@@ -1783,6 +1783,18 @@ test_case_math_ops = [
                         Tensor(np.random.rand(4).astype(np.int32))],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('MatrixInverse', {
+        'block': P.MatrixInverse(),
+        'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))]}),
+    ('MatrixDeterminant', {
+        'block': P.MatrixDeterminant(),
+        'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0]).astype(np.float32))]}),
+    ('LogMatrixDeterminant', {
+        'block': P.LogMatrixDeterminant(),
+        'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
+        'desc_bprop': [(Tensor(np.array([1, 2]).astype(np.float32)), Tensor(np.array([1, 2]).astype(np.float32)))]}),
     ('Erfinv', {
         'block': P.Erfinv(),
         'desc_inputs': [Tensor(np.array([0.1, 0.1, 0.1]).astype(np.float16))],

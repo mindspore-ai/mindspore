@@ -5314,7 +5314,7 @@ class LinSpace(PrimitiveWithInfer):
         return out
 
 
-class MatrixInverse(PrimitiveWithInfer):
+class MatrixInverse(Primitive):
     """
     Returns the inverse of the input matrix. If the matrix is irreversible, an error may be reported or an unknown
     result may be returned.
@@ -5323,20 +5323,19 @@ class MatrixInverse(PrimitiveWithInfer):
         The parameter 'adjoint' is only supporting False right now. Because complex number is not supported at present.
 
     Args:
-        adjoint (bool) : Whether to support complex matrix. False means that complex matrix is not supported.
-            Default: False.
+        adjoint (bool) : An optional bool. Default: False.
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size. dtypes: float32, float64.
+          dimensions must be the same size.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
 
     Raises:
         TypeError: If `adjoint` is not a bool.
-        TypeError: If dtype of `x` is neither float32 nor float64.
-        ValueError: If the last two dimensions of `x` is not the same size.
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the last two dimensions of `x` is not same size.
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
@@ -5350,8 +5349,8 @@ class MatrixInverse(PrimitiveWithInfer):
         >>> matrix_inverse = ops.MatrixInverse(adjoint=False)
         >>> output = matrix_inverse(x)
         >>> print(output)
-        [[[ 2.4095483  -1.536419  ]
-          [-2.4197974   0.97401696]]
+        [[[ 2.4095478  -1.5364188 ]
+          [-2.419797    0.9740167 ]]
          [[-0.79111797  1.0569006 ]
           [ 0.74180895 -0.2904787 ]]]
     """
@@ -5359,18 +5358,77 @@ class MatrixInverse(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, adjoint=False):
         """Initialize MatrixInverse"""
-        validator.check_type_name("adjoint", adjoint, False, self.name)
-        self.adjoint = adjoint
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type('adjoint', adjoint, [bool], self.name)
 
-    def infer_dtype(self, x_dtype):
-        valid_type = [mstype.float32, mstype.double]
-        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_type, self.name)
-        return x_dtype
 
-    def infer_shape(self, x_shape):
-        validator.check_int(len(x_shape), 2, Rel.GE, self.name, None)
-        validator.check_equal_int(x_shape[-1], x_shape[-2], self.name, None)
-        return x_shape
+class MatrixDeterminant(Primitive):
+    """
+    Computes the determinant of one or more square matrices.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size.
+
+    Outputs:
+        Tensor, the shape is `x_shape[:-2]`, the dtype is same as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> op = P.MatrixDeterminant()
+        >>> output = op(input_x)
+        >>> print(output)
+        [-16.5 21. ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MatrixDeterminant."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
+class LogMatrixDeterminant(Primitive):
+    """
+    Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size.
+
+    Outputs:
+        - **sign** (Tensor) - The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        - **y** (Tensor) - The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
+          as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> op = P.LogMatrixDeterminant()
+        >>> output = op(input_x)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2], dtype=Float32,
+        value= [ 2.80336046e+00,  3.04452229e+00]))
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize LogMatrixDeterminant."""
+        self.init_prim_io_names(inputs=['x'], outputs=['sign', 'y'])
 
 
 class IndexAdd(Primitive):

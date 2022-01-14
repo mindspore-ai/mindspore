@@ -16,6 +16,7 @@
 """Define the grad rules of math related operations."""
 
 from mindspore.common import dtype as mstype
+from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
 from .. import functional as F
@@ -144,6 +145,54 @@ def get_bprop_lp_norm(self):
             input_scaled = pow_op(abs_op(input_x), (p-2)) * input_x
             scale_v = dout / pow_op(out, (p-1))
         return (input_scaled * scale_v,)
+
+    return bprop
+
+
+@bprop_getters.register(P.MatrixInverse)
+def get_bprop_matrix_inverse(self):
+    """Generate bprop for MatrixInverse"""
+    matmul_x1 = nn.MatMul(transpose_x1=True)
+    matmul_x2 = nn.MatMul(transpose_x2=True)
+    neg = P.Neg()
+
+    def bprop(x, out, dout):
+        dx = matmul_x2(dout, out)
+        dx = matmul_x1(out, dx)
+        dx = neg(dx)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.MatrixDeterminant)
+def get_bprop_matrix_determinant(self):
+    """Generate bprop for MatrixDeterminant"""
+    inverse_op = P.MatrixInverse(adjoint=True)
+    shape_op = P.Shape()
+    reshape = P.Reshape()
+
+    def bprop(x, out, dout):
+        x_adj_inv = inverse_op(x)
+        multipliers = reshape(dout * out, shape_op(out) + (1, 1))
+        dx = multipliers * x_adj_inv
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.LogMatrixDeterminant)
+def get_bprop_log_matrix_determinant(self):
+    """Generate bprop for LogMatrixDeterminant"""
+    inverse_op = P.MatrixInverse(adjoint=True)
+    shape_op = P.Shape()
+    reshape = P.Reshape()
+
+    def bprop(x, out, dout):
+        x_adj_inv = inverse_op(x)
+        multipliers = reshape(dout[1], shape_op(out[1]) + (1, 1))
+        dx = multipliers * x_adj_inv
+        return (dx,)
 
     return bprop
 
