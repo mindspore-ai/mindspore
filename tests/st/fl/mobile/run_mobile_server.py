@@ -55,6 +55,12 @@ parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 parser.add_argument("--client_password", type=str, default="")
 parser.add_argument("--server_password", type=str, default="")
 parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
+# parameters for 'SIGNDS'
+parser.add_argument("--sign_k", type=float, default=0.01)
+parser.add_argument("--sign_eps", type=float, default=100)
+parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
+parser.add_argument("--sign_global_lr", type=float, default=0.1)
+parser.add_argument("--sign_dim_out", type=int, default=0)
 
 if __name__ == "__main__":
     args, _ = parser.parse_known_args()
@@ -91,6 +97,11 @@ if __name__ == "__main__":
     client_password = args.client_password
     server_password = args.server_password
     enable_ssl = args.enable_ssl
+    sign_k = args.sign_k
+    sign_eps = args.sign_eps
+    sign_thr_ratio = args.sign_thr_ratio
+    sign_global_lr = args.sign_global_lr
+    sign_dim_out = args.sign_dim_out
 
     if local_server_num == -1:
         local_server_num = server_num
@@ -137,6 +148,11 @@ if __name__ == "__main__":
         cmd_server += " --replay_attack_time_diff=" + str(replay_attack_time_diff)
         cmd_server += " --enable_ssl=" + str(enable_ssl)
         cmd_server += " --encrypt_type=" + str(encrypt_type)
+        cmd_server += " --sign_k=" + str(sign_k)
+        cmd_server += " --sign_eps=" + str(sign_eps)
+        cmd_server += " --sign_thr_ratio=" + str(sign_thr_ratio)
+        cmd_server += " --sign_global_lr=" + str(sign_global_lr)
+        cmd_server += " --sign_dim_out=" + str(sign_dim_out)
         cmd_server += " > server.log 2>&1 &"
 
         import time

@@ -16,15 +16,32 @@
 
 namespace mindspore.schema;
 
-table CipherPublicParams {
+table PWParams {
   t:int;
   p:[ubyte];
   g:int;
   prime:[ubyte];
+}
+
+table DPParams {
   dp_eps:float;
   dp_delta:float;
   dp_norm_clip:float;
+}
+
+table DSParams {
+  sign_k:float;
+  sign_eps:float;
+  sign_thr_ratio:float;
+  sign_global_lr:float;
+  sign_dim_out:int;
+}
+
+table CipherPublicParams {
   encrypt_type:string;
+  pw_params:PWParams;
+  dp_params:DPParams;
+  ds_params:DSParams;
 }
 
 table ClientPublicKeys {

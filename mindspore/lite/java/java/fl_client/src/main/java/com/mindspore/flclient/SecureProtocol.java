@@ -23,6 +23,8 @@ import mindspore.schema.FeatureMap;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 /**
@@ -46,6 +48,12 @@ public class SecureProtocol {
     private double dpNormClip;
     private ArrayList<String> updateFeatureName = new ArrayList<String>();
     private int retCode;
+    private float signK;
+    private float signEps;
+    private float signThrRatio;
+    private float signGlobalLr;
+    private int signDimOut;
+
 
     /**
      * Obtain current status code in client.
@@ -98,6 +106,22 @@ public class SecureProtocol {
         this.dpEps = diffEps;
         this.dpDelta = diffDelta;
         this.dpNormClip = diffNorm;
+        this.modelMap = map;
+        return FLClientStatus.SUCCESS;
+    }
+
+    /**
+     * Setting parameters for dimension select.
+     *
+     * @param map model weights.
+     * @return the status code corresponding to the response message.
+     */
+    public FLClientStatus setDSParameter(float signK, float signEps, float signThrRatio, float signGlobalLr, int signDimOut, Map<String, float[]> map) {
+        this.signK = signK;
+        this.signEps = signEps;
+        this.signThrRatio = signThrRatio;
+        this.signGlobalLr = signGlobalLr;
+        this.signDimOut = signDimOut;
         this.modelMap = map;
         return FLClientStatus.SUCCESS;
     }
@@ -367,6 +391,10 @@ public class SecureProtocol {
             }
         }
         updateL2Norm = Math.sqrt(updateL2Norm);
+        if (updateL2Norm == 0) {
+            LOGGER.severe(Common.addTag("[Encrypt] updateL2Norm is 0, please check"));
+            return new int[0];
+        }
         double clipFactor = Math.min(1.0, dpNormClip / updateL2Norm);
 
         // clip and add noise
@@ -407,6 +435,284 @@ public class SecureProtocol {
             }
             int featureName = builder.createString(key);
             int weight = FeatureMap.createDataVector(builder, data2);
+            int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
+            featuresMap[i] = featureMap;
+        }
+        return featuresMap;
+    }
+
+    /**
+     * The number of combinations of n things taken k.
+     *
+     * @param n Number of things.
+     * @param k Number of elements taken.
+     * @return the total number of "n choose k" combinations.
+     */
+    private static double comb(double n, double k) {
+        boolean cond = (k <= n) && (n >= 0) && (k >= 0);
+        double m = n + 1;
+        if (!cond) {
+            return 0;
+        } else {
+            double nTerm = Math.min(k, n - k);
+            double res = 1;
+            for (int i = 1; i <= nTerm; i++) {
+                res *= (m - i);
+                res /= i;
+            }
+            return res;
+        }
+    }
+
+    /**
+     * Calculate the number of possible combinations of output set given the number of topk dimensions.
+     * c(k, v) * c(d-k, h-v)
+     *
+     * @param numInter  the number of dimensions from topk set.
+     * @param topkDim   the size of top-k set.
+     * @param inputDim  total number of dimensions in the model.
+     * @param outputDim the number of dimensions selected for constructing sparse local updates.
+     * @return the number of possible combinations of output set.
+     */
+    private static double countCombs(int numInter, int topkDim, int inputDim, int outputDim) {
+        return comb(topkDim, numInter) * comb(inputDim - topkDim, outputDim - numInter);
+    }
+
+    /**
+     * Calculate the probability mass function of the number of topk dimensions in the output set.
+     * v is the number of dimensions from topk set.
+     *
+     * @param thr       threshold of the number of topk dimensions in the output set.
+     * @param topkDim   the size of top-k set.
+     * @param inputDim  total number of dimensions in the model.
+     * @param outputDim the number of dimensions selected for constructing sparse local updates.
+     * @param eps       the privacy budget of SignDS alg.
+     * @return the probability mass function.
+     */
+    private static List<Double> calcPmf(int thr, int topkDim, int inputDim, int outputDim, float eps) {
+        List<Double> pmf = new ArrayList<>();
+        double newPmf;
+        for (int v = 0; v <= outputDim; v++) {
+            if (v < thr) {
+                newPmf = countCombs(v, topkDim, inputDim, outputDim);
+            } else {
+                newPmf = countCombs(v, topkDim, inputDim, outputDim) * Math.exp(eps);
+            }
+            pmf.add(newPmf);
+        }
+        double pmfSum = 0;
+        for (int i = 0; i < pmf.size(); i++) {
+            pmfSum += pmf.get(i);
+        }
+        if (pmfSum == 0) {
+            LOGGER.severe(Common.addTag("[SignDS] probability mass function is 0, please check"));
+            return new ArrayList<>();
+        }
+        for (int i = 0; i < pmf.size(); i++) {
+            pmf.set(i, pmf.get(i) / pmfSum);
+        }
+        return pmf;
+    }
+
+    /**
+     * Calculate the expected number of topk dimensions in the output set given outputDim.
+     * The size of pmf is also outputDim.
+     *
+     * @param pmf probability mass function
+     * @return the expectation of the topk dimensions in the output set.
+     */
+    private static double calcExpectation(List<Double> pmf) {
+        double sumExpectation = 0;
+        for (int i = 0; i < pmf.size(); i++) {
+            sumExpectation += (i * pmf.get(i));
+        }
+        return sumExpectation;
+    }
+
+    /**
+     * Calculate the optimum threshold for the number of topk dimension in the output set.
+     * The optimum threshold is an integer among [1, outputDim], which has the largest
+     * expectation value.
+     *
+     * @param topkDim   the size of top-k set.
+     * @param inputDim  total number of dimensions in the model.
+     * @param outputDim the number of dimensions selected for constructing sparse local updates.
+     * @param eps       the privacy budget of SignDS alg.
+     * @return the optimum threshold.
+     */
+    private static int calcOptThr(int topkDim, int inputDim, int outputDim, float eps) {
+        double optExpect = 0;
+        double optT = 0;
+        for (int t = 1; t <= outputDim; t++) {
+            double newExpect = calcExpectation(calcPmf(t, topkDim, inputDim, outputDim, eps));
+            if (newExpect > optExpect) {
+                optExpect = newExpect;
+                optT = t;
+            } else {
+                break;
+            }
+        }
+        return (int) Math.max(optT, 1);
+    }
+
+    /**
+     * Tool function for finding the optimum output dimension.
+     * The main idea is to iteratively search for the largest output dimension while
+     * ensuring the expected ratio of topk dimensions in the output set larger than
+     * the target ratio.
+     *
+     * @param thrInterRatio threshold of the expected ratio of topk dimensions
+     * @param topkDim       the size of top-k set.
+     * @param inputDim      total number of dimensions in the model.
+     * @param eps           the privacy budget of SignDS alg.
+     * @return the optimum output dimension.
+     */
+    private static int findOptOutputDim(float thrInterRatio, int topkDim, int inputDim, float eps) {
+        int outputDim = 1;
+        while (true) {
+            int thr = calcOptThr(topkDim, inputDim, outputDim, eps);
+            double expectedRatio = calcExpectation(calcPmf(thr, topkDim, inputDim, outputDim, eps)) / outputDim;
+            if (expectedRatio < thrInterRatio || Double.isNaN(expectedRatio)) {
+                break;
+            } else {
+                outputDim += 1;
+            }
+        }
+        return Math.max(1, (outputDim - 1));
+    }
+
+    /**
+     * Determine the number of dimensions to be sampled from the topk dimension set via
+     * inverse sampling.
+     * The main steps of the trick of inverse sampling include:
+     * 1. Sample a random probability from the uniform distribution U(0, 1).
+     * 2. Calculate the cumulative distribution of numInter, namely the number of
+     * topk dimensions in the output set.
+     * 3. Compare the cumulative distribution with the random probability and determine
+     * the value of numInter.
+     *
+     * @param thrDim      threshold of the number of topk dimensions in the output set.
+     * @param denominator calculate denominator given the threshold.
+     * @param topkDim     the size of top-k set.
+     * @param inputDim    total number of dimensions in the model.
+     * @param outputDim   the number of dimensions selected for constructing sparse local updates.
+     * @param eps         the privacy budget of SignDS alg.
+     * @return the number of dimensions to be sampled from the top-k dimension set.
+     */
+    private static int countInters(int thrDim, double denominator, int topkDim, int inputDim, int outputDim, float eps) {
+        SecureRandom secureRandom = new SecureRandom();
+        double randomProb = secureRandom.nextDouble();
+        int numInter = 0;
+        double prob = countCombs(numInter, topkDim, inputDim, outputDim) / denominator;
+        while (prob < randomProb) {
+            numInter += 1;
+            if (numInter < thrDim) {
+                prob += countCombs(numInter, topkDim, inputDim, outputDim) / denominator;
+            } else {
+                prob += Math.exp(eps) * countCombs(numInter, topkDim, inputDim, outputDim) / denominator;
+            }
+        }
+        return numInter;
+    }
+
+    /**
+     * SignDS model weights.
+     *
+     * @param builder       the FlatBufferBuilder object used for serialization model weights.
+     * @param trainDataSize tne size of train data set.
+     * @return the serialized model weights after adding masks.
+     */
+
+    public int[] signDSModel(FlatBufferBuilder builder, int trainDataSize, Map<String, float[]> trainedMap) {
+        Map<String, float[]> mapBeforeTrain = modelMap;
+        int layerNum = updateFeatureName.size();
+        int[] featuresMap = new int[layerNum];
+        SecureRandom secureRandom = Common.getSecureRandom();
+        boolean sign = secureRandom.nextBoolean();
+        List<String> nonTopkKeyList = new ArrayList<>();
+        List<String> topkKeyList = new ArrayList<>();
+        Map<String, Float> allUpdateMap = new HashMap<>();
+        for (int i = 0; i < layerNum; i++) {
+            String key = updateFeatureName.get(i);
+            float[] dataAfterTrain = trainedMap.get(key);
+            float[] dataBeforeTrain = mapBeforeTrain.get(key);
+            for (int j = 0; j < dataAfterTrain.length; j++) {
+                float updateData = dataAfterTrain[j] - dataBeforeTrain[j];
+                String ij = Integer.toString(i) + ',' + j;
+                allUpdateMap.put(ij, updateData);
+            }
+        }
+        int inputDim = allUpdateMap.size();
+        int topkDim = (int) (signK * inputDim);
+        if (signDimOut == 0) {
+            signDimOut = findOptOutputDim(signThrRatio, topkDim, inputDim, signEps);
+        }
+        int thrDim = calcOptThr(topkDim, inputDim, signDimOut, signEps);
+        double combLessInter = 0d;
+        double combMoreInter = 0d;
+        for (int i = 0; i < thrDim; i++) {
+            combLessInter += countCombs(i, topkDim, inputDim, signDimOut);
+        }
+        for (int i = thrDim; i <= signDimOut; i++) {
+            combMoreInter += countCombs(i, topkDim, inputDim, signDimOut);
+        }
+        double denominator = combLessInter + Math.exp(signEps) * combMoreInter;
+        if (denominator == 0) {
+            LOGGER.severe(Common.addTag("[SignDS] denominator is 0, please check"));
+            return new int[0];
+        }
+        int numInter = countInters(thrDim, denominator, topkDim, inputDim, signDimOut, signEps);
+        int numOuter = signDimOut - numInter;
+        if (topkDim < numInter || signDimOut <= 0) {
+            LOGGER.severe("[SignDS] topkDim or signDimOut is ERROR! please check");
+            return new int[0];
+        }
+
+        List<Map.Entry<String, Float>> allUpdateList = new ArrayList<>(allUpdateMap.entrySet());
+        if (sign) {
+            allUpdateList.sort((o1, o2) -> Float.compare(o2.getValue(), o1.getValue()));
+        } else {
+            allUpdateList.sort((o1, o2) -> Float.compare(o1.getValue(), o2.getValue()));
+        }
+        for (int i = 0; i < topkDim; i++) {
+            topkKeyList.add(allUpdateList.get(i).getKey());
+        }
+        for (int i = topkDim; i < allUpdateList.size(); i++) {
+            nonTopkKeyList.add(allUpdateList.get(i).getKey());
+        }
+        List<String> outputDimensionIJStringList = new ArrayList<>();
+        for (int i = topkKeyList.size(); i > topkKeyList.size() - numInter; i--) {
+            int randomIndex = secureRandom.nextInt(i);
+            String randomChoiceTopkIJString = topkKeyList.get(randomIndex);
+            topkKeyList.set(randomIndex, topkKeyList.get(i - 1));
+            topkKeyList.set(i - 1, randomChoiceTopkIJString);
+            outputDimensionIJStringList.add(randomChoiceTopkIJString);
+        }
+        for (int i = nonTopkKeyList.size(); i > nonTopkKeyList.size() - numOuter; i--) {
+            int randomIndex = secureRandom.nextInt(i);
+            String randomChoiceNonTopkIJString = nonTopkKeyList.get(randomIndex);
+            nonTopkKeyList.set(randomIndex, nonTopkKeyList.get(i - 1));
+            nonTopkKeyList.set(i - 1, randomChoiceNonTopkIJString);
+            outputDimensionIJStringList.add(randomChoiceNonTopkIJString);
+        }
+        float signValue = sign ? 1f * signGlobalLr : -1f * signGlobalLr;
+        for (String ijString : outputDimensionIJStringList) {
+            String[] ij = ijString.split(",");
+            int iKeyIndex = Integer.parseInt(ij[0]);
+            int jDataIndex = Integer.parseInt(ij[1]);
+            String key = updateFeatureName.get(iKeyIndex);
+            float[] dataBeforeTrain = mapBeforeTrain.get(key);
+            dataBeforeTrain[jDataIndex] += signValue;
+            mapBeforeTrain.put(key, dataBeforeTrain);
+        }
+        for (int i = 0; i < layerNum; i++) {
+            String key = updateFeatureName.get(i);
+            float[] dataBeforeTrain = mapBeforeTrain.get(key);
+            for (int j = 0; j < dataBeforeTrain.length; j++) {
+                dataBeforeTrain[j] *= trainDataSize;
+            }
+            int featureName = builder.createString(key);
+            int weight = FeatureMap.createDataVector(builder, dataBeforeTrain);
             int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
             featuresMap[i] = featureMap;
         }
