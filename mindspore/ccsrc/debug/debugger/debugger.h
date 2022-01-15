@@ -99,6 +99,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void Dump(const KernelGraphPtr &kernel_graph) const;
 
+  void DumpConstantDataAscend(const KernelGraphPtr &graph);
+
   void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
 
   void DumpSetup(const KernelGraphPtr &kernel_graph) const;

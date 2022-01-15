@@ -441,9 +441,23 @@ void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     (void)E2eDump::DumpParametersData(kernel_graph.get(), rank_id, debugger_.get());
+    // Dump constant data for GPU mindRT.
     E2eDump::DumpConstantData(kernel_graph.get(), rank_id, debugger_.get());
   } else {
     DumpJsonParser::GetInstance().UpdateDumpIter();
+  }
+}
+
+void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
+  if (device_target_ != kAscendDevice) {
+    return;
+  }
+  auto &json_parser = DumpJsonParser::GetInstance();
+  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+    // Dump constant data for ascend mindRT, for old runtime constant data is dumped in session_basic.
+    uint32_t rank_id = GetRankID();
+    std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
+    DumpConstantInfo(graph, cst_file_dir);
   }
 }
 
@@ -498,6 +512,7 @@ void Debugger::PostExecuteGraphDebugger() {
     // Dump Parameters and consts
     for (auto graph : graph_ptr_step_vec_) {
       debugger_->Dump(graph);
+      DumpConstantDataAscend(graph);
       if (!debugger_->debugger_enabled()) {
         debugger_->ClearCurrentData();
       }
