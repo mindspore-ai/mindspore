@@ -31,29 +31,61 @@ WeightQuantizer::~WeightQuantizer() {
   }
 }
 
-int WeightQuantizer::DoWeightQuantize(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
+                                 const std::set<PrimitivePtr> &support_weight_quant_types,
+                                 const std::set<PrimitivePtr> &per_layer_types,
+                                 const std::set<PrimitivePtr> &symmetric_types) {
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
+    if (primitive == nullptr) {
+      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
+      continue;
+    }
+    if (!CheckNodeInSet(cnode, support_weight_quant_types)) {
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " of type: " << primitive->name() << " dont need weight quant.";
+      continue;
+    }
+    WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
+    if (CheckNodeInSet(cnode, per_layer_types)) {
+      weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
+    }
+    bool symmetric = false;
+    int q_min = quant_min_;
+    int q_max = quant_max_;
+    if (CheckNodeInSet(cnode, symmetric_types)) {
+      symmetric = true;
+      q_min = symmetric_quant_min_;
+      q_max = symmetric_quant_max_;
+    }
+    std::vector<int> weight_indices;
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam)) {
+      weight_indices = {2, 3};
+    } else if (opt::CheckPrimitiveType(cnode, prim::kPrimSGD)) {
+      weight_indices = {4, 6};
+    } else if (opt::CheckPrimitiveType(cnode, prim::kPrimApplyMomentum)) {
+      weight_indices = {2};
+    } else {
+      for (size_t i = 1; i < cnode->size(); ++i) {
+        weight_indices.push_back(i);
+      }
+    }
+    auto status = DoCNodeWeightQuant(func_graph, cnode, weight_indices, weight_quant_type, q_min, q_max, symmetric);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " do weight quantize error";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                        const std::vector<int> &weight_indices, WeightQuantType weight_quant_type,
+                                        int q_min, int q_max, bool symmetric) {
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
-  WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
   auto manager = api::FuncGraphManager::Manage(func_graph, true);
   CHECK_NULL_RETURN(manager);
-  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
-  if (CheckNodeInSet(cnode, per_layer_primitive_types)) {
-    weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
-  }
-  std::vector<int> weight_indices;
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimAdam)) {
-    weight_indices = {2, 3};
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimSGD)) {
-    weight_indices = {4, 6};
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimApplyMomentum)) {
-    weight_indices = {2};
-  } else {
-    for (size_t i = 1; i < cnode->size(); ++i) {
-      weight_indices.push_back(i);
-    }
-  }
   for (auto idx : weight_indices) {
     auto input = cnode->input(idx);
     ParameterPtr parameter;
@@ -85,11 +117,11 @@ int WeightQuantizer::DoWeightQuantize(const FuncGraphPtr &func_graph, const CNod
       status = MixedBitQuantFilter(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT,
                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
-      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
-                                           quant_min_, bit_num_, tmp_weight_quant_type, type_id_, idx - 1);
+      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, q_max, q_min,
+                                           bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
     } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_,
-                                            quant_min_, bit_num_, tmp_weight_quant_type, type_id_, idx - 1);
+      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, q_max, q_min,
+                                            bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -111,8 +143,9 @@ int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
   }
 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (quant_param_holder->quant_type() == schema::QuantType_QUANT_WEIGHT) {
-    // already marked with QUANT_WEIGHT
+  if (quant_param_holder->quant_type() == schema::QuantType_QUANT_WEIGHT ||
+      quant_param_holder->quant_type() == schema::QuantType_QUANT_DANAMIC) {
+    // already marked with QuantType_QUANT_WEIGHT or QuantType_QUANT_DANAMIC
     return RET_OK;
   }
 
@@ -153,28 +186,16 @@ int WeightQuantizer::DoQuantize(const FuncGraphPtr &func_graph, double init_scal
   mixed_bit_init_scale_ = init_scale;
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
-
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
-    if (primitive == nullptr) {
-      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
-      continue;
-    }
-    auto op_name = cnode->fullname_with_scope();
-    std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
-                                                      prim::kPrimMatMulFusion, prim::kPrimFullConnection,
-                                                      prim::kPrimLstm,         prim::kPrimGather,
-                                                      prim::kPrimAdam,         prim::kPrimSGD,
-                                                      prim::kPrimApplyMomentum};
-    if (CheckNodeInSet(cnode, support_primitive_types)) {
-      auto status = DoWeightQuantize(func_graph, cnode);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "DoWeightQuantize error";
-        return RET_ERROR;
-      }
-    } else {
-      MS_LOG(DEBUG) << op_name << " of type: " << primitive->name() << " no need quant";
-    }
+  const std::set<PrimitivePtr> support_primitive_types = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                                          prim::kPrimMatMulFusion, prim::kPrimFullConnection,
+                                                          prim::kPrimLstm,         prim::kPrimGather,
+                                                          prim::kPrimAdam,         prim::kPrimSGD,
+                                                          prim::kPrimApplyMomentum};
+  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
+  auto ret = WeightQuant(func_graph, support_primitive_types, per_layer_primitive_types, {});
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Weight Quant failed.";
+    return ret;
   }
   return MarkWeightQuantizationInNodes(func_graph);
 }

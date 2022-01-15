@@ -51,8 +51,10 @@ class WeightQuantizer : public Quantizer {
     }
     // parse param for fixed bit quant.
     if (!is_mixed_bit_) {
-      quant_max_ = QuantMax(bit_num_, false);
       quant_min_ = QuantMin(bit_num_, false, false);
+      quant_max_ = QuantMax(bit_num_, false);
+      symmetric_quant_min_ = QuantMin(bit_num_, false, true);
+      symmetric_quant_max_ = QuantMax(bit_num_, false);
       // parse type_id_
       MS_ASSERT(bit_num_ > 0 && bit_num_ <= k16Bit);
       if (bit_num_ > 0 && bit_num_ <= k8Bit) {
@@ -67,10 +69,14 @@ class WeightQuantizer : public Quantizer {
   int DoQuantize(FuncGraphPtr func_graph) override;
   int DoQuantize(const FuncGraphPtr &func_graph, double init_scale);
 
+  int WeightQuant(const FuncGraphPtr &func_graph, const std::set<PrimitivePtr> &support_weight_quant_types,
+                  const std::set<PrimitivePtr> &per_layer_types, const std::set<PrimitivePtr> &symmetric_types);
+
  private:
-  int DoWeightQuantize(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   int DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
+  int DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::vector<int> &weight_indices,
+                         WeightQuantType weight_quant_type, int q_min, int q_max, bool symmetric);
 
  private:
   size_t bit_num_{8};
@@ -79,9 +85,10 @@ class WeightQuantizer : public Quantizer {
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
   double mixed_bit_init_scale_ = 0.02;
-
-  int quant_max_{127};
   int quant_min_{-128};
+  int quant_max_{127};
+  int symmetric_quant_min_{-127};
+  int symmetric_quant_max_{127};
   TypeId type_id_{kNumberTypeInt8};
 };
 }  // namespace mindspore::lite::quant

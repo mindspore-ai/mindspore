@@ -18,6 +18,7 @@
 #include "src/weight_decoder.h"
 #include "src/huffman_decode.h"
 #include "tools/converter/quantizer/fse_decoder.h"
+#include "nnacl/conv_parameter.h"
 
 namespace mindspore::lite {
 namespace {
@@ -416,9 +417,24 @@ int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_in
   return 0;
 }
 
+int WeightDecoder::GetDeConvPreferredDim(OpParameter *op_parameter, const std::vector<int> &dims) {
+  MS_ASSERT(op_parameter != nullptr);
+  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter);
+  if (parameter->input_channel_ == parameter->group_ && parameter->output_channel_ == parameter->group_) {
+    // DepthWise-DeConv (CO\CI) KH KW 1
+    return 0;
+  } else {
+    // DeConv:CI KH KW CO
+    return dims.size() - 1;
+  }
+}
+
 int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims) {
+  MS_ASSERT(op_parameter != nullptr);
   if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
     return GetMatMulPreferredDim(op_parameter, index, dims);
+  } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
+    return 0;
   }
   // The first index.
   return 0;

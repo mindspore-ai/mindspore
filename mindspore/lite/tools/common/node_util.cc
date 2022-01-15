@@ -435,5 +435,22 @@ ValueNodePtr GetCallAnfPrim() {
   MS_CHECK_TRUE_MSG(call_anf_prim != nullptr, nullptr, "call_anf_prim is nullptr");
   return call_anf_prim;
 }
+
+int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type) {
+  auto abstract_base = cnode->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of node is nullptr, " << cnode->fullname_with_scope();
+    return RET_NULL_PTR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of node should be anstract tensor, " << cnode->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  CHECK_NULL_RETURN(abstract_tensor);
+  CHECK_NULL_RETURN(abstract_tensor->element());
+  abstract_tensor->element()->set_type(TypeIdToType(new_data_type));
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

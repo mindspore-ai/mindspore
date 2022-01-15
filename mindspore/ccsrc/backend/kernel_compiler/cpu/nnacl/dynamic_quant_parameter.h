@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
+#ifndef MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_
+#define MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_
+#include "nnacl/op_base.h"
 
-#include "include/errorcode.h"
-#include "ir/anf.h"
-#include "ir/dtype/type_id.h"
-#include "ir/func_graph.h"
+typedef struct DynamicQuantParameter {
+  OpParameter op_parameter_;
+  bool symmetric_;
+  int64_t dst_type_;
+} DynamicQuantParameter;
 
-namespace mindspore::lite::quant {
-class QuantCast {
- public:
-  QuantCast() = default;
-  virtual ~QuantCast() = default;
-  int Run(const FuncGraphPtr &graph);
-};
-}  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
+#endif  // MINDSPORE_NNACL_DYNAMIC_QUANT_PARAMETER_H_

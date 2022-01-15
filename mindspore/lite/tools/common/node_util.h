@@ -432,6 +432,8 @@ ValueNodePtr GetCallAnfPrim();
 inline bool IsGraphInput(const AnfNodePtr &cnode) {
   return cnode->isa<Parameter>() && !cnode->cast<ParameterPtr>()->has_default();
 }
+
+int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H

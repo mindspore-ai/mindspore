@@ -23,7 +23,7 @@
 #include <vector>
 #include "ops/tuple_get_item.h"
 #include "src/tensor.h"
-#include "tools/converter/quantizer/quant_cast.h"
+#include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
@@ -618,8 +618,8 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
   if (activation_target_data_type_ == kNumberTypeInt8 || activation_target_data_type_ == kNumberTypeUInt8) {
     // add quant_cast
-    quant::QuantCast quant_cast;
-    status = quant_cast.Run(func_graph);
+    quant::InsertQuantNodeManager inset_quant_node_pass;
+    status = inset_quant_node_pass.InsertQuantDtypeCastPass(func_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "add QuantCast error";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

@@ -457,8 +457,9 @@ enum PrimType {
   PrimType_Affine = 200,
   PrimType_AllGather = 201,
   PrimType_ReduceScatter = 202,
+  PrimType_DynamicQuant = 203,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_ReduceScatter + 1
+  PrimType_MAX = PrimType_DynamicQuant + 1
 };
 
 typedef enum LiteDataType {

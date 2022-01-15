@@ -20,7 +20,6 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"
-#include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/tensor_util.h"
 #include "securec/include/securec.h"
@@ -83,10 +82,10 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
     }
     MS_CHECK_TRUE_RET(data_shape.size() == DIMENSION_4D, false);
     MS_CHECK_TRUE_RET(weight_shape.size() == DIMENSION_4D, false);
-    if (data_shape[3] == 1 || data_shape[3] != weight_shape[3]) {
+    if (data_shape[kNHWC_C] == 1 || data_shape[kNHWC_C] != weight_shape[kNHWC_C]) {
       conv2d_fusion->EraseAttr(ops::kIsDepthWise);
-      conv2d_fusion->set_group(static_cast<int64_t>(data_shape[3]));
-      conv2d_fusion->set_in_channel(data_shape[3]);
+      conv2d_fusion->set_group(static_cast<int64_t>(data_shape[kNHWC_C]));
+      conv2d_fusion->set_in_channel(data_shape[kNHWC_C]);
       MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
       auto weight_node = conv_cnode->input(kConvWeightIndex);
       MS_ASSERT(weight_node != nullptr);

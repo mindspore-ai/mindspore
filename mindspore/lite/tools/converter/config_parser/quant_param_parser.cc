@@ -73,6 +73,11 @@ int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, 
       MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [1,8].";
       return RET_INPUT_PARAM_INVALID;
     }
+  } else if (common_quant->quant_type == schema::QuantType_QUANT_DANAMIC) {
+    if (common_quant->bit_num != kQuantBitNumInt8) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be 8.";
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
   return RET_OK;
 }
@@ -155,11 +160,14 @@ int QuantParamParser::ParseQuantType(const std::string &quant_type_str, schema::
   } else if (quant_type_str == "FULL_QUANT") {
     (*quant_type) = schema::QuantType_QUANT_ALL;
     return RET_OK;
+  } else if (quant_type_str == "DYNAMIC_QUANT") {
+    (*quant_type) = schema::QuantType_QUANT_DANAMIC;
+    return RET_OK;
   } else if (quant_type_str.empty()) {
     (*quant_type) = schema::QuantType_QUANT_NONE;
     return RET_OK;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: quant_type must be WEIGHT_QUANT|FULL_QUANT.";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: quant_type must be WEIGHT_QUANT|FULL_QUANT|DYNAMIC_QUANT.";
     return RET_INPUT_PARAM_INVALID;
   }
 }
