@@ -611,7 +611,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
-        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.
@@ -849,7 +849,7 @@ class Conv2dBnFoldQuant(Cell):
         pad_mode (str): Specifies padding mode. The optional values are "same", "valid", "pad". Default: "same".
         padding (Union[int, tuple[int]]): Implicit paddings on both sides of the `x`. Default: 0.
         dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
-        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         eps (float): Parameters for Batch Normalization. Default: 1e-5.
         momentum (float): Parameters for Batch Normalization op. Default: 0.997.

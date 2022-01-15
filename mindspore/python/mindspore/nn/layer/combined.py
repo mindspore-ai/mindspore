@@ -48,7 +48,7 @@ class Conv2dBnAct(Cell):
         dilation (int): Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than
             or equal to 1 and lower than any one of the height and width of the `x`. Default: 1.
-        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+        group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
