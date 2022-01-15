@@ -128,8 +128,9 @@ enum NNACLQuantType {
   QuantType_PostTraining = 3,
   QuantType_QUANT_WEIGHT = 4,
   QuantType_QUANT_ALL = 5,
+  QuantType_QUANT_DYNAMIC = 6,
   QuantType_MIN = QuantType_QUANT_NONE,
-  QuantType_MAX = QuantType_QUANT_ALL
+  QuantType_MAX = QuantType_QUANT_DYNAMIC
 };
 
 typedef struct vvector {

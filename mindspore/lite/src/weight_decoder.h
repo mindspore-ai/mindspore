@@ -241,7 +241,7 @@ class WeightDecoder {
   }
 
   static int GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
-
+  static int GetDeConvPreferredDim(OpParameter *op_parameter, const std::vector<int> &dims);
   static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename T1, typename T2>

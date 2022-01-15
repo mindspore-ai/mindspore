@@ -56,27 +56,12 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
   return NNACL_OK;
 }
 
-int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                     OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
-  if (check_ret != NNACL_OK) {
-    return check_ret;
-  }
-
+int SetShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+             OpParameter *parameter) {
   TensorC *input0 = (TensorC *)inputs[0];
   TensorC *input1 = (TensorC *)inputs[1];
   TensorC *output = outputs[0];
-
-  int diff = abs((int)input0->shape_size_ - (int)input1->shape_size_);
-  TensorC *in = input0->shape_size_ > input1->shape_size_ ? input1 : input0;
-  for (int i = 0; i < diff; ++i) {
-    ShapeInsert(in->shape_, &in->shape_size_, 0, 1);
-  }
-  SetDataTypeFormat(output, input0);
   MatMulParameter *param = (MatMulParameter *)parameter;
-  if (!InferFlag(inputs, inputs_size)) {
-    return NNACL_INFER_INVALID;
-  }
   int a_shape[MAX_SHAPE_SIZE] = {0};
   size_t a_shape_size = 0;
   ShapeSet(a_shape, &a_shape_size, input0->shape_, input0->shape_size_);
@@ -135,6 +120,32 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   SetShapeArray(output, c_shape, c_shape_size);
   return NNACL_OK;
+}
+
+int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                     OpParameter *parameter) {
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
+  if (check_ret != NNACL_OK) {
+    return check_ret;
+  }
+
+  TensorC *input0 = (TensorC *)inputs[0];
+  TensorC *input1 = (TensorC *)inputs[1];
+  TensorC *output = outputs[0];
+
+  int diff = abs((int)input0->shape_size_ - (int)input1->shape_size_);
+  TensorC *in = input0->shape_size_ > input1->shape_size_ ? input1 : input0;
+  for (int i = 0; i < diff; ++i) {
+    ShapeInsert(in->shape_, &in->shape_size_, 0, 1);
+  }
+  SetDataTypeFormat(output, input0);
+  if (parameter->quant_type_ == QuantType_QUANT_DYNAMIC) {
+    output->data_type_ = kNumberTypeFloat32;
+  }
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+  return SetShape(inputs, inputs_size, outputs, outputs_size, parameter);
 }
 
 REG_INFER(MatMul, PrimType_MatMulFusion, MatmulInferShape)

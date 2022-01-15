@@ -21,7 +21,6 @@
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"
-#include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 

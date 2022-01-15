@@ -102,6 +102,8 @@ int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequan
 
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
 
+int GetQuantType(const CNodePtr &cnode);
+
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
                 std::vector<T> *dequant_data, int preferred_dim = 0) {

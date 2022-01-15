@@ -26,7 +26,6 @@
 #include "ops/space_to_batch_nd.h"
 #include "ops/space_to_depth.h"
 #include "tools/converter/quant_param_holder.h"
-#include "tools/converter/quantizer/quant_cast.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 

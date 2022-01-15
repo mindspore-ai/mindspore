@@ -22,8 +22,8 @@
 #include <set>
 #include <functional>
 #include "include/version.h"
-#include "ops/fusion/full_connection.h"
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -32,7 +32,6 @@
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/optimizer/common/format_utils.h"
 
 using std::string;
 using std::vector;
@@ -138,6 +137,17 @@ QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   return quant_params_holder;
 }
 
+int GetQuantType(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr";
+    return RET_ERROR;
+  }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  return quant_param_holder->quant_type();
+}
+
 bool TensorQuantParamsInited(const schema::TensorT &tensor) {
   if (tensor.quantParams.empty()) {
     return false;
@@ -194,10 +204,11 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
     std::vector<std::vector<float>> clusters_data(clusters.size());
     for (size_t i = 0; i < elem_count; i++) {
       size_t index = 0;
-      float min_distance = pow(data[i] - clusters[0], 2);
+      const int pow_index = 2;
+      float min_distance = pow(data[i] - clusters[0], pow_index);
       for (size_t j = 1; j < clusters.size(); j++) {
-        if (pow(data[i] - clusters[j], 2) < min_distance) {
-          min_distance = pow(data[i] - clusters[j], 2);
+        if (pow(data[i] - clusters[j], pow_index) < min_distance) {
+          min_distance = pow(data[i] - clusters[j], pow_index);
           index = j;
         }
       }
@@ -341,6 +352,11 @@ int UpdateTensorDataAndSize(const AnfNodePtr &node, const tensor::TensorPtr &wei
     return RET_ERROR;
   }
   // set dtype
+  auto ret = UpdateDataType(node, new_data_type);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node->fullname_with_scope() << " set new dtype failed.";
+    return ret;
+  }
   auto abstract_base = node->abstract();
   if (abstract_base == nullptr) {
     MS_LOG(ERROR) << "Abstract of node is nullptr, " << node->fullname_with_scope();
@@ -381,6 +397,20 @@ int GetMatMulPreferredDim(const PrimitivePtr &primitive, int input_index, const 
   return 0;
 }
 
+int GetDeConvPreferredDim(const PrimitivePtr &primitive, const std::vector<int> &dims) {
+  auto prim = primitive->cast<std::shared_ptr<ops::Conv2DTranspose>>();
+  MS_ASSERT(prim != nullptr);
+  // For MatMul A
+  if (prim->get_in_channel() == prim->get_group() && prim->get_out_channel() == prim->get_group()) {
+    // DepthWise-DeConv (CO\CI) KH KW 1
+    return 0;
+  } else {
+    // DeConv:CI KH KW CO
+    return dims.size() - 1;
+  }
+  return 0;
+}
+
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first) {
   auto channels = dims[0];
   if (!(*channel_at_first)) {
@@ -399,6 +429,8 @@ int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_
 int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
   if (primitive->name() == ops::kNameMatMulFusion) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
+  } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {
+    return 0;
   }
   // The first index.
   return 0;

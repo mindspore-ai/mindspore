@@ -53,17 +53,17 @@ class MS_CORE_API DynamicQuant : public PrimitiveC {
   /// \param[in] symmetric Define whether symmetric quantization.
   void set_symmetric(const bool symmetric);
 
-  /// \brief Method to get src_t attribute.
+  /// \brief Method to get symmetric attribute.
   ///
   /// \return Whether symmetric quantization.
   bool get_symmetric() const;
 
-  /// \brief Method to set dst_t attribute.
+  /// \brief Method to set dst_type attribute.
   ///
   /// \param[in] dst_t Define the data type of output.
   void set_dst_type(const int64_t dst_type);
 
-  /// \brief Method to get dst_t attribute.
+  /// \brief Method to get dst_type attribute.
   ///
   /// \return the data type of output.
   int64_t get_dst_type() const;
