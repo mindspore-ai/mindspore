@@ -46,8 +46,11 @@ function linux_release_package()
     mkdir -p ${output_path}/release/linux/nnie/
     mkdir -p ${output_path}/release/linux/x86_64/
     mkdir -p ${output_path}/release/linux/aarch64/
+    mkdir -p ${output_path}/release/linux/ascend/
+
     cp ${input_path}/centos_x86/avx/*.tar.gz* ${output_path}/release/linux/x86_64/
     cp ${input_path}/linux_aarch64/*.tar.gz* ${output_path}/release/linux/aarch64/
+    cp ${input_path}/centos_x86/ascend/*.tar.gz* ${output_path}/release/linux/ascend/
 
     cp -r ${input_path}/linux_aarch32/nnie/Hi* ${output_path}/release/linux/nnie/
     cp -r ${input_path}/linux_aarch64/nnie/Hi* ${output_path}/release/linux/nnie/
