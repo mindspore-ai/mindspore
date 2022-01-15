@@ -2895,7 +2895,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         - **epsilon** (float) - Ridge term. Only constant value is allowed.
 
     Outputs:
-        Tensor, parameters to be update.
+        Tensor, parameters to be updated.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
@@ -3014,7 +3014,7 @@ class ApplyCenteredRMSProp(Primitive):
         - **epsilon** (float) - Ridge term.
 
     Outputs:
-        Tensor, parameters to be update.
+        Tensor, parameters to be updated.
 
     Raises:
         TypeError: If `use_locking` is not a bool.

@@ -64,10 +64,8 @@ void BroadcastToCPUKernel<T>::CheckArgs() {
     if (input_shape_[i] != output_shape_[i + offset] && input_shape_[i] != 1) {
       MS_LOG(EXCEPTION)
         << "For '" << kernel_name_ << "', when the " << i
-        << "'th dimension of input tensor 'input_x' "
-           "and target shape 'shape' not equal, the dimension length of input tensor 'input_x' should be "
-           "1. But got the dimension of input tensor 'input_x': "
-        << Vector2Str(input_shape_) << ", and the dimension of target shape 'shape': " << Vector2Str(output_shape_);
+        << "'th, the shape of input should be 1 and equal to the shape of output, but got the shape of input: "
+        << Vector2Str(input_shape_) << ", and the shape of output: " << Vector2Str(output_shape_);
     }
   }
 }
