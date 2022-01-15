@@ -296,7 +296,7 @@ void TransDataSrc2Fp16(const TypeIdArgs &args, void *dst, const int64_t data_siz
 
 bool DataTypeTransfer::CastKernel(const TypeIdArgs &args, void *dst, int64_t data_size, DataTypeTransMode mode) {
   using DtypeKernel = std::function<void(const TypeIdArgs &, void *, const int64_t)>;
-  const std::map<DataTypeTransMode, DtypeKernel> cast_kernel_map{
+  const std::map<DataTypeTransMode, DtypeKernel> cast_kernel_map = {
     {DataTypeTransMode::FROM_BOOL_TO_UINT8, TransDataSrc2Dst<int8_t, uint8_t>},
     {DataTypeTransMode::FROM_BOOL_TO_INT32, TransDataSrc2Dst<int8_t, int32_t>},
     {DataTypeTransMode::FROM_BOOL_TO_FLOAT16, TransDataSrc2Fp16<int8_t>},
@@ -343,7 +343,9 @@ bool DataTypeTransfer::TransDataType(const TypeIdArgs &args, void *result) {
   MS_LOG(DEBUG) << "Begin trans datatype from " << TypeIdLabel(args.src_data_type) << " to "
                 << TypeIdLabel(args.dst_data_type);
   MS_EXCEPTION_IF_NULL(result);
-  std::pair<TypeId, TypeId> type_info(args.src_data_type, args.dst_data_type);
+  auto src_type = (args.src_data_type == kNumberTypeFloat) ? kNumberTypeFloat32 : args.src_data_type;
+  auto dst_type = (args.dst_data_type == kNumberTypeFloat) ? kNumberTypeFloat32 : args.dst_data_type;
+  std::pair<TypeId, TypeId> type_info(src_type, dst_type);
   auto iter = mode_map.find(type_info);
   if (iter == mode_map.end()) {
     MS_LOG(ERROR) << "Can not find a datatype trans type. src_type :" << TypeIdLabel(args.src_data_type)
@@ -1361,7 +1363,7 @@ bool FormatTransfer::NCHW_TO_FRAC_Z_WITH_GROPUS(const FormatArgs &args, void *re
   auto c_dim = args.host_shape[kC];
   auto h_dim = args.host_shape[kH];
   auto w_dim = args.host_shape[kW];
-  auto d_dim = 1;
+  const int64_t d_dim = 1;
   auto cin_ori = c_dim;
   if (groups <= 0) {
     MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;

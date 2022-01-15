@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@
 #include <string>
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/common/helper.h"
-#include "base/core_ops.h"
-#include "utils/utils.h"
-#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -287,7 +283,7 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
     MS_LOG(EXCEPTION) << "Get stride size failed" << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> pad_list;
-  bool count_include_pad = false;
+  bool count_include_pad = true;
   bool ceil_mode = false;
   int64_t divisor_override = 0;
   GetAttrs(avg_pool_3d_node, &pad_list, &count_include_pad, &ceil_mode, &divisor_override);
