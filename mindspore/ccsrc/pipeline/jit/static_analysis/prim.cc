@@ -58,17 +58,24 @@ mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
 // We consider all tuple/list arguments are used by now.
 // Should check 'tuple argument index' and 'element use index' later.
 mindspore::HashSet<std::string> prims_use_sequence_elements{prim::kPrimStack->name(),
-                                                            prim::kPrimBroadcast->name(),
                                                             prim::kPrimConcat->name(),
                                                             prim::kPrimTupleToArray->name(),
                                                             prim::kPrimPack->name(),
                                                             prim::kPrimSlice->name(),
                                                             prim::kPrimStridedSlice->name(),
                                                             prim::kPrimScatterNd->name(),
+                                                            prim::kPrimReshape->name(),
+                                                            prim::kPrimTile->name(),
+                                                            prim::kPrimConv3DBackpropFilter->name(),
+                                                            prim::kPrimCentralization->name(),
+                                                            prim::kPrimMerge->name(),
+                                                            prim::kPrimCustom->name(),
+                                                            prim::kPrimAssert->name(),
                                                             "InvertPermutation",
                                                             "Meshgrid",
                                                             "TransShape",
-                                                            "ParallelConcat"};
+                                                            "ParallelConcat",
+                                                            "CudnnGRU"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
