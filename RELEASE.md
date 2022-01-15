@@ -2,35 +2,155 @@
 
 ## MindSpore 1.6.0 Release Notes
 
+### Major Features and Improvements
+
+#### OS
+
+* [STABLE] Support macOS with CPU(X86)
+* [BETA] Supoport macOS with CPU(M1)
+
+#### FrontEnd
+
+* [STABLE] Support JIT Fallback feature in Graph mode.
+* [STABLE] Support compile cache feature in Graph mode.
+* [STABLE] Add new optimizers, including ASGD and Rprop.
+* [STABLE] Add new initializers, including Identity, Orthogonal, Dirac, Sparse and VarianceScaling.
+* [STABLE] Support resuming training when an exception occurs in the process.
+* [STABLE] Change `mindspore.nn.LSTMCell` from single-layer LSTM to single-cell LSTM.
+* [BETA] Introduce `mindspore.ops.Custom` to customize your own operators for Ascend(AICore, AICPU), GPU, CPU backends, and the custom type can be one of TBE, AKG, pure Python function or prebuild binary(called aot operator).
+
+#### PyNative
+
+* [STABLE] Support heterogeneous feature in PyNative mode.
+* [STABLE] Optimize memory allocation in PyNative mode.
+
+#### Auto Parallel
+
+- [STABLE] Support configuring the output shard strategy of the MatMul distributed operator.
+- [STABLE] Support multi-instances parallel.
+- [STABLE] Support activation slice communication and calculation overlap in Transformer.
+- [STABLE] Support heterogeneous parallel tensor swap.
+- [STABLE] Add implementations of distributed operator of ResizeNearestNeighbor.
+- [STABLE] Add a communication operator named NeighborExchangeV2 that supports data exchange between adjacent 8 rank ids.
+- [STABLE] Pipeline parallel support GPU platform.
+- [STABLE] Add cell-level data parallel interface.
+- [STABLE] Support gradient AllReduce fusion according to the amount of data.
+- [STABLE] Support a sharding strategy search algorithm called sharding propagation.
+
+#### Executor
+
+* [STABLE] Support multigraph sink and subgraph sink of MindRT.
+* [STABLE] Support memory swap to break the device memory size limit on Ascend platform.
+* [STABLE] Support dynamic deployment of distributed training cluster(GPU).
+* [BETA] Support automatic failover of parameter server.
+
+#### DataSet
+
+* [STABLE] Support overwrite feature in MindRecord.
+* [STABLE] Log improvement and more friendly to users.
+* [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
+* [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
+
+#### GraphKernel Fusion
+
+* [STABLE] Support kernel fusion and generation for CPU backend.
+
+#### Federated Learning
+
+* [STABLE] FL-Client framework and model decoupling.
+* [BETA] Support Cross-silo federated learning framework.
+
+#### Debug
+
+* [STABLE] Support dump in cell level(Ascend).
+* [STABLE] Support dump Tensor statistics(Ascend/GPU).
+* [STABLE] Support displaying corresponding code lines for fusion nodes.
+* [STABLE] Support passing dump flag in Ascend backend in order to dump correct operators after fusion transformation.
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+###### `mindspore.dataset.MindDataset` interface changes input parameter dataset_file([!27542](https://gitee.com/mindspore/mindspore/pulls/27542))
+
+`MindDataset` contains the input parameter `dataset_file`, which is in the singular format. It can receive a single file path or a list that stores multiple file paths. Thus It is preferred to change the input parameter `dataset_file` into plural format. In addition, the input parameters of most dataset API, such as `TFRecordDataset`, are in plural formart (`dataset_files`). To ensure consistency, the input parameter `dataset_file` of MindDataset is changed to plural formart as `dataset_files`,  we can see the updated version in api of [mindspore.dataset.MindDataset](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/dataset/mindspore.dataset.MindDataset.html#mindspore.dataset.MindDataset).
+
+###### Delete `mindspore.Tensor`'s property `virtual_flag`([!26989](https://gitee.com/mindspore/mindspore/pulls/26989))
+
+###### Delete `mindspore.Parameter`'s property `is_init`([!26989](https://gitee.com/mindspore/mindspore/pulls/26989))
+
+###### Delete `mindspore.nn.ROC`'s interface `roc`([!25713](https://gitee.com/mindspore/mindspore/pulls/25713))
+
+###### The `shard()` interface of primitive is changed from `shard(strategy)` to `shard(in_strategy=None, out_strategy=None)`
+
+###### The `set_auto_parallel_context()` interface of context is changed from
+
+###### `set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, auto_parallel_search_mode="dynamic_programming")` to ` set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, search_mode="dynamic_programming")`
+
+#### Collect Data and Create Landscape
+
+##### Python API
+
+###### `mindspore.train.callback.SummaryCollector` interface's parameter `collect_specified_data` add new operations `collect_landscape` ([!26229](https://gitee.com/mindspore/mindspore/pulls/26229))
+
+`collect_landscape` can collect the parameters needed to create the loss landscape. we can see the updated version in api of [mindspore.train.callback.SummaryCollector](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.SummaryCollector).
+
+###### `mindspore.train.callback` add new interface `SummaryLandscape` ([!26229](https://gitee.com/mindspore/mindspore/pulls/26229))
+
+`SummaryLandscape` can help you to collect loss landscape information. It can create landscape in PCA direction or random direction by calculating loss. We can see the updated version in api of [mindspore.train.callback.SummaryLandscape](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.SummaryLandscape).
+
+### Bug fixes
+
+#### Executor
+
+* Fix process hanging while calling MPI_comm_create in asymmetric pipeline split scenario. ([!28707](https://gitee.com/mindspore/mindspore/pulls/28707))
+* Fix the execution error when the weights are shared between graph mode and PyNative mode.([!26635](https://gitee.com/mindspore/mindspore/pulls/26635))
+* Fixed the probability coredump when free memory under PyNative mode.([!25472](https://gitee.com/mindspore/mindspore/pulls/25472))
+
+#### Dataset
+
+* Fix memory increase abnormally when running dataset for a long time. ([!26237](https://gitee.com/mindspore/mindspore/pulls/26237))
+* Fix saving MindRecord files with Chinese path on Windows. ([!28378](https://gitee.com/mindspore/mindspore/pulls/28378))
+
 ## MindSpore Lite
 
 ### Major Features and Improvements
 
 #### Converter and runtime
 
-1. Add more fusion patterns in the converter tool to improve runtime performance.
-2. Support inference on Ascend310.
-3. Support take OpenGL texture as input and output of inference.
-4. Refactor the JAVA API.
+* [STABLE] Add more fusion patterns in the converter tool to improve runtime performance.
+* [STABLE] Support take OpenGL texture as input and output of inference.
+* [STABLE] Refactor the JAVA API.
+* [BETA] Support inference on Ascend310.
 
 #### x86 backend optimization
 
-1. Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
+* [STABLE] Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
 
 #### ARM backend optimization
 
-1. Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
-2. Add more FP16 operators.
+* [STABLE] Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
+* [STABLE] Add more FP16 operators.
 
 #### Post quantization
 
-1. Post quantization supports debugging.
-2. Full quantization supports choosing non-quantized nodes.
-3. Mixed bit quantization supports auto-tune.
+* [STABLE] Post quantization supports debugging.
+* [STABLE] Full quantization supports choosing non-quantized nodes.
+* [STABLE] Mixed bit quantization supports auto-tune.
 
 #### Training on Device
 
-1. Support user-defined algorithm models to access the federated learning framework.
+* [STABLE] Support user-defined algorithm models to access the federated learning framework.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, [wangnan39@huawei.com](mailto:wangnan39@huawei.com), wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, [zhanghaibo5@huawei.com](mailto:zhanghaibo5@huawei.com), zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking.
+
+Contributions of any kind are welcome!
 
 # MindSpore 1.5.2
 
