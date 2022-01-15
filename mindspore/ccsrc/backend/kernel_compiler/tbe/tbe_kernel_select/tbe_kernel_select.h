@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ class TbeKernelSelect {
 
   static void PrintSupportedFormat(const SupportFormat &support_format);
 
- private:
   CNodePtr cnode_ptr_;
   std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
   std::string node_name_;
