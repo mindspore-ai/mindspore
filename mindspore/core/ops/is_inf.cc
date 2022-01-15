@@ -44,13 +44,15 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat16, kFloat32, kFloat64},
                                              prim->name());
-  return kBool;
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
 
 AbstractBasePtr IsInfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  auto infertype = InferType(primitive, input_args);
+  auto infershape = InferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(IsInf, prim::kPrimIsInf, IsInfInfer, nullptr, true);
 }  // namespace ops
