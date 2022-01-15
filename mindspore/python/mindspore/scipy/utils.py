@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """internal utility functions"""
-import numpy as onp
 from .. import nn, ops
+from .. import numpy as mnp
 from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
@@ -62,11 +62,7 @@ def _to_scalar(arr):
     if isinstance(arr, Tensor):
         if arr.shape:
             return arr
-        arr = arr.asnumpy()
-    if isinstance(arr, onp.ndarray):
-        if arr.shape:
-            return arr
-        return arr.item()
+        return arr.asnumpy().item()
     raise ValueError("{} are not supported.".format(type(arr)))
 
 
@@ -130,3 +126,11 @@ def _normalize_matvec(f):
     _raise_value_error(
         'linear operator must be either a function or Tensor: but got {}'.format(F.typeof(f)))
     return f
+
+
+def _norm(x, ord_=None):
+    if ord_ == mnp.inf:
+        res = mnp.max(mnp.abs(x))
+    else:
+        res = mnp.sqrt(mnp.sum(x ** 2))
+    return res
