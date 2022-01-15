@@ -42,7 +42,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
     "x", input_args[0]->BuildType(),
     {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
     primitive->name());
-  return kBool;
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
 
@@ -51,7 +51,9 @@ AbstractBasePtr IsNanInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  auto infertype = InferType(primitive, input_args);
+  auto infershape = InferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(IsNan, prim::kPrimIsNan, IsNanInfer, nullptr, true);
 }  // namespace ops
