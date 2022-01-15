@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H
 #include <vector>
+#include <set>
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
@@ -32,7 +33,7 @@ class InsertQuantNodeManager {
 
   int InsertQuantDtypeCastPass(const FuncGraphPtr &graph);
 
-  int InsertDynamicQuantPass(const FuncGraphPtr &graph);
+  int InsertDynamicQuantPass(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops);
 
  private:
   ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params);
