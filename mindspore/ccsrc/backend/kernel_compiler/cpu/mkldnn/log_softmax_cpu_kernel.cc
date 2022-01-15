@@ -38,10 +38,9 @@ void LogSoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     axis += SizeToInt(src_shape.size());
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
-  dnnl::logsoftmax_forward::desc desc =
-    dnnl::logsoftmax_forward::desc(dnnl::prop_kind::forward_training, src_desc, axis);
-  auto prim_desc = dnnl::logsoftmax_forward::primitive_desc(desc, engine_);
-  primitive_ = std::make_shared<dnnl::logsoftmax_forward>(prim_desc);
+  auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_training, src_desc, axis);
+  auto prim_desc = CreateDesc<dnnl::logsoftmax_forward::primitive_desc>(desc, engine_);
+  primitive_ = CreatePrimitive<dnnl::logsoftmax_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
 }

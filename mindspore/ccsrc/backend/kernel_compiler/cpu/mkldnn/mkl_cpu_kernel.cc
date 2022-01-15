@@ -134,7 +134,7 @@ dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &sh
     (void)dims.insert(dims.end(), shape.begin(), shape.end());
   }
   dnnl::memory::format_tag mem_tag = GetDefaultFormatTag(dims);
-  dnnl::memory::desc mem_desc(dims, dnnl::memory::data_type::f32, mem_tag);
+  auto mem_desc = CreateDesc<dnnl::memory::desc>(dims, dnnl::memory::data_type::f32, mem_tag);
   return mem_desc;
 }
 
@@ -149,7 +149,9 @@ void MKLCPUKernel::AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, 
 void MKLCPUKernel::SetArgumentHandle(int arg_key, void *ptr) {
   auto arg_iter = arguments_.find(arg_key);
   if (arg_iter != arguments_.end()) {
+    MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
     arg_iter->second.set_data_handle(ptr);
+    MS_LOG(DEBUG) << "end to invoke dnnl::memory::set_data_handle";
   }
 }
 
@@ -169,7 +171,9 @@ void MKLCPUKernel::ExecutePrimitive() {
     }
     double start_time = GetTime();
     mkl_pool->set_num_threads(current_thread_nums);
+    MS_LOG(DEBUG) << "begin to invoke primitive::execute";
     primitive_->execute(stream_, arguments_);
+    MS_LOG(DEBUG) << "end to invoke primitive::execute";
     double cost_time = GetTime() - start_time;
     parallel_search_info_.tmp_sum_cost_time += cost_time;
     parallel_search_info_.search_count++;
@@ -184,16 +188,45 @@ void MKLCPUKernel::ExecutePrimitive() {
   } else {
     int best_thread_nums = static_cast<int>(std::pow(2.0f, parallel_search_info_.best_pow));
     mkl_pool->set_num_threads(best_thread_nums);
+    MS_LOG(DEBUG) << "begin to invoke primitive::execute";
     primitive_->execute(stream_, arguments_);
+    MS_LOG(DEBUG) << "end to invoke primitive::execute";
   }
 #else
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
   primitive_->execute(stream_, arguments_);
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
 #endif
   (void)stream_.wait();
 }
 
+void MKLCPUKernel::SetDataHandle(dnnl::memory mem, void *ptr) {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::set_data_handle";
+  mem.set_data_handle(ptr);
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::set_data_handle";
+}
+
+void *MKLCPUKernel::GetDataHandle(const dnnl::memory &mem) const {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::get_data_handle";
+  auto ptr = mem.get_data_handle();
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::get_data_handle";
+  return ptr;
+}
+
+size_t MKLCPUKernel::GetSize(const dnnl::memory::desc &desc) const {
+  MS_LOG(DEBUG) << "begin to invoke dnnl::memory::desc::get_size()";
+  auto size = desc.get_size();
+  MS_LOG(DEBUG) << "end to invoke dnnl::memory::desc::get_size()";
+  return size;
+}
+
 void MKLCPUKernel::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
-  dnnl::reorder(*src_mem, *dst_mem).execute(stream_, *src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::reorder";
+  auto desc = dnnl::reorder(*src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "end to invoke constructor of dnnl::reorder";
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
+  desc.execute(stream_, *src_mem, *dst_mem);
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -45,9 +45,9 @@ void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dnnl::memory::desc src0_desc = GetDefaultMemDesc(src0_shape);
   dnnl::memory::desc src1_desc = GetDefaultMemDesc(src1_shape);
-  dnnl::binary::desc desc = dnnl::binary::desc(dnnl::algorithm::binary_add, src0_desc, src1_desc, src0_desc);
-  auto prim_desc = dnnl::binary::primitive_desc(desc, engine_);
-  primitive_ = std::make_shared<dnnl::binary>(prim_desc);
+  auto desc = CreateDesc<dnnl::binary::desc>(dnnl::algorithm::binary_add, src0_desc, src1_desc, src0_desc);
+  auto prim_desc = CreateDesc<dnnl::binary::primitive_desc>(desc, engine_);
+  primitive_ = CreatePrimitive<dnnl::binary>(prim_desc);
   AddArgument(DNNL_ARG_SRC_0, src0_desc);
   AddArgument(DNNL_ARG_SRC_1, src1_desc);
   AddArgument(DNNL_ARG_DST, src0_desc);
