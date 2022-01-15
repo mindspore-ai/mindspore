@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -578,14 +578,14 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - min_param_num];
+    return parameters_[(parameters_.size() - hyper_param_count_) - min_param_num];
   }
 
   if (parameters_.size() < hyper_param_count_ + 1) {
     MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                       << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
   }
-  return parameters_[parameters_.size() - hyper_param_count_ - 1];
+  return parameters_[(parameters_.size() - hyper_param_count_) - 1];
 }
 
 std::string FuncGraph::GetVariableArgName() {
@@ -600,7 +600,8 @@ std::string FuncGraph::GetVariableArgName() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
     }
-    const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - min_param_num]->cast<ParameterPtr>();
+    const auto &parameter =
+      parameters_[(parameters_.size() - hyper_param_count_) - min_param_num]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
     return parameter->name();
   }
@@ -609,7 +610,7 @@ std::string FuncGraph::GetVariableArgName() {
     MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                       << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
   }
-  const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>();
+  const auto &parameter = parameters_[(parameters_.size() - hyper_param_count_) - 1]->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter);
   return parameter->name();
 }
@@ -620,7 +621,7 @@ AnfNodePtr FuncGraph::GetVariableKwargParameter() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
     }
-    return parameters_[parameters_.size() - hyper_param_count_ - 1];
+    return parameters_[(parameters_.size() - hyper_param_count_) - 1];
   }
   return nullptr;
 }
@@ -631,7 +632,7 @@ std::string FuncGraph::GetVariableKwargName() {
       MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
                         << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
     }
-    const auto &parameter = parameters_[parameters_.size() - hyper_param_count_ - 1]->cast<ParameterPtr>();
+    const auto &parameter = parameters_[(parameters_.size() - hyper_param_count_) - 1]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
     return parameter->name();
   }
@@ -646,7 +647,7 @@ int FuncGraph::GetPositionalArgsCount() const {
   if (has_vararg_) {
     count--;
   }
-  return count - kwonlyargs_count_ - SizeToInt(hyper_param_count_);
+  return (count - kwonlyargs_count_) - SizeToInt(hyper_param_count_);
 }
 
 AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {

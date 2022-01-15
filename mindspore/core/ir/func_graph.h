@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,13 +94,6 @@ const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
 const char kFuncGraphFlagReAutoMonad[] = "ReAutoMonad";
 const char kFuncGraphFlagRecursive[] = "Recursive";
-
-namespace abstract {
-class AbstractKeywordArg;
-using AbstractKeywordArgPtr = std::shared_ptr<AbstractKeywordArg>;
-class AbstractFunction;
-using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
-}  // namespace abstract
 
 class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
@@ -348,14 +341,16 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
 
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
-  static void set_drawer(Drawer drawer) { drawer_ = drawer; }
+  static void set_drawer(const Drawer &drawer) { drawer_ = drawer; }
   std::shared_ptr<bool> switch_input() const { return switch_input_; }
-  void set_switch_input(std::shared_ptr<bool> switch_input) { switch_input_ = switch_input; }
+  void set_switch_input(const std::shared_ptr<bool> &switch_input) { switch_input_ = switch_input; }
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
-  void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
+  void set_switch_layer_input(const std::shared_ptr<bool> &switch_layer_input) {
+    switch_layer_input_ = switch_layer_input;
+  }
   bool ContainMultiTarget();
   bool IsMultiTarget() const { return exist_multi_target_; }
-  int64_t stage() { return stage_; }
+  int64_t stage() const { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
 
   bool dropped() const { return dropped_; }

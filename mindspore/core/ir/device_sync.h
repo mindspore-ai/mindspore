@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,15 @@ class DeviceSync {
  public:
   // Used to sync data between different device addresses, only need the data size and data ptr. The CPU device doesn't
   // need use the interfaces, so need the default implementation.
-  virtual bool SyncDeviceToHost(size_t size, void *host_ptr) const { return true; }
-  virtual bool SyncHostToDevice(size_t size, const void *host_ptr) const { return true; }
+  virtual bool SyncDeviceToHost(size_t, void *) const { return true; }
+  virtual bool SyncHostToDevice(size_t, const void *) const { return true; }
 
   // Used to sync data between host tensor and device address, additional need the data shape and data type.
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                                 const std::string &format = "DefaultFormat") const = 0;
-  virtual bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const { return true; }
-  virtual bool AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                                   const std::string &format) const {
+  virtual bool SyncDeviceToDevice(const DeviceSync *) const { return true; }
+  virtual bool AsyncDeviceToDevice(const ShapeVector &, size_t, TypeId type, const void *, const std::string &) const {
     return true;
   }
 
@@ -65,6 +64,8 @@ class DeviceSync {
   }
   void DecreaseRefCount() { ref_count_--; }
   void ResetRefCount() { ref_count_ = original_ref_count_; }
+
+  virtual ~DeviceSync() {}
 
  protected:
   mutable size_t original_ref_count_{1};
