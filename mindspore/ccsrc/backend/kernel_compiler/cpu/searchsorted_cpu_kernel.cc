@@ -82,7 +82,7 @@ void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inpu
 
   if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimensions of input and output should be matched, but got the dimension of input "
+                      << "', the dimension of `v` and output should be equal, but got the dimension of `v` "
                       << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
   }
 

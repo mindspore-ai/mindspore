@@ -95,7 +95,7 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
   if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'var' should be at least 1-D, but got empty tensor.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'var' should be at least 1-D, but got scalar or None.";
   }
   if (!IsSameShape(var_shape, accum_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

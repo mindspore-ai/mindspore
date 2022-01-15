@@ -156,8 +156,8 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
       if (input_shape[i] < LongToSize(begin[i] + size[i])) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
                           << "', slice shape should be not greater than origin shape. But in dimension i=" << i
-                          << ", origin shape 'input_shape[i]' is " << input_shape[i]
-                          << " and slice shape 'LongToSize(begin[i] + size[i])' is " << LongToSize(begin[i] + size[i]);
+                          << ", origin shape 'input_shape[i]' is " << input_shape[i] << " and slice shape is "
+                          << LongToSize(begin[i] + size[i]);
       }
     }
     InitSliceParam(input_shape, begin, size);
