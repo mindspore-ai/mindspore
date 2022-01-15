@@ -33,7 +33,7 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
   MS_EXCEPTION_IF_NULL(relu_input);
   auto add = relu_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add);
-  if (AnfAlgo::GetInputTensorNum(cnode) != (ELTWISE_DOUBLE_IN_INPUT_SIZE - 1)) {
+  if (AnfAlgo::GetInputTensorNum(add) != (ELTWISE_DOUBLE_IN_INPUT_SIZE - 1)) {
     return;
   }
   auto tuple_getitem = add->input(kIndex1);

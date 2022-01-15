@@ -29,7 +29,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
-  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input) && AnfAlgo::GetCNodeName(cnode) == kAddNOpName) {
+  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input) && AnfAlgo::GetCNodeName(eltwise_input) == kAddNOpName) {
     (void)record.insert(eltwise_input);
   } else {
     return;
