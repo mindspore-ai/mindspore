@@ -76,6 +76,7 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{
   {kNumberTypeFloat32, MS_TYPE2LABLE(kNumberTypeFloat32)},
   {kNumberTypeFloat64, MS_TYPE2LABLE(kNumberTypeFloat64)},
   {kNumberTypeComplex64, MS_TYPE2LABLE(kNumberTypeComplex64)},
+  {kNumberTypeComplex128, MS_TYPE2LABLE(kNumberTypeComplex128)},
   {kNumberTypeEnd, MS_TYPE2LABLE(kNumberTypeEnd)},
   {kObjectTypeMonad, MS_TYPE2LABLE(kObjectTypeMonad)},
   {kObjectTypeUMonad, MS_TYPE2LABLE(kObjectTypeUMonad)},
