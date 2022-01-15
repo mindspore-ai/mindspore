@@ -100,7 +100,9 @@ void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', random operation is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
+                      << kernel_name_;
   } else {
     random_op_type_ = iter->second;
   }
@@ -135,7 +137,9 @@ bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_name_);
     LaunchUniformReal(RNG_seed, inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', random operation " << random_op_type_ << " is not supported.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << ", only support these types: StandardNormal, UniformInt or UniformReal currently, but got "
+                      << random_op_type_;
   }
   return true;
 }

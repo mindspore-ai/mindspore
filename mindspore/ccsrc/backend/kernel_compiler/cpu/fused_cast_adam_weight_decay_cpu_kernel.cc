@@ -166,23 +166,24 @@ void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::Add
                       << ", but got " << inputs[GRAD]->size;
   }
   if (inputs[LR]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the type of 'lr' should be float, but got 'lr': " << inputs[LR];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'lr' should be float32, but got 'lr': " << inputs[LR];
   }
   if (inputs[BETA1]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
+                      << "', the type of 'beta1' should be float32, but got 'beta1': " << inputs[BETA1];
   }
   if (inputs[BETA2]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
+                      << "', the type of 'beta2' should be float32, but got 'beta2': " << inputs[BETA2];
   }
   if (inputs[EPSILON]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
+                      << "', the type of 'epsilon' should be float32, but got 'epsilon': " << inputs[EPSILON];
   }
   if (inputs[DECAY]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'decay' should be float, but got 'decay': " << inputs[DECAY];
+                      << "', the type of 'decay' should be float32, but got 'decay': " << inputs[DECAY];
   }
 }
 

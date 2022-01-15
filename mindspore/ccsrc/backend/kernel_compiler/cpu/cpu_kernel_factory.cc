@@ -90,7 +90,10 @@ void CPUKernelFactory::UpdateKernelAttrs(const std::string &kernel_name, const s
   std::vector<std::pair<KernelAttr, CPUKernelCreator>> attr_creators(attr_size);
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
-    MS_LOG(EXCEPTION) << "CPUKernelFactory has not registered operator: " << kernel_name;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
+                      << ", only support these types: Concat, Pack, Stack, Split, Transpose, Unpack, AddN, "
+                         "ConcatOffset or DynamicStitch currently, but got "
+                      << kernel_name;
   }
 
   if (attr_size <= iter->second.size()) {
@@ -165,7 +168,10 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
   std::vector<KernelAttr> result;
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
-    MS_LOG(EXCEPTION) << "Not registered CPU kernel: op[" << kernel_name << "]!";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
+                      << ", only support these types: Concat, Pack, Stack, Split, Transpose, Unpack, AddN, "
+                         "ConcatOffset or DynamicStitch currently, but got "
+                      << kernel_name;
   }
   auto creators = iter->second;
   result.reserve(creators.size());
