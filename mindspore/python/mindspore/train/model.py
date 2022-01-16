@@ -602,7 +602,7 @@ class Model:
                                                                   epoch_num=epoch_num,
                                                                   dataset_helper=dataset_helper)
 
-            cb_params.train_network = self._train_network
+            cb_params.train_network = train_network
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
@@ -845,7 +845,7 @@ class Model:
         dataset_helper, eval_network = self._exec_preprocess(is_train=False,
                                                              dataset=valid_dataset,
                                                              dataset_sink_mode=True)
-        cb_params.eval_network = self._eval_network
+        cb_params.eval_network = eval_network
         cb_params.dataset_sink_mode = True
         list_callback.begin(run_context)
         list_callback.epoch_begin(run_context)
@@ -1089,12 +1089,11 @@ class Model:
                                                                     dataset=train_dataset,
                                                                     dataset_sink_mode=dataset_sink_mode,
                                                                     sink_size=sink_size)
-        self._train_network = train_network
         for inputs in train_dataset_helper:
-            self._train_network.compile(*inputs)
+            train_network.compile(*inputs)
             break
         train_dataset.__model_hash__ = hash(self)
-        return self._train_network.parameter_layout_dict
+        return train_network.parameter_layout_dict
 
     def infer_predict_layout(self, *predict_data):
         """
