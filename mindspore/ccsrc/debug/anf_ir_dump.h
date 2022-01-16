@@ -37,11 +37,14 @@ typedef struct DumpConfig {
 } DumpConfig;
 
 constexpr char PARALLEL_STRATEGY[] = "strategy";
-void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
+void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
             LocDumpMode dump_location = kOff, const std::string &target_file = "");
+void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
+            LocDumpMode dump_location = kOff);
+
 void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
 
-void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
+void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
                   LocDumpMode dump_location = kOff);
 const std::string ToShortString(const TypeId &typeId);
 DumpConfig GetDumpConfig();

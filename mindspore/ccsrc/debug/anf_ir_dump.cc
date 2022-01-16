@@ -633,48 +633,48 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
 }
 
 void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *sub_graphs,
-                  const FuncGraphPtr &graph, OrderedMap<AnfNodePtr, int32_t> *para_map, std::ofstream &fout) {
+                  const FuncGraphPtr &graph, OrderedMap<AnfNodePtr, int32_t> *para_map, std::ostringstream &oss) {
   if (sub_graphs == nullptr || graph == nullptr) {
     return;
   }
 
-  fout << "#Total subgraph : " << sub_graphs->size() << std::endl;
-  fout << std::endl;
+  oss << "#Total subgraph : " << sub_graphs->size() << std::endl;
+  oss << std::endl;
 
   for (const auto &sg : *sub_graphs) {
-    fout << "subgraph attr:" << std::endl;
+    oss << "subgraph attr:" << std::endl;
     MS_EXCEPTION_IF_NULL(sg.first);
     for (const auto &attr : sg.first->attrs()) {
-      fout << attr.first << " : ";
+      oss << attr.first << " : ";
       if (attr.second->isa<BoolImm>()) {
-        fout << GetValue<bool>(attr.second);
+        oss << GetValue<bool>(attr.second);
       } else if (attr.second->isa<StringImm>()) {
-        fout << (GetValue<std::string>(attr.second));
+        oss << (GetValue<std::string>(attr.second));
       }
-      fout << std::endl;
+      oss << std::endl;
     }
-    fout << "subgraph @" << sg.first->ToString() << "(";
+    oss << "subgraph @" << sg.first->ToString() << "(";
     if (sg.first != graph) {
       std::vector<AnfNodePtr> parameters = sg.first->parameters();
       if (parameters.size() == 1) {
         MS_EXCEPTION_IF_NULL(parameters[0]);
-        fout << "%para" << (*para_map)[parameters[0]] << "_" << parameters[0]->ToString();
+        oss << "%para" << (*para_map)[parameters[0]] << "_" << parameters[0]->ToString();
       } else if (parameters.size() > 1) {
         for (size_t idx = 0; idx < parameters.size() - 1; idx++) {
           MS_EXCEPTION_IF_NULL(parameters[idx]);
-          fout << "%para" << (*para_map)[parameters[idx]] << "_" << parameters[idx]->ToString();
-          fout << ", ";
+          oss << "%para" << (*para_map)[parameters[idx]] << "_" << parameters[idx]->ToString();
+          oss << ", ";
         }
         MS_EXCEPTION_IF_NULL(parameters[parameters.size() - 1]);
-        fout << "%para" << (*para_map)[parameters[parameters.size() - 1]] << "_"
-             << parameters[parameters.size() - 1]->ToString();
+        oss << "%para" << (*para_map)[parameters[parameters.size() - 1]] << "_"
+            << parameters[parameters.size() - 1]->ToString();
       }
     }
-    fout << ") {" << std::endl;
+    oss << ") {" << std::endl;
     MS_EXCEPTION_IF_NULL(sg.second);
-    fout << sg.second->buffer.str();
-    fout << "}" << std::endl;
-    fout << std::endl;
+    oss << sg.second->buffer.str();
+    oss << "}" << std::endl;
+    oss << std::endl;
   }
 }
 
@@ -807,13 +807,35 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   // Output global info
   fout << buffer.str() << std::endl;
+  buffer.clear();
 
   // Output each sub graph
-  DumpSubgraph(&sub_graphs, graph, &para_map, fout);
+  DumpSubgraph(&sub_graphs, graph, &para_map, buffer);
+  fout << buffer.str();
 
   fout.close();
   // Set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
+void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name,
+            LocDumpMode dump_location) {
+  GetEnvDumpIrLineLevel(&dump_location);
+  if (graph == nullptr) {
+    return;
+  }
+  auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  // Dump global info
+  DumpGlobalInfoEntry(graph, graph_buffer);
+  int32_t total_para = DumpParams(graph, graph_buffer, &para_map);
+  graph_buffer << "\n";
+
+  OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
+  // Dump ir in each sub graph
+  DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
+  // Output each sub graph
+  DumpSubgraph(&sub_graphs, graph, &para_map, graph_buffer);
 }
 
 void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name,
@@ -849,9 +871,11 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
 
   // Output global info
   fout << buffer.str() << std::endl;
+  buffer.clear();
 
   // Output each sub graph
-  DumpSubgraph(&sub_graphs, graph, &para_map, fout);
+  DumpSubgraph(&sub_graphs, graph, &para_map, buffer);
+  fout << buffer.str();
 
   fout.close();
   // Set file mode to read only by user
@@ -868,6 +892,17 @@ void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const 
   MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
                   << "please recompile source to enable it. See help of building script.";
 }
+
+void DumpIR(std::ostringstream &, const FuncGraphPtr &, bool, LocDumpMode) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
+                  << "please recompile source to enable it. See help of building script.";
+}
+
 void DumpIRForRDR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
   static bool already_printed = false;
   if (already_printed) {
