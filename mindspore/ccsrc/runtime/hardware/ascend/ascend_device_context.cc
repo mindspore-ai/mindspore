@@ -278,6 +278,7 @@ void AscendDeviceContext::Destroy() {
     // repeatedly. runtime_instance_->ReleaseDeviceRes();
     runtime_instance_ = nullptr;
   }
+  AscendGraphOptimization::GetInstance().Clear();
   initialized_ = false;
   MS_LOG(INFO) << "Status record: Destroy success.";
 }
