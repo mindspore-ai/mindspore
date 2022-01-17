@@ -76,7 +76,7 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
       buffer << "node={" << node->DebugString();
       auto flags = GetSequenceNodeElementsUseFlags(node);
       if (flags != nullptr) {
-        buffer << ", elements_use_flags=" << (*flags) << "}";
+        buffer << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
       }
     }
     if (i != sequence_abs->sequence_nodes().size() - 1) {

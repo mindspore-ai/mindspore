@@ -1583,20 +1583,17 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-    if (!args_spec_list.empty()) {
-      if (enable_eliminate_unused_element) {
-        for (auto &arg : args_spec_list) {
-          SetSequenceElementsUseFlags(arg, true);
-        }
-      }
-    } else {
+    if (args_spec_list.empty()) {
       MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
-      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
     }
     AnfNodeWeakPtrList sequence_nodes =
       (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());
@@ -1614,20 +1611,17 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-    if (!args_spec_list.empty()) {
-      if (enable_eliminate_unused_element) {
-        for (auto &arg : args_spec_list) {
-          SetSequenceElementsUseFlags(arg, true);
-        }
-      }
-    } else {
+    if (args_spec_list.empty()) {
       MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
-      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
     }
     AnfNodeWeakPtrList sequence_nodes =
       (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());

@@ -136,6 +136,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   } else {
     index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
   }
+  MS_LOG(DEBUG) << "GetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
   return queue->elements()[index_unsigned_value];
 }
@@ -165,6 +166,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   size_t index_unsigned_value = LongToSize(index_positive_value);
   constexpr int target_value_index = 2;
   elements[index_unsigned_value] = args_spec_list[target_value_index];
+  MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
   SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
   return std::make_shared<T>(elements, queue->sequence_nodes());
 }
@@ -298,6 +300,7 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(item);
   auto new_list = AbstractBasePtrList(list->elements());
   new_list.emplace_back(item);
+  MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
   return std::make_shared<AbstractList>(new_list, list->sequence_nodes());
 }
 

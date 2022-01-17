@@ -177,7 +177,7 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
     MS_LOG(DEBUG) << "Found previous result for NodeConfig: " << conf->ToString()
                   << ", result: " << iter->second->abstract().get() << "/" << iter->second->abstract()->ToString();
     // Update sequence nodes info, if matched in cache.
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
       auto new_sequence = dyn_cast<AbstractTuple>(result->abstract());
@@ -875,7 +875,7 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
         new_elements.push_back(orig_elements[i]);
       }
     }
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     AbstractBasePtr new_abs;
     if (orig_abs->isa<AbstractTuple>()) {
@@ -1112,7 +1112,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     auto prim = value->cast<PrimitivePtr>();
     return MakeAbstractClosure(prim, anf_node);
   }
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
   static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
   if (enable_eliminate_unused_element && value->isa<ValueSequence>()) {
     auto abs = value->ToAbstract();

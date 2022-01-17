@@ -396,7 +396,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
     // Update inputs sequence nodes info, if matched in cache.
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_spec_list.size(); ++i) {
