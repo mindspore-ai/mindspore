@@ -46,6 +46,17 @@ constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
 
+// an enum to indicate a vector or matrix alignment direction.
+// real_data: [1,2,3] left_align: [1,2,3,0] right_align:[0,1,2,3]
+namespace MatrixDiag {
+enum Alignment { RIGHT = 0, LEFT = 1 };
+static const mindspore::HashMap<std::string, std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment>> AlignmentMap{
+  {"RIGHT_LEFT", {MatrixDiag::RIGHT, MatrixDiag::LEFT}},
+  {"LEFT_RIGHT", {MatrixDiag::LEFT, MatrixDiag::RIGHT}},
+  {"RIGHT_RIGHT", {MatrixDiag::RIGHT, MatrixDiag::RIGHT}},
+  {"LEFT_LEFT", {MatrixDiag::LEFT, MatrixDiag::LEFT}}};
+}  // namespace MatrixDiag
+
 struct KernelMetaInfo {
   uintptr_t func_stub_;
   uint32_t block_dim_;
@@ -72,6 +83,53 @@ class KernelMeta {
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 
+class MatrixInfo {
+ public:
+  explicit MatrixInfo(size_t max_index, const std::vector<size_t> &matrix_shapes)
+      : max_index_(max_index), shapes_(matrix_shapes) {
+    current_indexes_.resize(shapes_.size(), 0);
+  }
+  ~MatrixInfo() = default;
+  bool SetIndex(size_t start, size_t end) {
+    // check data from start to end whether valid.
+    if (start < min_index || end > max_index_ || start >= end) {
+      return false;
+    }
+    // initial current indexes.
+    int last_rank = SizeToInt(current_indexes_.size()) - 1;
+    for (int i = last_rank; start != 0 && i >= 0; --i) {
+      current_indexes_[i] = start % shapes_.at(i);
+      start = start / shapes_.at(i);
+    }
+    return true;
+  }
+  std::vector<size_t> IndexIterator() {
+    if (is_first_iterator_) {
+      is_first_iterator_ = false;
+      return current_indexes_;
+    }
+    size_t last_rank = current_indexes_.size() - 1;
+    current_indexes_[last_rank]++;
+    for (size_t i = last_rank; current_indexes_.at(i) >= shapes_.at(i) && i > 0; --i) {
+      current_indexes_[i] = 0;
+      current_indexes_[i - 1] += 1;
+    }
+    is_first_iterator_ = false;
+    return current_indexes_;
+  }
+
+ private:
+  bool is_first_iterator_{true};
+  size_t min_index{0};
+  size_t max_index_{1};
+  std::vector<size_t> shapes_;
+  std::vector<size_t> current_indexes_;
+};
+using MatrixInfoPtr = std::shared_ptr<MatrixInfo>;
+
+std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment);
+int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
+                  const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment);
 std::string GetCompilerCachePath();
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);

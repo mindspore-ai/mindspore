@@ -99,6 +99,7 @@ constexpr char MODE[] = "mode";
 constexpr char UNIT_DIAGONAL[] = "unit_diagonal";
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
 constexpr char ADJOINT[] = "adjoint";
+constexpr char ALIGNMENT[] = "alignment";
 
 struct ParallelSearchInfo {
   double min_cost_time{DBL_MAX};
@@ -111,7 +112,7 @@ struct ParallelSearchInfo {
 class CpuDynamicKernel : public device::DynamicKernel {
  public:
   explicit CpuDynamicKernel(const CNodePtr &cnode_ptr) : DynamicKernel(nullptr, cnode_ptr) {}
-  ~CpuDynamicKernel() = default;
+  ~CpuDynamicKernel() override = default;
 
   void UpdateArgs() override;
   void PostExecute() final { MS_LOG(EXCEPTION) << "`PostExecute()` should not invoked with cpu backend"; };
