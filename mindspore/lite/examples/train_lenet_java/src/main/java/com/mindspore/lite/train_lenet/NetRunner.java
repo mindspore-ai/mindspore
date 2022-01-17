@@ -177,7 +177,7 @@ public class NetRunner {
                         max_acc = acc;
                     }
                     System.out.println("step_" + (i + 1) + ": \tLoss is " + loss + " [min=" + min_loss + "]" + " " +
-                            "max_accc=" + max_acc);
+                            "max_acc=" + max_acc);
                 }
             }
         }

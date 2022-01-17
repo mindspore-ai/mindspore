@@ -149,7 +149,7 @@ public class Benchmark {
         for (int i = 0; i < session.getInputs().size(); i++) {
             MSTensor inputTensor = session.getInputs().get(i);
             if (inputTensor.getDataType() != DataType.kNumberTypeFloat32) {
-                System.err.println("Input tensor shape do not float, the data type is " + inputTensor.getDataType());
+                System.err.println("Input tensor data type is not float, the data type is " + inputTensor.getDataType());
                 freeBuffer();
                 return;
             }
