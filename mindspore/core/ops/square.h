@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_SQUARE_H_
 #include <memory>
 #include <vector>
+#include <set>
 
 #include "abstract/abstract_value.h"
 #include "ops/primitive_c.h"

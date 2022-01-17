@@ -303,6 +303,10 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     LaunchKernel<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeComplex64) {
+    LaunchKernelComplex<std::complex<float>>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeComplex128) {
+    LaunchKernelComplex<std::complex<double>>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
@@ -361,6 +365,21 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticSelfFuncMap)
                       << ", but got " << kernel_name_;
+  }
+  func_pair->second(this, input, output, lens);
+}
+
+template <typename T>
+void ArithmeticSelfCPUKernel::LaunchKernelComplex(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const size_t lens = outputs[0]->size / sizeof(T);
+  static const std::unordered_map<std::string, std::function<void(ArithmeticSelfCPUKernel *, const T *, T *, size_t)>>
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}};
+  const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
+  if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
+    MS_LOG(EXCEPTION) << "ArithmeticSelfCPUKernel does not support " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
 }
