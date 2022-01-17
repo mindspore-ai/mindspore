@@ -34,8 +34,7 @@ std::vector<int64_t> _get_pack_shape(std::vector<BaseShapePtr> x_shapes, std::ve
     MS_EXCEPTION_IF_NULL(type);
     auto type0 = x_types[0]->cast<TensorTypePtr>()->element();
     MS_EXCEPTION_IF_NULL(type0);
-    CheckAndConvertUtils::Check("x_type[" + std::to_string(i) + "]", type->type_id(), kEqual, "base", type0->type_id(),
-                                name);
+    CheckAndConvertUtils::Check("x_type[" + std::to_string(i) + "]", type->type_id(), kEqual, type0->type_id(), name);
     auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shapes[LongToSize(i)])[kShape];
     if (shape != output_shape) {
       MS_EXCEPTION(ValueError) << "For '" + name + "' element " + std::to_string(i) +

@@ -207,8 +207,10 @@ class LogWriter {
   /// \param[in] stream The input log stream.
   MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
 
-  static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
-  static void set_trace_provider(TraceProvider trace_provider) { trace_provider_ = trace_provider; }
+  static void set_exception_handler(const ExceptionHandler &exception_handler) {
+    exception_handler_ = exception_handler;
+  }
+  static void set_trace_provider(const TraceProvider &trace_provider) { trace_provider_ = trace_provider; }
   static TraceProvider trace_provider() { return trace_provider_; }
 
  private:

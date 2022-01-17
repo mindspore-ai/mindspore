@@ -41,10 +41,10 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("strides_length", strides.size(), kEqual, 5, primitive->name());
   auto padding = GetValue<std::string>(primitive->GetAttr(kPadding));
   for (auto &item : strides) {
-    (void)CheckAndConvertUtils::Check("strides", item, kGreaterThan, "zero", 0, primitive->name());
+    (void)CheckAndConvertUtils::Check("strides", item, kGreaterThan, 0, primitive->name());
   }
   for (auto &item : kernel_size) {
-    (void)CheckAndConvertUtils::Check("kernel_size", item, kGreaterThan, "zero", 0, primitive->name());
+    (void)CheckAndConvertUtils::Check("kernel_size", item, kGreaterThan, 0, primitive->name());
   }
   std::vector<int64_t> y_shape(5);
   int64_t padding_needed = 0;

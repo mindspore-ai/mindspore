@@ -121,8 +121,8 @@ class ProfTransaction {
 
 class NoProfTransaction {
  public:
-  explicit NoProfTransaction(ProfileBase *prof) {}
-  explicit NoProfTransaction(ProfContext *ctx) {}
+  explicit NoProfTransaction(ProfileBase *) {}
+  explicit NoProfTransaction(ProfContext *) {}
   ~NoProfTransaction() = default;
 
   template <class Function>

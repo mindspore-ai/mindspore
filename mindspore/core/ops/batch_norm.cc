@@ -96,14 +96,13 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     input_shape_norm.push_back(input_x[2]);
   }
   (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale.size()), kEqual, 1, prim_name);
-  CheckAndConvertUtils::Check("scale shape", scale, kEqual, "bias shape", bias, prim_name, TypeError);
-  CheckAndConvertUtils::Check("scale shape[0]", scale[0], kEqual, "input_x channel", input_shape_norm[1], prim_name,
-                              TypeError);
+  CheckAndConvertUtils::Check("scale shape", scale, kEqual, bias, prim_name, TypeError);
+  CheckAndConvertUtils::Check("scale shape[0]", scale[0], kEqual, input_shape_norm[1], prim_name, TypeError);
 
   if (!GetValue<bool>(primitive->GetAttr(kIsTraining))) {
     (void)CheckAndConvertUtils::CheckInteger("mean rank", SizeToLong(mean.size()), kEqual, 1, prim_name);
-    CheckAndConvertUtils::Check("mean shape", mean, kEqual, "variance shape", variance, prim_name, TypeError);
-    CheckAndConvertUtils::Check("mean shape", mean, kEqual, "scale shape", scale, prim_name, TypeError);
+    CheckAndConvertUtils::Check("mean shape", mean, kEqual, variance, prim_name, TypeError);
+    CheckAndConvertUtils::Check("mean shape", mean, kEqual, scale, prim_name, TypeError);
   }
 
   // Infer type

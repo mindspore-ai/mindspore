@@ -51,8 +51,8 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   }
   auto begin = GetValue<std::vector<int64_t>>(begin_v);
   auto size = GetValue<std::vector<int64_t>>(size_v);
-  CheckAndConvertUtils::Check("len of begin", (int64_t)begin.size(), kEqual, "len x's dim", SizeToLong(x_shape_len));
-  CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, "len x's dim", SizeToLong(x_shape_len));
+  CheckAndConvertUtils::Check("len of begin", (int64_t)begin.size(), kEqual, SizeToLong(x_shape_len));
+  CheckAndConvertUtils::Check("len of size", (int64_t)size.size(), kEqual, SizeToLong(x_shape_len));
 
   for (size_t i = 0; i < x_shape_len; i++) {
     (void)CheckAndConvertUtils::CheckInteger("input size[" + std::to_string(i) + "]", size[i], kGreaterThan, 0, "");

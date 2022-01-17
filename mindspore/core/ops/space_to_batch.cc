@@ -61,7 +61,7 @@ void SpaceToBatch::set_paddings(const std::vector<std::vector<int64_t>> &padding
   int64_t h = SizeToLong(paddings.size());
   int64_t w = SizeToLong(paddings[0].size());
   std::vector<int64_t> temp_w = {2, 2};
-  CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
+  CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, temp_w, this->name());
   for (size_t i = 0; i < LongToSize(h); i++) {
     for (size_t j = 0; j < LongToSize(w); j++) {
       (void)CheckAndConvertUtils::CheckInteger(kPadding, paddings[i][j], kGreaterEqual, 0, this->name());
