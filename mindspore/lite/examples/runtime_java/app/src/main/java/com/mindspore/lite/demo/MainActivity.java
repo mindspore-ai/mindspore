@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         }
         msgSb.append("]");
         if (outTensor.getDataType() != DataType.kNumberTypeFloat32) {
-            Log.e(TAG, "output tensor shape do not float, the data type is " + outTensor.getDataType());
+            Log.e(TAG, "output tensor data type is not float, the data type is " + outTensor.getDataType());
             return false;
         }
         float[] result = outTensor.getFloatData();
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "runInference: ");
         MSTensor inputTensor = model.getInputByTensorName("graph_input-173");
         if (inputTensor.getDataType() != DataType.kNumberTypeFloat32) {
-            Log.e(TAG, "Input tensor shape do not float, the data type is " + inputTensor.getDataType());
+            Log.e(TAG, "Input tensor data type is not float, the data type is " + inputTensor.getDataType());
             return false;
         }
         // Generator Random Data.
