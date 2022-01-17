@@ -25,7 +25,7 @@ from ..ops import operations as P
 from ..ops import functional as F
 from ..common import dtype as mstype
 from .utils import float_types
-from .utils_const import _raise_value_error
+from .utils_const import _raise_value_error, _type_check
 
 __all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
 
@@ -164,6 +164,12 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         >>> print(mnp.dot(A, x))  # Check the result
         [4. 2. 4. 2.]
     """
+    _type_check(overwrite_b, 'overwrite_b', bool)
+    _type_check(check_finite, 'check_finite', bool)
+    if F.dtype(A) not in float_types:
+        A = F.cast(A, mstype.float32)
+    if F.dtype(b) not in float_types:
+        b = F.cast(b, mstype.float32)
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]

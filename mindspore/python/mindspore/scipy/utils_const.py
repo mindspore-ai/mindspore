@@ -44,3 +44,9 @@ def _raise_type_error(info):
         info(str): info string to display
     """
     raise TypeError(info)
+
+
+@constexpr
+def _type_check(var, var_name, expected_type):
+    if not isinstance(var, expected_type):
+        raise TypeError(f"Type of {var_name} should be {expected_type.__name__}, but got {type(var).__name__}")
