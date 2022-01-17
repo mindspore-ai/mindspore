@@ -78,4 +78,11 @@ typedef struct MatmulQuantParameter {
   int32_t *quant_multiplier_;
 } MatmulQuantParameter;
 
+typedef struct MatmulDynamicQuantParameter {
+  float input_scale_;
+  int32_t input_zp_;
+  float *filter_scale_;
+  int32_t *filter_zp_;
+} MatmulDynamicQuantParameter;
+
 #endif  // MINDSPORE_NNACL_MATMUL_H_

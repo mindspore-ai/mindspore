@@ -32,6 +32,7 @@ using mindspore::schema::PrimitiveType_DynamicQuant;
 namespace mindspore::kernel {
 namespace {
 constexpr int kBucketNums = 8;
+constexpr int k8Bit = 8;
 constexpr int kMinNums = 512;
 }  // namespace
 int DynamicQuantCPUKernel::Prepare() {
@@ -106,16 +107,22 @@ void DynamicQuantCPUKernel::ReduceMinMaxFp32() {
       real_max_ = real_max_array_[i];
     }
   }
+  return;
 }
 
 void DynamicQuantCPUKernel::CalculateScaleZp() {
+  lite::LiteQuantParam quant_parm;
   double scale = (real_max_ - real_min_) / (INT8_MAX - INT8_MIN);
   int zp = 0;
   if (!symmetric_) {
-    zp = std::round(INT8_MIN - real_min_ / scale);
+    zp = static_cast<int>(std::round(INT8_MIN - real_min_ / scale));
   }
-  this->out_tensors_.front()->quant_params().front().scale = scale;
-  this->out_tensors_.front()->quant_params().front().zeroPoint = zp;
+  quant_parm.scale = scale;
+  quant_parm.zeroPoint = zp;
+  quant_parm.bitNum = k8Bit;
+  quant_parm.inited = true;
+  this->out_tensors_.front()->AddQuantParam(quant_parm);
+  return;
 }
 
 int DynamicQuantCPUKernel::QuantData(int task_id) {
@@ -196,7 +203,7 @@ kernel::InnerKernel *DynamicQuantCPUCreator(const std::vector<lite::Tensor *> &i
   }
   bool support_dtype =
     inputs[0]->data_type() == TypeId::kNumberTypeFloat32 && outputs[0]->data_type() == TypeId::kNumberTypeInt8;
-  if (support_dtype) {
+  if (!support_dtype) {
     MS_LOG(ERROR) << "Unsupported data type input:" << inputs.front()->data_type()
                   << ", output:" << outputs.front()->data_type();
     return nullptr;
