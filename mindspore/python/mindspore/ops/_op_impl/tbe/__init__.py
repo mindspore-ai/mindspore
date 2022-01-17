@@ -181,6 +181,7 @@ from .strided_slice_ds import _strided_slice_ds_tbe
 from .strided_slice_grad_d import _strided_slice_grad_d_tbe
 from .strided_slice_grad_ds import _strided_slice_grad_ds_tbe
 from .split_d import _split_d_tbe
+from .split_d_ds import _split_d_ds_tbe
 from .exp import _exp_tbe
 from .expm1 import _expm1_tbe
 from .elu import _elu_tbe
