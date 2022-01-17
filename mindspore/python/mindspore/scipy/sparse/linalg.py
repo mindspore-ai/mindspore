@@ -182,7 +182,10 @@ class IterativeGmres(nn.Cell):
 def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
           M=None, solve_method='batched'):
     """
-    GMRES solves the linear system :math:`A x = b` for x, given A and b.
+    Given given A and b, GMRES solves the linear system:
+
+    .. math::
+        A x = b
 
     A is specified as a function performing A(vi) -> vf = A @ vi, and in principle
     need not have any particular special properties, such as symmetry. However,
@@ -314,7 +317,10 @@ class CG(nn.Cell):
 
 
 def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
-    """Use Conjugate Gradient iteration to solve :math:`Ax = b`.
+    """Use Conjugate Gradient iteration to solve the linear system:
+
+    .. math::
+        A x = b
 
     The numerics of MindSpore's `cg` should exact match SciPy's `cg` (up to
     numerical precision).
