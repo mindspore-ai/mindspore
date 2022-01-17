@@ -406,7 +406,7 @@ void EventLoop::RemoveDeletedEvents() {
   deleted_events_.clear();
 }
 
-int EventLoop::FindDeletedEvent(const Event *tev) {
+int EventLoop::FindDeletedEvent(Event *tev) {
   std::map<int, std::list<Event *>>::iterator fdIter = deleted_events_.find(tev->fd);
   if (fdIter == deleted_events_.end()) {
     return 0;
@@ -424,12 +424,11 @@ int EventLoop::FindDeletedEvent(const Event *tev) {
   return 0;
 }
 
-void EventLoop::HandleEvent(const struct epoll_event *events, int nevent) {
-  int i;
+void EventLoop::HandleEvent(struct epoll_event *events, size_t nevent) {
   int found;
   Event *tev = nullptr;
 
-  for (i = 0; i < nevent; i++) {
+  for (size_t i = 0; i < nevent; i++) {
     tev = reinterpret_cast<Event *>(events[i].data.ptr);
 
     if (tev != nullptr) {

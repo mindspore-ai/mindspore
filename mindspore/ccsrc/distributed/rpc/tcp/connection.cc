@@ -116,7 +116,7 @@ Connection::Connection()
       state(kInit),
       send_event_loop(nullptr),
       recv_event_loop(nullptr),
-      send_metrics(new SendMetrics()),
+      send_metrics(nullptr),
       send_message(nullptr),
       recv_message(nullptr),
       recv_state(kMsgHeader),
@@ -139,6 +139,7 @@ Connection::Connection()
   recv_kernel_msg.msg_iovlen = RECV_MSG_IO_VEC_LEN;
 
   // Initialize the send message header.
+  send_metrics = new SendMetrics();
   for (unsigned int i = 0; i < BUSMAGIC_LEN; i++) {
     if (i < sizeof(RPC_MAGICID) - 1) {
       send_msg_header.magic[i] = RPC_MAGICID[i];
@@ -167,7 +168,7 @@ void Connection::InitSocketOperation() {
     return;
   }
   socket_operation = new (std::nothrow) TCPSocketOperation();
-  RPC_OOM_EXIT(socket_operation);
+  MS_EXCEPTION_IF_NULL(socket_operation);
 }
 
 bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, uint32_t error) {
@@ -213,11 +214,13 @@ void Connection::Close() {
   if (!destination.empty()) {
     if (recv_message != nullptr) {
       delete recv_message;
+      recv_message = nullptr;
     }
   }
 
   if (total_send_len != 0 && send_message != nullptr) {
     delete send_message;
+    send_message = nullptr;
   }
 
   MessageBase *tmpMsg = nullptr;
@@ -225,15 +228,18 @@ void Connection::Close() {
     tmpMsg = send_message_queue.front();
     send_message_queue.pop();
     delete tmpMsg;
+    tmpMsg = nullptr;
   }
 
   if (socket_operation != nullptr) {
     socket_operation->Close(this);
     delete socket_operation;
+    socket_operation = nullptr;
   }
 
   if (send_metrics != nullptr) {
     delete send_metrics;
+    send_metrics = nullptr;
   }
 }
 
@@ -408,7 +414,7 @@ void Connection::FillRecvMessage() {
 
   int i = 0;
   MessageBase *msg = new (std::nothrow) MessageBase();
-  RPC_OOM_EXIT(msg);
+  MS_EXCEPTION_IF_NULL(msg);
 
   msg->name.resize(recvNameLen);
   recv_to.resize(recvToLen);

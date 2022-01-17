@@ -96,13 +96,6 @@ inline void KillProcess(const std::string &ret) { raise(SIGKILL); }
     ss << (ret) << "  ( file: " << __FILE__ << ", line: " << __LINE__ << " )."; \
     KillProcess(ss.str());                                                      \
   } while (0)
-
-#define RPC_OOM_EXIT(ptr)        \
-  {                              \
-    if (ptr == nullptr) {        \
-      RPC_EXIT("Exit for OOM."); \
-    }                            \
-  }
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

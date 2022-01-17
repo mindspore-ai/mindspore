@@ -73,18 +73,21 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
         break;
       }
 
-      unsigned int tmpLen = 0;
-      for (unsigned int i = 0; i < recvMsg->msg_iovlen; i++) {
-        if (recvMsg->msg_iov[i].iov_len + tmpLen <= (size_t)retval) {
-          tmpLen += recvMsg->msg_iov[i].iov_len;
-        } else {
-          recvMsg->msg_iov[i].iov_len -= (retval - tmpLen);
-          recvMsg->msg_iov[i].iov_base =
-            reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpLen;
+      unsigned int iovlen = recvMsg->msg_iovlen;
+      if (iovlen > 0) {
+        unsigned int tmpLen = 0;
+        for (unsigned int i = 0; i < iovlen; ++i) {
+          if (recvMsg->msg_iov[i].iov_len + tmpLen <= (size_t)retval) {
+            tmpLen += recvMsg->msg_iov[i].iov_len;
+          } else {
+            recvMsg->msg_iov[i].iov_len -= (retval - tmpLen);
+            recvMsg->msg_iov[i].iov_base =
+              reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpLen;
 
-          recvMsg->msg_iov = &recvMsg->msg_iov[i];
-          recvMsg->msg_iovlen -= i;
-          break;
+            recvMsg->msg_iov = &recvMsg->msg_iov[i];
+            recvMsg->msg_iovlen -= (i + 1);
+            break;
+          }
         }
       }
     } else if (retval == 0) {
@@ -129,7 +132,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
       }
 
       unsigned int tmpBytes = 0;
-      for (unsigned int i = 0; i < sendMsg->msg_iovlen; i++) {
+      for (unsigned int i = 0; i < sendMsg->msg_iovlen; ++i) {
         if (sendMsg->msg_iov[i].iov_len + tmpBytes < (size_t)retval) {
           tmpBytes += sendMsg->msg_iov[i].iov_len;
         } else {
@@ -138,7 +141,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
             reinterpret_cast<char *>(sendMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpBytes;
 
           sendMsg->msg_iov = &sendMsg->msg_iov[i];
-          sendMsg->msg_iovlen -= i;
+          sendMsg->msg_iovlen -= (i + 1);
           break;
         }
       }

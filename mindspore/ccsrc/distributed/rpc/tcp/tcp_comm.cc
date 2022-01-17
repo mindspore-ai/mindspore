@@ -198,7 +198,7 @@ TCPComm::~TCPComm() {
 void TCPComm::SendExitMsg(const std::string &from, const std::string &to) {
   if (message_handler_ != nullptr) {
     std::unique_ptr<MessageBase> exit_msg = std::make_unique<MessageBase>(MessageBase::Type::KEXIT);
-    RPC_OOM_EXIT(exit_msg);
+    MS_EXCEPTION_IF_NULL(exit_msg);
 
     exit_msg->SetFrom(AID(from));
     exit_msg->SetTo(AID(to));
@@ -245,14 +245,7 @@ bool TCPComm::Initialize() {
     return false;
   }
 
-  if (g_httpKmsgEnable < 0) {
-    char *httpKmsgEnv = getenv("LITERPC_HTTPKMSG_ENABLED");
-    if (httpKmsgEnv != nullptr) {
-      if (std::string(httpKmsgEnv) == "true" || std::string(httpKmsgEnv) == "1") {
-        is_http_msg_ = true;
-      }
-    }
-  } else {
+  if (g_httpKmsgEnable >= 0) {
     is_http_msg_ = (g_httpKmsgEnable == 0) ? false : true;
   }
 

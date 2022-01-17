@@ -136,18 +136,23 @@ std::string SocketOperation::GetIP(const std::string &url) {
     return "";
   }
 
-  std::string ip = url.substr(index1, index2 - index1);
-  SocketAddress addr;
+  if (index2 >= url.size()) {
+    MS_LOG(ERROR) << "Invalid url: " << url;
+    return "";
+  } else {
+    std::string ip = url.substr(index1, index2 - index1);
+    SocketAddress addr;
 
-  int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
-  if (result <= 0) {
-    result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+    int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
     if (result <= 0) {
-      MS_LOG(INFO) << "Parse ip failed, result: " << result << ", url:" << url.c_str();
-      return "";
+      result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+      if (result <= 0) {
+        MS_LOG(INFO) << "Parse ip failed, result: " << result << ", url:" << url.c_str();
+        return "";
+      }
     }
+    return ip;
   }
-  return ip;
 }
 
 bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
@@ -176,8 +181,13 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
     return false;
   }
 
+  size_t idx = index2 + sizeof(URL_IP_PORT_SEPARATOR) - 1;
+  if (idx >= url.size()) {
+    MS_LOG(ERROR) << "The size of url is invalid";
+    return false;
+  }
   try {
-    port = (uint16_t)std::stoul(url.substr(index2 + sizeof(URL_IP_PORT_SEPARATOR) - 1));
+    port = (uint16_t)std::stoul(url.substr(idx));
   } catch (const std::system_error &e) {
     MS_LOG(ERROR) << "Couldn't find port in url: " << url.c_str();
     return false;
