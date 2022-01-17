@@ -18,11 +18,23 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 constexpr int BIAS_INDEX = 2;
-constexpr int MATMUL_OUTPUT_DIM = 2;
+constexpr int MATMUL_COMMON_DIM = 2;
 constexpr int MATMUL_INPUT_SIZE = 3;
+constexpr int BATCH_MATMUL_MAX_SHAPE = 1024;
 
 int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
+  MS_CHECK_TRUE_RET(in_tensors.size() >= MATMUL_COMMON_DIM, RET_ERROR);
+  if (in_tensors.front().Shape().size() > MATMUL_COMMON_DIM || in_tensors.at(1).Shape().size() > MATMUL_COMMON_DIM) {
+    // The size of each input dim should be less than 1024 in batchmatmul, whose input dim exceeds 2.
+    bool is_exceed_dim = std::any_of(in_tensors.begin(), in_tensors.begin() + 1, [](const MSTensor &input) {
+      return std::any_of(input.Shape().begin(), input.Shape().end(),
+                         [](int64_t size) { return size > BATCH_MATMUL_MAX_SHAPE; });
+    });
+    if (is_exceed_dim) {
+      return RET_NOT_SUPPORT;
+    }
+  }
   if (in_tensors.size() == MATMUL_INPUT_SIZE) {
     if (in_tensors[BIAS_INDEX].Shape().size() != 1) {
       return RET_NOT_SUPPORT;
@@ -90,7 +102,7 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
     }
 
     ge::TensorDesc bias_tensor_desc(ConverterToNPUShape({1, bias_shape[0], 1, 1}));
-    if (out_tensors[0].Shape().size() == MATMUL_OUTPUT_DIM) {
+    if (out_tensors[0].Shape().size() == MATMUL_COMMON_DIM) {
       bias_tensor_desc.SetShape(ConverterToNPUShape({1, bias_shape[0]}));
     }
     bias_tensor->SetTensorDesc(bias_tensor_desc);

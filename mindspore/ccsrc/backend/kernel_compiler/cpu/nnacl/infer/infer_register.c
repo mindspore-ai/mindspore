@@ -99,6 +99,7 @@
 #include "nnacl/infer/select_infer.h"
 #include "nnacl/infer/sgd_infer.h"
 #include "nnacl/infer/shape_infer.h"
+#include "nnacl/infer/shape_fusion_infer.h"
 #include "nnacl/infer/size_infer.h"
 #include "nnacl/infer/string/skip_gram_infer.h"
 #include "nnacl/infer/slice_infer.h"
@@ -140,6 +141,7 @@
 #include "nnacl/infer/scatter_nd_update_infer.h"
 
 InferShape g_infer_func[PrimType_MAX * sizeof(InferShape)] = {0};
+InferShape g_inner_op_infer_func[(PrimType_InnerOpMax - PrimType_InnerOpMin) * sizeof(InferShape)] = {0};
 void RegAllInferFunc1() {
   g_infer_func[PrimType_NONE] = NULL;
   g_infer_func[PrimType_Abs] = CommonInferShape;
@@ -348,10 +350,15 @@ void RegAllInferFunc3() {
   g_infer_func[PrimType_Attention] = AttentionInferShape;
   g_infer_func[PrimType_LSTMGrad] = NULL;
   g_infer_func[PrimType_ScatterNdUpdate] = ScatterNdUpdateInferShape;
+
+  // fused operators.
+  g_inner_op_infer_func[PrimType_Inner_ShapeFusion - PrimType_InnerOpMin] = ShapeFusionInferShape;
 }
 
 #else
 __attribute__((init_priority(101))) InferShape g_infer_func[PrimType_MAX * sizeof(InferShape)] = {0};
+__attribute__((init_priority(101)))
+InferShape g_inner_op_infer_func[(PrimType_InnerOpMax - PrimType_InnerOpMin) * sizeof(InferShape)] = {0};
 #endif  // _MSC_VER
 
 InferShape GetInferFunc(int prim_type) {
@@ -364,6 +371,8 @@ InferShape GetInferFunc(int prim_type) {
 #endif
   if (prim_type < PrimType_MAX) {
     return g_infer_func[prim_type];
+  } else if (prim_type >= PrimType_InnerOpMin && prim_type < PrimType_InnerOpMax) {
+    return g_inner_op_infer_func[prim_type - PrimType_InnerOpMin];
   }
   return NULL;
 }
@@ -371,5 +380,7 @@ InferShape GetInferFunc(int prim_type) {
 void RegInfer(int prim_type, InferShape func) {
   if (prim_type < PrimType_MAX) {
     g_infer_func[prim_type] = func;
+  } else if (prim_type >= PrimType_InnerOpMin && prim_type < PrimType_InnerOpMax) {
+    g_inner_op_infer_func[prim_type - PrimType_InnerOpMin] = func;
   }
 }

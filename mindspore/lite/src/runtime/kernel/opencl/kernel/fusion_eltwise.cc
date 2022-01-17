@@ -19,12 +19,12 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/scale.h"
-#include "src/common/prim_inner.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
+constexpr int LOG_PREFIX_SCALE = 2;
 static std::set<EltwiseOperator> SupportedOperators = {
   // Arithmetic Primitive
   Operator_Mul,
@@ -445,8 +445,8 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
 std::string FusionEltwiseOpenCLKernel::CodegenCore(FusionEltwiseParameter *param, const std::string &out_name,
                                                    int degree) {
   std::stringstream code;
-  std::string log_prefix(degree * 2, ' ');
-  std::string cl_prefix((degree + 1) * 2, ' ');
+  std::string log_prefix(degree * LOG_PREFIX_SCALE, ' ');
+  std::string cl_prefix((degree + 1) * LOG_PREFIX_SCALE, ' ');
 
   std::vector<std::string> input_names;
   MS_ASSERT(param);
@@ -536,7 +536,7 @@ int FusionEltwiseOpenCLKernel::GetTensorIdx(lite::Tensor *in_tensor) {
       MS_ASSERT(in_kernel->in_tensors().size());
       MS_ASSERT(in_kernel->out_tensors().size());
       int type = in_kernel->op_parameter() == nullptr ? in_kernel->type() : in_kernel->op_parameter()->type_;
-      if (type == lite::PRIM_TO_FORMAT) {
+      if (type == PrimType::PrimType_Inner_ToFormat) {
         if (in_tensor == in_kernel->in_tensors().front()) {
           return std::find(in_tensors_.begin(), in_tensors_.end(), in_kernel->out_tensors().front()) -
                  in_tensors_.begin();

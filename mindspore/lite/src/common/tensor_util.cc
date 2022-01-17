@@ -88,6 +88,13 @@ int TensorC2Tensor(const TensorC *src, Tensor *dst) {
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
+  if (src->data_ != nullptr) {
+    auto data = dst->MutableData();
+    MS_CHECK_TRUE_RET(data != nullptr, RET_ERROR);
+    memcpy(data, src->data_, dst->Size());
+    dst->set_category(CONST_TENSOR);
+    free(src->data_);
+  }
   return RET_OK;
 }
 

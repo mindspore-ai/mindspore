@@ -38,7 +38,6 @@ int CastNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindsp
                     const std::vector<mindspore::MSTensor> &out_tensors) {
   CHECK_LESS_RETURN(in_tensors.size(), 1);
   CHECK_NULL_RETURN(in_tensors[0]);
-  CHECK_NULL_RETURN(cast_);
 
   cast_ = new (std::nothrow) hiai::op::CastT(name_);
   if (cast_ == nullptr) {

@@ -380,7 +380,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
   auto output_node = kernel::IdentityKernel::Create(new_output_tensors, old_output_tensors, this->context_);
   output_node->set_name(call_node->name() + "_output");
   kernel::KernelKey output_desc = call_node->desc();
-  output_desc.type = PRIM_IDENTITY;
+  output_desc.type = PrimType_Inner_Identity;
   output_node->set_desc(output_desc);
   output_node->AddInKernel(call_node);
   call_node->AddOutKernel(output_node);
@@ -600,7 +600,7 @@ kernel::SubGraphKernel *ControlFlowScheduler::IsolatePartialInputs(kernel::SubGr
   auto identity_node = kernel::IdentityKernel::Create(old_partial_inputs, new_partial_inputs, this->context_);
   identity_node->set_name(partial->name() + "_input_identity");
   kernel::KernelKey identity_desc = partial->desc();
-  identity_desc.type = PRIM_IDENTITY;
+  identity_desc.type = PrimType_Inner_Identity;
   identity_node->set_desc(identity_desc);
   // update identity and partial in kernels and out kernels
   for (auto partial_in_kernel : partial->in_kernels()) {

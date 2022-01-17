@@ -57,6 +57,9 @@ class KernelRegistry {
   static const int op_type_length_{PrimitiveType_MAX - PrimitiveType_MIN + 1};
   static const int array_size_{device_type_length_ * data_type_length_ * op_type_length_};
   kernel::KernelCreator *creator_arrays_ = nullptr;
+  static const int inner_op_type_length_{PrimType_InnerOpMax - PrimType_InnerOpMin};
+  static const int inner_op_array_size_{device_type_length_ * data_type_length_ * inner_op_type_length_};
+  kernel::KernelCreator *inner_op_creator_arrays_ = nullptr;
 
  private:
   void CreatorArraysInit();

@@ -66,6 +66,12 @@ void KernelRegistry::CreatorArraysInit() {
       memset(creator_arrays_, 0, array_size_ * sizeof(KernelCreator));
     }
   }
+  if (inner_op_creator_arrays_ == nullptr) {
+    inner_op_creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(inner_op_array_size_ * sizeof(KernelCreator)));
+    if (inner_op_creator_arrays_ != nullptr) {
+      memset(inner_op_creator_arrays_, 0, inner_op_array_size_ * sizeof(KernelCreator));
+    }
+  }
   return;
 }
 
@@ -77,13 +83,20 @@ KernelRegistry *KernelRegistry::GetInstance() {
 kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   if (desc.provider == kBuiltin) {
     int index = GetCreatorFuncIndex(desc);
-    if (index >= array_size_ || index < 0) {
-      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type " << desc.data_type << ",op type "
-                    << desc.type;
-      return nullptr;
-    }
-    if (creator_arrays_ != nullptr) {
-      return creator_arrays_[index];
+    if (desc.type >= PrimType_MIN && desc.type < PrimType_MAX) {
+      if (index >= array_size_ || index < 0) {
+        MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type " << desc.data_type << ",op type "
+                      << desc.type;
+        return nullptr;
+      }
+      if (creator_arrays_ != nullptr) {
+        return creator_arrays_[index];
+      }
+    } else if (desc.type >= PrimType_InnerOpMin && desc.type < PrimType_InnerOpMax) {
+      MS_CHECK_TRUE_RET(index >= 0 && index < inner_op_array_size_, nullptr);
+      if (inner_op_creator_arrays_ != nullptr) {
+        return inner_op_creator_arrays_[index];
+      }
     }
   }
   MS_LOG(ERROR) << "Call wrong interface!provider: " << desc.provider;
@@ -94,20 +107,32 @@ int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
   int device_index = static_cast<int>(desc.arch) - kKernelArch_MIN;
   int dType_index = static_cast<int>(desc.data_type) - kNumberTypeBegin;
   int op_index = static_cast<int>(desc.type);
-  int index = device_index * data_type_length_ * op_type_length_ + dType_index * op_type_length_ + op_index;
+  int op_type_length = op_type_length_;
+  if (op_index >= PrimType_InnerOpMin && desc.type < PrimType_InnerOpMax) {
+    op_type_length = inner_op_type_length_;
+    op_index -= PrimType_InnerOpMin;
+  }
+  int index = device_index * data_type_length_ * op_type_length + dType_index * op_type_length + op_index;
   return index;
 }
 
 void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator creator) {
   CreatorArraysInit();
   int index = GetCreatorFuncIndex(desc);
-  if (index >= array_size_ || index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
-                  << desc.type;
-    return;
-  }
-  if (creator_arrays_ != nullptr) {
-    creator_arrays_[index] = creator;
+  if (desc.type >= PrimType_MIN && desc.type < PrimType_MAX) {
+    if (index >= array_size_ || index < 0) {
+      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+                    << desc.type;
+      return;
+    }
+    if (creator_arrays_ != nullptr) {
+      creator_arrays_[index] = creator;
+    }
+  } else if (desc.type >= PrimType_InnerOpMin && desc.type < PrimType_InnerOpMax) {
+    MS_CHECK_TRUE_RET_VOID(index >= 0 && index < inner_op_array_size_);
+    if (inner_op_creator_arrays_ != nullptr) {
+      inner_op_creator_arrays_[index] = creator;
+    }
   }
 }
 
@@ -115,13 +140,20 @@ void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, 
   CreatorArraysInit();
   KernelKey desc = {arch, data_type, op_type};
   int index = GetCreatorFuncIndex(desc);
-  if (index >= array_size_ || index < 0) {
-    MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
-                  << desc.type;
-    return;
-  }
-  if (creator_arrays_ != nullptr) {
-    creator_arrays_[index] = creator;
+  if (desc.type >= PrimType_MIN && desc.type < PrimType_MAX) {
+    if (index >= array_size_ || index < 0) {
+      MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
+                    << desc.type;
+      return;
+    }
+    if (creator_arrays_ != nullptr) {
+      creator_arrays_[index] = creator;
+    }
+  } else if (desc.type >= PrimType_InnerOpMin && desc.type < PrimType_InnerOpMax) {
+    MS_CHECK_TRUE_RET_VOID(index >= 0 && index < inner_op_array_size_);
+    if (inner_op_creator_arrays_ != nullptr) {
+      inner_op_creator_arrays_[index] = creator;
+    }
   }
 }
 
@@ -131,6 +163,10 @@ KernelRegistry::~KernelRegistry() {
   if (instance->creator_arrays_ != nullptr) {
     free(instance->creator_arrays_);
     instance->creator_arrays_ = nullptr;
+  }
+  if (instance->inner_op_creator_arrays_ != nullptr) {
+    free(instance->inner_op_creator_arrays_);
+    instance->inner_op_creator_arrays_ = nullptr;
   }
 }
 
