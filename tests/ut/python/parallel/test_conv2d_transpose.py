@@ -30,9 +30,12 @@ class Net(Cell):
                                                   pad_mode=pad_mode, stride=stride).shard(strategy1)
         self.neg = P.Neg().shard(strategy2)
         self.weight = Parameter(conv2d_weight, "w1")
+        self.add = P.Add()
+        self.add_w = Parameter(Tensor(np.ones([32, 8, 8, 8]), dtype=ms.float32), "add_w")
 
     def construct(self, x, b):
-        out = self.conv2d_transpose(x, self.weight, (32, 16, 8, 8))
+        out = self.add(x, self.add_w)
+        out = self.conv2d_transpose(out, self.weight, (32, 16, 8, 8))
         out = self.neg(out)
         return out
 
@@ -117,6 +120,20 @@ def test_conv2d_transpose_model_parallel3():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 1, 4), (2, 1, 1, 1))
+    strategy2 = ((2, 2, 1, 4),)
+    net = Net2(_w2, out_channel=8, kernel_size=(4, 4), pad_mode="same", stride=2,
+               strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)
+
+
+def test_conv2d_transpose_model_parallel4():
+    """
+    Feature: test model parallel strategy
+    Description: shard batch dimension, channel dimension and w dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((1, 1, 2, 4), (1, 1, 1, 1))
     strategy2 = ((2, 2, 1, 4),)
     net = Net2(_w2, out_channel=8, kernel_size=(4, 4), pad_mode="same", stride=2,
                strategy1=strategy1, strategy2=strategy2)

@@ -1276,7 +1276,7 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
   // 5. compute new right pad: pad_all - new_left_pad
   if (dimension == H_DIMENSION) {
     new_pad_list_[0] = h_or_w_kernel_size - real_top_or_left_pad - 1;
-    new_pad_list_[1] = pad_all - new_pad_list_[2];
+    new_pad_list_[1] = pad_all - new_pad_list_[0];
   } else {
     new_pad_list_[2] = h_or_w_kernel_size - real_top_or_left_pad - 1;
     new_pad_list_[3] = pad_all - new_pad_list_[2];
