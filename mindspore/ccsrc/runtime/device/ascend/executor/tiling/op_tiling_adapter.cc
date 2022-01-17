@@ -71,7 +71,7 @@ std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t
 
 std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  if (input_names_.size() < index) {
+  if (input_names_.size() <= index) {
     return "unknown_name";
   }
   return input_names_[index];

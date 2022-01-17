@@ -319,16 +319,16 @@ std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
 
 void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
+  GetAscendGraphOptimization().UnifyMindIR(graph);
 }
 
 void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
+  GetAscendGraphOptimization().OptimizeGraph(graph);
 }
 
 void AscendDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
-  AscendGraphOptimization::GetInstance().SetOperatorInfo(nodes);
+  GetAscendGraphOptimization().SetOperatorInfo(nodes);
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
@@ -618,7 +618,7 @@ bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const {
 
 // kernel by kernel mode interface
 void AscendDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
+  GetAscendGraphOptimization().OptimizeSingleOpGraph(graph);
 }
 
 void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
