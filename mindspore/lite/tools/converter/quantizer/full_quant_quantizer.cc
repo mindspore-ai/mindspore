@@ -619,7 +619,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (activation_target_data_type_ == kNumberTypeInt8 || activation_target_data_type_ == kNumberTypeUInt8) {
     // add quant_cast
     quant::InsertQuantNodeManager inset_quant_node_pass;
-    status = inset_quant_node_pass.InsertQuantDtypeCastPass(func_graph);
+    status = inset_quant_node_pass.InsertQuantDtypeCastNode(func_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "add QuantCast error";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

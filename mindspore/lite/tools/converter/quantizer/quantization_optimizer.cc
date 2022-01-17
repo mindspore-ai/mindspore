@@ -158,31 +158,30 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, 
 }
 
 int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  // quant
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
     return RET_OK;
   }
   int status;
 
   SessionModel origin;
-  if (config->commonQuantParam.is_debug) {
+  if (config->commonQuantParam.is_debug) {  // Bak fp32 model for debug
     converter::Flags new_flag = *config;
     new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
     origin = CreateSessionByFuncGraph(old_graph, new_flag, config->commonQuantParam.thread_num);
   }
-  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
+  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {  // Full Quantization
     status = DoFullQuant(old_graph, config);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do full quant failed.";
       return status;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
+  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {  // Weight Quantization
     status = DoWeightQuant(old_graph, config);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do weight quant failed.";
       return status;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_DANAMIC) {
+  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_DYNAMIC) {  // Dynamic Quantization
     status = DoDynamicQuant(old_graph, config);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do dynamic quant failed.";
@@ -202,6 +201,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags 
 int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs{};
   GetFuncGraphs(func_graph, &all_func_graphs);
+  // Support for multi-subgraph models
   for (auto &item : all_func_graphs) {
     auto status = DoSingleGraphQuantize(item, flags_);
     if (status != RET_OK) {

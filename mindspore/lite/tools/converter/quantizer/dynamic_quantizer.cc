@@ -36,7 +36,7 @@ int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   const std::set<PrimitivePtr> support_dynamic_quant_ops = {
     prim::kPrimMatMulFusion,
   };
-  ret = manager.InsertDynamicQuantPass(func_graph, support_dynamic_quant_ops);
+  ret = manager.InsertDynamicQuantNode(func_graph, support_dynamic_quant_ops);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Insert dynamic quant failed.";
     return ret;

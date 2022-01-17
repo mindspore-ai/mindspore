@@ -132,7 +132,7 @@ int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId c
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertQuantDtypeCastPass(const FuncGraphPtr &graph) {
+int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
@@ -194,11 +194,11 @@ int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  quant_param_holder->set_quant_type(schema::QuantType_QUANT_DANAMIC);
+  quant_param_holder->set_quant_type(schema::QuantType_QUANT_DYNAMIC);
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertDynamicQuantPass(const FuncGraphPtr &graph,
+int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
                                                    const std::set<PrimitivePtr> &support_dynamic_quant_ops) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();

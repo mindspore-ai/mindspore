@@ -77,7 +77,7 @@ enum QuantType: int {
     PostTraining, // deprecated, use QUANT_ALL instead
     QUANT_WEIGHT,
     QUANT_ALL,
-    QUANT_DANAMIC,
+    QUANT_DYNAMIC,
 }
 
 table Primitive {
