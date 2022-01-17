@@ -45,6 +45,7 @@ class RowTensorEliminater : public OptimizerCaller {
 
 // {prim::kPrimRowTensorAdd, rowtensor, zeros_like(x)} -> rowtensor
 class RowTensorAddZerosLike : public AnfVisitor {
+ public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode x, y;
     auto zeros_like = PPrimitive(prim::kPrimZerosLike, y);
