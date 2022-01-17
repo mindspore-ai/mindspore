@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-import mindspore.dataset.audio.utils as audio
+from mindspore.dataset.audio import create_dct, NormMode
 from mindspore import log as logger
 
 
@@ -40,7 +40,7 @@ def test_create_dct_none():
                        [2.00000000, 0.76536685],
                        [2.00000000, -0.76536703],
                        [2.00000000, -1.84775925]], dtype=np.float64)
-    output = audio.CreateDct(2, 4, audio.NormMode.NONE)
+    output = create_dct(2, 4, NormMode.NONE)
     count_unequal_element(expect, output, 0.0001, 0.0001)
 
 
@@ -50,7 +50,7 @@ def test_create_dct_ortho():
     Description: test CreateDct in eager mode
     Expectation: the returned result is as expected
     """
-    output = audio.CreateDct(1, 3, audio.NormMode.ORTHO)
+    output = create_dct(1, 3, NormMode.ORTHO)
     expect = np.array([[0.57735026],
                        [0.57735026],
                        [0.57735026]], dtype=np.float64)
@@ -66,24 +66,24 @@ def test_createdct_invalid_input():
     def test_invalid_input(test_name, n_mfcc, n_mels, norm, error, error_msg):
         logger.info("Test CreateDct with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            audio.CreateDct(n_mfcc, n_mels, norm)
+            create_dct(n_mfcc, n_mels, norm)
         assert error_msg in str(error_info.value)
 
-    test_invalid_input("invalid n_mfcc parameter type as a float", 100.5, 200, audio.NormMode.NONE, TypeError,
+    test_invalid_input("invalid n_mfcc parameter type as a float", 100.5, 200, NormMode.NONE, TypeError,
                        "n_mfcc with value 100.5 is not of type <class 'int'>, but got <class 'float'>.")
-    test_invalid_input("invalid n_mfcc parameter type as a String", "100", 200, audio.NormMode.NONE, TypeError,
+    test_invalid_input("invalid n_mfcc parameter type as a String", "100", 200, NormMode.NONE, TypeError,
                        "n_mfcc with value 100 is not of type <class 'int'>, but got <class 'str'>.")
-    test_invalid_input("invalid n_mels parameter type as a String", 100, "200", audio.NormMode.NONE, TypeError,
+    test_invalid_input("invalid n_mels parameter type as a String", 100, "200", NormMode.NONE, TypeError,
                        "n_mels with value 200 is not of type <class 'int'>, but got <class 'str'>.")
-    test_invalid_input("invalid n_mels parameter type as a String", 0, 200, audio.NormMode.NONE, ValueError,
+    test_invalid_input("invalid n_mels parameter type as a String", 0, 200, NormMode.NONE, ValueError,
                        "n_mfcc must be greater than 0, but got 0.")
-    test_invalid_input("invalid n_mels parameter type as a String", 100, 0, audio.NormMode.NONE, ValueError,
+    test_invalid_input("invalid n_mels parameter type as a String", 100, 0, NormMode.NONE, ValueError,
                        "n_mels must be greater than 0, but got 0.")
-    test_invalid_input("invalid n_mels parameter type as a String", -100, 200, audio.NormMode.NONE, ValueError,
+    test_invalid_input("invalid n_mels parameter type as a String", -100, 200, NormMode.NONE, ValueError,
                        "n_mfcc must be greater than 0, but got -100.")
-    test_invalid_input("invalid n_mfcc parameter value", None, 100, audio.NormMode.NONE, TypeError,
+    test_invalid_input("invalid n_mfcc parameter value", None, 100, NormMode.NONE, TypeError,
                        "n_mfcc with value None is not of type <class 'int'>, but got <class 'NoneType'>.")
-    test_invalid_input("invalid n_mels parameter value", 100, None, audio.NormMode.NONE, TypeError,
+    test_invalid_input("invalid n_mels parameter value", 100, None, NormMode.NONE, TypeError,
                        "n_mels with value None is not of type <class 'int'>, but got <class 'NoneType'>.")
     test_invalid_input("invalid n_mels parameter value", 100, 200, "None", TypeError,
                        "norm with value None is not of type <enum 'NormMode'>, but got <class 'str'>.")

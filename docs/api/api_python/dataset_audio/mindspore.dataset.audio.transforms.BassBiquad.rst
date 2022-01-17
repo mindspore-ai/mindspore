@@ -8,7 +8,7 @@ mindspore.dataset.audio.transforms.BassBiquad
     低频搁架滤波器能够通过所有频率，但将低于搁架的频率提升或衰减指定量，其系统函数为：
 
     .. math::
-        H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}` 。
+        H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
 
     接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
 

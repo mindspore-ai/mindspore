@@ -84,8 +84,8 @@ PYBIND_REGISTER(
 
 PYBIND_REGISTER(ScaleType, 0, ([](const py::module *m) {
                   (void)py::enum_<ScaleType>(*m, "ScaleType", py::arithmetic())
-                    .value("DE_SCALETYPE_MAGNITUDE", ScaleType::kMagnitude)
-                    .value("DE_SCALETYPE_POWER", ScaleType::kPower)
+                    .value("DE_SCALE_TYPE_MAGNITUDE", ScaleType::kMagnitude)
+                    .value("DE_SCALE_TYPE_POWER", ScaleType::kPower)
                     .export_values();
                 }));
 
@@ -234,9 +234,9 @@ PYBIND_REGISTER(DetectPitchFrequencyOperation, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(DensityFunction, 0, ([](const py::module *m) {
                   (void)py::enum_<DensityFunction>(*m, "DensityFunction", py::arithmetic())
-                    .value("DE_DENSITYFUNCTION_TPDF", DensityFunction::kTPDF)
-                    .value("DE_DENSITYFUNCTION_RPDF", DensityFunction::kRPDF)
-                    .value("DE_DENSITYFUNCTION_GPDF", DensityFunction::kGPDF)
+                    .value("DE_DENSITY_FUNCTION_TPDF", DensityFunction::kTPDF)
+                    .value("DE_DENSITY_FUNCTION_RPDF", DensityFunction::kRPDF)
+                    .value("DE_DENSITY_FUNCTION_GPDF", DensityFunction::kGPDF)
                     .export_values();
                 }));
 
@@ -263,11 +263,11 @@ PYBIND_REGISTER(EqualizerBiquadOperation, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(FadeShape, 0, ([](const py::module *m) {
                   (void)py::enum_<FadeShape>(*m, "FadeShape", py::arithmetic())
-                    .value("DE_FADESHAPE_LINEAR", FadeShape::kLinear)
-                    .value("DE_FADESHAPE_EXPONENTIAL", FadeShape::kExponential)
-                    .value("DE_FADESHAPE_LOGARITHMIC", FadeShape::kLogarithmic)
-                    .value("DE_FADESHAPE_QUARTERSINE", FadeShape::kQuarterSine)
-                    .value("DE_FADESHAPE_HALFSINE", FadeShape::kHalfSine)
+                    .value("DE_FADE_SHAPE_LINEAR", FadeShape::kLinear)
+                    .value("DE_FADE_SHAPE_EXPONENTIAL", FadeShape::kExponential)
+                    .value("DE_FADE_SHAPE_LOGARITHMIC", FadeShape::kLogarithmic)
+                    .value("DE_FADE_SHAPE_QUARTER_SINE", FadeShape::kQuarterSine)
+                    .value("DE_FADE_SHAPE_HALF_SINE", FadeShape::kHalfSine)
                     .export_values();
                 }));
 
@@ -442,11 +442,11 @@ PYBIND_REGISTER(SlidingWindowCmnOperation, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(WindowType, 0, ([](const py::module *m) {
                   (void)py::enum_<WindowType>(*m, "WindowType", py::arithmetic())
-                    .value("DE_BARTLETT", WindowType::kBartlett)
-                    .value("DE_BLACKMAN", WindowType::kBlackman)
-                    .value("DE_HAMMING", WindowType::kHamming)
-                    .value("DE_HANN", WindowType::kHann)
-                    .value("DE_KAISER", WindowType::kKaiser)
+                    .value("DE_WINDOW_TYPE_BARTLETT", WindowType::kBartlett)
+                    .value("DE_WINDOW_TYPE_BLACKMAN", WindowType::kBlackman)
+                    .value("DE_WINDOW_TYPE_HAMMING", WindowType::kHamming)
+                    .value("DE_WINDOW_TYPE_HANN", WindowType::kHann)
+                    .value("DE_WINDOW_TYPE_KAISER", WindowType::kKaiser)
                     .export_values();
                 }));
 
@@ -522,9 +522,9 @@ PYBIND_REGISTER(VolOperation, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(GainType, 0, ([](const py::module *m) {
                   (void)py::enum_<GainType>(*m, "GainType", py::arithmetic())
-                    .value("DE_GAINTYPE_AMPLITUDE", GainType::kAmplitude)
-                    .value("DE_GAINTYPE_POWER", GainType::kPower)
-                    .value("DE_GAINTYPE_DB", GainType::kDb)
+                    .value("DE_GAIN_TYPE_AMPLITUDE", GainType::kAmplitude)
+                    .value("DE_GAIN_TYPE_POWER", GainType::kPower)
+                    .value("DE_GAIN_TYPE_DB", GainType::kDb)
                     .export_values();
                 }));
 }  // namespace dataset

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,19 +18,39 @@ Enum for audio ops.
 from enum import Enum
 
 import mindspore._c_dataengine as cde
-from mindspore.dataset.core.validator_helpers import check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
-    type_check
+from mindspore.dataset.core.validator_helpers import check_non_negative_float32, check_non_negative_int32, \
+    check_pos_float32, check_pos_int32, type_check
+
+
+class BorderType(str, Enum):
+    """
+    Padding Mode, BorderType Type.
+
+    Possible enumeration values are: BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BorderType.SYMMETRIC.
+
+    - BorderType.CONSTANT: means it fills the border with constant values.
+    - BorderType.EDGE: means it pads with the last value on the edge.
+    - BorderType.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+    - BorderType.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+
+    Note: This class derived from class str to support json serializable.
+    """
+    CONSTANT: str = "constant"
+    EDGE: str = "edge"
+    REFLECT: str = "reflect"
+    SYMMETRIC: str = "symmetric"
+
 
 class DensityFunction(str, Enum):
     """
     Density Functions.
 
-    Possible enumeration values are: DensityFunction.TPDF, DensityFunction.GPDF,
-    DensityFunction.RPDF.
+    Possible enumeration values are: DensityFunction.TPDF, DensityFunction.RPDF,
+    DensityFunction.GPDF.
 
     - DensityFunction.TPDF: means triangular probability density function.
-    - DensityFunction.GPDF: means gaussian probability density function.
     - DensityFunction.RPDF: means rectangular probability density function.
+    - DensityFunction.GPDF: means gaussian probability density function.
     """
     TPDF: str = "TPDF"
     RPDF: str = "RPDF"
@@ -41,34 +61,34 @@ class FadeShape(str, Enum):
     """
     Fade Shapes.
 
-    Possible enumeration values are: FadeShape.EXPONENTIAL, FadeShape.HALFSINE, FadeShape.LINEAR,
-    FadeShape.LOGARITHMIC, FadeShape.QUARTERSINE.
+    Possible enumeration values are: FadeShape.QUARTER_SINE, FadeShape.HALF_SINE, FadeShape.LINEAR,
+    FadeShape.LOGARITHMIC, FadeShape.EXPONENTIAL.
 
-    - FadeShape.EXPONENTIAL: means the fade shape is exponential mode.
-    - FadeShape.HALFSINE: means the fade shape is half_sine mode.
+    - FadeShape.QUARTER_SINE: means the fade shape is quarter_sine mode.
+    - FadeShape.HALF_SINE: means the fade shape is half_sine mode.
     - FadeShape.LINEAR: means the fade shape is linear mode.
     - FadeShape.LOGARITHMIC: means the fade shape is logarithmic mode.
-    - FadeShape.QUARTERSINE: means the fade shape is quarter_sine mode.
+    - FadeShape.EXPONENTIAL: means the fade shape is exponential mode.
     """
+    QUARTER_SINE: str = "quarter_sine"
+    HALF_SINE: str = "half_sine"
     LINEAR: str = "linear"
-    EXPONENTIAL: str = "exponential"
     LOGARITHMIC: str = "logarithmic"
-    QUARTERSINE: str = "quarter_sine"
-    HALFSINE: str = "half_sine"
+    EXPONENTIAL: str = "exponential"
 
 
 class GainType(str, Enum):
     """"
     Gain Types.
 
-    Possible enumeration values are: GainType.AMPLITUDE, GainType.DB, GainType.POWER.
+    Possible enumeration values are: GainType.AMPLITUDE, GainType.POWER, GainType.DB.
 
     - GainType.AMPLITUDE: means input gain type is amplitude.
-    - GainType.DB: means input gain type is decibel.
     - GainType.POWER: means input gain type is power.
+    - GainType.DB: means input gain type is decibel.
     """
-    POWER: str = "power"
     AMPLITUDE: str = "amplitude"
+    POWER: str = "power"
     DB: str = "db"
 
 
@@ -85,49 +105,6 @@ class Interpolation(str, Enum):
     QUADRATIC: str = "quadratic"
 
 
-class Modulation(str, Enum):
-    """
-    Modulation Type.
-
-    Possible enumeration values are: Modulation.SINUSOIDAL, Modulation.TRIANGULAR.
-
-    - Modulation.SINUSOIDAL: means input modulation type is sinusoidal.
-    - Modulation.TRIANGULAR: means input modulation type is triangular.
-    """
-    SINUSOIDAL: str = "sinusoidal"
-    TRIANGULAR: str = "triangular"
-
-
-class ScaleType(str, Enum):
-    """
-    Scale Types.
-
-    Possible enumeration values are: ScaleType.MAGNITUDE, ScaleType.POWER.
-
-    - ScaleType.MAGNITUDE: means the scale of input audio is magnitude.
-    - ScaleType.POWER: means the scale of input audio is power.
-    """
-    POWER: str = "power"
-    MAGNITUDE: str = "magnitude"
-
-
-class NormType(str, Enum):
-    """
-    Norm Types.
-
-    Possible enumeration values are: NormType.NONE, NormType.SLANEY.
-
-    - NormType.NONE: norm the input data with none.
-    - NormType.SLANEY: norm the input data with slaney.
-    """
-    NONE: str = "none"
-    SLANEY: str = "slaney"
-
-
-DE_C_NORMTYPE_TYPE = {NormType.NONE: cde.NormType.DE_NORMTYPE_NONE,
-                      NormType.SLANEY: cde.NormType.DE_NORMTYPE_SLANEY}
-
-
 class MelType(str, Enum):
     """
     Mel Types.
@@ -141,8 +118,121 @@ class MelType(str, Enum):
     SLANEY: str = "slaney"
 
 
-DE_C_MELTYPE_TYPE = {MelType.HTK: cde.MelType.DE_MELTYPE_HTK,
-                     MelType.SLANEY: cde.MelType.DE_MELTYPE_SLANEY}
+class Modulation(str, Enum):
+    """
+    Modulation Type.
+
+    Possible enumeration values are: Modulation.SINUSOIDAL, Modulation.TRIANGULAR.
+
+    - Modulation.SINUSOIDAL: means input modulation type is sinusoidal.
+    - Modulation.TRIANGULAR: means input modulation type is triangular.
+    """
+    SINUSOIDAL: str = "sinusoidal"
+    TRIANGULAR: str = "triangular"
+
+
+class NormMode(str, Enum):
+    """
+    Norm Types.
+
+    Possible enumeration values are: NormMode.ORTHO, NormMode.NONE.
+
+    - NormMode.ORTHO: means the mode of input audio is ortho.
+    - NormMode.NONE: means the mode of input audio is none.
+    """
+    ORTHO: str = "ortho"
+    NONE: str = "none"
+
+
+class NormType(str, Enum):
+    """
+    Norm Types.
+
+    Possible enumeration values are: NormType.SLANEY, NormType.NONE.
+
+    - NormType.SLANEY: norm the input data with slaney.
+    - NormType.NONE: norm the input data with none.
+    """
+    SLANEY: str = "slaney"
+    NONE: str = "none"
+
+
+class ScaleType(str, Enum):
+    """
+    Scale Types.
+
+    Possible enumeration values are: ScaleType.POWER, ScaleType.MAGNITUDE.
+
+    - ScaleType.POWER: means the scale of input audio is power.
+    - ScaleType.MAGNITUDE: means the scale of input audio is magnitude.
+    """
+    POWER: str = "power"
+    MAGNITUDE: str = "magnitude"
+
+
+class WindowType(str, Enum):
+    """
+    Window Function types,
+
+    Possible enumeration values are: WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN,
+    WindowType.KAISER.
+
+    - WindowType.BARTLETT: means the type of window function is Bartlett.
+    - WindowType.BLACKMAN: means the type of window function is Blackman.
+    - WindowType.HAMMING: means the type of window function is Hamming.
+    - WindowType.HANN: means the type of window function is Hann.
+    - WindowType.KAISER: means the type of window function is Kaiser, currently not supported on macOS.
+    """
+    BARTLETT: str = "bartlett"
+    BLACKMAN: str = "blackman"
+    HAMMING: str = "hamming"
+    HANN: str = "hann"
+    KAISER: str = "kaiser"
+
+
+DE_C_NORM_MODE = {NormMode.ORTHO: cde.NormMode.DE_NORM_MODE_ORTHO,
+                  NormMode.NONE: cde.NormMode.DE_NORM_MODE_NONE}
+
+
+def create_dct(n_mfcc, n_mels, norm=NormMode.NONE):
+    """
+    Create a DCT transformation matrix with shape (n_mels, n_mfcc), normalized depending on norm.
+
+    Args:
+        n_mfcc (int): Number of mfc coefficients to retain, the value must be greater than 0.
+        n_mels (int): Number of mel filterbanks, the value must be greater than 0.
+        norm (NormMode): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
+
+    Returns:
+        numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
+
+    Examples:
+        >>> from mindspore.dataset.audio import create_dct
+        >>>
+        >>> dct = create_dct(100, 200, audio.NormMode.NONE)
+    """
+
+    if not isinstance(n_mfcc, int):
+        raise TypeError("n_mfcc with value {0} is not of type {1}, but got {2}.".format(
+            n_mfcc, int, type(n_mfcc)))
+    if not isinstance(n_mels, int):
+        raise TypeError("n_mels with value {0} is not of type {1}, but got {2}.".format(
+            n_mels, int, type(n_mels)))
+    if not isinstance(norm, NormMode):
+        raise TypeError("norm with value {0} is not of type {1}, but got {2}.".format(
+            norm, NormMode, type(norm)))
+    if n_mfcc <= 0:
+        raise ValueError("n_mfcc must be greater than 0, but got {0}.".format(n_mfcc))
+    if n_mels <= 0:
+        raise ValueError("n_mels must be greater than 0, but got {0}.".format(n_mels))
+    return cde.create_dct(n_mfcc, n_mels, DE_C_NORM_MODE[norm]).as_array()
+
+
+DE_C_MEL_TYPE = {MelType.HTK: cde.MelType.DE_MEL_TYPE_HTK,
+                 MelType.SLANEY: cde.MelType.DE_MEL_TYPE_SLANEY}
+
+DE_C_NORM_TYPE = {NormType.SLANEY: cde.NormType.DE_NORM_TYPE_SLANEY,
+                  NormType.NONE: cde.NormType.DE_NORM_TYPE_NONE}
 
 
 def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NONE, mel_type=MelType.HTK):
@@ -162,7 +252,9 @@ def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NO
         numpy.ndarray, the frequency transformation matrix.
 
     Examples:
-        >>> melscale_fbanks = audio.melscale_fbanks(n_freqs=4096, f_min=0, f_max=8000, n_mels=40, sample_rate=16000)
+        >>> from mindspore.dataset.audio import melscale_fbanks
+        >>>
+        >>> fbanks = melscale_fbanks(n_freqs=4096, f_min=0, f_max=8000, n_mels=40, sample_rate=16000)
     """
 
     type_check(n_freqs, (int,), "n_freqs")
@@ -185,94 +277,5 @@ def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NO
 
     type_check(norm, (NormType,), "norm")
     type_check(mel_type, (MelType,), "mel_type")
-    return cde.MelscaleFbanks(n_freqs, f_min, f_max, n_mels, sample_rate, DE_C_NORMTYPE_TYPE[norm],
-                              DE_C_MELTYPE_TYPE[mel_type]).as_array()
-
-
-class NormMode(str, Enum):
-    """
-    Norm Types.
-
-    Possible enumeration values are: NormMode.NONE, NormMode.ORTHO.
-
-    - NormMode.NONE: means the mode of input audio is none.
-    - NormMode.ORTHO: means the mode of input audio is ortho.
-    """
-    NONE: str = "none"
-    ORTHO: str = "ortho"
-
-
-DE_C_NORMMODE_TYPE = {NormMode.NONE: cde.NormMode.DE_NORMMODE_NONE,
-                      NormMode.ORTHO: cde.NormMode.DE_NORMMODE_ORTHO}
-
-
-def CreateDct(n_mfcc, n_mels, norm=NormMode.NONE):
-    """
-    Create a DCT transformation matrix with shape (n_mels, n_mfcc), normalized depending on norm.
-
-    Args:
-        n_mfcc (int): Number of mfc coefficients to retain, the value must be greater than 0.
-        n_mels (int): Number of mel filterbanks, the value must be greater than 0.
-        norm (NormMode): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
-
-    Returns:
-        numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
-
-    Examples:
-        >>> dct = audio.CreateDct(100, 200, audio.NormMode.NONE)
-    """
-
-    if not isinstance(n_mfcc, int):
-        raise TypeError("n_mfcc with value {0} is not of type {1}, but got {2}.".format(
-            n_mfcc, int, type(n_mfcc)))
-    if not isinstance(n_mels, int):
-        raise TypeError("n_mels with value {0} is not of type {1}, but got {2}.".format(
-            n_mels, int, type(n_mels)))
-    if not isinstance(norm, NormMode):
-        raise TypeError("norm with value {0} is not of type {1}, but got {2}.".format(
-            norm, NormMode, type(norm)))
-    if n_mfcc <= 0:
-        raise ValueError("n_mfcc must be greater than 0, but got {0}.".format(n_mfcc))
-    if n_mels <= 0:
-        raise ValueError("n_mels must be greater than 0, but got {0}.".format(n_mels))
-    return cde.CreateDct(n_mfcc, n_mels, DE_C_NORMMODE_TYPE[norm]).as_array()
-
-
-class BorderType(str, Enum):
-    """
-    Padding Mode, BorderType Type.
-
-    Possible enumeration values are: BorderType.CONSTANT, BorderType.EDGE, BorderType.REFLECT, BorderType.SYMMETRIC.
-
-    - BorderType.CONSTANT: means it fills the border with constant values.
-    - BorderType.EDGE: means it pads with the last value on the edge.
-    - BorderType.REFLECT: means it reflects the values on the edge omitting the last value of edge.
-    - BorderType.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
-
-    Note: This class derived from class str to support json serializable.
-    """
-    CONSTANT: str = "constant"
-    EDGE: str = "edge"
-    REFLECT: str = "reflect"
-    SYMMETRIC: str = "symmetric"
-
-
-class WindowType(str, Enum):
-    """
-    Window Function types,
-
-    Possible enumeration values are: WindowType.BARTLETT, WindowType.BLACKMAN, WindowType.HAMMING, WindowType.HANN,
-    WindowType.KAISER.
-
-    - WindowType.BARTLETT: means the type of window function is bartlett.
-    - WindowType.BLACKMAN: means the type of window function is blackman.
-    - WindowType.HAMMING: means the type of window function is hamming.
-    - WindowType.HANN: means the type of window function is hann.
-    - WindowType.KAISER: means the type of window function is kaiser.
-      Currently kaiser window is not supported on macOS.
-    """
-    BARTLETT: str = "bartlett"
-    BLACKMAN: str = "blackman"
-    HAMMING: str = "hamming"
-    HANN: str = "hann"
-    KAISER: str = "kaiser"
+    return cde.melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, DE_C_NORM_TYPE[norm],
+                               DE_C_MEL_TYPE[mel_type]).as_array()

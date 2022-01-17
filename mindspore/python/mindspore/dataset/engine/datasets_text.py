@@ -410,7 +410,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
     Examples:
         >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
-        >>> dataset = ds.CoNLL2000Dataset(dataset_files=conll2000_dataset_dir, usage='all')
+        >>> dataset = ds.CoNLL2000Dataset(dataset_dir=conll2000_dataset_dir, usage='all')
     """
 
     @check_conll2000_dataset
@@ -786,7 +786,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
 
     Examples:
         >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
-        >>> dataset = ds.IWSLT2016Dataset(dataset_files=iwslt2016_dataset_dir, usage='all',
+        >>> dataset = ds.IWSLT2016Dataset(dataset_dir=iwslt2016_dataset_dir, usage='all',
         ...                               language_pair=('de', 'en'), valid_set='tst2013', test_set='tst2014')
 
     About IWSLT2016 dataset:
@@ -907,7 +907,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
 
     Examples:
         >>> iwslt2017_dataset_dir = "/path/to/iwslt207_dataset_dir"
-        >>> dataset = ds.IWSLT2017Dataset(dataset_files=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
+        >>> dataset = ds.IWSLT2017Dataset(dataset_dir=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
 
     About IWSLT2017 dataset:
 
@@ -1092,7 +1092,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
 
     Examples:
         >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
-        >>> dataset = ds.SogouNewsDataset(dataset_files=sogou_news_dataset_dir, usage='all')
+        >>> dataset = ds.SogouNewsDataset(dataset_dir=sogou_news_dataset_dir, usage='all')
 
     About SogouNews Dataset:
 
@@ -1234,7 +1234,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
     Examples:
         >>> udpos_dataset_dir = "/path/to/udpos_dataset_dir"
-        >>> dataset = ds.UDPOSDataset(dataset_files=udpos_dataset_dir, usage='all')
+        >>> dataset = ds.UDPOSDataset(dataset_dir=udpos_dataset_dir, usage='all')
     """
 
     @check_udpos_dataset

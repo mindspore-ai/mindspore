@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace dataset {
 PYBIND_REGISTER(CreateDct, 1, ([](py::module *m) {
-                  (void)m->def("CreateDct", ([](int32_t n_mfcc, int32_t n_mels, NormMode norm) {
+                  (void)m->def("create_dct", ([](int32_t n_mfcc, int32_t n_mels, NormMode norm) {
                                  std::shared_ptr<Tensor> out;
                                  THROW_IF_ERROR(Dct(&out, n_mfcc, n_mels, norm));
                                  return out;
@@ -32,8 +32,8 @@ PYBIND_REGISTER(CreateDct, 1, ([](py::module *m) {
 
 PYBIND_REGISTER(MelscaleFbanks, 1, ([](py::module *m) {
                   (void)m->def(
-                    "MelscaleFbanks", ([](int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
-                                          int32_t sample_rate, NormType norm, MelType mel_type) {
+                    "melscale_fbanks", ([](int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                                           int32_t sample_rate, NormType norm, MelType mel_type) {
                       std::shared_ptr<Tensor> fb;
                       THROW_IF_ERROR(CreateFbanks(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
                       return fb;
@@ -42,22 +42,22 @@ PYBIND_REGISTER(MelscaleFbanks, 1, ([](py::module *m) {
 
 PYBIND_REGISTER(MelType, 0, ([](const py::module *m) {
                   (void)py::enum_<MelType>(*m, "MelType", py::arithmetic())
-                    .value("DE_MELTYPE_HTK", MelType::kHtk)
-                    .value("DE_MELTYPE_SLANEY", MelType::kSlaney)
+                    .value("DE_MEL_TYPE_HTK", MelType::kHtk)
+                    .value("DE_MEL_TYPE_SLANEY", MelType::kSlaney)
                     .export_values();
                 }));
 
 PYBIND_REGISTER(NormType, 0, ([](const py::module *m) {
                   (void)py::enum_<NormType>(*m, "NormType", py::arithmetic())
-                    .value("DE_NORMTYPE_NONE", NormType::kNone)
-                    .value("DE_NORMTYPE_SLANEY", NormType::kSlaney)
+                    .value("DE_NORM_TYPE_NONE", NormType::kNone)
+                    .value("DE_NORM_TYPE_SLANEY", NormType::kSlaney)
                     .export_values();
                 }));
 
 PYBIND_REGISTER(NormMode, 0, ([](const py::module *m) {
                   (void)py::enum_<NormMode>(*m, "NormMode", py::arithmetic())
-                    .value("DE_NORMMODE_NONE", NormMode::kNone)
-                    .value("DE_NORMMODE_ORTHO", NormMode::kOrtho)
+                    .value("DE_NORM_MODE_NONE", NormMode::kNone)
+                    .value("DE_NORM_MODE_ORTHO", NormMode::kOrtho)
                     .export_values();
                 }));
 }  // namespace dataset

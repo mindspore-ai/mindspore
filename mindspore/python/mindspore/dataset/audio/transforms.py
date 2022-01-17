@@ -50,12 +50,24 @@ class AudioTensorOperation(TensorOperation):
 
 class AllpassBiquad(AudioTensorOperation):
     """
-    Design two-pole all-pass filter for audio waveform of dimension of (..., time).
+    Design two-pole all-pass filter with central frequency and bandwidth for audio waveform.
+
+    An all-pass filter changes the audio's frequency to phase relationship without changing
+    its frequency to amplitude relationship. The system function is:
+
+    .. math::
+        H(s) = \frac{s^2 - \frac{s}{Q} + 1}{s^2 + \frac{s}{Q} + 1}
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        central_freq (float): central frequency (in Hz).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
+        central_freq (float): Central frequency (in Hz).
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -76,26 +88,34 @@ class AllpassBiquad(AudioTensorOperation):
         return cde.AllpassBiquadOperation(self.sample_rate, self.central_freq, self.Q)
 
 
-DE_C_SCALETYPE_TYPE = {ScaleType.MAGNITUDE: cde.ScaleType.DE_SCALETYPE_MAGNITUDE,
-                       ScaleType.POWER: cde.ScaleType.DE_SCALETYPE_POWER}
+DE_C_SCALE_TYPE = {ScaleType.POWER: cde.ScaleType.DE_SCALE_TYPE_POWER,
+                   ScaleType.MAGNITUDE: cde.ScaleType.DE_SCALE_TYPE_MAGNITUDE}
 
 
 class AmplitudeToDB(AudioTensorOperation):
     """
-    Converts the input tensor from amplitude/power scale to decibel scale.
+    Turn the input audio waveform from the amplitude/power scale to decibel scale.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., freq, time).
 
     Args:
-        stype (ScaleType, optional): Scale of the input tensor (default=ScaleType.POWER).
-            It can be one of ScaleType.MAGNITUDE or ScaleType.POWER.
-        ref_value (float, optional): Param for generate db_multiplier (default=1.0).
-        amin (float, optional): Lower bound to clamp the input waveform. It must be greater than zero (default=1e-10).
-        top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative.
-            Commonly set at 80 (default=80.0).
+        stype (ScaleType, optional): Scale of the input waveform, which can be
+            ScaleType.POWER or ScaleType.MAGNITUDE. Default: ScaleType.POWER.
+        ref_value (float, optional): Multiplier reference value for generating
+            `db_multiplier`. Default: 1.0. The formula is
+
+            :math:`\text{db_multiplier} = Log10(max(\text{ref_value}, amin))`.
+
+        amin (float, optional): Lower bound to clamp the input waveform, which must
+            be greater than zero. Default: 1e-10.
+        top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
+
     Examples:
         >>> import numpy as np
         >>> from mindspore.dataset.audio import ScaleType
         >>>
-        >>> waveform = np.random.random([1, 400//2+1, 30])
+        >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
@@ -109,13 +129,16 @@ class AmplitudeToDB(AudioTensorOperation):
         self.top_db = top_db
 
     def parse(self):
-        return cde.AmplitudeToDBOperation(DE_C_SCALETYPE_TYPE[self.stype], self.ref_value, self.amin, self.top_db)
+        return cde.AmplitudeToDBOperation(DE_C_SCALE_TYPE[self.stype], self.ref_value, self.amin, self.top_db)
 
 
 class Angle(AudioTensorOperation):
     """
-    Calculate the angle of the complex number sequence of shape (..., 2).
-    The first dimension represents the real part while the second represents the imaginary.
+    Calculate the angle of complex number sequence.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., complex=2).
+        The first dimension represents the real part while the second represents the imaginary.
 
     Examples:
         >>> import numpy as np
@@ -132,14 +155,24 @@ class Angle(AudioTensorOperation):
 
 class BandBiquad(AudioTensorOperation):
     """
-    Design two-pole band filter for audio waveform of dimension of (..., time).
+    Design two-pole band-pass filter for audio waveform.
+
+    The frequency response drops logarithmically around the center frequency. The
+    bandwidth gives the slope of the drop. The frequencies at band edge will be
+    half of their original amplitudes.
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
         central_freq (float): Central frequency (in Hz).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
         noise (bool, optional) : If True, uses the alternate mode for un-pitched audio (e.g. percussion).
-            If False, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music (default=False).
+            If False, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music. Default: False.
 
     Examples:
         >>> import numpy as np
@@ -162,15 +195,32 @@ class BandBiquad(AudioTensorOperation):
 
 
 class BandpassBiquad(AudioTensorOperation):
-    """
-    Design two-pole band-pass filter. Similar to SoX implementation.
+    r"""
+    Design two-pole Butterworth band-pass filter for audio waveform.
+
+    The frequency response of the Butterworth filter is maximally flat (i.e. has no ripples)
+    in the passband and rolls off towards zero in the stopband.
+
+    The system function of Butterworth band-pass filter is:
+
+    .. math::
+        H(s) = \begin{cases}
+            \frac{s}{s^2 + \frac{s}{Q} + 1}, &\text{if const_skirt_gain=True}; \cr
+            \frac{\frac{s}{Q}}{s^2 + \frac{s}{Q} + 1}, &\text{if const_skirt_gain=False}.
+        \end{cases}
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
         central_freq (float): Central frequency (in Hz).
-        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0,1] (default=0.707).
-        const_skirt_gain (bool, optional) : If True, uses a constant skirt gain (peak gain = Q).
-            If False, uses a constant 0dB peak gain (default=False).
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
+        const_skirt_gain (bool, optional) : If True, uses a constant skirt gain (peak gain = Q);
+            If False, uses a constant 0dB peak gain. Default: False.
 
     Examples:
         >>> import numpy as np
@@ -194,12 +244,26 @@ class BandpassBiquad(AudioTensorOperation):
 
 class BandrejectBiquad(AudioTensorOperation):
     """
-    Design two-pole band-reject filter for audio waveform of dimension of (..., time).
+    Design two-pole Butterworth band-reject filter for audio waveform.
+
+    The frequency response of the Butterworth filter is maximally flat (i.e. has no ripples)
+    in the passband and rolls off towards zero in the stopband.
+
+    The system function of Butterworth band-reject filter is:
+
+    .. math::
+        H(s) = \frac{s^2 + 1}{s^2 + \frac{s}{Q} + 1}
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        central_freq (float): central frequency (in Hz).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
+        central_freq (float): Central frequency (in Hz).
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -221,14 +285,26 @@ class BandrejectBiquad(AudioTensorOperation):
 
 
 class BassBiquad(AudioTensorOperation):
-    """
-    Design a bass tone-control effect for audio waveform of dimension of (..., time).
+    r"""
+    Design a bass tone-control effect, also known as two-pole low-shelf filter for audio waveform.
+
+    A low-shelf filter passes all frequencies, but increase or reduces frequencies below the shelf
+    frequency by specified amount. The system function is:
+
+    .. math::
+        H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
         gain (float): Desired gain at the boost (or attenuation) in dB.
-        central_freq (float): Central frequency (in Hz) (default=100.0).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        central_freq (float, optional): Central frequency (in Hz). Default: 100.0.
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -252,7 +328,7 @@ class BassBiquad(AudioTensorOperation):
 
 class Biquad(TensorOperation):
     """
-    Perform a biquad filter of input tensor.
+    Perform a biquad filter of input audio.
 
     Args:
         b0 (float): Numerator coefficient of current input, x[n].
@@ -285,10 +361,14 @@ class Biquad(TensorOperation):
 
 class ComplexNorm(AudioTensorOperation):
     """
-    Compute the norm of complex tensor input.
+    Compute the norm of complex number sequence.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., complex=2).
+        The first dimension represents the real part while the second represents the imaginary.
 
     Args:
-        power (float, optional): Power of the norm, which must be non-negative (default=1.0).
+        power (float, optional): Power of the norm, which must be non-negative. Default: 1.0.
 
     Examples:
         >>> import numpy as np
@@ -355,12 +435,19 @@ class ComputeDeltas(AudioTensorOperation):
 
 class Contrast(AudioTensorOperation):
     """
-    Apply contrast effect. Similar to SoX implementation.
+    Apply contrast effect for audio waveform.
+
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
+
     Args:
-        enhancement_amount (float): Controls the amount of the enhancement. Allowed range is [0, 100] (default=75.0).
-            Note that enhancement_amount equal to 0 still gives a significant contrast enhancement.
+        enhancement_amount (float, optional): Controls the amount of the enhancement,
+            in range of [0, 100]. Default: 75.0. Note that `enhancement_amount` equal
+            to 0 still gives a significant contrast enhancement.
 
     Examples:
         >>> import numpy as np
@@ -420,7 +507,7 @@ class DCShift(AudioTensorOperation):
         >>> waveform = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DCShift(0.5, 0.02)]
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operation=transforms, input_columns=["audio"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
     @check_dc_shift
@@ -496,9 +583,9 @@ class DetectPitchFrequency(AudioTensorOperation):
                                                  self.win_length, self.freq_low, self.freq_high)
 
 
-DE_C_DENSITYFUNCTION_TYPE = {DensityFunction.TPDF: cde.DensityFunction.DE_DENSITYFUNCTION_TPDF,
-                             DensityFunction.RPDF: cde.DensityFunction.DE_DENSITYFUNCTION_RPDF,
-                             DensityFunction.GPDF: cde.DensityFunction.DE_DENSITYFUNCTION_GPDF}
+DE_C_DENSITY_FUNCTION = {DensityFunction.TPDF: cde.DensityFunction.DE_DENSITY_FUNCTION_TPDF,
+                         DensityFunction.RPDF: cde.DensityFunction.DE_DENSITY_FUNCTION_RPDF,
+                         DensityFunction.GPDF: cde.DensityFunction.DE_DENSITY_FUNCTION_GPDF}
 
 
 class Dither(AudioTensorOperation):
@@ -530,7 +617,7 @@ class Dither(AudioTensorOperation):
         self.noise_shaping = noise_shaping
 
     def parse(self):
-        return cde.DitherOperation(DE_C_DENSITYFUNCTION_TYPE[self.density_function], self.noise_shaping)
+        return cde.DitherOperation(DE_C_DENSITY_FUNCTION[self.density_function], self.noise_shaping)
 
 
 class EqualizerBiquad(AudioTensorOperation):
@@ -563,11 +650,11 @@ class EqualizerBiquad(AudioTensorOperation):
         return cde.EqualizerBiquadOperation(self.sample_rate, self.center_freq, self.gain, self.Q)
 
 
-DE_C_FADESHAPE_TYPE = {FadeShape.LINEAR: cde.FadeShape.DE_FADESHAPE_LINEAR,
-                       FadeShape.EXPONENTIAL: cde.FadeShape.DE_FADESHAPE_EXPONENTIAL,
-                       FadeShape.LOGARITHMIC: cde.FadeShape.DE_FADESHAPE_LOGARITHMIC,
-                       FadeShape.QUARTERSINE: cde.FadeShape.DE_FADESHAPE_QUARTERSINE,
-                       FadeShape.HALFSINE: cde.FadeShape.DE_FADESHAPE_HALFSINE}
+DE_C_FADE_SHAPE = {FadeShape.QUARTER_SINE: cde.FadeShape.DE_FADE_SHAPE_QUARTER_SINE,
+                   FadeShape.HALF_SINE: cde.FadeShape.DE_FADE_SHAPE_HALF_SINE,
+                   FadeShape.LINEAR: cde.FadeShape.DE_FADE_SHAPE_LINEAR,
+                   FadeShape.LOGARITHMIC: cde.FadeShape.DE_FADE_SHAPE_LOGARITHMIC,
+                   FadeShape.EXPONENTIAL: cde.FadeShape.DE_FADE_SHAPE_EXPONENTIAL}
 
 
 class Fade(AudioTensorOperation):
@@ -578,17 +665,18 @@ class Fade(AudioTensorOperation):
         fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative (default=0).
         fade_out_len (int, optional): Length of fade-out (time frames), which must be non-negative (default=0).
         fade_shape (FadeShape, optional): Shape of fade (default=FadeShape.LINEAR). Can be one of
-            [FadeShape.LINEAR, FadeShape.EXPONENTIAL, FadeShape.LOGARITHMIC, FadeShape.QUARTERSINC, FadeShape.HALFSINC].
+            FadeShape.QUARTER_SINE, FadeShape.HALF_SINE, FadeShape.LINEAR, FadeShape.LOGARITHMIC or
+            FadeShape.EXPONENTIAL.
+
+            -FadeShape.QUARTER_SINE, means it tend to 0 in an quarter sin function.
+
+            -FadeShape.HALF_SINE, means it tend to 0 in an half sin function.
 
             -FadeShape.LINEAR, means it linear to 0.
 
-            -FadeShape.EXPONENTIAL, means it tend to 0 in an exponential function.
-
             -FadeShape.LOGARITHMIC, means it tend to 0 in an logrithmic function.
 
-            -FadeShape.QUARTERSINE, means it tend to 0 in an quarter sin function.
-
-            -FadeShape.HALFSINE, means it tend to 0 in an half sin function.
+            -FadeShape.EXPONENTIAL, means it tend to 0 in an exponential function.
 
     Raises:
         RuntimeError: If fade_in_len exceeds waveform length.
@@ -611,14 +699,14 @@ class Fade(AudioTensorOperation):
         self.fade_shape = fade_shape
 
     def parse(self):
-        return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADESHAPE_TYPE[self.fade_shape])
+        return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADE_SHAPE[self.fade_shape])
 
 
-DE_C_MODULATION_TYPE = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
-                        Modulation.TRIANGULAR: cde.Modulation.DE_MODULATION_TRIANGULAR}
+DE_C_MODULATION = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
+                   Modulation.TRIANGULAR: cde.Modulation.DE_MODULATION_TRIANGULAR}
 
-DE_C_INTERPOLATION_TYPE = {Interpolation.LINEAR: cde.Interpolation.DE_INTERPOLATION_LINEAR,
-                           Interpolation.QUADRATIC: cde.Interpolation.DE_INTERPOLATION_QUADRATIC}
+DE_C_INTERPOLATION = {Interpolation.LINEAR: cde.Interpolation.DE_INTERPOLATION_LINEAR,
+                      Interpolation.QUADRATIC: cde.Interpolation.DE_INTERPOLATION_QUADRATIC}
 
 
 class Flanger(AudioTensorOperation):
@@ -662,21 +750,27 @@ class Flanger(AudioTensorOperation):
 
     def parse(self):
         return cde.FlangerOperation(self.sample_rate, self.delay, self.depth, self.regen, self.width, self.speed,
-                                    self.phase, DE_C_MODULATION_TYPE[self.modulation],
-                                    DE_C_INTERPOLATION_TYPE[self.interpolation])
+                                    self.phase, DE_C_MODULATION[self.modulation],
+                                    DE_C_INTERPOLATION[self.interpolation])
 
 
 class FrequencyMasking(AudioTensorOperation):
     """
     Apply masking to a spectrogram in the frequency domain.
 
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., freq, time).
+
     Args:
-        iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        frequency_mask_param (int): Maximum possible length of the mask, range: [0, freq_length] (default=0).
-            Indices uniformly sampled from [0, frequency_mask_param].
-        mask_start (int): Mask start takes effect when iid_masks=true,
-            range: [0, freq_length-frequency_mask_param] (default=0).
-        mask_value (double): Mask value (default=0.0).
+        iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: False.
+        freq_mask_param (int, optional): When `iid_masks` is True, length of the mask will be uniformly sampled
+            from [0, freq_mask_param]; When `iid_masks` is False, directly use it as length of the mask.
+            The value should be in range of [0, freq_length], where `freq_length` is the length of audio waveform
+            in frequency domain. Default: 0.
+        mask_start (int): Starting point to apply mask, only works when `iid_masks` is True. The value should
+            be in range of [0, freq_length - freq_mask_param], where `freq_length` is the length of audio waveform
+            in frequency domain. Default: 0.
+        mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.
 
     Examples:
         >>> import numpy as np
@@ -685,12 +779,16 @@ class FrequencyMasking(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    .. image:: api_img/frequency_masking_original.png
+
+    .. image:: api_img/frequency_masking.png
     """
 
     @check_masking
-    def __init__(self, iid_masks=False, frequency_mask_param=0, mask_start=0, mask_value=0.0):
+    def __init__(self, iid_masks=False, freq_mask_param=0, mask_start=0, mask_value=0.0):
         self.iid_masks = iid_masks
-        self.frequency_mask_param = frequency_mask_param
+        self.frequency_mask_param = freq_mask_param
         self.mask_start = mask_start
         self.mask_value = mask_value
 
@@ -787,12 +885,24 @@ class LFilter(AudioTensorOperation):
 
 class LowpassBiquad(AudioTensorOperation):
     """
-    Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
+    Design two-pole low-pass filter for audio waveform.
+
+    A low-pass filter passes frequencies lower than a selected cutoff frequency
+    but attenuates frequencies higher than it. The system function is:
+
+    .. math::
+        H(s) = \frac{1}{s^2 + \frac{s}{Q} + 1}
+
+    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., time).
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        cutoff_freq (float): Filter cutoff frequency.
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        sample_rate (int): Sampling rate (in Hz), which can't be zero.
+        cutoff_freq (float): Filter cutoff frequency (in Hz).
+        Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
+            in range of (0, 1]. Default: 0.707.
 
     Examples:
         >>> import numpy as np
@@ -1012,11 +1122,11 @@ class SlidingWindowCmn(AudioTensorOperation):
         return cde.SlidingWindowCmnOperation(self.cmn_window, self.min_cmn_window, self.center, self.norm_vars)
 
 
-DE_C_WINDOW_TYPE = {WindowType.BARTLETT: cde.WindowType.DE_BARTLETT,
-                    WindowType.BLACKMAN: cde.WindowType.DE_BLACKMAN,
-                    WindowType.HAMMING: cde.WindowType.DE_HAMMING,
-                    WindowType.HANN: cde.WindowType.DE_HANN,
-                    WindowType.KAISER: cde.WindowType.DE_KAISER}
+DE_C_WINDOW_TYPE = {WindowType.BARTLETT: cde.WindowType.DE_WINDOW_TYPE_BARTLETT,
+                    WindowType.BLACKMAN: cde.WindowType.DE_WINDOW_TYPE_BLACKMAN,
+                    WindowType.HAMMING: cde.WindowType.DE_WINDOW_TYPE_HAMMING,
+                    WindowType.HANN: cde.WindowType.DE_WINDOW_TYPE_HANN,
+                    WindowType.KAISER: cde.WindowType.DE_WINDOW_TYPE_KAISER}
 
 
 class SpectralCentroid(TensorOperation):
@@ -1110,13 +1220,19 @@ class TimeMasking(AudioTensorOperation):
     """
     Apply masking to a spectrogram in the time domain.
 
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., freq, time).
+
     Args:
-        iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        time_mask_param (int): Maximum possible length of the mask, range: [0, time_length] (default=0).
-            Indices uniformly sampled from [0, time_mask_param].
-        mask_start (int): Mask start takes effect when iid_masks=true,
-            range: [0, time_length-time_mask_param] (default=0).
-        mask_value (double): Mask value (default=0.0).
+        iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: False.
+        time_mask_param (int): When `iid_masks` is True, length of the mask will be uniformly sampled
+            from [0, time_mask_param]; When `iid_masks` is False, directly use it as length of the mask.
+            The value should be in range of [0, time_length], where `time_length` is the length of audio waveform
+            in time domain. Default: 0.
+        mask_start (int): Starting point to apply mask, only works when `iid_masks` is True. The value should
+            be in range of [0, time_length - time_mask_param], where `time_length` is the length of audio waveform
+            in time domain. Default: 0.
+        mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.
 
     Examples:
         >>> import numpy as np
@@ -1125,6 +1241,10 @@ class TimeMasking(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeMasking(time_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    .. image:: api_img/time_masking_original.png
+
+    .. image:: api_img/time_masking.png
     """
 
     @check_masking
@@ -1140,13 +1260,18 @@ class TimeMasking(AudioTensorOperation):
 
 class TimeStretch(AudioTensorOperation):
     """
-    Stretch STFT in time at a given rate, without changing the pitch.
+    Stretch Short Time Fourier Transform (STFT) in time without modifying pitch for a given rate.
+
+    Note:
+        The dimension of the audio waveform to be processed needs to be (..., freq, time, complex=2).
+        The first dimension represents the real part while the second represents the imaginary.
 
     Args:
-        hop_length (int, optional): Length of hop between STFT windows (default=None, will use ((n_freq - 1) * 2) // 2).
-        n_freq (int, optional): Number of filter banks form STFT (default=201).
-        fixed_rate (float, optional): Rate to speed up or slow down the input in time
-            (default=None, will keep the original rate).
+        hop_length (int, optional): Length of hop between STFT windows, i.e. the number of samples
+            between consecutive frames. Default: None, will use `n_freq - 1`.
+        n_freq (int, optional): Number of filter banks from STFT. Default: 201.
+        fixed_rate (float, optional): Rate to speed up or slow down by. Default: None, will keep
+            the original rate.
 
     Examples:
         >>> import numpy as np
@@ -1155,6 +1280,12 @@ class TimeStretch(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    .. image:: api_img/time_stretch_rate1.5.png
+
+    .. image:: api_img/time_stretch_original.png
+
+    .. image:: api_img/time_stretch_rate0.8.png
     """
 
     @check_time_stretch
@@ -1200,9 +1331,9 @@ class TrebleBiquad(AudioTensorOperation):
         return cde.TrebleBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
 
 
-DE_C_GAINTYPE_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAINTYPE_AMPLITUDE,
-                      GainType.POWER: cde.GainType.DE_GAINTYPE_POWER,
-                      GainType.DB: cde.GainType.DE_GAINTYPE_DB}
+DE_C_GAIN_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAIN_TYPE_AMPLITUDE,
+                  GainType.POWER: cde.GainType.DE_GAIN_TYPE_POWER,
+                  GainType.DB: cde.GainType.DE_GAIN_TYPE_DB}
 
 
 class Vol(AudioTensorOperation):
@@ -1233,4 +1364,4 @@ class Vol(AudioTensorOperation):
         self.gain_type = gain_type
 
     def parse(self):
-        return cde.VolOperation(self.gain, DE_C_GAINTYPE_TYPE[self.gain_type])
+        return cde.VolOperation(self.gain, DE_C_GAIN_TYPE[self.gain_type])
