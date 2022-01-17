@@ -38,6 +38,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
     """
     A source dataset that reads and parses comma-separated values
     `(CSV) <http://en.volupedia.org/wiki/Comma-separated_values>`_ files as dataset.
+
     The columns of generated dataset depend on the source CSV files.
 
     Args:
@@ -101,7 +102,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
 
 class MindDataset(MappableDataset, UnionBaseDataset):
     """
-    A source dataset for reading and parsing MindRecord dataset.
+    A source dataset that reads and parses MindRecord dataset.
 
     The columns of generated dataset depend on the source MindRecord files.
 
@@ -230,7 +231,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
 class TFRecordDataset(SourceDataset, UnionBaseDataset):
     """
-    A source dataset for reading and parsing datasets stored on disk in TFData format.
+    A source dataset that reads and parses datasets stored on disk in TFData format.
 
     The columns of generated dataset depend on the source TFRecord files.
 

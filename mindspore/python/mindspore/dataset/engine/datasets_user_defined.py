@@ -876,8 +876,9 @@ class _PaddedDataset:
 
 class PaddedDataset(GeneratorDataset):
     """
-    Creates a dataset with filler data provided by user. Mainly used to add to the original dataset
-    and assign it to the corresponding shard.
+    Creates a dataset with filler data provided by user.
+
+    Mainly used to add to the original dataset and assign it to the corresponding shard.
 
     Args:
         padded_samples (list(dict)): Samples provided by user.
