@@ -54,16 +54,16 @@ def test_block_diag(args):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 @pytest.mark.parametrize('shape', [(4, 4), (50, 50), (2, 5, 5)])
-def test_inv(dtype, shape):
+def test_inv(data_type, shape):
     """
     Feature: ALL TO ALL
     Description: test cases for inv
     Expectation: the result match numpy
     """
     onp.random.seed(0)
-    x = create_full_rank_matrix(shape, dtype)
+    x = create_full_rank_matrix(shape, data_type)
 
     ms_res = msp.linalg.inv(Tensor(x))
     scipy_res = onp.linalg.inv(x)
@@ -76,14 +76,14 @@ def test_inv(dtype, shape):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('dtype', [onp.float64])
-def test_cholesky(n: int, lower: bool, dtype: Generic):
+@pytest.mark.parametrize('data_type', [onp.float64])
+def test_cholesky(n: int, lower: bool, data_type: Generic):
     """
     Feature: ALL TO ALL
     Description:  test cases for cholesky [N,N]
     Expectation: the result match scipy cholesky
     """
-    a = create_sym_pos_matrix((n, n), dtype)
+    a = create_sym_pos_matrix((n, n), data_type)
     tensor_a = Tensor(a)
     rtol = 1.e-5
     atol = 1.e-8
@@ -98,14 +98,14 @@ def test_cholesky(n: int, lower: bool, dtype: Generic):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('dtype', [onp.float64])
-def test_cho_factor(n: int, lower: bool, dtype: Generic):
+@pytest.mark.parametrize('data_type', [onp.float64])
+def test_cho_factor(n: int, lower: bool, data_type: Generic):
     """
     Feature: ALL TO ALL
     Description:  test cases for cholesky [N,N]
     Expectation: the result match scipy cholesky
     """
-    a = create_sym_pos_matrix((n, n), dtype)
+    a = create_sym_pos_matrix((n, n), data_type)
     tensor_a = Tensor(a)
     msp_c, _ = msp.linalg.cho_factor(tensor_a, lower=lower)
     if lower:
@@ -121,15 +121,15 @@ def test_cho_factor(n: int, lower: bool, dtype: Generic):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('dtype', [onp.float64])
-def test_cholesky_solver(n: int, lower: bool, dtype):
+@pytest.mark.parametrize('data_type', [onp.float64])
+def test_cholesky_solver(n: int, lower: bool, data_type):
     """
     Feature: ALL TO ALL
     Description:  test cases for cholesky  solver [N,N]
     Expectation: the result match scipy cholesky_solve
     """
-    a = create_sym_pos_matrix((n, n), dtype)
-    b = onp.ones((n, 1), dtype=dtype)
+    a = create_sym_pos_matrix((n, n), data_type)
+    b = onp.ones((n, 1), dtype=data_type)
     tensor_a = Tensor(a)
     tensor_b = Tensor(b)
     osp_c, lower = osp.linalg.cho_factor(a, lower=lower)
@@ -149,10 +149,10 @@ def test_cholesky_solver(n: int, lower: bool, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
-@pytest.mark.parametrize('dtype',
+@pytest.mark.parametrize('data_type',
                          [(onp.int8, "f"), (onp.int16, "f"), (onp.int32, "f"), (onp.int64, "d"), (onp.float32, "f"),
                           (onp.float64, "d")])
-def test_eigh(n: int, dtype):
+def test_eigh(n: int, data_type):
     """
     Feature: ALL TO ALL
     Description:  test cases for eigenvalues/eigenvector for symmetric/Hermitian matrix solver [N,N]
@@ -160,11 +160,11 @@ def test_eigh(n: int, dtype):
     """
     # test for real scalar float
     tol = {"f": (1e-3, 1e-4), "d": (1e-5, 1e-8)}
-    rtol = tol[dtype[1]][0]
-    atol = tol[dtype[1]][1]
-    A = create_sym_pos_matrix([n, n], dtype[0])
-    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(A).astype(dtype[0])), lower=True, eigvals_only=False)
-    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(A).astype(dtype[0])), lower=False, eigvals_only=False)
+    rtol = tol[data_type[1]][0]
+    atol = tol[data_type[1]][1]
+    A = create_sym_pos_matrix([n, n], data_type[0])
+    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(A).astype(data_type[0])), lower=True, eigvals_only=False)
+    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(A).astype(data_type[0])), lower=False, eigvals_only=False)
     assert onp.allclose(A @ msp_vl.asnumpy() - msp_vl.asnumpy() @ onp.diag(msp_wl.asnumpy()), onp.zeros((n, n)),
                         rtol,
                         atol)
@@ -172,8 +172,8 @@ def test_eigh(n: int, dtype):
                         rtol,
                         atol)
     # test for real scalar float no vector
-    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(A).astype(dtype[0])), lower=True, eigvals_only=True)
-    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(A).astype(dtype[0])), lower=False, eigvals_only=True)
+    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(A).astype(data_type[0])), lower=True, eigvals_only=True)
+    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(A).astype(data_type[0])), lower=False, eigvals_only=True)
     assert onp.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
 
@@ -183,8 +183,8 @@ def test_eigh(n: int, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
-@pytest.mark.parametrize('dtype', [(onp.complex64, "f"), (onp.complex128, "d")])
-def test_eigh_complex(n: int, dtype):
+@pytest.mark.parametrize('data_type', [(onp.complex64, "f"), (onp.complex128, "d")])
+def test_eigh_complex(n: int, data_type):
     """
     Feature: ALL TO ALL
     Description:  test cases for eigenvalues/eigenvector for symmetric/Hermitian matrix solver [N,N]
@@ -192,9 +192,9 @@ def test_eigh_complex(n: int, dtype):
     """
     # test case for complex
     tol = {"f": (1e-3, 1e-4), "d": (1e-5, 1e-8)}
-    rtol = tol[dtype[1]][0]
-    atol = tol[dtype[1]][1]
-    A = onp.array(onp.random.rand(n, n), dtype=dtype[0])
+    rtol = tol[data_type[1]][0]
+    atol = tol[data_type[1]][1]
+    A = onp.array(onp.random.rand(n, n), dtype=data_type[0])
     for i in range(0, n):
         for j in range(0, n):
             if i == j:
@@ -203,16 +203,16 @@ def test_eigh_complex(n: int, dtype):
                 A[i][j] = complex(onp.random.rand(1, 1), onp.random.rand(1, 1))
     sym_al = (onp.tril((onp.tril(A) - onp.tril(A).T)) + onp.tril(A).conj().T)
     sym_au = (onp.triu((onp.triu(A) - onp.triu(A).T)) + onp.triu(A).conj().T)
-    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(dtype[0])), lower=True, eigvals_only=False)
-    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(dtype[0])), lower=False, eigvals_only=False)
+    msp_wl, msp_vl = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(data_type[0])), lower=True, eigvals_only=False)
+    msp_wu, msp_vu = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(data_type[0])), lower=False, eigvals_only=False)
     assert onp.allclose(sym_al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ onp.diag(msp_wl.asnumpy()),
                         onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(sym_au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ onp.diag(msp_wu.asnumpy()),
                         onp.zeros((n, n)), rtol, atol)
 
     # test for real scalar complex no vector
-    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(dtype[0])), lower=True, eigvals_only=True)
-    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(dtype[0])), lower=False, eigvals_only=True)
+    msp_wl0 = msp.linalg.eigh(Tensor(onp.array(sym_al).astype(data_type[0])), lower=True, eigvals_only=True)
+    msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(data_type[0])), lower=False, eigvals_only=True)
     assert onp.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
 
@@ -222,14 +222,14 @@ def test_eigh_complex(n: int, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(4, 4), (4, 5), (5, 10), (20, 20)])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_lu(shape: (int, int), dtype):
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
+def test_lu(shape: (int, int), data_type):
     """
     Feature: ALL To ALL
     Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
     Expectation: the result match to scipy
     """
-    a = create_random_rank_matrix(shape, dtype)
+    a = create_random_rank_matrix(shape, data_type)
     s_p, s_l, s_u = osp.linalg.lu(a)
     tensor_a = Tensor(a)
     m_p, m_l, m_u = msp.linalg.lu(tensor_a)
@@ -245,14 +245,14 @@ def test_lu(shape: (int, int), dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5), (2, 3, 4, 5)])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_batch_lu(shape, dtype):
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
+def test_batch_lu(shape, data_type):
     """
     Feature: ALL To ALL
     Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
     Expectation: the result match to scipy
     """
-    b_a = create_random_rank_matrix(shape, dtype)
+    b_a = create_random_rank_matrix(shape, data_type)
     b_s_p = list()
     b_s_l = list()
     b_s_u = list()
@@ -279,14 +279,14 @@ def test_batch_lu(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_lu_factor(n: int, dtype):
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
+def test_lu_factor(n: int, data_type):
     """
     Feature: ALL To ALL
     Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
     Expectation: the result match to scipy
     """
-    a = create_full_rank_matrix((n, n), dtype)
+    a = create_full_rank_matrix((n, n), data_type)
     s_lu, s_pivots = osp.linalg.lu_factor(a)
     tensor_a = Tensor(a)
     m_lu, m_pivots = msp.linalg.lu_factor(tensor_a)
@@ -300,15 +300,15 @@ def test_lu_factor(n: int, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_lu_solve(n: int, dtype):
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
+def test_lu_solve(n: int, data_type):
     """
     Feature: ALL To ALL
     Description: test cases for lu_solve test cases for A[N,N]x = b[N,1]
     Expectation: the result match to scipy
     """
-    a = create_full_rank_matrix((n, n), dtype)
-    b = onp.random.random((n, 1)).astype(dtype)
+    a = create_full_rank_matrix((n, n), data_type)
+    b = onp.random.random((n, 1)).astype(data_type)
     s_lu, s_piv = osp.linalg.lu_factor(a)
 
     tensor_a = Tensor(a)

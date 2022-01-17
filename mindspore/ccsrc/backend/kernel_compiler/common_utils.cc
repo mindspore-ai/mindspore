@@ -102,6 +102,26 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
+std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
+  auto alignment_iter = MatrixDiag::AlignmentMap.find(alignment);
+  if (alignment_iter == MatrixDiag::AlignmentMap.end()) {
+    MS_LOG(EXCEPTION) << "For  current kernel, input alignment is invalid: " << alignment
+                      << ". please limit it to {RIGHT_LEFT, LEFT_RIGHT, RIGHT_RIGHT, LEFT_LEFT}";
+  }
+  return alignment_iter->second;
+}
+
+int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
+                  const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment) {
+  bool right_align_super_diagonal = (alignment.first == MatrixDiag::RIGHT);
+  bool right_align_sub_diagonal = (alignment.second == MatrixDiag::RIGHT);
+  const bool right_align =
+    (diag_index >= 0 && right_align_super_diagonal) || (diag_index <= 0 && right_align_sub_diagonal);
+  const int diag_len = std::min(inner_rows + std::min(0, diag_index), inner_cols - std::max(0, diag_index));
+  const int offset = (right_align) ? (max_diag_len - diag_len) : 0;
+  return offset;
+}
+
 std::string GetFusionNameByType(const kernel::FusionType &type) {
   auto iter = fusion_type_name_maps.find(type);
   if (iter == fusion_type_name_maps.end()) {

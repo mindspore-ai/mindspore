@@ -45,7 +45,8 @@ void CholeskyCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size
     *col = shape.at(shape.size() - kColIndex);
   }
   if (*row != *col) {
-    MS_LOG_EXCEPTION << kernel_name_ << "input shape is invalid: " << *row << ", " << *col;
+    MS_LOG_EXCEPTION << kernel_name_ << "input shape is invalid. "
+                     << "cholesky expects a square matrix. but input shape is:" << *row << ", " << *col;
   }
 }
 

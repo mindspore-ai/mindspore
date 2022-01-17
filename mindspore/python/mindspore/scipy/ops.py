@@ -332,3 +332,25 @@ class LUSolver(PrimitiveWithInfer):
             'value': None
         }
         return output
+
+
+class MatrixSetDiag(PrimitiveWithInfer):
+    """
+    Inner API to set a [..., M, N] matrix's diagonals by range[k[0], k[1]].
+    """
+
+    @prim_attr_register
+    def __init__(self, alignment: str):
+        super().__init__(name="MatrixSetDiag")
+        self.init_prim_io_names(inputs=['input_x', 'diagonal', 'k'], outputs=['output'])
+        self.alignment = validator.check_value_type("alignment", alignment, [str], self.name)
+
+    def __infer__(self, input_x, diagonal, k):
+        in_shape = list(input_x['shape'])
+        in_dtype = input_x['dtype']
+        output = {
+            'shape': tuple(in_shape),
+            'dtype': in_dtype,
+            'value': None
+        }
+        return output
