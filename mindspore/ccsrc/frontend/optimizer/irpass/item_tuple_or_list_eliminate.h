@@ -450,7 +450,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
         MS_LOG(EXCEPTION) << "The idx value " << idx << " of tuple_getitem node " << c_->DebugString()
                           << " is out of range.";
       }
-      item_node->set_abstract(abs_tuple->elements()[idx]);
+      item_node->set_abstract(abs_tuple->elements()[LongToSize(idx)]);
     } else {
       item_node->set_abstract(abs);
     }
