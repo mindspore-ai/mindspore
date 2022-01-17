@@ -32,6 +32,10 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
                             int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
                             InputTransFunc func);
 
+void WinogradInputTransformOptStep(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
+                                   int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
+                                   InputTransStepFunc func);
+
 void WinogradOutputNHWCTransform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
                                  int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
                                  OutputTransFunc func);

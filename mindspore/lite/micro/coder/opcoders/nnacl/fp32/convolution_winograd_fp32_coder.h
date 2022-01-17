@@ -22,6 +22,7 @@
 #include <vector>
 #include "coder/opcoders/base/conv2d_base_coder.h"
 #include "nnacl/conv_parameter.h"
+#include "wrapper/fp32/conv_winograd_fp32_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
@@ -68,8 +69,7 @@ class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
   float *gemm_out_{nullptr};
   float *col_buffer_{nullptr};
 
-  std::string in_func_;
-  std::string out_func_;
+  TransFuncStr trans_func_str_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CONVOLUTION_WINOGRAD_FP32_CODER_H_

@@ -157,4 +157,8 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceWrappe
                  splice_param.src_to_dst_row_offset);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransFuncStr trans_func_str) {
+  CodeBaseStruct("TransFuncList", name, trans_func_str.in_func_, nullptr, nullptr, trans_func_str.out_func_);
+}
+
 }  // namespace mindspore::lite::micro::nnacl

@@ -28,8 +28,20 @@ extern "C" {
 #endif
 typedef void (*InputTransFunc)(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
+typedef void (*InputTransStepFunc)(const float *src_data, float *dst_data, int src_step, int dst_step,
+                                   int dst_row_step);
+
+typedef void (*InputTransPackFunc)(float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
 typedef void (*OutputTransFunc)(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c);
+
+typedef struct TransFuncList {
+  InputTransFunc in_func_;
+  InputTransStepFunc in_step_func_;
+  InputTransPackFunc in_pack_func_;
+  OutputTransFunc out_func_;
+} TransFuncList;
 
 #define Load16Data                                \
   src[0] = MS_LDQ_F32(src_data + 0 * src_step);   \
@@ -153,13 +165,65 @@ typedef void (*OutputTransFunc)(const float *src_data, float *dst_data, const fl
   src[62] = MS_LDQ_F32(src_data + 62 * src_step); \
   src[63] = MS_LDQ_F32(src_data + 63 * src_step);
 
+#define LOAD_LINE_DATA(line)                                                               \
+  MS_FLOAT32X4 s##line##0 = MS_LDQ_F32(src_ptr + line * src_point_stride + 0 * pack_tile); \
+  MS_FLOAT32X4 s##line##1 = MS_LDQ_F32(src_ptr + line * src_point_stride + 1 * pack_tile); \
+  MS_FLOAT32X4 s##line##2 = MS_LDQ_F32(src_ptr + line * src_point_stride + 2 * pack_tile);
+
+#define TRANSPOSE_12x4                                     \
+  MS_FLOAT32X4 s0 = MS_LDQ_F32(src_ptr + 0 * pack_tile);   \
+  MS_FLOAT32X4 s3 = MS_LDQ_F32(src_ptr + 1 * pack_tile);   \
+  MS_FLOAT32X4 s6 = MS_LDQ_F32(src_ptr + 2 * pack_tile);   \
+  MS_FLOAT32X4 s9 = MS_LDQ_F32(src_ptr + 3 * pack_tile);   \
+  MS_FLOAT32X4 s1 = MS_LDQ_F32(src_ptr + 4 * pack_tile);   \
+  MS_FLOAT32X4 s4 = MS_LDQ_F32(src_ptr + 5 * pack_tile);   \
+  MS_FLOAT32X4 s7 = MS_LDQ_F32(src_ptr + 6 * pack_tile);   \
+  MS_FLOAT32X4 s10 = MS_LDQ_F32(src_ptr + 7 * pack_tile);  \
+  MS_FLOAT32X4 s2 = MS_LDQ_F32(src_ptr + 8 * pack_tile);   \
+  MS_FLOAT32X4 s5 = MS_LDQ_F32(src_ptr + 9 * pack_tile);   \
+  MS_FLOAT32X4 s8 = MS_LDQ_F32(src_ptr + 10 * pack_tile);  \
+  MS_FLOAT32X4 s11 = MS_LDQ_F32(src_ptr + 11 * pack_tile); \
+  transpose4(&s0, &s3, &s6, &s9);                          \
+  transpose4(&s1, &s4, &s7, &s10);                         \
+  transpose4(&s2, &s5, &s8, &s11);                         \
+  MS_STQ_F32(src_ptr + 0 * pack_tile, s0);                 \
+  MS_STQ_F32(src_ptr + 1 * pack_tile, s1);                 \
+  MS_STQ_F32(src_ptr + 2 * pack_tile, s2);                 \
+  MS_STQ_F32(src_ptr + 3 * pack_tile, s3);                 \
+  MS_STQ_F32(src_ptr + 4 * pack_tile, s4);                 \
+  MS_STQ_F32(src_ptr + 5 * pack_tile, s5);                 \
+  MS_STQ_F32(src_ptr + 6 * pack_tile, s6);                 \
+  MS_STQ_F32(src_ptr + 7 * pack_tile, s7);                 \
+  MS_STQ_F32(src_ptr + 8 * pack_tile, s8);                 \
+  MS_STQ_F32(src_ptr + 9 * pack_tile, s9);                 \
+  MS_STQ_F32(src_ptr + 10 * pack_tile, s10);               \
+  MS_STQ_F32(src_ptr + 11 * pack_tile, s11);
+
 InputTransFunc GetInputTransFunc(int input_unit);
+
+#ifdef ENABLE_ARM64
+InputTransStepFunc GetInputTransStepFunc(int input_unit);
+
+InputTransPackFunc GetInputTransPackFunc(int input_unit);
+#endif
 
 void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
+void InputTransform4x4Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step);
+
+void InputTransform4x4Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
 void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
+void InputTransform6x6Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step);
+
+void InputTransform6x6Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
 void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform8x8Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step);
+
+void InputTransform8x8Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
 
 OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit, ActType act_type);
 

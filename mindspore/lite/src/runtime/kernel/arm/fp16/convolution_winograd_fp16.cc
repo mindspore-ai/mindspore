@@ -119,21 +119,40 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
+  opt_input_trans_ = reinterpret_cast<float16_t *>(
+    ctx_->allocator->Malloc(thread_count_ * row_tile_ * input_unit_ * input_unit_ *
+                            UP_ROUND(conv_param_->input_channel_, C8NUM) * sizeof(float16_t)));
+  if (opt_input_trans_ == nullptr) {
+    MS_LOG(ERROR) << "malloc opt_input_trans_ failed.";
+    return RET_ERROR;
+  }
+
   tmp_buffer_address_list_[0] = trans_input_;
   tmp_buffer_address_list_[1] = gemm_out_;
   tmp_buffer_address_list_[2] = tmp_data_;
   tmp_buffer_address_list_[3] = col_buffer_;
+  tmp_buffer_address_list_[4] = opt_input_trans_;
   return RET_OK;
 }
 
 int ConvolutionWinogradFP16CPUKernel::ConfigInputOutput() {
-  in_func_ = GetInputTransFp16Func(input_unit_);
-  if (in_func_ == nullptr) {
+  trans_func_.in_func_ = GetInputTransFp16Func(input_unit_);
+  if (trans_func_.in_func_ == nullptr) {
     MS_LOG(ERROR) << "in_func_ is null.";
     return RET_ERROR;
   }
-  out_func_ = GetOutputTransFp16Func(input_unit_, output_unit_, conv_param_->act_type_);
-  if (out_func_ == nullptr) {
+#ifdef ENABLE_ARM64
+  trans_func_.in_step_func_ = GetInputTransStepFp16Func(input_unit_);
+  if (trans_func_.in_step_func_ == nullptr) {
+    MS_LOG(DEBUG) << "in_step_func_ is null.";
+  }
+  trans_func_.in_pack_func_ = GetInputTransPackFp16Func(input_unit_);
+  if (trans_func_.in_pack_func_ == nullptr) {
+    MS_LOG(DEBUG) << "in_pack_func_ is null.";
+  }
+#endif
+  trans_func_.out_func_ = GetOutputTransFp16Func(input_unit_, output_unit_, conv_param_->act_type_);
+  if (trans_func_.out_func_ == nullptr) {
     MS_LOG(ERROR) << "out_func_ is null.";
     return RET_ERROR;
   }
@@ -219,7 +238,7 @@ int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
   }
   ConvWinogardFp16(input_ptr, reinterpret_cast<float16_t *>(packed_weight_),
                    reinterpret_cast<const float16_t *>(bias_data_), output_ptr, tmp_buffer_address_list_, task_id,
-                   conv_param_, in_func_, out_func_);
+                   conv_param_, trans_func_);
   return RET_OK;
 }
 

@@ -17,6 +17,59 @@
 #include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/op_base.h"
 
+void PrepareTransInput(const float *src_data, float *dst_data, int interval_x_s, int interval_x_e, int interval_y_s,
+                       int interval_y_e, int real_c, const ConvParameter *conv_param) {
+  int input_unit = conv_param->input_unit_;
+  int in_channel = conv_param->input_channel_;
+  int input_w = conv_param->input_w_;
+#ifdef ENABLE_AVX
+  int channel_tile = C8NUM;
+#else
+  int channel_tile = C4NUM;
+#endif
+  // clear tmp buffer
+  if (interval_x_e - interval_x_s != input_unit || interval_y_e - interval_y_s != input_unit) {
+    memset(dst_data, 0, input_unit * input_unit * channel_tile * (int)(sizeof(float)));
+  }
+
+  // get real input block with padding
+  if (real_c == channel_tile) {
+    for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+      int src_y_offset = (interval * input_w + interval_x_s) * in_channel;
+      int dst_y_offset = interval * input_unit * channel_tile + interval_x_s * channel_tile;
+      for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+        int src_x_offset = src_y_offset + j * in_channel;
+        int dst_x_offset = dst_y_offset + j * channel_tile;
+        const float *src_addr = src_data + src_x_offset;
+        float *dst_addr = dst_data + dst_x_offset;
+#ifdef ENABLE_AVX
+        MS_ST256_F32(dst_addr, MS_LD256_F32(src_addr));
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
+        MS_STQ_F32(dst_addr, MS_LDQ_F32(src_addr));
+#else
+        for (int k = 0; k < channel_tile; k++) {
+          dst_addr[k] = src_addr[k];
+        }
+#endif
+      }  // interval x loop
+    }    // interval y loop
+  } else {
+    for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+      int src_y_offset = (interval * input_w + interval_x_s) * in_channel;
+      int dst_y_offset = interval * input_unit * channel_tile + interval_x_s * channel_tile;
+      for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+        int src_x_offset = src_y_offset + j * in_channel;
+        int dst_x_offset = dst_y_offset + j * channel_tile;
+        const float *src_addr = src_data + src_x_offset;
+        float *dst_addr = dst_data + dst_x_offset;
+        for (int k = 0; k < real_c; k++) {
+          dst_addr[k] = src_addr[k];
+        }
+      }  // interval x loop
+    }    // interval y loop
+  }
+}
+
 // fp32 conv winograd
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
                             int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
@@ -25,11 +78,11 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
 #ifdef ENABLE_AVX
-  int tile = C8NUM;
+  int channel_tile = C8NUM;
 #else
-  int tile = C4NUM;
+  int channel_tile = C4NUM;
 #endif
-  int ic4 = UP_DIV(in_channel, tile);
+  int ic4 = UP_DIV(in_channel, channel_tile);
   int pad_h = conv_param->pad_u_;
   int pad_w = conv_param->pad_l_;
   int input_h = conv_param->input_h_;
@@ -49,54 +102,61 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
     int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic4; ic++) {
-      // clear tmp buffer
-      memset(tmp_data, 0, input_unit * input_unit * tile * (int)(sizeof(float)));
+      int real_c = in_channel - ic * channel_tile;
+      real_c = real_c > channel_tile ? channel_tile : real_c;
+      const float *src_data = input_data + src_plane_offset + ic * channel_tile;
+      PrepareTransInput(src_data, tmp_data, interval_x_s, interval_x_e, interval_y_s, interval_y_e, real_c, conv_param);
 
-      int real_c = in_channel - ic * tile;
-      real_c = real_c > tile ? tile : real_c;
-      int src_ic4_offset = src_plane_offset + ic * tile;
-      // get real input block with padding
-      if (real_c == tile) {
-        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-          int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * tile + interval_x_s * tile;
-          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-            int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * tile;
-            float *src_addr = (float *)(input_data) + src_x_offset;
-            float *dst_addr = tmp_data + dst_x_offset;
-#ifdef ENABLE_AVX
-            MS_ST256_F32(dst_addr, MS_LD256_F32(src_addr));
-#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
-            MS_STQ_F32(dst_addr, MS_LDQ_F32(src_addr));
-#else
-            for (int k = 0; k < tile; k++) {
-              dst_addr[k] = src_addr[k];
-            }
-#endif
-          }  // interval x loop
-        }    // interval y loop
-      } else {
-        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-          int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * tile + interval_x_s * tile;
-          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-            int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * tile;
-            float *src_addr = (float *)(input_data) + src_x_offset;
-            float *dst_addr = tmp_data + dst_x_offset;
-            for (int k = 0; k < real_c; k++) {
-              dst_addr[k] = src_addr[k];
-            }
-          }  // interval x loop
-        }    // interval y loop
-      }
       // input transform
       const int tile_num = C12NUM;
-      int dst_ic4_offset = dst_plane_offset + ic * tile;
+      int dst_ic4_offset = dst_plane_offset + ic * channel_tile;
       int dst_step = tile_num * in_channel;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
-      func(tmp_data, trans_input_ptr, tile, dst_step, real_c);
+      func(tmp_data, trans_input_ptr, channel_tile, dst_step, real_c);
+    }
+    out_tile_index++;
+  }  // cal_tile_num loop
+}
+
+// Only support arm64
+void WinogradInputTransformOptStep(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
+                                   int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
+                                   InputTransStepFunc func) {
+  int input_unit = conv_param->input_unit_;
+  int output_unit = conv_param->output_unit_;
+  int in_channel = conv_param->input_channel_;
+  int channel_tile = C4NUM;
+  int ic4 = UP_DIV(in_channel, channel_tile);
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
+  int input_h = conv_param->input_h_;
+  int input_w = conv_param->input_w_;
+  NNACL_CHECK_ZERO_RETURN(out_w_block_num);
+
+  for (int c = 0; c < cal_num; c++) {  // actual tiled number
+    int src_x_s = (out_tile_index % out_w_block_num) * output_unit - pad_w;
+    int src_y_s = (out_tile_index / out_w_block_num) * output_unit - pad_h;
+    int interval_x_s = src_x_s > 0 ? 0 : -src_x_s;
+    int interval_y_s = src_y_s > 0 ? 0 : -src_y_s;
+    int src_x_e = src_x_s + input_unit;
+    int src_y_e = src_y_s + input_unit;
+    int interval_x_e = src_x_e < input_w ? input_unit : (input_w - src_x_s);
+    int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
+
+    int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
+    int dst_plane_offset = c * channel_tile;
+    for (int ic = 0; ic < ic4; ic++) {
+      int real_c = in_channel - ic * channel_tile;
+      real_c = real_c > channel_tile ? channel_tile : real_c;
+      const float *src_data = input_data + src_plane_offset + ic * channel_tile;
+      PrepareTransInput(src_data, tmp_data, interval_x_s, interval_x_e, interval_y_s, interval_y_e, real_c, conv_param);
+
+      // input transform
+      const int block_tile = C12NUM;
+      int dst_ic8_offset = dst_plane_offset + ic * block_tile * input_unit * input_unit * channel_tile;
+      size_t dst_step = input_unit * block_tile * channel_tile;
+      float *trans_input_ptr = trans_input + dst_ic8_offset;
+      func(tmp_data, trans_input_ptr, channel_tile, dst_step, block_tile * channel_tile);
     }
     out_tile_index++;
   }  // cal_tile_num loop

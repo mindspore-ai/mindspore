@@ -29,8 +29,21 @@ extern "C" {
 typedef void (*InputTransFp16Func)(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
                                    int real_c);
 
+typedef void (*InputTransStepFp16Func)(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                                       int dst_row_step);
+
+typedef void (*InputTransPackFp16Func)(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                                       int real_c);
+
 typedef void (*OutputTransFp16Func)(const float16_t *src_data, float16_t *dst_data, const float16_t *bias_data,
                                     int src_step, int dst_step, int out_c, int r_w, int r_h, int r_c);
+
+typedef struct TransFp16FuncList {
+  InputTransFp16Func in_func_;
+  InputTransStepFp16Func in_step_func_;
+  InputTransPackFp16Func in_pack_func_;
+  OutputTransFp16Func out_func_;
+} TransFp16FuncList;
 
 #define Load16DataFp16                           \
   src[0] = vld1q_f16(src_data + 0 * src_step);   \
@@ -276,13 +289,76 @@ typedef void (*OutputTransFp16Func)(const float16_t *src_data, float16_t *dst_da
   src[62] = vld1_f16(src_data + 62 * src_step); \
   src[63] = vld1_f16(src_data + 63 * src_step);
 
+#define LOAD_LINE_DATA_FP16(line)                                                        \
+  float16x8_t s##line##0 = vld1q_f16(src_ptr + line * src_point_stride + 0 * pack_tile); \
+  float16x8_t s##line##1 = vld1q_f16(src_ptr + line * src_point_stride + 1 * pack_tile);
+
+#define TRANSPOSE_16x8                                   \
+  float16x8_t s0 = vld1q_f16(src_ptr + 0 * pack_tile);   \
+  float16x8_t s2 = vld1q_f16(src_ptr + 1 * pack_tile);   \
+  float16x8_t s4 = vld1q_f16(src_ptr + 2 * pack_tile);   \
+  float16x8_t s6 = vld1q_f16(src_ptr + 3 * pack_tile);   \
+  float16x8_t s8 = vld1q_f16(src_ptr + 4 * pack_tile);   \
+  float16x8_t s10 = vld1q_f16(src_ptr + 5 * pack_tile);  \
+  float16x8_t s12 = vld1q_f16(src_ptr + 6 * pack_tile);  \
+  float16x8_t s14 = vld1q_f16(src_ptr + 7 * pack_tile);  \
+  float16x8_t s1 = vld1q_f16(src_ptr + 8 * pack_tile);   \
+  float16x8_t s3 = vld1q_f16(src_ptr + 9 * pack_tile);   \
+  float16x8_t s5 = vld1q_f16(src_ptr + 10 * pack_tile);  \
+  float16x8_t s7 = vld1q_f16(src_ptr + 11 * pack_tile);  \
+  float16x8_t s9 = vld1q_f16(src_ptr + 12 * pack_tile);  \
+  float16x8_t s11 = vld1q_f16(src_ptr + 13 * pack_tile); \
+  float16x8_t s13 = vld1q_f16(src_ptr + 14 * pack_tile); \
+  float16x8_t s15 = vld1q_f16(src_ptr + 15 * pack_tile); \
+  transpose8(&s0, &s2, &s4, &s6, &s8, &s10, &s12, &s14); \
+  transpose8(&s1, &s3, &s5, &s7, &s9, &s11, &s13, &s15); \
+  vst1q_f16(src_ptr + 0 * pack_tile, s0);                \
+  vst1q_f16(src_ptr + 1 * pack_tile, s1);                \
+  vst1q_f16(src_ptr + 2 * pack_tile, s2);                \
+  vst1q_f16(src_ptr + 3 * pack_tile, s3);                \
+  vst1q_f16(src_ptr + 4 * pack_tile, s4);                \
+  vst1q_f16(src_ptr + 5 * pack_tile, s5);                \
+  vst1q_f16(src_ptr + 6 * pack_tile, s6);                \
+  vst1q_f16(src_ptr + 7 * pack_tile, s7);                \
+  vst1q_f16(src_ptr + 8 * pack_tile, s8);                \
+  vst1q_f16(src_ptr + 9 * pack_tile, s9);                \
+  vst1q_f16(src_ptr + 10 * pack_tile, s10);              \
+  vst1q_f16(src_ptr + 11 * pack_tile, s11);              \
+  vst1q_f16(src_ptr + 12 * pack_tile, s12);              \
+  vst1q_f16(src_ptr + 13 * pack_tile, s13);              \
+  vst1q_f16(src_ptr + 14 * pack_tile, s14);              \
+  vst1q_f16(src_ptr + 15 * pack_tile, s15);
+
 InputTransFp16Func GetInputTransFp16Func(int input_unit);
+
+#ifdef ENABLE_ARM64
+InputTransStepFp16Func GetInputTransStepFp16Func(int input_unit);
+
+InputTransPackFp16Func GetInputTransPackFp16Func(int input_unit);
+#endif
 
 void InputTransform4x4UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
 
 void InputTransform6x6UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
 
 void InputTransform8x8UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform4x4StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step);
+
+void InputTransform6x6StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step);
+
+void InputTransform8x8StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step);
+
+#ifdef ENABLE_ARM64
+void InputTransform4x4Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform6x6Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform8x8Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c);
+#endif
 
 OutputTransFp16Func GetOutputTransFp16Func(int input_unit, int output_unit, ActType act_type);
 
