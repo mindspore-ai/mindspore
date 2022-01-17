@@ -48,6 +48,7 @@
 #define MS_ST128_EPI32(src1, src2) _mm_storeu_si128((__m128i *)(src1), src2)
 #define MS_SUBQ_F32 _mm_sub_ps
 #define MS_SUB128_F32 _mm_sub_ps
+#define MS_SUB128_EPI32 _mm_sub_epi32
 #define MS_MAXQ_F32 _mm_max_ps
 #define MS_MAXQ_EPI32 _mm_max_epi32
 #define MS_MAX128_F32 _mm_max_ps

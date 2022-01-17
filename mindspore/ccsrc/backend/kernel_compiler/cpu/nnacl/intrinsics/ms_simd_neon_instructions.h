@@ -38,6 +38,7 @@
 #define MS_MOV128_EPI32 vmovq_n_s32
 #define MS_SUBQ_F32 vsubq_f32
 #define MS_SUB128_F32 vsubq_f32
+#define MS_SUB128_EPI32 vsubq_s32
 #define MS_MLAQ_F32(src1, src2, src3) vmlaq_f32(src1, src2, src3)
 #define MS_STQ_F32 vst1q_f32
 #define MS_ST128_F32 vst1q_f32
