@@ -258,23 +258,23 @@ class SummaryRecord:
             value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
                 The value to store.
 
-                - The data type of value should be 'GraphProto' (see mindspore/ccsrc/anf_ir.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>) object
+                - The data type of value should be 'GraphProto' (see `mindspore/ccsrc/anf_ir.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_) object
                   when the plugin is 'graph'.
                 - The data type of value should be 'Tensor' object when the plugin is 'scalar', 'image', 'tensor'
                   or 'histogram'.
                 - The data type of value should be a 'TrainLineage' object when the plugin is 'train_lineage',
-                  see mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>.
+                  see `mindspore/ccsrc/lineage.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'EvaluationLineage' object when the plugin is 'eval_lineage',
-                  see mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>.
+                  see `mindspore/ccsrc/lineage.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'DatasetGraph' object when the plugin is 'dataset_graph',
-                  see mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>.
+                  see `mindspore/ccsrc/lineage.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
-                  see mindspore/ccsrc/lineage.proto
-                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>.
+                  see `mindspore/ccsrc/lineage.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
 
         Raises:
             ValueError: `plugin` is not in the optional value。
