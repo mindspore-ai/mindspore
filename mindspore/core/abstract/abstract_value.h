@@ -147,7 +147,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Set the function, which prints the debug info.
   ///
   /// \param[in] trace_node_provider The function.
-  static void set_trace_node_provider(TraceNodeProvider trace_node_provider) {
+  static void set_trace_node_provider(const TraceNodeProvider &trace_node_provider) {
     trace_node_provider_ = trace_node_provider;
   }
 

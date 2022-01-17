@@ -60,7 +60,7 @@ abstract::ShapePtr AudioSpectrogramInferShape(const PrimitivePtr &primitive,
   }
   auto stride_size = GetValue<int64_t>(primitive->GetAttr(kStride));
   if (stride_size < 1) {
-    MS_LOG(ERROR) << "stride must be positive, now is " << stride_size;
+    MS_LOG(EXCEPTION) << "stride must be positive, now is " << stride_size;
   }
   std::vector<int64_t> infer_shape;
   infer_shape.push_back(input_shape[1]);
