@@ -16,11 +16,11 @@
 import pytest
 import numpy as onp
 import scipy as osp
-from scipy.sparse.linalg import cg as osp_cg
+import scipy.sparse.linalg
+
 import mindspore.scipy as msp
 from mindspore import context
 from mindspore.common import Tensor
-from mindspore.scipy.sparse.linalg import cg as msp_cg
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_full_rank_matrix
 
 
@@ -61,7 +61,7 @@ def test_cg_against_scipy(dtype_tol, shape, preconditioner, maxiter):
     A = create_sym_pos_matrix(shape, dtype)
     b = onp.random.random(shape[:1]).astype(dtype)
     M = _fetch_preconditioner(preconditioner, A)
-    osp_res = osp_cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+    osp_res = scipy.sparse.linalg.cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
 
     A = Tensor(A)
     b = Tensor(b)
@@ -69,11 +69,11 @@ def test_cg_against_scipy(dtype_tol, shape, preconditioner, maxiter):
 
     # using PYNATIVE MODE
     context.set_context(mode=context.PYNATIVE_MODE)
-    msp_res_dyn = msp_cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+    msp_res_dyn = msp.sparse.linalg.cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
 
     # using GRAPH MODE
     context.set_context(mode=context.GRAPH_MODE)
-    msp_res_sta = msp_cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+    msp_res_sta = msp.sparse.linalg.cg(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
 
     kw = {"atol": tol, "rtol": tol}
     onp.testing.assert_allclose(osp_res, msp_res_dyn.asnumpy(), **kw)
@@ -99,11 +99,11 @@ def test_cg_against_numpy(dtype, shape):
 
     # using PYNATIVE MODE
     context.set_context(mode=context.PYNATIVE_MODE)
-    actual_dyn, _ = msp_cg(Tensor(A), Tensor(b))
+    actual_dyn, _ = msp.sparse.linalg.cg(Tensor(A), Tensor(b))
 
     # using GRAPH MODE
     context.set_context(mode=context.GRAPH_MODE)
-    actual_sta, _ = msp_cg(Tensor(A), Tensor(b))
+    actual_sta, _ = msp.sparse.linalg.cg(Tensor(A), Tensor(b))
 
     kw = {"atol": 1e-5, "rtol": 1e-5}
     onp.testing.assert_allclose(expected, actual_dyn.asnumpy(), **kw)
@@ -229,3 +229,41 @@ def test_graph_batched_gmres_against_scipy(n, dtype, tol, preconditioner, maxite
     osp_x, _ = osp.sparse.linalg.gmres(a, b, maxiter=maxiter, atol=0.0)
     msp_x, _ = msp.sparse.linalg.gmres(tensor_a, tensor_b, maxiter=maxiter, M=M, atol=0.0, solve_method='batched')
     onp.testing.assert_almost_equal(msp_x.asnumpy(), osp_x, decimal=tol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype_tol', [(onp.float64, 1e-10)])
+@pytest.mark.parametrize('shape', [(4, 4), (7, 7)])
+@pytest.mark.parametrize('preconditioner', [None, 'identity', 'exact', 'random'])
+@pytest.mark.parametrize('maxiter', [1, 3])
+def test_bicgstab_against_scipy(dtype_tol, shape, preconditioner, maxiter):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for bicgstab
+    Expectation: the result match scipy
+    """
+    onp.random.seed(0)
+    dtype, tol = dtype_tol
+    A = create_full_rank_matrix(shape, dtype)
+    b = onp.random.random(shape[:1]).astype(dtype)
+    M = _fetch_preconditioner(preconditioner, A)
+    osp_res = scipy.sparse.linalg.bicgstab(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+
+    A = Tensor(A)
+    b = Tensor(b)
+    M = Tensor(M) if M is not None else M
+
+    # using PYNATIVE MODE
+    context.set_context(mode=context.PYNATIVE_MODE)
+    msp_res_dyn = msp.sparse.linalg.bicgstab(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+
+    # using GRAPH MODE
+    context.set_context(mode=context.GRAPH_MODE)
+    msp_res_sta = msp.sparse.linalg.bicgstab(A, b, M=M, maxiter=maxiter, atol=tol, tol=tol)[0]
+
+    kw = {"atol": tol, "rtol": tol}
+    onp.testing.assert_allclose(osp_res, msp_res_dyn.asnumpy(), **kw)
+    onp.testing.assert_allclose(osp_res, msp_res_sta.asnumpy(), **kw)

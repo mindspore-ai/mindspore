@@ -20,7 +20,7 @@ from ... import numpy as mnp
 from ...common import Tensor
 
 from .line_search import LineSearch
-from ..utils import _to_scalar, grad
+from ..utils import _to_scalar, grad, _norm
 from ..utils import _INT_ZERO, _INT_ONE, _BOOL_FALSE
 
 
@@ -74,13 +74,6 @@ class MinimizeBfgs(nn.Cell):
         self.line_search = LineSearch(func)
 
     def construct(self, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
-        def _my_norm(x, ord_=None):
-            if ord_ == mnp.inf:
-                res = mnp.max(mnp.abs(x))
-            else:
-                res = mnp.sqrt(mnp.sum(x ** 2))
-            return res
-
         if maxiter is None:
             maxiter = mnp.size(x0) * 200
 
@@ -90,7 +83,7 @@ class MinimizeBfgs(nn.Cell):
         g_0 = grad(self.func)(x0)
 
         state = {
-            "converged": _my_norm(g_0, ord_=mnp.inf) < gtol,
+            "converged": _norm(g_0, ord_=mnp.inf) < gtol,
             "failed": _BOOL_FALSE,
             "k": _INT_ZERO,
             "nfev": _INT_ONE,
@@ -100,7 +93,7 @@ class MinimizeBfgs(nn.Cell):
             "f_k": f_0,
             "g_k": g_0,
             "H_k": I,
-            "old_old_fval": f_0 + _my_norm(g_0) / 2,
+            "old_old_fval": f_0 + _norm(g_0) / 2,
             "status": _INT_ZERO,
             "line_search_status": _INT_ZERO
         }
@@ -128,7 +121,7 @@ class MinimizeBfgs(nn.Cell):
             y_k = g_kp1 - state["g_k"]
 
             state["old_old_fval"] = state["f_k"]
-            state["converged"] = _my_norm(g_kp1, ord_=norm) < gtol
+            state["converged"] = _norm(g_kp1, ord_=norm) < gtol
             state["x_k"] = x_kp1
             state["f_k"] = f_kp1
             state["g_k"] = g_kp1

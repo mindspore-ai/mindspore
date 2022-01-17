@@ -18,7 +18,7 @@ from ... import numpy as mnp
 from ...ops import functional as F
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps, float_types
+from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps, float_types, _norm
 from ..utils_const import _raise_value_error, _raise_type_error
 
 
@@ -289,21 +289,14 @@ class CG(nn.Cell):
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
 
-        def _my_norm(x, ord_=None):
-            if ord_ == mnp.inf:
-                res = mnp.max(mnp.abs(x))
-            else:
-                res = mnp.sqrt(mnp.sum(x ** 2))
-            return res
-
-        atol_ = mnp.maximum(atol, tol * _my_norm(b))
+        atol_ = mnp.maximum(atol, tol * _norm(b))
 
         r = b - A(x0)
         z = p = M(r)
         rho = mnp.dot(r, z)
         k = _INT_ZERO
         x = x0
-        while k < maxiter and _my_norm(r) > atol_:
+        while k < maxiter and _norm(r) > atol_:
             q = A(p)
             alpha = rho / mnp.dot(p, q)
             x = x + alpha * p
@@ -317,7 +310,7 @@ class CG(nn.Cell):
 
             k += 1
 
-        return x
+        return x, F.select(_norm(r) > atol_, k, _INT_ZERO)
 
 
 def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
@@ -393,5 +386,132 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     if (F.dtype(b) not in float_types) or (F.dtype(b) != F.dtype(x0)) or (F.dtype(b) != F.dtype(A)):
         _raise_type_error('Input A, x0 and b must have same float types')
 
-    x = CG(A, M)(b, x0, tol, atol, maxiter)
-    return x, None
+    x, info = CG(A, M)(b, x0, tol, atol, maxiter)
+    return x, info
+
+
+class BiCGStab(nn.Cell):
+    """Figure 2.10 from Barrett R, et al. 'Templates for the sulution of linear systems:
+    building blocks for iterative methods', 1994, pg. 24-25
+    """
+
+    def __init__(self, A, M):
+        super(BiCGStab, self).__init__()
+        self.A = A
+        self.M = M
+
+    def construct(self, b, x0, tol, atol, maxiter):
+        A = _normalize_matvec(self.A)
+        M = _normalize_matvec(self.M)
+
+        _FLOAT_ONE = _to_tensor(1., dtype=b.dtype)
+        atol_ = mnp.maximum(atol, tol * _norm(b))
+
+        r = r_tilde = v = p = b - A(x0)
+        rho = alpha = omega = _FLOAT_ONE
+        k = _INT_ZERO
+        x = x0
+        while k < maxiter:
+            rho_ = mnp.dot(r_tilde, r)
+            if rho_ == 0. or omega == 0.:
+                k = _INT_NEG_ONE
+                break
+
+            beta = rho_ / rho * (alpha / omega)
+            p = r + beta * (p - omega * v)
+            p_hat = M(p)
+            v = A(p_hat)
+            alpha = rho_ / mnp.dot(r_tilde, v)
+            s = r - alpha * v
+            x = x + alpha * p_hat
+            if _norm(s) <= atol_:
+                break
+
+            s_hat = M(s)
+            t = A(s_hat)
+            omega = mnp.dot(t, s) / mnp.dot(t, t)
+            x = x + omega * s_hat
+            r = s - omega * t
+            if _norm(r) <= atol_:
+                break
+
+            rho = rho_
+            k += 1
+
+        return x, F.select(k == _INT_NEG_ONE or k >= maxiter, k, _INT_ZERO)
+
+
+def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
+    """Use Bi-Conjugate Gradient Stable iteration to solve :math:`Ax = b`.
+
+    The numerics of MindSpore's `bicgstab` should exact match SciPy's
+    `bicgstab` (up to numerical precision).
+
+    As with `cg`, derivatives of `bicgstab` are implemented via implicit
+    differentiation with another `bicgstab` solve, rather than by
+    differentiating *through* the solver. They will be accurate only if
+    both solves converge.
+
+    Note:
+        - In the future, MindSpore will report the number of iterations when convergence
+          is not achieved, like SciPy. Currently it is None, as a Placeholder.
+
+        - `bicgstab` is not supported on Windows platform yet.
+
+    Args:
+        A (Union[Tensor, function]): 2D Tensor or function that calculates the linear
+            map (matrix-vector product) :math:`Ax` when called like :math:`A(x)`.
+            As function, `A` must return Tensor with the same structure and shape as its input matrix.
+        b (Tensor): Right hand side of the linear system representing a single vector. Can be
+            stored as a Tensor.
+        x0 (Tensor): Starting guess for the solution. Must have the same structure as `b`. Default: None.
+        tol (float, optional): Tolerances for convergence, :math:`norm(residual) <= max(tol*norm(b), atol)`.
+            We do not implement SciPy's "legacy" behavior, so MindSpore's tolerance will
+            differ from SciPy unless you explicitly pass `atol` to SciPy's `bicgstab`. Default: 1e-5.
+        atol (float, optional): The same as `tol`. Default: 0.0.
+        maxiter (int): Maximum number of iterations.  Iteration will stop after maxiter
+            steps even if the specified tolerance has not been achieved. Default: None.
+        M (Union[Tensor, function]): Preconditioner for A.  The preconditioner should approximate the
+            inverse of A. Effective preconditioning dramatically improves the
+            rate of convergence, which implies that fewer iterations are needed
+            to reach a given error tolerance. Default: None.
+
+    Returns:
+        - Tensor, the converged solution. Has the same structure as `b`.
+        - None, placeholder for convergence information.
+
+    Raises:
+        ValueError: If `x0` and `b` don't have the same structure.
+        TypeError: If `A`, `x0` and `b` don't have the same float types(`mstype.float32` or `mstype.float64`).
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.scipy.sparse.linalg import bicgstab
+        >>> A = Tensor(onp.array([[1, 2], [2, 1]], dtype='float32'))
+        >>> b = Tensor(onp.array([1, -1], dtype='float32'))
+        >>> result, _ = bicgstab(A, b)
+        >>> print(result)
+        [-1.  1.]
+    """
+    if x0 is None:
+        x0 = mnp.zeros_like(b)
+
+    if maxiter is None:
+        maxiter = 10 * b.shape[0]
+
+    if M is None:
+        M = lambda x: x
+
+    if x0.shape != b.shape:
+        _raise_value_error(
+            'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
+
+    if (F.dtype(b) not in float_types) or (F.dtype(b) != F.dtype(x0)) or (F.dtype(b) != F.dtype(A)):
+        _raise_type_error('Input A, x0 and b must have same float types')
+
+    x, info = BiCGStab(A, M)(b, x0, tol, atol, maxiter)
+    return x, info
