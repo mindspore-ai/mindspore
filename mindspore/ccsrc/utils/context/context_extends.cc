@@ -15,6 +15,7 @@
  */
 
 #include "utils/context/context_extends.h"
+#include <cstdlib>
 #include <map>
 #include <string>
 #include <memory>
@@ -377,7 +378,12 @@ struct DeviceTypeSetRegister {
   DeviceTypeSetRegister() {
     MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
 #if defined(ENABLE_D)
-      device_type_seter.reset(new (std::nothrow) MsContext("ms", kAscendDevice));
+      auto enable_ge = std::getenv("MS_ENABLE_GE");
+      if (enable_ge != nullptr && std::string(enable_ge) == "1") {
+        device_type_seter.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
+      } else {
+        device_type_seter.reset(new (std::nothrow) MsContext("ms", kAscendDevice));
+      }
 #elif defined(ENABLE_GPU)
       device_type_seter.reset(new (std::nothrow) MsContext("ms", kGPUDevice));
 #else

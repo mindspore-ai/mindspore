@@ -15,6 +15,7 @@
  */
 
 #include "utils/ms_context.h"
+#include <cstdlib>
 #include <thread>
 #include <atomic>
 #include <fstream>
@@ -117,12 +118,19 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
 }
 
 bool MsContext::set_backend_policy(const std::string &policy) {
-  if (policy_map_.find(policy) == policy_map_.end()) {
-    MS_LOG(ERROR) << "invalid backend policy name: " << policy;
+  auto policy_new = policy;
+#if defined(ENABLE_D)
+  auto enable_ge = std::getenv("MS_ENABLE_GE");
+  if (enable_ge != nullptr && std::string(enable_ge) == "1") {
+    policy_new = "ge";
+  }
+#endif
+  if (policy_map_.find(policy_new) == policy_map_.end()) {
+    MS_LOG(ERROR) << "invalid backend policy name: " << policy_new;
     return false;
   }
-  backend_policy_ = policy_map_[policy];
-  MS_LOG(INFO) << "ms set context backend policy:" << policy;
+  backend_policy_ = policy_map_[policy_new];
+  MS_LOG(INFO) << "ms set context backend policy:" << policy_new;
   return true;
 }
 
