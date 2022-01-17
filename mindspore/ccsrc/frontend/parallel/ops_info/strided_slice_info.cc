@@ -42,6 +42,11 @@ Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_val
       return FAILED;
     }
   }
+
+  if (*mask_value != 0) {
+    MS_LOG(INFO) << "For StridedSlice op attr:" << mask_name << ", the value is " << *mask_value;
+  }
+
   return SUCCESS;
 }
 
@@ -78,8 +83,7 @@ Status StridedSliceInfo::GetAttrs() {
       (GetMask(SHRINK_AXIS_MASK, &shrink_axis_mask_) != SUCCESS)) {
     return FAILED;
   }
-  has_mask_ = ((begin_mask_ != 0) || (end_mask_ != 0) || (ellipsis_mask_ != 0) || (new_axis_mask_ != 0) ||
-               (shrink_axis_mask_ != 0));
+  has_mask_ = ((ellipsis_mask_ != 0) || (new_axis_mask_ != 0) || (shrink_axis_mask_ != 0));
 
   if (input_value_.size() != STRIDED_SLICE_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": The size of input value must be " << STRIDED_SLICE_INPUTS_SIZE << ", but got "
