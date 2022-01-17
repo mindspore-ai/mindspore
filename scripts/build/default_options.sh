@@ -29,7 +29,6 @@ init_default_options()
   export RUN_TESTCASES="off"
   export RUN_CPP_ST_TESTS="off"
   export ENABLE_BACKEND=""
-  export TRAIN_MODE="INFER"
   export ENABLE_ASAN="off"
   export ENABLE_PROFILE="off"
   export INC_BUILD="off"

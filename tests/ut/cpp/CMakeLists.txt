@@ -260,12 +260,7 @@ if(MINDSPORE_PROTO_LIST)
 endif()
 
 if(ENABLE_D)
-    if(ENABLE_TRAIN)
-        target_link_libraries(ut_tests PRIVATE graph ge_runner)
-    else()
-        target_link_libraries(ut_tests PRIVATE graph ge_client)
-    endif()
-
+    target_link_libraries(ut_tests PRIVATE graph ge_runner ge_client)
     target_link_libraries(mindspore PRIVATE tsdclient)
 endif()
 

@@ -20,6 +20,7 @@
 #include <memory>
 #include <thread>
 #include "pybind11/pybind11.h"
+#include "utils/config_manager.h"
 #include "utils/ms_utils.h"
 #include "utils/convert_utils_base.h"
 #ifndef NO_DLIB
@@ -194,9 +195,10 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
     (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
-#if ENABLE_TRAIN == 1
-  (*ge_options)["ge.graphRunMode"] = "1";
-#endif
+  if (ConfigManager::GetInstance().training()) {
+    (*ge_options)["ge.graphRunMode"] = "1";
+  }
+
   SetDisableReuseMemoryFlag(ge_options);
   SetHcclOptions(ms_context_ptr, ge_options);
 
