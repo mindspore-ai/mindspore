@@ -54,6 +54,15 @@ message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
 find_required_package(Threads)
 
+# add openmp if the onednn use ms threadpool
+if(USE_MS_THREADPOOL_FOR_DNNL)
+    find_package(OpenMP)
+    if(OPENMP_FOUND)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    else()
+        message(WARNING "OpenMP not found")
+    endif()
+endif()
 
 ## packages used on Linux
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")

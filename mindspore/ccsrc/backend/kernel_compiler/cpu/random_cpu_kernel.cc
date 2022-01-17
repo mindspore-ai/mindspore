@@ -40,9 +40,14 @@ void LaunchStandardNormal(RandomCPUKernel *content, unsigned int seed, const std
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   // multithreading
   size_t lens = outputs[0]->size / sizeof(float);
-  std::default_random_engine random_generator(++seed);
-  auto task = [&seed, &output, &random_generator](size_t start, size_t end) {
-    std::normal_distribution<float> distribution;
+  auto thread_pool = GetActorMgrInnerThreadPool();
+  size_t max_thread_num = thread_pool->GetKernelThreadNum();
+  size_t thread_num = lens < kRandomBlockSize * max_thread_num ? std::ceil(lens / kRandomBlockSize) : max_thread_num;
+  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  std::normal_distribution<float> distribution;
+  auto task = [&](size_t start, size_t end) {
+    auto task_id = start / once_compute_size;
+    std::default_random_engine random_generator(seed + task_id);
     StandardNormal(output, distribution, random_generator, start, end);
   };
   ParallelLaunch(task, lens, kRandomBlockSize, content);

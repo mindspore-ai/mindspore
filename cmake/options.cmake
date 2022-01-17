@@ -30,7 +30,7 @@ option(ENABLE_FAST_HASH_TABLE "Enable use fast hash table instead of std ones" O
 option(USE_LLVM "use llvm" OFF)
 option(USE_MS_THREADPOOL_FOR_DNNL "use ms threadpool for onednn ops" ON)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(USE_MS_THREADPOOL_FOR_DNNL OFF)
 endif()
 
