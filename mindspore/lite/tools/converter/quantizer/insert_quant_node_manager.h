@@ -31,9 +31,9 @@ class InsertQuantNodeManager {
 
   ~InsertQuantNodeManager() = default;
 
-  int InsertQuantDtypeCastPass(const FuncGraphPtr &graph);
+  int InsertQuantDtypeCastNode(const FuncGraphPtr &graph);
 
-  int InsertDynamicQuantPass(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops);
+  int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops);
 
  private:
   ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params);
