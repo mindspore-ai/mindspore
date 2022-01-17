@@ -198,12 +198,10 @@ int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-int InsertQuantNodeManager::InsertDynamicQuantPass(const FuncGraphPtr &graph) {
+int InsertQuantNodeManager::InsertDynamicQuantPass(const FuncGraphPtr &graph,
+                                                   const std::set<PrimitivePtr> &support_dynamic_quant_ops) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
-  const std::set<PrimitivePtr> support_dynamic_quant_ops = {
-    prim::kPrimMatMulFusion,
-  };
   for (auto &cnode : cnodes) {
     auto ret = CheckDataType(cnode, kNumberTypeFloat32);
     if (ret == RET_NO_CHANGE) {

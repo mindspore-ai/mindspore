@@ -143,9 +143,8 @@ int WeightQuantizer::DoMarkWeightQuantizeIfQuantized(const CNodePtr &cnode) {
   }
 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (quant_param_holder->quant_type() == schema::QuantType_QUANT_WEIGHT ||
-      quant_param_holder->quant_type() == schema::QuantType_QUANT_DANAMIC) {
-    // already marked with QuantType_QUANT_WEIGHT or QuantType_QUANT_DANAMIC
+  if (quant_param_holder->quant_type() == schema::QuantType_QUANT_WEIGHT) {
+    // already marked with QuantType_QUANT_WEIGHT
     return RET_OK;
   }
 

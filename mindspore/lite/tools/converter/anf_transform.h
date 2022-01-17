@@ -49,11 +49,7 @@ class AnfTransform {
 
   static int RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
-
-  static void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
-
-  int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
+  static int DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *config);
 
   static bool StoreBuiltinPass(const converter::Flags *config);
 

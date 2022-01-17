@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <deque>
 #include <map>
+#include <tuple>
 #include "nnacl/op_base.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/optimizer_manager.h"
@@ -74,9 +75,7 @@
 #include "tools/optimizer/graph/special_node_postprocess.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
-#include "tools/converter/quantizer/full_quant_quantizer.h"
-#include "tools/converter/quantizer/weight_quantizer.h"
-#include "tools/converter/quantizer/dynamic_quantizer.h"
+#include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "tools/optimizer/fisson/iter_node_outputs.h"
@@ -88,8 +87,7 @@
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl/acl_pass.h"
-#include "tools/converter/quantizer/parameter_tunner.h"
-#include "tools/converter/quantizer/debug_info_manager.h"
+#include "src/common/log_util.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -350,185 +348,12 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   return RET_OK;
 }
 
-void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(all_func_graphs != nullptr);
-  all_func_graphs->insert(func_graph);
-  auto nodes = func_graph->GetOrderedCnodes();
-  std::deque<CNodePtr> to_process{};
-  to_process.insert(to_process.end(), nodes.begin(), nodes.end());
-  while (!to_process.empty()) {
-    auto &cur_cnode = to_process.front();
-    for (auto &input : cur_cnode->inputs()) {
-      if (!IsValueNode<FuncGraph>(input)) {
-        continue;
-      }
-      auto new_fg = GetValueNode<FuncGraphPtr>(input);
-      if (all_func_graphs->find(new_fg) != all_func_graphs->end()) {
-        continue;
-      }
-      all_func_graphs->insert(new_fg);
-      auto new_nodes = new_fg->GetOrderedCnodes();
-      to_process.insert(to_process.end(), new_nodes.begin(), new_nodes.end());
-    }
-    to_process.pop_front();
-  }
-}
-
-int DoFullQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto quantizer = std::make_unique<quant::FullQuantQuantizer>(*config);
-  if (quantizer == nullptr) {
-    MS_LOG(ERROR) << "New FullQuantQuantizer failed";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-    return RET_ERROR;
-  }
-  auto status = quantizer->DoQuantize(old_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "DoQuantization failed " << status;
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int DoWeightQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  double init_scale = config->mixedBitWeightQuantParam.init_scale;
-  if (config->commonQuantParam.bit_num == 0 && config->mixedBitWeightQuantParam.auto_tune) {
-    quant::ParameterOptimizer optimizer;
-    auto status = optimizer.GridSearchForScale(old_graph, const_cast<converter::Flags *>(config), &init_scale);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Grid search with scale failed.";
-      return status;
-    }
-    auto quantizer = std::make_unique<quant::WeightQuantizer>(*config);
-    if (quantizer == nullptr) {
-      MS_LOG(ERROR) << "New WeightQuantizer failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-      return RET_ERROR;
-    }
-    status = static_cast<quant::WeightQuantizer *>(quantizer.get())->DoQuantize(old_graph, init_scale);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "DoQuantization failed " << status;
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return RET_ERROR;
-    }
-  } else {
-    auto quantizer = std::make_unique<quant::WeightQuantizer>(*config);
-    if (quantizer == nullptr) {
-      MS_LOG(ERROR) << "New WeightQuantizer failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-      return RET_ERROR;
-    }
-    auto status = quantizer->DoQuantize(old_graph);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "DoQuantization failed " << status;
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
-int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto quantizer = std::make_unique<quant::DynamicQuantizer>(*config);
-  if (quantizer == nullptr) {
-    MS_LOG(ERROR) << "New DynamicQuantizer failed";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-    return RET_ERROR;
-  }
-  auto status = quantizer->DoQuantize(old_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "DoQuantization failed " << status;
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, const quant::SessionModel &origin) {
-  auto quant = quant::CreateSessionByFuncGraph(old_graph, *config, config->commonQuantParam.thread_num);
-  std::map<std::string, OpParameter *> op_parameters;
-  FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
-  DebugInfoManager manager;
-  CHECK_NULL_RETURN(origin.model);
-  CHECK_NULL_RETURN(origin.session);
-  CHECK_NULL_RETURN(quant.model);
-  CHECK_NULL_RETURN(quant.session);
-  auto status = manager.CompareOriginWithQuant(
-    origin, quant, op_parameters, config->commonQuantParam.debug_info_save_path, config->dataPreProcessParam);
-  auto free_buffer = [&] {
-    delete origin.session;
-    delete origin.model;
-    delete quant.session;
-    delete quant.model;
-    for (auto parameter : op_parameters) {
-      if (parameter.second != nullptr) {
-        free(parameter.second);
-        parameter.second = nullptr;
-      }
-    }
-    op_parameters.clear();
-  };
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Compare origin with quant failed.";
-    free_buffer();
-    return status;
-  }
-  free_buffer();
-  return RET_OK;
-}
-
-int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  // quant
-  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
-    return RET_OK;
-  }
-  int status;
-
-  quant::SessionModel origin;
-  if (config->commonQuantParam.is_debug) {
-    converter::Flags new_flag = *config;
-    new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-    origin = quant::CreateSessionByFuncGraph(old_graph, new_flag, config->commonQuantParam.thread_num);
-  }
-  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
-    status = DoFullQuant(old_graph, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do full quant failed.";
-      return status;
-    }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
-    status = DoWeightQuant(old_graph, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do weight quant failed.";
-      return status;
-    }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_DANAMIC) {
-    status = DoDynamicQuant(old_graph, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do dynamic quant failed.";
-      return status;
-    }
-  }
-  if (config->commonQuantParam.is_debug) {
-    status = DoQuantDebug(old_graph, config, origin);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do quant debug failed.";
-      return status;
-    }
-  }
-  return RET_OK;
-}
-
-int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  std::set<FuncGraphPtr> all_func_graphs{};
-  GetFuncGraphs(old_graph, &all_func_graphs);
-  for (auto &item : all_func_graphs) {
-    auto status = DoSingleGraphQuantize(item, config);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Do Quantize failed.";
-      return status;
-    }
+int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *config) {
+  quant::QuantizationOptimizer optimizer(config);
+  auto ret = optimizer.Run(old_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Post training quantization failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -619,7 +444,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
     return nullptr;
   }
-  status = DoQuantize(old_graph, config);
+  status = DoQuantize(old_graph, const_cast<converter::Flags *>(config));
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";
     return nullptr;
