@@ -715,7 +715,7 @@ inline const PrimitivePtr kPrimWhile = std::make_shared<Primitive>("While");
 inline const PrimitivePtr kPrimPull = std::make_shared<Primitive>("Pull");
 inline const PrimitivePtr kPrimPush = std::make_shared<Primitive>("Push");
 inline const PrimitivePtr kPrimNPUAllocFloatStatus = std::make_shared<Primitive>("NPUAllocFloatStatus");
-inline const PrimitivePtr kPyFunc = std::make_shared<Primitive>("PyFunc");
+inline const PrimitivePtr kPrimPyFunc = std::make_shared<Primitive>("PyFunc");
 
 // Structures
 inline const PrimitivePtr kPrimMakeList = std::make_shared<Primitive>("make_list");
