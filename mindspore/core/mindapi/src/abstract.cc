@@ -18,7 +18,6 @@
 #include "mindapi/src/helper.h"
 #include "abstract/abstract_value.h"
 #include "ir/dtype.h"
-#include "ir/value.h"
 
 namespace mindspore::api {
 using TypeImpl = mindspore::Type;

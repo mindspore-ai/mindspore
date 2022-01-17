@@ -42,14 +42,14 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
   auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("segment_ids_shape", SizeToLong(segment_ids_shape.size()), kGreaterThan, 0,
                                            prim_name);
-  CheckAndConvertUtils::Check("input_x", int64_t(x_shape.size()), kGreaterEqual, "segment_ids_shape",
-                              int64_t(segment_ids_shape.size()), prim_name);
+  CheckAndConvertUtils::Check("input_x", int64_t(x_shape.size()), kGreaterEqual, int64_t(segment_ids_shape.size()),
+                              prim_name);
 
   if ((x_shape.end() != find(x_shape.begin(), x_shape.end(), -1)) &&
       (segment_ids_shape.end() != find(segment_ids_shape.begin(), segment_ids_shape.end(), -1))) {
     size_t size = segment_ids_shape.size();
     for (size_t i = 0; i < size; ++i) {
-      CheckAndConvertUtils::Check("segment_ids_shp", segment_ids_shape[i], kEqual, "x_shape", x_shape[i], prim_name);
+      CheckAndConvertUtils::Check("segment_ids_shp", segment_ids_shape[i], kEqual, x_shape[i], prim_name);
     }
   }
 

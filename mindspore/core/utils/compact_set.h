@@ -61,7 +61,7 @@ class CompactSet {
     return true;
   }
 
-  iterator erase(iterator pos) { return data_.erase(pos); }
+  iterator erase(const iterator &pos) { return data_.erase(pos); }
 
   void clear() { data_.clear(); }
 

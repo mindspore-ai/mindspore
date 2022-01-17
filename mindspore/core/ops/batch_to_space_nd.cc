@@ -47,7 +47,7 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod = out_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
-    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, "crops sum", crops_sum, prim_name);
+    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, crops_sum, prim_name);
     out_shape[i + offset] = x_block_prod - crops_sum;
   }
   if (out_shape[0] % block_shape_prod != 0) {
@@ -65,10 +65,8 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     auto x_block_prod_min = output_min_shape[i + offset] * block_shape[i];
     auto x_block_prod_max = output_max_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
-    CheckAndConvertUtils::Check("x block shape prod min", x_block_prod_min, kGreaterThan, "crops sum", crops_sum,
-                                prim_name);
-    CheckAndConvertUtils::Check("x block shape prod max", x_block_prod_max, kGreaterThan, "crops sum", crops_sum,
-                                prim_name);
+    CheckAndConvertUtils::Check("x block shape prod min", x_block_prod_min, kGreaterThan, crops_sum, prim_name);
+    CheckAndConvertUtils::Check("x block shape prod max", x_block_prod_max, kGreaterThan, crops_sum, prim_name);
     output_min_shape[i + offset] = x_block_prod_min - crops_sum;
     output_max_shape[i + offset] = x_block_prod_max - crops_sum;
   }
@@ -102,7 +100,7 @@ void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
   size_t h = crops.size();
   size_t w = crops[0].size();
   std::vector<size_t> temp_w = {2, 2};
-  CheckAndConvertUtils::Check(kCrops, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
+  CheckAndConvertUtils::Check(kCrops, {h, w}, kEqual, temp_w, this->name());
   for (size_t i = 0; i < h; i++) {
     for (size_t j = 0; j < w; j++) {
       (void)CheckAndConvertUtils::CheckInteger(kCrops, crops[i][j], kGreaterEqual, 0, this->name());

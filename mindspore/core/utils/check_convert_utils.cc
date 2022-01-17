@@ -457,8 +457,8 @@ TypePtr CheckAndConvertUtils::GetTensorInputType(const std::string &prim_name,
   return type;
 }
 
-void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, const string &,
-                                 int64_t value, const string &prim_name, ExceptionType) {
+void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, int64_t value,
+                                 const string &prim_name, ExceptionType) {
   auto iter = kCompareMap<float>.find(compare_type);
   if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "the compare type :" << compare_type << " is not in the compare map";
@@ -783,8 +783,10 @@ void CheckAndConvertUtils::CheckMinMaxShape(const ShapeVector &shape, ShapeVecto
 int64_t CheckAndConvertUtils::GetAndCheckFormat(const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
-    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW, NHWC and NCDHW";
+  if (!result ||
+      (data_format != static_cast<int64_t>(Format::NHWC) && data_format != static_cast<int64_t>(Format::NCHW) &&
+       data_format != static_cast<int64_t>(Format::NCDHW))) {
+    MS_LOG(EXCEPTION) << "data format value " << data_format << " is invalid, only support NCHW, NHWC and NCDHW";
   }
   return data_format;
 }

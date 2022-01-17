@@ -41,7 +41,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, "input_x_shape", input_x_shape, prim_name, TypeError);
+  CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, input_x_shape, prim_name, TypeError);
   return std::make_shared<abstract::Shape>(grads_shape);
 }
 

@@ -158,26 +158,26 @@ class MsContext {
   void CreateTensorPrintThread(const PrintThreadCrt &ctr);
   void DestroyTensorPrintThread();
 #endif
-  static void device_seter(DeviceSeter device) { seter_ = device; }
-  static void device_type_seter(DeviceTypeSeter device_type) { device_type_seter_ = device_type; }
+  static void device_seter(const DeviceSeter &device) { seter_ = device; }
+  static void device_type_seter(const DeviceTypeSeter &device_type) { device_type_seter_ = device_type; }
 
   template <typename T>
-  void set_param(MsCtxParam param, const T &value) {
+  void set_param(MsCtxParam, const T &) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
-  const T &get_param(MsCtxParam param) const {
+  const T &get_param(MsCtxParam) const {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
-  void increase_param(MsCtxParam param) {
+  void increase_param(MsCtxParam) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
   template <typename T>
-  void decrease_param(MsCtxParam param) {
+  void decrease_param(MsCtxParam) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 

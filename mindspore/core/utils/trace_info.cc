@@ -15,7 +15,6 @@
  */
 
 #include "utils/trace_info.h"
-#include <sstream>
 #include "ir/anf.h"
 
 namespace mindspore {
