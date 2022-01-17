@@ -459,6 +459,9 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
+  if (!dump_json_parser.e2e_dump_enabled()) {
+    return;
+  }
 
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();

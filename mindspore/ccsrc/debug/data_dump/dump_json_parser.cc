@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,13 @@ bool DumpJsonParser::IsDumpEnabled() {
   }
   // Dump is supported with Ascend kernel-by-kernel mode (mindRT) when kGraphOpRun is set.
   if (!single_op.empty() && single_op == "1" && !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
-                       "sink, so that the data can be dumped.";
+    if (!dump_enabled_warning_printed_) {
+      MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
+                         "sink, so that the data can be dumped.";
+      // Only print the warning once.
+      dump_enabled_warning_printed_ = true;
+    }
+
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
