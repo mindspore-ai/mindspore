@@ -60,6 +60,8 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     auto key_string = GetValue<std::string>(keyPtr);
     (void)key_value.emplace_back(key_string, value_list[index]);
   }
+  SetSequenceElementsUseFlags(keys, true);
+  SetSequenceElementsUseFlags(values, true);
   return std::make_shared<AbstractDictionary>(key_value);
 }
 
@@ -163,7 +165,8 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   size_t index_unsigned_value = LongToSize(index_positive_value);
   constexpr int target_value_index = 2;
   elements[index_unsigned_value] = args_spec_list[target_value_index];
-  return std::make_shared<T>(elements);
+  SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
+  return std::make_shared<T>(elements, queue->sequence_nodes());
 }
 
 AbstractBasePtr InferImplTupleGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -295,7 +298,7 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(item);
   auto new_list = AbstractBasePtrList(list->elements());
   new_list.emplace_back(item);
-  return std::make_shared<AbstractList>(new_list);
+  return std::make_shared<AbstractList>(new_list, list->sequence_nodes());
 }
 
 AbstractBasePtr InferImplTupleLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

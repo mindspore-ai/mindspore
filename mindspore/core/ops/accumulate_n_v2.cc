@@ -96,6 +96,7 @@ AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const Pr
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  SetSequenceElementsUseFlags(input_args[0], true);
   auto infer_type = AccumulateNV2InferType(primitive, input_args);
   auto infer_shape = AccumulateNV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

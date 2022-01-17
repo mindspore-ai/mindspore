@@ -279,6 +279,7 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
+  SetSequenceElementsUseFlags(dense_shape, true);
   return ret;
 }
 
@@ -382,6 +383,7 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
+  SetSequenceElementsUseFlags(dense_shape, true);
   return ret;
 }
 
@@ -595,6 +597,7 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(shape);
+  SetSequenceElementsUseFlags(shape, true);
   return ret;
 }
 
