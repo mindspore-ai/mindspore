@@ -189,7 +189,7 @@ const std::map<std::string, size_t> kCiphers = {
   {"ECDHE-ECDSA-AES256-GCM-SHA384", 3}, {"ECDHE-RSA-CHACHA20-POLY1305", 4},   {"ECDHE-PSK-CHACHA20-POLY1305", 5},
   {"ECDHE-ECDSA-AES128-CCM", 6},        {"ECDHE-ECDSA-AES256-CCM", 7},        {"ECDHE-ECDSA-CHACHA20-POLY1305", 8}};
 
-using DataPtr = std::shared_ptr<unsigned char>;
+using DataPtr = std::unique_ptr<uint8_t[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = size_t;
 using Keys = std::vector<Key>;

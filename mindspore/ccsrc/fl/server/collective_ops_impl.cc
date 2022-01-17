@@ -33,12 +33,15 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
 
-  size_t src_size = count * sizeof(T);
-  size_t dst_size = count * sizeof(T);
-  int ret = memcpy_s(recvbuff, dst_size, sendbuff, src_size);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-    return false;
+  int ret;
+  if (recvbuff != sendbuff) {
+    size_t src_size = count * sizeof(T);
+    size_t dst_size = count * sizeof(T);
+    ret = memcpy_s(recvbuff, dst_size, sendbuff, src_size);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return false;
+    }
   }
 
   uint32_t rank_size = server_num_;

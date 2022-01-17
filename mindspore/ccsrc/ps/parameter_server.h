@@ -97,22 +97,22 @@ class ParameterServer {
     ~ServerHandler() = default;
     void Init();
     void operator()(const std::shared_ptr<core::TcpConnection> &conn, const std::shared_ptr<core::MessageMeta> &meta,
-                    const DataPtr &data, size_t size);
-    void HandlePushReq(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandlePullReq(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleInitWeights(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleInitWeightToOptimId(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleInitInputsShape(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleInitEmbeddings(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleCheckReadyForPush(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleCheckReadyForPull(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleEmbeddingLookup(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleUpdateEmbeddings(const DataPtr &data, size_t size, const VectorPtr &res);
-    void HandleFinalize(const DataPtr &data, size_t size, const VectorPtr &res);
+                    const void *data, size_t size);
+    void HandlePushReq(const void *data, size_t size, const VectorPtr &res);
+    void HandlePullReq(const void *data, size_t size, const VectorPtr &res);
+    void HandleInitWeights(const void *data, size_t size, const VectorPtr &res);
+    void HandleInitWeightToOptimId(const void *data, size_t size, const VectorPtr &res);
+    void HandleInitInputsShape(const void *data, size_t size, const VectorPtr &res);
+    void HandleInitEmbeddings(const void *data, size_t size, const VectorPtr &res);
+    void HandleCheckReadyForPush(const void *data, size_t size, const VectorPtr &res);
+    void HandleCheckReadyForPull(const void *data, size_t size, const VectorPtr &res);
+    void HandleEmbeddingLookup(const void *data, size_t size, const VectorPtr &res);
+    void HandleUpdateEmbeddings(const void *data, size_t size, const VectorPtr &res);
+    void HandleFinalize(const void *data, size_t size, const VectorPtr &res);
 
    private:
     ParameterServer *ps_;
-    typedef void (ServerHandler::*RequestHandler)(const DataPtr &data, size_t size, const VectorPtr &res);
+    typedef void (ServerHandler::*RequestHandler)(const void *data, size_t size, const VectorPtr &res);
     mindspore::HashMap<int, RequestHandler> handlers_;
     mindspore::HashMap<int, std::string> commands_;
     mindspore::HashMap<Key, bool> init_weights_;

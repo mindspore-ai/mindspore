@@ -16,6 +16,7 @@
 
 #include "ps/core/communicator/tcp_communicator.h"
 #include <memory>
+#include <utility>
 
 namespace mindspore {
 namespace ps {
@@ -29,7 +30,7 @@ bool TcpCommunicator::Start() {
 
   // Set message callback. For example, message of push/pull, etc.
   tcp_msg_callback_ = std::bind(
-    [&](std::shared_ptr<core::TcpConnection> conn, std::shared_ptr<core::MessageMeta> meta, DataPtr data,
+    [&](std::shared_ptr<core::TcpConnection> conn, std::shared_ptr<core::MessageMeta> meta, const void *data,
         size_t size) -> void {
       MS_ERROR_IF_NULL_WO_RET_VAL(conn);
       MS_ERROR_IF_NULL_WO_RET_VAL(meta);
@@ -42,8 +43,20 @@ bool TcpCommunicator::Start() {
       }
 
       MS_LOG(DEBUG) << "TcpCommunicator receives message for " << msg_type;
+      // avoid data release when tcp message callback invoked in other thread
+      auto unique_data = std::make_unique<uint8_t[]>(size);
+      if (size > 0) {
+        auto src_size = size;
+        auto dst_size = size;
+        auto ret = memcpy_s(unique_data.get(), dst_size, data, src_size);
+        if (ret != 0) {
+          MS_LOG(ERROR) << "Failed to copy tcp data, data size: " << size << ", user command: " << user_command
+                        << ", msg type: " << msg_type;
+          return;
+        }
+      }
       std::shared_ptr<MessageHandler> tcp_msg_handler =
-        std::make_shared<TcpMsgHandler>(abstrace_node_, conn, meta, data, size);
+        std::make_shared<TcpMsgHandler>(abstrace_node_, conn, meta, std::move(unique_data), size);
       MS_ERROR_IF_NULL_WO_RET_VAL(tcp_msg_handler);
       // The Submit function timed out for 30s, if it returns false, it will retry 60 times.
       bool res = CommUtil::Retry(

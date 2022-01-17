@@ -103,23 +103,9 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
   while (safemode_.load()) {
     std::this_thread::yield();
   }
-
-  auto message_addr = std::make_unique<unsigned char[]>(size);
-  MS_EXCEPTION_IF_NULL(message_addr);
-  std::shared_ptr<unsigned char> message(message_addr.release(), std::default_delete<unsigned char[]>());
-  MS_EXCEPTION_IF_NULL(message);
-
-  uint64_t src_size = size;
-  uint64_t dst_size = size;
-  int ret = memcpy_s(message.get(), dst_size, data, src_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return false;
-  }
-
   if (output != nullptr) {
     while (true) {
-      if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command), output,
+      if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, data, size, static_cast<int>(command), output,
                               kWorkerTimeout)) {
         MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
         return false;
@@ -138,7 +124,7 @@ bool FLWorker::SendToServer(uint32_t server_rank, const void *data, size_t size,
       }
     }
   } else {
-    if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, message, size, static_cast<int>(command),
+    if (!worker_node_->Send(ps::core::NodeRole::SERVER, server_rank, data, size, static_cast<int>(command), nullptr,
                             kWorkerTimeout)) {
       MS_LOG(ERROR) << "Sending message to server " << server_rank << " failed.";
       return false;

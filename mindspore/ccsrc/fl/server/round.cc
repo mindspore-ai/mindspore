@@ -50,12 +50,6 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
     finish_iteration_cb(true, reason);
   };
 
-  // Callback for finalizing the server. This can only be called once.
-  finalize_cb_ = [&](void) -> void {
-    MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
-    (void)communicator_->Stop();
-  };
-
   if (check_timeout_) {
     iter_timer_ = std::make_shared<IterationTimer>();
     MS_EXCEPTION_IF_NULL(iter_timer_);
