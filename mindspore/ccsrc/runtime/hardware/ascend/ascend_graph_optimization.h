@@ -26,14 +26,20 @@ namespace device {
 namespace ascend {
 class AscendGraphOptimization {
  public:
+  static AscendGraphOptimization &GetInstance() {
+    static AscendGraphOptimization instance;
+    return instance;
+  }
+
   void OptimizeGraph(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes);
   void UnifyMindIR(const KernelGraphPtr &graph);
-  AscendGraphOptimization() { graph_manager_ = MakeManager(); }
-  ~AscendGraphOptimization() = default;
+  void Clear();
 
  private:
+  AscendGraphOptimization() { graph_manager_ = MakeManager(); }
+  ~AscendGraphOptimization() = default;
   AscendGraphOptimization(const AscendGraphOptimization &) = delete;
   AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
   // Graph Optimized level-2 interface
@@ -65,8 +71,6 @@ class AscendGraphOptimization {
   // Note: Please clean the set before each use.
   std::set<KernelGraphPtr> memo_;
 };
-
-AscendGraphOptimization GetAscendGraphOptimization();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

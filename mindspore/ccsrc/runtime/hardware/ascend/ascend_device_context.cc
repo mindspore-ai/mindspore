@@ -278,6 +278,7 @@ void AscendDeviceContext::Destroy() {
     // repeatedly. runtime_instance_->ReleaseDeviceRes();
     runtime_instance_ = nullptr;
   }
+  AscendGraphOptimization::GetInstance().Clear();
   initialized_ = false;
   MS_LOG(INFO) << "Status record: Destroy success.";
 }
@@ -319,16 +320,16 @@ std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
 
 void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  GetAscendGraphOptimization().UnifyMindIR(graph);
+  AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
 void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  GetAscendGraphOptimization().OptimizeGraph(graph);
+  AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
 }
 
 void AscendDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
-  GetAscendGraphOptimization().SetOperatorInfo(nodes);
+  AscendGraphOptimization::GetInstance().SetOperatorInfo(nodes);
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
@@ -618,7 +619,7 @@ bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const {
 
 // kernel by kernel mode interface
 void AscendDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
-  GetAscendGraphOptimization().OptimizeSingleOpGraph(graph);
+  AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
 }
 
 void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
