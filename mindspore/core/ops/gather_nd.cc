@@ -75,10 +75,11 @@ TypePtr GatherNdInferType(const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x1", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("x2", input_args[kInputIndex0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, all_types, "GatherNd");
+  std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto indices_type = input_args[kInputIndex1]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, int_types, "GatherNd");
+  return x_type;
 }
 }  // namespace
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
