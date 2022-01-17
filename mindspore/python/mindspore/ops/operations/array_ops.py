@@ -509,7 +509,7 @@ class Reshape(PrimitiveWithInfer):
             if len(min_shape) != shape_rank or len(max_shape) != shape_rank:
                 raise RuntimeError("The primitive[Reshape]'s input[shape] min or max value not math the shape rank.")
             for i in range(shape_rank):
-                if min_shape[i] == max_shape[i]:
+                if min_shape[i] == max_shape[i] and min_shape[i] != 1:
                     out_shape[i] = min_shape[i]
         elif is_shape_unknown(x_shp) and "max_shape" in x:
             # when dynamic memory allocation is supported, max_shape can be left out
