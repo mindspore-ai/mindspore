@@ -39,7 +39,6 @@ class RelativePositionAttentionCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
- private:
   // check inputs
   int CheckInputs();
   int CheckWeights();

@@ -36,7 +36,6 @@ class SpaceToBatchCPUKernel : public InnerKernel {
   int Run() override;
   void ProcessInput();
 
- public:
   int DoRun(int task_id);
 
  protected:
