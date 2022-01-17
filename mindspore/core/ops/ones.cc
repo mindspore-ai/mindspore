@@ -50,16 +50,13 @@ TypePtr OnesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 AbstractBasePtr OnesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr size_t shape_index = 0;
   const std::string op_name = primitive->name();
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   auto res = abstract::MakeAbstract(OnesInferShape(primitive, input_args), OnesInferType(primitive, input_args));
   // Set all used flags of tuple as true.
-  for (size_t i = 0; i < input_args.size(); i++) {
-    if (input_args[i] != nullptr) {
-      SetSequenceElementsUseFlags(input_args[i], true);
-    }
-  }
+  SetSequenceElementsUseFlags(input_args[shape_index], true);
   return res;
 }
 

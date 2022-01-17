@@ -118,16 +118,19 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
 AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 5;
+  constexpr size_t shape_index = 1;
+  constexpr size_t begin_index = 2;
+  constexpr size_t end_index = 3;
+  constexpr size_t stride_index = 4;
+  constexpr int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto res = abstract::MakeAbstract(StridedSliceGradInferShape(primitive, input_args),
                                     StridedSliceGradInferType(primitive, input_args));
   // Set all used flags of tuple as true.
-  for (size_t i = 0; i < input_args.size(); i++) {
-    if (input_args[i] != nullptr) {
-      SetSequenceElementsUseFlags(input_args[i], true);
-    }
-  }
+  SetSequenceElementsUseFlags(input_args[shape_index], true);
+  SetSequenceElementsUseFlags(input_args[begin_index], true);
+  SetSequenceElementsUseFlags(input_args[end_index], true);
+  SetSequenceElementsUseFlags(input_args[stride_index], true);
   return res;
 }
 

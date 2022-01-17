@@ -40,6 +40,7 @@ float DropoutGrad::get_keep_prob() const {
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr size_t shape_index = 0;
   auto op_name = primitive->name();
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
@@ -55,11 +56,7 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, dy_index);
   auto res = abstract::MakeAbstract(shape, out_type);
   // Set all used flags of tuple as true.
-  for (size_t i = 0; i < input_args.size(); i++) {
-    if (input_args[i] != nullptr) {
-      SetSequenceElementsUseFlags(input_args[i], true);
-    }
-  }
+  SetSequenceElementsUseFlags(input_args[shape_index], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGrad, prim::kPrimDropoutGrad, DropoutGradInfer, nullptr, true);

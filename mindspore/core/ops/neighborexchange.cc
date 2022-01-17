@@ -182,15 +182,13 @@ TypePtr InferType(const PrimitivePtr &primitive) {
 }  // namespace
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
+  constexpr size_t input_tuple_index = 0;
   Check(primitive, input_args);
   auto type = InferType(primitive);
   auto shape = InferShape(primitive);
   auto res = abstract::MakeAbstract(shape, type);
-  for (size_t i = 0; i < input_args.size(); i++) {
-    if (input_args[i] != nullptr) {
-      SetSequenceElementsUseFlags(input_args[i], true);
-    }
-  }
+  // Set all used flags of tuple as true.
+  SetSequenceElementsUseFlags(input_args[input_tuple_index], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NeighborExchange, prim::kPrimNeighborExchange, NeighborExchangeInfer, nullptr, true);
