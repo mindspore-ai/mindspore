@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PARALLEL_STEP_AUTO_PARALLEL_H_
-#define PARALLEL_STEP_AUTO_PARALLEL_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_AUTO_PARALLEL_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_AUTO_PARALLEL_H_
 
 #include <map>
 #include <memory>
@@ -72,4 +72,4 @@ std::vector<std::vector<size_t>> GetSharedTensorsOps(
   const std::vector<std::vector<std::string>> &input_tensor_names);
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // PARALLEL_STEP_AUTO_PARALLEL_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_STEP_AUTO_PARALLEL_H_

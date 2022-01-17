@@ -18,6 +18,7 @@ import functools
 import inspect
 import copy
 from mindspore.common.api import _wrap_func
+from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from .._c_expression import Primitive_, real_run_op, prim_type
@@ -153,6 +154,7 @@ class Primitive(Primitive_):
         self.add_prim_attr("stage", stage)
         return self
 
+    @_LogActionOnce(logger=logger)
     def shard(self, in_strategy=None, out_strategy=None):
         """
         Add strategies to primitive attribute.
@@ -200,11 +202,17 @@ class Primitive(Primitive_):
 
         if not _is_in_auto_parallel_mode():
             if in_strategy is not None:
-                logger.warning(f"The in_strategy: {in_strategy} of {self.name} is not valid in {mode}. "
-                               f"Please use semi auto or auto parallel mode.")
+                logger.warning(f"The in_strategy of the operator in your network will not take effect in {mode} mode. "
+                               f"This means the the shard function called in the network is ignored. "
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL")
             if out_strategy is not None:
-                logger.warning(f"The out_strategy: {out_strategy} of {self.name} is not valid in {mode}. "
-                               f"Please use semi auto or auto parallel mode.")
+                logger.warning(f"The out_strategy of the operator in your network will not take effect in {mode} mode."
+                               f" This means the the shard function called in the network is ignored. "
+                               f"If you want to enable it, please use semi auto or auto parallel mode by "
+                               f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL")
 
         self.add_prim_attr("in_strategy", in_strategy)
         self.add_prim_attr("out_strategy", out_strategy)
