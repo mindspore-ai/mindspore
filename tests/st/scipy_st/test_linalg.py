@@ -76,7 +76,7 @@ def test_inv(data_type, shape):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('data_type', [onp.float64])
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 def test_cholesky(n: int, lower: bool, data_type: Generic):
     """
     Feature: ALL TO ALL
@@ -85,8 +85,11 @@ def test_cholesky(n: int, lower: bool, data_type: Generic):
     """
     a = create_sym_pos_matrix((n, n), data_type)
     tensor_a = Tensor(a)
-    rtol = 1.e-5
-    atol = 1.e-8
+    rtol = 1.e-3
+    atol = 1.e-3
+    if data_type == onp.float64:
+        rtol = 1.e-5
+        atol = 1.e-8
     osp_c = osp.linalg.cholesky(a, lower=lower)
     msp_c = msp.linalg.cholesky(tensor_a, lower=lower)
     assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
@@ -98,21 +101,23 @@ def test_cholesky(n: int, lower: bool, data_type: Generic):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
-@pytest.mark.parametrize('data_type', [onp.float64])
+@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 def test_cho_factor(n: int, lower: bool, data_type: Generic):
     """
     Feature: ALL TO ALL
-    Description:  test cases for cholesky [N,N]
+    Description:  test cases for cho_factor [N,N]
     Expectation: the result match scipy cholesky
     """
     a = create_sym_pos_matrix((n, n), data_type)
     tensor_a = Tensor(a)
     msp_c, _ = msp.linalg.cho_factor(tensor_a, lower=lower)
-    if lower:
-        msp_reconstruct_a = mnp.dot(mnp.tril(msp_c), mnp.tril(msp_c).T)
-    else:
-        msp_reconstruct_a = mnp.dot(mnp.triu(msp_c).T, mnp.triu(msp_c))
-    assert onp.allclose(a, msp_reconstruct_a.asnumpy())
+    osp_c, _ = osp.linalg.cho_factor(a, lower=lower)
+    rtol = 1.e-3
+    atol = 1.e-3
+    if data_type == onp.float64:
+        rtol = 1.e-5
+        atol = 1.e-8
+    assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0

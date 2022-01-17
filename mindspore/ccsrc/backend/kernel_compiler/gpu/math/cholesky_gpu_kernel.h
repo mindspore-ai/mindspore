@@ -53,9 +53,7 @@ class CholeskyGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                  "cusolverDnSetStream failed");
-    CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "cublasSetStream failed");
+                                  "cholesky bind cusolverDnSetStream failed");
     if (!use_split_matrix_) {
       return NoSplitLaunch(inputs, workspace, outputs, stream_ptr);
     }
@@ -66,16 +64,17 @@ class CholeskyGpuKernel : public GpuKernel {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
+    clean_ = static_cast<bool>(GetAttr<bool>(kernel_node, kClean));
     split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
+    // cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
+    // so we reverse lower to upper, to fake transpose col_major input to row_major.
     if (lower_) {
-      uplo_ = CUBLAS_FILL_MODE_LOWER;
-    } else {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
+    } else {
+      uplo_ = CUBLAS_FILL_MODE_LOWER;
     }
     // get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    // get Cublas handler
-    blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
 
@@ -189,11 +188,17 @@ class CholeskyGpuKernel : public GpuKernel {
     auto d_array_addr = GetDeviceAddress<pointer>(workspace, kDim0);
     auto d_info_array_addr = GetDeviceAddress<int>(workspace, kDim1);
 
+    // copy input data to output, cholesky inplace output in gpu backend.
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(output_addr, input1_addr, batch_ * m_ * lda_ * unit_size_,
+                                              cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                              "cuda memcopy input to output Fail");
+
     for (size_t i = 0; i < batch_; i++) {
-      h_array_[i] = input1_addr + i * lda_ * m_;
+      h_array_[i] = output_addr + i * lda_ * m_;
     }
 
-    // copy input's addr to d_array_addr
+    // copy output's addr to d_array_addr
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(pointer) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -212,8 +217,8 @@ class CholeskyGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
     size_t output_elements = outputs.at(kDim0)->size / unit_size_;
-    // copy results from written input's matrix to output's matrix by up or lower flag.
-    TriangleMatrixCopy(input1_addr, output_addr, uplo_, output_elements, ldb_, m_,
+    // copy results from original input's matrix to output's matrix by up or lower flag.
+    TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -248,8 +253,9 @@ class CholeskyGpuKernel : public GpuKernel {
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
-
-    TriangleMatrixCopy(d_batch_input_addr, output_addr, uplo_, outputs[0]->size / sizeof(T), ldb_, m_,
+    size_t output_elements = outputs.at(kDim0)->size / unit_size_;
+    // copy results from original input's matrix to output's matrix by up or lower flag.
+    TriangleMatrixCopy(input1_addr, output_addr, clean_, uplo_, output_elements, ldb_, m_,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -267,10 +273,10 @@ class CholeskyGpuKernel : public GpuKernel {
   bool is_null_input_{false};
   bool use_split_matrix_{false};
   cusolverDnHandle_t handle_{nullptr};
-  cublasHandle_t blas_handle_{nullptr};
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   std::vector<pointer> h_array_;
   bool lower_{false};
+  bool clean_{false};
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

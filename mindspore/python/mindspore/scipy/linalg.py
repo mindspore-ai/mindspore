@@ -180,7 +180,7 @@ def inv(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): Square matrix to be inverted. Note that if the input tensor is not a `float`,
-            then it will be casted to :class:`mstype.float32`.
+            then it will be cast to :class:`mstype.float32`.
         overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
@@ -219,7 +219,7 @@ def inv(a, overwrite_a=False, check_finite=True):
 def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the Cholesky decomposition of a matrix, to use in cho_solve
-    Note that if the input tensor is not a `float`, then it will be casted to :class:'mstype.float32'.
+    Note that if the input tensor is not a `float`, then it will be cast to :class:'mstype.float32'.
     Returns a matrix containing the Cholesky decomposition,
     ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
     The return value can be directly used as the first parameter to cho_solve.
@@ -230,14 +230,16 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         entries, use the function `cholesky` instead.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed. Note that if the input tensor is not a `float`,
-            then it will be casted to :class:'mstype.float32'.
+        a (Tensor): square Matrix of (M, M) to be decomposed. Note that if the input tensor is not a `float`
+            or a `double`, then it will be cast to :class:'mstype.float64'.
         lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization
-            (Default: upper-triangular)
-        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance)
+            (Default: upper-triangular (false))
+        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default is False.
+            in mindspore, this arg does not work right now.
         check_finite(bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default is True.
+            in mindspore, this arg does not work right now.
 
     Returns:
          - Tensor, matrix whose upper or lower triangle contains the Cholesky factor of `a`.
@@ -245,7 +247,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          - bool, flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
-        LinAlgError: Raised if decomposition fails.
+        ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -263,7 +265,12 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 5.          1.          2.          1.5541857 ]]
     """
     if F.dtype(a) not in float_types:
-        a = F.cast(a, mstype.float32)
+        a = F.cast(a, mstype.float64)
+    a_shape = a.shape
+    if len(a_shape) != 2:
+        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must have 2 dimensions.")
+    if a_shape[-1] != a_shape[-2]:
+        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be a square matrix.")
     cholesky_net = Cholesky(lower=lower, clean=False)
     c = cholesky_net(a)
     return c, lower
@@ -277,19 +284,22 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     :math:`A = U^* U` of a Hermitian positive-definite matrix A.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed
+        a (Tensor): square Matrix of (M, M) to be decomposed, Note that if the input tensor is not a `float`
+            or `double`, then it will be casted to :class:'mstype.float64'.
         lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
-            factorization.  Default is upper-triangular.
-        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance).
+            factorization.  Default is upper-triangular, which means lower defaults to false.
+        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default is False.
+            in mindspore, this arg does not work right now.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
-            Disabling may give a performance gain, but may result in problems
+            Default is True. Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            in mindspore, this arg does not work right now.
 
     Returns:
         Tensor, upper- or lower-triangular Cholesky factor of `a`.
 
     Raises:
-        LinAlgError: if decomposition fails.
+        ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -298,14 +308,22 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import cholesky
-        >>> a = Tensor(onp.array([[1, -2],[2, 5]]).astype(onp.float32))
+        >>> a = Tensor(onp.array([[1, 2],[2, 5]]).astype(onp.float32))
         >>> L = cholesky(a, lower=True)
         >>> print(L)
         [[1. 0.]
          [2. 1.]]
     """
     if F.dtype(a) not in float_types:
-        a = F.cast(a, mstype.float32)
+        a = F.cast(a, mstype.float64)
+
+    a_shape = a.shape
+    if len(a_shape) != 2:
+        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must have 2 dimensions.")
+
+    if a_shape[-1] != a_shape[-2]:
+        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be a square matrix.")
+
     cholesky_net = Cholesky(lower=lower, clean=True)
     c = cholesky_net(a)
     return c
@@ -500,7 +518,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a `float`,
-            then it will be casted to :class:'mstype.float32'.
+            then it will be cast to :class:'mstype.float32'.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may increase performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
@@ -559,7 +577,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a `float`,
-            then it will be casted to :class:'mstype.float32'.
+            then it will be cast to :class:'mstype.float32'.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute). Default: False.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may improve performance). Default: False.
         check_finite (bool, optional):  Whether to check that the input matrix contains
@@ -699,7 +717,7 @@ def det(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): A square matrix to compute. Note that if the input tensor is not a `float`,
-            then it will be casted to :class:`mstype.float32`.
+            then it will be cast to :class:`mstype.float32`.
         overwrite_a (bool, optional): Allow overwriting data in a (may enhance performance).
         check_finite (bool, optional): Whether to check that the input matrix contains
             only finite numbers.

@@ -43,6 +43,9 @@ static constexpr char kAvgPoolingModeLowerCase[] = "avg";
 static constexpr char kLower[] = "lower";
 
 // Used by cholesky
+static constexpr char kClean[] = "clean";
+
+// Used by cholesky
 static constexpr char kSplitDim[] = "split_dim";
 
 // Used by MaxPool pad: The minimum value of float32
