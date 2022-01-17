@@ -1447,7 +1447,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
 }  // namespace pipeline
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
-                                         const py::object &broadcast_params) {
+                                         const py::object &broadcast_params) const {
 #ifdef ENABLE_D
   return BuildDFGraph(info_, init_params, phase, broadcast_params);
 #else

@@ -246,8 +246,7 @@ bool DynamicParser::IsDynamicCell(const py::object &cell) {
   // get the name of input args as the initialize of dynamic_variables
   ParseInputArgs(ast, fn_node);
   // parse body context
-  bool ret = false;
-  ret = ParseBodyContext(ast, fn_node);
+  bool ret = ParseBodyContext(ast, fn_node);
   cell_input_args_.clear();
   return ret;
 }

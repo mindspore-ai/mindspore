@@ -675,7 +675,7 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 bool VmOptimizeAction(const ResourcePtr &res) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
-    kVmPasses.push_back({"server_communication_op_fusion", ps::Util::FuseServerCommOps});
+    kVmPasses.push_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
   }
 #endif
   auto ret = OptimizeAction(res, kVmPasses);
