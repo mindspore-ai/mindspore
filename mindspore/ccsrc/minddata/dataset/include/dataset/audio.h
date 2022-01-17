@@ -616,6 +616,19 @@ class MS_API Magphase final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Create a frequency transformation matrix with shape (n_freqs, n_mels).
+/// \param[in] output Tensor of the frequency transformation matrix.
+/// \param[in] n_freqs Number of frequencies to highlight/apply.
+/// \param[in] f_min Minimum frequency (Hz).
+/// \param[in] f_max Maximum frequency (Hz).
+/// \param[in] n_mels Number of mel filterbanks.
+/// \param[in] sample_rate Sample rate of the audio waveform.
+/// \param[in] norm Norm to use, can be NormType::kNone or NormType::kSlaney (Default: NormType::kNone).
+/// \param[in] mel_type Scale to use, can be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtz).
+/// \return Status code.
+Status MS_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                             int32_t sample_rate, NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
+
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
 class MS_API MuLawDecoding final : public TensorTransform {

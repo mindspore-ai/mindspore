@@ -380,6 +380,19 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis);
 
+/// \brief Create a frequency transformation matrix with shape (n_freqs, n_mels).
+/// \param output Tensor of the frequency transformation matrix.
+/// \param n_freqs: Number of frequency.
+/// \param f_min: Minimum of frequency in Hz.
+/// \param f_max: Maximum of frequency in Hz.
+/// \param n_mels: Number of mel filterbanks.
+/// \param sample_rate: Sample rate.
+/// \param norm: Norm to use, can be NormTyppe::kSlaney or NormTyppe::kNone.
+/// \param mel_type: Scale to use, can be MelTyppe::kSlaney or MelTyppe::kHtk.
+/// \return Status code.
+Status CreateFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                    int32_t sample_rate, NormType norm, MelType mel_type);
+
 /// \brief Create a DCT transformation matrix with shape (n_mels, n_mfcc), normalized depending on norm.
 /// \param n_mfcc: Number of mfc coefficients to retain, the value must be greater than 0.
 /// \param n_mels: Number of mel filterbanks, the value must be greater than 0.

@@ -936,6 +936,34 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: MelscaleFbanks.
+/// Description: Test normal operation.
+/// Expectation: As expected.
+TEST_F(MindDataTestPipeline, TestMelscaleFbanksNormal) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-MelscaleFbanksNormal.";
+  mindspore::MSTensor output;
+  NormType norm = NormType::kSlaney;
+  MelType mel_type = MelType::kHtk;
+  Status s01 = audio::MelscaleFbanks(&output, 1024, 0, 1000, 40, 16000, norm, mel_type);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+/// Feature: MelscaleFbanks.
+/// Description: Test operation with invalid input.
+/// Expectation: Throw exception as expected.
+TEST_F(MindDataTestPipeline, TestMelscaleFbanksWithInvalidInput) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMelscaleFbanksWithInvalidInput.";
+  mindspore::MSTensor output;
+  MS_LOG(INFO) << "n_freqs is too low.";
+  NormType norm = NormType::kNone;
+  MelType mel_type = MelType::kHtk;
+  Status s01 = audio::MelscaleFbanks(&output, 1, 50, 1000, 20, 16000, norm, mel_type);
+  EXPECT_FALSE(s01.IsOk());
+  MS_LOG(INFO) << "n_mels is too high.";
+  Status s02 = audio::MelscaleFbanks(&output, 100, 50, 1000, 40, 16000, norm, mel_type);
+  EXPECT_FALSE(s02.IsOk());
+}
+
 TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawDecodingBasic.";
 

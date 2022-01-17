@@ -84,6 +84,12 @@ enum class MS_API NormMode {
   kOrtho = 1  ///< Ortho type norm.
 };
 
+/// \brief Possible options for norm in MelscaleFbanks.
+enum class MS_API NormType {
+  kNone = 0,    ///< None type norm.
+  kSlaney = 1,  ///< Slaney type norm.
+};
+
 /// \brief The mode for manual offload.
 enum class MS_API ManualOffloadMode {
   kUnspecified,  ///< Not set, will use auto_offload setting instead.
@@ -96,6 +102,12 @@ enum class MS_API MapTargetDevice {
   kCpu,       ///< CPU Device.
   kGpu,       ///< Gpu Device.
   kAscend310  ///< Ascend310 Device.
+};
+
+/// \brief Possible options for mel_type in MelscaleFbanks.
+enum class MS_API MelType {
+  kHtk = 0,     ///< Htk scale type.
+  kSlaney = 1,  ///< Slaney scale type.
 };
 
 /// \brief The initial type of tensor implementation.
