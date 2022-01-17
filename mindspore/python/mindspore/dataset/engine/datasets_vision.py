@@ -401,7 +401,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
 class CelebADataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing CelebA dataset.
+    A source dataset that reads and parses CelebA dataset.
     Only support to read `list_attr_celeba.txt` currently, which is the attribute annotations of the dataset.
 
     The generated dataset has two columns: :py:obj:`[image, attr]`.
@@ -565,7 +565,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
 class Cifar10Dataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing Cifar10 dataset.
+    A source dataset that reads and parses Cifar10 dataset.
     This api only supports parsing Cifar10 file in binary version now.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
@@ -696,7 +696,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
 class Cifar100Dataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing Cifar100 dataset.
+    A source dataset that reads and parses Cifar100 dataset.
 
     The generated dataset has three columns :py:obj:`[image, coarse_label, fine_label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -820,7 +820,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
 class CityscapesDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing Cityscapes dataset.
+    A source dataset that reads and parses Cityscapes dataset.
 
     The generated dataset has two columns :py:obj:`[image, task]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -990,7 +990,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
 class CocoDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing COCO dataset.
+    A source dataset that reads and parses COCO dataset.
 
     CocoDataset supports four kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation and
     Panoptic Segmentation of 2017 Train/Val/Test dataset.
@@ -1201,7 +1201,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
 
 class DIV2KDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing DIV2KDataset dataset.
+    A source dataset that reads and parses DIV2KDataset dataset.
 
     The generated dataset has two columns :py:obj:`[hr_image, lr_image]`.
     The tensor of column :py:obj:`hr_image` is of the uint8 type.
@@ -1388,7 +1388,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
 class EMnistDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the EMNIST dataset.
+    A source dataset that reads and parses the EMNIST dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -1609,7 +1609,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
 
 class FashionMnistDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the FASHION-MNIST dataset.
+    A source dataset that reads and parses the FASHION-MNIST dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -1730,7 +1730,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
 
 class FlickrDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing Flickr8k and Flickr30k dataset.
+    A source dataset that reads and parses Flickr8k and Flickr30k dataset.
 
     The generated dataset has two columns :py:obj:`[image, annotation]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -1973,7 +1973,7 @@ class _Flowers102Dataset:
 
 class Flowers102Dataset(GeneratorDataset):
     """
-    A source dataset for reading and parsing Flowers102 dataset.
+    A source dataset that reads and parses Flowers102 dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]` or three :py:obj:`[image, segmentation, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -2266,7 +2266,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
 class KMnistDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the KMNIST dataset.
+    A source dataset that reads and parses the KMNIST dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -2506,7 +2506,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
 class MnistDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the MNIST dataset.
+    A source dataset that reads and parses the MNIST dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -2626,7 +2626,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
 
 class PhotoTourDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the PhotoTour dataset.
+    A source dataset that reads and parses the PhotoTour dataset.
 
     The generated dataset with different usage has different output columns.
     If train, the generated dataset has one column :py:obj:`[image]`,
@@ -2780,7 +2780,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
 
 class Places365Dataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the Places365 dataset.
+    A source dataset that reads and parses the Places365 dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -2922,7 +2922,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
 class QMnistDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the QMNIST dataset.
+    A source dataset that reads and parses the QMNIST dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3148,7 +3148,7 @@ class _SBDataset:
 
 class SBDataset(GeneratorDataset):
     """
-    A source dataset for reading and parsing Semantic Boundaries Dataset.
+    A source dataset that reads and parses Semantic Boundaries Dataset.
 
     The generated dataset has two columns: :py:obj:`[image, task]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3280,7 +3280,7 @@ class SBDataset(GeneratorDataset):
 
 class SBUDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the SBU dataset.
+    A source dataset that reads and parses the SBU dataset.
 
     The generated dataset has two columns :py:obj:`[image, caption]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3394,7 +3394,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
 
 class SemeionDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing Semeion dataset.
+    A source dataset that reads and parses Semeion dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3514,7 +3514,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
 
 class STL10Dataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing STL10 dataset.
+    A source dataset that reads and parses STL10 dataset.
 
     The generated dataset has two columns: :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3686,7 +3686,7 @@ class _SVHNDataset:
 
 class SVHNDataset(GeneratorDataset):
     """
-    A source dataset for reading and parsing SVHN dataset.
+    A source dataset that reads and parses SVHN dataset.
 
     The generated dataset has two columns: :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3798,7 +3798,7 @@ class SVHNDataset(GeneratorDataset):
 
 class USPSDataset(SourceDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing the USPS dataset.
+    A source dataset that reads and parses the USPS dataset.
 
     The generated dataset has two columns: :py:obj:`[image, label]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -3896,7 +3896,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
 class VOCDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing VOC dataset.
+    A source dataset that reads and parses VOC dataset.
 
     The generated dataset with different task setting has different output columns:
 
@@ -4098,7 +4098,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
 class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
     """
-    A source dataset for reading and parsing WIDERFace dataset.
+    A source dataset that reads and parses WIDERFace dataset.
 
     When usage is "train", "valid" or "all", the generated dataset has eight columns ["image", "bbox", "blur",
     "expression", "illumination", "occlusion", "pose", "invalid"]. When usage is "test", it only has one column
