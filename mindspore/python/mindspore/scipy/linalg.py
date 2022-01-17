@@ -100,26 +100,30 @@ def block_diag(*arrs):
 def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
                      overwrite_b=False, debug=None, check_finite=True):
     """
-    Solve the equation `a x = b` for `x`, assuming a is a triangular matrix.
+    Assuming a is a triangular matrix, solve the equation
+
+    .. math::
+        A x = b
 
     Args:
-        A (Tensor): A triangular matrix of shape :math:`(N, N)`.
+        A (Tensor): A triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
+            `float32` nor `float64`, then it will be casted to :class:`mstype.float32`.
         b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
-            Right-hand side matrix in :math:`A x = b`.
-        lower (bool, optional): Use only data contained in the lower triangle of `a`.
-            Default is to use upper triangle.
-        trans (0, 1, 2, 'N', 'T', 'C', optional):
+            Right-hand side matrix in :math:`A x = b`. Note that if the input tensor is neither `float32` nor `float64`,
+            then it will be casted to :class:`mstype.float32`.
+        lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
+        trans (0, 1, 2, 'N', 'T', 'C', optional), Default: 'N'.
             Type of system to solve:
             trans:        system:
                 0 or 'N'        a x  = b
                 1 or 'T'        a^T x = b
                 2 or 'C'        a^H x = b
         unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
-            will not be referenced.
-        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance)
+            will not be referenced. Default: False.
+        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.
 
     Returns:
         Tensor of shape :math:`(M,)` or :math:`(M, N)`,
@@ -127,13 +131,21 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         Shape of :math:`x` matches :math:`b`.
 
     Raises:
-        LinAlgError: If :math:`A` is singular
+        TypeError: If `A` is not Tensor.
+        TypeError: If `b` is not Tensor.
+        TypeError: If `trans` is not int or str.
+        TypeError: If `lower` is not bool.
+        TypeError: If `unit_diagonal` is not bool.
+        TypeError: If `overwrite_b` is not bool.
+        TypeError: If `check_finite` is not bool.
+        ValueError: If `A` is singular matrix.
+        ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
 
     Supported Platforms:
         ``CPU`` ``GPU``
 
     Examples:
-        Solve the lower triangular system :math:`A x = b`, where:
+        Solve the lower triangular system :math:`A x = b`, where::
 
                  [3  0  0  0]       [4]
             A =  [2  1  0  0]   b = [2]
