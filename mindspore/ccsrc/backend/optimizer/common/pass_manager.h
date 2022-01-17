@@ -39,7 +39,6 @@ class CacheManager {
   std::map<AnfNodePtr, std::map<size_t, TypeId>> type_map_;
   std::map<AnfNodePtr, std::map<size_t, std::vector<size_t>>> shape_map_;
 };
-using CacheManagerPtr = std::shared_ptr<CacheManager>;
 
 // @brief For optimization passes management
 class PassManager {
