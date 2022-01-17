@@ -93,7 +93,9 @@ class LiteSession : public session::LiteSession {
   int ConvertTensorsData(size_t tensor_index, const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
 
   lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
-
+#ifdef ENABLE_V0
+  void TensorNameCompatibleWithV0(const lite::Model *model);
+#endif
   int ConvertTensors(const lite::Model *model);
 
   void InitGraphInOutTensorsMap(const lite::Model *model);
