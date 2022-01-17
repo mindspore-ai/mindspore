@@ -490,23 +490,39 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
     auto type = item.second;
     MS_EXCEPTION_IF_NULL(type);
     if (!type->isa<TensorType>()) {
+      size_t i = 1;
       std::ostringstream buffer;
-      buffer << "The primitive[" << prim_name << "]'s input arguments must be all tensor.\n";
+      buffer << "The primitive[" << prim_name << "]'s input arguments[";
+      for (const auto &item_type : types) {
+        buffer << item_type.first;
+        if (i < types.size()) {
+          buffer << ", ";
+          ++i;
+        }
+      }
+      i = 1;
+      buffer << "] must be all tensor and those type must be same.";
+      for (const auto &type_info : types) {
+        if (!type_info.second->isa<TensorType>()) {
+          buffer << "But got input argument[" << type_info.first << "]"
+                 << ":" << type_info.second->ToString() << "\n";
+        }
+      }
       if (!check_list.empty()) {
         buffer << "Valid type list: {";
         for (auto const &valid_type : check_list) {
           if (valid_type->isa<TensorType>()) {
             buffer << valid_type->ToString() << ", ";
             break;
+          } else {
+            buffer << "Tensor[" << valid_type << "]";
           }
-          buffer << "Tensor[" << valid_type << "]"
-                 << ", ";
+          if (i < check_list.size()) {
+            buffer << ", ";
+            ++i;
+          }
         }
-        buffer << "}.\n";
-      }
-      for (const auto &type_info : types) {
-        buffer << "input argument[" << type_info.first << "]"
-               << ":" << type_info.second->ToString() << "\n";
+        buffer << "}.";
       }
       MS_EXCEPTION(TypeError) << buffer.str();
     }
