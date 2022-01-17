@@ -94,8 +94,8 @@ std::vector<mindspore::MSTensor> GetGraphOutTensors(const std::vector<T *> &ops)
 }
 
 template <typename T>
-std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<T *> &ops, DelegateModel *model, KernelIter from,
-                                                KernelIter end) {
+std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<T *> &ops, DelegateModel<schema::Primitive> *model,
+                                                KernelIter from, KernelIter end) {
   auto in_tensors = GetGraphInTensors(ops, nullptr);
   std::vector<mindspore::MSTensor> all_in_tensors;
   for (auto op : ops) {
@@ -121,8 +121,8 @@ std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<T *> &ops, Del
 }
 
 template <typename T>
-std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<T *> &ops, DelegateModel *model, KernelIter from,
-                                                 KernelIter end) {
+std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<T *> &ops, DelegateModel<schema::Primitive> *model,
+                                                 KernelIter from, KernelIter end) {
   auto out_tensors = GetGraphOutTensors(ops);
   std::vector<mindspore::MSTensor> all_out_tensors;
   for (auto op : ops) {

@@ -31,6 +31,7 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "include/model.h"
+#include "include/api/format.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -38,6 +39,12 @@
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
+#define BENCHMARK_LOG_ERROR(str)   \
+  do {                             \
+    MS_LOG(ERROR) << str;          \
+    std::cerr << str << std::endl; \
+  } while (0);
+
 enum MS_API InDataType { kImage = 0, kBinary = 1 };
 
 enum MS_API AiModelDescription_Frequency {
@@ -60,7 +67,7 @@ constexpr const char *DELIM_COMMA = ",";
 constexpr const char *DELIM_SLASH = "/";
 
 extern const std::unordered_map<int, std::string> kTypeIdMap;
-extern const std::unordered_map<schema::Format, std::string> kTensorFormatMap;
+extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
 
 //
 namespace dump {
@@ -184,8 +191,9 @@ class MS_API BenchmarkBase {
 
   int ReadCalibData();
 
-  virtual int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
-                             const std::vector<size_t> &dims) = 0;
+  int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name, const std::vector<size_t> &dims);
+
+  virtual int GetDataTypeByTensorName(const std::string &tensor_name) = 0;
 
   virtual int CompareOutput() = 0;
 

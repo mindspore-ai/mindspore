@@ -29,6 +29,8 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
         ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+        ${TEST_DIR}/ut/src/api/context_c_test.cc
+        ${TEST_DIR}/ut/src/api/tensor_c_test.cc
         )
 
 if(MSLITE_ENABLE_TRAIN)
@@ -69,6 +71,7 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${LITE_DIR}/tools/benchmark/run_benchmark.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_base.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_unified_api.cc
+                ${LITE_DIR}/tools/benchmark/benchmark_c_api.cc
                 ${LITE_DIR}/tools/benchmark/benchmark.cc
                 )
     endif()

@@ -113,43 +113,13 @@ int Benchmark::ReadInputFile() {
   return RET_OK;
 }
 
-int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
-                              const std::vector<size_t> &dims) {
-  std::string line;
-  getline(in_file_stream, line);
-  std::stringstream line_stream(line);
-  if (this->benchmark_data_.find(tensor_name) != this->benchmark_data_.end()) {
-    return RET_OK;
-  }
-  tensor::MSTensor *tensor = session_->GetOutputByTensorName(tensor_name);
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
-    return RET_ERROR;
-  }
-  std::vector<float> data;
-  std::vector<std::string> strings_data;
-  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
-  if (tensor->data_type() == kObjectTypeString) {
-    strings_data.push_back(line);
-    for (size_t i = 1; i < shape_size; i++) {
-      getline(in_file_stream, line);
-      strings_data.push_back(line);
-    }
+int Benchmark::GetDataTypeByTensorName(const std::string &tensor_name) {
+  auto tensor = session_->GetOutputByTensorName(tensor_name);
+  if (tensor != nullptr) {
+    return tensor->data_type();
   } else {
-    for (size_t i = 0; i < shape_size; i++) {
-      float tmp_data;
-      line_stream >> tmp_data;
-      data.push_back(tmp_data);
-    }
+    return kTypeUnknown;
   }
-  auto *check_tensor = new (std::nothrow) CheckTensor(dims, data, strings_data);
-  if (check_tensor == nullptr) {
-    MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
-    return RET_ERROR;
-  }
-  this->benchmark_tensor_names_.push_back(tensor_name);
-  this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
-  return RET_OK;
 }
 
 void Benchmark::InitContext(const std::shared_ptr<Context> &context) {
@@ -503,13 +473,6 @@ int Benchmark::RunBenchmark() {
   }
   if (!flags_->benchmark_data_file_.empty()) {
     status = MarkAccuracy();
-    for (auto &data : benchmark_data_) {
-      data.second->shape.clear();
-      data.second->data.clear();
-      delete data.second;
-      data.second = nullptr;
-    }
-    benchmark_data_.clear();
     if (status != 0) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
@@ -742,7 +705,7 @@ std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &
   if (kTypeIdMap.find(tensor->data_type()) != kTypeIdMap.end()) {
     file_name += kTypeIdMap.at(tensor->data_type());
   }
-  auto tensor_format = static_cast<schema::Format>(static_cast<lite::Tensor *>(tensor)->format());
+  auto tensor_format = static_cast<lite::Tensor *>(tensor)->format();
   if (kTensorFormatMap.find(tensor_format) != kTensorFormatMap.end()) {
     file_name += "_" + kTensorFormatMap.at(tensor_format) + ".bin";
   }

@@ -144,6 +144,7 @@ getCommonFile() {
   while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/model/*.cc)
   while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/tensor/*.cc)
   while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/c_api/*.cc)
   mindrt_files=()
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/async/*.cc)
@@ -303,7 +304,6 @@ chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
 
 # support for npu
 npu_files=()
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/delegate.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/op/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/pass/*.cc)

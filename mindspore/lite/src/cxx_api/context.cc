@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "include/api/context.h"
+#include "src/cxx_api/context.h"
 #include <string>
 #include <memory>
-#ifndef SUPPORT_NNIE
-#include <any>
-#else
-#include <experimental/any>
-#endif
 #include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/runtime/inner_allocator.h"
@@ -46,24 +40,6 @@ constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend3
 constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
 constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
 constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
-
-struct Context::Data {
-  std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
-  int32_t thread_num = 2;
-  bool enable_parallel_ = false;
-  std::vector<int32_t> affinity_core_list_;
-  int affinity_mode_ = 0;
-  std::shared_ptr<Delegate> delegate = nullptr;
-};
-
-struct DeviceInfoContext::Data {
-#ifndef SUPPORT_NNIE
-  std::map<std::string, std::any> params;
-#else
-  std::map<std::string, std::experimental::any> params;
-#endif
-  std::shared_ptr<Allocator> allocator = nullptr;
-};
 
 Context::Context() : data_(std::shared_ptr<Data>(new (std::nothrow) Data())) {}
 

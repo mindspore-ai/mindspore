@@ -61,9 +61,14 @@ file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
         )
 
+file(GLOB C_API_SRCS
+        ${CMAKE_CURRENT_SOURCE_DIR}/c_api/*.cc
+        )
+
 set(API_SRC
         ${CORE_DIR}/utils/status.cc
         ${CXX_API_SRCS}
+        ${C_API_SRCS}
         )
 
 file(GLOB CXX_API_TRAIN_SRCS
@@ -159,11 +164,6 @@ set(LITE_SRC
     ${LITE_SRC}
     ${KERNEL_REG_SRC}
     )
-
-set(LITE_SRC
-        ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/delegate.cc
-        )
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC

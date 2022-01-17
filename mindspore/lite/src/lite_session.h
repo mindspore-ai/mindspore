@@ -52,8 +52,9 @@ class LiteSession : public session::LiteSession {
 
   static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
 
-  static int CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session);
-  static int CreateSessionByPath(const std::string &model_path, session::LiteSession *session);
+  int LoadModelAndCompileByBuf(const char *model_buf, size_t buf_size);
+
+  int LoadModelAndCompileByPath(const std::string &model_path);
 
   virtual int Init(InnerContext *context);
 

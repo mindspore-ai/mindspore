@@ -99,3 +99,7 @@ echo 'runtime pass'
 
 echo 'Runtime config file test'
 ./lite-test --gtest_filter="MixDataTypeTest.Config1"
+
+echo 'run c api ut test'
+./lite-test --gtest_filter="TensorCTest.*"
+./lite-test --gtest_filter="ContextCTest.*"
