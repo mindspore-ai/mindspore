@@ -116,7 +116,10 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
     const auto &arg_abs = args_abs_list[i];
     const auto &node = fg->parameters()[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, new_context, new_context->func_graph());
-    engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg_abs, nullptr));
+    auto result = std::make_shared<EvalResult>(arg_abs, nullptr);
+    MS_LOG(DEBUG) << "Save argument[" << i << "] result, NodeConfig: " << conf->ToString()
+                  << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
+    engine->SaveEvalResultInCache(conf, result);
   }
 
   // Create a new stack frame and set arguments for it.
@@ -181,9 +184,11 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
 
   // Continue saving node's result for parent func graph.
   auto &current_node = NextNode();
-  MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
-                << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
+  MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
+                << ", current_context_: " << current_context_->ToString()
+                << ", Save result, NodeConfig: " << node_conf->ToString() << ", result: " << result->abstract().get()
+                << "/" << result->abstract()->ToString();
   engine->SaveEvalResultInCache(node_conf, result);
 
   // Leave the call CNode.

@@ -240,8 +240,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     const auto &node = parameters[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, context, fg);
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
-    MS_LOG(DEBUG) << GetInferThread() << "Set parameter[" << i << "] for " << fg->ToString()
-                  << ", conf: " << conf->ToString() << ", arg: " << arg->ToString();
+    MS_LOG(DEBUG) << GetInferThread() << ", Save argument[" << i << "] result for " << fg->ToString()
+                  << ", NodeConfig: " << conf->ToString() << ", result: " << arg << "/" << arg->ToString();
   }
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
@@ -403,10 +403,12 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
         auto new_sequence = dyn_cast<AbstractTuple>(args_spec_list[i]);
         auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
         if (old_sequence != nullptr && new_sequence != nullptr) {
-          MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+          MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
+                        << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
           SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
-          MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
+          MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
+                        << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
         }
       }
