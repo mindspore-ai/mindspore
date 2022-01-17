@@ -596,7 +596,10 @@ def get_slice_stride(index_slice, dim_size):
         start_default = -1
         stop_default = -(dim_size + 1)
     start = start_default if index_slice.start is None else index_slice.start
-    stop = stop_default if index_slice.stop is None else index_slice.stop
+    if index_slice.stop is None:
+        stop = stop_default
+    else:
+        stop = min(stop_default, index_slice.stop) if step >= 0 else max(stop_default, index_slice.stop)
     return start, stop, step
 
 
