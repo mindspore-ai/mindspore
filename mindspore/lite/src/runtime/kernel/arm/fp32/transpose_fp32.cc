@@ -62,6 +62,10 @@ int TransposeCPUKernel::ReSize() {
   } else {
     MS_ASSERT(in_tensors_.size() == C2NUM);
     auto perm_tensor = in_tensors_.at(1);
+    if (perm_tensor->data_type() != kNumberTypeInt32) {
+      MS_LOG(ERROR) << "Unsupported type id: " << perm_tensor->data_type() << " of perm tensor.";
+      return RET_ERROR;
+    }
     perm_data = reinterpret_cast<int *>(perm_tensor->data());
     MSLITE_CHECK_PTR(perm_data);
   }

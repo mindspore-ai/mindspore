@@ -17,6 +17,9 @@
 #include "nnacl/fp32/unique_fp32.h"
 
 int Find(const float *array, int len, float target) {
+  if (array == NULL) {
+    return -1;
+  }
   for (int i = 0; i < len; ++i) {
     if (array[i] == target) {
       return i;

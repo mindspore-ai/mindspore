@@ -37,7 +37,7 @@ constexpr int k3DimsLeftMatrixDeepIndex = 2;
 constexpr int kRightMatrixDeepIndex = 0;
 constexpr int kRelativePositionHasBiasInputSize = 15;
 
-bool AttentionActivationTensorCheck(lite::Tensor *tensor) {
+bool AttentionActivationTensorCheck(const lite::Tensor *tensor) {
   if (tensor == nullptr || tensor->data_type() != kNumberTypeFloat32 ||
       tensor->shape().size() != kActivationTensorShapeSize ||
       tensor->shape().at(kTensorShapeBatchIndex) != kActivationTensorBatch) {
@@ -99,7 +99,7 @@ int RelativePositionAttentionCPUKernel::CheckInputs() {
 
 namespace {
 constexpr int kWeightTensorShapeSize = 2;
-bool AttentionWeightTensorCheck(lite::Tensor *tensor) {
+bool AttentionWeightTensorCheck(const lite::Tensor *tensor) {
   if (tensor == nullptr || !tensor->IsConst() || tensor->data_type() != kNumberTypeFloat32 ||
       tensor->shape().size() != kWeightTensorShapeSize) {
     return false;
@@ -152,7 +152,7 @@ int RelativePositionAttentionCPUKernel::CheckWeights() {
 }
 
 namespace {
-bool AttentionBiasTensorCheck(lite::Tensor *tensor) {
+bool AttentionBiasTensorCheck(const lite::Tensor *tensor) {
   if (tensor == nullptr || !tensor->IsConst() || tensor->data_type() != kNumberTypeFloat32 ||
       tensor->shape().size() != 1) {
     return false;

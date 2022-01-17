@@ -98,7 +98,6 @@ int WhereCPUKernel::RunWithSingleInput() {
   int data_num_int = where_param_->condition_num_ * where_param_->rank_;
   MS_CHECK_TRUE_RET(data_num_int >= 0, RET_ERROR);
   size_t data_num = static_cast<size_t>(data_num_int);
-  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int32_t), data_num), RET_ERROR, "mul overflow");
   size_t data_size = data_num * sizeof(int32_t);
   auto data = ms_context_->allocator->Malloc(data_size);
   if (data == nullptr) {
@@ -113,13 +112,13 @@ int WhereCPUKernel::RunWithSingleInput() {
     bool condition = false;
     switch (input_data_type) {
       case kNumberTypeInt32:
-        condition = int32_condition_[index];
+        condition = static_cast<bool>(int32_condition_[index]);
         break;
       case kNumberTypeFloat32:
-        condition = fp32_condition_[index];
+        condition = static_cast<bool>(fp32_condition_[index]);
         break;
       case kNumberTypeBool:
-        condition = condition_[index];
+        condition = static_cast<bool>(condition_[index]);
         break;
       default:
         MS_LOG(ERROR) << "Unsupported data type: " << input_data_type << " of where cpu kernel.";
