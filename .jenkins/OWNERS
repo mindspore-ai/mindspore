@@ -15,6 +15,7 @@ approvers:
 - hwhewei
 - jjfeing
 - john_tzanakakis
+- jonyguo
 - jpc_chenjianping
 - kingxian
 - liangchenghui
@@ -28,6 +29,7 @@ approvers:
 - pandoublefeng
 - robingrosman
 - stsuteng
+- tiancixiao
 - tom__chen
 - wangyue01
 - wenkai_dist
@@ -50,6 +52,4 @@ reviewers:
 - nicholas_yhr
 - liubuyu
 - chengxb7532
-- xulei2020
-- jonyguo
 - lx0095
