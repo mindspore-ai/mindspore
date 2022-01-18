@@ -239,3 +239,17 @@ def test_neighbor_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net2(_w1, _w2, out_channel=8, kernel_size=2, pad_mode="same", stride=1)
     compile_net(net)
+
+
+def test_bilinear_shard_n_c_w():
+    """
+    Feature: test ResizeBilinear shard n/c/w
+    Description: shard n/c/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=3)
+    strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
+    strategy2 = ((2, 2, 1, 2),)
+    net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1,
+              strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)

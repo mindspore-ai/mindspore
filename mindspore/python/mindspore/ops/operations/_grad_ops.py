@@ -2338,7 +2338,7 @@ class ParallelResizeBilinearGrad(PrimitiveWithInfer):
         x_dtype = x['dtype']
         validator.check_tensor_dtype_valid("grad_dtype", grad_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32], self.name)
-        if size_val is not None:
+        if size_val is None:
             raise ValueError("size should be const input")
         output_shape = [grad_shape[0], grad_shape[1], x_shape[2], x_shape[3]]
 
