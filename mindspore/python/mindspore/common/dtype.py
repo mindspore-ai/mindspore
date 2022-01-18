@@ -115,6 +115,7 @@ Ellipsis_ = typing.TypeEllipsis
 none_type = typing.TypeNone
 env_type_type = typing.EnvType
 tensor_type = typing.TensorType
+csr_tensor_type = typing.CSRTensorType
 anything_type = typing.TypeAnything
 ref_type = typing.RefType
 

@@ -126,6 +126,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimInDict, R{InferImplInDict, nullptr, true}},
     {prim::kPrimNotInDict, R{InferImplNotInDict, nullptr, true}},
     {prim::kPrimIsConsant, R{InferImplIsConstant, nullptr, true}},
+    {prim::kPrimIsCSRFunc, R{InferImplIsCSRFunc, nullptr, true}},
     // Maths
     {prim::kPrimMatMul, R{InferImplMatMul, nullptr, true}},
     {prim::kPrimBatchMatMul, R{InferImplBatchMatMul, nullptr, true}},

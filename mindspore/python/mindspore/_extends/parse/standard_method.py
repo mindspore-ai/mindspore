@@ -1536,10 +1536,32 @@ def view(x, *shape):
     return F.reshape(x, shape)
 
 
+@constexpr
+def check_is_tuple(x):
+    """check whether x is tuple."""
+    return isinstance(x, mstype.Tuple)
+
+
+@constexpr
+def check_is_func(x):
+    """check whether x is function."""
+    return isinstance(x, mstype.function_type)
+
+
 def isinstance_(x, base_type):
-    """Determine whether x is an instance of base_type."""
+    """Determine whether x is an instance of base."""
     x_type = F.typeof(x)
-    return check_type_same(x_type, base_type)
+    cmp_type = base_type
+    if check_is_tuple(F.typeof(base_type)):
+        cmp_type = ()
+        for i in base_type:
+            if check_is_func(F.typeof(i)) and i.__is_csr_func__():
+                cmp_type += (mstype.csr_tensor_type,)
+            else:
+                cmp_type += (i,)
+    if check_is_func(F.typeof(base_type)) and base_type.__is_csr_func__():
+        cmp_type = mstype.csr_tensor_type
+    return check_type_same(x_type, cmp_type)
 
 
 def while_cond(x):
@@ -1571,6 +1593,7 @@ def check_type_same(x_type, base_type):
         Parameter: mstype.ref_type,
         slice: mstype.Slice,
     }
+    sparse_mstype_set = (mstype.csr_tensor_type,)
 
     has_int = False
     has_tensor = False
@@ -1578,7 +1601,12 @@ def check_type_same(x_type, base_type):
     def to_target_type(origin_type):
         try:
             if isinstance(origin_type, type):
-                ret_type = pytype_to_mstype[origin_type]
+                ret_type = None
+                if origin_type in pytype_to_mstype:
+                    ret_type = pytype_to_mstype[origin_type]
+                elif origin_type in sparse_mstype_set:
+                    ret_type = origin_type
+
                 if ret_type == mstype.Int:
                     nonlocal has_int
                     has_int = True

@@ -140,6 +140,7 @@ constexpr auto kCSRTensorGetValues = "CSRTensorGetValues";
 constexpr auto kCSRTensorGetIndptr = "CSRTensorGetIndptr";
 constexpr auto kCSRTensorGetIndices = "CSRTensorGetIndices";
 constexpr auto kCSRTensorGetDenseShape = "CSRTensorGetDenseShape";
+constexpr auto kIsCSRFunc = "IsCSRFunc";
 
 // Sparse ops
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
@@ -583,6 +584,7 @@ MS_CORE_API inline const PrimitivePtr kPrimCSRTensorGetIndptr = std::make_shared
 MS_CORE_API inline const PrimitivePtr kPrimCSRTensorGetIndices = std::make_shared<Primitive>(kCSRTensorGetIndices);
 MS_CORE_API inline const PrimitivePtr kPrimCSRTensorGetDenseShape =
   std::make_shared<Primitive>(kCSRTensorGetDenseShape);
+MS_CORE_API inline const PrimitivePtr kPrimIsCSRFunc = std::make_shared<Primitive>(kIsCSRFunc);
 
 // Sparse ops
 MS_CORE_API inline const PrimitivePtr kPrimSparseTensorDenseMatmul =

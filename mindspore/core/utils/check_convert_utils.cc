@@ -552,6 +552,20 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
   return CheckTensorSubClass(type_name, type, check_list, prim_name);
 }
 
+TypePtr CheckAndConvertUtils::CheckCSRTensorTypeValid(const std::string &type_name, const TypePtr &type,
+                                                      const std::set<TypePtr> &check_list,
+                                                      const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(type);
+  if (!type->isa<CSRTensorType>()) {
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
+                            << "] must be a CSRTensor but got " << type->ToString() << ".";
+  }
+  auto csr_tensor_type = type->cast<CSRTensorTypePtr>();
+  auto element = csr_tensor_type->element();
+  MS_EXCEPTION_IF_NULL(element);
+  return element;
+}
+
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
                                                       const std::string &prim_name) {
   if (value == nullptr) {
