@@ -240,7 +240,8 @@ void NodeManager::UpdateCluster() {
   }
 
   // 2. update cluster finish state
-  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_) {
+  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_ &&
+      PSContext::instance()->server_mode() != kServerModeHybrid) {
     UpdateClusterState(ClusterState::CLUSTER_EXIT);
   }
 }
@@ -315,7 +316,7 @@ void NodeManager::ResetMetadata(const std::vector<std::string> &scale_in_nodes) 
       }
     }
     auto min_rank_id = std::min_element(server_rank_ids.begin(), server_rank_ids.end());
-    next_server_rank_id_ = UintToInt(*min_rank_id - 1);
+    next_server_rank_id_ = UintToInt(*min_rank_id);
     MS_LOG(INFO) << "The next server rank id:" << next_server_rank_id_;
   }
   registered_nodes_info_.clear();
