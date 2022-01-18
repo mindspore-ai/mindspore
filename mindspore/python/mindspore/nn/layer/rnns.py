@@ -781,7 +781,7 @@ class LSTM(_RNNBase):
             num_directions=2 if bidirectional=True otherwise 1. Default: False.
 
     Inputs:
-        - **x** (Tensor) - (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
+        - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
           or mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
@@ -803,7 +803,7 @@ class LSTM(_RNNBase):
         TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
         TypeError: If `has_bias`, `batch_first` or `bidirectional` is not a bool.
         TypeError: If `dropout` is not a float.
-        ValueError: If `dropout` is not in range [0.0, 1.0].
+        ValueError: If `dropout` is not in range [0.0, 1.0).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
