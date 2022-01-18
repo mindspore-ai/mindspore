@@ -49,7 +49,8 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
     fi
 fi
 
-if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_gl_texture" ]]; then
+if [[ $backend == "all" || $backend == "gpu" || $backend == "gpu_onnx_mindir" || $backend == "gpu_tf_caffe" || \
+      $backend == "gpu_tflite" || $backend == "gpu_gl_texture" ]]; then
     sh $cur_path/scripts/run_benchmark_gpu.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     gpu_status=$?
     if [[ $gpu_status -ne 0 ]]; then
@@ -69,6 +70,16 @@ fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_onnx" || $backend == "x86_tf" || \
       $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+    sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -p $fail_not_return
+    x86_status=$?
+    if [[ $x86_status -ne 0 ]]; then
+      echo "Run x86 failed"
+      exit 1
+    fi
+fi
+
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx512" || $backend == "x86_avx512_onnx" || $backend == "x86_avx512_tf" || \
+      $backend == "x86_avx512_tflite" || $backend == "x86_avx512_caffe" || $backend == "x86_avx512_mindir" ]]; then
     sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -p $fail_not_return
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
