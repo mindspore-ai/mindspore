@@ -396,8 +396,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
     // Update inputs sequence nodes info, if matched in cache.
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_spec_list.size(); ++i) {
         auto new_sequence = dyn_cast<AbstractSequence>(args_spec_list[i]);
@@ -514,6 +513,8 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   // Call the original evaluator, get the result: y = f(x)
   EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
   MS_EXCEPTION_IF_NULL(result);
+  // If the primal func graph's output is sequence, set its elements use flags all true.
+  SetSequenceElementsUseFlagsRecursively(result->abstract(), true);
   // Build a virtual function: bprop_f which use sense of y as input, return sense of function free variable and input
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
@@ -569,8 +570,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
                       << ", arguments no: " << args_spec_list.size();
   }
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-  static const auto enable_eliminate_unused_element = (eliminate_unused_element != "0");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_spec_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);

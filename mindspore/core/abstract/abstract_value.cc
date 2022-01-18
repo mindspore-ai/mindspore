@@ -361,8 +361,7 @@ void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &seq
 
 AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {
   AnfNodeWeakPtrList sequence_nodes;
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
   if (!enable_eliminate_unused_element) {
     return sequence_nodes;
   }
@@ -439,7 +438,7 @@ void AbstractSequence::PurifyElements() {
   }
   // Purify the elements.
   if (elements_use_flags_ptr == nullptr) {
-    MS_LOG(ERROR) << "Check if all sequence nodes are released, or none elements use flags in them. " << ToString();
+    MS_LOG(INFO) << "Check if all sequence nodes are released, or none elements use flags in them. " << ToString();
     return;
   }
   auto &elements_use_flags = *elements_use_flags_ptr;

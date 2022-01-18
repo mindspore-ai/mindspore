@@ -1600,8 +1600,7 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
       MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
     if (enable_eliminate_unused_element) {
       auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
       if (flags == nullptr) {
@@ -1628,8 +1627,7 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
       MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
     if (enable_eliminate_unused_element) {
       auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
       if (flags == nullptr) {

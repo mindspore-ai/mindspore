@@ -1587,8 +1587,7 @@ void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &
       continue;
     }
     std::vector<FuncGraphPtr> func_graphs;
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
     if (enable_eliminate_unused_element) {
       func_graphs = GetFuncGraphs(control_node->cast<CNodePtr>()->input(0));
     } else {
