@@ -38,6 +38,7 @@ typedef enum MSDeviceType {
   kMSDeviceTypeCPU = 0,
   kMSDeviceTypeGPU,
   kMSDeviceTypeKirinNPU,
+  kMSDeviceTypeHexagonDSP = 6,
   // add new type here
   kMSDeviceTypeInvalid = 100,
 } MSDeviceType;
