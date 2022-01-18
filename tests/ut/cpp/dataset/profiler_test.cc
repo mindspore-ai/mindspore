@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,13 +198,13 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByEpoch) {
 
   // Enable profiler and check
   common::SetEnv("RANK_ID", "2");
-  GlobalContext::config_manager()->set_monitor_sampling_interval(100);
+  GlobalContext::config_manager()->set_monitor_sampling_interval(10);
   std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
   EXPECT_OK(profiler_manager->Init());
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
-  std::shared_ptr<Dataset> ds = set_dataset(2);
+  std::shared_ptr<Dataset> ds = set_dataset(20);
 
   // No columns are specified, use all columns
   std::vector<std::string> columns = {};
@@ -239,21 +239,21 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByEpoch) {
     ASSERT_OK(profiler_manager->GetUserCpuUtilByEpoch(i - 1, i, &op_result));
     ASSERT_OK(profiler_manager->GetSysCpuUtilByEpoch(i, &cpu_result));
     ASSERT_OK(profiler_manager->GetSysCpuUtilByEpoch(i - 1, i, &op_result));
-    // Epoch is 1 for each iteration and 2 steps for each epoch, so the output size are expected to be 2
+    // Epoch is 1 for each iteration and 20 steps for each epoch, so the output size are expected to be 20
     ASSERT_OK(profiler_manager->GetBatchTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 2);
+    EXPECT_EQ(time_result.size(), 20);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetPipelineTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 2);
+    EXPECT_EQ(time_result.size(), 20);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetPushTimeByEpoch(i, &time_result));
-    EXPECT_EQ(time_result.size(), 2);
+    EXPECT_EQ(time_result.size(), 20);
     time_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorSizeByEpoch(i, &connector_result));
-    EXPECT_EQ(connector_result.size(), 2);
+    EXPECT_EQ(connector_result.size(), 20);
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorCapacityByEpoch(i, &connector_result));
-    EXPECT_EQ(connector_result.size(), 2);
+    EXPECT_EQ(connector_result.size(), 20);
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorSizeByEpoch(i - 1, i, &connector_result));
     EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
@@ -283,13 +283,13 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProfilerManagerByStep.";
   // Enable profiler and check
   common::SetEnv("RANK_ID", "2");
-  GlobalContext::config_manager()->set_monitor_sampling_interval(100);
+  GlobalContext::config_manager()->set_monitor_sampling_interval(10);
   std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
   EXPECT_OK(profiler_manager->Init());
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
-  std::shared_ptr<Dataset> ds = set_dataset(10);
+  std::shared_ptr<Dataset> ds = set_dataset(20);
 
   // No columns are specified, use all columns
   std::vector<std::string> columns = {};
@@ -346,7 +346,7 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByStep) {
     EXPECT_EQ(connector_result.size(), 1);
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetConnectorSizeByStep(i - 1, i, i, &connector_result));
-    EXPECT_GE(connector_result.size(), 0);  // Connector size is expected to be greater than 0
+    EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
     connector_result.clear();
     ASSERT_OK(profiler_manager->GetEmptyQueueFrequencyByStep(i, i, &queue_result));
     EXPECT_GE(queue_result, 0);
@@ -376,13 +376,13 @@ TEST_F(MindDataTestProfiler, TestProfilerManagerByTime) {
 
   // Enable profiler and check
   common::SetEnv("RANK_ID", "2");
-  GlobalContext::config_manager()->set_monitor_sampling_interval(100);
+  GlobalContext::config_manager()->set_monitor_sampling_interval(10);
   std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
   EXPECT_OK(profiler_manager->Init());
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
-  std::shared_ptr<Dataset> ds = set_dataset(5);
+  std::shared_ptr<Dataset> ds = set_dataset(20);
 
   // No columns are specified, use all columns
   std::vector<std::string> columns = {};
