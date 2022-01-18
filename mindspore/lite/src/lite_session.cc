@@ -247,7 +247,11 @@ void LiteSession::TensorNameCompatibleWithV0(const lite::Model *model) {
       if (to_name_tensor_indices.count(output_index) > 0) {
         auto *dst_tensor = this->tensors_[output_index];
         MS_ASSERT(dst_tensor != nullptr);
-        dst_tensor->set_tensor_name(node->name_ + "_o:" + std::to_string(j));
+        if (node->output_indices_.size() == 1) {
+          dst_tensor->set_tensor_name(node->name_);
+        } else {
+          dst_tensor->set_tensor_name(node->name_ + "_o:" + std::to_string(j));
+        }
         to_name_tensor_indices.erase(output_index);
       }
     }
