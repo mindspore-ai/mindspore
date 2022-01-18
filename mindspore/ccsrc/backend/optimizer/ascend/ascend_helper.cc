@@ -96,8 +96,11 @@ void SetGroupAttr(const ParameterPtr &param, const AnfNodePtr &out_trans, const 
   // not set with groups attr and cannot be eliminated in EliminateReduntantOp. So to solve this problem,
   // set the groups and fracz_group attr here for these paired TransData nodes.
   if (fz_group > 1) {
-    AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), out_trans);
-    AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), out_trans);
+    if (out_trans->isa<CNode>()) {
+      // if has transdata after parameter
+      AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), out_trans);
+      AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), out_trans);
+    }
     if (dest_format == kOpFormat_FRAC_Z) {
       AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), in_trans);
       AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), in_trans);
@@ -241,6 +244,11 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   if (trans_opname == prim::kPrimTransDataRNN->name()) {
     AnfAlgo::CopyNodeAttr(kAttrHiddenSize, node, trans_data);
     AnfAlgo::CopyNodeAttr(kAttrInputSize, node, trans_data);
+  }
+  if (spec_format == kOpFormat_FRAC_Z && orig_node->isa<CNode>() &&
+      AnfAlgo::HasNodeAttr(kAttrFracZGroup, orig_node->cast<CNodePtr>())) {
+    AnfAlgo::CopyNodeAttr(kAttrGroups, orig_node, trans_data);
+    AnfAlgo::CopyNodeAttr(kAttrFracZGroup, orig_node, trans_data);
   }
   // refresh the transdata's format to ori format & dst format
   RefreshKernelBuildInfo(input_format, dst_format, trans_data, padding_axis);
