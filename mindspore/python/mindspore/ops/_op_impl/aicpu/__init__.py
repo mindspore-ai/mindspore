@@ -40,6 +40,8 @@ from .is_nan import _is_nan_aicpu
 from .reshape import _reshape_aicpu
 from .flatten import _flatten_aicpu
 from .squeeze import _squeeze_aicpu
+from .acos import _acos_aicpu
+from .acos_grad import _acos_grad_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu

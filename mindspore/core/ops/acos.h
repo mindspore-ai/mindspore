@@ -13,27 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CORE_OPS_ACOS_H_
 #define MINDSPORE_CORE_OPS_ACOS_H_
+
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/primitive_c.h"
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameACos = "ACos";
-
+/// \brief Computes arccosine of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.ACos for more details.
 class ACos : public PrimitiveC {
  public:
-  ACos() : PrimitiveC(kNameACos) { InitIOName({"x"}, {"output"}); }
+  /// \brief Constructor.
+  ACos() : PrimitiveC(kNameACos) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~ACos() = default;
+
   MS_DECLARE_PARENT(ACos, PrimitiveC);
-  void Init() {}
 };
+
+AbstractBasePtr ACosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args);
+
+using PrimACosPtr = std::shared_ptr<ACos>;
 }  // namespace ops
 }  // namespace mindspore
+
 #endif  // MINDSPORE_CORE_OPS_ACOS_H_
