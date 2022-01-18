@@ -288,7 +288,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
 
     where X is the input tensor.
     where :math:`Q_{max}` (quant_max) is decided by quant_dtype and neg_trunc, for example, if quant_dtype=INT8
-    and neg_trunc works, :math:`Q_{max} = 256` , otherwise math:`Q_{max} = 127`.
+    and neg_trunc works, :math:`Q_{max} = 256` , otherwise :math:`Q_{max} = 127`.
 
     The maxq is updated by training, and its gradient is calculated as follows:
 
