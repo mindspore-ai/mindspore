@@ -601,3 +601,34 @@ def _setup_logger(kwargs):
     finally:
         _setup_logger_lock.release()
     return _global_logger
+
+
+class _LogActionOnce:
+    """
+    A wrapper for modify the warning logging to an empty function. This is used when we want to only log
+    once to avoid the repeated logging.
+
+    Args:
+        logger (logging): The logger object.
+
+    """
+    __is_logged__ = False
+
+    def __init__(self, logger):
+        self.logger = logger
+
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            if not hasattr(self.logger, 'warning'):
+                return func(*args, **kwargs)
+
+            _old_ = self.logger.warning
+            if _LogActionOnce.__is_logged__:
+                self.logger.warning = lambda x: x
+            else:
+                _LogActionOnce.__is_logged__ = True
+            res = func(*args, **kwargs)
+            if hasattr(self.logger, 'warning'):
+                self.logger.warning = _old_
+            return res
+        return wrapper
