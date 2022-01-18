@@ -93,7 +93,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
 // iterate through dataset and count rows
 // Expectation: There should be 12 rows
 TEST_F(MindDataTestPipeline, TestWeightedRandomSamplerImageFolder) {
-    std::vector<double> weights = {0.9, 0.8, 0.68, 0.7, 0.71, 0.6, 0.5, 0.4, 0.3, 0.5, 0.2, 0.1};
+  std::vector<double> weights = {0.9, 0.8, 0.68, 0.7, 0.71, 0.6, 0.5, 0.4, 0.3, 0.5, 0.2, 0.1};
   std::shared_ptr<Sampler> sampl = std::make_shared<WeightedRandomSampler>(weights, 12);
   EXPECT_NE(sampl, nullptr);
 
@@ -272,7 +272,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess4) {
 }
 
 // Feature: Test ImageFolder with DistributedSampler
-// Description: Create ImageFolder dataset with DistributedSampler given num_shards=11 and shard_id=10, 
+// Description: Create ImageFolder dataset with DistributedSampler given num_shards=11 and shard_id=10,
 // count rows in dataset
 // Expectation: There should be 4 rows (44 rows in original data/11 = 4)
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess5) {
@@ -306,7 +306,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess5) {
 }
 
 // Feature: Test ImageFolder with DistributedSampler
-// Description: Create ImageFolder dataset with DistributedSampler given num_shards=4 and shard_id=3, 
+// Description: Create ImageFolder dataset with DistributedSampler given num_shards=4 and shard_id=3,
 // count rows in dataset
 // Expectation: There should be 11 rows (44 rows in original data/4 = 11)
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess6) {
@@ -428,6 +428,168 @@ TEST_F(MindDataTestPipeline, TestSamplerAddChild) {
   }
 
   EXPECT_EQ(ds->GetDatasetSize(), 5);
+  iter->Stop();
+}
+
+/// Feature: MindData Sampler Support
+/// Description: Test MindData Sampler AddChild with nested children
+/// Expectation: Result dataset has expected number of samples.
+TEST_F(MindDataTestPipeline, TestSamplerAddChild2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild2.";
+
+  // num_samples of parent sampler > num_sampler of child sampler, namely 5 > 2, num_shards is 2 to output dataset with
+  // 1 sampler
+  auto sampler = std::make_shared<DistributedSampler>(2, 0, false, 5, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  // num_samples of parent sampler > num_samples of child sampler, namely 4 > 2
+  auto child_sampler = std::make_shared<RandomSampler>(true, 4);
+  EXPECT_NE(child_sampler, nullptr);
+  auto child_sampler2 = std::make_shared<SequentialSampler>(0, 2);
+  EXPECT_NE(child_sampler2, nullptr);
+
+  child_sampler->AddChild(child_sampler2);
+  sampler->AddChild(child_sampler);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 1);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 1);
+  iter->Stop();
+}
+
+/// Feature: MindData Sampler Support
+/// Description: Test MindData Sampler AddChild with num_samples of parent sampler > num_samples of child sampler
+/// Expectation: Result dataset has expected number of samples.
+TEST_F(MindDataTestPipeline, TestSamplerAddChild3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild3.";
+
+  // num_samples of parent sampler > num_samples of child sampler, namely 5 > 4
+  std::vector<double> weights = {1.0, 0.1, 0.02, 0.3};
+  auto sampler = std::make_shared<WeightedRandomSampler>(weights, 5);
+  EXPECT_NE(sampler, nullptr);
+
+  auto child_sampler = std::make_shared<SequentialSampler>(0, 4);
+  EXPECT_NE(child_sampler, nullptr);
+
+  sampler->AddChild(child_sampler);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 4);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 4);
+  iter->Stop();
+}
+
+/// Feature: MindData Sampler Support
+/// Description: Test MindData Sampler AddChild with num_samples of parent sampler < num_samples of child sampler
+/// Expectation: Result dataset has expected number of samples.
+TEST_F(MindDataTestPipeline, TestSamplerAddChild4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild4.";
+
+  // num_samples of parent sampler < num_samples of child sampler, namely 5 < 7
+  auto sampler = std::make_shared<DistributedSampler>(1, 0, false, 5, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  auto child_sampler = std::make_shared<PKSampler>(3, true, 7);
+  EXPECT_NE(child_sampler, nullptr);
+
+  sampler->AddChild(child_sampler);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 5);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 5);
+  iter->Stop();
+}
+
+/// Feature: MindData Sampler Support
+/// Description: Test MindData Sampler AddChild with several children
+/// Expectation: Result dataset has expected number of samples, and output error messages for more than 1 child.
+TEST_F(MindDataTestPipeline, TestSamplerAddChild5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild5.";
+
+  // Use all samples (num_sampler=0) for parent DistributedSampler
+  auto sampler = std::make_shared<DistributedSampler>(1, 0, false, 0, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  auto child_sampler1 = std::make_shared<SequentialSampler>(0, 10);
+  EXPECT_NE(child_sampler1, nullptr);
+  sampler->AddChild(child_sampler1);
+
+  // Attempt to add more than one child_sampler is expected to fail
+  auto child_sampler2 = std::make_shared<SequentialSampler>(0, 6);
+  EXPECT_NE(child_sampler2, nullptr);
+  sampler->AddChild(child_sampler2);
+
+  auto child_sampler3 = std::make_shared<SequentialSampler>(0, 7);
+  EXPECT_NE(child_sampler3, nullptr);
+  sampler->AddChild(child_sampler3);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 10);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 10);
   iter->Stop();
 }
 
@@ -553,7 +715,6 @@ TEST_F(MindDataTestPipeline, TestSubsetSamplerFail) {
 TEST_F(MindDataTestPipeline, TestPKSamplerImageFolder) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPKSamplerImageFolder.";
 
-  
   std::shared_ptr<Sampler> sampler = std::make_shared<PKSampler>(3, false);
   EXPECT_NE(sampler, nullptr);
 

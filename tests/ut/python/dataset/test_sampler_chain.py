@@ -136,23 +136,22 @@ def test_numpyslices_sampler_chain_multi_add_child():
     """
     Feature: Chained Sampler
     Description: NumpySlicesDataset with sampler chain with multiple add_child() invocations
-    Expectation: Data verified to be correct. Only last add_child() invocation is effective.
+    Expectation: Data verified to be correct. A subsequent add_child() invocation replaces the prior
+    child sampler (if any).
     """
     logger.info("test_numpyslices_sampler_chain_multi_add_child")
 
     # Create NumpySlicesDataset with sampler chain
     # Call add_child() multiple times in succession
-    # Note: A subsequent add_child() invocation replaces the prior child sampler (if any).
     np_data = [1, 2, 3, 4, 5, 6, 7, 8]
     sampler = ds.SequentialSampler(start_index=1, num_samples=None)
-    # 1st add_child invocation
-    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=1))
-    # 2nd add_child invocation
-    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=2))
-    # 3rd add_child invocation
-    sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=3))
-    # 4th and last add_child invocation which is the effective child sampler
     sampler.add_child(ds.SequentialSampler(start_index=1, num_samples=6))
+    # Expect the second child will fail
+    with pytest.raises(RuntimeError) as info:
+        sampler.add_child(ds.SequentialSampler(start_index=4, num_samples=2))
+
+    error_msg = "Cannot add child sampler, this sampler already has a child."
+    assert error_msg in str(info.value)
 
     data1 = ds.NumpySlicesDataset(np_data, sampler=sampler)
 
@@ -281,13 +280,14 @@ def test_coco_sampler_chain():
 
 def test_cifar_sampler_chain():
     """
-    Test Cifar sampler chain
+    Test Cifar sampler chain, including nested child sampler
     """
     logger.info("test_cifar_sampler_chain")
 
     sampler = ds.DistributedSampler(num_shards=2, shard_id=0, shuffle=False, num_samples=5)
     child_sampler = ds.RandomSampler(replacement=True, num_samples=4)
     child_sampler2 = ds.SequentialSampler(start_index=0, num_samples=2)
+    # Note: Add nested child_sampler2 to child_sampler
     child_sampler.add_child(child_sampler2)
     sampler.add_child(child_sampler)
     data1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, sampler=sampler)
