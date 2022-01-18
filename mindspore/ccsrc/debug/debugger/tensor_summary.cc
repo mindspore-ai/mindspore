@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,13 @@ TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *cons
       epsilon_(1.0e-9),
       mean_sd_cal_enabled_(false) {}
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Initialize watchpoints calculators based on the watchpoint category. Process all the elements within the
+ * current tensor.
+ */
 template <typename T>
 void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &wps) {
   InitCalculators(wps);
@@ -156,6 +163,12 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
   }
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Calculates statistics on chunks of data.
+ */
 template <typename T>
 void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
   if (dtype_value == DT_BOOL) {
@@ -211,6 +224,12 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
   }
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Process all the elements of the chunked data and calculates the statistics.
+ */
 template <typename T>
 void TensorSummary<T>::TensorStatisticsSingleThread() {
   MeanCalculator mean_calc = MeanCalculator();
@@ -244,6 +263,14 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
   avg_ = mean_calc.GetMean();
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns a tuple with three elements, the first element is a bool and it is true if the watchpoint is
+ * hit. The second element is the error_code which is set in this function and the third element is the parameter_list
+ * for the watchpoint.
+ */
 template <typename T>
 std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>::IsWatchpointHit(
   DebugServices::watchpoint_t wp) {

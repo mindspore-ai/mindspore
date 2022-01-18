@@ -71,6 +71,13 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
   return *this;
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Create a watchpoint_t object and set the watchpoint's variables and add the watchpoint to the
+ * watchpoint_table.
+ */
 void DebugServices::AddWatchpoint(
   unsigned int id, unsigned int watch_condition, float parameter,
   const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
@@ -83,9 +90,11 @@ void DebugServices::AddWatchpoint(
   watchpoint_item.condition.type = static_cast<CONDITION_TYPE>(watch_condition);
   watchpoint_item.condition.parameter = parameter;
   watchpoint_item.check_node_list = check_node_list;
+  // For offline debugger check_node_device_list is not nullptr.
   if (check_node_device_list != nullptr) {
     watchpoint_item.check_node_device_list = *check_node_device_list;
   }
+  // For offline debugger check_node_graph_list is not nullptr.
   if (check_node_graph_list != nullptr) {
     watchpoint_item.check_node_graph_list = *check_node_graph_list;
   }
@@ -98,6 +107,13 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
   (void)watchpoint_table_.erase(id);
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns a tensor summary unique pointer based on the given tensor_dtype, returns nullptr if the type is
+ * not supported.
+ */
 std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
                                               const void *const previous_tensor_ptr, uint32_t num_elements,
                                               uint32_t prev_num_elements, int tensor_dtype) {
@@ -160,6 +176,12 @@ std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> 
   }
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns TensorStat for the given tensor based on the base_summary_ptr.
+ */
 DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_ptr<TensorData> &tensor) {
   if (tensor == nullptr) {
     MS_LOG(WARNING) << "Tensor is nullptr, returning empty tensor statistics.";
@@ -184,7 +206,15 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
 
   return tensor_stat_data;
 }
+
 #ifdef OFFLINE_DBG_MODE
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns previous_tensor_ptr if graph hisotry file is found and the current iteration is not the first
+ * run iteration for tensor's graph.
+ */
 const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
                                          uint32_t *prev_num_elements, bool *history_not_found) {
   MS_EXCEPTION_IF_NULL(tensor);
@@ -309,6 +339,13 @@ void DebugServices::SetCheckWatchpointsResult(
 }
 
 #ifdef OFFLINE_DBG_MODE
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Sets and checks the OUT_OF_MEMORY error_code (for memory limit feature) and  NO_VALUE error_code (for
+ * new python API feature). Sets checkwatchpoint results.
+ */
 void DebugServices::CheckOutofMemoryandNoValue(
   const bool no_mem_to_read, const bool error_on_no_value, const std::vector<watchpoint_t> watchpoints_to_check,
   int chunk_id, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
@@ -339,6 +376,14 @@ void DebugServices::CheckOutofMemoryandNoValue(
   }
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: After finishing checking watchpoint, set the tensor to not-in-use status (for memory control
+ * feature) by pushing it to eviction candidate queue. So it can be evicted from memory anytime if the memory is
+ * required by other nodes' checking. If previous_tensor exists, change their status in a pair.
+ */
 void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tensor, const void *previous_tensor_ptr) {
   // set the tensor into not-in-use status in tensor_loader.
   auto tensor_name = tensor->GetName();
@@ -353,6 +398,16 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
 #endif
 
 #ifdef ONLINE_DBG_MODE
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Compares the current root graph id with the given graph id and returns false if they are not equal
+ * for GPU mindRT and Ascend. Otherwise, it returns true. The objectives of this function are: 1) Check if tensor's
+ * root_graph_id is different from current_root_graph_id and skip checkwatchpoint for the tensor if these values are
+ * different. 2) Set prev_tensor_ptr to nullptr if current_root_graph_id is different from prev_root_graph_id. 3) Skip
+ * reading tensor if tensor's root_graph_id is different from current_root_graph_id.
+ */
 bool DebugServices::CompareCurrentRootGraph(uint32_t id) {
   auto debugger = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
@@ -368,6 +423,13 @@ bool DebugServices::CompareCurrentRootGraph(uint32_t id) {
   return true;
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns the previous tensor pointer if the current root graph id is equal to previous root graph id and
+ * prev_tensor_data is not nullptr.
+ */
 const void *DebugServices::PreparePrevTensor(uint32_t *prev_num_elements, const std::string &tensor_name) {
   std::shared_ptr<TensorData> prev_tensor_data;
   if (!CompareCurrentRootGraph(Debugger::GetInstance()->GetPrevRootGraphId())) {
@@ -391,6 +453,15 @@ void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_foun
     *error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
   }
 }
+
+/*
+ * Feature group: Offline debugger, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: For all the tensors in the given chunk, reads the tensors, checks all the watchpoints and sets the
+ * watchpoint hit result. Checkwatchpoint process might be affected by memory limit, whether the read tensor was
+ * successfully and whether we have a multi root graph scenario. All of aforementioned checks are done in this function.
+ */
 void DebugServices::CheckWatchpointsForTensor(
   partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
   partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
@@ -501,6 +572,14 @@ void DebugServices::CheckWatchpointsForTensor(
   }
 }
 
+/*
+ * Feature group: Offline debugger, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function checks the watchpoints for the given tensor list by dividing the tensor list into chunks.
+ * Each chunk is handled by a separate thread and then the result of check watchpoint for each thread is gathered and
+ * sorted. In the end, the time for checking the watchpoint in the current step is reported.
+ */
 void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::vector<std::string> *const slot,
                                      std::vector<int> *const condition, std::vector<unsigned int> *const watchpoint_id,
                                      std::vector<std::vector<parameter_t>> *const parameters,
@@ -574,6 +653,13 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
   MS_LOG(INFO) << "CheckWatchpoints Took: " << ms_double.count() / 1000 << "s";
 }
 
+/*
+ * Feature group: Offline debugger, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Sorts the result of watchpoint hit for the online and offline debugger. This sorting for the online
+ * debugger is based on the execution order and for the offline debugger is based on the time stamp.
+ */
 void DebugServices::SortWatchpointsInfo(
   std::vector<std::future<void>> *const tensor_future_vec, std::vector<int> *const exec_order,
   std::vector<std::string> *const time_stamps, uint64_t *const tensor_list_byte_size,
@@ -632,6 +718,15 @@ void DebugServices::SortWatchpointsInfo(
 }
 
 #ifdef OFFLINE_DBG_MODE
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Read tensor info from the given file. If memory control feature is configured to be enabled, it checks
+ * if the tensor can fit in memory before reading. There are two situations to return false: 1)tensor size is greater
+ * than the total preset memory limit. 2) Evicting all NOT-In-USE tensors from tensor_list_map_ cannot make enough room
+ * for the tensor.
+ */
 void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name,
                                       std::string *const tensor_type, std::size_t *const size,
                                       std::vector<int64_t> *const shape, std::vector<char> **const data_buffer,
@@ -712,6 +807,13 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   }
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is to convert files in each directory from device format to host format and append the
+ * converted npy file name into AsyncFilePool. It's for Ascend async dump only.
+ */
 void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list) {
   std::string file_format = "npy";
   for (auto const &d : dir_to_files_map) {
@@ -731,7 +833,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFil
     }
     MS_LOG(INFO) << "Number of files to convert: " << files_to_convert_in_dir.size();
     if (!files_to_convert_in_dir.empty()) {
-      // Look for the installation path to the conver_async package. If not found, throw exception and terminate the
+      // Look for the installation path to the convert_async package. If not found, throw exception and terminate the
       // later task.
       {
         pybind11::gil_scoped_acquire acquire;
@@ -748,6 +850,13 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFil
   }
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is to iterate through dump directory (dump_key) and search all the converted npy files and
+ * append into AsyncFilePool. It's for Ascend async dump only.
+ */
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
                                                const std::string &dump_key, AsyncFilePool *const result_list,
                                                const std::string &file_format) {
@@ -786,6 +895,14 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
   (void)closedir(d_handle);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Node name string prefixes with scope and separates with slash "/". While the npy files in the tensor
+ * dump path do not include scope in their name. The objective of this function is to remove scope from the node name to
+ * match the file.
+ */
 std::string GetNodeNameWithoutScope(const std::string &dump_style_name) {
   if (dump_style_name.empty()) {
     return "";
@@ -799,6 +916,14 @@ std::string GetNodeNameWithoutScope(const std::string &dump_style_name) {
   return dump_style_name.substr(last_scope_marker + delim.size());
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is to search and prepare the target npy file to be read for each node. If the found file
+ * is already npy format, push it to AsyncFilePool; Otherwise, use conversion tool in convert_async.py to transfer it to
+ * npy format beforehand.
+ */
 void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                        std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                        std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list) {
@@ -949,6 +1074,13 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
   }
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: For the two possible modes (rank and graph), this function returns the rank_id or graph_id extracted
+ * from the given directory name otherwise, it returns UINT32_MAX to identify an invalid rank or graph id.
+ */
 uint32_t GetRankOrGraphId(const std::string &mode, const std::string &name) {
   std::regex re;
   if (mode == "rank") {
@@ -994,6 +1126,13 @@ std::vector<uint32_t> DebugServices::GetDumpRankIdList() {
   return rank_id_list;
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Searches the current dump directory and for each rank_id in rank_id_list extracts the existing
+ * graph_ids. Then the history file is read for all the extracted graph_ids.
+ */
 void DebugServices::CheckDumpGraphIdList(std::vector<uint32_t> rank_id_list) {
   std::string net_name = GetNetName();
   std::string dump_dir = GetDumpDir();
@@ -1038,6 +1177,13 @@ void DebugServices::SetGraphsHistory() {
   CheckDumpGraphIdList(rank_id_list);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Reads the graph history file (containing iteration numbers in which the graph was executed) and stores
+ * the data in graphs_run_history_ for the given rank and graph id.
+ */
 void DebugServices::ReadGraphsHistory(uint32_t rank_id, uint32_t root_graph_id) {
   std::tuple<uint32_t, uint32_t> rank_and_graph(rank_id, root_graph_id);
   if (graphs_run_history_.find(rank_and_graph) != graphs_run_history_.end()) {
@@ -1060,6 +1206,14 @@ void DebugServices::ReadGraphsHistory(uint32_t rank_id, uint32_t root_graph_id) 
   (void)closedir(d_handle);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns a map with a tuple as the key (rank, graph) and a vector as the value. This vector contains a
+ * tuple with two elements, the first element is the node name and the second element is whether the node is output or
+ * not.
+ */
 std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> DebugServices::GetAllWpNodes() {
   std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, bool>>> rank_and_graph_to_nodes;
   for (auto w_table_item : watchpoint_table_) {
@@ -1081,6 +1235,13 @@ std::map<std::tuple<uint32_t, uint32_t>, std::vector<std::tuple<std::string, boo
   return rank_and_graph_to_nodes;
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: For the given graph and rank id, reads the graph history file, stores all the run iterations for the
+ * graph in a vector and inserts it to graphs_run_history_ map.
+ */
 void DebugServices::ReadGraphRunIter(std::string file_path, std::tuple<uint32_t, uint32_t> rank_and_graph) {
   std::ifstream infile;
   std::string line;
@@ -1106,6 +1267,13 @@ void DebugServices::ReadGraphRunIter(std::string file_path, std::tuple<uint32_t,
     std::pair<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t>>(rank_and_graph, run_iters_vec));
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Creates a tensor_data object and sets its variables based on the function arguments and add the tensor
+ * to the tensor_list_map_.
+ */
 void DebugServices::AddToTensorData(const std::string &backend_name, const std::string &time_stamp,
                                     const std::size_t slot, const unsigned int iteration, const unsigned int device_id,
                                     const unsigned int root_graph_id, const bool is_output, const std::size_t data_size,
@@ -1139,6 +1307,13 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   result_list->push_back(tensor_data);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Generate a string in format of {no-scope-op-name}.{input-output}.{slot} to check and match files to
+ * read.
+ */
 void DebugServices::SetPrefixToCheck(std::string *const prefix_dump_file_name, std::string *const slot_string_to_check,
                                      std::string *const dump_style_kernel_name, size_t slot, bool is_output) {
   std::string dump_style_name_part = *dump_style_kernel_name;
@@ -1179,6 +1354,13 @@ std::string GetTimeStampStr(std::string file_path) {
   return "";
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Search files in dir (sync mode) or in AsyncFilePool (async mode) for the one that meets the filename
+ * prefix and read the file into memory.
+ */
 void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
@@ -1216,7 +1398,6 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     }
     MS_LOG(INFO) << "specific_dump_dir " << specific_dump_dir;
 
-    // search files in dir for the one that meets the filename prefix and read the file into memory
     if (is_sync_mode_ || is_cst) {
       ReadDumpedTensorSync(prefix_dump_file_name, specific_dump_dir, backend_name[i], slot[i], device_id[i],
                            iteration[i], root_graph_id[i], is_output[i], result_list, no_mem_to_read);
@@ -1227,7 +1408,14 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
     }
   }
 }
-
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: For both sync and async dump, gets the newest matched file path and reads the npy file and add the
+ * tenosr_data object to tensor_list_map_. If there is no matched file, an empty tensor_data object is created with
+ * data_size = 0, empty shape and nullptr buffer.
+ */
 void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<std::string> &matched_paths,
                                            const std::string &backend_name, const unsigned int device_id,
                                            const unsigned int root_graph_id, const bool &is_output, size_t slot,
@@ -1254,6 +1442,13 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
   }
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Looks for the files that match the node_name (in the dump directory) for sync dump, read the newest file
+ * and add the related tensor_data object.
+ */
 void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                                          const std::string &backend_name, size_t slot, const unsigned int device_id,
                                          unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
@@ -1296,6 +1491,13 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
                          no_mem_to_read, iteration, result_list);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Iterates through all the file paths in the async_file_pool and looks for the files that match the
+ * node_name for async dump, read the newest file and add the related tensor_data object.
+ */
 void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
                                           const std::string &slot_string_to_check, const std::string &backend_name,
                                           size_t slot, unsigned int device_id, unsigned int iteration,
@@ -1322,6 +1524,15 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
                          iteration, result_list);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Obtain opname, output_str and slot from the npy file. Make sure its return value is the same as
+ * SetPrefixToCheck(). The input/output examples look like:
+ * input: {op_type}.{op_name}.{task_id}.{stream_id}.{timestamp}.{output_or_input_string}.{slot}.{format}.npy
+ * output: {op_name}.{output_or_input_string}.{slot}
+ */
 std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
   // strip off the task_id, stream_id, and timestamp, then compare
   size_t first_dot = file_name.find(".");
@@ -1349,6 +1560,15 @@ std::string DebugServices::GetStrippedFilename(const std::string &file_name) {
   return stripped_file_name;
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Gets a list of the nodes that should be monitored, creates a vector called proto_to_dump with nodes'
+ * original names and dump style names. Then, for each node, it creates an empty tensor_data object with data_byte_size
+ * = 0 and data_ptr = nullptr and add it to the tensor_list (for both sync and async dump). This tensor_list is used for
+ * checkwatchpoint functions.
+ */
 std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(unsigned int iteration,
                                                                                 AsyncFilePool *const async_file_pool,
                                                                                 bool error_on_no_value) {
@@ -1405,6 +1625,13 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
   return tensor_list;
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Iterates through the dump directory and for each file it looks for a match in the file name with node
+ * names in proto_to_dump vector.
+ */
 void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
                                           const std::string &specific_dump_dir, unsigned int iteration,
                                           unsigned int device_id, unsigned int root_graph_id,
@@ -1463,6 +1690,13 @@ std::string DebugServices::IterationString(unsigned int iteration) {
 }
 #endif
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Searches for tensor in the loaded tensors, if the tensor is found and tensor's root_graph_id is equal to
+ * current root_graph_id, it updates the given vectors.
+ */
 void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *const ret_name,
                                      std::vector<const char *> *const data_ptr, std::vector<ssize_t> *const data_size,
                                      std::vector<unsigned int> *const dtype,
@@ -1557,6 +1791,14 @@ bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, boo
   return tensor_loader_->LoadNewTensor(tensor, keep_prev);
 }
 
+/*
+ * Feature group: Offline debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns the previous iteration in which tensor's graph was executed, if the current step is the first
+ * run iteration for the graph or graph history file is not available it returns UINT32_MAX to identify invalid
+ * prev_iteration.
+ */
 uint32_t DebugServices::GetPrevIteration(const std::shared_ptr<TensorData> &tensor) {
   uint32_t prev_iter;
   uint32_t rank_id = tensor->GetDeviceId();
@@ -1704,6 +1946,13 @@ void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, st
   }
 }
 
+/*
+ * Feature group: Online debugger, Offline debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Checks whether for the given node the operator overflow happened or not by checking the overflow
+ * directory.
+ */
 bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int device_id, unsigned int root_graph_id,
                                     unsigned int iteration) {
   std::string overflow_bin_path = "";

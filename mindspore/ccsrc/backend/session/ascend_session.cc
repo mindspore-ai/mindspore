@@ -608,6 +608,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
 
 bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedLoopSink(); }
 
+// Ascend old runtime.
 void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
 #ifdef ENABLE_DEBUGGER
@@ -625,6 +626,7 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
 #endif
 }
 
+// Ascend old runtime.
 void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                      const std::vector<tensor::TensorPtr> &, VectorRef *const) {
   // summary
@@ -1659,6 +1661,7 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
 }
 
 #ifdef ENABLE_DEBUGGER
+// Load graphs and their children for Ascend old runtime.
 void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
                                     NotNull<std::set<KernelGraphPtr> *> const memo) const {
   if (memo->find(graph) != memo->end()) {

@@ -91,6 +91,12 @@ bool DumpJsonParser::IsDumpEnabled() {
   return true;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Parse the configuration option in dump json file pointed by environment variable MINDSPORE_DUMP_CONFIG.
+ */
 void DumpJsonParser::Parse() {
   std::lock_guard<std::mutex> guard(lock_);
   if (already_parsed_) {
@@ -144,6 +150,12 @@ void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file)
   ChangeFileMode(file_path, S_IRUSR);
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Copy the dump configuration file to the root directory of dump path.
+ */
 void DumpJsonParser::CopyDumpJsonToDir(uint32_t rank_id) {
   this->Parse();
   if (!IsDumpEnabled()) {
@@ -165,6 +177,12 @@ void DumpJsonParser::CopyDumpJsonToDir(uint32_t rank_id) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Copy the hccl configuration file to the root directory of dump path.
+ */
 void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
   if (!IsDumpEnabled()) {
     return;
@@ -186,6 +204,13 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Copy the mindspore configuration file to the root directory of dump path. It provides the device and
+ * ms_version information.
+ */
 void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
   if (!IsDumpEnabled()) {
     return;
@@ -217,6 +242,12 @@ bool DumpJsonParser::DumpEnabledForIter() const {
   return ((e2e_dump_enabled_ || async_dump_enabled_) && IsDumpIter(cur_dump_iter_));
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Dump data in the given address into npy file.
+ */
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                                 TypeId type) {
   if (filename.empty() || data == nullptr || len == 0) {
@@ -595,6 +626,12 @@ void DumpJsonParser::JudgeDumpEnabled() {
   JsonConfigToString();
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Check if the given op needs to be dumped based the configuration option.
+ */
 bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
   bool need_dump = false;
   switch (dump_mode_) {
@@ -617,6 +654,12 @@ bool DumpJsonParser::NeedDump(const std::string &op_full_name) const {
   return need_dump;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Increment the count of dumping for given kernel.
+ */
 void DumpJsonParser::MatchKernel(const std::string &kernel_name) {
   auto iter = kernels_.find(kernel_name);
   if (iter == kernels_.end()) {
@@ -637,6 +680,12 @@ void DumpJsonParser::PrintUnusedKernel() {
   }
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Generate the directory path where overflow bin file locates.
+ */
 std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id) const {
   std::string bin_path;
   bin_path.append(path_);
@@ -674,6 +723,12 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Obtain the cell dump flag of each operators in the given kernel graph.
+ */
 void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
   if (dump_mode_ != DUMP_KERNELS_WITH_FLAG) {
     return;

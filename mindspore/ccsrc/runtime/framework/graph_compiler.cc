@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License"){}
  * you may not use this file except in compliance with the License.
@@ -415,6 +415,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   auto graph_id = CompileGraphImpl(root_graph, device_context);
 
   // dump all graphs.
+  // for ascend mindRT.
   session_->DumpGraphs(all_graphs);
 
   // Cache the backend graph output nodes to front nodes with output index.
@@ -488,8 +489,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
+  // Dump graph for GPU mindRT if dump is enabled.
   debugger->DumpInGraphCompiler(graph);
   if (debugger && debugger->DebuggerBackendEnabled()) {
+    // Load graphs for GPU and Ascend mindRT.
     debugger->LoadGraphs(graph);
   }
 #endif

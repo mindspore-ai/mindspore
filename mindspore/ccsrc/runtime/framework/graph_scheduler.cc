@@ -294,6 +294,8 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   (void)actor_manager->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
+  // debugger_actor_need is true for CPU when e2e dump is enabled and for Ascend and GPU is true when debugger or dump
+  // is enabled.
 #ifndef ENABLE_SECURITY
   bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
 #endif

@@ -41,8 +41,13 @@ using KernelGraph = mindspore::session::KernelGraph;
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
+/*
+ * Feature group: Online debugger.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: Returns a vector containing real output number.
+ */
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
-  // define a vector containing real output number
   std::vector<size_t> real_outputs;
   // P.BatchNorm is used for training and inference
   // can add the filter list for more operators here....
@@ -58,6 +63,12 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
   return real_outputs;
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: Get kernel inputs from launch_info and load the inputs from device to host.
+ */
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
                 uint32_t root_graph_id) {
   // get inputs
@@ -86,6 +97,12 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: Get kernel outputs from launch_info and load the inputs from device to host.
+ */
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
                  uint32_t root_graph_id) {
   // get outputs
@@ -116,6 +133,13 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Returns true if the node needs to be read for Dump or online debugger. This function is used by GPU
+ * and Ascend kernel-by-kernel mindRT.
+ */
 bool CheckReadData(const CNodePtr &cnode) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
@@ -136,6 +160,13 @@ bool CheckReadData(const CNodePtr &cnode) {
   return read_data;
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
+ * PostExecuteNode function on the given node.
+ */
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
@@ -167,6 +198,12 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
   debugger->PostExecuteNode(cnode, last_kernel);
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Load outputs of the given node and dump them if dump is enabled for Ascend kernel-by-kernel dump.
+ */
 void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
@@ -192,6 +229,13 @@ void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order) {
   }
 }
 
+/*
+ * Feature group: Dump, Online Debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Returns the error_info when sink_mode is true and we are in online debugger mode or dump mode for
+ * GPU, if everything is normal the error_info string will be empty.
+ */
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   std::string error_info = "";
   bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
@@ -208,6 +252,12 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   return error_info;
 }
 
+/*
+ * Feature group: Online Debugger.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Loads graph's outputs and parameters for Ascend super kernel mode.
+ */
 void LoadDataForDebugger(const KernelGraphPtr &graph_ptr) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -265,6 +315,16 @@ void SuperKernelE2eDump(const KernelGraphPtr &graph) {
 }
 
 #ifdef ENABLE_D
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: It is a function to be registered to Adx server for a + m dump feature with the following steps:
+ * 1) Merge chunks into one memory segment after receiving all the data for one node.
+ * 2) Parse dump data object.
+ * 3) Convert data from device to host format.
+ * 4) Dump to disk based on configuration.
+ */
 int32_t DumpDataCallBack(const DumpChunk *dump_chunk, int32_t size) {
   MS_LOG(DEBUG) << "ADX DumpDataCallBack is called";
   string file_name = dump_chunk->fileName;

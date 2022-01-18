@@ -133,6 +133,12 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   return real_outputs;
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: Old runtime.
+ * Description: Load data and dump the node if needed.
+ */
 #ifdef ENABLE_DEBUGGER
 void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_inputs,
@@ -743,6 +749,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 #ifdef ENABLE_DEBUGGER
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
   if (!mock && debugger_) {
+    // Update the step number for old GPU runtime.
     debugger_->UpdateStepNum(graph);
   }
 #endif

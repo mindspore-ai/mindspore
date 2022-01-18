@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -355,11 +355,13 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph &graph) const {
 
 #ifdef ENABLE_DEBUGGER
 bool KernelRuntime::DumpDataEnabled() {
+  // Returns true if e2e dump is enabled.
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   return dump_json_parser.e2e_dump_enabled();
 }
 
 bool KernelRuntime::DumpDataEnabledIteration() {
+  // Returns true if e2e dump is enabled and current iteration must be dumped.
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.e2e_dump_enabled()) {
     return false;
