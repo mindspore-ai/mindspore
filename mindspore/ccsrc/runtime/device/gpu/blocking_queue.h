@@ -33,10 +33,12 @@ namespace device {
 enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_EXIST, HANDLE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
 
 struct DataItemGpu {
-  int32_t worker_id_;
+  int32_t worker_id_{0};
   std::string data_type_;
-  size_t data_len_;
-  void *data_ptr_;
+  size_t data_len_{0};
+  void *data_ptr_{nullptr};
+  std::vector<int64_t> shapes_;
+  void *device_addr_{nullptr};
 };
 
 class GpuQueue {
@@ -49,8 +51,8 @@ class GpuQueue {
   inline bool IsEmpty() const { return size_ == 0; }
   inline bool IsFull() const { return size_ == capacity_; }
 
-  BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data);
-  BlockQueueStatus_T Front(void **ptr, size_t *len) const;
+  BlockQueueStatus_T Push(std::vector<DataItemGpu> data);
+  BlockQueueStatus_T Front(std::vector<DataItemGpu> *data) const;
   BlockQueueStatus_T Pop();
   bool Destroy();
   size_t Size() { return size_; }
@@ -85,7 +87,7 @@ class BlockingQueue {
   BlockQueueStatus_T Create(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
   void RegisterRelease(const std::function<void(void *, int32_t)> &func);
   BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data, unsigned int timeout_in_sec);
-  BlockQueueStatus_T Front(void **ptr, size_t *len);
+  BlockQueueStatus_T Front(std::vector<DataItemGpu> *data);
   BlockQueueStatus_T Pop();
   bool Destroy();
   size_t Size() { return queue_->Size(); }

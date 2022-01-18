@@ -23,9 +23,11 @@
 #include "backend/kernel_compiler/gpu/data/dataset_profiling.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-
+#include "runtime/device/gpu/blocking_queue.h"
 namespace mindspore {
 namespace kernel {
+using mindspore::device::DataItemGpu;
+
 class DatasetIteratorKernelMod : public NativeGpuKernelMod {
  public:
   DatasetIteratorKernelMod();
@@ -34,17 +36,19 @@ class DatasetIteratorKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
+  void PostExecute() override;
 
  protected:
   void InitSizeLists() override;
 
  private:
-  bool ReadDevice(void **addr, size_t *len);
+  bool ReadDevice(std::vector<DataItemGpu> *data);
   std::string queue_name_;
   unsigned int handle_;
-  size_t total_bytes_;
   bool profiling_enable_;
   std::shared_ptr<GetNextProfiling> profiling_op_;
+  std::vector<TypeId> types_;
+  std::vector<DataItemGpu> output_data_;
 };
 
 MS_REG_GPU_KERNEL(GetNext, DatasetIteratorKernelMod)
