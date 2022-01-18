@@ -23,14 +23,3 @@ mindspore.nn.WithEvalCell
     **异常：**
 
     **TypeError**： `add_cast_fp32` 不是bool。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> # 未包含损失函数的前向网络
-    >>> net = Net()
-    >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-    >>> eval_net = nn.WithEvalCell(net, loss_fn)

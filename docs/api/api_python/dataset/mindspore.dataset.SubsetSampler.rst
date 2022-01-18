@@ -16,14 +16,4 @@ mindspore.dataset.SubsetSampler
     - **TypeError：** `num_samples` 不是整数值。
     - **ValueError：** `num_samples` 为负值。
 
-    **样例：**
-
-    >>> indices = [0, 1, 2, 3, 4, 5]
-    >>>
-    >>> # 创建SubsetSampler，根据提供的索引序列，对数据集进行采样
-    >>> sampler = ds.SubsetSampler(indices)
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

@@ -20,10 +20,6 @@ mindspore.nn.probability.distribution.LogNormal
     - **dtype** (mindspore.dtype) - 分布类型。默认值：mindspore.float32。
     - **name** (str) - 分布的名称。默认值：'LogNormal'。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
     .. note:: 
         - `scale` 必须大于零。
         - `dtype` 必须是float，因为对数正态分布是连续的。
@@ -32,24 +28,6 @@ mindspore.nn.probability.distribution.LogNormal
 
     - **ValueError** - `scale` 中元素小于0。
     - **TypeError** - `dtype` 不是float的子类。
-
-    **样例：**
-
-    >>> import numpy as np
-    >>> import mindspore
-    >>> import mindspore.nn as nn
-    >>> import mindspore.nn.probability.distribution as msd
-    >>> from mindspore import Tensor
-    >>> class Prob(nn.Cell):
-    ...     def __init__(self):
-    ...         super(Prob, self).__init__()
-    ...         self.ln = msd.LogNormal(np.array([0.3]), np.array([[0.2], [0.4]]), dtype=mindspore.float32)
-    ...     def construct(self, x_):
-    ...         return self.ln.prob(x_)
-    >>> pdf = Prob()
-    >>> output = pdf(Tensor([1.0, 2.0], dtype=mindspore.float32))
-    >>> print(output.shape)
-    (2, 2)
 
     .. py:method:: loc
         :property:

@@ -12,20 +12,6 @@ mindspore.nn.MAE
 
     这里， :math:`n` 是batch size。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> from mindspore import nn, Tensor
-    >>>
-    >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
-    >>> y = Tensor(np.array([0.1, 0.25, 0.7, 0.9]), mindspore.float32)
-    >>> error = nn.MAE()
-    >>> error.clear()
-    >>> error.update(x, y)
-    >>> result = error.eval()
-    >>> print(result)
-    0.037499990314245224
-
     .. py:method:: clear()
 
         内部评估结果清零。

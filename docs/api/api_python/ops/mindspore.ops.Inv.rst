@@ -19,16 +19,3 @@ mindspore.ops.Inv
     **异常：**
 
     - **TypeError** - `x` 的数据类型不是float16、float32或int32。
-
-    **支持平台：**
-
-    ``Ascend``
-
-    **样例：**
-
-    >>> inv = ops.Inv()
-    >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
-    >>> output = inv(x)
-    >>> print(output)
-    [4.        2.5       3.2258065 1.923077 ]
-    

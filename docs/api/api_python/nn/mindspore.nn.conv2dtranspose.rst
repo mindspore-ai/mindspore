@@ -60,20 +60,8 @@ mindspore.nn.Conv2dTranspose
 
    - **TypeError** - 如果 `in_channels` ，`out_channels` 或者 `group` 不是整数。
    - **TypeError** - 如果 `kernel_size` ，`stride` ，`padding` 或者 `dilation` 既不是整数也不是tuple。
-   - **ValueError** - 如果 `in_channels` ，`out_channels` ， `kernel_size`， `stride` 或者 `dilation` 小于1。
+   - **ValueError** - 如果 `in_channels` ，`out_channels` ， `kernel_size` ， `stride` 或者 `dilation` 小于1。
    - **ValueError** - 如果 `padding` 小于0。
    - **ValueError** - 如果 `pad_mode` 不是"same"，"valid"或"pad"。
    - **ValueError** - 如果 `padding` 是一个长度不等于4的tuple。
    - **ValueError** - 如果 `pad_mode` 不等于"pad"且 `padding` 不等于(0,0,0,0)。
-
-   **支持平台：**
-
-   ``Ascend`` ``GPU`` ``CPU``
-
-   **样例：**
-
-   >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
-   >>> x = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
-   >>> output = net(x).shape
-   >>> print(output)
-   (1, 64, 19, 53)

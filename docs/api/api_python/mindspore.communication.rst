@@ -16,13 +16,6 @@ mindspore.communication
     - BACKEND：使用的通信库，HCCL或者NCCL。
     - WORLD_COMM_GROUP：全局通信域。
 
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> GlobalComm.BACKEND
-
 .. py:method:: mindspore.communication.init(backend_name=None)
 
     初始化通信服务需要的分布式后端，例如‘HCCL’或‘NCCL’服务。
@@ -38,12 +31,6 @@ mindspore.communication
     - **TypeError** – 参数 `backend_name` 不是字符串。
     - **RuntimeError** – 1）硬件设备类型无效；2）后台服务无效；3）分布式计算初始化失败；4）未设置环境变量 `RANK_ID` 或 `MINDSPORE_HCCL_CONFIG_PATH` 的情况下初始化HCCL服务。
     - **ValueError** – 环境变量 `RANK_ID` 设置成非数字。
-
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
 
 .. py:class:: mindspore.communication.release()
 
@@ -95,18 +82,6 @@ mindspore.communication
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
 
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> group = "0-4"
-    >>> rank_ids = [0,4]
-    >>> create_group(group, rank_ids)
-    >>> group_size = get_group_size(group)
-    >>> print("group_size is: ", group_size)
-    >>> group_size is:2
-
 .. py:class:: mindspore.communication.get_world_rank_from_group_rank(group, group_rank_id)
 
     由指定通信组中的设备序号获取通信集群中的全局设备序号。
@@ -130,17 +105,6 @@ mindspore.communication
     - **TypeError** – 参数 `group` 不是字符串或参数 `group_rank_id` 不是数字。
     - **ValueError** – 参数 `group` 是 `hccl_world_group` 或后台不可用。
     - **RuntimeError** – ‘HCCL’或‘NCCL’服务不可用，以及使用CPU版本的MindSpore。
-
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> group = "0-4"
-    >>> rank_ids = [0,4]
-    >>> create_group(group, rank_ids)
-    >>> world_rank_id = get_world_rank_from_group_rank(group, 1)
-    >>> print("world_rank_id is: ", world_rank_id) # 全局设备序号为4
 
 .. py:class:: mindspore.communication.get_group_rank_from_world_rank(world_rank_id, group)
 
@@ -166,17 +130,6 @@ mindspore.communication
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用，以及使用GPU版本的MindSpore时抛出。
 
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> group = "0-4"
-    >>> rank_ids = [0,4]
-    >>> create_group(group, rank_ids)
-    >>> group_rank_id = get_group_rank_from_world_rank(4, group)
-    >>> print("group_rank_id is: ", group_rank_id) # 组内设备序号是1
-
 .. py:class:: mindspore.communication.create_group(group, rank_ids)
 
     创建用户自定义的通信组实例。
@@ -197,15 +150,6 @@ mindspore.communication
     - **TypeError** – 参数 `group_rank_id` 不是数字或参数 `group` 不是字符串。
     - **ValueError** – 列表rank_ids的长度小于1，或列表rank_ids内有重复数据，以及后台无效。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’ 服务不可用，以及使用CPU版本的MindSpore。
-
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> group = "0-8"
-    >>> rank_ids = [0,8]
-    >>> create_group(group, rank_ids)
 
 .. py:class:: mindspore.communication.get_local_rank(group=GlobalComm.WORLD_COMM_GROUP)
 
@@ -269,13 +213,3 @@ mindspore.communication
     - **TypeError** – 在参数 `group` 不是字符串时抛出。
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在‘HCCL’或‘NCCL’服务不可用时抛出。
-
-    **样例：**
-
-    >>> from mindspore.context import set_context
-    >>> set_context(device_target="Ascend")
-    >>> init()
-    >>> group = "0-8"
-    >>> rank_ids = [0,8]
-    >>> create_group(group, rank_ids)
-    >>> destroy_group(group)

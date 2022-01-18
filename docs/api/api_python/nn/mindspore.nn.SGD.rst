@@ -62,29 +62,3 @@ mindspore.nn.SGD
     **异常：**
 
     **ValueError：** 动量、阻尼或重量衰减值小于0.0。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> # 1) 所有参数使用相同的学习率和权重衰减
-    >>> optim = nn.SGD(params=net.trainable_params())
-    >>>
-    >>> # 2) 使用参数组并设置不同的值
-    >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-    >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    >>> group_params = [{'params': conv_params,'grad_centralization':True},
-    ...                 {'params': no_conv_params, 'lr': 0.01},
-    ...                 {'order_params': net.trainable_params()}]
-    >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
-    >>> # con_params的参数将使用默认学习率0.1、默认权重衰减0.0、梯度集中度为True。
-    >>> #
-    >>> # no_con_params的参数将使用学习率0.01、默认权重衰减0.0、梯度集中度为False。
-    >>> #
-    >>> # 优化器的最终参数顺序采用'order_params'的值。
-    >>>
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-    >>> model = Model(net, loss_fn=loss, optimizer=optim)

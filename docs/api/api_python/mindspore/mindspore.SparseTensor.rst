@@ -21,27 +21,3 @@ mindspore.SparseTensor
     **返回：**
 
     SparseTensor，由 `indices` 、 `values` 和 `dense_shape` 组成。
-
-    **样例：**
-
-    >>> import mindspore as ms
-    >>> import mindspore.nn as nn
-    >>> from mindspore import SparseTensor
-    >>> class Net(nn.Cell)：
-    ...     def __init__(self, dense_shape)：
-    ...         super(Net, self).__init__()
-    ...         self.dense_shape = dense_shape
-    ...     def construct(self, indices, values)：
-    ...         x = SparseTensor(indices, values, self.dense_shape)
-    ...         return x.values, x.indices, x.dense_shape
-    >>>
-    >>> indices = Tensor([[0, 1], [1, 2]])
-    >>> values = Tensor([1, 2], dtype=ms.float32)
-    >>> out = Net((3, 4))(indices, values)
-    >>> print(out[0])
-    [1.2.]
-    >>> print(out[1])
-    [[0 1]
-    [1 2]]
-    >>> print(out[2])
-    (3, 4)

@@ -27,19 +27,6 @@ mindspore.ops.SeLU
 
     Tensor，数据类型和shape与 `input_x` 的相同。
 
-    **支持平台：**
-
-    ``Ascend``
-
     **异常：**
 
     - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-    >>> selu = ops.SeLU()
-    >>> output = selu(input_x)
-    >>> print(output)
-    [[-1.1113307 4.202804 -1.7575096]
-    [ 2.101402 -1.7462534 9.456309 ]]

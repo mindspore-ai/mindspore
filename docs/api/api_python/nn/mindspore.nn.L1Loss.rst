@@ -35,26 +35,3 @@ mindspore.nn.L1Loss
     **异常：**
 
     **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> # case1：logits.shape = labels.shape = (3,)
-    >>> loss = nn.L1Loss()
-    >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-    >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
-    >>> output = loss(logits, labels)
-    >>> print(output)
-    0.33333334
-    >>> # case2：logits.shape = (3,), labels.shape = (2, 3)
-    >>> loss = nn.L1Loss(reduction='none')
-    >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-    >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
-    >>> output = loss(logits, labels)
-    >>> print(output)
-    [[0. 1. 2.]
-     [0. 0. 1.]]
-    

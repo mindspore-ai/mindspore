@@ -17,8 +17,4 @@ mindspore.nn.get_metric_fn
 
     **异常：**
 
-    - **TypeError** - 入参`metric`的类型不是None, dict或set。
-
-    **样例：**
-    >>> from mindspore import nn
-    >>> metric = nn.get_metric_fn('precision', eval_type='classification')
+    - **TypeError** - 入参 `metric` 的类型不是None, dict或set。

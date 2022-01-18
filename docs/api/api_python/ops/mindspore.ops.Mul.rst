@@ -28,17 +28,3 @@ mindspore.ops.Mul
 
     - **TypeError** - `x` 和 `y` 不是Tensor、number.Number或bool。
     - **ValueError** - `x` 和 `y` 的shape不相同。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-    >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-    >>> mul = ops.Mul()
-    >>> output = mul(x, y)
-    >>> print(output)
-    [ 4. 10. 18.]
-    

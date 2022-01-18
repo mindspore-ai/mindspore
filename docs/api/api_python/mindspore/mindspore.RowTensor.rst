@@ -25,26 +25,3 @@ mindspore.RowTensor
     **返回：**
 
     RowTensor，由 `indices` 、 `values` 和 `dense_shape` 组成。
-
-    **样例：**
-
-    >>> import mindspore as ms
-    >>> import mindspore.nn as nn
-    >>> from mindspore import RowTensor
-    >>> class Net(nn.Cell):
-    ...     def __init__(self, dense_shape)：
-    ...         super(Net, self).__init__()
-    ...         self.dense_shape = dense_shape
-    ...     def construct(self, indices, values)：
-    ...         x = RowTensor(indices, values, self.dense_shape)
-    ...         return x.values, x.indices, x.dense_shape
-    >>>
-    >>> indices = Tensor([0])
-    >>> values = Tensor([[1, 2]], dtype=ms.float32)
-    >>> out = Net((3, 2))(indices, values)
-    >>> print(out[0])
-    [[1.2.]]
-    >>> print(out[1])
-    [0]
-    >>> print(out[2])
-    (3, 2)

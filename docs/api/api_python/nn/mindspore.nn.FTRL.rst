@@ -74,30 +74,5 @@ mindspore.nn.FTRL
     - **ValueError** - `loss_scale` 小于等于0。
     - **ValueError** - `initial_accum`、`l1` 或 `l2` 小于0。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> #1) 所有参数使用相同的学习率和权重衰减
-    >>> optim = nn.FTRL(params=net.trainable_params())
-    >>>
-    >>> #2) 使用参数分组并设置不同的值
-    >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-    >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
-    ...                 {'params': no_conv_params},
-    ...                 {'order_params': net.trainable_params()}]
-    >>> optim = nn.FTRL(group_params, learning_rate=0.1, weight_decay=0.0)
-    >>> # conv_params参数组将使用优化器中的学习率0.1、该组的权重衰减0.01、该组的梯度中心化配置True。
-    >>> # no_conv_params参数组使用优化器中的学习率0.1、优化器中的权重衰减0.0、梯度中心化使用默认值False。
-    >>> # 优化器按照"order_params"配置的参数顺序更新参数。
-    >>>
-    >>>
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-    >>> model = Model(net, loss_fn=loss, optimizer=optim)
-
 
 .. include:: mindspore.nn.optim_target_unique_for_sparse.rst

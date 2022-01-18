@@ -19,17 +19,3 @@ mindspore.ops.Reshape
     **异常：**
 
     - **ValueError** - 给定的 `input_shape`，如果它有多个-1，或者除-1（若存在）之外的元素的乘积小于或等于0，或者无法被输入Tensor的shape的乘积整除，或者与输入的数组大小不匹配。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-    >>> reshape = ops.Reshape()
-    >>> output = reshape(input_x, (3, 2))
-    >>> print(output)
-    [[-0.1  0.3]
-     [ 3.6  0.4]
-     [ 0.5 -3.2]]

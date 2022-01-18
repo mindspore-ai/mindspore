@@ -13,10 +13,3 @@ mindspore.dataset.compare
     **返回：**
 
     bool，两个数据处理管道是否相等。
-
-    **样例：**
-
-    >>> pipeline1 = ds.MnistDataset(mnist_dataset_dir, 100)
-    >>> pipeline2 = ds.Cifar10Dataset(cifar_dataset_dir, 100)
-    >>> ds.compare(pipeline1, pipeline2)
-    

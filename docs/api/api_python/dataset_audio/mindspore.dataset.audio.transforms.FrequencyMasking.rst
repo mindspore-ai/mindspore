@@ -14,15 +14,6 @@ mindspore.dataset.audio.transforms.FrequencyMasking
     - **mask_start** (int, 可选) - 添加掩码的起始位置，只有当 `iid_masks` 为True时，该值才会生效。取值范围为[0, freq_length - freq_mask_param]，其中 `freq_length` 为音频波形在频域的长度，默认值：0。
     - **mask_value** (float, 可选) - 掩码填充值，默认值：0.0。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>>
-    >>> waveform = np.random.random([1, 3, 2])
-    >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-    >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
-    >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
-
     .. image:: api_img/dataset/frequency_masking_original.png
 
     .. image:: api_img/dataset/frequency_masking.png

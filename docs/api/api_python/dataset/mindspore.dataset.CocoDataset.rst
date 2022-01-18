@@ -17,15 +17,15 @@
     - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
     - **extra_metadata** (bool, 可选) - 用于指定是否额外输出一个数据列用于表示图片元信息。如果为True，则将额外输出一个名为 `[_meta-filename, dtype=string]` 的数据列，默认值：False。
 
     根据不同 `task` 参数设置，生成数据集具有不同的输出列：
 
-    - `task` = 'Detection', 输出列: `[image, dtype=uint8]`, `[bbox, dtype=float32]`, `[category_id, dtype=uint32]`, `[iscrowd, dtype=uint32]`。
-    - `task` = 'Stuff', 输出列: `[image, dtype=uint8]`, `[segmentation,dtype=float32]`, `[iscrowd,dtype=uint32]`。
-    - `task` = 'Keypoint', 输出列: `[image, dtype=uint8]`, `[keypoints, dtype=float32]`, `[num_keypoints, dtype=uint32]`。
-    - `task` = 'Panoptic', 输出列: `[image, dtype=uint8]`, `[bbox, dtype=float32]`, `[category_id, dtype=uint32]`, `[iscrowd, dtype=uint32]`, `[area, dtype=uint32]`。
+    - `task` = 'Detection', 输出列: `[image, dtype=uint8]` , `[bbox, dtype=float32]` , `[category_id, dtype=uint32]` , `[iscrowd, dtype=uint32]` 。
+    - `task` = 'Stuff', 输出列: `[image, dtype=uint8]` , `[segmentation,dtype=float32]` , `[iscrowd,dtype=uint32]` 。
+    - `task` = 'Keypoint', 输出列: `[image, dtype=uint8]` , `[keypoints, dtype=float32]` , `[num_keypoints, dtype=uint32]` 。
+    - `task` = 'Panoptic', 输出列: `[image, dtype=uint8]` , `[bbox, dtype=float32]` , `[category_id, dtype=uint32]` , `[iscrowd, dtype=uint32]` , `[area, dtype=uint32]` 。
 
     **异常：**
 
@@ -36,7 +36,7 @@
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **RuntimeError** - 解析 `annotation_file` 指定的JSON文件失败。
-    - **ValueError** - `task` 参数取值不为 `Detection`、`Stuff`、`Panoptic` 或 `Keypoint`。
+    - **ValueError** - `task` 参数取值不为 `Detection` 、 `Stuff` 、`Panoptic` 或 `Keypoint` 。
     - **ValueError** - `annotation_file` 参数对应的文件不存在。
     - **ValueError** - `dataset_dir` 参数路径不存在。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
@@ -72,33 +72,6 @@
        * - `sampler` 实例
          - False
          - 不允许
-
-    **样例：**
-
-    >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
-    >>> coco_annotation_file = "/path/to/coco_dataset_directory/annotation_file"
-    >>>
-    >>> # 1）读取COCO数据集中 `Detection` 任务中的数据。
-    >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
-    ...                          annotation_file=coco_annotation_file,
-    ...                          task='Detection')
-    >>>
-    >>> # 2）读取COCO数据集中 `Stuff` 任务中的数据。
-    >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
-    ...                          annotation_file=coco_annotation_file,
-    ...                          task='Stuff')
-    >>>
-    >>> # 3）读取COCO数据集中 `Panoptic` 任务中的数据。
-    >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
-    ...                          annotation_file=coco_annotation_file,
-    ...                          task='Panoptic')
-    >>>
-    >>> # 4）读取COCO数据集中 `Keypoint` 任务中的数据。
-    >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
-    ...                          annotation_file=coco_annotation_file,
-    ...                          task='Keypoint')
-    >>>
-    >>> # 在生成的COCO数据集对象中，每一次迭代得到的数据行都有"image"和"annotation"两个键。
 
     **关于COCO数据集：**
 

@@ -30,16 +30,3 @@ mindspore.ops.LessEqual
     **异常：**
 
     - **TypeError** - `x` 和 `y` 都不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-    >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-    >>> less_equal = ops.LessEqual()
-    >>> output = less_equal(x, y)
-    >>> print(output)
-    [ True False  True]

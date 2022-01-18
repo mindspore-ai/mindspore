@@ -16,21 +16,3 @@ mindspore.nn.Flatten
     **异常：**
 
     **TypeError** - `x` 不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
-    >>> net = nn.Flatten()
-    >>> output = net(x)
-    >>> print(output)
-    [[1.2 1.2 2.1 2.1]
-     [2.2 2.2 3.2 3.2]]
-    >>> print(f"Before flatten the x shape is {x.shape}.")
-    Before flatten the x shape is (2, 2, 2)
-    >>> print(f"After flatten the output shape is {output.shape}.")
-    After flatten the output shape is (2, 4)
-    

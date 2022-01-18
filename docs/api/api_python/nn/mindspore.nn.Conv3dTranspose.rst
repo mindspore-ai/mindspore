@@ -60,10 +60,6 @@ mindspore.nn.Conv3dTranspose
        H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor
        W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
     **异常：**
 
     - **TypeError** - `in_channels` 、 `out_channels` 或 `group` 不是int。
@@ -75,13 +71,3 @@ mindspore.nn.Conv3dTranspose
     - **ValueError** - `padding` 是长度不等于6的tuple。
     - **ValueError** - `pad_mode` 不等于"pad"且 `padding` 不等于(0, 0, 0, 0, 0, 0)。
     - **ValueError** - `data_format` 不是"NCDHW"。
-
-    **样例：**
-
-    >>> x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
-    >>> conv3d_transpose = nn.Conv3dTranspose(in_channels=16, out_channels=3, kernel_size=(4, 6, 2),
-    ...                                       pad_mode='pad')
-    >>> output = conv3d_transpose(x)
-    >>> print(output.shape)
-    (32, 3, 13, 37, 33)
-    

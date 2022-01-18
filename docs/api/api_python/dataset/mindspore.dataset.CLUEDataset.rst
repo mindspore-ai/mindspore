@@ -15,7 +15,7 @@ mindspore.dataset.CLUEDataset
     - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
     - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
     - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
-      如果`shuffle`为False，则不混洗，如果`shuffle`为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
+      如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
       通过传入枚举变量设置数据混洗的模式：
 
       - **Shuffle.GLOBAL**：混洗文件和样本。
@@ -28,34 +28,34 @@ mindspore.dataset.CLUEDataset
     根据给定的 `task` 参数配置，数据集会生成不同的输出列：
 
     - `task` = 'AFQMC'
-        - usage = 'train'，输出列: `[sentence1, dtype=string]`, `[sentence2, dtype=string]`, `[label, dtype=string]`.
-        - usage = 'test'，输出列: `[id, dtype=uint8]`, `[sentence1, dtype=string]`, `[sentence2, dtype=string]`.
-        - usage = 'eval'，输出列: `[sentence1, dtype=string]`, `[sentence2, dtype=string]`, `[label, dtype=string]`.
+        - usage = 'train'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
+        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[sentence1, dtype=string]` , `[sentence2, dtype=string]` .
+        - usage = 'eval'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
 
     - `task` = 'TNEWS'
-        - usage = 'train'，输出列: `[label, dtype=string]`, `[label_des, dtype=string]`, `[sentence, dtype=string]`, `[keywords, dtype=string]`.
-        - usage = 'test'，输出列: `[label, dtype=string]`, `[label_des, dtype=string]`, `[sentence, dtype=string]`, `[keywords, dtype=string]`.
-        - usage = 'eval'，输出列: `[label, dtype=string]`, `[label_des, dtype=string]`, `[sentence, dtype=string]`, `[keywords, dtype=string]`.
+        - usage = 'train'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
+        - usage = 'test'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
+        - usage = 'eval'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
 
     - `task` = 'IFLYTEK'
-        - usage = 'train'，输出列: `[label, dtype=string]`, `[label_des, dtype=string]`, `[sentence, dtype=string]`.
-        - usage = 'test'，输出列: `[id, dtype=string]`, `[sentence, dtype=string]`.
-        - usage = 'eval'，输出列: `[label, dtype=string]`, `[label_des, dtype=string]`, `[sentence, dtype=string]`.
+        - usage = 'train'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` .
+        - usage = 'test'，输出列: `[id, dtype=string]` , `[sentence, dtype=string]` .
+        - usage = 'eval'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` .
 
     - `task` = 'CMNLI'
-        - usage = 'train'，输出列: `[sentence1, dtype=string]`, `[sentence2, dtype=string]`, `[label, dtype=string]`.
-        - usage = 'test'，输出列: `[id, dtype=uint8]`, `[sentence1, dtype=string]`, `[sentence2, dtype=string]`.
-        - usage = 'eval'，输出列: `[sentence1, dtype=string]`, `[sentence2, dtype=string]`, `[label, dtype=string]`.
+        - usage = 'train'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
+        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[sentence1, dtype=string]` , `[sentence2, dtype=string]` .
+        - usage = 'eval'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
 
     - `task` = 'WSC'
-        - usage = 'train'，输出列: `[span1_index, dtype=uint8]`, `[span2_index, dtype=uint8]`, `[span1_text, dtype=string]`, `[span2_text, dtype=string]`, `[idx, dtype=uint8]`, `[text, dtype=string]`, `[label, dtype=string]`.
-        - usage = 'test'，输出列: `[span1_index, dtype=uint8]`, `[span2_index, dtype=uint8]`, `[span1_text, dtype=string]`, `[span2_text, dtype=string]`, `[idx, dtype=uint8]`, `[text, dtype=string]`.
-        - usage = 'eval'，输出列: `[span1_index, dtype=uint8]`, `[span2_index, dtype=uint8]`, `[span1_text, dtype=string]`, `[span2_text, dtype=string]`, `[idx, dtype=uint8]`, `[text, dtype=string]`, `[label, dtype=string]`.
+        - usage = 'train'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` , `[label, dtype=string]` .
+        - usage = 'test'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` .
+        - usage = 'eval'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` , `[label, dtype=string]` .
 
     - `task` = 'CSL'
-        - usage = 'train'，输出列: `[id, dtype=uint8]`, `[abst, dtype=string]`, `[keyword, dtype=string]`, `[label, dtype=string]`.
-        - usage = 'test'，输出列: `[id, dtype=uint8]`, `[abst, dtype=string]`, `[keyword, dtype=string]`.
-        - usage = 'eval'，输出列: `[id, dtype=uint8]`, `[abst, dtype=string]`, `[keyword, dtype=string]`, `[label, dtype=string]`.
+        - usage = 'train'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` , `[label, dtype=string]` .
+        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` .
+        - usage = 'eval'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` , `[label, dtype=string]` .
 
     **异常：**
 
@@ -63,11 +63,6 @@ mindspore.dataset.CLUEDataset
     - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-
-    **样例：**
-
-    >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # 包含一个或多个CLUE数据集文件
-    >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
 
     **关于CLUE数据集：**
 

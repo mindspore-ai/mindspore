@@ -16,16 +16,3 @@ mindspore.ops.Size
     **异常：**
 
     - **TypeError** - `input_x` 不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-    >>> size = ops.Size()
-    >>> output = size(input_x)
-    >>> print(output)
-    4
-    

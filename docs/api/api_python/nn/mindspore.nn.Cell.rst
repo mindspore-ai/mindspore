@@ -12,10 +12,6 @@
     - **auto_prefix** (bool) – 是否自动为Cell及其子Cell生成NameSpace。`auto_prefix` 的设置影响网络参数的命名，如果设置为True，则自动给网络参数的名称添加前缀，否则不添加前缀。默认值：True。
     - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
     **样例** :
 
     >>> import mindspore.nn as nn
@@ -107,14 +103,6 @@
 
         Iteration类型，当前Cell及输入 `cells` 的所有子Cell和相对应的名称。
 
-        **样例：**
-
-        >>> n = Net()
-        >>> names = []
-        >>> for m in n.cells_and_names():
-        ...    if m[0]:
-        ...       names.append(m[0])
-
     .. py:method:: check_names()
 
         检查Cell中的网络参数名称是否重复。
@@ -182,13 +170,6 @@
         **返回：**
 
         Iteration类型，Cell的parameter。
-
-        **样例：**
-
-        >>> n = Net()
-        >>> parameters = []
-        >>> for item in net.get_parameters():
-        ...    parameters.append(item)
 
     .. py:method:: get_scope()
 
@@ -292,14 +273,6 @@
 
         迭代器，Cell的名称和Cell本身。
 
-        **样例：**
-
-        >>> n = Net()
-        >>> names = []
-        >>> for m in n.parameters_and_names():
-        ...     if m[0]:
-        ...         names.append(m[0])
-
     .. py:method:: parameters_broadcast_dict(recurse=True)
 
         获取这个Cell的参数广播字典。
@@ -380,12 +353,6 @@
         递归设置该Cell中的所有算子的并行策略为数据并行。
 
         .. note:: 仅在全自动并行(AUTO_PARALLEL)模式下生效。
-
-        **样例：**
-
-        >>> import mindspore.nn as nn
-        >>> net = nn.Dense(3, 4)
-        >>> net.set_data_parallel()
 
     .. py:method:: set_grad(requires_grad=True)
 

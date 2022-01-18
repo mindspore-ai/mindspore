@@ -15,7 +15,7 @@ mindspore.nn.Sigmoid
 
     其中 :math:`x_i` 是输入的元素。
 
-    关于Sigmoid的图例见`Sigmoid <https://en.wikipedia.org/wiki/Sigmoid_function#/media/File:Logistic-curve.svg>`_。
+    关于Sigmoid的图例见 `Sigmoid <https://en.wikipedia.org/wiki/Sigmoid_function#/media/File:Logistic-curve.svg>`_ 。
 
     **输入：**
 
@@ -28,16 +28,3 @@ mindspore.nn.Sigmoid
     **异常：**
 
     **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-    >>> sigmoid = nn.Sigmoid()
-    >>> output = sigmoid(x)
-    >>> print(output)
-    [0.2688  0.11914 0.5     0.881   0.7305 ]
-    

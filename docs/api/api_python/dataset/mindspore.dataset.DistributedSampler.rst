@@ -25,12 +25,4 @@ mindspore.dataset.DistributedSampler
     - **RuntimeError** - `shard_id` 小于0或大于等于 `num_shards` 。
     - **RuntimeError** - `offset` 大于 `num_shards` 。
 
-    **样例：**
-
-    >>> # 创建一个分布式采样器，共10个分片。当前分片为分片5。
-    >>> sampler = ds.DistributedSampler(10, 5)
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

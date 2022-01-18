@@ -5,10 +5,3 @@
         **参数：**
 
         - **new_sampler** (Sampler) ：替换的新采样器。
-
-        **样例：**
-
-        >>> # dataset为任意数据集对象的实例
-        >>> # 将dataset的采样器更换为DistributedSampler
-        >>> new_sampler = ds.DistributedSampler(10, 2)
-        >>> dataset.use_sampler(new_sampler)

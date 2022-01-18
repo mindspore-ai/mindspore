@@ -26,16 +26,3 @@ mindspore.nn.FastGelu
     **异常：**
 
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-    >>> fast_gelu = nn.FastGelu()
-    >>> output = fast_gelu(x)
-    >>> print(output)
-    [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
-     [ 1.9375000e+00 -1.0052517e-03  8.9824219e+00]]

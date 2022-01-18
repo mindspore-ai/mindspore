@@ -51,22 +51,6 @@ mindspore.nn.Metric
 
         - **ValueError** - 如果输入的index类型不是list或其元素类型不全为int。
 
-        **样例：**
-
-        >>> import numpy as np
-        >>> from mindspore import nn, Tensor
-        >>>
-        >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-        >>> y = Tensor(np.array([1, 0, 1]))
-        >>> y2 = Tensor(np.array([0, 0, 1]))
-        >>> metric = nn.Accuracy('classification').set_indexes([0, 2])
-        >>> metric.clear()
-        >>> # indexes为[0, 2]，使用x作为预测值，y2作为真实标签
-        >>> metric.update(x, y, y2)
-        >>> accuracy = metric.eval()
-        >>> print(accuracy)
-        0.3333333333333333
-
     .. py:method:: update(*inputs)
         :abstractmethod:
 

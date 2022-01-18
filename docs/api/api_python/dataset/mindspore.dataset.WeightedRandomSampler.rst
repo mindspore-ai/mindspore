@@ -19,14 +19,4 @@ mindspore.dataset.WeightedRandomSampler
     - **RuntimeError：** `weights` 为空或全为零。
     - **ValueError：** `num_samples` 为负值。
 
-    **样例：**
-
-    >>> weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.1, 0.3]
-    >>>
-    >>> # 创建一个WeightedRandomSampler，将对4个元素进行有放回采样
-    >>> sampler = ds.WeightedRandomSampler(weights, 4)
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

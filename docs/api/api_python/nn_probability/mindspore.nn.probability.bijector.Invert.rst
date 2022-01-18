@@ -4,37 +4,12 @@ mindspore.nn.probability.bijector.Invert
 .. py:class:: mindspore.nn.probability.bijector.Invert(bijector, name='')
 
     逆映射Bijector（Invert Bijector）。
-    计算输入Bijector的逆映射。如果正向映射（下面的`bijector`输入)对应的映射函数为 :math:`Y = g(X)`，那么对应的逆映射Bijector的映射函数为 :math:`Y = h(X) = g^{-1}(X)` 。
+    计算输入Bijector的逆映射。如果正向映射（下面的 `bijector` 输入)对应的映射函数为 :math:`Y = g(X)` ，那么对应的逆映射Bijector的映射函数为 :math:`Y = h(X) = g^{-1}(X)` 。
 
     **参数：**
 
     - **bijector** (Bijector) - 基础Bijector（Base Bijector）。
     - **name** (str) - Bijector名称。默认值：""。当name设置为""时，它实际上是'Invert' + Bijector.name。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
-    **样例：**
-
-    >>> import numpy as np
-    >>> import mindspore
-    >>> import mindspore.nn as nn
-    >>> import mindspore.nn.probability.bijector as msb
-    >>> from mindspore import Tensor
-    >>> class Net(nn.Cell):
-    ...     def __init__(self):
-    ...         super(Net, self).__init__()
-    ...         self.origin = msb.ScalarAffine(scale=2.0, shift=1.0)
-    ...         self.invert = msb.Invert(self.origin)
-    ...
-    ...     def construct(self, x_):
-    ...         return self.invert.forward(x_)
-    >>> forward = Net()
-    >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
-    >>> ans = forward(Tensor(x, dtype=mindspore.float32))
-    >>> print(ans.shape)
-    (4,)
 
     .. py:method:: bijector
         :property:
@@ -43,7 +18,7 @@ mindspore.nn.probability.bijector.Invert
 
     .. py:method:: forward(x)
 
-        计算基础Bijector的逆映射，即 :math:`Y = h(X) = g^{-1}(X)`。
+        计算基础Bijector的逆映射，即 :math:`Y = h(X) = g^{-1}(X)` 。
 
         **参数：**
 
@@ -55,7 +30,7 @@ mindspore.nn.probability.bijector.Invert
 
     .. py:method:: forward_log_jacobian(x)
 
-        计算基础Bijector的逆映射导数的对数值，即 :math:`\log dg^{-1}(x) / dx`。
+        计算基础Bijector的逆映射导数的对数值，即 :math:`\log dg^{-1}(x) / dx` 。
 
         **参数：**
 
@@ -67,7 +42,7 @@ mindspore.nn.probability.bijector.Invert
 
     .. py:method:: inverse(y)
 
-        计算基础Bijector的正映射，即 :math:`Y = g(X)`。
+        计算基础Bijector的正映射，即 :math:`Y = g(X)` 。
 
         **参数：**
 
@@ -83,7 +58,7 @@ mindspore.nn.probability.bijector.Invert
 
     .. py:method:: inverse_log_jacobian(y)
 
-        计算基础Bijector的正映射导数的对数，即 :math:`Y = \log dg(x) / dx`。
+        计算基础Bijector的正映射导数的对数，即 :math:`Y = \log dg(x) / dx` 。
 
         **参数：**
 

@@ -10,19 +10,6 @@
 
         执行了给定操作函数的数据集对象。
 
-        **样例：**
-
-        >>> # dataset是任意数据集对象的实例
-        >>>
-        >>> # 声明一个名为apply_func函数，对数据集对象执行batch操作，并返回值处理后的Dataset对象
-        >>> # 注意apply_func函数的输入参数data需要为 `Dataset` 对象
-        >>> def apply_func(data):
-        ...     data = data.batch(2)
-        ...     return data
-        >>>
-        >>> # 通过apply操作调用apply_func函数，得到处理后的数据集对象
-        >>> dataset = dataset.apply(apply_func)
-
         **异常：**
 
         - **TypeError：** `apply_func` 的类型不是函数。
@@ -64,35 +51,6 @@
 
         Dataset， `batch` 操作后的数据集对象。
 
-        **样例：**
-
-        >>> # 1）创建一个数据集对象，每100条数据合并成一个批处理数据
-        >>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
-        >>> dataset = dataset.batch(100, True)
-        >>>
-        >>> # 2）根据批次编号调整图像大小，如果是第5批，则图像大小调整为(5^2, 5^2) = (25, 25)
-        >>> def np_resize(col, BatchInfo):
-        ...     output = col.copy()
-        ...     s = (BatchInfo.get_batch_num() + 1) ** 2
-        ...     index = 0
-        ...     for c in col:
-        ...         img = Image.fromarray(c.astype('uint8')).convert('RGB')
-        ...         img = img.resize((s, s), Image.ANTIALIAS)
-        ...         output[index] = np.array(img)
-        ...         index += 1
-        ...     return (output,)
-        >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
-        >>>
-        >>> # 3）创建一个数据集对象，动态指定批处理大小
-        >>> # 定义一个批处理函数，每次将batch_size加一
-        >>> def add_one(BatchInfo):
-        ...     return BatchInfo.get_batch_num() + 1
-        >>> dataset = dataset.batch(batch_size=add_one, drop_remainder=True)
-        >>>
-        >>> # 4）创建一个数据集对象，并执行batch数据，指定column_order更换数据列顺序
-        >>> # 假设数据集对象的数据列原顺序是["image", "label"]
-        >>> dataset = dataset.batch(32, column_order=["label", "image"])
-
     .. py:method:: bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes, element_length_function=None, pad_info=None, pad_to_bucket_boundary=False, drop_remainder=False)
 
         根据数据的长度进行分桶，每个桶将在数据填满的时候进行填充和批处理操作。
@@ -120,28 +78,6 @@
 
         Dataset，按长度进行分桶和批处理操作后的数据集对象。
 
-        **样例：**
-
-        >>> # 创建一个数据集对象，其中给定条数的数据会被组成一个批次数据
-        >>> # 如果最后一个批次数据小于给定的批次大小（batch_size)，则丢弃这个批次
-        >>> import numpy as np
-        >>> def generate_2_columns(n):
-        ...     for i in range(n):
-        ...         yield (np.array([i]), np.array([j for j in range(i + 1)]))
-        >>>
-        >>> column_names = ["col1", "col2"]
-        >>> dataset = ds.GeneratorDataset(generate_2_columns(8), column_names)
-        >>> bucket_boundaries = [5, 10]
-        >>> bucket_batch_sizes = [2, 1, 1]
-        >>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
-        >>> # 将对列名为"col2"的列进行填充，填充后的shape为[bucket_boundaries[i]]，其中i是当前正在批处理的桶的索引
-        >>> pad_info = {"col2": ([None], -1)}
-        >>> pad_to_bucket_boundary = True
-        >>> dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
-        ...                                          bucket_batch_sizes,
-        ...                                          element_length_function, pad_info,
-        ...                                          pad_to_bucket_boundary)
-
     .. py:method:: build_sentencepiece_vocab(columns, vocab_size, character_coverage, model_type, params)
 
         迭代源数据集对象获取数据并构建SentencePiece词汇表。
@@ -159,17 +95,6 @@
         **返回：**
 
         构建好的SentencePiece词汇表。
-
-        **样例：**
-
-        >>> from mindspore.dataset.text import SentencePieceModel
-        >>>
-        >>> # DE_C_INTER_SENTENCEPIECE_MODE 是一个映射字典
-        >>> from mindspore.dataset.text.utils import DE_C_INTER_SENTENCEPIECE_MODE
-        >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
-        >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995,
-        ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
-        ...                                             {})
 
     .. py:method:: build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
@@ -191,20 +116,6 @@
 
         构建好的词汇表。
 
-        **样例：**
-
-        >>> def gen_corpus():
-        ...     # key：单词，value：出现次数，键的取值采用字母表示有利于排序和显示。
-        ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
-        ...     for k, v in corpus.items():
-        ...         yield (np.array([k] * v, dtype='S'),)
-        >>> column_names = ["column1", "column2", "column3"]
-        >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-        >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
-        ...                               freq_range=(1, 10), top_k=5,
-        ...                               special_tokens=["<pad>", "<unk>"],
-        ...                               special_first=True,vocab='vocab')
-
     .. py:method:: close_pool()
 
         关闭数据集对象中的多进程池。如果您熟悉多进程库，可以将此视为进程池对象的析构函数。
@@ -224,13 +135,6 @@
 
         Dataset，拼接后的数据集对象。
 
-        **样例：**
-
-        >>> # 使用"+"运算符拼接dataset_1和dataset_2，获得拼接后的数据集对象
-        >>> dataset = dataset_1 + dataset_2
-        >>> # 通过concat操作拼接dataset_1和dataset_2，获得拼接后的数据集对象
-        >>> dataset = dataset_1.concat(dataset_2)
-
     .. py:method:: create_dict_iterator(num_epochs=-1, output_numpy=False)
 
         基于数据集对象创建迭代器，输出的数据为字典类型。
@@ -243,16 +147,6 @@
         **返回：**
 
         DictIterator，基于数据集对象创建的字典迭代器。
-
-        **样例：**
-
-        >>> # dataset是任意数据集对象的实例
-        >>> iterator = dataset.create_dict_iterator()
-        >>> for item in iterator:
-        ...     # item 是一个dict
-        ...     print(type(item))
-        ...     break
-        <class 'dict'>
 
     .. py:method:: create_tuple_iterator(columns=None, num_epochs=-1, output_numpy=False, do_copy=True)
 
@@ -270,16 +164,6 @@
         **返回：**
 
         TupleIterator，基于数据集对象创建的元组迭代器。
-
-        **样例：**
-
-        >>> # dataset是任意数据集对象的实例
-        >>> iterator = dataset.create_tuple_iterator()
-        >>> for item in iterator：
-        ...     # item 是一个list
-        ...     print(type(item))
-        ...     break
-        <class 'list'>
 
     .. py:method:: device_que(send_epoch_end=True, create_data_info_queue=False)
 
@@ -306,18 +190,6 @@
 
         两个列表代表最小shape和最大shape，每个列表中的shape按照数据列的顺序排列。
 
-        **样例：**
-
-        >>> import numpy as np
-        >>>
-        >>> def generator1():
-        >>>     for i in range(1, 100):
-        >>>         yield np.ones((16, i, 83)), np.array(i)
-        >>>
-        >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
-        >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
-        >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
-
 
     .. py:method:: filter(predicate, input_columns=None, num_parallel_workers=None)
 
@@ -334,16 +206,6 @@
 
         Dataset，执行给定筛选过滤操作的数据集对象。
 
-        **样例：**
-
-        >>> # 生成一个list，其取值范围为（0，63）
-        >>> def generator_1d():
-        ...     for i in range(64):
-        ...         yield (np.array(i),)
-        >>> dataset = ds.GeneratorDataset(generator_1d, ["data"])
-        >>> # 过滤掉数值大于或等于11的数据
-        >>> dataset = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
-
 
     .. py:method:: flat_map(func)
 
@@ -356,21 +218,6 @@
         **返回：**
 
         执行给定操作后的数据集对象。
-
-        **样例：**
-
-        >>> # 以NumpySlicesDataset为例
-        >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
-        >>>
-        >>> def flat_map_func(array):
-        ...     # 使用数组创建NumpySlicesDataset
-        ...     dataset = ds.NumpySlicesDataset(array)
-        ...     # 将数据集对象中的数据重复两次
-        ...     dataset = dataset.repeat(2)
-        ...     return dataset
-        >>>
-        >>> dataset = dataset.flat_map(flat_map_func)
-            >>> # [[0, 1], [0, 1], [2, 3], [2, 3]]
 
         **异常：**
 
@@ -385,12 +232,6 @@
 
         int，一个批处理数据中包含的数据条数。
 
-        **样例：**
-
-        >>> # dataset是任意数据集对象的实例
-        >>> dataset = dataset.batch(16)
-        >>> batch_size = dataset.get_batch_size()
-
     .. py:method:: get_class_indexing()
 
         返回类别索引。
@@ -398,11 +239,6 @@
         **返回：**
 
         dict，描述类别名称到索引的键值对映射关系，通常为str-to-int格式。针对COCO数据集，类别名称到索引映射关系描述形式为str-to-list<int>格式，列表中的第二个数字表示超级类别。
-
-        **样例：**
-
-        >>> # dataset是数据集类的实例化对象
-        >>> class_indexing = dataset.get_class_indexing()
 
 
     .. py:method:: get_col_names()
@@ -412,11 +248,6 @@
         **返回：**
 
         list，数据集中所有列名组成列表。
-
-        **样例：**
-
-        >>> # dataset是数据集类的实例化对象
-        >>> col_names = dataset.get_col_names()
 
     .. py:method:: get_dataset_size()
 
@@ -442,14 +273,6 @@
         **返回：**
 
         input index信息的元组。
-
-        **样例：**
-
-        >>> # dataset是Dataset对象的实例
-        >>> # 设置input_indexs
-        >>> dataset.input_indexs = 10
-        >>> print(dataset.input_indexs)
-        10
 
     .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None)
 
@@ -481,95 +304,6 @@
         **返回：**
 
         MapDataset，map操作后的数据集。
-
-        **样例：**
-
-        >>> # dataset是Dataset对象的一个实例，它有2列，"image"和"label"。
-        >>>
-        >>> # 定义两个operation，每个operation接受1列输入，输出1列。
-        >>> decode_op = c_vision.Decode(rgb=True)
-        >>> random_jitter_op = c_vision.RandomColorAdjust(brightness=(0.8, 0.8), contrast=(1, 1),
-        ...                                               saturation=(1, 1), hue=(0, 0))
-        >>>
-        >>> # 1）简单的map示例。
-        >>>
-        >>> # 对"image"对应的数据列进行"decode_op"操作。
-        >>> # 由于未指定column_order，因此"image"
-        >>> # 和"label"2列将按其原来的顺序传播到下一个操作。
-        >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"])
-        >>>
-        >>> # 对"image"对应的数据列进行"decode_op"操作并将列名重命名为"decoded_image"。
-        >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"], output_columns=["decoded_image"])
-        >>>
-        >>> # 指定输出列的顺序。
-        >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-        ...                       output_columns=None, column_order=["label", "image"])
-        >>>
-        >>> # 将"image"重命名为"decoded_image"，并指定输出列的顺序。
-        >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-        ...                       output_columns=["decoded_image"], column_order=["label", "decoded_image"])
-        >>>
-        >>> # 将"image"重命名为"decoded_image"，并只保留此列。
-        >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
-        ...                       output_columns=["decoded_image"], column_order=["decoded_image"])
-        >>>
-        >>> # 使用用户自定义Python函数的map简单示例。列重命名和指定列顺序
-        >>> # 的方式同前面的示例相同。
-        >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
-        >>> dataset = dataset.map(operations=[(lambda x: x + 1)], input_columns=["data"])
-        >>>
-        >>> # 2）多个operation的map示例。
-        >>>
-        >>> # 创建一个数据集，图像被解码，并随机颜色抖动。
-        >>> # decode_op以列"image"作为输入，并输出1列。将
-        >>> # decode_op输出的数据列作为输入传递给random_jitter_op，
-        >>> # random_jitter_op将输出1列。列"image"将替换为
-        >>> # random_jitter_op（最后一个operation）输出的列。所有其他
-        >>> # 列保持不变。由于未指定column_order，因此
-        >>> # 列的顺序将保持不变。
-        >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"])
-        >>>
-        >>> # 将random_jitter_op输出的列重命名为"image_mapped"。
-        >>> # 指定列顺序的方式与示例1相同。
-        >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"],
-        ...                       output_columns=["image_mapped"])
-        >>>
-        >>> # 使用用户自定义Python函数的多个operation的map示例。列重命名和指定列顺序
-        >>> # 的方式与示例1相同。
-        >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
-        >>> dataset = dataset.map(operations=[(lambda x: x * x), (lambda x: x - 1)], input_columns=["data"],
-        ...                                   output_columns=["data_mapped"])
-        >>>
-        >>> # 3）输入列数和输出列数不等的示例。
-        >>>
-        >>> # operation[i]均为lambda函数。
-        >>> #
-        >>> # operation[0]输入2列并输出3列。
-        >>> # operations[1]输入3列并输出1列。
-        >>> # operations[2]输入1列并输出4列。
-        >>> #
-        >>> # 注：operation[i]的输出列数必须等于
-        >>> # operation[i+1]的输入列。否则，map算子会
-        >>> # 出错。
-        >>> operations = [(lambda x, y: (x, x + y, x + y + 1)),
-        ...               (lambda x, y, z: x * y * z),
-        ...               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
-        >>>
-        >>> # 注：由于输入列数与
-        >>> # 输出列数不相同，必须指定output_columns和column_order
-        >>> # 参数。否则，此map算子也会出错。
-        >>>
-        >>> dataset = ds.NumpySlicesDataset(data=([[0, 1, 2]], [[3, 4, 5]]), column_names=["x", "y"])
-        >>>
-        >>> # 将所有数据列传播到下一个操作：
-        >>> dataset = dataset.map(operations, input_columns=["x", "y"],
-        ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
-        ...                       column_order=["mod2", "mod3", "mod5", "mod7"])
-        >>>
-        >>> # 将某些列数据列播到下一个操作：
-        >>> dataset = dataset.map(operations, input_columns=["x", "y"],
-        ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
-        ...                       column_order=["mod7", "mod3", "col2"])
 
     .. py:method:: num_classes()
 
@@ -608,14 +342,6 @@
 
         ProjectDataset，project操作后的数据集对象。
 
-        **样例：**
-
-        >>> # dataset是Dataset对象的实例
-        >>> columns_to_project = ["column3", "column1", "column2"]
-        >>>
-        >>> # 创建一个数据集，无论列的原始顺序如何，依次包含column3, column1, column2。
-        >>> dataset = dataset.project(columns=columns_to_project)
-
     .. py:method:: rename(input_columns, output_columns)
 
         对数据集对象按指定的列名进行重命名。
@@ -628,17 +354,6 @@
         **返回：**
 
         RenameDataset，rename操作后的数据集对象。
-
-        **样例：**
-
-        >>> # dataset是Dataset对象的实例
-        >>> input_columns = ["input_col1", "input_col2", "input_col3"]
-        >>> output_columns = ["output_col1", "output_col2", "output_col3"]
-        >>>
-        >>> # 创建一个数据集，其中"nput_col1"重命名为"output_col1"，
-        >>> # "input_col2"重命名为"output_col2"，"input_col3"重命名
-        >>> # 为"output_col3"。
-        >>> dataset = dataset.rename(input_columns=input_columns, output_columns=output_columns)
 
     .. py:method:: repeat(count=None)
 
@@ -654,23 +369,6 @@
         **返回：**
 
         RepeatDataset，repeat操作后的数据集对象。
-
-        **样例：**
-
-        >>>  # dataset是Dataset对象的实例
-        >>>
-        >>> # 创建一个数据集，数据集重复50个epoch。
-        >>> dataset = dataset.repeat(50)
-        >>>
-        >>> # 创建一个数据集，其中每个epoch都是独立混洗的。
-        >>> dataset = dataset.shuffle(10)
-        >>> dataset = dataset.repeat(50)
-        >>>
-        >>> # 创建一个数据集，混洗前先将数据集重复
-        >>> # 50个epoch。shuffle算子将
-        >>> # 整个50个epoch视作一个大数据集。
-        >>> dataset = dataset.repeat(50)
-        >>> dataset = dataset.shuffle(10)
 
     .. py:method:: reset()
 
@@ -775,14 +473,6 @@
 
         - **RuntimeError** - 混洗前存在通过 `dataset.sync_wait` 进行同步操作。
 
-        **样例：**
-
-        >>>  # dataset是Dataset对象的实例
-        >>> # 可以选择设置第一个epoch的种子
-        >>> ds.config.set_seed(58)
-        >>> # 使用大小为4的shuffle缓冲区创建打乱后的数据集。
-        >>> dataset = dataset.shuffle(4)
-
     .. py:method:: skip(count)
 
         跳过此数据集对象的前 `count` 条数据。
@@ -794,12 +484,6 @@
         **返回：**
 
         SkipDataset，跳过指定条数据后的数据集对象。
-
-        **样例：**
-
-        >>> # dataset是Dataset对象的实例
-        >>> # 创建一个数据集对象，跳过前3条数据
-        >>> dataset = dataset.skip(3)
 
     .. py:method:: split(sizes, randomize=True)
 
@@ -834,11 +518,6 @@
 
         tuple(Dataset)，split操作后子数据集对象的元组。
 
-        **样例：**
-
-        >>> dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
-        >>> train_dataset, test_dataset = dataset.split([0.9, 0.1])
-
     .. py:method:: sync_update(condition_name, num_batch=None, data=None)
 
         释放阻塞条件并使用给定数据触发回调函数。
@@ -867,37 +546,6 @@
 
         - **RuntimeError** - 条件名称已存在。
 
-        **样例：**
-
-        >>> import numpy as np
-        >>> def gen():
-        ...     for i in range(100)：
-        ...         yield (np.array(i),)
-        >>>
-        >>> class Augment:
-        ...     def __init__(self, loss)：
-        ...         self.loss = loss
-        ...
-        ...     def preprocess(self, input_)：
-        ...         return input_
-        ...
-        ...     def update(self, data)：
-        ...         self.loss = data["loss"]
-        >>>
-        >>> batch_size = 4
-        >>> dataset = ds.GeneratorDataset(gen, column_names=["input"])
-        >>>
-        >>> aug = Augment(0)
-        >>> dataset = dataset.sync_wait(condition_name="policy", callback=aug.update)
-        >>> dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
-        >>> dataset = dataset.batch(batch_size)
-        >>> count = 0
-        >>> for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True)：
-        ...     assert data["input"][0] == count
-        ...     count += batch_size
-        ...     data = {"loss": count}
-        ...     dataset.sync_update(condition_name="policy", data=data)
-
     .. py:method:: take(count=-1)
 
         从数据集中获取最多 `count` 的元素。
@@ -913,12 +561,6 @@
         **返回：**
 
         TakeDataset，take操作后的数据集对象。
-
-        **样例：**
-
-        >>> # dataset是Dataset对象的实例。
-        >>> # 创建一个数据集对象，包含50条数据。
-        >>> dataset = dataset.take(50)
 
     .. py:method:: to_device(send_epoch_end=True, create_data_info_queue=False)
 

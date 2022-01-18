@@ -18,22 +18,6 @@ mindspore.parse_print
     **ValueError** – 指定的文件不存在或为空。
     **RuntimeError** - 解析文件失败。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> import mindspore.ops as ops
-    >>> from mindspore.nn as nn
-    >>> from mindspore import Tensor, context
-    >>> context.set_context(mode=context.GRAPH_MODE, print_file_path='log.data')
-    >>> class PrintInputTensor(nn.Cell):
-    ...         def __init__(self):
-    ...             super().__init__()
-    ...             self.print = ops.Print()
-    ...
-    ...         def construct(self, input_pra):
-    ...             self.print('print:', input_pra)
-    ...             return input_pra
-
     >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float32)
     >>> input_pra = Tensor(x)
     >>> net = PrintInputTensor()

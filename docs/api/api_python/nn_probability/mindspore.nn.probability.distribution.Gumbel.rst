@@ -19,10 +19,6 @@ mindspore.nn.probability.distribution.Gumbel
     - **dtype** (mindspore.dtype) - 分布类型。默认值：mindspore.float32。
     - **name** (str) - 分布的名称。默认值：'Gumbel'。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
     .. note:: 
         - `scale` 必须大于零。
         - `dtype` 必须是浮点类型，因为Gumbel分布是连续的。
@@ -32,23 +28,6 @@ mindspore.nn.probability.distribution.Gumbel
 
     - **ValueError** - `scale` 中元素小于0。
     - **TypeError** - `dtype` 不是float的子类。
-
-    **样例：**
-
-    >>> import mindspore
-    >>> import mindspore.nn as nn
-    >>> import mindspore.nn.probability.distribution as msd
-    >>> from mindspore import Tensor
-    >>> class Prob(nn.Cell):
-    ...     def __init__(self):
-    ...         super(Prob, self).__init__()
-    ...         self.gum = msd.Gumbel(np.array([0.0]), np.array([[1.0], [2.0]]), dtype=mindspore.float32)
-    ...
-    ...     def construct(self, x_):
-    ...         return self.gum.prob(x_)
-    >>> value = np.array([1.0, 2.0]).astype(np.float32)
-    >>> pdf = Prob()
-    >>> output = pdf(Tensor(value, dtype=mindspore.float32))
 
     .. py:method:: loc
         :property:

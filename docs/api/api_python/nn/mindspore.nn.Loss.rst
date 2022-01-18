@@ -8,17 +8,6 @@ mindspore.nn.Loss
     .. math::
         loss = \frac{\sum_{k=1}^{n}loss_k}{n}
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> from mindspore import nn, Tensor
-    >>>
-    >>> x = Tensor(np.array(0.2), mindspore.float32)
-    >>> loss = nn.Loss()
-    >>> loss.clear()
-    >>> loss.update(x)
-    >>> result = loss.eval()
-
     .. py:method:: clear()
 
         内部评估结果清零。

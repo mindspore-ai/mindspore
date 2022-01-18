@@ -9,8 +9,3 @@
         **返回：**
 
         ZipDataset，合并压缩后的数据集对象。
-
-        **样例：**
-
-        >>> # 创建一个数据集，它将dataset和dataset_1进行合并
-        >>> dataset = dataset.zip(dataset_1)

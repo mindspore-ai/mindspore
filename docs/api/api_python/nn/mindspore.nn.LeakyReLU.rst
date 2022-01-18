@@ -30,16 +30,3 @@ mindspore.nn.LeakyReLU
    **异常：**
 
    **TypeError** - `alpha` 不是浮点数或整数。
-
-   **支持平台：**
-
-   ``Ascend`` ``GPU`` ``CPU``
-
-   **样例：**
-
-    >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-    >>> leaky_relu = nn.LeakyReLU()
-    >>> output = leaky_relu(x)
-    >>> print(output)
-    [[-0.2  4.  -1.6]
-     [ 2.  -1.   9. ]]

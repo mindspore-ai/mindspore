@@ -14,22 +14,6 @@ mindspore.nn.TopKCategoricalAccuracy
     - **TypeError** - `k` 不是int。
     - **ValueError** - `k` 小于1。
 
-    **样例：**
-
-    >>> import mindspore
-    >>> import numpy as np
-    >>> from mindspore import nn, Tensor
-    >>>
-    >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
-    ...         [0.9, 0.6, 0.2, 0.01, 0.3]]), mindspore.float32)
-    >>> y = Tensor(np.array([2, 0, 1]), mindspore.float32)
-    >>> topk = nn.TopKCategoricalAccuracy(3)
-    >>> topk.clear()
-    >>> topk.update(x, y)
-    >>> output = topk.eval()
-    >>> print(output)
-    0.6666666666666666
-
     .. py:method:: clear()
 
         内部评估结果清零。

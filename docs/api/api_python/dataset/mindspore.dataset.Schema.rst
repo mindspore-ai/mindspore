@@ -17,16 +17,6 @@ mindspore.dataset.Schema
 
     **RuntimeError**： 模式文件加载失败。
 
-    **样例：**
-
-    >>> from mindspore import dtype as mstype
-    >>>
-    >>> # 创建模式；指定列名、mindspore.dtype和列shape。
-    >>> schema = ds.Schema()
-    >>> schema.add_column(name='col1', de_type=mstype.int64, shape=[2])
-    
-    .. py:method::add_column(name, de_type, shape=None)
-
         向schema中添加新列。
 
         **参数：**
@@ -69,16 +59,6 @@ mindspore.dataset.Schema
         - **RuntimeError:** 解析列失败。
         - **RuntimeError:** 列name字段缺失。
         - **RuntimeError:** 列type字段缺失。
-
-        **样例：**
-
-        >>> schema = Schema()
-        >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
-        >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
-        >>> schema.parse_columns(columns1)
-        >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
-        >>> schema.parse_columns(columns2)
-        
 
     .. py:method::to_json()
 

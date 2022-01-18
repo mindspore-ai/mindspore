@@ -6,12 +6,6 @@
 
     - **sampler** (Sampler) - 用于从数据集中选择样本的对象。仅支持内置采样器（DistributedSampler、PKSampler、RandomSampler、SequentialSampler、SubsetRandomSampler、WeightedRandomSampler）。
 
-    **样例：**
-
-    >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
-    >>> sampler.add_child(ds.RandomSampler(num_samples=2))
-    >>> dataset = ds.Cifar10Dataset(cifar10_dataset_dir, sampler=sampler)
-
 .. py:method:: get_child()
 
    获取给定采样器的子采样器。 

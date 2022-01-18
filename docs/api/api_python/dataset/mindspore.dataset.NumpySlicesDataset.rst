@@ -58,25 +58,6 @@ mindspore.dataset.NumpySlicesDataset
     - **RuntimeError:** 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError:**  `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
 
-    **样例：**
-
-    >>> # 1) 输入的 `data` 参数类型为list，指定输出列名为"column_1"
-    >>> data = [1, 2, 3]
-    >>> dataset = ds.NumpySlicesDataset(data=data, column_names=["column_1"])
-    >>>
-    >>> # 2) 输入的 `data` 参数类型为dict，并且使用column_names的默认行为，即采用键名作为生成列名。
-    >>> data = {"a": [1, 2], "b": [3, 4]}
-    >>> dataset = ds.NumpySlicesDataset(data=data)
-    >>>
-    >>> # 3) 输入的 `data` 参数类型是由list组成的tuple，每个元组分别生成一个输出列，共三个输出列
-    >>> data = ([1, 2], [3, 4], [5, 6])
-    >>> dataset = ds.NumpySlicesDataset(data=data, column_names=["column_1", "column_2", "column_3"])
-    >>>
-    >>> # 4) 从CSV文件加载数据
-    >>> import pandas as pd
-    >>> df = pd.read_csv(filepath_or_buffer=csv_dataset_dir[0])
-    >>> dataset = ds.NumpySlicesDataset(data=dict(df), shuffle=False)
-
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.rst

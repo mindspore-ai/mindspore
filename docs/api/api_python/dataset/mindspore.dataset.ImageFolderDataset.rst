@@ -62,22 +62,6 @@ mindspore.dataset.ImageFolderDataset
          - False
          - 不允许
 
-    **样例：**
-
-    >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
-    >>>
-    >>> # 1）使用8个线程读取image_folder_dataset_dir中的所有图像文件。
-    >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8)
-    >>>
-    >>> # 2）从标签为0和1的cat文件夹为和dog文件夹中读取所有图像文件。
-    >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-    ...                                 class_indexing={"cat":0, "dog":1})
-    >>>
-    >>> # 3）读取image_folder_dataset_dir中所有扩展名为.JPEG和.png（区分大小写）的图像文件。
-    >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
-    ...                                 extensions=[".JPEG", ".png"])
-
     **关于ImageFolderDataset：**
 
     您可以将图片数据文件构建成如下目录结构，并通过MindSpore的API进行读取。

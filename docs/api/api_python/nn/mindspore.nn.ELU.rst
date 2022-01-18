@@ -36,10 +36,6 @@ mindspore.nn.ELU
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
     - **ValueError** - `alpha` 不等于1.0。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
     **样例** :
 
     >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)

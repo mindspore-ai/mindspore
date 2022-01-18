@@ -18,36 +18,6 @@ mindspore.dataset.DatasetCache
     - **num_connections** (int, optional) - TCP/IP连接数量。默认值：None，表示连接数量为12。
     - **prefetch_size** (int, optional) - 指定缓存队列大小，使用缓存功能算子时，将直接从缓存队列中获取数据。默认值：None，表示缓存队列大小为20。
 
-    **样例：**
-
-    >>> import mindspore.dataset as ds
-    >>>
-    >>> # 创建数据缓存客户端实例，其中 `session_id` 由命令 `cache_admin -g` 生成
-    >>> some_cache = ds.DatasetCache(session_id=session_id, size=0)
-    >>>
-    >>> dataset_dir = "path/to/imagefolder_directory"
-    >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
-
     .. py:method:: get_stat()
 
         获取缓存实例的统计信息。在数据管道结束后，可获取三类统计信息，包括平均缓存命中数（avg_cache_sz），内存中的缓存数（num_mem_cached）和磁盘中的缓存数（num_disk_cached）。
-
-        **样例：**
-
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> # 创建数据缓存客户端实例，其中 `session_id` 由命令 `cache_admin -g` 生成
-        >>> some_cache = ds.DatasetCache(session_id=session_id, size=0)
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
-        >>> for _ in ds1.create_dict_iterator(num_epochs=1):
-        ...     pass
-        >>> # 数据管道执行结束之后，才能获取cache的统计信息
-        >>> stat = some_cache.get_stat()
-        >>> # 获取平均缓存命中数（avg_cache_sz）
-        >>> cache_sz = stat.avg_cache_sz
-        >>> # 获取内存中的缓存数（num_mem_cached）
-        >>> num_mem_cached = stat.num_mem_cached
-        >>> # 获取磁盘中的缓存数（num_disk_cached）
-        >>> num_dick_cached = stat.num_disk_cached

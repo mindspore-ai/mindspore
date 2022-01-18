@@ -27,16 +27,3 @@ mindspore.ops.Sub
     **异常：**
 
     - **TypeError** - `x` 和 `y` 不是Tensor、number.Number或bool。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-    >>> y = Tensor(np.array([4, 5, 6]), mindspore.int32)
-    >>> sub = ops.Sub()
-    >>> output = sub(x, y)
-    >>> print(output)
-    [-3 -3 -3]
