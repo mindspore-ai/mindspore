@@ -95,6 +95,7 @@ class DumpJsonParser {
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
+  bool dump_enabled_warning_printed_{false};
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;
