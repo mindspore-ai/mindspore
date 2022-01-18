@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,6 @@ class E2eDump {
 
   static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                              std::string *kernel_name, const Debugger *debugger);
-
-  static bool DumpDirExists(const std::string &dump_path);
 
 #ifdef ENABLE_D
   static void DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data, char *data_ptr);

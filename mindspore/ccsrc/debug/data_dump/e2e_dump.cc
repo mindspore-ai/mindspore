@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -521,18 +521,6 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
     if (node_name == prim::kPrimGetNext->name() || node_name == prim::kPrimInitDataSetQueue->name()) {
       return true;
     }
-  }
-  return false;
-}
-
-bool E2eDump::DumpDirExists(const std::string &dump_path) {
-  DIR *dir = opendir(dump_path.c_str());
-  if (dir != nullptr) {
-    MS_LOG(INFO) << "Dump dir " << dump_path << " exists";
-    if (closedir(dir) == -1) {
-      MS_LOG(WARNING) << "Dump dir " << dump_path << " close failed!";
-    }
-    return true;
   }
   return false;
 }

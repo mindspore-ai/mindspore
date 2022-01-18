@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,10 +58,10 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
   return real_outputs;
 }
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
                 uint32_t root_graph_id) {
   // get inputs
-  auto kernel_inputs = launch_info_->inputs_;
+  auto kernel_inputs = launch_info->inputs_;
   auto input_size = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t j = 0; j < input_size; ++j) {
     auto input_kernel = cnode->input(j + 1);
@@ -77,8 +77,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
     auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret =
-      gpu_addr->LoadMemToHost(input_tensor_name, exec_order_, format, int_shapes, type, 0, true, root_graph_id);
+    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -87,10 +86,10 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uin
   }
 }
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
                  uint32_t root_graph_id) {
   // get outputs
-  auto kernel_outputs = launch_info_->outputs_;
+  auto kernel_outputs = launch_info->outputs_;
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   auto node_name = AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
@@ -108,7 +107,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
     auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order_, format, int_shapes, type, j, false, root_graph_id);
+    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
@@ -137,7 +136,7 @@ bool CheckReadData(const CNodePtr &cnode) {
   return read_data;
 }
 
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_) {
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
     return;
@@ -148,10 +147,10 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info_, exec_order_, root_graph_id);
+    LoadInputs(cnode, launch_info, exec_order, root_graph_id);
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info_, exec_order_, root_graph_id);
+    LoadOutputs(cnode, launch_info, exec_order, root_graph_id);
   }
   // Dump kernel
   if (dump_enabled) {
@@ -168,7 +167,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_
   debugger->PostExecuteNode(cnode, last_kernel);
 }
 
-void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order_) {
+void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
     return;
@@ -180,7 +179,7 @@ void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order_) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
 
-  debugger->LoadNodeOutputs(cnode, exec_order_, root_graph_id);
+  debugger->LoadNodeOutputs(cnode, exec_order, root_graph_id);
   // Dump kernel
   if (dump_enabled) {
     MS_EXCEPTION_IF_NULL(kernel_graph);

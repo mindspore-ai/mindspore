@@ -468,20 +468,13 @@ void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
   }
 }
 
-void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get());
-  MS_LOG(INFO) << "Finish!";
-}
-
 void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
   // This function is used for new GPU runtime using MindRTBackend, on Ascend platform, graphs are saved in other way.
   if (device_target_ == kAscendDevice) {
     return;
   }
   auto &json_parser = DumpJsonParser::GetInstance();
-  if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {
+  if (json_parser.e2e_dump_enabled()) {
     uint32_t rank_id = GetRankID();
     kernel_graph->set_root_graph_id(kernel_graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(kernel_graph->graph_id());
