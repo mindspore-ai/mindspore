@@ -114,7 +114,7 @@ void SchedulerNode::RunRecovery() {
     scheduler_recovery_message.set_rank_id(rank_id);
     if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, scheduler_recovery_message.SerializeAsString().data(),
                          scheduler_recovery_message.ByteSizeLong())) {
-      if (node_info.node_role_ == NodeRole::WORKER) {
+      if (node_info.node_role_ == NodeRole::WORKER && PSContext::instance()->server_mode() == kServerModePS) {
         is_worker_timeout_ = true;
         break;
       }
@@ -312,6 +312,10 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
           auto scale_in_client = GetOrCreateClient(nodes[id]);
           SendMetadata(scale_in_client, nodes[id].rank_id_);
           node_manager_.UpdateHeartbeat(id);
+        }
+        if (connected_nodes_.count(id)) {
+          MS_LOG(INFO) << "remove scale in node id: " << id << " connection.";
+          connected_nodes_.erase(id);
         }
       }
     }

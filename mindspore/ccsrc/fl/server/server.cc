@@ -394,6 +394,7 @@ void Server::InitExecutor() {
   // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph_, executor_threshold_);
+  func_graph_ = nullptr;
   ModelStore::GetInstance().Initialize();
   return;
 }
@@ -630,6 +631,7 @@ void Server::HandleQueryInstanceRequest(const std::shared_ptr<ps::core::MessageH
   response["client_epoch_num"] = ps::PSContext::instance()->client_epoch_num();
   response["client_batch_size"] = ps::PSContext::instance()->client_batch_size();
   response["client_learning_rate"] = ps::PSContext::instance()->client_learning_rate();
+  response["global_iteration_time_window"] = ps::PSContext::instance()->global_iteration_time_window();
   auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
   MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
   if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
