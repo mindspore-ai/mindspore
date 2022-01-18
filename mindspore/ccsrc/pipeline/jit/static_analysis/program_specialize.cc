@@ -79,7 +79,7 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
   }
   auto res = SpecializeFuncGraph(fg, context);
   // Call PurifyElements() to purify tuple/list elements.
-  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_ONLY_MARK_SEQUENCE_UNUSED_ELEMENT");
+  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_DDE_ONLY_MARK");
   static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
   if (!enable_only_mark_unused_element) {
     for (auto &sequence_abs : sequence_abstract_list_) {
@@ -592,7 +592,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
   static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
   auto attrs = conf->ObtainEvalResult()->attribute();
   auto c_old = node->cast<CNodePtr>();
@@ -1010,9 +1010,9 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
 
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
   static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_ONLY_MARK_SEQUENCE_UNUSED_ELEMENT");
+  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_DDE_ONLY_MARK");
   static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);

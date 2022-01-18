@@ -273,7 +273,7 @@ std::string AbstractSequence::ToString() const {
       }
       auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
       if (flags != nullptr) {
-        ss << ", elements_use_flags: " << (*flags);
+        ss << ", elements_use_flags: {ptr: " << flags << ", value: " << (*flags) << "}";
       }
       if (i != sequence_nodes_.size() - 1) {
         ss << ", ";
@@ -364,7 +364,7 @@ void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &seq
 
 AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {
   AnfNodeWeakPtrList sequence_nodes;
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
   static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
   if (!enable_eliminate_unused_element) {
     return sequence_nodes;
