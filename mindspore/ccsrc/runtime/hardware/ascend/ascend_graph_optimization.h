@@ -35,6 +35,7 @@ class AscendGraphOptimization {
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
   void SetOperatorInfo(const std::vector<CNodePtr> &nodes);
   void UnifyMindIR(const KernelGraphPtr &graph);
+  void Clear();
 
  private:
   AscendGraphOptimization() { graph_manager_ = MakeManager(); }
