@@ -269,6 +269,10 @@ std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::
 
 void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   MS_ASSERT(src_tensor != dst_tensor);
+  if (src_tensor->data() == dst_tensor->data()) {
+    MS_LOG(DEBUG) << "no need to move data.";
+    return;
+  }
   dst_tensor->FreeData();
   dst_tensor->ResetRefCount();
   dst_tensor->set_allocator(src_tensor->allocator());

@@ -247,7 +247,7 @@ STATUS DeleteRedundantTrans(std::vector<kernel::LiteKernel *> *kernels) {
     auto pre_kernel_in_tensor_shape = pre_kernel->in_tensors().at(0)->shape();
     auto pre_kernel_out_tensor_shape = pre_kernel->out_tensors().at(0)->shape();
     for (size_t i = 0; i < pre_kernel_out_tensor_shape.size(); i++) {
-      if (pre_kernel_in_tensor_shape[i] == -1) {
+      if (pre_kernel_out_tensor_shape[i] == -1) {
         MS_LOG(DEBUG) << " input need do resize.";
         return RET_OK;
       }

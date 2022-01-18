@@ -56,6 +56,7 @@ class ControlFlowScheduler {
   int IsolateSameInputPartials(std::vector<kernel::LiteKernel *> *dst_kernels);
   int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
   int RecordControlFlowLinkInfo();
+  int IsolateInputOfMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
@@ -77,6 +78,7 @@ class ControlFlowScheduler {
   kernel::SubGraphKernel *IsolatePartialInputs(kernel::SubGraphKernel *subgraph, kernel::LiteKernel *partial);
   std::set<kernel::LiteKernel *> GetSameInputPartials();
   void UpdateSubGraphMap(kernel::LiteKernel *new_subgraph, kernel::LiteKernel *old_subgraph);
+  int GetSubGraphsWhichNeedBoundary();
 
  private:
   InnerContext *context_ = nullptr;
@@ -87,6 +89,9 @@ class ControlFlowScheduler {
   std::vector<kernel::LiteKernel *> non_tail_calls_{};
   // key is subgraph index, value is the corresponding partial nodes.
   std::unordered_map<size_t, std::set<kernel::LiteKernel *>> more_than_once_called_partial_nodes_{};
+  // record partial nodes which corresponding subgraph need build boundary, key is subgraph, value is corresponding
+  // partial nodes
+  std::unordered_map<kernel::SubGraphKernel *, std::set<kernel::LiteKernel *>> subgraphs_need_boundary_{};
   std::unordered_map<size_t, kernel::LiteKernel *> *subgraph_index_subgraph_kernel_map_{};
   std::unordered_map<kernel::LiteKernel *, size_t> *partial_kernel_subgraph_index_map_{};
 };
