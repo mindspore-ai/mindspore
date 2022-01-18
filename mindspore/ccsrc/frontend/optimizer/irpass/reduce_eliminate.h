@@ -70,7 +70,7 @@ class ReduceOneEliminater : public AnfVisitor {
       size_t x_shape_size = x_shape_.size();
       std::vector<int64_t> positive_axis;
       std::transform(axis_.begin(), axis_.end(), std::back_inserter(positive_axis),
-                     [x_shape_size](int64_t idx) { return idx < 0 ? idx + x_shape_size : idx; });
+                     [x_shape_size](int64_t idx) { return idx < 0 ? idx + SizeToLong(x_shape_size) : idx; });
 
       std::vector<ValuePtr> elements;
       for (size_t i = 0; i < x_shape_size; i++) {

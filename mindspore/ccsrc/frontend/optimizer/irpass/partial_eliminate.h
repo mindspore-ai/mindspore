@@ -85,8 +85,9 @@ class PartialEliminater : public AnfVisitor {
 
     // reorder the formal parameter of fg.
     AnfNodePtrList new_params;
-    std::copy(fg->parameters().cbegin() + xs_size, fg->parameters().cend(), std::back_inserter(new_params));
-    std::copy(fg->parameters().cbegin(), fg->parameters().cbegin() + xs_size, std::back_inserter(new_params));
+    std::copy(fg->parameters().cbegin() + SizeToLong(xs_size), fg->parameters().cend(), std::back_inserter(new_params));
+    std::copy(fg->parameters().cbegin(), fg->parameters().cbegin() + SizeToLong(xs_size),
+              std::back_inserter(new_params));
     fg->manager()->SetParameters(fg, new_params);
     return new_node;
   }
@@ -116,15 +117,11 @@ class ChoicePartialEliminater : public AnfVisitor {
  public:
   virtual ~ChoicePartialEliminater() = default;
 
- protected:
-  AnfNodePtrList fg_list_{};
-  std::vector<AnfNodePtrList> args_list_{};
-
   void Visit(const AnfNodePtr &node) override {
     if (!IsPrimitiveCNode(node, prim::kPrimPartial)) {
       if (IsValueNode<FuncGraph>(node)) {
         fg_list_.push_back(node);
-        args_list_.push_back(AnfNodePtrList{});
+        (void)args_list_.push_back(AnfNodePtrList{});
       }
       return;
     }
@@ -133,7 +130,6 @@ class ChoicePartialEliminater : public AnfVisitor {
     // {prim::kPrimPartial, G, Xs}
     if (inputs.size() < 3) {
       MS_LOG(EXCEPTION) << "Node should be Partial CNode, but: " << node->DebugString();
-      return;
     }
     if (IsValueNode<FuncGraph>(inputs[1])) {
       fg_list_.push_back(inputs[1]);
@@ -143,6 +139,10 @@ class ChoicePartialEliminater : public AnfVisitor {
     }
     return;
   }
+
+ protected:
+  AnfNodePtrList fg_list_{};
+  std::vector<AnfNodePtrList> args_list_{};
 
   // return value: true -- continue replace; false -- return nullptr;
   bool CheckFuncGraphAndArgs() {
@@ -237,7 +237,8 @@ class ChoicePartialEliminater : public AnfVisitor {
     AnfNodePtrList new_params;
     new_params.reserve(anchor_params_size + extra_input_counter);
     // reuse parameters for anchor_args;
-    std::copy(anchor_fg_params.cbegin(), anchor_fg_params.cbegin() + anchor_args_size, std::back_inserter(new_params));
+    std::copy(anchor_fg_params.cbegin(), anchor_fg_params.cbegin() + SizeToLong(anchor_args_size),
+              std::back_inserter(new_params));
     // Extra parameters;
     for (size_t i = 0; i < extra_inputs.size(); ++i) {
       TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[i]->debug_info()));
