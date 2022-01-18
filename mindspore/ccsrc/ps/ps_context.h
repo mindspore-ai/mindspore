@@ -211,6 +211,9 @@ class PSContext {
   std::string http_url_prefix() const;
   void set_http_url_prefix(const std::string &http_url_prefix);
 
+  void set_global_iteration_time_window(const uint64_t &global_iteration_time_window);
+  uint64_t global_iteration_time_window() const;
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -229,9 +232,9 @@ class PSContext {
         fl_client_enable_(false),
         fl_name_(""),
         start_fl_job_threshold_(0),
-        start_fl_job_time_window_(3000),
+        start_fl_job_time_window_(300000),
         update_model_ratio_(1.0),
-        update_model_time_window_(3000),
+        update_model_time_window_(300000),
         share_secrets_ratio_(1.0),
         cipher_time_window_(300000),
         reconstruct_secrets_threshold_(2000),
@@ -257,7 +260,8 @@ class PSContext {
         enable_ssl_(false),
         client_password_(""),
         server_password_(""),
-        http_url_prefix_("") {}
+        http_url_prefix_(""),
+        global_iteration_time_window_(21600000) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -372,6 +376,9 @@ class PSContext {
   std::string server_password_;
   // http url prefix for http communication
   std::string http_url_prefix_;
+
+  // The time window of startFLJob round in millisecond.
+  uint64_t global_iteration_time_window_;
 };
 }  // namespace ps
 }  // namespace mindspore

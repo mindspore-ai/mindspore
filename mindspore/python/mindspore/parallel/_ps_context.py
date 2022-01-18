@@ -71,7 +71,8 @@ _set_ps_context_func_map = {
     "dp_delta": ps_context().set_dp_delta,
     "dp_norm_clip": ps_context().set_dp_norm_clip,
     "encrypt_type": ps_context().set_encrypt_type,
-    "http_url_prefix": ps_context().set_http_url_prefix
+    "http_url_prefix": ps_context().set_http_url_prefix,
+    "global_iteration_time_window": ps_context().set_global_iteration_time_window
 }
 
 _get_ps_context_func_map = {
@@ -112,7 +113,8 @@ _get_ps_context_func_map = {
     "server_password": ps_context().server_password,
     "scheduler_manage_port": ps_context().scheduler_manage_port,
     "config_file_path": ps_context().config_file_path,
-    "http_url_prefix": ps_context().http_url_prefix
+    "http_url_prefix": ps_context().http_url_prefix,
+    "global_iteration_time_window": ps_context().global_iteration_time_window
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",

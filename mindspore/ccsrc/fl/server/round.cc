@@ -220,14 +220,27 @@ bool Round::IsServerAvailable(std::string *reason) {
     return false;
   }
 
-  // If the server is still in the process of scaling, reject the request.
+  // If the server is still in safemode, reject the request.
   if (Server::GetInstance().IsSafeMode()) {
-    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
+    MS_LOG(WARNING) << "The cluster is still in safemode, please retry " << name_ << " later.";
     *reason = ps::kClusterSafeMode;
     return false;
   }
   return true;
 }
+
+void Round::KernelSummarize() {
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  (void)kernel_->Summarize();
+}
+
+size_t Round::kernel_total_client_num() const { return kernel_->total_client_num(); }
+
+size_t Round::kernel_accept_client_num() const { return kernel_->accept_client_num(); }
+
+size_t Round::kernel_reject_client_num() const { return kernel_->reject_client_num(); }
+
+void Round::InitkernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore
