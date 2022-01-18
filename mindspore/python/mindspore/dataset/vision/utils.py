@@ -75,7 +75,32 @@ class ImageBatchFormat(IntEnum):
 
 
 class ConvertMode(IntEnum):
-    """The color conversion code"""
+    """
+    The color conversion mode.
+
+    Possible enumeration values are as follows:
+
+    - ConvertMode.COLOR_BGR2BGRA: convert BGR format images to BGRA format images.
+    - ConvertMode.COLOR_RGB2RGBA: convert RGB format images to RGBA format images.
+    - ConvertMode.COLOR_BGRA2BGR: convert BGRA format images to BGR format images.
+    - ConvertMode.COLOR_RGBA2RGB: convert RGBA format images to RGB format images.
+    - ConvertMode.COLOR_BGR2RGBA: convert BGR format images to RGBA format images.
+    - ConvertMode.COLOR_RGB2BGRA: convert RGB format images to BGRA format images.
+    - ConvertMode.COLOR_RGBA2BGR: convert RGBA format images to BGR format images.
+    - ConvertMode.COLOR_BGRA2RGB: convert BGRA format images to RGB format images.
+    - ConvertMode.COLOR_BGR2RGB: convert BGR format images to RGB format images.
+    - ConvertMode.COLOR_RGB2BGR: convert RGB format images to BGR format images.
+    - ConvertMode.COLOR_BGRA2RGBA: convert BGRA format images to RGBA format images.
+    - ConvertMode.COLOR_RGBA2BGRA: convert RGBA format images to BGRA format images.
+    - ConvertMode.COLOR_BGR2GRAY: convert BGR format images to GRAY format images.
+    - ConvertMode.COLOR_RGB2GRAY: convert RGB format images to GRAY format images.
+    - ConvertMode.COLOR_GRAY2BGR: convert GRAY format images to BGR format images.
+    - ConvertMode.COLOR_GRAY2RGB: convert GRAY format images to RGB format images.
+    - ConvertMode.COLOR_GRAY2BGRA: convert GRAY format images to BGRA format images.
+    - ConvertMode.COLOR_GRAY2RGBA: convert GRAY format images to RGBA format images.
+    - ConvertMode.COLOR_BGRA2GRAY: convert BGRA format images to GRAY format images.
+    - ConvertMode.COLOR_RGBA2GRAY: convert RGBA format images to GRAY format images.
+    """
     COLOR_BGR2BGRA = 0
     COLOR_RGB2RGBA = COLOR_BGR2BGRA
     COLOR_BGRA2BGR = 1
