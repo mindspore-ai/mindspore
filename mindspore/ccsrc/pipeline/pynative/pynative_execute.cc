@@ -3445,11 +3445,11 @@ void PynativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::obj
 }
 
 void PynativeExecutor::Sync() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-
   ExecuteLazyTask();
 
+  mindspore::ScopedLongRunning long_running;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     for (auto &item : kSessionBackends) {
       MS_EXCEPTION_IF_NULL(item.second);
