@@ -30,6 +30,7 @@ enum DeviceType {
   kKirinNPU,
   kAscend910,
   kAscend310,
+  kHexagonDSP = 6,
   // add new type here
   kInvalidDeviceType = 100,
 };
@@ -448,5 +449,10 @@ void Ascend310DeviceInfo::SetBufferOptimizeMode(const std::string &buffer_optimi
   SetBufferOptimizeMode(StringToChar(buffer_optimize_mode));
 }
 std::string Ascend310DeviceInfo::GetBufferOptimizeMode() const { return CharToString(GetBufferOptimizeModeChar()); }
+
+class MS_API HexagonDspDeviceInfo : public DeviceInfoContext {
+ public:
+  enum DeviceType GetDeviceType() const override { return DeviceType::kHexagonDSP; };
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H
