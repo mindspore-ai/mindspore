@@ -39,7 +39,6 @@ class ScatterNdUpdateCPUKernel : public InnerKernel {
 
  private:
   ScatterNDParameter *param_ = nullptr;
-  void *output_ptr_ = nullptr;
   std::vector<int> output_unit_offsets_;
 };
 }  // namespace mindspore::kernel
