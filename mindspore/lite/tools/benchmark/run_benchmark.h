@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINNIE_BENCHMARK_RUN_BENCHMARK_H_
 #define MINNIE_BENCHMARK_RUN_BENCHMARK_H_
-#include "tools/benchmark/benchmark.h"
-#include "tools/benchmark/benchmark_unified_api.h"
 
 namespace mindspore::lite {
-
-int MS_API RunBenchmark(int argc, const char **argv);
-
+int RunBenchmark(int argc, const char **argv);
 }  // namespace mindspore::lite
 #endif  // MINNIE_BENCHMARK_RUN_BENCHMARK_H_

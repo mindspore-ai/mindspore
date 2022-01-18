@@ -17,6 +17,9 @@
 #include "tools/benchmark/run_benchmark.h"
 #include <string>
 #include <memory>
+#include "tools/benchmark/benchmark.h"
+#include "tools/benchmark/benchmark_unified_api.h"
+#include "tools/benchmark/benchmark_c_api.h"
 
 namespace mindspore {
 namespace lite {
@@ -34,44 +37,43 @@ int RunBenchmark(int argc, const char **argv) {
     return RET_OK;
   }
 
-  // get dump data output path
-  auto new_api = std::getenv("ENABLE_NEW_API");
-  bool run_old_api = (new_api == nullptr || std::string(new_api) != "true");
-  if (flags.config_file_ != "") {
-    run_old_api = false;
+  auto api_type = std::getenv("MSLITE_API_TYPE");
+  if (api_type != nullptr) {
+    MS_LOG(INFO) << "MSLITE_API_TYPE = " << api_type;
+    std::cout << "MSLITE_API_TYPE = " << api_type << std::endl;
   }
+
   std::unique_ptr<BenchmarkBase> benchmark;
-  if (run_old_api) {
-    benchmark = std::make_unique<Benchmark>(&flags);
-  } else {
+  if (flags.config_file_ != "" || (api_type != nullptr && std::string(api_type) == "NEW")) {
     benchmark = std::make_unique<BenchmarkUnifiedApi>(&flags);
+  } else if (api_type == nullptr || std::string(api_type) == "OLD") {
+    benchmark = std::make_unique<Benchmark>(&flags);
+  } else if (std::string(api_type) == "C") {
+    benchmark = std::make_unique<tools::BenchmarkCApi>(&flags);
+  } else {
+    BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
+    return RET_ERROR;
   }
   if (benchmark == nullptr) {
-    MS_LOG(ERROR) << "new benchmark failed ";
-    std::cerr << "new benchmark failed" << std::endl;
+    BENCHMARK_LOG_ERROR("new benchmark failed ");
     return RET_ERROR;
   }
+
   auto status = benchmark->Init();
   if (status != 0) {
-    MS_LOG(ERROR) << "Benchmark init Error : " << status;
-    std::cerr << "Benchmark init Error : " << status << std::endl;
+    BENCHMARK_LOG_ERROR("Benchmark init Error : " << status);
     return RET_ERROR;
   }
+  auto model_name = flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1);
 
   status = benchmark->RunBenchmark();
   if (status != 0) {
-    MS_LOG(ERROR) << "Run Benchmark "
-                  << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-                  << " Failed : " << status;
-    std::cerr << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-              << " Failed : " << status << std::endl;
+    BENCHMARK_LOG_ERROR("Run Benchmark " << model_name << " Failed : " << status);
     return RET_ERROR;
   }
 
-  MS_LOG(INFO) << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-               << " Success.";
-  std::cout << "Run Benchmark " << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
-            << " Success." << std::endl;
+  MS_LOG(INFO) << "Run Benchmark " << model_name << " Success.";
+  std::cout << "Run Benchmark " << model_name << " Success." << std::endl;
   return RET_OK;
 }
 }  // namespace lite
