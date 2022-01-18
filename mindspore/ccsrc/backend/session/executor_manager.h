@@ -32,6 +32,14 @@ class ExecutorManager {
   std::shared_ptr<Executor> GetExecutor(const std::string &device_name, uint32_t device_id);
   void OnEvent(const ExecutorEvent &event);
   void Clear();
+  void ClearDoneTasks() {
+    for (auto &item : executors_) {
+      auto &executor = item.second;
+      if (executor != nullptr) {
+        executor->ClearDoneTasks();
+      }
+    }
+  }
 
  private:
   ExecutorManager() = default;
