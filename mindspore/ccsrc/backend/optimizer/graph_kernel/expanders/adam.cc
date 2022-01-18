@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,9 +88,9 @@ class Adam : public OpDesc {
     }
 
     auto var_new = gb.Emit("Sub", {var, var_sub});
-    auto var_result = gb.Emit("InplaceAssign", {var, var_new, var_new}, {{"fake_output", MakeValue(true)}});
-    auto m_result = gb.Emit("InplaceAssign", {m, m_new, var_result}, {{"fake_output", MakeValue(true)}});
-    auto v_result = gb.Emit("InplaceAssign", {v, v_new, m_result}, {{"fake_output", MakeValue(true)}});
+    auto var_result = gb.Emit("Assign", {var, var_new});
+    auto m_result = gb.Emit("Assign", {m, m_new});
+    auto v_result = gb.Emit("Assign", {v, v_new});
     auto result = {var_result, m_result, v_result};
     return result;
   }

@@ -113,10 +113,6 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   // normalize the Reduce axis
   pm->AddPass(std::make_shared<AxisNormalizer>(), OptLevel_1);
 
-  // Replace Assign with InplaceAssign, and replace original output with overridden parameters
-  pm->AddPass(std::make_shared<OptimizeAssign>(), OptLevel_2);
-  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_2);
-
   // Cast the input of ReduceSum from float16 to float32 for higher precision
   pm->AddPass(std::make_shared<RaiseReductionPrecision>(), OptLevel_2);
 
@@ -167,6 +163,10 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->AddPass(std::make_shared<GraphKernelRecompute>(), recompute_lv);
   pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), recompute_lv);
   pm->AddPass(std::make_shared<MergeOutputForUpdateState>(), recompute_lv);
+
+  // Replace Assign with InplaceAssign, and replace original output with overridden parameters
+  pm->AddPass(std::make_shared<OptimizeAssign>(), OptLevel_2);
+  pm->AddPass(std::make_shared<EliminateRedundantOutput>(), OptLevel_2);
 
   // Enable atomic add
   pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,6 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kGPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
     {kGPUDevice, OpLevel_0, prim::kPrimDropout},
     {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimFusedAdam},
-    {kGPUDevice, OpLevel_0, prim::kPrimFusedAdamWeightDecay},
     {kGPUDevice, OpLevel_1, prim::kPrimMaximumGrad},
     {kGPUDevice, OpLevel_1, prim::kPrimMinimumGrad},
     {kGPUDevice, OpLevel_1, prim::kPrimLayerNorm},
