@@ -316,9 +316,9 @@ class HeNormal(Initializer):
     :math:`{N}(0, \text{sigma}^2)` in order to initialize a tensor, where
 
     .. math::
-        sigma = \frac{gain} {\sqrt{fan_mode}}
+        sigma = \frac{gain} {\sqrt{fan\_mode}}
 
-    where :math:`gain` is an optional scaling factor. :math: `fan_mode` is the number of input or output units of
+    where :math:`gain` is an optional scaling factor. :math:`fan_mode` is the number of input or output units of
     the weight tensor, depending on the `mode` is 'fan_in' or 'fan_out'.
 
     For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.

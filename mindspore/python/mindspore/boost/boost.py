@@ -93,78 +93,85 @@ class AutoBoost:
                     }
                 }
 
-                boost:
-                    mode (str): How to set the boost. Supports ["auto", "manual", "enable_all", "disable_all"].
-                        Default: "auto".
+            - boost:
 
-                        - auto: Depend on the argument "boost_level" in class model.
-                        - manual: Depen on "boost_config_dict".
-                        - enable_all: Set all boost functions true.
-                        - disable_all: Set all boost functions false.
+              - mode (str): How to set the boost. Supports ["auto", "manual", "enable_all", "disable_all"].
+                Default: "auto".
 
-                    less_bn (bool): Whether to apply less_bn function. Default: False.
-                    grad_freeze: (bool): Whether to apply grad_freeze function. Default: False.
-                    adasum (bool): Whether to apply adasum function. Default: False.
-                    grad_accumulation (bool): Whether to apply grad_accumulation function. Default: False.
-                    dim_reduce (bool): Whether to apply dim_reduce function. Default: False.
+                - auto: Depend on the argument "boost_level" in class model.
+                - manual: Depen on "boost_config_dict".
+                - enable_all: Set all boost functions true.
+                - disable_all: Set all boost functions false.
 
-                    If set dim_reduce true, other functions will be false.
-                    If set grad_freeze true and dim_reduce fasle, other functions will be false.
+              - less_bn (bool): Whether to apply less_bn function. Default: False.
+              - grad_freeze: (bool): Whether to apply grad_freeze function. Default: False.
+              - adasum (bool): Whether to apply adasum function. Default: False.
+              - grad_accumulation (bool): Whether to apply grad_accumulation function. Default: False.
+              - dim_reduce (bool): Whether to apply dim_reduce function. Default: False.
 
-                common:
-                    gradient_split_groups (list): The gradient split point of this network. Default: [50, 100].
-                    device_number (int): Device number. Default: 8.
+              If set dim_reduce true, other functions will be false.
+              If set grad_freeze true and dim_reduce fasle, other functions will be false.
 
-                less_bn:
-                    fn_flag (bool): Whether changing fc to fn. Default: True.
-                    gc_flag (bool): Whether to apply gc. Default: True.
+            - common:
 
-                grad_freeze:
-                    param_groups (int): The number of parameter groups. Default: 10.
-                    freeze_type (int): Gradient freeze grouping strategy, select from [0, 1]. Default: 1.
-                    freeze_p (float): Gradient freezing probability. Default: 0.7.
-                    total_steps (int): Total training steps. Default: 65536.
+              - gradient_split_groups (list): The gradient split point of this network. Default: [50, 100].
+              - device_number (int): Device number. Default: 8.
 
-                grad_accumulation:
-                    grad_ccumulation_step (int): Steps to accumulate gradients. Default: 1.
+            - less_bn:
 
-                dim_reduce:
+              - fn_flag (bool): Whether changing fc to fn. Default: True.
+              - gc_flag (bool): Whether to apply gc. Default: True.
 
-                    .. math::
+            - grad_freeze:
 
-                            \begin{align}
-                            grad\_k &= pca\_mat \cdot grad\\
-                            dk &= - bk \cdot grad\_k\\
-                            sk &= rho ^ m \cdot dk\\
-                            delta\_loss &= sigma \cdot grad\_k.T \cdot sk
-                            \end{align}
+              - param_groups (int): The number of parameter groups. Default: 10.
+              - freeze_type (int): Gradient freeze grouping strategy, select from [0, 1]. Default: 1.
+              - freeze_p (float): Gradient freezing probability. Default: 0.7.
+              - total_steps (int): Total training steps. Default: 65536.
 
-                    Here: pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
-                          bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+            - grad_accumulation:
 
-                    we need to find the m satisfy:
+              - grad_ccumulation_step (int): Steps to accumulate gradients. Default: 1.
 
-                    .. math::
-                            new\_loss < old\_loss + delta\_loss
+            - dim_reduce:
 
-                    Then, get delta_grad to update the weights for model:
+              .. math::
 
-                    .. math::
+                  \begin{align}
+                  grad\_k &= pca\_mat \cdot grad\\
+                  dk &= - bk \cdot grad\_k\\
+                  sk &= rho ^ m \cdot dk\\
+                  delta\_loss &= sigma \cdot grad\_k.T \cdot sk
+                  \end{align}
 
-                            \begin{align}
-                            grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
-                            new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
-                            delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
-                            \end{align}
+              Here:
 
-                    rho (float): Generally, it does not need to be modified. Default: 0.55.
-                    gamma (float): Generally, it does not need to be modified. Default: 0.9.
-                    alpha (float): Generally, it does not need to be modified. Default: 0.001.
-                    sigma (float): Generally, it does not need to be modified. Default: 0.4.
-                    n_components (int): PCA component. Default: 32.
-                    pca_mat_path (str): The path to load pca mat. Default: None.
-                    weight_load_dir (str): The directory to load weight files saved as ckpt. Default: None.
-                    timeout (int): Waiting time to load local pca mat. Default: 1800 second.
+              - pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
+              - bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+
+              we need to find the m satisfy:
+
+              .. math::
+                  new\_loss < old\_loss + delta\_loss
+
+              Then, get delta_grad to update the weights for model:
+
+              .. math::
+
+                  \begin{align}
+                  grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
+                  new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
+                  delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
+                  \end{align}
+
+              - rho (float): Generally, it does not need to be modified. Default: 0.55.
+              - gamma (float): Generally, it does not need to be modified. Default: 0.9.
+              - alpha (float): Generally, it does not need to be modified. Default: 0.001.
+              - sigma (float): Generally, it does not need to be modified. Default: 0.4.
+              - n_components (int): PCA component. Default: 32.
+              - pca_mat_path (str): The path to load pca mat. Default: None.
+              - weight_load_dir (str): The directory to load weight files saved as ckpt. Default: None.
+              - timeout (int): Waiting time to load local pca mat. Default: 1800 second.
 
             User can load the config through the JSON file or use the dictionary directly.
             The unconfigured parameters will adopt the default values. Default: "".

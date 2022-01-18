@@ -3030,7 +3030,7 @@ class Select(Primitive):
     Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the `condition`.
 
     Given a tensor as input, this operation inserts a dimension of 1 at the dimension,
-    it was invalid when both math: 'x' and math: 'y' are none.
+    it was invalid when both :math:`x` and :math:`y` are none.
     Keep in mind that the shape of the output tensor can vary depending
     on how many true values are in the input. Indexes are output in row-first
     order.

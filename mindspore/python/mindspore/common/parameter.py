@@ -68,7 +68,7 @@ def init_to_value(init):
 class Parameter(Tensor_):
     """
     `Parameter` is a `Tensor` subclass, when they are assigned as Cell attributes they are automatically added to
-     the list of its parameters, and will appear e.g. in `cell.get_parameters()` iterator.
+    the list of its parameters, and will appear e.g. in `cell.get_parameters()` iterator.
 
     Note:
         In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
