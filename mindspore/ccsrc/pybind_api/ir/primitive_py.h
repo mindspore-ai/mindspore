@@ -75,6 +75,7 @@ class PrimitivePy : public Primitive {
   PrimitivePtr Clone() override;
   PrimitivePyAdapterPtr adapter() const { return adapter_; }
   void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
+  static void ClearHookRes();
 
  private:
   py::function GetComputeFunction() const;
