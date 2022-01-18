@@ -44,28 +44,23 @@ _k_context = None
 
 def _make_directory(path):
     """Make directory."""
-    real_path = None
     if path is None or not isinstance(path, str) or path.strip() == "":
         raise ValueError(f"For 'context.set_context', the 'save_graphs_path' or the 'print_file_path' is invalid "
                          f"type, it should be Non-empty string, but got '{path}'.")
 
-    # convert the relative paths
     path = os.path.realpath(path)
     logger.debug("The absolute path is %r", path)
 
-    # check whether the path is already existed and has written permissions
-    if os.path.exists(path):
-        real_path = path
-    else:
-        # All exceptions need to be caught because create directory maybe have some limit(permissions)
+    if not os.path.exists(path):
         logger.debug("The directory(%s) doesn't exist, will create it", path)
         try:
             os.makedirs(path)
-            real_path = path
+        except FileExistsError:
+            logger.debug("The directory(%s) already exist.", path)
         except PermissionError as e:
             logger.critical(f"No write permission on the directory '{path}'', error = {e}")
             raise ValueError(e.__str__() + f"\nNo write permission on the directory '{path}'.")
-    return real_path
+    return path
 
 
 def _get_print_file_name(file_name):
