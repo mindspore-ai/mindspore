@@ -44,6 +44,17 @@
 #define MS_MAX512_EPI32 _mm512_max_epi32
 #define MS_MIN512_F32 _mm512_min_ps
 #define MS_MIN512_EPI32 _mm512_min_epi32
+#define MS_SQRT512_F32 _mm512_sqrt_ps
+#define MS_RSQRT512_F32 _mm512_rsqrt14_ps
+#define MS_LOG512_F32 _mm512_log_ps
+#define MS_COS512_F32 _mm512_cos_ps
+#define MS_SIN512_F32 _mm512_sin_ps
+#define MS_ERF512_F32 _mm512_erf_ps
+#define MS_ABS512_F32 _mm512_abs_ps
+#define MS_ROUND512_F32(src) \
+  _mm512_add_round_ps(src, _mm512_set1_ps(0.0f), _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+#define MS_FLOOR512_F32 _mm512_floor_ps
+#define MS_CEIL512_F32 _mm512_ceil_ps
 #define MS_MUL512_F32(src1, src2) _mm512_mul_ps(src1, src2)
 #define MS_MUL512_EPI32(src1, src2) _mm512_mul_epi32(src1, src2)
 #define MS_DIV512_F32(src1, src2) _mm512_div_ps(src1, src2)

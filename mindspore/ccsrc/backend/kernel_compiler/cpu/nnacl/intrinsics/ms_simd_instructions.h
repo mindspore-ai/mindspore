@@ -92,6 +92,36 @@
 #define MS_DIV_N_F32(bit_num, val1, val2) MS_EXPAND(MS_DIV##bit_num##_F32(val1, MS_MOV##bit_num##_F32(val2)))
 #define MS_DIV_N_EPI32(bit_num, val1, val2) MS_EXPAND(MS_DIV##bit_num##_EPI32(val1, MS_MOV##bit_num##_EPI32(val2)))
 
+// sqrt (float) op
+#define MS_SQRT_F32(bit_num, ...) MS_EXPAND(MS_SQRT##bit_num##_F32(__VA_ARGS__))
+
+// rsqrt (float) op
+#define MS_RSQRT_F32(bit_num, ...) MS_EXPAND(MS_RSQRT##bit_num##_F32(__VA_ARGS__))
+
+// log (float) op
+#define MS_LOG_F32(bit_num, ...) MS_EXPAND(MS_LOG##bit_num##_F32(__VA_ARGS__))
+
+// cos (float) op
+#define MS_COS_F32(bit_num, ...) MS_EXPAND(MS_COS##bit_num##_F32(__VA_ARGS__))
+
+// sin (float) op
+#define MS_SIN_F32(bit_num, ...) MS_EXPAND(MS_SIN##bit_num##_F32(__VA_ARGS__))
+
+// erf (float) op
+#define MS_ERF_F32(bit_num, ...) MS_EXPAND(MS_ERF##bit_num##_F32(__VA_ARGS__))
+
+// log (float) op
+#define MS_ABS_F32(bit_num, ...) MS_EXPAND(MS_ABS##bit_num##_F32(__VA_ARGS__))
+
+// round (float) op
+#define MS_ROUND_F32(bit_num, ...) MS_EXPAND(MS_ROUND##bit_num##_F32(__VA_ARGS__))
+
+// ceil (float) op
+#define MS_CEIL_F32(bit_num, ...) MS_EXPAND(MS_CEIL##bit_num##_F32(__VA_ARGS__))
+
+// floor (float) op
+#define MS_FLOOR_F32(bit_num, ...) MS_EXPAND(MS_FLOOR##bit_num##_F32(__VA_ARGS__))
+
 // min (float/int) op
 #define MS_MIN_F32(bit_num, ...) MS_EXPAND(MS_MIN##bit_num##_F32(__VA_ARGS__))
 #define MS_MIN_EPI32(bit_num, ...) MS_EXPAND(MS_MIN##bit_num##_EPI32(__VA_ARGS__))
@@ -147,6 +177,20 @@
 #define MS_SIMD_RUN_AVX(function, ...)
 #endif
 
+// enable sse
+#if defined(ENABLE_SSE)
+#define MS_SIMD_RUN_SSE(function, ...) MS_EXPAND(function(128, 4, __VA_ARGS__))
+#else
+#define MS_SIMD_RUN_SSE(function, ...)
+#endif
+
+// enable neon
+#if defined(ENABLE_NEON)
+#define MS_SIMD_RUN_NEON(function, ...) MS_EXPAND(function(128, 4, __VA_ARGS__))
+#else
+#define MS_SIMD_RUN_NEON(function, ...)
+#endif
+
 // enable neon/sse
 #if defined(ENABLE_NEON) || defined(ENABLE_SSE)
 #define MS_SIMD_RUN_SSEORNEON128(function, ...) MS_EXPAND(function(128, 4, __VA_ARGS__))
@@ -157,15 +201,34 @@
 // scalar (c style data)
 #define MS_SIMD_RUN_SCALAR(function, ...) MS_EXPAND(function(32, 1, __VA_ARGS__))
 
-#define MS_SIMD_RUN(function, ...)                 \
-  MS_SIMD_RUN_AVX512(function, __VA_ARGS__);       \
-  MS_SIMD_RUN_AVX(function, __VA_ARGS__);          \
-  MS_SIMD_RUN_SSEORNEON128(function, __VA_ARGS__); \
-  MS_SIMD_RUN_SCALAR(function, __VA_ARGS__);
+#define MS_SIMD_RUN(function, ...)                   \
+  do {                                               \
+    MS_SIMD_RUN_AVX512(function, __VA_ARGS__);       \
+    MS_SIMD_RUN_AVX(function, __VA_ARGS__);          \
+    MS_SIMD_RUN_SSEORNEON128(function, __VA_ARGS__); \
+    MS_SIMD_RUN_SCALAR(function, __VA_ARGS__);       \
+  } while (0)
 
-#define MS_SIMD_RUN_NO_SCALAR(function, ...) \
-  MS_SIMD_RUN_AVX512(function, __VA_ARGS__); \
-  MS_SIMD_RUN_AVX(function, __VA_ARGS__);    \
-  MS_SIMD_RUN_SSEORNEON128(function, __VA_ARGS__);
+#define MS_SIMD_RUN_NO_SCALAR(function, ...)         \
+  do {                                               \
+    MS_SIMD_RUN_AVX512(function, __VA_ARGS__);       \
+    MS_SIMD_RUN_AVX(function, __VA_ARGS__);          \
+    MS_SIMD_RUN_SSEORNEON128(function, __VA_ARGS__); \
+  } while (0)
+
+#define MS_SIMD_RUN_X86(function, ...)         \
+  do {                                         \
+    MS_SIMD_RUN_AVX512(function, __VA_ARGS__); \
+    MS_SIMD_RUN_AVX(function, __VA_ARGS__);    \
+    MS_SIMD_RUN_SSE(function, __VA_ARGS__);    \
+    MS_SIMD_RUN_SCALAR(function, __VA_ARGS__); \
+  } while (0)
+
+#define MS_SIMD_RUN_X86_NO_SCALAR(function, ...) \
+  do {                                           \
+    MS_SIMD_RUN_AVX512(function, __VA_ARGS__);   \
+    MS_SIMD_RUN_AVX(function, __VA_ARGS__);      \
+    MS_SIMD_RUN_SSE(function, __VA_ARGS__);      \
+  } while (0)
 
 #endif  // MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
