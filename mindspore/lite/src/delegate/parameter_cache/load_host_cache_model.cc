@@ -29,6 +29,13 @@ constexpr size_t kGatherInputsSize = 3;
 }
 namespace mindspore {
 namespace cache {
+HostCacheModel::~HostCacheModel() {
+  if (cache_model_ != nullptr) {
+    delete cache_model_;
+    MS_LOG(ERROR) << "delete cache_model_";
+    cache_model_ = nullptr;
+  }
+}
 MSTensor *SchemaTensorToMSTensor(lite::SchemaTensorWrapper *schema_tensor_wrapper,
                                  mindspore::schema::Tensor *schema_tensor) {
   std::vector<int64_t> shape;
