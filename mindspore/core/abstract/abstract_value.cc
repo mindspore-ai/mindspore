@@ -307,57 +307,54 @@ void CollectSequenceNodes(const AnfNodeWeakPtrList &source_sequence_nodes, AnfNo
 }
 
 void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &sequence_nodes) {
-  // Synchronize the elements use flags for all sequence nodes.
-  auto current_sequence_node = sequence_nodes[0].lock();
-  MS_EXCEPTION_IF_NULL(current_sequence_node);
+  // Choose the candidate sequence node, that we use its flags as unique one.
+  AnfNodePtr candidate_sequence_node = sequence_nodes[0].lock();
+  MS_EXCEPTION_IF_NULL(candidate_sequence_node);
+  auto candidate_flags = GetSequenceNodeElementsUseFlags(candidate_sequence_node);
+  MS_EXCEPTION_IF_NULL(candidate_flags);
   for (size_t i = 1; i < sequence_nodes.size(); ++i) {
-    // Synchronize the 'elements_use_flags' for all sequence node.
-    // We set the same 'elements_use_flags' for them after here.
-    auto latter_sequence_node = sequence_nodes[i].lock();
-    MS_EXCEPTION_IF_NULL(latter_sequence_node);
-    if (current_sequence_node == latter_sequence_node) {
+    auto current_sequence_node = sequence_nodes[i].lock();
+    MS_EXCEPTION_IF_NULL(current_sequence_node);
+    if (candidate_sequence_node == current_sequence_node) {
       continue;
     }
-    // The 'current_sequence_node' is not equal to 'latter_sequence_node'.
+    candidate_flags = GetSequenceNodeElementsUseFlags(candidate_sequence_node);
+    MS_EXCEPTION_IF_NULL(candidate_flags);
     auto current_flags = GetSequenceNodeElementsUseFlags(current_sequence_node);
-    auto latter_flags = GetSequenceNodeElementsUseFlags(latter_sequence_node);
-    if (current_flags == latter_flags) {
+    MS_EXCEPTION_IF_NULL(current_flags);
+    if (candidate_flags == current_flags) {
       continue;
     }
-    // Choose the ptr (use_count > 1) as unique flags.
-    std::shared_ptr<std::vector<bool>> unique_flags = nullptr;
+
+    // Find the sequence node whose flags are most used.
+    auto candidate_count = candidate_flags.use_count();
     auto current_count = current_flags.use_count();
-    auto latter_count = latter_flags.use_count();
-    if (current_count == 1 && latter_count == 1) {
-      unique_flags = current_flags;
-    } else {
-      if (current_count > 1 && latter_count > 1) {
-        MS_LOG(DEBUG) << "Allow only one side has more than one use count. count: " << current_count << ", "
-                      << latter_count;
-      }
-      if (current_count > latter_count) {
-        unique_flags = current_flags;
-      } else {
-        unique_flags = latter_flags;
-      }
+    if (candidate_count < current_count) {
+      candidate_sequence_node = current_sequence_node;
     }
+  }
+
+  // Synchronize the elements use flags for all sequence nodes with candidate sequence node.
+  // We set the same 'elements_use_flags' for them after here.
+  for (size_t i = 0; i < sequence_nodes.size(); ++i) {
+    auto current_sequence_node = sequence_nodes[i].lock();
+    MS_EXCEPTION_IF_NULL(current_sequence_node);
+    if (candidate_sequence_node == current_sequence_node) {
+      continue;
+    }
+    auto current_flags = GetSequenceNodeElementsUseFlags(current_sequence_node);
+    if (candidate_flags == current_flags) {
+      continue;
+    }
+
     // Merge the use flags, set true if either is true.
-    for (size_t j = 0; j < current_flags->size(); ++j) {
-      MS_LOG(DEBUG) << "Check elements_use_flags[" << j << "], this_flag: " << (*current_flags)[j]
-                    << ", other_flag: " << (*latter_flags)[j];
-      if ((*current_flags)[j] != (*latter_flags)[j]) {
-        (*unique_flags)[j] = true;
-      } else {
-        (*unique_flags)[j] = (*current_flags)[j];
-      }
+    for (size_t j = 0; j < candidate_flags->size(); ++j) {
+      MS_LOG(DEBUG) << "Check elements_use_flags[" << j << "], this_flag: " << (*candidate_flags)[j]
+                    << ", other_flag: " << (*current_flags)[j];
+      (*candidate_flags)[j] = ((*candidate_flags)[j] || (*current_flags)[j]);
     }
-    // Use the same flags.
-    if (unique_flags != current_flags) {
-      SetSequenceNodeElementsUseFlags(current_sequence_node, unique_flags);
-    }
-    if (unique_flags != latter_flags) {
-      SetSequenceNodeElementsUseFlags(latter_sequence_node, unique_flags);
-    }
+    // Use the candidate sequence node flags.
+    SetSequenceNodeElementsUseFlags(current_sequence_node, candidate_flags);
   }
 }
 }  // namespace
@@ -400,6 +397,26 @@ void SynchronizeSequenceNodesElementsUseFlags(const AnfNodeWeakPtrList &lhs_sequ
   }
   // Synchronize the elements use flags for all sequence nodes.
   SynchronizeSequenceNodesElementsUseFlagsInner(sequence_nodes);
+}
+
+void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
+                                                    const AbstractSequencePtr &rhs_sequence) {
+  SynchronizeSequenceNodesElementsUseFlags(lhs_sequence->sequence_nodes(), rhs_sequence->sequence_nodes());
+  if (lhs_sequence->elements().size() != rhs_sequence->elements().size()) {
+    MS_LOG(EXCEPTION) << "The elements size should be equal, " << lhs_sequence->ToString() << ", "
+                      << rhs_sequence->ToString();
+  }
+  for (size_t i = 0; i < lhs_sequence->elements().size(); ++i) {
+    auto lhs_inner_sequence = dyn_cast<AbstractSequence>(lhs_sequence->elements()[i]);
+    if (lhs_inner_sequence == nullptr) {
+      continue;
+    }
+    auto rhs_inner_sequence = dyn_cast<AbstractSequence>(rhs_sequence->elements()[i]);
+    if (rhs_inner_sequence == nullptr) {
+      continue;
+    }
+    SynchronizeSequenceElementsUseFlagsRecursively(lhs_inner_sequence, rhs_inner_sequence);
+  }
 }
 
 void AbstractSequence::PurifyElements() {
