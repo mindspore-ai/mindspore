@@ -72,7 +72,7 @@ int PoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   }
   int output_h = 0;
   int output_w = 0;
-  if (param->stride_h_ == 0 || param->stride_w_ == 0) {
+  if ((param->stride_h_ == 0 || param->stride_w_ == 0) && !param->global_) {
     return NNACL_PARAM_INVALID;
   }
   if (param->pad_mode_ == Pad_same) {
