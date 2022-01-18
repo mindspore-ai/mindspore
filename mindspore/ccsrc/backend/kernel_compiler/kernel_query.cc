@@ -67,6 +67,21 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
                  << "input size : [" << input_tensor_num << "] can not match any kernelInfo !";
   }
 }
+
+bool SelectAicpuReshapeInTaskSink(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (AnfAlgo::GetCNodeName(kernel_node) != "Reshape") {
+    return false;
+  }
+  const size_t AicpuReshapeSize = 2;
+  if (kernel_node->size() != AicpuReshapeSize) {
+    return false;
+  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  return is_task_sink;
+}
 }  // namespace
 
 void CheckKernelInfoListEmpty(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list,
@@ -89,6 +104,9 @@ void KernelQueryAll(const CNodePtr &kernel_node,
   if (kernel_info_list->empty()) {
     HcclMetadataInfo(kernel_node, kernel_info_list);
     CheckKernelInfoListEmpty(kernel_info_list, "HCCL_Kernel");
+  }
+  if (SelectAicpuReshapeInTaskSink(kernel_node)) {
+    return;
   }
   if (kernel_info_list->empty()) {
     HostMetadataInfo(kernel_node, kernel_info_list);
