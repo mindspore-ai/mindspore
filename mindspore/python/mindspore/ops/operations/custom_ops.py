@@ -281,7 +281,7 @@ class Custom(ops.PrimitiveWithInfer):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
-        self.supported_func_type = ["akg", "tbe", "aicpu", "aot", "pyfunc"]
+        self.supported_func_type = ["akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]
         self.func = func
         self.func_type = func_type
         self.func_name = ""
@@ -352,7 +352,7 @@ class Custom(ops.PrimitiveWithInfer):
         if self.func_type not in self.supported_func_type:
             raise ValueError("func_type should be one of {}, but got {}"
                              .format(self.supported_func_type, self.func_type))
-        if self.func_type == "aot":
+        if self.func_type == "aot" or self.func_type == "julia":
             if not isinstance(self.func, str):
                 raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
         else:
@@ -523,7 +523,8 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target, "pyfunc": target}
+        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target, "pyfunc": target,
+                                   "julia": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def _save_attr(self, reg_info):
@@ -576,6 +577,27 @@ class Custom(ops.PrimitiveWithInfer):
             raise ValueError("func {}: attr_names {} is different from previous saved one: {}"
                              .format(self.func, attr_names, prev_attr_names))
 
+    def _add_prim_target(self):
+        """Add primitive_target to primitive's attr."""
+        registered_targets = self._get_registered_targets()
+        if self.func_type == "pyfunc":
+            self.add_prim_attr("primitive_target", "CPU")
+            if registered_targets and registered_targets != ["CPU"]:
+                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}."
+                               "We will run CustomPyfunc on CPU".format(registered_targets))
+        elif self.func_type == "aot":
+            if len(registered_targets) != 1:
+                logger.info("Target of CustomAOT will be set according to context.")
+            elif registered_targets == ["GPU"]:
+                self.add_prim_attr("primitive_target", "GPU")
+            elif registered_targets == ["CPU"]:
+                self.add_prim_attr("primitive_target", "CPU")
+        elif self.func_type == "julia":
+            self.add_prim_attr("primitive_target", "CPU")
+            if registered_targets and registered_targets != ["CPU"]:
+                logger.warning("CustomJulia only supports CPU platform, but gets registered target as {}."
+                               "We will run CustomJulia on CPU".format(registered_targets))
+
     def _update_attr(self):
         """Add input_names, attr_names, primitive_target to primitive's attr."""
         # add input_names, attr_names
@@ -591,20 +613,7 @@ class Custom(ops.PrimitiveWithInfer):
                 self.add_prim_attr("input_names", input_names)
             if attr_names:
                 self.add_prim_attr("attr_names", attr_names)
-        # add primitive_target
-        registered_targets = self._get_registered_targets()
-        if self.func_type == "pyfunc":
-            self.add_prim_attr("primitive_target", "CPU")
-            if registered_targets and registered_targets != ["CPU"]:
-                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}."
-                               "We will run CustomPyfunc on CPU".format(registered_targets))
-        elif self.func_type == "aot":
-            if len(registered_targets) != 1:
-                logger.info("Target of CustomAOT will be set according to context.")
-            elif registered_targets == ["GPU"]:
-                self.add_prim_attr("primitive_target", "GPU")
-            elif registered_targets == ["CPU"]:
-                self.add_prim_attr("primitive_target", "CPU")
+        self._add_prim_target()
         if callable(self.func) and callable(self.out_shape):
             if hasattr(self.out_shape, "type") and getattr(self.out_shape, "type") == "autodiff":
                 self.add_prim_attr("autodiff", True)
@@ -623,6 +632,7 @@ class Custom(ops.PrimitiveWithInfer):
 
             def infer_func(*args):
                 return args[:inputs_num]
+
             setattr(infer_func, "type", "autodiff")
             op = Custom(func=self.func, out_shape=infer_func, out_dtype=infer_func,
                         func_type="akg", bprop=True)
