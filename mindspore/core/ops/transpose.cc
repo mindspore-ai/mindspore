@@ -93,17 +93,14 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr size_t input_perm_index = 1;
   (void)CheckAndConvertUtils::CheckInteger("Transpose infer", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                            primitive->name());
   auto type = InferType(primitive, input_args);
   auto shape = InferShape(primitive, input_args);
   auto res = abstract::MakeAbstract(shape, type);
   // Set all used flags of tuple as true.
-  for (size_t i = 0; i < input_args.size(); i++) {
-    if (input_args[i] != nullptr) {
-      SetSequenceElementsUseFlags(input_args[i], true);
-    }
-  }
+  SetSequenceElementsUseFlags(input_args[input_perm_index], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, nullptr, true);
