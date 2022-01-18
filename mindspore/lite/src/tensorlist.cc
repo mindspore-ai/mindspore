@@ -267,6 +267,8 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
   result->shape_ = src.shape_;
   result->category_ = src.category_;
   result->format_ = src.format_;
+  result->tensors_data_type_ = src.tensors_data_type_;
+  result->element_shape_ = src.element_shape_;
   result->set_allocator(allocator);
   result->set_tensor_name(src.tensor_name() + "_duplicate");
   auto src_tensor_dtype = src.tensors_data_type_;

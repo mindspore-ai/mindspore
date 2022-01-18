@@ -85,7 +85,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual void InitInputData();
   void SetOutputData(OpContext<Tensor> *context);
   virtual void AsyncOutput(OpContext<Tensor> *context);
-  void SetTensorShape(Tensor *dst, Tensor *src);
 
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
@@ -95,13 +94,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int PrepareOutputData();
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
-  void SetTensorListShape(Tensor *dst, Tensor *src);
-#endif
-  int CastTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-  bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
-  int CastCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  int CastTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
 #endif
 
   kernel::LiteKernel *kernel_;
@@ -124,9 +116,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  private:
   kernel::LiteKernel *partial_node_ = nullptr;
   kernel::LiteKernel *call_node_ = nullptr;
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
   bool support_fp16_ = false;
-#endif
 };
 
 int MindrtInit();

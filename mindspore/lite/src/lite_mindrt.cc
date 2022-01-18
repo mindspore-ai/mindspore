@@ -22,9 +22,6 @@
 #include "src/common/tensor_util.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel/arm/base/partial_fusion.h"
-#ifdef ENABLE_FP16
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
-#endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/actor/switch_actor.h"
 #include "src/control_flow/actor/entrance_actor.h"
@@ -264,10 +261,6 @@ int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std
       MS_LOG(DEBUG) << "not a useful receiver.";
       continue;
     }
-    if (partial_node_ != nullptr && subgraph_inputs_set.find(receiver_tensor) == subgraph_inputs_set.end()) {
-      MS_LOG(DEBUG) << "not a need arrow for this actor.";
-      continue;
-    }
     auto receiver_set = receivers_map.at(receiver_tensor);
     for (auto item : receiver_set) {
       if (ArrowHasCompiled(item.first, item.second, *receiver_index_set)) {
@@ -317,91 +310,6 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   return RET_OK;
 }
 
-int LiteOpActor::CastTensorData(Tensor *dst, Tensor *src) {
-  int ret = RET_OK;
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  if (src->data_type() != kObjectTypeTensorType) {
-    ret = CastCommonTensorData(dst, src);
-  } else {
-    ret = CastTensorListTensorData(reinterpret_cast<TensorList *>(dst), reinterpret_cast<TensorList *>(src));
-  }
-#else
-  ret = CastCommonTensorData(dst, src);
-#endif
-  src->DecRefCount();
-  return ret;
-}
-
-bool LiteOpActor::NeedCastData(Tensor *dst_tensor, Tensor *src_tensor) {
-  if (dst_tensor->data_type() != kObjectTypeTensorType && src_tensor->data_type() != kObjectTypeTensorType &&
-      dst_tensor->data_type() != src_tensor->data_type()) {
-    return true;
-  }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  if (dst_tensor->data_type() == kObjectTypeTensorType && src_tensor->data_type() == kObjectTypeTensorType &&
-      reinterpret_cast<TensorList *>(dst_tensor)->tensors_data_type() !=
-        reinterpret_cast<TensorList *>(src_tensor)->tensors_data_type()) {
-    return true;
-  }
-#endif
-  return false;
-}
-
-int LiteOpActor::CastCommonTensorData(Tensor *dst, Tensor *src) {
-  dst->MallocData();
-  dst->ResetRefCount();
-#if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-  if (dst->shape() != src->shape()) {
-    MS_LOG(ERROR) << "dst tensor: " << dst->tensor_name() << " shape: " << dst->shape() << " vs "
-                  << "src tensor: " << src->tensor_name() << " shape: " << src->shape();
-    return RET_PARAM_INVALID;
-  }
-  auto dst_data = dst->MutableData(); /* using MutableData to sync GPU data */
-  auto src_data = src->MutableData();
-  auto src_nums_size = src->ElementsNum();
-  auto dst_data_type = static_cast<int>(dst->data_type());
-  auto src_data_type = static_cast<int>(src->data_type());
-  if (dst_data_type == kNumberTypeFloat32 && src_data_type == kNumberTypeFloat16) {
-    Float16ToFloat32_fp16_handler(src_data, dst_data, src_nums_size, support_fp16_);
-  } else if (dst_data_type == kNumberTypeFloat16 && src_data_type == kNumberTypeFloat32) {
-    Float32ToFloat16_fp16_handler(src_data, dst_data, src_nums_size, support_fp16_);
-  } else {
-    MS_LOG(ERROR) << "not support dst_data_type: " << dst_data_type << " src_data_type: " << src_data_type;
-    return RET_NOT_SUPPORT;
-  }
-  return RET_OK;
-#endif
-  return RET_ERROR;
-}
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-int LiteOpActor::CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist) {
-  MS_ASSERT(src_tensorlist != nullptr);
-  MS_ASSERT(dst_tensorlist != nullptr);
-  dst_tensorlist->set_shape(src_tensorlist->shape());
-  std::vector<std::vector<int>> tensors_shapes{};
-  tensors_shapes.resize(src_tensorlist->tensors().size());
-  for (size_t i = 0; i < tensors_shapes.size(); ++i) {
-    tensors_shapes[i] = src_tensorlist->tensors()[i]->shape();
-  }
-  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat16) {
-    dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
-  }
-  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
-    dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
-  }
-  dst_tensorlist->set_allocator(src_tensorlist->allocator());
-  dst_tensorlist->ResetRefCount();
-
-  for (size_t i = 0; i < src_tensorlist->tensors().size(); ++i) {
-    auto &src_tensor = src_tensorlist->tensors()[i];
-    auto &dst_tensor = dst_tensorlist->tensors()[i];
-    CastCommonTensorData(dst_tensor, src_tensor);
-  }
-  return RET_OK;
-}
-#endif
-
 std::set<void *> LiteOpActor::PartialSubgraphInputTensors(kernel::LiteKernel *partial_node) {
   if (partial_node == nullptr) {
     return {};
@@ -443,25 +351,6 @@ void LiteOpActor::SetInputShape() {
   }
 }
 
-void LiteOpActor::SetTensorShape(Tensor *dst, Tensor *src) {
-  dst->set_shape(src->shape());
-  dst->set_format(src->format());
-}
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-void LiteOpActor::SetTensorListShape(Tensor *dst, Tensor *src) {
-  auto input_tensorlist = reinterpret_cast<TensorList *>(dst);
-  auto input_data_tensorlist = reinterpret_cast<TensorList *>(src);
-  input_tensorlist->FreeTensorListData();
-  input_tensorlist->set_element_shape(input_data_tensorlist->element_shape());
-  input_tensorlist->set_shape(input_data_tensorlist->shape());
-  std::vector<std::vector<int>> tensor_shape{};
-  std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
-                 std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
-  input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
-}
-#endif
-
 void LiteOpActor::InitInputData() {
   SetInputShape();
 
@@ -472,12 +361,10 @@ void LiteOpActor::InitInputData() {
       src_tensor->DecRefCount();
       continue;
     }
-
     if (NeedCastData(dst_tensor, src_tensor)) {
-      CastTensorData(dst_tensor, src_tensor);
+      CastTensorData(dst_tensor, src_tensor, support_fp16_);
       continue;
     }
-
     /* same data-type  */
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       // delegate graph kernel output tensor

@@ -107,6 +107,15 @@ class TensorList : public Tensor {
 
   bool IsConst() const override;
 
+  void set_init_ref_count(int ref_count) override {
+    this->init_ref_count_ = ref_count;
+    for (auto tensor : tensors_) {
+      if (tensor != nullptr) {
+        tensor->set_init_ref_count(ref_count);
+      }
+    }
+  }
+
   void set_ref_count(int ref_count) override {
     ref_count_ = ref_count;
     for (auto tensor : tensors_) {

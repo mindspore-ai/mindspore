@@ -23,10 +23,13 @@
 #include "src/control_flow/exit_subgraph_kernel.h"
 #include "src/control_flow/identity_kernel.h"
 #include "src/tensorlist.h"
+#include "src/common/prim_inner.h"
 
 namespace mindspore::lite {
 int ControlFlowScheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  auto ret = this->BuildBoundaryForMultipleCalledGraph(dst_kernels);
+  auto ret = this->IsolateSameInputPartials(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateSameInputPartials failed.");
+  ret = this->BuildBoundaryForMultipleCalledGraph(dst_kernels);
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "BuildBoundaryForMultipleCalledGraph failed.");
   ret = this->RecordControlFlowLinkInfo();
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordControlFlowLinkInfo failed.");
@@ -284,6 +287,9 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
   }
   auto output_node = kernel::IdentityKernel::Create(new_output_tensors, old_output_tensors, this->context_);
   output_node->set_name(call_node->name() + "_output");
+  kernel::KernelKey output_desc = call_node->desc();
+  output_desc.type = PRIM_IDENTITY;
+  output_node->set_desc(output_desc);
   output_node->AddInKernel(call_node);
   call_node->AddOutKernel(output_node);
   nodes.push_back(output_node);
@@ -294,8 +300,6 @@ kernel::SubGraphKernel *ControlFlowScheduler::AddOutputKernel(kernel::SubGraphKe
 }
 
 int ControlFlowScheduler::BuildBoundaryForMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels) {
-  kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
-
   for (auto item : more_than_once_called_partial_nodes_) {
     if (item.second.size() == 1) {
       MS_LOG(DEBUG) << "subgraph call only once.";
@@ -383,10 +387,10 @@ int ControlFlowScheduler::IsolateOutputForCallOutputGraph(std::vector<kernel::Li
   auto new_subgraph = AddOutputKernel(subgraph);
   MS_CHECK_TRUE_MSG(new_subgraph != nullptr, RET_ERROR, "create output subgraph failed.");
   new_subgraph->set_name(subgraph->name());
-  dst_kernels->emplace_back(new_subgraph);
+  std::replace(dst_kernels->begin(), dst_kernels->end(), subgraph, new_subgraph);
 
-  std::set<kernel::LiteKernel *> useless_kernels{subgraph};
-  RemoveUselessKernels(dst_kernels, &useless_kernels);
+  subgraph->set_nodes({});
+  delete subgraph;
   return RET_OK;
 }
 
@@ -476,30 +480,35 @@ kernel::SubGraphKernel *ControlFlowScheduler::IsolatePartialInputs(kernel::SubGr
   for (size_t i = 0; i < old_partial_inputs.size(); i++) {
     Tensor *old_tensor = old_partial_inputs[i];
     auto allocator = old_tensor->allocator();
-    bool copy_data = false;
-    if (old_tensor->IsConst()) {
-      copy_data = true;
-    }
     Tensor *new_tensor = nullptr;
     if (old_tensor->data_type() == kObjectTypeTensorType) {
       auto old_tensor_list = reinterpret_cast<TensorList *>(old_tensor);
-      new_tensor = TensorList::CopyTensorList(*old_tensor_list, copy_data, allocator);
+      new_tensor = TensorList::CopyTensorList(*old_tensor_list, false, allocator);
     } else {
-      new_tensor = Tensor::CopyTensor(*old_tensor, copy_data, allocator);
+      new_tensor = Tensor::CopyTensor(*old_tensor, false, allocator);
     }
-    if (new_tensor == nullptr) {
-      MS_LOG(ERROR) << "new Tensor failed.";
-      return nullptr;
-    }
+    MS_CHECK_TRUE_MSG(new_tensor != nullptr, nullptr, "new tensor failed.");
+    new_tensor->set_category(VAR);
     partial->set_in_tensor(new_tensor, i);
     src_tensors_->push_back(new_tensor);
     new_partial_inputs.push_back(new_tensor);
   }
   auto identity_node = kernel::IdentityKernel::Create(old_partial_inputs, new_partial_inputs, this->context_);
   identity_node->set_name(partial->name() + "_input_identity");
+  kernel::KernelKey identity_desc = partial->desc();
+  identity_desc.type = PRIM_IDENTITY;
+  identity_node->set_desc(identity_desc);
+  // update identity and partial in kernels and out kernels
+  for (auto partial_in_kernel : partial->in_kernels()) {
+    auto output_kernels = partial_in_kernel->out_kernels();
+    std::replace(output_kernels.begin(), output_kernels.end(), partial, identity_node);
+    partial_in_kernel->set_out_kernels(output_kernels);
+    identity_node->AddInKernel(partial_in_kernel);
+  }
   identity_node->AddOutKernel(partial);
-  partial->AddInKernel(identity_node);
-  nodes.push_back(identity_node);
+  partial->set_in_kernels({identity_node});
+  auto partial_iter = std::find(nodes.begin(), nodes.end(), partial);
+  nodes.insert(partial_iter, identity_node);
   auto subgraph_type = subgraph->subgraph_type();
   auto new_subgraph =
     kernel::LiteKernelUtil::CreateSubGraphKernel(nodes, &inputs, &outputs, subgraph_type, *context_, schema_version_);
@@ -529,6 +538,27 @@ std::set<kernel::LiteKernel *> ControlFlowScheduler::GetSameInputPartials() {
     }
   }
   return same_input_partials;
+}
+
+int ControlFlowScheduler::IsolateSameInputPartials(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  auto same_input_partials = GetSameInputPartials();
+
+  for (auto partial : same_input_partials) {
+    auto subgraph = kernel::LiteKernelUtil::BelongToWhichSubGraph(*dst_kernels, partial);
+    MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "can not find belong graph.");
+    kernel::SubGraphKernel *new_subgraph = IsolatePartialInputs(subgraph, partial);
+    MS_CHECK_TRUE_MSG(new_subgraph != nullptr, RET_ERROR, "create new subgraph failed.");
+    new_subgraph->set_name(subgraph->name());
+
+    std::replace(dst_kernels->begin(), dst_kernels->end(), subgraph, new_subgraph);
+    UpdateSubGraphMap(new_subgraph, subgraph);
+
+    subgraph->set_nodes({});
+    delete subgraph;
+  }
+
+  SetSubgraphForPartialNode(partial_kernel_subgraph_index_map_, subgraph_index_subgraph_kernel_map_);
+  return RET_OK;
 }
 
 void ControlFlowScheduler::SetSubgraphForPartialNode(
