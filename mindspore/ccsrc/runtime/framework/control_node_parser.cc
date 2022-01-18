@@ -512,21 +512,18 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
   }
 
   size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
-  if (!abstract->isa<abstract::AbstractTuple>()) {
-    for (size_t i = 0; i < output_num; ++i) {
-      (void)results.emplace_back(real_node, i);
-    }
-    return results;
+  for (size_t i = 0; i < output_num; ++i) {
+    (void)results.emplace_back(real_node, i);
   }
-
-  auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_abstract);
-  const auto &sub_abstracts = tuple_abstract->elements();
-  size_t index = 0;
-  for (const auto &sub_abstract : sub_abstracts) {
-    MS_EXCEPTION_IF_NULL(sub_abstract);
-    if (!sub_abstract->isa<abstract::AbstractMonad>()) {
-      (void)results.emplace_back(real_node, index++);
+  if (abstract->isa<abstract::AbstractTuple>()) {
+    auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_abstract);
+    const auto &sub_abstracts = tuple_abstract->elements();
+    for (const auto &sub_abstract : sub_abstracts) {
+      MS_EXCEPTION_IF_NULL(sub_abstract);
+      if (sub_abstract->isa<abstract::AbstractMonad>()) {
+        (void)results.pop_back();
+      }
     }
   }
   return results;
