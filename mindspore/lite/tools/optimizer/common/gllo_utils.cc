@@ -1126,5 +1126,24 @@ int DetermineCertainVarInputHasInferred(const CNodePtr &cnode, size_t index, boo
   *infer_succ = infer_infos[item_index];
   return RET_OK;
 }
+bool CheckAndGetCnodeIndex(const CNodePtr &cnode, size_t *index, const PrimitivePtr &primitive_type) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
+  MS_CHECK_TRUE_RET(index != nullptr, false);
+  if (cnode->size() != kInputSizeThree) {
+    return false;
+  }
+  size_t dst_index = 0;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    if (CheckPrimitiveType(cnode->input(i), primitive_type)) {
+      dst_index = i;
+      break;
+    }
+  }
+  if (dst_index == 0) {
+    return false;
+  }
+  *index = dst_index;
+  return true;
+}
 }  // namespace opt
 }  // namespace mindspore
