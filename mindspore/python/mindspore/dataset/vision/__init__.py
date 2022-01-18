@@ -27,4 +27,4 @@ Common imported modules in corresponding API examples are as follows:
 """
 from . import c_transforms
 from . import py_transforms
-from .utils import Inter, Border, ImageBatchFormat, SliceMode, AutoAugmentPolicy
+from .utils import Inter, Border, ConvertMode, ImageBatchFormat, SliceMode, AutoAugmentPolicy
