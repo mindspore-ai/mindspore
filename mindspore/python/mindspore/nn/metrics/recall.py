@@ -27,6 +27,7 @@ class Recall(EvaluationBase):
 
     The recall class creates two local variables, :math:`\text{true_positive}` and :math:`\text{false_negative}`,
     that are used to compute the recall. The calculation formula is:
+
     .. math::
         \text{recall} = \frac{\text{true_positive}}{\text{true_positive} + \text{false_negative}}
 

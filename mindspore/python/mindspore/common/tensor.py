@@ -1492,6 +1492,7 @@ class Tensor(Tensor_):
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
         """
         Get the tensor format data of this Tensor.
+
         Note:
             The init_data function can be called once for the same tensor.
 
