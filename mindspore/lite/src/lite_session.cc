@@ -16,6 +16,9 @@
 
 #include "src/lite_session.h"
 #include <vector>
+#ifdef ENABLE_V0
+#include <set>
+#endif
 #include <utility>
 #ifndef _WIN32
 #include <malloc.h>
@@ -218,6 +221,43 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   return dst_tensor;
 }
 
+#ifdef ENABLE_V0
+void LiteSession::TensorNameCompatibleWithV0(const lite::Model *model) {
+  if (reinterpret_cast<const LiteModel *>(model)->GetSchemaVersion() != SCHEMA_VERSION::SCHEMA_V0) {
+    return;
+  }
+  auto model_output_indices = model->output_indices_;
+  std::set<uint32_t> to_name_tensor_indices;
+  for (uint32_t &model_output_index : model_output_indices) {
+    auto *dst_tensor = this->tensors_[model_output_index];
+    MS_ASSERT(dst_tensor != nullptr);
+    if (!dst_tensor->tensor_name().empty()) {
+      continue;
+    }
+    to_name_tensor_indices.insert(model_output_index);
+  }
+  if (model_output_indices.empty()) {
+    return;
+  }
+  for (int i = static_cast<int>(model->all_nodes_.size()) - 1; i >= 0; i--) {
+    const auto &node = model->all_nodes_.at(i);
+    MS_ASSERT(node != nullptr);
+    for (size_t j = 0; j < node->output_indices_.size(); j++) {
+      const auto &output_index = node->output_indices_.at(j);
+      if (to_name_tensor_indices.count(output_index) > 0) {
+        auto *dst_tensor = this->tensors_[output_index];
+        MS_ASSERT(dst_tensor != nullptr);
+        dst_tensor->set_tensor_name(node->name_ + "_o:" + std::to_string(j));
+        to_name_tensor_indices.erase(output_index);
+      }
+    }
+    if (to_name_tensor_indices.empty()) {
+      break;
+    }
+  }
+}
+#endif
+
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   uint32_t tensor_count = model->all_tensors_.size();
@@ -265,6 +305,9 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     }
     this->tensors_.emplace_back(dst_tensor);
   }
+#ifdef ENABLE_V0
+  TensorNameCompatibleWithV0(model);
+#endif
   return RET_OK;
 }
 
