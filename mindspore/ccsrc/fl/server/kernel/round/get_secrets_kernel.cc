@@ -91,31 +91,23 @@ sigVerifyResult GetSecretsKernel::VerifySignature(const schema::GetShareSecrets 
   return sigVerifyResult::PASSED;
 }
 
-bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool GetSecretsKernel::Launch(const uint8_t *req_data, size_t len,
+                              const std::shared_ptr<ps::core::MessageHandler> &message) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   std::string next_timestamp = std::to_string(CURRENT_TIME_MILLI.count());
   MS_LOG(INFO) << "Launching get secrets kernel, ITERATION NUMBER IS : " << iter_num;
-
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    return false;
-  }
-
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  void *req_data = inputs[0]->addr;
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
     return false;
   }
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::GetShareSecrets>()) {
     std::string reason = "The schema of GetShareSecrets is invalid.";
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::GetShareSecrets *get_secrets_req = flatbuffers::GetRoot<schema::GetShareSecrets>(req_data);
@@ -123,7 +115,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     std::string reason = "Building flatbuffers schema failed for GetExchangeKeys.";
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -134,7 +126,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       std::string reason = "verify signature failed.";
       cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iter_num, next_timestamp, nullptr);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -142,7 +134,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       std::string reason = "verify signature timestamp failed.";
       cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num, next_timestamp, nullptr);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -155,7 +147,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(ERROR) << "GetSecretsKernel iteration invalid. server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num, next_timestamp, nullptr);
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -166,14 +158,14 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   bool response = cipher_share_->GetSecrets(get_secrets_req, fbb, next_timestamp);
   if (!response) {
     MS_LOG(WARNING) << "get secret shares not ready.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForGetSecrets(fbb, get_secrets_req, iter_num)) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

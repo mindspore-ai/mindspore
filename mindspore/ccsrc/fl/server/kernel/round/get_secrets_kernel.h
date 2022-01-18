@@ -37,8 +37,7 @@ class GetSecretsKernel : public RoundKernel {
   GetSecretsKernel() = default;
   ~GetSecretsKernel() override = default;
   void InitKernel(size_t required_cnt) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
   bool Reset() override;
 
  private:

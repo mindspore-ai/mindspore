@@ -45,22 +45,18 @@ constexpr uint64_t kReleaseDuration = 100;
 
 // For example, the main process of federated learning is:
 // startFLJob round->updateModel round->getModel round.
-class RoundKernel : virtual public CPUKernel {
+class RoundKernel {
  public:
   RoundKernel();
   virtual ~RoundKernel();
-
-  // RoundKernel doesn't use InitKernel method of base class CPUKernel to initialize. So implementation of this
-  // inherited method is empty.
-  void InitKernel(const CNodePtr &kernel_node) override {}
 
   // Initialize RoundKernel with threshold_count which means that for every iteration, this round needs threshold_count
   // messages.
   virtual void InitKernel(size_t threshold_count) = 0;
 
   // Launch the round kernel logic to handle the message passed by the communication module.
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs) = 0;
+  virtual bool Launch(const uint8_t *req_data, size_t len,
+                      const std::shared_ptr<ps::core::MessageHandler> &message) = 0;
 
   // Some rounds could be stateful in a iteration. Reset method resets the status of this round.
   virtual bool Reset() = 0;
@@ -77,10 +73,6 @@ class RoundKernel : virtual public CPUKernel {
   // Called after this iteration(including all rounds) is finished. All rounds' Reset method will
   // be called.
   void FinishIteration() const;
-
-  // Release the response data allocated inside the round kernel.
-  // Server framework must call this after the response data is sent back.
-  void Release(const AddressPtr &addr_ptr);
 
   // Set round kernel name, which could be used in round kernel's methods.
   void set_name(const std::string &name);
@@ -106,19 +98,12 @@ class RoundKernel : virtual public CPUKernel {
  protected:
   // Generating response data of this round. The data is allocated on the heap to ensure it's not released before sent
   // back to worker.
-  void GenerateOutput(const std::vector<AddressPtr> &outputs, const void *data, size_t len);
-
+  void GenerateOutput(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
   // Round kernel's name.
   std::string name_;
 
   // The current received message count for this round in this iteration.
   size_t current_count_;
-
-  // The required received message count for this round in one iteration.
-  size_t required_count_;
-
-  // The reason causes the error in this round kernel.
-  std::string error_reason_;
 
   StopTimerCb stop_timer_cb_;
   FinishIterCb finish_iteration_cb_;
@@ -128,13 +113,6 @@ class RoundKernel : virtual public CPUKernel {
   // To ensure the performance, we use another thread to release data on the heap. So the operation on the data should
   // be threadsafe.
   std::atomic_bool running_;
-  std::thread release_thread_;
-
-  // Data needs to be released and its mutex;
-  std::mutex release_mtx_;
-  std::queue<AddressPtr> heap_data_to_release_;
-  std::mutex heap_data_mtx_;
-  std::unordered_map<AddressPtr, std::unique_ptr<unsigned char[]>> heap_data_;
 
   std::atomic<size_t> total_client_num_;
   std::atomic<size_t> accept_client_num_;

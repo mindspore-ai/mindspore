@@ -38,10 +38,10 @@ class PushListSignKernel : public RoundKernel {
   PushListSignKernel() = default;
   ~PushListSignKernel() override = default;
   void InitKernel(size_t required_cnt) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
   bool LaunchForPushListSign(const schema::SendClientListSign *client_list_sign_req, const size_t &iter_num,
-                             const std::shared_ptr<server::FBBuilder> &fbb, const std::vector<AddressPtr> &outputs);
+                             const std::shared_ptr<server::FBBuilder> &fbb,
+                             const std::shared_ptr<ps::core::MessageHandler> &message);
   bool Reset() override;
   void BuildPushListSignKernelRsp(const std::shared_ptr<server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                                   const string &reason, const string &next_req_time, const size_t iteration);

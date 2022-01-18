@@ -123,18 +123,12 @@ sigVerifyResult ExchangeKeysKernel::VerifySignature(const schema::RequestExchang
   return sigVerifyResult::PASSED;
 }
 
-bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool ExchangeKeysKernel::Launch(const uint8_t *req_data, size_t len,
+                                const std::shared_ptr<ps::core::MessageHandler> &message) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Launching ExchangeKey kernel, ITERATION NUMBER IS : " << iter_num;
   bool response = false;
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    return false;
-  }
 
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
@@ -143,17 +137,17 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   }
 
   if (ReachThresholdForExchangeKeys(fbb, iter_num)) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestExchangeKeys>()) {
     std::string reason = "The schema of RequestExchangeKeys is invalid.";
     cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_RequestError, reason,
                                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::RequestExchangeKeys *exchange_keys_req = flatbuffers::GetRoot<schema::RequestExchangeKeys>(req_data);
@@ -162,7 +156,7 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_RequestError, reason,
                                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -174,7 +168,7 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
       cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_RequestError, reason,
                                         std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -183,7 +177,7 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
       cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_OutOfTime, reason,
                                         std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -198,21 +192,21 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
                   << ". client request iteration is " << iter_client;
     cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.",
                                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   response = cipher_key_->ExchangeKeys(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), exchange_keys_req, fbb);
   if (!response) {
     MS_LOG(ERROR) << "update exchange keys is failed.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForExchangeKeys(fbb, exchange_keys_req, iter_num)) {
     MS_LOG(ERROR) << "count for exchange keys failed.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

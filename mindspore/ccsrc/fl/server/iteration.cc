@@ -72,21 +72,18 @@ void Iteration::InitRounds(const std::vector<std::shared_ptr<ps::core::Communica
     MS_LOG(EXCEPTION) << "Communicators for rounds is empty.";
     return;
   }
-
-  (void)std::for_each(communicators.begin(), communicators.end(),
-                      [&](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                        for (auto &round : rounds_) {
-                          MS_EXCEPTION_IF_NULL(round);
-                          round->Initialize(communicator, timeout_cb, finish_iteration_cb);
-                        }
-                      });
-
   // The time window for one iteration, which will be used in some round kernels.
-  size_t iteration_time_window = std::accumulate(rounds_.begin(), rounds_.end(), IntToSize(0),
-                                                 [](size_t total, const std::shared_ptr<Round> &round) {
-                                                   MS_EXCEPTION_IF_NULL(round);
-                                                   return round->check_timeout() ? total + round->time_window() : total;
-                                                 });
+  size_t iteration_time_window = 0;
+  for (auto &round : rounds_) {
+    MS_EXCEPTION_IF_NULL(round);
+    round->Initialize(timeout_cb, finish_iteration_cb);
+    for (auto &communicator : communicators) {
+      round->RegisterMsgCallBack(communicator);
+    }
+    if (round->check_timeout()) {
+      iteration_time_window += round->time_window();
+    }
+  }
   LocalMetaStore::GetInstance().put_value(kCtxTotalTimeoutDuration, iteration_time_window);
   MS_LOG(INFO) << "Time window for one iteration is " << iteration_time_window;
 

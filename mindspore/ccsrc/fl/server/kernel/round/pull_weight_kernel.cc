@@ -34,17 +34,9 @@ void PullWeightKernel::InitKernel(size_t) {
   }
 }
 
-bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool PullWeightKernel::Launch(const uint8_t *req_data, size_t len,
+                              const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(DEBUG) << "Launching PullWeightKernel kernel.";
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
-    return true;
-  }
-
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
@@ -56,12 +48,12 @@ bool PullWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     std::string reason = "Building flatbuffers schema failed for RequestPullWeight";
     BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(),
                        {});
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
   PullWeight(fbb, pull_weight_req);
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 
