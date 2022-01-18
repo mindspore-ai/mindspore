@@ -737,14 +737,13 @@ void DataPrepareActor::PrepareDataForControlNode(const ControlNodeParserPtr &con
       continue;
     }
 
-    const auto &front_to_backend_parameters = control_node_parser->front_to_backend_parameters();
-    const auto &iter = front_to_backend_parameters.find({front_node, 0});
-    if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
+    const auto &backend_parameter_with_context =
+      control_node_parser->FetchBackendParameterWithContextByFrontParameter({front_node, 0});
+    if (backend_parameter_with_context.first == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << AnfAlgo::GetNodeDebugString(front_node);
     }
-    const auto &node_with_context = iter->second.begin();
-    const auto &backend_node = node_with_context->first;
-    const auto &device_context = node_with_context->second;
+    const auto &backend_node = backend_parameter_with_context.first;
+    const auto &device_context = backend_parameter_with_context.second;
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
 

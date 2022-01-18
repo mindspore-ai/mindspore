@@ -1418,6 +1418,10 @@ void ControlNodeScheduler::LinkBranchIDArrow(ControlActor *const from_actor, Con
 
 bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
+  if (actor_set->control_actors_ == nullptr) {
+    return true;
+  }
+
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     std::string exit_actor_name = "";
     for (const auto arrow : kernel_actor->output_data_arrows_) {

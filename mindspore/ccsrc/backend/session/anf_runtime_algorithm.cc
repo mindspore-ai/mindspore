@@ -307,7 +307,8 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
 
 KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index,
                                                                bool skip_nop_node,
-                                                               const std::vector<PrimitivePtr> &return_types) {
+                                                               const std::vector<PrimitivePtr> &return_types,
+                                                               abstract::AbstractBasePtr *abstract) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (std::any_of(return_types.begin(), return_types.end(), [&anf_node](const PrimitivePtr &prim_type) -> bool {
         return CheckPrimitiveType(anf_node, prim_type);
@@ -320,8 +321,9 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
-    auto item_with_index_tmp = VisitKernelWithReturnType(GetTupleGetItemRealInput(cnode),
-                                                         GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types);
+    abstract::AbstractBasePtr abs = nullptr;
+    auto item_with_index_tmp = VisitKernelWithReturnType(
+      GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
     if (CheckPrimitiveType(item_with_index_tmp.first, prim::kPrimMakeTuple)) {
       MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
       auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
@@ -333,6 +335,32 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
                           << "].";
       }
       return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], 0, skip_nop_node, return_types);
+    }
+    if (IsCallNode(item_with_index_tmp.first)) {
+      size_t real_index = item_with_index_tmp.second;
+      if (abs == nullptr) {
+        abs = item_with_index_tmp.first->abstract();
+        real_index = 0;
+      }
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractTuple>()) {
+        auto tuple_abstract = abs->cast<abstract::AbstractTuplePtr>();
+        MS_EXCEPTION_IF_NULL(tuple_abstract);
+        auto sub_abstracts = tuple_abstract->elements();
+        if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
+          MS_LOG(EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
+                            << " for abstract:" << abs->ToString();
+        }
+        for (size_t i = 0; i < GetTupleGetItemOutIndex(cnode); ++i) {
+          MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
+          real_index += AnfAlgo::GetOutputNumByAbstract(sub_abstracts[i]);
+        }
+        if (abstract != nullptr) {
+          (*abstract) = sub_abstracts[GetTupleGetItemOutIndex(cnode)];
+          MS_EXCEPTION_IF_NULL((*abstract));
+        }
+        return {item_with_index_tmp.first, real_index};
+      }
     }
     return item_with_index_tmp;
   }
