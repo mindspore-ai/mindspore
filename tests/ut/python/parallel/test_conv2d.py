@@ -143,7 +143,7 @@ def test_conv2d_model_parallel_dilation():
 def test_conv2d_model_parallel_group():
     """
     Feature: test conv2d model parallel and group is not 1
-    Description: model parallel and group is not 1
+    Description: split cin and cout, and group is not 1
     Expectation: compile failed
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
@@ -153,6 +153,20 @@ def test_conv2d_model_parallel_group():
               strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_conv2d_model_parallel_group2():
+    """
+    Feature: test conv2d model parallel and group is not 1
+    Description: has not to split cin and cout, and group is not 1
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 2, 2), (1, 1, 1, 1))
+    strategy2 = ((8, 1, 1, 1),)
+    net = Net(_w4, out_channel=8, kernel_size=2, pad_mode="same", stride=1, group=2,
+              strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)
 
 
 def test_conv2d_model_parallel2():

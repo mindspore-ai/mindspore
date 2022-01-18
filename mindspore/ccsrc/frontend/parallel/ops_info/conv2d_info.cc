@@ -273,19 +273,21 @@ Status Conv2DInfo::CheckStrategyBase(const StrategyPtr &strategy) {
   int64_t input_except_n_shards =
     std::accumulate(input_strategy.begin() + 1, input_strategy.end(), 1, std::multiplies<int64_t>());
   int64_t weight_shards =
-    std::accumulate(weight_strategy.begin() + 1, weight_strategy.end(), 1, std::multiplies<int64_t>());
+    std::accumulate(weight_strategy.begin(), weight_strategy.end(), 1, std::multiplies<int64_t>());
 
   bool is_data_parallel = (input_except_n_shards * weight_shards == 1);
   if (!is_data_parallel) {
     if (std::any_of(dilation_.begin(), dilation_.end(), [](int64_t value) { return value != 1; })) {
-      MS_LOG(ERROR) << name_ << ": If it is not data parallel, the value of dilation must be 1, but got " << dilation_;
+      MS_LOG(ERROR) << name_ << ": It is not data parallel, the value of dilation must be 1, but got " << dilation_;
       return FAILED;
     }
+  }
 
-    if (group_ != 1) {
-      MS_LOG(ERROR) << name_ << ": If it is not data parallel, the group must be 1, but got " << group_;
-      return FAILED;
-    }
+  if (group_ != 1 && (weight_strategy[0] != 1 || weight_strategy[1] != 1)) {
+    MS_LOG(ERROR) << name_ << ": The group is " << group_
+                  << ", the cout and cin can not be split, but the shard num of cout is " << weight_strategy[0]
+                  << ", the shard num of cin is " << weight_strategy[1];
+    return FAILED;
   }
   return SUCCESS;
 }
