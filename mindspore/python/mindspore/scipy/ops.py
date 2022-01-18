@@ -97,10 +97,10 @@ class SolveTriangular(PrimitiveWithInfer):
             'value': None
         }
 
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid(x_dtype, [mstype.float32, mstype.float64],
-                                           self.name, True)
-        return x_dtype
+    def infer_dtype(self, A_dtype, b_dtype):
+        validator.check_scalar_or_tensor_types_same({"A_dtype": A_dtype, "b_dtype": b_dtype},
+                                                    [mstype.float32, mstype.float64], self.name, True)
+        return A_dtype
 
 
 class Cholesky(PrimitiveWithInfer):
