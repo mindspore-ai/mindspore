@@ -15,49 +15,41 @@
  */
 
 #include "ops/grad/acosh_grad.h"
-#include <algorithm>
-#include <set>
-#include "abstract/param_validator.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+const size_t input_num = 2;
+
 abstract::ShapePtr AcoshGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto x = input_args[0]->BuildShape();
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
 
-TypePtr AcoshGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(x_type);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
-  return x_type;
+TypePtr AcoshGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("y", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 AbstractBasePtr AcoshGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  auto type = AcoshGradInferType(primitive, input_args);
-  auto shape = AcoshGradInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+  auto types = AcoshGradInferType(primitive, input_args);
+  auto shapes = AcoshGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(AcoshGrad, prim::kPrimAcoshGrad, AcoshGradInfer, nullptr, true);

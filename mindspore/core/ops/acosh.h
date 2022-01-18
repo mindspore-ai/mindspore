@@ -13,26 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CORE_OPS_ACOSH_H_
 #define MINDSPORE_CORE_OPS_ACOSH_H_
+
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/primitive_c.h"
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAcosh = "Acosh";
+/// \brief Computes arccosh of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.Acosh for more details.
 class Acosh : public PrimitiveC {
  public:
-  Acosh() : PrimitiveC(kNameAcosh) { InitIOName({"x"}, {"output"}); }
+  /// \brief Constructor.
+  Acosh() : PrimitiveC(kNameAcosh) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Acosh() = default;
+
   MS_DECLARE_PARENT(Acosh, PrimitiveC);
-  void Init() {}
 };
+
+AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args);
+
+using PrimAcoshPtr = std::shared_ptr<Acosh>;
 }  // namespace ops
 }  // namespace mindspore
+
 #endif  // MINDSPORE_CORE_OPS_ACOSH_H_
