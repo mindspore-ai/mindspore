@@ -634,6 +634,17 @@ def get_bprop_exp(self):
     return bprop
 
 
+@bprop_getters.register(P.Einsum)
+def get_bprop_einsum(self):
+    """Grad definition for `Einsum` operation."""
+    grad_func = G.EinsumGrad(self.equation)
+
+    def bprop(x, out, dout):
+        dx = grad_func(x, dout)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Expm1)
 def get_bprop_expm1(self):
     """Grad definition for `Expm1` operation."""

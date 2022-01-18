@@ -634,6 +634,26 @@ class InstanceNormGrad(PrimitiveWithInfer):
         return (x_type, gamma_type, gamma_type)
 
 
+class EinsumGrad(PrimitiveWithInfer):
+    """Gradients of Einsum."""
+
+    @prim_attr_register
+    def __init__(self, equation):
+        self.add_prim_attr('equation', equation)
+
+    def infer_shape(self, x_shapes, dout_shape):
+        out_shape = ()
+        for dim in x_shapes:
+            out_shape += (dim,)
+        return out_shape
+
+    def infer_dtype(self, x_types, dout_shape):
+        out_type = ()
+        for cur_type in x_types:
+            out_type += (cur_type,)
+        return out_type
+
+
 class UniqueGrad(Primitive):
     """Gradients of Unique operation."""
 
