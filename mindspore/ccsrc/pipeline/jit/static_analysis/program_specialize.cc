@@ -35,9 +35,6 @@ namespace abstract {
 namespace {
 inline AbstractBasePtr GetEvaluatedValue(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
-  if (conf->node()->intermediate_abstract()) {
-    return conf->node()->intermediate_abstract();
-  }
   MS_EXCEPTION_IF_NULL(conf->ObtainEvalResult());
   return conf->ObtainEvalResult()->abstract();
 }

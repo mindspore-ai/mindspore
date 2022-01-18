@@ -79,25 +79,6 @@ void DecreaseStackFrameDepth() {
 size_t StackFrameDepth() { return stack_frame_depth; }
 size_t StackFrameMaxDepth() { return stack_frame_max_depth; }
 
-bool IsIntermediateAbstract(const AbstractBasePtr &arg_spec) {
-  MS_EXCEPTION_IF_NULL(arg_spec);
-  if (dyn_cast<AbstractScalar>(arg_spec)) {
-    auto v = arg_spec->GetValueTrack();
-    if (v->isa<SymbolicKeyInstance>()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-AbstractBasePtr IntermediateJoin(const AbstractBasePtr &arg1, const AbstractBasePtr &arg2) {
-  if (dyn_cast<AbstractScalar>(arg1) && dyn_cast<AbstractScalar>(arg2)) {
-    MS_EXCEPTION_IF_NULL(arg1);
-    return arg1->Join(arg2);
-  }
-  return nullptr;
-}
-
 EvalResultPtr PrimitiveEvalCache::Get(const PrimitivePtr &prim, const AbstractBasePtrList &args) const {
   std::lock_guard<std::mutex> guard(mutex_);
   auto cache_iter = prim_cache_.find(prim->name());
@@ -196,21 +177,6 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
   MS_LOG(DEBUG) << "Save result for NodeConfig: " << conf->ToString() << ", result: " << result->abstract().get() << "/"
                 << result->abstract()->ToString();
   cache_mgr.SetValue(conf, result);
-
-  // Set intermediate abstract value.
-  if (IsIntermediateAbstract(result->abstract())) {
-    if (conf->node()->intermediate_abstract() == nullptr) {
-      conf->node()->set_intermediate_abstract(result->abstract());
-      MS_LOG(DEBUG) << "Set intermediate abstract: " << result->abstract()->ToString();
-    } else {
-      auto old_spec = conf->node()->intermediate_abstract();
-      auto joined_spec = IntermediateJoin(result->abstract(), old_spec);
-      conf->node()->set_intermediate_abstract(joined_spec);
-      MS_LOG(DEBUG) << "Set joined intermediate abstract:\nold_spec:\t\t" << old_spec->ToString() << "\nnew_spec:\t\t"
-                    << result->abstract()->ToString() << "\njoined_spec:\t"
-                    << (joined_spec != nullptr ? joined_spec->ToString() : "nullptr");
-    }
-  }
 }
 
 EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
