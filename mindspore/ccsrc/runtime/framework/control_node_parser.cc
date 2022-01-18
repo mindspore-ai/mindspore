@@ -622,14 +622,6 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index) {
   return {get_item_src_node, *(indexes.begin())};
 }
 
-bool HasAbstractRef(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  auto &abs = node->abstract();
-  return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
-}
-
 bool IsCsrNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {

@@ -94,9 +94,6 @@ struct KernelGraphGroupInfo {
 };
 using KernelGraphGroupInfoPtr = std::shared_ptr<KernelGraphGroupInfo>;
 
-// Check whether the parameter is a weight. In the control flow, weight is passed to the subgraph, and in the subgraph,
-// it is determined whether it is a weight.
-bool HasAbstractRef(const AnfNodePtr &node);
 // Check whether the node is a csr node.
 bool IsCsrNode(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the

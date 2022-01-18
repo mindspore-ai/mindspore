@@ -57,6 +57,7 @@ void EnvironMgr::Clear() {
     env.second->Clear();
   }
 
+  env_handles_count_ = 0;
   envs_.clear();
   mutex.unlock();
 }
