@@ -161,8 +161,8 @@ int InnerContext::Init() {
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_MEDIUM &&
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_HIGH &&
           device_ctx.device_info_.npu_device_info_.frequency_ != hiai::AiModelDescription_Frequency_EXTREME) {
-        MS_LOG(INFO) << "NPU frequency set to 3, original value "
-                     << device_ctx.device_info_.npu_device_info_.frequency_;
+        MS_LOG(WARNING) << "NPU frequency set to 3, original value "
+                        << device_ctx.device_info_.npu_device_info_.frequency_;
         device_ctx.device_info_.npu_device_info_.frequency_ = hiai::AiModelDescription_Frequency_HIGH;
       }
     }
@@ -187,7 +187,7 @@ int InnerContext::IsValid() const {
     return RET_NOT_SUPPORT;
   }
   if (this->device_list_.size() > kMaxInnerContextDeviceNums) {
-    MS_LOG(ERROR) << "Not support device list more than 2.";
+    MS_LOG(ERROR) << "Not support device list more than " << kMaxInnerContextDeviceNums;
     return RET_NOT_SUPPORT;
   }
   if (thread_num_ < 1) {

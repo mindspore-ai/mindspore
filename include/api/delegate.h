@@ -32,12 +32,14 @@ typedef enum {
 } SchemaVersion;
 
 using KernelIter = std::vector<kernel::Kernel *>::iterator;
+
+template <class T>
 class MS_API DelegateModel {
  public:
   /// \brief Constructor of MindSpore Lite DelegateModel.
   DelegateModel(std::vector<kernel::Kernel *> *kernels, const std::vector<MSTensor> &inputs,
-                const std::vector<MSTensor> &outputs,
-                const std::map<kernel::Kernel *, const schema::Primitive *> &primitives, SchemaVersion version)
+                const std::vector<MSTensor> &outputs, const std::map<kernel::Kernel *, const T *> &primitives,
+                SchemaVersion version)
       : kernels_(kernels), inputs_(inputs), outputs_(outputs), primitives_(primitives), version_(version) {}
 
   /// \brief Destructor of MindSpore Lite DelegateModel.
@@ -47,18 +49,24 @@ class MS_API DelegateModel {
   ///
   /// \param[in] a kernel in DelegateModel kernels vector.
   ///
-  /// \return The schema::Primitive of The kernel.
-  const schema::Primitive *GetPrimitive(kernel::Kernel *kernel) const;
+  /// \return The Primitive of The kernel.
+  const T *GetPrimitive(kernel::Kernel *kernel) const {
+    if (primitives_.find(kernel) != primitives_.end()) {
+      return primitives_.at(kernel);
+    } else {
+      return nullptr;
+    }
+  }
 
   /// \brief Get the begin iterator of the DelegateModel kernels vector.
   ///
   /// \return The begin iterator of the DelegateModel kernels vector.
-  KernelIter BeginKernelIterator();
+  KernelIter BeginKernelIterator() { return kernels_->begin(); }
 
   /// \brief Get the end iterator of the DelegateModel kernels vector.
   ///
   /// \return The end iterator of the DelegateModel kernels vector.
-  KernelIter EndKernelIterator();
+  KernelIter EndKernelIterator() { return kernels_->end(); }
 
   /// \brief Replace the continuous kernel supported by the delegate with a delegate graph kernel.
   ///
@@ -66,7 +74,15 @@ class MS_API DelegateModel {
   /// \param[in] end Define the end iterator of continuous kernel supported by the delegate.
   ///
   /// \return The next iterator after graph_kernel, point to the next kernel that is not visited.
-  KernelIter Replace(KernelIter from, KernelIter end, kernel::Kernel *graph_kernel);
+  KernelIter Replace(KernelIter from, KernelIter end, kernel::Kernel *graph_kernel) {
+    size_t insert_index = from - BeginKernelIterator();
+    if (insert_index >= kernels_->size()) {
+      return BeginKernelIterator();
+    }
+    kernels_->erase(from, end);
+    kernels_->insert(BeginKernelIterator() + insert_index, graph_kernel);
+    return BeginKernelIterator() + insert_index + 1;
+  }
 
   /// \brief Get the input tensors of DelegateModel.
   ///
@@ -87,7 +103,7 @@ class MS_API DelegateModel {
   std::vector<kernel::Kernel *> *kernels_;
   const std::vector<mindspore::MSTensor> &inputs_;
   const std::vector<mindspore::MSTensor> &outputs_;
-  const std::map<kernel::Kernel *, const schema::Primitive *> &primitives_;
+  const std::map<kernel::Kernel *, const T *> &primitives_;
   SchemaVersion version_;
 };
 
@@ -111,7 +127,7 @@ class MS_API Delegate {
   /// \note Build willed be called in Model::Build.
   ///
   /// \param[in] model Define the delegate model to be built.
-  virtual Status Build(DelegateModel *model) = 0;
+  virtual Status Build(DelegateModel<schema::Primitive> *model) = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_DELEGATE_H

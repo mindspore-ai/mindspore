@@ -30,6 +30,7 @@
 #include "include/lite_session.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/inner_context.h"
+#include "src/lite_session.h"
 
 template <class T>
 void clearVectorOfPointers(std::vector<T> *v) {
@@ -43,9 +44,9 @@ void clearVectorOfPointers(std::vector<T> *v) {
 
 namespace mindspore {
 
-typedef std::shared_ptr<session::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
-                                                                       std::shared_ptr<TrainCfg> cfg,
-                                                                       lite::InnerContext *context);
+typedef std::shared_ptr<lite::LiteSession>(CreateTrainSessionProto)(std::shared_ptr<Graph::GraphData> graph_data,
+                                                                    std::shared_ptr<TrainCfg> cfg,
+                                                                    lite::InnerContext *context);
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
 namespace session {
@@ -67,7 +68,7 @@ class ModelImpl {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
                  const MSKernelCallBack &after);
 
-  session::LiteSession *CreateLiteSession(lite::InnerContext *context);
+  lite::LiteSession *CreateLiteSession(lite::InnerContext *context);
 
   Status LoadConfig(const std::string &config_path);
   std::vector<MSTensor> GetInputs();
@@ -103,7 +104,7 @@ class ModelImpl {
   friend class Model;
   friend class Serialization;
   std::shared_ptr<Graph> graph_ = nullptr;
-  std::shared_ptr<session::LiteSession> session_ = nullptr;
+  std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<Context> context_ = nullptr;
   std::shared_ptr<TrainCfg> cfg_ = nullptr;
   std::vector<Metrics *> metrics_;

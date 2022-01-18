@@ -100,7 +100,7 @@ int LiteModel::ConvertAttrToTensors() {
 
 void LiteModel::Free() {
   if (this->buf != nullptr) {
-    free(this->buf);
+    delete[](this->buf);
     this->buf = nullptr;
   }
   auto nodes_size = this->all_nodes_.size();
@@ -442,7 +442,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
       delete (model);
       return nullptr;
     }
-    model->buf = reinterpret_cast<char *>(malloc(size));
+    model->buf = new char[size];
     if (model->buf == nullptr) {
       MS_LOG(ERROR) << "new inner model buf fail!";
       delete (model);

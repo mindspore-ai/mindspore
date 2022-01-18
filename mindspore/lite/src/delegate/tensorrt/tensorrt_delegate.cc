@@ -119,7 +119,7 @@ Status TensorRTDelegate::Init() {
   return mindspore::kSuccess;
 }
 
-Status TensorRTDelegate::Build(DelegateModel *model) {
+Status TensorRTDelegate::Build(DelegateModel<schema::Primitive> *model) {
   lite::SetCudaDevice(device_info_);
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
@@ -180,8 +180,9 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
   }
 }
 
-TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops, DelegateModel *model,
-                                                        KernelIter from, KernelIter end) {
+TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<TensorRTOp *> &ops,
+                                                        DelegateModel<schema::Primitive> *model, KernelIter from,
+                                                        KernelIter end) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
   auto *tensorrt_graph = new (std::nothrow)

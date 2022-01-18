@@ -13,25 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_SRC_CXX_API_CONVERTERS_H_
 #define MINDSPORE_LITE_SRC_CXX_API_CONVERTERS_H_
 
-#include <limits.h>
+#include <vector>
+#include <string>
+#include <memory>
+#include "include/api/context.h"
 #include "include/api/status.h"
-#include "include/api/types.h"
-#include "include/lite_types.h"
+#include "include/api/cfg.h"
+#include "include/train/train_cfg.h"
 #include "src/inner_context.h"
+#include "src/c_api/context_c.h"
 
 namespace mindspore {
+class ContextUtils {
+ public:
+  static lite::InnerContext *Convert(Context *context);
+  static lite::InnerContext *Convert(const ContextC *context_c);
 
-namespace lite {
-struct Context;
-class TrainCfg;
-}  // namespace lite
-
-class Context;
-class TrainCfg;
+ private:
+  static void SetContextAttr(int32_t thread_num, bool enable_parallel, const std::vector<int32_t> &affinity_core_list,
+                             const std::shared_ptr<Delegate> &delegate, lite::InnerContext *inner_context);
+  static Status AddCpuDevice(const std::shared_ptr<Allocator> &allocator, int affinity_mode, bool enable_fp16,
+                             const std::string &provider, const std::string &provider_device,
+                             lite::InnerContext *inner_context);
+  static Status AddGpuDevice(bool enable_fp16, uint32_t device_id, const std::string &provider,
+                             const std::string &provider_device, const std::shared_ptr<Allocator> &allocator,
+                             lite::InnerContext *inner_context);
+  static Status AddNpuDevice(int frequency, lite::InnerContext *inner_context);
+  static Status AddAscend310Device(lite::InnerContext *inner_context, DeviceInfoContext *device);
+  static bool IsAffinityModeValid(int affinity_mode) {
+    return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
+  }
+};
 
 inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {
   if (qt == kNoQuant) {
@@ -42,25 +57,6 @@ inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {
   }
   return lite::QT_DEFAULT;
 }
-
-inline lite::CpuBindMode A2L_ConvertAffinityMode(int affinity_mode) {
-  switch (affinity_mode) {
-    case 0:
-      return lite::NO_BIND;
-    case 1:
-      return lite::HIGHER_CPU;
-    case 2:
-      return lite::MID_CPU;
-    default:
-      return lite::NO_BIND;
-  }
-}
-
-inline bool IsAffinityModeValid(int affinity_mode) {
-  return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
-}
-
-Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context);
 
 Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cfg);
 }  // namespace mindspore

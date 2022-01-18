@@ -34,13 +34,13 @@ class NPUDelegate : public Delegate {
 
   Status Init() override;
 
-  Status Build(DelegateModel *model) override;
+  Status Build(DelegateModel<schema::Primitive> *model) override;
 
  protected:
   NPUOp *GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive);
 
-  kernel::Kernel *CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
-                                 KernelIter end);
+  kernel::Kernel *CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel<schema::Primitive> *model,
+                                 KernelIter from, KernelIter end);
 
   Status AddPasses();
 

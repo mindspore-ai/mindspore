@@ -1070,7 +1070,7 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto ret = lite::LiteSession::CreateSessionByBuf(model_buf, size, session);
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByBuf(model_buf, size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1085,7 +1085,7 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
-  auto ret = lite::LiteSession::CreateSessionByPath(model_path, session);
+  auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByPath(model_path);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1094,13 +1094,13 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
   return session;
 }
 
-int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, session::LiteSession *session) {
-  auto *model = lite::ImportFromBuffer(model_buf, size, true);
+int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, size_t buf_size) {
+  auto *model = lite::ImportFromBuffer(model_buf, buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
-  auto ret = session->CompileGraph(model);
+  auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     model->buf = nullptr;
@@ -1108,11 +1108,11 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, se
     return RET_ERROR;
   }
   model->buf = nullptr;
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  set_model(model);
   return RET_OK;
 }
 
-int lite::LiteSession::CreateSessionByPath(const std::string &model_path, session::LiteSession *session) {
+int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path) {
   size_t model_size;
   auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
   if (model_buf == nullptr) {
@@ -1125,12 +1125,12 @@ int lite::LiteSession::CreateSessionByPath(const std::string &model_path, sessio
     return RET_ERROR;
   }
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
-  auto ret = session->CompileGraph(model);
+  auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Compile model failed";
     return RET_ERROR;
   }
-  (reinterpret_cast<lite::LiteSession *>(session))->set_model(model);
+  set_model(model);
   return RET_OK;
 }
 
