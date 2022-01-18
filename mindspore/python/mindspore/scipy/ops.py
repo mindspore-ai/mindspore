@@ -356,3 +356,35 @@ class MatrixSetDiag(PrimitiveWithInfer):
             'value': None
         }
         return output
+
+
+class MatrixBandPart(PrimitiveWithInfer):
+    """
+    MatrixBandPart
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        super().__init__(name="MatrixBandPart")
+        self.init_prim_io_names(inputs=['A', 'lower_numer', 'upper_number'], outputs=['output'])
+
+    def __infer__(self, a, lower, upper):
+        shape = {
+            'shape': (a['shape']),
+            'dtype': (a['dtype']),
+            'value': None
+        }
+        return shape
+
+
+class MatrixBandPartNet(nn.Cell):
+    """
+    MatrixBandPart
+    """
+
+    def __init__(self):
+        super(MatrixBandPartNet, self).__init__()
+        self.matrix_band_part = MatrixBandPart()
+
+    def construct(self, a, num_lower, num_upper):
+        return self.matrix_band_part(a, num_lower, num_upper)

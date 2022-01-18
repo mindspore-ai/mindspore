@@ -17,7 +17,8 @@ import pytest
 import numpy as onp
 import mindspore.scipy as msp
 from mindspore import context, Tensor
-from tests.st.scipy_st.utils import match_array
+from mindspore.scipy.ops import MatrixBandPartNet
+from tests.st.scipy_st.utils import match_matrix
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
 ALIGNMENT_LIST = ["RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT"]
@@ -311,7 +312,7 @@ def test_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = msp.ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_array(output.asnumpy(), expected_diag_matrix)
+                match_matrix(output, Tensor(expected_diag_matrix))
 
 
 @pytest.mark.level0
@@ -334,4 +335,36 @@ def test_graph_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = msp.ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_array(output.asnumpy(), expected_diag_matrix)
+                match_matrix(output, Tensor(expected_diag_matrix))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('band_inputs',
+                         [([], 1, 1), ([], 1, 2), ([], 1, 7), ([], 2, 1), ([], 2, 2), ([], 2, 7), ([], 7, 1),
+                          ([], 7, 2), ([], 7, 7), ([2], 1, 1), ([2], 1, 2), ([2], 1, 7), ([2], 2, 1), ([2], 2, 2),
+                          ([2], 2, 7), ([2], 7, 1), ([2], 7, 2), ([2], 7, 7), ([1, 3, 2], 1, 1), ([1, 3, 2], 1, 2),
+                          ([1, 3, 2], 1, 7), ([1, 3, 2], 2, 1), ([1, 3, 2], 2, 2), ([1, 3, 2], 2, 7), ([1, 3, 2], 7, 1),
+                          ([1, 3, 2], 7, 2), ([1, 3, 2], 7, 7)])
+def test_matrix_band_part_net_cpu(band_inputs):
+    """
+    Feature: ALL TO ALL
+    Description: test general matrix cases for matrix_band_diag in graph mode
+    Expectation: the result match expected_diag_band_matrix.
+    """
+    msp_matrixbandpart = MatrixBandPartNet()
+    batch_shape, rows, cols = band_inputs
+    for dtype in [onp.int32, onp.float64]:
+        mat = onp.ones(batch_shape + [rows, cols]).astype(dtype)
+        for lower in -1, 0, 1, rows - 1:
+            for upper in -1, 0, 1, cols - 1:
+                band_np = mat
+                if lower >= 0:
+                    band_np = onp.triu(band_np, -lower)
+                if upper >= 0:
+                    band_np = onp.tril(band_np, upper)
+                if batch_shape:
+                    band_np = onp.tile(band_np, batch_shape + [1, 1])
+                band = msp_matrixbandpart(Tensor(band_np), lower, upper)
+                match_matrix(band, Tensor(band_np))
