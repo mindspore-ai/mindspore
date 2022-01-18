@@ -78,7 +78,7 @@ class HausdorffDistance(Metric):
 
     where h(A,B) is the maximum distance of a set A to the nearest point in the set B, h(B,A) is the maximum distance
     of a set B to the nearest point in the set A. The distance calculation is oriented, which means that most of times
-    :math: `h(A, B)` is not equal to :math: `h(B, A)`.
+    :math:`h(A, B)` is not equal to :math:`h(B, A)`.
 
     Args:
         distance_metric (string): Three distance measurement methods are supported: "euclidean", "chessboard" or

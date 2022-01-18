@@ -318,7 +318,7 @@ class HeNormal(Initializer):
     .. math::
         sigma = \frac{gain} {\sqrt{N}}
 
-    where :math:`gain` is an optional scaling factor. :math: `N` is the number of input units of the weight tensor,
+    where :math:`gain` is an optional scaling factor. :math:`N` is the number of input units of the weight tensor,
     if `mode` is 'fan_in'. If `mode` is 'fan_out', it is the number of output units.
 
     For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.

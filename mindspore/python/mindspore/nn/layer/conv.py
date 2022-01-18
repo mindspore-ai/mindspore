@@ -541,7 +541,7 @@ class Conv3d(_Conv):
             If `paddings` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
             padding[0], padding[1], padding[2], padding[3], padding[4] and padding[5] correspondingly.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-            : math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
             Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             Its value must be greater or equal to 1 and bounded by the height and width of the input `x`. Default: 1.
@@ -742,7 +742,7 @@ class Conv3dTranspose(_Conv):
             If `padding` is a tuple of six integers, the padding of head, tail, top, bottom, left and right equal to
             padding[0], padding[1], padding[2], padding[3], padding[4] and padding[5] correspondingly.
         dilation (Union(int, tuple[int])): The data type is int or a tuple of 3 integers
-            : math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
+            :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1.
             Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location.
             Its value must be greater or equal to 1 and bounded by the height and width of the input `x`. Default: 1.

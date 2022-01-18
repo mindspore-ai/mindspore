@@ -87,8 +87,10 @@ class DimReduce(Cell):
             delta\_loss &= sigma \cdot grad\_k.T \cdot sk
             \end{align}
 
-    Here: pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
-          bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
+    Here:
+
+    - pca_mat (array): Shape (k*n), k is part of n_components, n is the size of weight.
+    - bk (array): Shape (k*k), is the symmetric positive definite matrix in Quasi-Newton method.
 
     we need to find the m satisfy:
 
