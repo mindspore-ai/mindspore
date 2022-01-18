@@ -30,31 +30,23 @@ void PushWeightKernel::InitKernel(size_t) {
   local_rank_ = DistributedCountService::GetInstance().local_rank();
 }
 
-bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool PushWeightKernel::Launch(const uint8_t *req_data, size_t len,
+                              const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(INFO) << "Launching PushWeightKernel kernel.";
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
-    return true;
-  }
-
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestPushWeight>()) {
     std::string reason = "The schema of RequestPushWeight is invalid.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num());
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -62,12 +54,12 @@ bool PushWeightKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (push_weight_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestPushWeight";
     BuildPushWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num());
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
   ResultCode result_code = PushWeight(fbb, push_weight_req);
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return ConvertResultCode(result_code);
 }
 

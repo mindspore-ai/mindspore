@@ -33,29 +33,23 @@ void PushListSignKernel::InitKernel(size_t) {
   cipher_init_ = &armour::CipherInit::GetInstance();
 }
 
-bool PushListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool PushListSignKernel::Launch(const uint8_t *req_data, size_t len,
+                                const std::shared_ptr<ps::core::MessageHandler> &message) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Launching PushListSignKernel, Iteration number is " << iter_num;
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    return false;
-  }
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  void *req_data = inputs[0]->addr;
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
     return false;
   }
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::SendClientListSign>()) {
     std::string reason = "The schema of PushClientListSign is invalid.";
     BuildPushListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                                std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::SendClientListSign *client_list_sign_req = flatbuffers::GetRoot<schema::SendClientListSign>(req_data);
@@ -64,7 +58,7 @@ bool PushListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     BuildPushListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                                std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   // verify signature
@@ -75,7 +69,7 @@ bool PushListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std
       BuildPushListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                                  std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     if (verify_result == sigVerifyResult::TIMEOUT) {
@@ -83,17 +77,17 @@ bool PushListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std
       BuildPushListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason,
                                  std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
   }
-  return LaunchForPushListSign(client_list_sign_req, iter_num, fbb, outputs);
+  return LaunchForPushListSign(client_list_sign_req, iter_num, fbb, message);
 }
 
 bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign *client_list_sign_req,
                                                const size_t &iter_num, const std::shared_ptr<server::FBBuilder> &fbb,
-                                               const std::vector<AddressPtr> &outputs) {
+                                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, false);
   size_t iter_client = IntToSize(client_list_sign_req->iteration());
   if (iter_num != iter_client) {
@@ -102,7 +96,7 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
     MS_LOG(WARNING) << "server now iteration is " << iter_num << ". client request iteration is " << iter_client;
     BuildPushListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(CURRENT_TIME_MILLI.count()),
                                iter_num);
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::vector<string> update_model_clients;
@@ -125,13 +119,13 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
                                  "Current amount for PushListSignKernel is enough.",
                                  std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     }
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!PushListSign(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), client_list_sign_req, fbb,
                     update_model_clients)) {
     MS_LOG(ERROR) << "push client list sign failed.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::string count_reason = "";
@@ -140,9 +134,10 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
     BuildPushListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(CURRENT_TIME_MILLI.count()),
                                iter_num);
     MS_LOG(ERROR) << reason;
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

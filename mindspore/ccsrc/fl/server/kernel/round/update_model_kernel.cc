@@ -45,37 +45,29 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, kInitialDataSizeSum);
 }
 
-bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
+                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(DEBUG) << "Launching UpdateModelKernel kernel.";
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
-    return true;
-  }
-
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestUpdateModel>()) {
     std::string reason = "The schema of RequestUpdateModel is invalid.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   ResultCode result_code = ReachThresholdForUpdateModel(fbb);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
@@ -84,7 +76,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     std::string reason = "Building flatbuffers schema failed for RequestUpdateModel.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -95,7 +87,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
       std::string reason = "verify signature failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
       MS_LOG(WARNING) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -103,7 +95,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
       std::string reason = "verify signature timestamp failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, "");
       MS_LOG(WARNING) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -112,25 +104,25 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   result_code = VerifyUpdateModel(update_model_req, fbb, &device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
   result_code = CountForUpdateModel(fbb, update_model_req);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
   result_code = UpdateModel(update_model_req, fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
   IncreaseAcceptClientNum();
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

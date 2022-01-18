@@ -32,7 +32,7 @@ size_t HttpMsgHandler::len() const { return len_; }
 
 bool HttpMsgHandler::SendResponse(const void *data, const size_t &len) {
   MS_ERROR_IF_NULL_W_RET_VAL(data, false);
-  http_msg_->QuickResponse(kHttpSuccess, reinterpret_cast<unsigned char *>(const_cast<void *>(data)), len);
+  http_msg_->QuickResponse(kHttpSuccess, data, len);
   return true;
 }
 }  // namespace core

@@ -51,36 +51,29 @@ void StartFLJobKernel::InitKernel(size_t) {
   return;
 }
 
-bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                              const std::vector<AddressPtr> &outputs) {
+bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
+                              const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(DEBUG) << "Launching StartFLJobKernel kernel.";
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
-    return true;
-  }
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestFLJob>()) {
     std::string reason = "The schema of RequestFLJob is invalid.";
     BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
   ResultCode result_code = ReachThresholdForStartFLJob(fbb);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
@@ -91,17 +84,17 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
     MS_LOG(WARNING) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
   if (ps::PSContext::instance()->pki_verify()) {
     if (!JudgeFLJobCert(fbb, start_fl_job_req)) {
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     if (!StoreKeyAttestation(fbb, start_fl_job_req)) {
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
   }
@@ -109,7 +102,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
   PBMetadata metadata;
@@ -120,7 +113,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return update_reason == kNetworkError ? false : true;
   }
 
@@ -128,11 +121,11 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   result_code = CountForStartFLJob(fbb, start_fl_job_req);
   if (result_code != ResultCode::kSuccess) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
   IncreaseAcceptClientNum();
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

@@ -78,30 +78,24 @@ sigVerifyResult GetListSignKernel::VerifySignature(const schema::RequestAllClien
   return sigVerifyResult::PASSED;
 }
 
-bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool GetListSignKernel::Launch(const uint8_t *req_data, size_t len,
+                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Launching GetListSign kernel,  Iteration number is " << iter_num;
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    return false;
-  }
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  void *req_data = inputs[0]->addr;
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
     return false;
   }
   std::map<std::string, std::vector<unsigned char>> list_signs;
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestAllClientListSign>()) {
     std::string reason = "The schema of RequestAllClientListSign is invalid.";
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::RequestAllClientListSign *get_list_sign_req =
@@ -111,7 +105,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -123,7 +117,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
       BuildGetListSignKernelRsp(fbb, schema::ResponseCode_RequestError, reason,
                                 std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -132,7 +126,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
       BuildGetListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(CURRENT_TIME_MILLI.count()),
                                 iter_num, list_signs);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -147,7 +141,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
                   << ". client request iteration is " << iter_client;
     BuildGetListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.",
                               std::to_string(CURRENT_TIME_MILLI.count()), iter_num, list_signs);
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::string fl_id = get_list_sign_req->fl_id()->str();
@@ -156,7 +150,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   }
   if (!GetListSign(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), get_list_sign_req, fbb)) {
     MS_LOG(WARNING) << "get list signs not ready.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   std::string count_reason = "";
@@ -167,7 +161,7 @@ bool GetListSignKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     MS_LOG(ERROR) << reason;
     return true;
   }
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 
