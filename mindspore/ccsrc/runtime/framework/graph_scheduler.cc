@@ -646,22 +646,16 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     }
   }
 
-  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
-  const auto &front_to_backend_parameter = graph_compiler_info.control_node_parser_->front_to_backend_parameters_;
+  const auto parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
-  // the corresponding backend parameter from the map, and insert it into the host data source actor
-  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
+  // the corresponding backend parameter from the map, and insert it into the host data source actor.
+  const auto &control_node_parameters = parser->control_node_parameters();
   for (const auto &parameter : control_node_parameters) {
     if (IsPersistentDeviceTensor(parameter)) {
       continue;
     }
-
-    auto backend_iter = front_to_backend_parameter.find({parameter, 0});
-    if (backend_iter == front_to_backend_parameter.end() || backend_iter->second.empty()) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for front node:" << AnfAlgo::GetNodeDebugString(parameter);
-    }
-
     if (host_queue_ds_actor == nullptr) {
       auto actor_name = graph_compiler_info.name_ + "_HostDSActor";
       MS_LOG(INFO) << "Create host queue data source actor: " << actor_name;
@@ -675,15 +669,18 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     if (node_map.find(parameter) != node_map.end()) {
       continue;
     }
-    const auto &backend_node = backend_iter->second.begin()->first;
+    const auto &backend_parameter_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter({parameter, 0});
+    const auto &backend_node = backend_parameter_with_context.first;
+    MS_EXCEPTION_IF_NULL(backend_node);
     auto iter = find(host_queue_ds_actor->data_nodes_.begin(), host_queue_ds_actor->data_nodes_.end(), backend_node);
     if (iter != host_queue_ds_actor->data_nodes_.end()) {
       (void)node_map.emplace(parameter, iter - host_queue_ds_actor->data_nodes_.begin());
     } else {
       (void)node_map.emplace(parameter, host_queue_ds_actor->data_nodes_.size());
-      (void)node_map.emplace(backend_iter->second.begin()->first, host_queue_ds_actor->data_nodes_.size());
-      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_iter->second.begin()->first);
-      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_iter->second.begin()->second);
+      (void)node_map.emplace(backend_node, host_queue_ds_actor->data_nodes_.size());
+      (void)host_queue_ds_actor->data_nodes_.emplace_back(backend_node);
+      (void)host_queue_ds_actor->device_contexts_.emplace_back(backend_parameter_with_context.second);
     }
   }
 
@@ -1940,14 +1937,13 @@ void GraphScheduler::PersistDeviceTensorForControlNode(const GraphCompilerInfo &
     if ((!IsPersistentDeviceTensor(input_node)) || (!parser->IsRootGraphParameter(input_node))) {
       continue;
     }
-    const auto &front_to_backend_parameters = parser->front_to_backend_parameters();
-    const auto &iter = front_to_backend_parameters.find({input_node, 0});
-    if (iter == front_to_backend_parameters.end() || iter->second.empty()) {
+    const auto &backend_parameter_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter({input_node, 0});
+    if (backend_parameter_with_context.first == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << input_node->DebugString();
     }
-    const auto &node_with_context = iter->second.begin();
-    const auto &backend_node = node_with_context->first;
-    const auto &device_context = node_with_context->second;
+    const auto &backend_node = backend_parameter_with_context.first;
+    const auto &device_context = backend_parameter_with_context.second;
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
     if (!DeviceTensorStore::GetInstance().Fetch(input_node.get()).empty()) {

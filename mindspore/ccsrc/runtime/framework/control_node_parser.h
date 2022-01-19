@@ -66,8 +66,8 @@ constexpr size_t kMakeCSRTensorInputNum = 4;
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
-
-using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<std::pair<AnfNodePtr, DeviceContext *>>>;
+using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
+using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithContext>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraphGroup = mindspore::HashMap<FuncGraphPtr, std::vector<std::vector<KernelGraphPtr>>>;
 using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;
@@ -145,6 +145,7 @@ class ControlNodeParser {
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
   std::string FetchGroupNameByKernelGraph(const KernelGraphPtr &graph);
+  NodeWithContext FetchBackendParameterWithContextByFrontParameter(const KernelWithIndex &front_parameter_with_index);
 
  private:
   friend class GraphScheduler;

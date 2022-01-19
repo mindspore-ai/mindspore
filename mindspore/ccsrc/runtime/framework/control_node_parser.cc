@@ -369,7 +369,8 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address;
+  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address
+                << " size:" << tensor_size;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
   UpdateRefCount(address.get(), true);
 }
@@ -1231,6 +1232,25 @@ FuncGraphPtr ControlNodeParser::FetchFuncGraphByKernelGraph(const KernelGraph *c
   return nullptr;
 }
 
+NodeWithContext ControlNodeParser::FetchBackendParameterWithContextByFrontParameter(
+  const KernelWithIndex &front_parameter_with_index) {
+  const auto &iter = front_to_backend_parameters_.find(front_parameter_with_index);
+  if (iter == front_to_backend_parameters_.end()) {
+    return {};
+  }
+
+  for (const auto &node_with_context : iter->second) {
+    MS_EXCEPTION_IF_NULL(node_with_context.first);
+    if (AnfAlgo::GetOutputTensorMemSize(node_with_context.first, 0) != 0) {
+      return node_with_context;
+    }
+    MS_LOG(WARNING) << "Backend node:" << node_with_context.first->DebugString()
+                    << " for front node:" << front_parameter_with_index.first->DebugString()
+                    << " index:" << front_parameter_with_index.second << " output size is 0.";
+  }
+  return {};
+}
+
 void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes,
                                             const DeviceContext *const default_context) {
   MS_EXCEPTION_IF_NULL(default_context);
@@ -1241,28 +1261,16 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
         continue;
       }
 
-      const auto &iter = front_to_backend_parameters_.find(real_parameter_with_index);
-      if (iter != front_to_backend_parameters_.end() && (!iter->second.empty())) {
-        (void)front_value_nodes_.emplace(real_parameter_with_index, iter->second.begin()->second);
-        CreateDeviceTensorForValueNode(real_parameter_with_index, iter->second.begin()->first,
-                                       iter->second.begin()->second);
+      const auto &backend_node_with_context =
+        FetchBackendParameterWithContextByFrontParameter(real_parameter_with_index);
+      if (backend_node_with_context.first != nullptr) {
+        (void)front_value_nodes_.emplace(real_parameter_with_index, backend_node_with_context.second);
+        CreateDeviceTensorForValueNode(real_parameter_with_index, backend_node_with_context.first,
+                                       backend_node_with_context.second);
       } else {
         (void)front_value_nodes_.emplace(real_parameter_with_index, default_context);
         CreateDeviceTensorForFrontNode(real_parameter_with_index, default_context);
       }
-    }
-  }
-
-  // If the output of funcgraph is a value node, it will eventually be sent to the kernel as a real parameter.
-  // These the value nodes also need to create a device address.
-  for (const auto &front_to_backend_parameters : front_to_backend_parameters_) {
-    const auto &front_node = front_to_backend_parameters.first.first;
-    MS_EXCEPTION_IF_NULL(front_node);
-    if (IsFrontValueNode(front_to_backend_parameters.first) && (!front_to_backend_parameters.second.empty())) {
-      const auto &backend_parameter = front_to_backend_parameters.second.begin()->first;
-      const auto &device_context = front_to_backend_parameters.second.begin()->second;
-      CreateDeviceTensorForValueNode(front_to_backend_parameters.first, backend_parameter, device_context);
-      (void)front_value_nodes_.emplace(front_to_backend_parameters.first, device_context);
     }
   }
 
