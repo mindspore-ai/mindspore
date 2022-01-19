@@ -403,6 +403,8 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
   return infer_value(*args);
 }
 
+void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }
+
 PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
 
 void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {

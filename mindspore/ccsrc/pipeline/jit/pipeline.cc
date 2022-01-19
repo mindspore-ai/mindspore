@@ -1820,6 +1820,7 @@ void ClearResAtexit() {
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   MS_LOG(INFO) << "End clear kernel runtime.";
 
+  PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
