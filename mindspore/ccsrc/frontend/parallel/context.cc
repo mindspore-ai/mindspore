@@ -63,6 +63,8 @@ void ParallelContext::Reset() {
   parameter_broadcast_ = false;
   parameter_broadcast_is_set_ = false;
   enable_all_reduce_fusion_ = true;
+  enable_all_gather_fusion_ = true;
+  enable_reduce_scatter_fusion_ = true;
   strategy_ckpt_load_file_ = "";
   strategy_ckpt_save_file_ = "";
   enable_parallel_optimizer_ = false;
@@ -79,6 +81,8 @@ void ParallelContext::Reset() {
   sharding_propagation_ = false;
   dataset_strategy_.clear();
   fusion_threshold_mb_ = FUSUION_THRESHOLD;
+  allgather_fusion_threshold_mb_ = FUSUION_THRESHOLD;
+  reducescatter_fusion_threshold_mb_ = FUSUION_THRESHOLD;
   fusion_threshold_is_set_ = true;
   fusion_mode_ = FUSION_AUTO;
 }
@@ -92,6 +96,16 @@ void ParallelContext::set_fusion_threshold_mb(int64_t fusion_threshold) {
   fusion_threshold_mb_ = fusion_threshold;
   fusion_threshold_is_set_ = true;
   enable_all_reduce_fusion_ = true;
+}
+
+void ParallelContext::set_allgather_fusion_threshold_mb(int64_t fusion_threshold) {
+  allgather_fusion_threshold_mb_ = fusion_threshold;
+  enable_all_gather_fusion_ = true;
+}
+
+void ParallelContext::set_reducescatter_fusion_threshold_mb(int64_t fusion_threshold) {
+  reducescatter_fusion_threshold_mb_ = fusion_threshold;
+  enable_reduce_scatter_fusion_ = true;
 }
 
 bool ParallelContext::set_fusion_mode(const std::string &fusion_mode) {

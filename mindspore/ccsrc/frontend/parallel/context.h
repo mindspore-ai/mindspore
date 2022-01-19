@@ -85,6 +85,13 @@ class ParallelContext {
 
   void set_fusion_threshold_mb(int64_t fusion_threshold);
   int64_t fusion_threshold_mb() const { return fusion_threshold_mb_; }
+
+  void set_allgather_fusion_threshold_mb(int64_t allgather_fusion_threshold);
+  int64_t allgather_fusion_threshold_mb() const { return allgather_fusion_threshold_mb_; }
+
+  void set_reducescatter_fusion_threshold_mb(int64_t rs_fusion_threshold);
+  int64_t reducescatter_fusion_threshold_mb() const { return reducescatter_fusion_threshold_mb_; }
+
   bool set_fusion_mode(const std::string &fusion_mode);
   std::string get_fusion_mode() const { return fusion_mode_; }
 
@@ -123,6 +130,14 @@ class ParallelContext {
     enable_all_reduce_fusion_ = enable_all_reduce_fusion;
   }
   bool enable_all_reduce_fusion() const { return enable_all_reduce_fusion_; }
+  void set_enable_all_gather_fusion(bool enable_all_gather_fusion) {
+    enable_all_gather_fusion_ = enable_all_gather_fusion;
+  }
+  bool enable_all_gather_fusion() const { return enable_all_gather_fusion_; }
+  void set_enable_reduce_scatter_fusion(bool enable_reduce_scatter_fusion) {
+    enable_reduce_scatter_fusion_ = enable_reduce_scatter_fusion;
+  }
+  bool enable_reduce_scatter_fusion() const { return enable_reduce_scatter_fusion_; }
 
   void set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file);
   std::string strategy_ckpt_load_file() const { return strategy_ckpt_load_file_; }
@@ -170,6 +185,8 @@ class ParallelContext {
   bool loss_repeated_mean_;
   int64_t device_num_;
   int64_t fusion_threshold_mb_;
+  int64_t allgather_fusion_threshold_mb_;
+  int64_t reducescatter_fusion_threshold_mb_;  // reducescatter
   int64_t global_rank_;
   int64_t grad_accumulation_step_;
   std::string parallel_mode_;
@@ -181,6 +198,8 @@ class ParallelContext {
   bool global_rank_is_set_;
   bool parameter_broadcast_is_set_;
   bool enable_all_reduce_fusion_;
+  bool enable_all_gather_fusion_;
+  bool enable_reduce_scatter_fusion_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
   std::string strategy_ckpt_load_file_;
