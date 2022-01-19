@@ -359,7 +359,7 @@ bool ParseLogLevel(const std::string &str_level, MsLogLevel *ptr_level) {
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
     ch = ch - number_start;  // subtract ASCII code of '0', which is 48
-    if (ch >= DEBUG && ch <= EXCEPTION) {
+    if (ch >= static_cast<int>(DEBUG) && ch <= static_cast<int>(EXCEPTION)) {
       if (ptr_level != nullptr) {
         *ptr_level = static_cast<MsLogLevel>(ch);
       }
@@ -390,7 +390,7 @@ static MsLogLevel GetGlobalLogLevel() {
 void InitSubModulesLogLevel() {
   // initialize submodule's log level using global
   auto global_log_level = GetGlobalLogLevel();
-  for (int i = 0; i < NUM_SUBMODUES; ++i) {
+  for (int i = 0; i < static_cast<int>(NUM_SUBMODUES); ++i) {
     g_ms_submodule_log_levels[i] = global_log_level;
   }
 
@@ -401,7 +401,7 @@ void InitSubModulesLogLevel() {
   auto configs = parser.Parse();
   for (const auto &cfg : configs) {
     int mod_idx = -1;
-    for (int i = 0; i < NUM_SUBMODUES; ++i) {
+    for (int i = 0; i < static_cast<int>(NUM_SUBMODUES); ++i) {
       if (cfg.first == GetSubModuleName(static_cast<SubModuleId>(i))) {
         mod_idx = i;
         break;
@@ -416,7 +416,7 @@ void InitSubModulesLogLevel() {
       MS_LOG(WARNING) << "Illegal log level value " << cfg.second << " for " << cfg.first << ", ignore it.";
       continue;
     }
-    g_ms_submodule_log_levels[mod_idx] = submodule_log_level;
+    g_ms_submodule_log_levels[mod_idx] = static_cast<int>(submodule_log_level);
   }
 }
 }  // namespace mindspore
@@ -438,7 +438,7 @@ MS_CORE_API void common_log_init(void) {
   FLAGS_logbufsecs = 0;
   // Set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
-    FLAGS_v = mindspore::WARNING;
+    FLAGS_v = static_cast<int>(mindspore::WARNING);
   }
 
   // Set default log file mode to 0640

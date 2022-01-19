@@ -40,8 +40,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   auto num_split = GetValue<int64_t>(primitive->GetAttr("num_split"));
   (void)CheckAndConvertUtils::CheckInteger("num_split", num_split, kGreaterEqual, 1, prim_name);
   auto size_splits = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSizeSplits));
-  CheckAndConvertUtils::Check("num_split", num_split, kEqual, "rank of size_splits", SizeToLong(size_splits.size()),
-                              prim_name);
+  CheckAndConvertUtils::Check("num_split", num_split, kEqual, SizeToLong(size_splits.size()), prim_name);
   auto default_idx = std::find(size_splits.begin(), size_splits.end(), -1);
   if (default_idx == size_splits.end()) {
     int64_t sum_of_size_splits = 0;
@@ -50,8 +49,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
                                                {0, shape_of_split_dim}, prim_name);
       sum_of_size_splits += size_splits[LongToSize(i)];
     }
-    CheckAndConvertUtils::Check("sum of size_splits", sum_of_size_splits, kEqual, "dimension of value along split_dim",
-                                shape_of_split_dim, prim_name);
+    CheckAndConvertUtils::Check("sum of size_splits", sum_of_size_splits, kEqual, shape_of_split_dim, prim_name);
   } else {
     (void)size_splits.erase(default_idx);
     auto excessive_default_idx = std::find(size_splits.begin(), size_splits.end(), -1);

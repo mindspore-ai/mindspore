@@ -52,6 +52,9 @@ class Counter {
 
   Counter(const Counter &other) { *this = other; }
   Counter &operator=(const Counter &other) {
+    if (&other == this) {
+      return *this;
+    }
     map_.clear();
     list_ = other.list_;
     for (auto iter = list_.begin(); iter != list_.end(); ++iter) {

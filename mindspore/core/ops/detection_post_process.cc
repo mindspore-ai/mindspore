@@ -137,10 +137,8 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
   auto num_classes = GetValue<int64_t>(primitive->GetAttr(kNumClasses));
   CheckAndConvertUtils::CheckInRange("scores_shape[2]", scores_shape[2], kIncludeBoth, {num_classes, num_classes + 1},
                                      prim_name);
-  CheckAndConvertUtils::Check("boxes_shape[1]", boxes_shape[1], kEqual, "scores_shape[1]", scores_shape[1], prim_name,
-                              ValueError);
-  CheckAndConvertUtils::Check("boxes_shape[1]", boxes_shape[1], kEqual, "anchors_shape[0]", anchors_shape[0], prim_name,
-                              ValueError);
+  CheckAndConvertUtils::Check("boxes_shape[1]", boxes_shape[1], kEqual, scores_shape[1], prim_name, ValueError);
+  CheckAndConvertUtils::Check("boxes_shape[1]", boxes_shape[1], kEqual, anchors_shape[0], prim_name, ValueError);
 
   // Infer shape
   auto max_detections = GetValue<int64_t>(primitive->GetAttr(kMaxDetections));

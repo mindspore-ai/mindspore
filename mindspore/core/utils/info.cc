@@ -128,7 +128,7 @@ LocationPtr GraphDebugInfo::location() const {
   // Function may have decorator which is included in its location.
   auto loc = DebugInfo::location();
   if (deco_loc_ != nullptr && loc != nullptr) {
-    auto loc_line = loc->line() + (deco_loc_->line_end() - deco_loc_->line() + 1);
+    auto loc_line = loc->line() + ((deco_loc_->line_end() - deco_loc_->line()) + 1);
     return std::make_shared<Location>(loc->file_name(), loc_line, loc->line_end(), loc->column(), loc->column_end());
   }
   return loc;

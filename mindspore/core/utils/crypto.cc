@@ -310,7 +310,7 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
   MS_EXCEPTION_IF_NULL(key);
 
   size_t block_enc_buf_len = MAX_BLOCK_SIZE + RESERVED_BYTE_PER_BLOCK;
-  size_t encrypt_buf_len = plain_len + (plain_len + MAX_BLOCK_SIZE) / MAX_BLOCK_SIZE * RESERVED_BYTE_PER_BLOCK;
+  size_t encrypt_buf_len = plain_len + ((plain_len + MAX_BLOCK_SIZE) / MAX_BLOCK_SIZE) * RESERVED_BYTE_PER_BLOCK;
   std::vector<Byte> int_buf(sizeof(int32_t));
   std::vector<Byte> block_buf;
   std::vector<Byte> block_enc_buf(block_enc_buf_len);

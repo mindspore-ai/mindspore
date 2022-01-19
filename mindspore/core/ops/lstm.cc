@@ -41,7 +41,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
 
   (void)CheckAndConvertUtils::CheckInteger("h_shape.size()", SizeToLong(h_input_shape.size()), kEqual, shape_size,
                                            prim_name);
-  CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, "c_shape", c_input_shape, prim_name);
+  CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, c_input_shape, prim_name);
 
   int64_t num_layers = GetValue<int64_t>(primitive->GetAttr(kNumLayers));
   bool bidirectional = GetValue<bool>(primitive->GetAttr(kBidirectional));

@@ -55,7 +55,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   same_shape_args_map.insert({"accum_updata shape", accum_updata_shape});
   same_shape_args_map.insert({"grad shape", grad_shape});
   for (auto &elem : same_shape_args_map) {
-    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, "var shape", var_shape, prim_name);
+    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
   // Indices must be rank 1
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);

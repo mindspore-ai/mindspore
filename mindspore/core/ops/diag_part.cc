@@ -38,7 +38,7 @@ abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::
   std::vector<int64_t> out_shape;
   for (size_t i = 0; i < length; i++) {
     CheckAndConvertUtils::Check("input_shape[i + rank(input_shape) / 2]", input_shape[i + length], kEqual,
-                                "input_shape[i]", input_shape[i], op_name, ValueError);
+                                input_shape[i], op_name, ValueError);
     (void)out_shape.emplace_back(input_shape[i]);
   }
   return std::make_shared<abstract::Shape>(out_shape);

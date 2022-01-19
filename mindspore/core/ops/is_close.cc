@@ -40,7 +40,7 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
   auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto input_rank = SizeToLong(input_shape.size());
   auto other_rank = SizeToLong(other_shape.size());
-  CheckAndConvertUtils::Check("input rank", input_rank, kEqual, "other rank", other_rank, op_name);
+  CheckAndConvertUtils::Check("input rank", input_rank, kEqual, other_rank, op_name);
   int64_t input_size = 1, other_size = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size *= input_shape[i];

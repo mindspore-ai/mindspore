@@ -32,12 +32,12 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   int64_t x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, "index_rank", SizeToLong(index_shape.size()), prim_name);
+  CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, SizeToLong(index_shape.size()), prim_name);
   auto value_ptr = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto dim_v = GetValue<int64_t>(value_ptr);
-  CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, "negative index_rank", -x_rank, prim_name);
-  CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, "index_rank", x_rank, prim_name);
+  CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, -x_rank, prim_name);
+  CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, x_rank, prim_name);
 
   if (dim_v < 0) {
     dim_v = dim_v + x_rank;
@@ -45,7 +45,7 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   for (size_t i = 0; i < x_shape.size(); ++i) {
     if (SizeToLong(i) == dim_v) continue;
     MS_LOG(INFO) << "Check " << i << "th x shape";
-    CheckAndConvertUtils::Check("x shape", x_shape[i], kEqual, "index_rank", index_shape[i], prim_name);
+    CheckAndConvertUtils::Check("x shape", x_shape[i], kEqual, index_shape[i], prim_name);
   }
   return std::make_shared<abstract::Shape>(index_shape);
 }

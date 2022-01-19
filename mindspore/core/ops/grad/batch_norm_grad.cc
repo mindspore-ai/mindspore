@@ -56,7 +56,7 @@ AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
                                            input_num, primitive->name());
   auto y_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("BatchNorm y_backprop_shape", y_backprop_shape, kEqual, "BatchNorm x_shape", x_shape);
+  CheckAndConvertUtils::Check("BatchNorm y_backprop_shape", y_backprop_shape, kEqual, x_shape);
 
   auto dx = input_args[kInputIndex1]->Broaden();
   auto dscale = input_args[kInputIndex2]->Broaden();
