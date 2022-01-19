@@ -338,24 +338,18 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
                                     const AnfNodePtr &, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output_data);
   MS_EXCEPTION_IF_NULL(data_arrow);
-  MS_EXCEPTION_IF_NULL(context);
-
-  const auto &data = output_data->data_;
-  MS_EXCEPTION_IF_NULL(data);
   auto formal_parameter_position = data_arrow->from_output_index_;
   // Has no the ref formal parameter.
   if (ref_formal_parameter_device_tensors_.count(formal_parameter_position) == 0) {
     return;
   }
 
-  if (data->GetMutablePtr() == nullptr) {
-    std::string error_info =
-      "The address of the " + std::to_string(formal_parameter_position) + "position real parameter is nullptr.";
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
-  }
-  if (data->ref_count() != SIZE_MAX) {
-    std::string error_info = "The ref count of the " + std::to_string(formal_parameter_position) +
-                             "position real parameter is wrong:" + std::to_string(data->ref_count());
+  MS_EXCEPTION_IF_NULL(context);
+  const auto &data = output_data->data_;
+  MS_EXCEPTION_IF_NULL(data);
+  if ((data->GetMutablePtr() == nullptr) || (data->ref_count() != SIZE_MAX)) {
+    std::string error_info = "The address of the " + std::to_string(formal_parameter_position) +
+                             "position real parameter is nullptr or ref count is wrong.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
@@ -379,10 +373,11 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
 
     // Copy from the real parameter to formal parameter and insert the device tensor copy store.
     if ((device_tensor->format() != data->format()) || (device_tensor->DeviceType() != data->DeviceType())) {
-      MS_LOG(INFO) << "The formal parameter:" << formal_parameter.first->DebugString()
-                   << " input position:" << formal_parameter_position << " need copy from real parameter,"
-                   << " formal parameter format:" << device_tensor->format() << " type:" << device_tensor->DeviceType()
-                   << ", real parameter format:" << data->format() << " type:" << data->DeviceType();
+      MS_LOG(INFO) << GetAID().Name() << " the input position:" << formal_parameter_position
+                   << " copy from real parameter address:" << data << ", type:" << data->DeviceType()
+                   << ", format:" << data->format() << " to formal parameter address:" << device_tensor.get()
+                   << ", type:" << device_tensor->DeviceType() << ", format:" << device_tensor->format()
+                   << ", formal parameter name:" << formal_parameter.first->DebugString();
       const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {device_tensor->device_name(), device_tensor->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);

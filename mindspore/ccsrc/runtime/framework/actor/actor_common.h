@@ -127,7 +127,7 @@ class ActorDispatcher {
       auto actor_manager = ActorMgr::GetActorMgrRef();
       MS_EXCEPTION_IF_NULL(actor_manager);
       auto base_actor = actor_manager->GetActor(aid);
-      T *actor = dynamic_cast<T *>(base_actor.get());
+      T *actor = static_cast<T *>(base_actor.get());
       MS_EXCEPTION_IF_NULL(actor);
       (actor->*method)(arg);
     }
@@ -143,7 +143,7 @@ class ActorDispatcher {
       auto actor_manager = ActorMgr::GetActorMgrRef();
       MS_EXCEPTION_IF_NULL(actor_manager);
       auto base_actor = actor_manager->GetActor(aid);
-      T *actor = dynamic_cast<T *>(base_actor.get());
+      T *actor = static_cast<T *>(base_actor.get());
       MS_EXCEPTION_IF_NULL(actor);
       (actor->*method)(std::forward<Args1>(args)...);
     }

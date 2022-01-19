@@ -294,19 +294,25 @@ bool HasAbstractRef(const AnfNodePtr &node) {
 
 std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  // Only the auto moand node will modify the input.
-  if (!HasAbstractMonad(cnode)) {
-    return {};
-  }
 
+  bool has_monad = false;
   std::set<size_t> ref_input_indexes;
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto &input = cnode->inputs().at(i);
+    if (HasAbstractMonad(input)) {
+      has_monad = true;
+    }
     if (HasAbstractRef(input)) {
       (void)ref_input_indexes.insert(i - 1);
     }
   }
-  return ref_input_indexes;
+
+  // Only the auto moand node will modify the input.
+  if (has_monad) {
+    return ref_input_indexes;
+  } else {
+    return {};
+  }
 }
 
 std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const KernelGraphPtr &graph) {
