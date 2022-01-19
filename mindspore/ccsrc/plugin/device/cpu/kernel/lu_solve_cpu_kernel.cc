@@ -124,10 +124,8 @@ void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
   for (size_t i = 0; i < input_0_Shape[b_dim - kDimNum]; i++) {
     matrix_b.row(i).swap(matrix_b.row(*(pivots_working_ptr + i) - 1));
   }
-  MatrixXd L = matrix_A.template triangularView<Eigen::UnitLower>();
-  MatrixXd U = matrix_A.template triangularView<Eigen::Upper>();
-  MatrixXd x = L * U;
-  MatrixXd result = x.lu().solve(matrix_b);
+  MatrixXd result = matrix_A.template triangularView<Eigen::UnitLower>().solve(matrix_b);
+  result.noalias() = matrix_A.template triangularView<Eigen::Upper>().solve(result);
   for (size_t m = 0; m < b_stride; m++) {
     *(output_y + a * b_stride + m) = (T2) * (result.data() + m);
   }
