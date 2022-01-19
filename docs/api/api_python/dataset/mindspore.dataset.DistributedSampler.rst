@@ -26,3 +26,5 @@ mindspore.dataset.DistributedSampler
     - **RuntimeError** - `offset` 大于 `num_shards` 。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
+
+    .. include:: mindspore.dataset.BuiltinSampler.b.rst

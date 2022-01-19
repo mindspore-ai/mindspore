@@ -20,3 +20,5 @@ mindspore.dataset.WeightedRandomSampler
     - **ValueError：** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
+
+    .. include:: mindspore.dataset.BuiltinSampler.b.rst

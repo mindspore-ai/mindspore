@@ -124,6 +124,8 @@ mindspore.dataset.CelebADataset
 
     .. include:: mindspore.dataset.Dataset.rst
 
+    .. include:: mindspore.dataset.Dataset.d.rst
+
     .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst
