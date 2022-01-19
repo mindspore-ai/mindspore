@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
 #include <vector>
+#include "include/api/kernel.h"
 
 namespace mindspore {
 namespace nnie {
@@ -32,7 +33,7 @@ class Flags {
  public:
   Flags() = default;
   ~Flags() = default;
-  void Init();
+  int Init(const kernel::Kernel &kernel);
 
  public:
   int time_step_{1};

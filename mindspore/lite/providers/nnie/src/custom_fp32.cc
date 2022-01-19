@@ -37,15 +37,19 @@ bool CustomCPUKernel::roi_used_ = false;
 int CustomCPUKernel::Prepare() {
   if (!load_model_) {
     Flags flags;
-    flags.Init();
+    if (flags.Init(*this) != RET_OK) {
+      LOGE("Nnie config init fail.");
+      return RET_ERROR;
+    }
+
     if (nnie::NNIEManager::GetInstance()->CfgInit(flags.max_roi_num_, flags.time_step_, flags.core_ids_) != RET_OK) {
-      LOGE("Nnie init cfg fail");
+      LOGE("Nnie init cfg fail.");
       return RET_ERROR;
     }
 
     if (nnie::NNIEManager::GetInstance()->Init(reinterpret_cast<char *>(inputs_[inputs_.size() - 1].MutableData()),
                                                static_cast<int>(inputs_[inputs_.size() - 1].ElementNum()), inputs_)) {
-      LOGI("Load WK Model Fail");
+      LOGI("Load WK Model Fail.");
       return RET_OK;
     }
     load_model_ = true;
@@ -74,12 +78,12 @@ int CustomCPUKernel::Execute() {
   run_seg_ = seg_id_;
 
   if (nnie::NNIEManager::GetInstance()->FillData(&inputs_, run_seg_) != RET_OK) {
-    LOGE("Fail Fill Data");
+    LOGE("Fail Fill Data.");
     return RET_ERROR;
   }
 
   if (nnie::NNIEManager::GetInstance()->Run(&outputs_, run_seg_, outputs_shapes_) != RET_OK) {
-    LOGE("Fail WK Run");
+    LOGE("Fail WK Run.");
     return RET_ERROR;
   }
   run_seg_++;
@@ -100,7 +104,7 @@ bool GetCustomAttr(char *buf, int buf_size, const mindspore::schema::Custom *op,
       auto output_info = op->attr()->Get(i)->data();
       attr_size = static_cast<int>(output_info->size());
       if (attr_size >= buf_size) {
-        LOGE("attr size too big");
+        LOGE("attr size too big.");
         return false;
       }
       for (int j = 0; j < attr_size; j++) {
@@ -118,13 +122,13 @@ std::shared_ptr<mindspore::kernel::Kernel> CustomCreateKernel(const std::vector<
                                                               const mindspore::schema::Primitive *primitive,
                                                               const mindspore::Context *ctx) {
   if (primitive->value_type() != mindspore::schema::PrimitiveType_Custom) {
-    LOGE("Primitive type is not PrimitiveType_Custom");
+    LOGE("Primitive type is not PrimitiveType_Custom.");
     return nullptr;
   }
 
   auto op = primitive->value_as_Custom();
   if (op->attr()->size() < 1) {
-    LOGE("There are at least 1 attribute of Custom");
+    LOGE("There are at least 1 attribute of Custom.");
     return nullptr;
   }
 

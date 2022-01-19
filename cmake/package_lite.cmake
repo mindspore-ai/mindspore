@@ -493,7 +493,7 @@ elseif(PLATFORM_ARM32)
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                     if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "Hi3516D")
                         install(FILES
-                                ${TOP_DIR}/mindspore/lite/tools/benchmark/nnie/third_patry/${MICRO_NNIE_LIB_NAME}.so
+                                ${TOP_DIR}/mindspore/lite/providers/nnie/third_patry/${MICRO_NNIE_LIB_NAME}.so
                                 DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
                                 COMPONENT ${RUNTIME_COMPONENT_NAME})
                     endif()

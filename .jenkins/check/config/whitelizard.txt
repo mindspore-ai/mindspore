@@ -6,7 +6,7 @@
 mindspore/mindspore/lite/src/ops/primitive_c.cc:mindspore::lite::PrimitiveC::Create
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
-mindspore/mindspore/lite/tools/benchmark/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
+mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
 mindspore/mindspore/core/abstract/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveToEvalImplMap
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy

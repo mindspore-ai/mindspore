@@ -30,7 +30,7 @@ check_Hi35xx() {
     echo "error: to compile the runtime package of Hi35XX, you need to set HI35XX_SDK_PATH to declare the path of Hi35XX sdk."
     exit 1
   else
-    cp -r ${HI35XX_SDK_PATH}/third_patry ${BASEPATH}/mindspore/lite/tools/benchmark/nnie/
+    cp -r ${HI35XX_SDK_PATH}/third_patry ${BASEPATH}/mindspore/lite/providers/nnie
   fi
 }
 
@@ -51,12 +51,12 @@ build_lite_x86_64_jni_and_jar() {
     export MSLITE_ENABLE_RUNTIME_CONVERT=off
     # copy x86 so
     local is_train=on
-    cd ${BASEPATH}/output/tmp
+    cd ${INSTALL_PREFIX}/
     local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
 
-    cd ${BASEPATH}/output/tmp/
+    cd ${INSTALL_PREFIX}/
     rm -rf ${pkg_name}
-    tar -zxf ${BASEPATH}/output/tmp/${pkg_name}.tar.gz
+    tar -zxf ${INSTALL_PREFIX}/${pkg_name}.tar.gz
     rm -rf ${LITE_JAVA_PATH}/java/linux_x86/libs/   && mkdir -pv ${LITE_JAVA_PATH}/java/linux_x86/libs/
     rm -rf ${LITE_JAVA_PATH}/native/libs/linux_x86/ && mkdir -pv ${LITE_JAVA_PATH}/native/libs/linux_x86/
     cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/linux_x86/libs/
@@ -82,11 +82,11 @@ build_lite_x86_64_jni_and_jar() {
     fi
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-    cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
     if [[ "X$is_train" = "Xon" ]]; then
         cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
         cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-        cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+        cp ./libmindspore-lite-train-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
     fi
 
     cd ${LITE_JAVA_PATH}/java
@@ -110,7 +110,7 @@ build_lite_x86_64_jni_and_jar() {
         ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+        cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
         rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
     fi
 
@@ -126,10 +126,10 @@ build_lite_x86_64_jni_and_jar() {
            ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
       fi
     fi
-    cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+    cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
 
     # package
-    cd ${BASEPATH}/output/tmp
+    cd ${INSTALL_PREFIX}
     rm -rf ${pkg_name}.tar.gz ${pkg_name}.tar.gz.sha256
     tar czf ${pkg_name}.tar.gz ${pkg_name}
     sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
@@ -156,7 +156,7 @@ build_lite() {
     cd ${BASEPATH}/mindspore/lite/build
     write_commit_file
 
-    LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp"
+    LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}"
 
     if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
       LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DCMAKE_BUILD_TYPE=Debug/-DCMAKE_BUILD_TYPE=Release/g'`
@@ -289,7 +289,7 @@ build_lite() {
         fi
         if [[ "X$MSLITE_ENABLE_TOOLS" != "XOFF" ]]; then
           LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DMSLITE_COMPILE_TWICE=ON/-DMSLITE_COMPILE_TWICE=OFF/g'`
-          cp -r ${BASEPATH}/output/tmp/mindspore*/runtime ${BASEPATH}/mindspore/lite/tools/benchmark
+          cp -r ${INSTALL_PREFIX}/mindspore*/runtime ${BASEPATH}/mindspore/lite/providers
           echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
           cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
           cmake --build "${BASEPATH}/mindspore/lite/build" --target benchmark -j$THREAD_NUM
@@ -327,23 +327,23 @@ build_lite() {
           sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
           rm -r mindspore-lite.framework
         else
-          mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
+          mv ${INSTALL_PREFIX}/*.tar.gz* ${BASEPATH}/output/
         fi
 
         if [[ "${local_lite_platform}" == "x86_64" ]]; then
           if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]]; then
             mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
             if [[ ! "${MSLITE_ENABLE_CONVERTER}" || "${MSLITE_ENABLE_CONVERTER}"  == "ON" || "${MSLITE_ENABLE_CONVERTER}"  == "on" ]]; then
-              cp ${BASEPATH}/output/tmp/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+              cp ${INSTALL_PREFIX}/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             fi
-            cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+            cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             if [[ ! "${MSLITE_ENABLE_TRAIN}" || "${MSLITE_ENABLE_TRAIN}"  == "ON" || "${MSLITE_ENABLE_TRAIN}"  == "on" ]]; then
-              cp ${BASEPATH}/output/tmp/mindspore-lite*/runtime/third_party/libjpeg-turbo/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+              cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/third_party/libjpeg-turbo/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             fi
           fi
         fi
 
-        [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
+        rm -rf ${INSTALL_PREFIX:?}/
         if [[ "X$MSLITE_REGISTRY_DEVICE" != "X" ]] && [[ "${MSLITE_REGISTRY_DEVICE}" != "SD3403" ]]; then
           local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
           cd ${BASEPATH}/../
@@ -520,6 +520,7 @@ update_submodule()
   git submodule update --init metadef
 }
 
+INSTALL_PREFIX=${BASEPATH}/output/tmp
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
 if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
     update_submodule

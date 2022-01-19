@@ -39,11 +39,13 @@ function Run_Hi3516() {
         else
           input_files=${basepath}/../input_output/input/${model_name}.ms.bin
         fi
-        export TIME_STEP=${env_time_step}
-        export MAX_ROI_NUM=${env_max_roi_num}
+        NNIE_CONFIG_FILE=nnie_config_tmp.txt
+        echo [nnie] > ${NNIE_CONFIG_FILE}
+        echo TimeStep=${env_time_step} >> ${NNIE_CONFIG_FILE}
+        echo MaxROINum=${env_max_roi_num} >> ${NNIE_CONFIG_FILE}
 
-        echo './benchmark --modelFile='${basepath}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${basepath}'/../input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_hi3516_log_file}"
-        ./benchmark --modelFile=${basepath}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${basepath}/../input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_hi3516_log_file}"
+        echo './benchmark --modelFile='${basepath}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${basepath}'/../input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit}' --configFile='${NNIE_CONFIG_FILE} >> "${run_hi3516_log_file}"
+        ./benchmark --modelFile=${basepath}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${basepath}/../input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} --configFile=${NNIE_CONFIG_FILE}>> "${run_hi3516_log_file}"
         if [ $? = 0 ]; then
             run_result='hi3516: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else

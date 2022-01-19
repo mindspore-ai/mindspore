@@ -25,13 +25,3 @@ add_library(mslite_nnie SHARED
         ${COMMON_SRC3})
 target_link_libraries(mslite_nnie ${MSLITE_NNIE_LINK_LIB} securec)
 
-if(DEFINED HIMIX_STRIP)
-    set(NDK_STRIP ${HIMIX_STRIP})
-else()
-    set(NDK_STRIP "arm-himix200-linux-strip")
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    add_custom_command(TARGET mslite_nnie POST_BUILD COMMAND ${NDK_STRIP}
-            ${CMAKE_CURRENT_BINARY_DIR}/libmslite_nnie.so)
-endif()
