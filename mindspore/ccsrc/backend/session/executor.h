@@ -170,6 +170,7 @@ class Executor {
   bool CreateCommGroup(const std::string &group_name, const std::vector<uint32_t> &ranks);
   bool DestroyCommGroup(const std::string &group_name);
   void OnEvent(const ExecutorEvent &event);
+  void ClearDoneTasks();
 
  private:
   void RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run = false);
@@ -178,7 +179,6 @@ class Executor {
   void OnClear();
   void OnRunGraphFinished();
   void OnException();
-  void ClearDoneTasks();
 
   uint32_t device_id_;
   std::string device_name_;

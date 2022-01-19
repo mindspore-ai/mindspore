@@ -1770,6 +1770,7 @@ void MemoryRecycle() {
   mindspore::RDR::ResetRecorder();
 #endif
   ReclaimOptimizer();
+  session::ExecutorManager::Instance().ClearDoneTasks();
   ad::g_k_prims.clear();
   ad::ClearKPynativeCellStaticRes();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
