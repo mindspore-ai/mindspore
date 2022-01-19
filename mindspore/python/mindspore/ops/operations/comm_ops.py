@@ -526,7 +526,7 @@ class Broadcast(PrimitiveWithInfer):
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         Tensor, has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.

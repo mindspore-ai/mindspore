@@ -115,7 +115,8 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   (void)std::transform(res.begin(), res.end(), std::back_inserter(elems), [](int64_t n) -> AbstractBasePtr {
     return std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(n), kInt64);
   });
-
+  SetSequenceElementsUseFlags(xs, true);
+  SetSequenceElementsUseFlags(ys, true);
   return std::make_shared<AbstractTuple>(elems);
 }
 
