@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,3 +95,35 @@ def test_single_if_01():
     expect1 = Tensor(26, mstype.int32)
     expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
     control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_single_if_any():
+    """
+    Feature: compile and run control flow with if statement
+    Description: true-branch func graph refer a CNode in construct as free variable.
+                  That CNode and the inputs will be specialized before ProcessCNode
+                  of true-branch func graph, so it's no need to specialize the inputs
+                  of that CNode again if it's a specialized func graph.
+    Expectation: success
+    """
+    x = Tensor([True, True, False])
+    y = Tensor([False])
+
+    class Net(nn.Cell):
+        def __init__(self, input1, input2):
+            super().__init__()
+            self.input1 = input1
+            self.input2 = input2
+
+        def construct(self):
+            if self.input1.all() == self.input2:
+                return self.input1.any()
+            return self.input2
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(x, y)
+    output = net()
+    assert output

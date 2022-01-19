@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,18 @@ const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
 const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
 
 inline bool CanSpecializeValueNode(const AnfNodePtr &node) {
-  if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
+  if (IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
+    return true;
+  }
+  if (IsValueNode<FuncGraph>(node)) {
+    if (node->abstract() != nullptr) {
+      auto abs_func = node->abstract()->cast<FuncGraphAbstractClosurePtr>();
+      // If this funcgraph had specialized in ProcessCNode of FirstPass,
+      // then ignore it.
+      if (abs_func != nullptr && abs_func->specialized()) {
+        return false;
+      }
+    }
     return true;
   }
   return false;
@@ -410,6 +421,8 @@ void FuncGraphSpecializer::FirstPass() {
       parent->FirstPass();
       AnfNodePtr new_node = parent->GetReplicatedNode(node);
       if (new_node->isa<CNode>()) {
+        MS_LOG(INFO) << "ProcessCNode in FirstPass for " << func_graph_->ToString() << ", node: " << node->DebugString()
+                     << ", new_node: " << new_node->DebugString();
         parent->ProcessCNode(new_node->cast<CNodePtr>());
       }
       continue;
