@@ -80,12 +80,12 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
                   << ", current_context_: " << current_context_->ToString() << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
     for (size_t i = 0; i < args_abs_list.size(); ++i) {
-      auto new_sequence = dyn_cast<AbstractTuple>(args_abs_list[i]);
-      auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
+      auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
+      auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
       if (old_sequence != nullptr && new_sequence != nullptr) {
         MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
-        SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+        SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
         MS_LOG(DEBUG) << "After synchronize sequence nodes use flags, old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
       }

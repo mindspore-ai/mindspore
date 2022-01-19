@@ -400,13 +400,13 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_spec_list.size(); ++i) {
-        auto new_sequence = dyn_cast<AbstractTuple>(args_spec_list[i]);
-        auto old_sequence = dyn_cast<AbstractTuple>(iter->first[i]);
+        auto new_sequence = dyn_cast<AbstractSequence>(args_spec_list[i]);
+        auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
         if (old_sequence != nullptr && new_sequence != nullptr) {
           MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
                         << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();
-          SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+          SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
           MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
                         << ", old_sequence: " << old_sequence->ToString()
                         << ", new_sequence: " << new_sequence->ToString();

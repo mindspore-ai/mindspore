@@ -266,12 +266,14 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
     auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
+    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
+    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
 
       // Handle previous inferred value for CNode if is loaded from MindIR
       if (resource->is_load()) {
-        // If the primitive is not defined in front end,keep the inferred value loaded from MindIR.
+        // If the primitive is not defined in front end, keep the inferred value loaded from MindIR.
         auto primitive = GetCNodePrimitive(node);
         if (primitive != nullptr && abstract::GetPrimEvaluator(primitive, engine) == nullptr) {
           MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
@@ -282,6 +284,11 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
       const AbstractBasePtr &prev_inferred = node->abstract();
       // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
       if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
+        // Reset tuple/list abstract use flags.
+        if (enable_eliminate_unused_element && prev_inferred != nullptr &&
+            prev_inferred->isa<abstract::AbstractSequence>()) {
+          SetSequenceNodeElementsUseFlags(node, nullptr);
+        }
         node->set_abstract(nullptr);
         MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
       }

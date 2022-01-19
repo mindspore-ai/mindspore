@@ -161,13 +161,13 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
     static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
     static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
     if (enable_eliminate_unused_element) {
-      auto new_sequence = dyn_cast<AbstractTuple>(result->abstract());
-      auto old_sequence = dyn_cast<AbstractTuple>(iter->second->abstract());
+      auto new_sequence = dyn_cast<AbstractSequence>(result->abstract());
+      auto old_sequence = dyn_cast<AbstractSequence>(iter->second->abstract());
       if (old_sequence != nullptr && new_sequence != nullptr) {
         MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
                       << ", old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
-        SynchronizeSequenceNodesElementsUseFlags(old_sequence->sequence_nodes(), new_sequence->sequence_nodes());
+        SynchronizeSequenceElementsUseFlagsRecursively(old_sequence, new_sequence);
         MS_LOG(DEBUG) << "After synchronize sequence nodes use flags for NodeConfig: " << conf->ToString()
                       << ", old_sequence: " << old_sequence->ToString()
                       << ", new_sequence: " << new_sequence->ToString();
