@@ -86,7 +86,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     - **enable_profiling** (bool) - 此参数已弃用，将在下一版本中删除。请使用mindspore.profiler.Profiler API。
     - **profiling_options** (str) - 此参数已弃用，将在下一版本中删除。请使用mindspore.profiler.Profiler API。
     - **print_file_path** (str)：该路径用于保存打印数据。使用时 :class:`mindspore.ops.print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题, 如果未设置，将报告错误:"prompt to set the upper absolute path"。
-    - **env_config_path** (str) - 通过``context.set_context(env_config_path="./mindspore_config.json")``来设置MindSpore环境配置文件路径。
+    - **env_config_path** (str) - 通过 `context.set_context(env_config_path="./mindspore_config.json")` 来设置MindSpore环境配置文件路径。
 
       配置Running Data Recorder：
 
@@ -96,7 +96,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       内存重用：
 
       - **mem_Reuse**：表示内存复用功能是否打开。设置为True时，将打开内存复用功能。设置为False时，将关闭内存复用功能。
-        有关running data recoder和内存复用配置详细信息，请查看`配置RDR和内存复用 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
+        有关running data recoder和内存复用配置详细信息，请查看 `配置RDR和内存复用 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
 
 
     - **precompile_only** (bool) - 表示是否仅预编译网络。默认值：False。设置为True时，仅编译网络，而不执行网络。
@@ -137,7 +137,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     - **enable_sparse** (bool) - 表示是否启用稀疏特征。默认值：False。有关稀疏特征和稀疏张量的详细信息，请查看 `稀疏张量 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/tensor.html#sparse-tensor>`_。
     - **grad_for_scalar** (bool)：  表示是否获取标量梯度。默认值：False。当 `grad_for_scalar` 设置为True时，则可以导出函数的标量输入。由于后端目前不支持伸缩操作，所以该接口只支持在前端可推演的简单操作。
     - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值：False。这是一个实验特性，可能会被更改或者删除。
-    - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录：`compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
+    - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
 
     **异常：**
 

@@ -9,7 +9,7 @@ mindspore.ops.Sub
 
         out_{i} = x_{i} - y_{i}
 
-     .. note::
+    .. note::
         - 输入 `x` 和 `y` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/note/zh-CN/master/operator_list_implicit.html>`_ ，使数据类型保持一致。
         - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
         - 当输入是两个Tensor时，它们的数据类型不能同时是bool，它们的shape可以广播。
