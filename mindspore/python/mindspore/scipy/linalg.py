@@ -106,7 +106,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         A x = b
 
     Args:
-        A (Tensor): A triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
+        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
             `float32` nor `float64`, then it will be casted to :class:`mstype.float32`.
         b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
             Right-hand side matrix in :math:`A x = b`. Note that if the input tensor is neither `float32` nor `float64`,
@@ -133,12 +133,14 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
     Raises:
         TypeError: If `A` is not Tensor.
         TypeError: If `b` is not Tensor.
+        TypeError: If dtype of `A` and `b` are not the same.
         TypeError: If `trans` is not int or str.
         TypeError: If `lower` is not bool.
         TypeError: If `unit_diagonal` is not bool.
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `check_finite` is not bool.
         ValueError: If `A` is singular matrix.
+        ValueError: If the shape of `A` and `b` not match.
         ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
 
     Supported Platforms:
