@@ -27,4 +27,4 @@ mindspore.ops.Pow
     **异常：**
 
     - **TypeError** - `x` 和 `y` 不是Tensor、number.Number或bool。
-    - **ValueError** - 当`x` 和 `y` 都为Tensor时，它们的shape不相同。
+    - **ValueError** - 当 `x` 和 `y` 都为Tensor时，它们的shape不相同。
