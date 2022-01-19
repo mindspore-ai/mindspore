@@ -188,7 +188,9 @@ AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const
   auto shape = InferShape(primitive);
   auto res = abstract::MakeAbstract(shape, type);
   // Set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(input_args[input_tuple_index], true);
+  if (!input_args.empty()) {
+    SetSequenceElementsUseFlags(input_args[input_tuple_index], true);
+  }
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NeighborExchange, prim::kPrimNeighborExchange, NeighborExchangeInfer, nullptr, true);
