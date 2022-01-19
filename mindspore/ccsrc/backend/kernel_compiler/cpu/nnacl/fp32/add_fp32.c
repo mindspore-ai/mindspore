@@ -17,99 +17,53 @@
 #include "nnacl/fp32/add_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptAddCoreCalc(block_size, block_num, in0, in1, out, size, index)              \
+  do {                                                                                            \
+    MS_FLOAT_32xN(block_num) vin0_##block_num = MS_MOVN_F32(block_size, in0[0]);                  \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                         \
+      MS_FLOAT_32xN(block_num) vout = MS_ADD_F32(block_size, vin0_##block_num, vin1);             \
+      MS_ST_F32(block_size, out + index, vout);                                                   \
+    }                                                                                             \
+  } while (0)
+
 int ElementOptAdd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_AVX
-  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
-  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
-  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
-#endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-      MS_FLOAT32X8 vout = MS_ADD256_F32(vin0_opt_8, vin1);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-      MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0_opt, vin1);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddCoreCalc, in0, in1, out, size, index);
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
     }
   } else {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-      MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1_opt_8);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-      MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1_opt);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddCoreCalc, in1, in0, out, size, index);
     for (; index < size; index++) {
       out[index] = in0[index] + in1[0];
     }
   }
   return NNACL_OK;
 }
+
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptAddIntCoreCalc(block_size, block_num, in0, in1, out, size, index)           \
+  do {                                                                                            \
+    MS_INT_32xN(block_num) vin0_##block_num = MS_MOVN_EPI32(block_size, in0[0]);                  \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_INT_32xN(block_num) vin1 = MS_LD_EPI32(block_size, in1 + index);                         \
+      MS_INT_32xN(block_num) vout = MS_ADD_EPI32(block_size, vin0_##block_num, vin1);             \
+      MS_ST_EPI32(block_size, out + index, vout);                                                 \
+    }                                                                                             \
+  } while (0)
 
 int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_AVX
-  MS_INT32X8 vin0_opt_8 = MS_MOV256_EPI32(in0[0]);
-  MS_INT32X8 vin1_opt_8 = MS_MOV256_EPI32(in1[0]);
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_INT32X4 vin0_opt = MS_MOVQ_EPI32(in0[0]);
-  MS_INT32X4 vin1_opt = MS_MOVQ_EPI32(in1[0]);
-#endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_INT32X8 vin1 = MS_LD256_EPI32(in1 + index);
-      MS_INT32X8 vout = MS_ADD256_EPI32(vin0_opt_8, vin1);
-      MS_ST256_EPI32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_INT32X4 vin1 = MS_LDQ_EPI32(in1 + index);
-      MS_INT32X4 vout = MS_ADDQ_EPI32(vin0_opt, vin1);
-      MS_STQ_EPI32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddIntCoreCalc, in0, in1, out, size, index);
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
     }
   } else {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_INT32X8 vin0 = MS_LD256_EPI32(in0 + index);
-      MS_INT32X8 vout = MS_ADD256_EPI32(vin0, vin1_opt_8);
-      MS_ST256_EPI32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_INT32X4 vin0 = MS_LDQ_EPI32(in0 + index);
-      MS_INT32X4 vout = MS_ADDQ_EPI32(vin0, vin1_opt);
-      MS_STQ_EPI32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddIntCoreCalc, in1, in0, out, size, index);
     for (; index < size; index++) {
       out[index] = in0[index] + in1[0];
     }
@@ -117,51 +71,26 @@ int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const A
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptAddReluCoreCalc(block_size, block_num, in0, in1, out, size, index)                              \
+  do {                                                                                                                \
+    MS_FLOAT_32xN(block_num) vin0_##block_num = MS_MOVN_F32(block_size, in0[0]);                                      \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {                     \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                             \
+      MS_FLOAT_32xN(block_num) vout = MS_MAX_N_F32(block_size, MS_ADD_F32(block_size, vin0_##block_num, vin1), 0.0f); \
+      MS_ST_F32(block_size, out + index, vout);                                                                       \
+    }                                                                                                                 \
+  } while (0)
+
 int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_AVX
-  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
-  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
-  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
-  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
-  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
-#endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-      MS_FLOAT32X8 vout = MS_MAX256_F32(MS_ADD256_F32(vin0_opt_8, vin1), zeros_8);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-      MS_FLOAT32X4 vout = MS_MAXQ_F32(MS_ADDQ_F32(vin0_opt, vin1), zeros);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddReluCoreCalc, in0, in1, out, size, index);
     for (; index < size; index++) {
       out[index] = MSMAX(in0[0] + in1[index], 0);
     }
   } else {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-      MS_FLOAT32X8 vout = MS_MAX256_F32(MS_ADD256_F32(vin0, vin1_opt_8), zeros_8);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-      MS_FLOAT32X4 vout = MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1_opt), zeros);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddReluCoreCalc, in1, in0, out, size, index);
     for (; index < size; index++) {
       out[index] = MSMAX(in0[index] + in1[0], 0);
     }
@@ -169,58 +98,31 @@ int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, 
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptAddRelu6CoreCalc(block_size, block_num, in0, in1, out, size, index)                  \
+  do {                                                                                                     \
+    MS_FLOAT_32xN(block_num) vin0_##block_num = MS_MOVN_F32(block_size, in0[0]);                           \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {          \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                  \
+      MS_FLOAT_32xN(block_num) vout = MS_MIN_N_F32(                                                        \
+        block_size, MS_MAX_N_F32(block_size, MS_ADD_F32(block_size, vin0_##block_num, vin1), 0.0f), 6.0f); \
+      MS_ST_F32(block_size, out + index, vout);                                                            \
+    }                                                                                                      \
+  } while (0)
+
 int ElementOptAddRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_AVX
-  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
-  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
-  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
-  MS_FLOAT32X8 bounds_8 = MS_MOV256_F32(6.0f);
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
-  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
-  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
-  MS_FLOAT32X4 bounds = MS_MOVQ_F32(6.0f);
-#endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-      MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0_opt_8, vin1), zeros_8), bounds_8);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-      MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0_opt, vin1), zeros), bounds);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddRelu6CoreCalc, in0, in1, out, size, index);
     for (; index < size; index++) {
       out[index] = MSMIN(MSMAX(in0[0] + in1[index], 0), 6);
     }
   } else {
-#ifdef ENABLE_AVX
-    for (; index <= size - C8NUM; index += C8NUM) {
-      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-      MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0, vin1_opt_8), zeros_8), bounds_8);
-      MS_ST256_F32(out + index, vout);
-    }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-    for (; index <= size - C4NUM; index += C4NUM) {
-      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-      MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1_opt), zeros), bounds);
-      MS_STQ_F32(out + index, vout);
-    }
-#endif
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptAddRelu6CoreCalc, in1, in0, out, size, index);
     for (; index < size; index++) {
       out[index] = MSMIN(MSMAX(in0[index] + in1[0], 0), 6);
     }
   }
-
   return NNACL_OK;
 }
 
@@ -230,70 +132,38 @@ int BroadcastAdd(const float *in0, const float *in1, float *tile_in0, float *til
   return ElementAdd(tile_in0, tile_in1, out, size);
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementAddCoreCalc(block_size, block_num, in0, in1, out, size, index)               \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                         \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                         \
+    MS_FLOAT_32xN(block_num) vout = MS_ADD_F32(block_size, vin0, vin1);                         \
+    MS_ST_F32(block_size, out + index, vout);                                                   \
+  }
+
 int ElementAdd(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_AVX512
-  for (; index <= size - C16NUM; index += C16NUM) {
-    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
-    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
-    MS_FLOAT32X16 vout = MS_ADD512_F32(vin0, vin1);
-    MS_ST512_F32(out + index, vout);
-  }
-#endif
-#ifdef ENABLE_AVX
-  for (; index <= size - C8NUM; index += C8NUM) {
-    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-    MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1);
-    MS_ST256_F32(out + index, vout);
-  }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  for (; index <= size - C4NUM; index += C4NUM) {
-    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-    MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1);
-    MS_STQ_F32(out + index, vout);
-  }
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementAddCoreCalc, in0, in1, out, size, index);
   for (; index < size; index++) {
     out[index] = in0[index] + in1[index];
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementAddReluCoreCalc(block_size, block_num, in0, in1, out, size, index)                   \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {         \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                                 \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                 \
+    MS_FLOAT_32xN(block_num) vout = MS_MAX_N_F32(block_size, MS_ADD_F32(block_size, vin0, vin1), 0.0f); \
+    MS_ST_F32(block_size, out + index, vout);                                                           \
+  }
+
 int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_AVX512
-  MS_FLOAT32X16 zeros_16 = MS_MOV512_F32(0.0f);
-  for (; index <= size - C16NUM; index += C16NUM) {
-    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
-    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
-    MS_FLOAT32X16 vout = MS_ADD512_F32(vin0, vin1);
-    vout = MS_BLEND512_F32(zeros_16, vout, MS_CMP512_F32(vout, zeros_16, 30));  // 30: gt
-    MS_ST512_F32(out + index, vout);
-  }
-#endif
-#ifdef ENABLE_AVX
-  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
-  for (; index <= size - C8NUM; index += C8NUM) {
-    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-    MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1);
-    vout = MS_BLEND256_F32(zeros_8, vout, MS_CMP256_F32(vout, zeros_8, 30));  // 30:gt
-    MS_ST256_F32(out + index, vout);
-  }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
-  for (; index <= size - C4NUM; index += C4NUM) {
-    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-    MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1);
-    vout = MS_BLENDQ_F32(vout, zeros, MS_CMPLEQ_F32(vout, zeros));
-    MS_STQ_F32(out + index, vout);
-  }
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementAddReluCoreCalc, in0, in1, out, size, index);
   for (; index < size; index++) {
     float res = in0[index] + in1[index];
     out[index] = res > 0 ? res : 0;
@@ -301,62 +171,39 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementAddRelu6CoreCalc(block_size, block_num, in0, in1, out, size, index)                    \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {           \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                                   \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                   \
+    MS_FLOAT_32xN(block_num) vout =                                                                       \
+      MS_MIN_N_F32(block_size, MS_MAX_N_F32(block_size, MS_ADD_F32(block_size, vin0, vin1), 0.0f), 6.0f); \
+    MS_ST_F32(block_size, out + index, vout);                                                             \
+  }
+
 int ElementAddRelu6(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_AVX512
-  MS_FLOAT32X16 zeros_16 = MS_MOV512_F32(0.0f);
-  MS_FLOAT32X16 bounds_16 = MS_MOV512_F32(6.0f);
-  for (; index <= size - C16NUM; index += C16NUM) {
-    MS_FLOAT32X16 vin0 = MS_LD512_F32(in0 + index);
-    MS_FLOAT32X16 vin1 = MS_LD512_F32(in1 + index);
-    MS_FLOAT32X16 vout = MS_MIN512_F32(MS_MAX512_F32(MS_ADD512_F32(vin0, vin1), zeros_16), bounds_16);
-    MS_ST512_F32(out + index, vout);
-  }
-#endif
-#ifdef ENABLE_AVX
-  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
-  MS_FLOAT32X8 bounds_8 = MS_MOV256_F32(6.0f);
-  for (; index <= size - C8NUM; index += C8NUM) {
-    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
-    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
-    MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0, vin1), zeros_8), bounds_8);
-    MS_ST256_F32(out + index, vout);
-  }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
-  MS_FLOAT32X4 bounds = MS_MOVQ_F32(6.0f);
-  for (; index <= size - C4NUM; index += C4NUM) {
-    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
-    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
-    MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1), zeros), bounds);
-    MS_STQ_F32(out + index, vout);
-  }
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementAddRelu6CoreCalc, in0, in1, out, size, index);
   for (; index < size; index++) {
     out[index] = MSMIN(MSMAX(in0[index] + in1[index], 0), 6);
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementAddIntCoreCalc(block_size, block_num, in0, in1, out, size, index)            \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+    MS_INT_32xN(block_num) vin0 = MS_LD_EPI32(block_size, in0 + index);                         \
+    MS_INT_32xN(block_num) vin1 = MS_LD_EPI32(block_size, in1 + index);                         \
+    MS_INT_32xN(block_num) vout = MS_ADD_EPI32(block_size, vin0, vin1);                         \
+    MS_ST_EPI32(block_size, out + index, vout);                                                 \
+  }
+
 int ElementAddInt(const int *in0, const int *in1, int *out, int size) {
   int index = 0;
-#ifdef ENABLE_AVX
-  for (; index <= size - C8NUM; index += C8NUM) {
-    MS_INT32X8 vin0 = MS_LD256_EPI32(in0 + index);
-    MS_INT32X8 vin1 = MS_LD256_EPI32(in1 + index);
-    MS_INT32X8 vout = MS_ADD256_EPI32(vin0, vin1);
-    MS_ST256_EPI32(out + index, vout);
-  }
-#endif
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-  for (; index <= size - C4NUM; index += C4NUM) {
-    MS_INT32X4 vin0 = MS_LDQ_EPI32(in0 + index);
-    MS_INT32X4 vin1 = MS_LDQ_EPI32(in1 + index);
-    MS_INT32X4 vout = MS_ADDQ_EPI32(vin0, vin1);
-    MS_STQ_EPI32(out + index, vout);
-  }
-#endif
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementAddIntCoreCalc, in0, in1, out, size, index);
   for (; index < size; index++) {
     out[index] = in0[index] + in1[index];
   }
