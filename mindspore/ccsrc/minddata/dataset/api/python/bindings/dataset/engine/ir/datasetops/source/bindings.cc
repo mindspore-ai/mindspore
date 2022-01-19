@@ -67,6 +67,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
@@ -450,6 +451,20 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                         THROW_IF_ERROR(mnist->ValidateParams());
                         return mnist;
                       }));
+                }));
+
+PYBIND_REGISTER(Multi30kNode, 2, ([](const py::module *m) {
+                  (void)py::class_<Multi30kNode, DatasetNode, std::shared_ptr<Multi30kNode>>(*m, "Multi30kNode",
+                                                                                             "to create a Multi30kNode")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage,
+                                     const std::vector<std::string> &language_pair, int64_t num_samples,
+                                     int32_t shuffle, int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<Multi30kNode> multi30k =
+                        std::make_shared<Multi30kNode>(dataset_dir, usage, language_pair, num_samples,
+                                                       toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(multi30k->ValidateParams());
+                      return multi30k;
+                    }));
                 }));
 
 PYBIND_REGISTER(PennTreebankNode, 2, ([](const py::module *m) {

@@ -3636,6 +3636,75 @@ inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class Multi30kDataset
+/// \brief A source dataset that reads and parses Multi30k dataset.
+class MS_API Multi30kDataset : public Dataset {
+ public:
+  /// \brief Constructor of Multi30kDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of MULTI30K, can be "train", "test", "valid" or "all".
+  /// \param[in] language_pair List containing text and translation language.
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
+  ///     Can be any of:
+  ///     ShuffleMode::kFalse - No shuffling is performed.
+  ///     ShuffleMode::kFiles - Shuffle files only.
+  ///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
+  /// \param[in] shard_id The shard ID within num_shards. This argument should be
+  ///     specified only when num_shards is also specified.
+  /// \param[in] cache Tensor cache to use.
+  Multi30kDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                  const std::vector<std::vector<char>> &language_pair, int64_t num_samples, ShuffleMode shuffle,
+                  int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of Multi30kDataset.
+  ~Multi30kDataset() = default;
+};
+
+/// \brief Function to create a Multi30kDataset.
+/// \note The generated dataset has two columns ["text", "translation"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of MULTI30K, can be "train", "test", "valid" or "all" (default = "all").
+/// \param[in] language_pair List containing text and translation language (default = {"en", "de"}).
+/// \param[in] num_samples The number of samples to be included in the dataset
+///     (Default = 0, means all samples).
+/// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+///     Can be any of:
+///     ShuffleMode::kFalse - No shuffling is performed.
+///     ShuffleMode::kFiles - Shuffle files only.
+///     ShuffleMode::kGlobal - Shuffle both the files and samples.
+/// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+/// \param[in] shard_id The shard ID within num_shards. This argument should be
+///     specified only when num_shards is also specified (Default = 0).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the Multi30kDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_dir = "/path/to/multi30k_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Multi30k(dataset_dir, "all");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Multi30kdataset, each dictionary has keys "text" and "translation" */
+///      auto text = row["text"];
+/// \endcode
+inline std::shared_ptr<Multi30kDataset> MS_API Multi30k(const std::string &dataset_dir,
+                                                        const std::string &usage = "all",
+                                                        const std::vector<std::string> &language_pair = {"en", "de"},
+                                                        int64_t num_samples = 0,
+                                                        ShuffleMode shuffle = ShuffleMode::kGlobal,
+                                                        int32_t num_shards = 1, int32_t shard_id = 0,
+                                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Multi30kDataset>(StringToChar(dataset_dir), StringToChar(usage),
+                                           VectorStringToChar(language_pair), num_samples, shuffle, num_shards,
+                                           shard_id, cache);
+}
+
 /// \class PennTreebankDataset
 /// \brief A source dataset for reading and parsing PennTreebank dataset.
 class MS_API PennTreebankDataset : public Dataset {

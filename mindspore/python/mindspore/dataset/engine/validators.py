@@ -2527,4 +2527,41 @@ def check_en_wik9_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
-    
+
+
+def check_multi30k_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset (Multi30kDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle', 'decode']
+
+        dataset_dir = param_dict.get('dataset_dir')
+        check_dir(dataset_dir)
+
+        usage = param_dict.get('usage')
+        if usage is not None:
+            check_valid_str(usage, ["train", "test", "valid", "all"], "usage")
+
+        language_pair = param_dict.get('language_pair')
+        support_language_pair = [['en', 'de'], ['de', 'en'], ('en', 'de'), ('de', 'en')]
+        if language_pair is not None:
+            type_check(language_pair, (list, tuple), "language_pair")
+            if len(language_pair) != 2:
+                raise ValueError(
+                    "language_pair should be a list or tuple of length 2, but got {0}".format(len(language_pair)))
+            if language_pair not in support_language_pair:
+                raise ValueError(
+                    "language_pair can only be ['en', 'de'] or ['en', 'de'], but got {0}".format(language_pair))
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        return method(self, *args, **kwargs)
+
+    return new_method

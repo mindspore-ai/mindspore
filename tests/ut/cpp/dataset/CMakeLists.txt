@@ -39,6 +39,7 @@ SET(DE_UT_SRCS
         c_api_dataset_lj_speech_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
+        c_api_dataset_multi30k_test.cc
         c_api_dataset_ops_test.cc
         c_api_dataset_penn_treebank_test.cc
         c_api_dataset_photo_tour_test.cc

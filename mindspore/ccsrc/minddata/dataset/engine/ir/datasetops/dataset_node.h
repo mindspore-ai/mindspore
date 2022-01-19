@@ -105,6 +105,7 @@ constexpr char kLJSpeechNode[] = "LJSpeechDataset";
 constexpr char kManifestNode[] = "ManifestDataset";
 constexpr char kMindDataNode[] = "MindDataDataset";
 constexpr char kMnistNode[] = "MnistDataset";
+constexpr char kMulti30kNode[] = "Multi30kDataset";
 constexpr char kPennTreebankNode[] = "PennTreebankDataset";
 constexpr char kPhotoTourNode[] = "PhotoTourDataset";
 constexpr char kPlaces365Node[] = "Places365Dataset";

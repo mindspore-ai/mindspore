@@ -103,6 +103,7 @@
 #endif
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/ir/datasetops/source/multi30k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
@@ -1510,6 +1511,16 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
 }
 
 #ifndef ENABLE_ANDROID
+Multi30kDataset::Multi30kDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 const std::vector<std::vector<char>> &language_pair, int64_t num_samples,
+                                 ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto ds =
+    std::make_shared<Multi30kNode>(CharToString(dataset_dir), CharToString(usage), VectorCharToString(language_pair),
+                                   num_samples, shuffle, num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<Multi30kNode>(ds);
+}
+
 PennTreebankDataset::PennTreebankDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                                          int64_t num_samples, ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
                                          const std::shared_ptr<DatasetCache> &cache) {

@@ -30,7 +30,7 @@ from .validators import check_imdb_dataset, check_iwslt2016_dataset, check_iwslt
     check_penn_treebank_dataset, check_ag_news_dataset, check_amazon_review_dataset, check_udpos_dataset, \
     check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, \
     check_sogou_news_dataset, check_textfiledataset, check_dbpedia_dataset, check_yelp_review_dataset, \
-    check_en_wik9_dataset, check_yahoo_answers_dataset
+    check_en_wik9_dataset, check_yahoo_answers_dataset, check_multi30k_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -959,6 +959,106 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     def parse(self, children=None):
         return cde.IWSLT2017Node(self.dataset_dir, self.usage, self.language_pair, self.num_samples,
                                  self.shuffle_flag, self.num_shards, self.shard_id)
+
+
+class Multi30kDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses Multi30k dataset.
+
+    The generated dataset has two columns :py:obj:`[text, translation]`.
+    The tensor of column :py:obj:'text' is of the string type.
+    The tensor of column :py:obj:'translation' is of the string type.
+
+      Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Acceptable usages include `train`, `test, `valid` or `all` (default=`all`).
+        language_pair (str, optional): Acceptable language_pair include ['en', 'de'], ['de', 'en']
+            (default=['en', 'de']).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, `num_samples` reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If usage is not "train", "test", "valid" or "all".
+        RuntimeError: If the length of language_pair is not equal to 2.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If num_samples is less than 0.
+
+    Examples:
+        >>> multi30k_dataset_dir = "/path/to/multi30k_dataset_directory"
+        >>> data = ds.Multi30kDataset(dataset_dir=multi30k_dataset_dir, usage='all', language_pair=['de', 'en'])
+
+    About Multi30k dataset:
+
+    Multi30K is a dataset to stimulate multilingual multimodal research for English-German.
+    It is based on the Flickr30k dataset, which contains images sourced from online
+    photo-sharing websites. Each image is paired with five English descriptions, which were
+    collected from Amazon Mechanical Turk. The Multi30K dataset extends the Flickr30K
+    dataset with translated and independent German sentences.
+
+    You can unzip the dataset files into the following directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        └── multi30k_dataset_directory
+              ├── training
+              │    ├── train.de
+              │    └── train.en
+              ├── validation
+              │    ├── val.de
+              │    └── val.en
+              └── mmt16_task1_test
+                   ├── val.de
+                   └── val.en
+
+    Citation:
+
+    .. code-block::
+
+        @article{elliott-EtAl:2016:VL16,
+        author    = {{Elliott}, D. and {Frank}, S. and {Sima'an}, K. and {Specia}, L.},
+        title     = {Multi30K: Multilingual English-German Image Descriptions},
+        booktitle = {Proceedings of the 5th Workshop on Vision and Language},
+        year      = {2016},
+        pages     = {70--74},
+        year      = 2016
+        }
+    """
+
+    @check_multi30k_dataset
+    def __init__(self, dataset_dir, usage=None, language_pair=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+        self.language_pair = replace_none(language_pair, ["en", "de"])
+        self.shuffle = replace_none(shuffle, Shuffle.GLOBAL)
+
+    def parse(self, children=None):
+        return cde.Multi30kNode(self.dataset_dir, self.usage, self.language_pair, self.num_samples,
+                                self.shuffle_flag, self.num_shards, self.shard_id)
 
 
 class PennTreebankDataset(SourceDataset, TextBaseDataset):
