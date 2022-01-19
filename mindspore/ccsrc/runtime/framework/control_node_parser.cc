@@ -1523,8 +1523,8 @@ FuncGraphPtr GetFuncGraph(const abstract::AbstractBasePtr &abs, const AnfNodePtr
   if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
     auto abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
     if (!abs_func_graph->specialized()) {
-      MS_LOG(EXCEPTION) << "Unspecilized func graph abstract: " << abs_func_graph->ToString()
-                        << ", node: " << anf_node->DebugString();
+      MS_LOG(INFO) << "Unspecilized func graph abstract: " << abs_func_graph->ToString()
+                   << ", node: " << anf_node->DebugString();
     }
     return abs_func_graph->func_graph();
   }
