@@ -34,16 +34,15 @@ Round::Round(const std::string &name, bool check_timeout, size_t time_window, bo
       threshold_count_(threshold_count),
       server_num_as_threshold_(server_num_as_threshold) {}
 
-void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, const TimeOutCb &timeout_cb,
-                       const FinishIterCb &finish_iteration_cb) {
+void Round::RegisterMsgCallBack(const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
-  communicator_ = communicator;
-  MS_LOG(INFO) << "Round " << name_ << " start initialize.";
-  communicator_->RegisterMsgCallBack(name_, [&](std::shared_ptr<ps::core::MessageHandler> message) {
-    MS_ERROR_IF_NULL_WO_RET_VAL(message);
-    LaunchRoundKernel(message);
-  });
+  MS_LOG(INFO) << "Round " << name_ << " register message callback.";
+  communicator->RegisterMsgCallBack(
+    name_, [this](std::shared_ptr<ps::core::MessageHandler> message) { LaunchRoundKernel(message); });
+}
 
+void Round::Initialize(const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb) {
+  MS_LOG(INFO) << "Round " << name_ << " start initialize.";
   // Callback when the iteration is finished.
   finish_iteration_cb_ = [this, finish_iteration_cb](bool, const std::string &) -> void {
     std::string reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
@@ -61,7 +60,7 @@ void Round::Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &commun
     });
 
     // 2.Stopping timer callback which will be set to the round kernel.
-    stop_timer_cb_ = [&](void) -> void {
+    stop_timer_cb_ = [this](void) -> void {
       MS_ERROR_IF_NULL_WO_RET_VAL(iter_timer_);
       MS_LOG(INFO) << "Round " << name_ << " kernel stops its timer.";
       iter_timer_->Stop();
@@ -121,40 +120,17 @@ void Round::BindRoundKernel(const std::shared_ptr<kernel::RoundKernel> &kernel) 
 void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_ERROR_IF_NULL_WO_RET_VAL(message);
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
-  MS_ERROR_IF_NULL_WO_RET_VAL(communicator_);
 
   std::string reason = "";
   if (!IsServerAvailable(&reason)) {
-    if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
+    if (!message->SendResponse(reason.c_str(), reason.size())) {
       MS_LOG(ERROR) << "Sending response failed.";
       return;
     }
     return;
   }
-
   (void)(Iteration::GetInstance().running_round_num_++);
-  AddressPtr input = std::make_shared<Address>();
-  AddressPtr output = std::make_shared<Address>();
-  MS_ERROR_IF_NULL_WO_RET_VAL(input);
-  MS_ERROR_IF_NULL_WO_RET_VAL(output);
-  input->addr = message->data();
-  input->size = message->len();
-  bool ret = kernel_->Launch({input}, {}, {output});
-  if (output->size == 0) {
-    reason = "The output of the round " + name_ + " is empty.";
-    MS_LOG(WARNING) << reason;
-    if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
-      MS_LOG(ERROR) << "Sending response failed.";
-      return;
-    }
-    return;
-  }
-  if (!communicator_->SendResponse(output->addr, output->size, message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
-    return;
-  }
-  kernel_->Release(output);
-
+  bool ret = kernel_->Launch(reinterpret_cast<const uint8_t *>(message->data()), message->len(), message);
   // Must send response back no matter what value Launch method returns.
   if (!ret) {
     reason = "Launching round kernel of round " + name_ + " failed.";

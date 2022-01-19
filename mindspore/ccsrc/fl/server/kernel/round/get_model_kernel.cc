@@ -39,31 +39,23 @@ void GetModelKernel::InitKernel(size_t) {
   }
 }
 
-bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                            const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
-    return true;
-  }
-
-  void *req_data = inputs[0]->addr;
+bool GetModelKernel::Launch(const uint8_t *req_data, size_t len,
+                            const std::shared_ptr<ps::core::MessageHandler> &message) {
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestGetModel>()) {
     std::string reason = "The schema of RequestGetModel is invalid.";
     BuildGetModelRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(), {},
                      "");
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -76,11 +68,11 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
   if (get_model_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestGetModel.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
   GetModel(get_model_req, fbb);
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }
 

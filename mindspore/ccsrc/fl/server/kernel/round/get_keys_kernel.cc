@@ -90,19 +90,12 @@ sigVerifyResult GetKeysKernel::VerifySignature(const schema::GetExchangeKeys *ge
   return sigVerifyResult::PASSED;
 }
 
-bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                           const std::vector<AddressPtr> &outputs) {
+bool GetKeysKernel::Launch(const uint8_t *req_data, size_t len,
+                           const std::shared_ptr<ps::core::MessageHandler> &message) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Launching GetKeys kernel, ITERATION NUMBER IS : " << iter_num;
   bool response = false;
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
-    return false;
-  }
-
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  void *req_data = inputs[0]->addr;
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
@@ -111,13 +104,13 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(WARNING) << "Current amount for GetKeysKernel is enough.";
   }
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::GetExchangeKeys>()) {
     std::string reason = "The schema of GetExchangeKeys is invalid.";
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::GetExchangeKeys *get_exchange_keys_req = flatbuffers::GetRoot<schema::GetExchangeKeys>(req_data);
@@ -126,7 +119,7 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -138,7 +131,7 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
       cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, iter_num,
                                    std::to_string(CURRENT_TIME_MILLI.count()), false);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -147,7 +140,7 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
       cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
                                    std::to_string(CURRENT_TIME_MILLI.count()), false);
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -162,20 +155,20 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
                   << ". client request iteration is " << iter_client;
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
                                  std::to_string(CURRENT_TIME_MILLI.count()), false);
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   response = cipher_key_->GetKeys(iter_num, std::to_string(CURRENT_TIME_MILLI.count()), get_exchange_keys_req, fbb);
   if (!response) {
     MS_LOG(WARNING) << "get public keys not ready.";
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   if (!CountForGetKeys(fbb, get_exchange_keys_req, iter_num)) {
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  GenerateOutput(outputs, fbb->GetCurrentBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetCurrentBufferPointer(), fbb->GetSize());
   return true;
 }
 

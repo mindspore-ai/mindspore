@@ -44,8 +44,7 @@ class UpdateModelKernel : public RoundKernel {
   ~UpdateModelKernel() override = default;
 
   void InitKernel(size_t threshold_count) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs);
+  bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message);
   bool Reset() override;
 
   // In some cases, the last updateModel message means this server iteration is finished.

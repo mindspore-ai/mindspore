@@ -253,7 +253,7 @@ void HttpMessageHandler::SendResponse() {
   evhttp_send_reply(event_request_, resp_code_, "Client", resp_buf_);
 }
 
-void HttpMessageHandler::QuickResponse(int code, const unsigned char *body, size_t len) {
+void HttpMessageHandler::QuickResponse(int code, const void *body, size_t len) {
   MS_EXCEPTION_IF_NULL(event_request_);
   MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(resp_buf_);

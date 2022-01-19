@@ -226,7 +226,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
   message_meta->set_role(node_info_.node_role_);
   message_meta->set_user_cmd(command);
 
-  auto client = GetOrCreateTcpClient(rank_id);
+  auto client = GetOrCreateTcpClient(rank_id, node_role);
   MS_EXCEPTION_IF_NULL(client);
   if (!client->SendMessage(message_meta, Protos::RAW, message, len)) {
     MS_LOG(WARNING) << "Client send message failed.";
@@ -279,7 +279,7 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 
     auto &msg = msgs.at(it);
 
-    auto client = GetOrCreateTcpClient(rank_ids.at(it));
+    auto client = GetOrCreateTcpClient(rank_ids.at(it), node_role);
     MS_EXCEPTION_IF_NULL(client);
     if (!client->SendMessage(message_meta, Protos::RAW, msg.data(), msg.size())) {
       MS_LOG(WARNING) << "Client send message failed.";

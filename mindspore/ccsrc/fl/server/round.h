@@ -37,8 +37,8 @@ class Round {
                  bool check_count = false, size_t threshold_count = 8, bool server_num_as_threshold = false);
   ~Round() = default;
 
-  void Initialize(const std::shared_ptr<ps::core::CommunicatorBase> &communicator, const TimeOutCb &timeout_cb,
-                  const FinishIterCb &finish_iteration_cb);
+  void RegisterMsgCallBack(const std::shared_ptr<ps::core::CommunicatorBase> &communicator);
+  void Initialize(const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb);
 
   // Reinitialize count service and round kernel of this round after scaling operations are done.
   bool ReInitForScaling(uint32_t server_num);
@@ -101,8 +101,6 @@ class Round {
 
   // Whether this round uses the server number as its threshold count.
   bool server_num_as_threshold_;
-
-  std::shared_ptr<ps::core::CommunicatorBase> communicator_;
 
   // The round kernel for this Round.
   std::shared_ptr<kernel::RoundKernel> kernel_;
