@@ -467,11 +467,10 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
-            self._train_network = train_network
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
-                self._train_network.add_flags_recursive(is_first_iteration=True)
+                train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
-                self._train_network.compile(*inputs)
+                train_network.compile(*inputs)
                 break
 
         if valid_dataset:
@@ -483,11 +482,10 @@ class Model:
             valid_dataset_helper, eval_network = self._exec_preprocess(is_train=False,
                                                                        dataset=valid_dataset,
                                                                        dataset_sink_mode=True)
-            self._eval_network = eval_network
             if context.get_auto_parallel_context("pipeline_stages") > 1:
-                self._eval_network.add_flags_recursive(is_first_iteration=False)
+                eval_network.add_flags_recursive(is_first_iteration=False)
             for inputs in valid_dataset_helper:
-                self._eval_network.compile(*inputs)
+                eval_network.compile(*inputs)
                 break
 
     @_save_final_ckpt
@@ -610,8 +608,7 @@ class Model:
                                                                   epoch_num=epoch_num,
                                                                   dataset_helper=dataset_helper)
 
-            self._train_network = train_network
-            cb_params.train_network = self._train_network
+            cb_params.train_network = train_network
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
@@ -622,7 +619,7 @@ class Model:
                 self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
                 cb_params.train_dataset_element = inputs
                 list_callback.step_begin(run_context)
-                outputs = self._train_network(*inputs)
+                outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
                 if _is_role_pserver():
@@ -854,15 +851,14 @@ class Model:
         dataset_helper, eval_network = self._exec_preprocess(is_train=False,
                                                              dataset=valid_dataset,
                                                              dataset_sink_mode=True)
-        self._eval_network = eval_network
-        cb_params.eval_network = self._eval_network
+        cb_params.eval_network = eval_network
         cb_params.dataset_sink_mode = True
         list_callback.begin(run_context)
         list_callback.epoch_begin(run_context)
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
             list_callback.step_begin(run_context)
-            outputs = self._eval_network(*inputs)
+            outputs = eval_network(*inputs)
             cb_params.net_outputs = outputs
             list_callback.step_end(run_context)
             self._update_metrics(outputs)
@@ -1100,12 +1096,11 @@ class Model:
                                                                     dataset=train_dataset,
                                                                     dataset_sink_mode=dataset_sink_mode,
                                                                     sink_size=sink_size)
-        self._train_network = train_network
         for inputs in train_dataset_helper:
-            self._train_network.compile(*inputs)
+            train_network.compile(*inputs)
             break
         train_dataset.__model_hash__ = hash(self)
-        return self._train_network.parameter_layout_dict
+        return train_network.parameter_layout_dict
 
     def infer_predict_layout(self, *predict_data):
         """
