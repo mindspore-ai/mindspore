@@ -330,9 +330,9 @@ void CompileGraph::AddSwitch(const CNodePtr &node) {
     MS_LOG(EXCEPTION) << "Length of inputs of primitive " << prim::kPrimSwitch->name() << " is less than 4";
   }
   VectorRef args;
-  args.emplace_back(Ref(inputs[kCallKernelGraphIndex]));
-  args.emplace_back(Ref(inputs[kSwitchTrueKernelGraphIndex]));
-  args.emplace_back(Ref(inputs[kSwitchFalseKernelGraphIndex]));
+  args.emplace_back(Ref(inputs[kPartialGraphIndex]));
+  args.emplace_back(Ref(inputs[kSwitchTrueBranchIndex]));
+  args.emplace_back(Ref(inputs[kSwitchFalseBranchIndex]));
   AddInst(Instruction::kSwitch, args);
 }
 

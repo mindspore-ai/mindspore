@@ -563,18 +563,21 @@ constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kTupleGetItemInputSize = 3;
+// index define of partial
+constexpr auto kPartialMinInputSize = 2;
+constexpr auto kPartialGraphIndex = 1;
+
+// index define of switch
 constexpr auto kSwitchInputSize = 4;
-constexpr auto kFirstBranchInSwitch = 2;
-constexpr auto kCallKernelGraphIndex = 1;
-constexpr auto kSwitchTrueKernelGraphIndex = 2;
-constexpr auto kSwitchFalseKernelGraphIndex = 3;
-constexpr auto kMakeTupleInSwitchLayerIndex = 2;
+constexpr auto kSwitchTrueBranchIndex = 2;
+constexpr auto kSwitchFalseBranchIndex = 3;
+constexpr auto kSwitchBranchesNum = 2;
+
+// index define of switch_layer
 constexpr auto kSwitchLayerInputSize = 3;
-// index define of control depend
-constexpr auto kControlDependPriorIndex = 1;
-constexpr auto kControlDependBehindIndex = 2;
-constexpr auto kControlDependInputSize = 3;
-constexpr auto kControlDependMode = "depend_mode";
+constexpr auto kSwitchLayerSelectIndex = 1;
+constexpr auto kSwitchLayerBranchesIndex = 2;
+
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
