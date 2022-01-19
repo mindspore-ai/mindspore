@@ -61,8 +61,9 @@ class AkgKernelPool {
  public:
   class LockMng {
    public:
-    explicit LockMng(int32_t fd) {
+    explicit LockMng(const int32_t fd, const char *function, const uint32_t line) {
       fd_ = fd;
+      calling_position_ = std::string(function) + ":" + std::to_string(line);
       locked_ = TryLock();
     }
 
@@ -79,6 +80,7 @@ class AkgKernelPool {
     void Unlock() const;
 
     int32_t fd_{-1};
+    std::string calling_position_;
   };
 
  public:
