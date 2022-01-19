@@ -413,7 +413,7 @@ void GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info, const std::vector<t
 
   // Random effect operator
   if (is_random_effect_op) {
-    buf << "_" << GetId(op_prim->GetPyObj());
+    buf << "_" << std::to_string(op_prim->id());
   }
 
   graph_info = buf.str();
