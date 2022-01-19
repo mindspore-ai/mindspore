@@ -112,6 +112,7 @@ constexpr auto kTranspose = "Transpose";
 constexpr auto kSplitV = "SplitV";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 constexpr auto kReshape = "Reshape";
+constexpr auto kLstsq = "Lstsq";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -307,6 +308,7 @@ inline const PrimitivePtr kPrimReal = std::make_shared<Primitive>(kReal);
 inline const PrimitivePtr kPrimImag = std::make_shared<Primitive>(kImag);
 inline const PrimitivePtr kPrimConj = std::make_shared<Primitive>(kConj);
 inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive>("ExtractVolumePatches");
+inline const PrimitivePtr kPrimLstsq = std::make_shared<Primitive>(kLstsq);
 
 // NN
 inline const PrimitivePtr kPrimCeLU = std::make_shared<Primitive>("CeLU");

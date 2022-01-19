@@ -6780,3 +6780,63 @@ class ExtractVolumePatches(Primitive):
         validator.check_value_type("padding_dtype", padding, (str), self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
+
+
+class Lstsq(Primitive):
+    r"""
+    Computes the solutions of the least squares and minimum norm problems of full-rank
+    matrix `x` of size :math:`(m \times n)` and matrix `a` of size :math:`(m \times k)`.
+
+    If :math:`m \geq n`, `lstsq` solves the least-squares problem:
+
+    .. math::
+
+       \begin{array}{ll}
+       \min_y & \|xy-a\|_2.
+       \end{array}
+
+    If :math:`m < n`, `lstsq` solves the least-norm problem:
+
+    .. math::
+
+       \begin{array}{llll}
+       \min_y & \|y\|_2 & \text{subject to} & xy = a.
+       \end{array}
+
+    Inputs:
+        - **x** (Tensor) - The m by n matrix `x`. The input tensor whose data type is float16, float32 or float64.
+        - **a** (Tensor) - The m by k matrix `a`. The input tensor whose data type is float16, float32 or float64.
+
+    Outputs:
+        Tensor, the least squares or minimum norm problems solution, which has shape :math:`(n \times k)`.
+        The data type is the same with `x`.
+
+    Raises:
+        TypeError: If the input `x` or `a` is not a Tensor.
+        TypeError: If dtype of `x` or `a` is not one of: float16, float32, float64.
+        TypeError: If the dtypes of `x` and `a` are not the same.
+        ValueError: If the dimension of `x` is not equal to 2.
+        ValueError: If the dimension of `a` is not equal to 2 or 1.
+        ValueError: If the length of x_dims[0] is not equal to the length of a_dims[0].
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[2,1,5],[3,5,1],[1,1,1]]),mindspore.float32)
+        >>> a = Tensor(np.array([[10,5],[15,8],[7,4]]),mindspore.float32)
+        >>> op = ops.Lstsq()
+        >>> output = op(x, a)
+        >>> print(output)
+        [[17.000002  11.000002 ]
+         [-6.5000005 -4.500001 ]
+         [-3.500002  -2.5000017]]
+    """
+
+    @prim_attr_register
+    def __init__(self, fast=True, l2_regularizer=0.0):
+        """Initialize Lstsq"""
+        validator.check_type_name("fast", fast, True, self.name)
+        validator.check_type_name("l2_regularizer", l2_regularizer, 0.0, self.name)
+        self.fast = fast
+        self.l2_regularizer = l2_regularizer
