@@ -144,24 +144,38 @@ class Gamma(PrimitiveWithInfer):
     .. math::
         \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}}
 
+    .. note::
+        - Random seed: A set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same, the random
+          number obtained will not change.
+        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with a randomly generated seed.
+        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
+          and splices with the operator-level random seed.
+        - Both Global random and operator-level random seed are set: The global random seed will splice with the
+          operator-level random seed.
+
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
+        final generated random number, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-        - **alpha** (Tensor) - The α distribution parameter. It must be greater than 0.
-          It is also known as the shape parameter with float32 data type.
-        - **beta** (Tensor) - The β distribution parameter. It must be greater than 0.
-          It is also known as the inverse scale parameter with float32 data type.
+        - **alpha** (Tensor) - α is the shape parameter of Gamma distribution, which mainly determines the shape of
+          the curve. It must be greater than 0. The data type is float32.
+        - **beta** (Tensor) - β is the inverse scale parameter of the Gamma distribution, which mainly determines how
+          steep the curve is. It must be greater than 0. The data type is float32.
 
     Outputs:
-        Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of alpha and beta.
+        Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of `alpha` and `beta`.
         The dtype is float32.
 
     Raises:
-        TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If neither `alpha` nor `beta` is a Tensor.
+        TypeError: If data type of `seed` or `seed2` is not int.
+        TypeError: If `alpha` or `beta` is not a Tensor.
+        TypeError: If data type of `alpha` or `beta` is not float32.
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
@@ -346,20 +360,30 @@ class UniformInt(PrimitiveWithInfer):
 
 class UniformReal(StandardNormal):
     r"""
-    Produces random floating-point values i, uniformly distributed to the interval [0, 1).
+    Produces random floating-point values, uniformly distributed to the interval [0, 1).
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
+        final generated random number, must be non-negative. Default: 0.
+
+    .. note::
+        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with a randomly generated seed.
+        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
+          and splices with the operator-level random seed.
+        - Both Global random and operator-level random seed are set: The global random seed will splice with the
+          operator-level random seed.
 
     Inputs:
-        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+        - **shape** (tuple) - The shape of tensor to be generated. Only constant value is allowed.
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Raises:
-        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `seed` or `seed2` is not an int.
         TypeError: If `shape` is not a tuple.
         ValueError: If `shape` is not a constant value.
 

@@ -182,29 +182,34 @@ class Add(_MathBinaryOp):
     r"""
     Adds two input tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
     .. math::
 
         out_{i} = x_{i} + y_{i}
 
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
+        Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1534,14 +1539,16 @@ class AddN(Primitive):
     All input tensors must have the same shape.
 
     Inputs:
-        - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
-          is made up of multiple tensors whose dtype is number to be added together.
+        - **x** (Union(tuple[Tensor], list[Tensor])) - A tuple or list composed of Tensor, the data type is
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
 
     Outputs:
-        Tensor, has the same shape and dtype as each entry of the `x`.
+        Tensor, has the same shape and dtype as each Tensor of `x`.
 
     Raises:
         TypeError: If `x` is neither tuple nor list.
+        ValueError: If there are Tensors with different shapes in `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1828,29 +1835,34 @@ class Sub(_MathBinaryOp):
     """
     Subtracts the second input tensor from the first input tensor element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
     .. math::
 
         out_{i} = x_{i} - y_{i}
 
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor, or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not a Number or a bool or a Tensor.
+        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1878,29 +1890,33 @@ class Mul(_MathBinaryOp):
     """
     Multiplies two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
     .. math::
 
         out_{i} = x_{i} * y_{i}
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
         ValueError: If `x` and `y` are not the same shape.
 
     Supported Platforms:
@@ -2145,31 +2161,37 @@ class Reciprocal(PrimitiveWithInfer):
 
 class Pow(Primitive):
     """
-    Computes a tensor to the power of the second input.
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    Calculates the `y` power of each element in `x`.
 
     .. math::
 
         out_{i} = x_{i} ^{ y_{i}}
 
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number or bool.
+        ValueError: If `x` and `y` are not the same shape.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2448,13 +2470,15 @@ class Log(PrimitiveWithInfer):
         y_i = log_e(x_i)
 
     .. warning::
-        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy
-        is subject to change.
+        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        be affacted.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The data type must be float16, float32 or float64. The value must be
-          greater than 0. :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should
-          be less than 8.
+        - **x** (Tensor) - Input Tensor of any dimension. The value must be greater than 0.
+
+    .. note::
+        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
+        input Tensor on the CPU should be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2540,8 +2564,8 @@ class Erf(Primitive):
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - Input Tensor of Gaussian error function. Its dimension must be less than 8 and
+        data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2763,32 +2787,35 @@ class Div(_MathBinaryOp):
     r"""
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
     .. math::
 
         out_{i} = \frac{x_i}{y_i}
+
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
+        Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+        TypeError: If neither `x` nor `y` is a Tensor.
+        TypeError: If data types of `x` and `y` are both Tensor with bool_.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2802,8 +2829,8 @@ class Div(_MathBinaryOp):
         >>> print(output)
         [-1.3333334  2.5        2.        ]
         >>> # case 2 : different data type and shape of the two inputs
-        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.int32)
-        >>> y = Tensor(2, mindspore.float32)
+        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
+        >>> y = Tensor(2, mindspore.int32)
         >>> output = div(x, y)
         >>> print(output)
         [-2.  2.5  3.]
@@ -3937,13 +3964,6 @@ class LessEqual(_LogicBinaryOp):
     r"""
     Computes the boolean value of :math:`x <= y` element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be both bool , and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
     .. math::
 
         out_{i} =\begin{cases}
@@ -3951,14 +3971,26 @@ class LessEqual(_LogicBinaryOp):
             & \text{False,   if } x_{i}>y_{i}
             \end{cases}
 
+    .. note::
+        - Inputs of `x` and `y` comply with the
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors,
+          dtypes of them cannot be both bool , and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
         TypeError: If neither `x` nor `y` is a Tensor.
@@ -5303,14 +5335,19 @@ class Invert(Primitive):
 
 class Eps(PrimitiveWithInfer):
     """
-    Creates a tensor filled with minimum value in `x` dtype.
+    Create a Tensor with the same data type and shape as input, and the element value is the minimum value that the
+    corresponding data type can be expressed.
 
     Inputs:
-        - **x** (Tensor) - Input tensor. The data type must be float16, float32 or float64.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can be expressed.
+        The data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, has the same type and shape as `x`, but filled with `x` dtype minimum val.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If data type of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

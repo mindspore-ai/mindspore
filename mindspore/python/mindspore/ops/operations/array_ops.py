@@ -451,7 +451,7 @@ class IsInstance(PrimitiveWithInfer):
 
 class Reshape(PrimitiveWithInfer):
     """
-    Reshapes the input tensor with the same values based on a given shape tuple.
+    Rearranges the input Tensor based on the given shape.
 
     The 'input_shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
     the number of elements in the input.
@@ -1221,12 +1221,12 @@ class TruncatedNormal(PrimitiveWithInfer):
 
 class Size(PrimitiveWithInfer):
     r"""
-    Returns the size of a Tensor.
-
-    Returns an int scalar representing the elements' size of input, the total number of elements in the tensor.
+    Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
+    Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+        - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -1398,13 +1398,10 @@ class Zeros(Primitive):
 
 class OnesLike(Primitive):
     """
-    Creates a new tensor. The values of all elements are 1.
-
-    Returns a tensor of ones with the same shape and type as the input.
+    Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **input_x** (Tensor) - Tensor of any dimension.
 
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
@@ -1431,13 +1428,10 @@ class OnesLike(Primitive):
 
 class ZerosLike(Primitive):
     """
-    Creates a new tensor. All elements value are 0.
-
-    Returns a tensor of zeros with the same shape and data type as the input tensor.
+    Returns a Tensor with a value of 0 and its shape and data type is the same as the input.
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor. The data type is int32, int64, float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **input_x** (Tensor) - Input Tensor of any dimension. The data type is int32, int64, float16 or float32.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
@@ -1936,35 +1930,34 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
 class Tile(PrimitiveWithInfer):
     r"""
-    Replicates a tensor with given multiples times.
+    Replicates an input tensor with given multiples times.
 
     Creates a new tensor by replicating `input_x` `multiples` times. The i'th dimension of
-    output tensor has `input_x.shape(i) * multiples[i]` elements, and the values of `input_x`
+    output tensor has `input_x.shape[i] * multiples[i]` elements, and the values of `input_x`
     are replicated `multiples[i]` times along the i'th dimension.
 
     Note:
         The length of `multiples` must be greater or equal to the length of dimension in `input_x`.
 
     Inputs:
-        - **input_x** (Tensor) - 1-D or higher Tensor. Set the shape of input tensor as
+        - **input_x** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_S)`.
 
-        - **multiples** (tuple[int]) - The input tuple is constructed by multiple
-          integers, i.e., :math:`(y_1, y_2, ..., y_S)`. The length of `multiples`
-          cannot be smaller than the length of the shape of `input_x`.
+        - **multiples** (tuple[int]) - The parameter that specifies the number of replications,
+          the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
+          The length of `multiples` cannot be smaller than the length of the shape of `input_x`.
           Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same data type as the `input_x`.
+        Tensor, has the same data type as the `input_x`. Suppose the length of `multiples` is `d`,
+        the dimension of `input_x` is `input_x.dim`, and the shape of `input_x` is :math:`(x_1, x_2, ..., x_S)`.
 
-        - If the length of `multiples` is the same as the length of shape of `input_x`,
-          then the shape of their corresponding positions can be multiplied, and
+        - If `input_x.dim = d`, then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(x_1*y_1, x_2*y_2, ..., x_S*y_R)`.
-        - If the length of `multiples` is larger than the length of shape of `input_x`,
-          fill in multiple 1 in the length of the shape of `input_x` until their lengths are consistent.
-          Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
-          then the shape of their corresponding positions can be multiplied, and
-          the shape of Outputs is :math:`(1*y_1, ..., x_S*y_R)`.
+        - If `input_x.dim < d`, fill in multiple 1 in the length of the shape of `input_x` until their
+          lengths are consistent. Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
+          then the shape of their corresponding positions can be multiplied, and the shape of Outputs is
+          :math:`(1*y_1, ..., x_S*y_R)`.
 
     Raises:
         TypeError: If `multiples` is not a tuple or its elements are not all int.
