@@ -26,10 +26,140 @@ After declaring the dataset object, you can further apply dataset operations
 import mindspore._c_dataengine as cde
 
 from .datasets import AudioBaseDataset, MappableDataset
-from .validators import check_lj_speech_dataset, check_yes_no_dataset, check_speech_commands_dataset, \
-    check_tedlium_dataset
+from .validators import check_gtzan_dataset, check_lj_speech_dataset, check_speech_commands_dataset, check_tedlium_dataset, \
+    check_yes_no_dataset
 
 from ..core.validator_helpers import replace_none
+
+
+class GTZANDataset(MappableDataset, AudioBaseDataset):
+    """
+    A source dataset that reads and parses GTZAN dataset.
+
+    The generated dataset has three columns: :py:obj:`["waveform", "sample_rate", "label"]`.
+    The tensor of column :py:obj:`waveform` is of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`label` is of a scalar of string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be "train", "valid", "test" or "all"
+            (default=None, all samples).
+        num_samples (int, optional): The number of audio to be included in the dataset
+            (default=None, will read all audio).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If source raises an exception during execution.
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - GTZAN doesn't support PKSampler.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> gtzan_dataset_directory = "/path/to/gtzan_dataset_directory"
+        >>>
+        >>> # 1) Read 500 samples (audio files) in gtzan_dataset_directory
+        >>> dataset = ds.GTZANDataset(gtzan_dataset_directory, usage="all", num_samples=500)
+        >>>
+        >>> # 2) Read all samples (audio files) in gtzan_dataset_directory
+        >>> dataset = ds.GTZANDataset(gtzan_dataset_directory)
+
+    About GTZAN dataset:
+
+    The GTZAN dataset appears in at least 100 published works and is the most commonly used
+    public dataset for evaluation in machine listening research for music genre recognition.
+    It consists of 1000 audio tracks, each of which is 30 seconds long. It contains 10 genres (blues,
+    classical, country, disco, hiphop, jazz, metal, pop, reggae and reggae), each of which is
+    represented by 100 tracks. The tracks are all 22050Hz Mono 16-bit audio files in .wav format.
+
+    You can construct the following directory structure from GTZAN dataset and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── gtzan_dataset_directory
+            ├── blues
+            │    ├──blues.00000.wav
+            │    ├──blues.00001.wav
+            │    ├──blues.00002.wav
+            │    ├──...
+            ├── disco
+            │    ├──disco.00000.wav
+            │    ├──disco.00001.wav
+            │    ├──disco.00002.wav
+            │    └──...
+            └──...
+
+    Citation:
+
+    .. code-block::
+
+        @misc{tzanetakis_essl_cook_2001,
+        author    = "Tzanetakis, George and Essl, Georg and Cook, Perry",
+        title     = "Automatic Musical Genre Classification Of Audio Signals",
+        url       = "http://ismir2001.ismir.net/pdf/tzanetakis.pdf",
+        publisher = "The International Society for Music Information Retrieval",
+        year      = "2001"
+        }
+    """
+
+    @check_gtzan_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.GTZANNode(self.dataset_dir, self.usage, self.sampler)
 
 
 class LJSpeechDataset(MappableDataset, AudioBaseDataset):

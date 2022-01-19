@@ -92,6 +92,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/gtzan_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/imdb_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
@@ -1232,6 +1233,27 @@ FlickrDataset::FlickrDataset(const std::vector<char> &dataset_dir, const std::ve
   auto sampler_obj = sampler.get().Parse();
   auto ds =
     std::make_shared<FlickrNode>(CharToString(dataset_dir), CharToString(annotation_file), decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+GTZANDataset::GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<GTZANNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+GTZANDataset::GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<GTZANNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+GTZANDataset::GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                           const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<GTZANNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

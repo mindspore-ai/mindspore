@@ -43,6 +43,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/gtzan_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/imdb_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
@@ -321,6 +322,17 @@ PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(gen->ValidateParams());
                       return gen;
                     }));
+                }));
+
+PYBIND_REGISTER(GTZANNode, 2, ([](const py::module *m) {
+                  (void)py::class_<GTZANNode, DatasetNode, std::shared_ptr<GTZANNode>>(*m, "GTZANNode",
+                                                                                       "to create a GTZANNode")
+                    .def(
+                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler) {
+                        auto gtzan = std::make_shared<GTZANNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                        THROW_IF_ERROR(gtzan->ValidateParams());
+                        return gtzan;
+                      }));
                 }));
 
 PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {

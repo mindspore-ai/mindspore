@@ -32,6 +32,7 @@ SET(DE_UT_SRCS
         c_api_dataset_fake_image_test.cc
         c_api_dataset_fashion_mnist_test.cc
         c_api_dataset_flickr_test.cc
+        c_api_dataset_gtzan_test.cc
         c_api_dataset_imdb_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_iwslt_test.cc

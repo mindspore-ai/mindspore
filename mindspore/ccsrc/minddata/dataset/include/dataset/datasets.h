@@ -2647,6 +2647,93 @@ inline std::shared_ptr<FlickrDataset> MS_API Flickr(const std::string &dataset_d
                                          cache);
 }
 
+/// \class GTZANDataset
+/// \brief A source dataset for reading and parsing GTZAN dataset.
+class MS_API GTZANDataset : public Dataset {
+ public:
+  /// \brief Constructor of GTZANDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all" (default = "all").
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of GTZANDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of GTZANDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  GTZANDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of GTZANDataset.
+  ~GTZANDataset() = default;
+};
+
+/// \brief Function to create a GTZANDataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the GTZANDataset.
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/gtzan_dataset_directory";
+///      std::shared_ptr<Dataset> ds =
+///          GTZANDataset(folder_path, usage = "all", std::make_shared<RandomSampler>(false, 10));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In GTZAN dataset, each data dictionary has keys "waveform", "sample_rate" and "label" */
+///      auto waveform = row["waveform"];
+/// \endcode
+inline std::shared_ptr<GTZANDataset> MS_API
+GTZAN(const std::string &dataset_dir, const std::string &usage = "all",
+      const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+      const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<GTZANDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a GTZANDataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the GTZANDataset.
+inline std::shared_ptr<GTZANDataset> MS_API GTZAN(const std::string &dataset_dir, const std::string &usage,
+                                                  const Sampler *sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<GTZANDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a GTZANDataset.
+/// \note The generated dataset has three columns ["waveform", "sample_rate", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of GTZAN, can be "train", "valid", "test", or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the GTZANDataset.
+inline std::shared_ptr<GTZANDataset> MS_API GTZAN(const std::string &dataset_dir, const std::string &usage,
+                                                  const std::reference_wrapper<Sampler> sampler,
+                                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<GTZANDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class ImageFolderDataset
 /// \brief A source dataset that reads images from a tree of directories.
 class MS_API ImageFolderDataset : public Dataset {
