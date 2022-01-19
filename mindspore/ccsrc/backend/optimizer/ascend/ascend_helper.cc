@@ -96,8 +96,11 @@ void SetGroupAttr(const ParameterPtr &param, const AnfNodePtr &out_trans, const 
   // not set with groups attr and cannot be eliminated in EliminateReduntantOp. So to solve this problem,
   // set the groups and fracz_group attr here for these paired TransData nodes.
   if (fz_group > 1) {
-    AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), out_trans);
-    AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), out_trans);
+    if (out_trans->isa<CNode>()) {
+      // if has transdata after parameter
+      AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), out_trans);
+      AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), out_trans);
+    }
     if (dest_format == kOpFormat_FRAC_Z) {
       AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(fz_group), in_trans);
       AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(fz_group), in_trans);
