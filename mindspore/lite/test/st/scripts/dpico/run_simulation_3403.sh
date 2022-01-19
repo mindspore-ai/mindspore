@@ -234,9 +234,11 @@ dpico_atc_path=${hisi_sdk}/sd3403_sdk/dpico_atc_adapter
 x86_path=${release_path}/centos_x86
 
 # Set version
-file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
+cd ${x86_path}
+file_name=$(ls *-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
+cd -
 
 # Set filepath
 models_caffe_3403_config=${basepath}/../config/models_caffe_3403_simulation.cfg
