@@ -33,5 +33,20 @@ MS_REG_GPU_KERNEL_TWO(TopK,
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeInt32),
                       TopKGpuKernel, half, int)
+MS_REG_GPU_KERNEL_TWO(TopK,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      TopKGpuKernel, float, int)
+
+MS_REG_GPU_KERNEL_TWO(TopK,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      TopKGpuKernel, half, int)
 }  // namespace kernel
 }  // namespace mindspore
