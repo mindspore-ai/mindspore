@@ -296,8 +296,8 @@ class InlinerBase : public AnfVisitor {
   }
 
   bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) {
-    auto true_branch_abstract = sw_inputs[kSwitchTrueKernelGraphIndex]->abstract();
-    auto false_branch_abstract = sw_inputs[kSwitchFalseKernelGraphIndex]->abstract();
+    auto true_branch_abstract = sw_inputs[kSwitchTrueBranchIndex]->abstract();
+    auto false_branch_abstract = sw_inputs[kSwitchFalseBranchIndex]->abstract();
     // When branch has dead node or poly node, do not perform inline.
     if (CheckSwitchBranchAbstract(true_branch_abstract) || CheckSwitchBranchAbstract(false_branch_abstract)) {
       return true;

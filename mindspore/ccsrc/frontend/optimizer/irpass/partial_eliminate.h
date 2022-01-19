@@ -31,6 +31,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+const auto kMinInputSizeOfCallWithArgs = 2;
 // {{prim::kPrimPartial, X, Xs}, Ys} -> {X, Xs, Ys} or {X, Ys, Xs}
 class PartialEliminater : public AnfVisitor {
  public:
@@ -99,7 +100,7 @@ class PartialEliminater : public AnfVisitor {
 
     auto &inputs = node->cast<CNodePtr>()->inputs();
     // {prim::kPrimPartial, X, Xs}
-    if (inputs.size() < 2) {
+    if (inputs.size() <= 1) {
       return;
     }
 
@@ -127,8 +128,8 @@ class ChoicePartialEliminater : public AnfVisitor {
     }
 
     auto &inputs = node->cast<CNodePtr>()->inputs();
-    // {prim::kPrimPartial, G, Xs}
-    if (inputs.size() < 3) {
+    // {prim::kPrimPartial, G}
+    if (inputs.size() < kPartialMinInputSize) {
       MS_LOG(EXCEPTION) << "Node should be Partial CNode, but: " << node->DebugString();
     }
     if (IsValueNode<FuncGraph>(inputs[1])) {
@@ -218,6 +219,9 @@ class ChoicePartialEliminater : public AnfVisitor {
         if (new_params[j] == nullptr) {
           TraceGuard guard(std::make_shared<TraceCopy>(anchor_fg_params[j]->debug_info()));
           ParameterPtr param = std::make_shared<Parameter>(another_fg);
+          auto new_abs =
+            anchor_fg_params[j]->abstract() == nullptr ? nullptr : anchor_fg_params[j]->abstract()->Clone();
+          param->set_abstract(new_abs);
           new_params[j] = param;
         }
       }
@@ -226,6 +230,8 @@ class ChoicePartialEliminater : public AnfVisitor {
         if (new_params[anchor_args_size + j] == nullptr) {
           TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[j]->debug_info()));
           ParameterPtr param = std::make_shared<Parameter>(another_fg);
+          auto new_abs = extra_inputs[j]->abstract() == nullptr ? nullptr : extra_inputs[j]->abstract()->Clone();
+          param->set_abstract(new_abs);
           new_params[anchor_args_size + j] = param;
         }
       }
@@ -243,6 +249,8 @@ class ChoicePartialEliminater : public AnfVisitor {
     for (size_t i = 0; i < extra_inputs.size(); ++i) {
       TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[i]->debug_info()));
       ParameterPtr param = std::make_shared<Parameter>(anchor_fg);
+      auto new_abs = extra_inputs[i]->abstract() == nullptr ? nullptr : extra_inputs[i]->abstract()->Clone();
+      param->set_abstract(new_abs);
       new_params.push_back(param);
     }
     // Reorder Zs_ to last;
@@ -313,19 +321,19 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
       return nullptr;
     }
     auto input0_cnode = cnode->input(0)->cast<CNodePtr>();
-    if (input0_cnode->size() != 4) {
+    if (input0_cnode->size() != kSwitchInputSize) {
       return nullptr;
     }
 
     fg_list_.clear();
     args_list_.clear();
-    auto &maybe_partial_1 = input0_cnode->input(2);
+    auto &maybe_partial_1 = input0_cnode->input(kSwitchTrueBranchIndex);
     Visit(maybe_partial_1);
-    auto &maybe_partial_2 = input0_cnode->input(3);
+    auto &maybe_partial_2 = input0_cnode->input(kSwitchFalseBranchIndex);
     Visit(maybe_partial_2);
 
     // Either one should be {Partial, G, X}
-    if (fg_list_.size() != 2 && args_list_.size() != 2) {
+    if (fg_list_.size() != kSwitchBranchesNum && args_list_.size() != kSwitchBranchesNum) {
       return nullptr;
     }
     // Should not continue;
@@ -360,11 +368,12 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
     TraceGuard guard1(std::make_shared<TraceCopy>(input0_cnode->debug_info()));
     // {Switch, cond, G1, G2}
     auto switch_cnode = old_cnode->func_graph()->NewCNode({input0_cnode->input(0), input0_cnode->input(1), G1, G2});
+    switch_cnode->set_abstract(input0_cnode->abstract());
     AnfNodePtrList args{switch_cnode};
     (void)std::copy(partial_args.begin(), partial_args.end(), std::back_inserter(args));
     (void)std::copy(extra_args.begin(), extra_args.end(), std::back_inserter(args));
     // Zs
-    if (old_cnode->size() >= 2) {
+    if (old_cnode->size() >= kMinInputSizeOfCallWithArgs) {
       (void)std::copy(old_cnode->inputs().begin() + 1, old_cnode->inputs().end(), std::back_inserter(args));
     }
     TraceGuard guard2(std::make_shared<TraceCopy>(old_cnode->debug_info()));
@@ -393,14 +402,14 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
     }
     auto switch_layer_cnode = cnode->input(0)->cast<CNodePtr>();
     // {SwitchLayer, cond, MakeTuple{}}
-    if (switch_layer_cnode->size() != 3) {
+    if (switch_layer_cnode->size() != kSwitchLayerInputSize) {
       return nullptr;
     }
-    if (!IsPrimitiveCNode(switch_layer_cnode->input(2), prim::kPrimMakeTuple)) {
+    if (!IsPrimitiveCNode(switch_layer_cnode->input(kSwitchLayerBranchesIndex), prim::kPrimMakeTuple)) {
       return nullptr;
     }
-    auto make_tuple_cnode = switch_layer_cnode->input(2)->cast<CNodePtr>();
-    if (make_tuple_cnode->size() < 2) {
+    auto make_tuple_cnode = switch_layer_cnode->input(kSwitchLayerBranchesIndex)->cast<CNodePtr>();
+    if (make_tuple_cnode->size() <= 1) {
       return nullptr;
     }
 
@@ -438,7 +447,7 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
  private:
   AnfNodePtr BuildNewSwitchLayerNode(const CNodePtr &old_cnode, const CNodePtr switch_layer_cnode,
                                      const AnfNodePtrList &anchor_partial_args, const AnfNodePtrList &extra_args) {
-    auto make_tuple_cnode = switch_layer_cnode->input(2)->cast<CNodePtr>();
+    auto make_tuple_cnode = switch_layer_cnode->input(kSwitchLayerBranchesIndex)->cast<CNodePtr>();
     AnfNodePtrList make_tuple_args{make_tuple_cnode->input(0)};
     make_tuple_args.insert(make_tuple_args.end(), fg_list_.begin(), fg_list_.end());
     TraceGuard guard1(std::make_shared<TraceCopy>(make_tuple_cnode->debug_info()));
@@ -453,7 +462,7 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
     (void)std::copy(anchor_partial_args.begin(), anchor_partial_args.end(), std::back_inserter(args));
     (void)std::copy(extra_args.begin(), extra_args.end(), std::back_inserter(args));
     // Zs
-    if (old_cnode->size() >= 2) {
+    if (old_cnode->size() >= kMinInputSizeOfCallWithArgs) {
       (void)std::copy(old_cnode->inputs().begin() + 1, old_cnode->inputs().end(), std::back_inserter(args));
     }
     TraceGuard guard3(std::make_shared<TraceCopy>(old_cnode->debug_info()));

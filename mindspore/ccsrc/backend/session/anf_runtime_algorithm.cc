@@ -1724,7 +1724,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     }
     auto partial_cnode = partial->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(partial_cnode);
-    auto graph_node = partial_cnode->input(kCallKernelGraphIndex);
+    auto graph_node = partial_cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(graph_node);
     auto graph_value_node = graph_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(graph_value_node);
@@ -1734,7 +1734,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     return child_graph;
   };
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
-    auto input1 = cnode->input(kCallKernelGraphIndex);
+    auto input1 = cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(input1);
     auto value_node = input1->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -1742,11 +1742,10 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     MS_EXCEPTION_IF_NULL(kernel_graph);
     return {kernel_graph->cast<KernelGraphPtr>()};
   } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
-    return {get_switch_kernel_graph(kSwitchTrueKernelGraphIndex),
-            get_switch_kernel_graph(kSwitchFalseKernelGraphIndex)};
+    return {get_switch_kernel_graph(kSwitchTrueBranchIndex), get_switch_kernel_graph(kSwitchFalseBranchIndex)};
   } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
     std::vector<KernelGraphPtr> child_graphs;
-    for (size_t idx = kMakeTupleInSwitchLayerIndex; idx < cnode->inputs().size(); idx++) {
+    for (size_t idx = kSwitchLayerBranchesIndex; idx < cnode->inputs().size(); idx++) {
       auto child_graph = get_switch_kernel_graph(idx);
       child_graphs.emplace_back(child_graph);
     }
