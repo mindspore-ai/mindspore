@@ -56,12 +56,13 @@ class Var : public Base {
   explicit Var(const PrimitivePtr &primitive, std::string tag = "") : tag_(std::move(tag)), primitive_(primitive) {
     EnsureTag();
   }
-  Var(const Var &other) : Base(other), tag_(other.tag_) {}
+  Var(const Var &other) : Base(other), tag_(other.tag_), primitive_(other.primitive_) {}
   virtual Var &operator=(const Var &other) {
     if (&other == this) {
       return *this;
     }
     this->tag_ = other.tag_;
+    this->primitive_ = other.primitive_;
     return *this;
   }
   ~Var() override = default;
