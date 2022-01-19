@@ -55,6 +55,7 @@ from .reverse_sequence import _reverse_sequence_aicpu
 from .matrix_inverse import _matrix_inverse_aicpu
 from .matrix_determinant import _matrix_determinant_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu
+from .lstsq import _lstsq_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .acosh import _acosh_aicpu
 from .acosh_grad import _acosh_grad_aicpu

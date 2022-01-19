@@ -2756,6 +2756,11 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.random.rand(1, 1, 3, 3, 3), mstype.float16)],
         'desc_bprop': [Tensor(np.random.rand(1, 8, 2, 2, 2), mstype.float16)],
     }),
+    ('Lstsq', {
+        'block': P.Lstsq(l2_regularizer=0.0, fast=True),
+        'desc_inputs': [Tensor(np.array([[2, 1, 5], [3, 5, 1], [1, 1, 1]]), mstype.float32),
+                        Tensor(np.array([[10, 5], [15, 8], [7, 4]]), mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 test_case_image_ops = [
