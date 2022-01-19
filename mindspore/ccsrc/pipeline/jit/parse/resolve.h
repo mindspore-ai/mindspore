@@ -163,9 +163,9 @@ class SymbolResolver {
   // resolve symbol in namespace and save it in result_;
   bool Resolve();
 
-  SymbolPtr symbol() { return symbol_; }
+  SymbolPtr symbol() const { return symbol_; }
 
-  const py::object &result() { return result_; }
+  const py::object &result() const { return result_; }
 
  private:
   // namespace where the symbol locates

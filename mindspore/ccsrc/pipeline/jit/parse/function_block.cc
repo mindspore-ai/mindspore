@@ -136,8 +136,9 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       static const auto use_fallback = (parser_.support_fallback() != "0");
       if (use_fallback) {
         MS_LOG(DEBUG) << "Update global params of block: " << ToString()
-                      << ", with previous block: " << block->ToString() << ",\nCurrent: " << py::str(global_py_params())
-                      << "\nInsert: " << py::str(block->global_py_params());
+                      << ", with previous block: " << block->ToString()
+                      << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
+                      << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
         UpdateGlobalPyParam(block->global_py_params());
       }
       return res;

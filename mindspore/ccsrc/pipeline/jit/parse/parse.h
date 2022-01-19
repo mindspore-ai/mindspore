@@ -79,7 +79,7 @@ class LoopContext {
   LoopContext(std::stack<Loop> *loops, const FunctionBlockPtr &header, const AnfNodePtr &iterator) : loops_(loops) {
     loops_->emplace(header, iterator, nullptr);
   }
-  ~LoopContext() { loops_->pop(); }
+  ~LoopContext() noexcept { loops_->pop(); }
   const FunctionBlockPtr &EndBlock() const { return loops_->top().end; }
 
  private:
