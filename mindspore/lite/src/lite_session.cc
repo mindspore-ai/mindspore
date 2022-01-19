@@ -567,8 +567,7 @@ int LiteSession::IniPackWeightData(Model *model) {
             src_tensor->length() == 0) {
           continue;
         }
-        lite::PackWeightManager::GetInstance()->StoreOriginTensor(lite_model, src_tensor, tensor_index);
-        auto data = lite::PackWeightManager::GetInstance()->GetTensorData(lite_model, tensor_index);
+        auto data = lite::PackWeightManager::GetInstance()->GetTensorData(lite_model, src_tensor, tensor_index);
         if (data == nullptr) {
           MS_LOG(DEBUG) << "data not packed.";
           continue;
@@ -982,9 +981,6 @@ LiteSession::~LiteSession() {
     MS_LOG(ERROR) << "Not support multi-threading";
     return;
   }
-#ifdef USING_SERVING
-  lite::PackWeightManager::GetInstance()->DeleteSavedSessionPtr(this);
-#endif
   for (auto *kernel : kernels_) {
     delete kernel;
     kernel = nullptr;
@@ -1684,7 +1680,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     model_buf = nullptr;
   }
 #ifdef USING_SERVING
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf, nullptr);
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;
 }
@@ -1708,7 +1704,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     model_buf = nullptr;
   }
 #ifdef USING_SERVING
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf, nullptr);
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;
 }
@@ -1722,9 +1718,6 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-#ifdef USING_SERVING
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(model_buf, this);
-#endif
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
@@ -1755,9 +1748,6 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-#ifdef USING_SERVING
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(model_buf, this);
-#endif
   auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
