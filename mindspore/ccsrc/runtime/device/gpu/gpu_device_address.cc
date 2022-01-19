@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,12 @@ void GPUDeviceAddress::ClearDeviceMemory() {
 
 GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load tensor to host and create tensor_data object for the loaded tensor.
+ */
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,

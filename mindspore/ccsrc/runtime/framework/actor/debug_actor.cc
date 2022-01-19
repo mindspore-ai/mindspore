@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,13 @@
 
 namespace mindspore {
 namespace runtime {
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
+ * memory after the dump (for GPU and ascend kernel-by-kernel).
+ */
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
                        const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                        const AID *from_aid) {
@@ -91,6 +98,12 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Load data for online debugger and dump graph for e2e dump mode (Ascend super kernel mode).
+ */
 void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
                                OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -109,6 +122,12 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Checks dataset_sink_mode and generates the related error if any exist and calls PreExecuteGraphDebugger.
+ */
 void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
@@ -144,6 +163,13 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: MindRT.
+ * Description: Dump parameters and constants and update dump iter for CPU. Call PostExecuteGraph Debugger for GPU and
+ * Ascend and update step number of online debugger GPU.
+ */
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);

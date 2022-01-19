@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,13 @@ class DumpDataBuilder {
   ~DumpDataBuilder() = default;
 
 #ifdef ENABLE_D
+  /*
+   * Feature group: Dump.
+   * Target device group: Ascend.
+   * Runtime category: Old runtime, MindRT.
+   * Description: This function is for A+M dump only. In each callback, allocate memory and copy the dump chunk from
+   * adx. Return false if OOM.
+   */
   bool CopyDumpChunk(const DumpChunk *dump_chunk) {
     try {
       uint32_t buf_sz = dump_chunk->bufLen;
@@ -50,6 +57,14 @@ class DumpDataBuilder {
     return true;
   }
 
+  /*
+   * Feature group: Dump.
+   * Target device group: Ascend.
+   * Runtime category: Old runtime, MindRT.
+   * Description: This function is for A+M dump only. When receiving the last chunk of the node (is_last_chunk = true),
+   * parse and construct the dump data for dumping. It does the these steps: 1) merge all chunks for the node; 2)
+   * parse header and protobuf string; 3) memcpy tensor data to contiguous memory segment.
+   */
   bool ConstructDumpData(debugger::dump::DumpData *dump_data_proto, std::vector<char> *data_ptr) {
     if (chunk_list_.empty()) {
       return false;

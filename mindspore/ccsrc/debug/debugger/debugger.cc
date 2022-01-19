@@ -257,6 +257,12 @@ bool Debugger::CheckDebuggerPartialMemoryEnabled() const {
   return false;
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT
+ * Description: Returns true if online debugger or dump is enabled.
+ */
 bool Debugger::DebuggerBackendEnabled() const { return CheckDebuggerDumpEnabled() || CheckDebuggerEnabled(); }
 
 void Debugger::Reset() {
@@ -284,6 +290,13 @@ void Debugger::Reset() {
   MS_LOG(INFO) << "Release Debugger resource.";
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Sets root_graph_id for all the graphs in the compiled graph list. Sets cur_root_graph_id_ and
+ * prev_root_graph_id_ and calls PreExecute function for all the graphs.
+ */
 void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
   // MindRTBackend for GPU and Ascend
   if (device_target_ == kCPUDevice) {
@@ -308,12 +321,25 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: When async dump is enabled and dataset_sink_mode is true, graph_iter_num_map_ stores the number of
+ * iterations per epoch for each running graph.
+ */
 void Debugger::UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num) {
   if (graph_iter_num_map_.find(graph_id) == graph_iter_num_map_.end()) {
     graph_iter_num_map_[graph_id] = iter_num;
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime.
+ * Description: For Ascend old runtime, this function sets the current and previous root graph id.
+ */
 void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
   // for GPU and ascend MindRT root graphs are set in PreExecuteGraphDebugger.
   if (device_target_ != kAscendDevice || MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
@@ -325,8 +351,15 @@ void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
                 << " for step: " << num_step_ << ".";
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: GPU.
+ * Runtime category: Old runtime.
+ * Description: In the case of GPU old runtime and when we have multiple subgraphs, we use the first run graph id to
+ * update the step number.
+ */
 void Debugger::StoreRunGraphIdList(uint32_t graph_id) {
-  // collect rungrap_ids to update step number in multigraph case
+  // collect rungrap_ids to update step number in multigraph case for GPU old runtime
   if (!rungraph_id_list_.size()) {
     rungraph_id_list_.push_back(graph_id);
 
@@ -337,6 +370,13 @@ void Debugger::StoreRunGraphIdList(uint32_t graph_id) {
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Sets previous and current root_graph_id for Ascend old runtime, sends graphs to online debugger when
+ * debugger_enabled_ is true.
+ */
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
@@ -386,6 +426,12 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   suspended_at_last_kernel_ = false;
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Sends all the subgraphs to online debugger when debugger_enabled_ is true.
+ */
 void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
   // only try to enable debugger if they are not all dataset graphs
   if (!debugger_enabled_) {
@@ -407,6 +453,12 @@ void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Returns true for e2e dump if dump is enabled for the current iteration.
+ */
 bool Debugger::DumpDataEnabledIteration() const {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.e2e_dump_enabled()) {
@@ -420,6 +472,12 @@ bool Debugger::DumpDataEnabledIteration() const {
   return false;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Returns the rank_id for GPU and Ascend kernel-bykernel mindRT.
+ */
 uint32_t Debugger::GetRankID() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -431,8 +489,13 @@ uint32_t Debugger::GetRankID() {
   return rank_id;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Dumps graph history and parameters for GPU and Ascend kernel-by-kernel MindRT. DumpConstantData for GPU.
+ */
 void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
-  // only for GPU and kernel by kernel ascend (mindRT).
   if (!(ascend_kernel_by_kernel_ || device_target_ == kGPUDevice)) {
     return;
   }
@@ -461,6 +524,12 @@ void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Dumps a single node for given graph_id.
+ */
 void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
@@ -468,8 +537,14 @@ void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: This function is used for new GPU runtime using MindRTBackend, on Ascend platform, graphs are saved in
+ * session_basic.
+ */
 void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
-  // This function is used for new GPU runtime using MindRTBackend, on Ascend platform, graphs are saved in other way.
   if (device_target_ == kAscendDevice) {
     return;
   }
@@ -488,6 +563,12 @@ void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU and CPU.
+ * Runtime category: MindRT.
+ * Description: Load and dump parameters and constant data, call postExecute and update dump iter.
+ */
 void Debugger::PostExecuteGraphDebugger() {
   // On CPU, update dump iteration， Parameters and consts are not dumped here
   if (device_target_ == kCPUDevice) {
@@ -519,6 +600,12 @@ void Debugger::PostExecuteGraphDebugger() {
   }
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Send hit watchpoints, update the step number and reset loaded tensors.
+ */
 void Debugger::PostExecute() {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -565,6 +652,13 @@ bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
   return false;
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Check and send watchpoint hit for a single node, suspend if a watchpoint is hit or we are continuing
+ * in node level.
+ */
 void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -597,6 +691,12 @@ void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   }
 }
 
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Get graph proto and add it to graph proto list and add loaded graph pointers to a list.
+ */
 void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   if (graph_ptr_ != graph_ptr) {
@@ -670,6 +770,12 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   return model.graph();
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Send debugger backend heartbeat to online debugger every few seconds.
+ */
 void Debugger::SendHeartbeat(int32_t period) {
   int num_heartbeat_fail = 0;
   const int max_num_heartbeat_fail = 5;
@@ -1407,6 +1513,12 @@ bool Debugger::CheckIp(const std::string &host) const {
 
 uint32_t Debugger::GetFirstRunGraphId() const { return rungraph_id_list_.front(); }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load a single parameter or value node.
+ */
 void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, uint32_t root_graph_id) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
@@ -1450,6 +1562,12 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load all the parameters and value nodes for the last loaded graph.
+ */
 void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
@@ -1469,6 +1587,12 @@ void Debugger::LoadParametersAndConst() {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load all the parameters and value nodes for the given graph.
+ */
 void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph);
@@ -1488,6 +1612,12 @@ void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   }
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load all the kernels for the last loaded graph.
+ */
 void Debugger::LoadGraphOutputs() {
   if (!(debugger_enabled() && device_target_ == kAscendDevice)) return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
@@ -1528,6 +1658,12 @@ void Debugger::LoadGraphOutputs() {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Load a single node for kernel-by-kernel ascend mindRT dump.
+ */
 void Debugger::LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id) {
   if (device_target_ != kAscendDevice) {
     return;
@@ -1563,10 +1699,15 @@ void Debugger::LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32
   }
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: GPU.
+ * Runtime category: Old runtime.
+ * Description: Update step number if we are processing the first graph (to support multigraph).
+ */
 void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(debugger_);
-  // update step number if we are processing the first graph (to support multigraph)
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()) &&
       (graph->graph_id() == debugger_->GetFirstRunGraphId())) {
     // access lock for public method
@@ -1575,8 +1716,13 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
   }
 }
 
+/*
+ * Feature group: Online debugger.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: Update step number when DebugActor::DebugOnStepEnd is called at the end of each step.
+ */
 void Debugger::UpdateStepNumGPU() {
-  // UpdateStepNum with DebugActor::DebugOnStepEnd
   if (device_target_ == kGPUDevice && (debugger_enabled_ || DumpDataEnabledIteration())) {
     // access lock for public method
     std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -1600,6 +1746,13 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
 }
 
 #ifdef ENABLE_D
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load DumpDataBuilder object from dump_data_construct_map_ for tracking data chunks of node_name. It's
+ * for Ascend a + m dump. If not found, create a new one for it and add to dump_data_construct_map_.
+ */
 std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string &node_name) {
   auto iter = dump_data_construct_map_.find(node_name);
   if (iter == dump_data_construct_map_.end()) {

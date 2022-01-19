@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,13 @@ class TensorLoader {
     return std::equal(suffix.rbegin(), suffix.rend(), tensor_name.rbegin());
   }
 
+  /*
+   * Feature group: Dump, Online debugger and Offline debugger.
+   * Target device group: Ascend, GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: Load new tensor into tensor_list_map_ (debugger backend cache). In offline debugger, add ":prev" to
+   * the previous tensor's name to avoid segfault caused by wrongly evicting the tensor when memory limit is enabled.
+   */
   bool LoadNewTensor(std::shared_ptr<TensorData> tensor, bool keep_prev) {
     lock_.lock();
     auto tensor_name = tensor->GetName();
@@ -124,6 +131,13 @@ class TensorLoader {
     return nullptr;
   }
 
+  /*
+   * Feature group: Online debugger.
+   * Target device group: Ascend, GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: Search and obtain TensorData for a list of tensors from tensor_list_map_ (debugger backend cache).
+   * Return nullptr if the tensor is not found.
+   */
   void SearchTensors(const std::vector<std::string> &search_list,
                      std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
     for (auto i : search_list) {
@@ -147,6 +161,14 @@ class TensorLoader {
 
   bool EnableMemoryControl() { return mem_total_ > 0; }
 
+  /*
+   * Feature group: Offline debugger.
+   * Target device group: Ascend, GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: This function is for memory control feature only. When finishing using a tensor in offline debugger,
+   * it will be added to cache_evict_queue_ and become an eviction candidate. Once there is no memory to read in a new
+   * tensor, it will be evicted from cache.
+   */
   void AppendToCacheEvictQueue(const std::string &tensor_name) {
     std::lock_guard<std::mutex> lk(mem_lock_);
     if (std::find(cache_evict_queue_.begin(), cache_evict_queue_.end(), tensor_name) == cache_evict_queue_.end()) {
@@ -155,6 +177,13 @@ class TensorLoader {
     }
   }
 
+  /*
+   * Feature group: Offline debugger.
+   * Target device group: Ascend, GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: This function is for memory control feature only. Check if the tensor size is greater than the preset
+   * limit. If not, evect the candidate tensor in cache_evict_queue_ to make room for it.
+   */
   bool CheckMemoryAvailable(const std::string &backend_name, const uint64_t data_size) {
     // 1. Check if the tensor can fit in the entire limit. If not, don't attempt any read or evictions and generate
     // warning.
@@ -168,6 +197,13 @@ class TensorLoader {
     return ret;
   }
 
+  /*
+   * Feature group: Offline debugger.
+   * Target device group: Ascend, GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: This function is for memory control feature only. Greedily evict not-in-use tensors from cache queue.
+   * If no candidate in the queue, block the thread until there is any candidate available.
+   */
   bool CheckAndEvictTensorCache(const uint64_t data_size) {
     std::string candidate_name;
     uint64_t candidates_size;
@@ -199,6 +235,12 @@ class TensorLoader {
   void SetMemTotal(uint64_t total_mem_size) { this->mem_total_ = total_mem_size; }
 
 #ifdef ONLINE_DBG_MODE
+  /*
+   * Feature group: Dump.
+   * Target device group: GPU.
+   * Runtime category: Old runtime, MindRT.
+   * Description: Load tensor data from debugger backend cache (tensor_list_map_) and dump to file in npy format.
+   */
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
                         TypeId device_type, const std::string &addr_format, size_t slot) {

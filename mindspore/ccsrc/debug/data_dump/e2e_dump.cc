@@ -102,6 +102,12 @@ bool E2eDump::IsDeviceTargetGPU() {
   return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is for dumping tensor in memory to disk in GPU machine.
+ */
 void E2eDump::DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
                                const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                                const TypeId &host_type, const TypeId &device_type, bool trans_flag, size_t slot,
@@ -397,6 +403,13 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
   dump_json_parser.UpdateDumpIter();
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is for updating dump iteration for GPU and ascend old runtime and ascend super
+ * kernel MindRT.
+ */
 void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
@@ -406,11 +419,25 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: This function is for updating dump iteration for GPU and kernel by kernel ascend MindRT dump.
+ */
 void E2eDump::UpdateIterMindRTDump() {
   // update dump iter for GPU and kernel by kernel ascend dump.
   DumpJsonParser::GetInstance().UpdateDumpIter();
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Generates graph history files (dumping all the iteration numbers in which the graph was executed) for
+ * the given graph and rank_id. If dataset_sink_mode is true for async dump in ascend, this function is called once per
+ * each epoch and dumps all the iterations in the epoch to the graph history file.
+ */
 void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
@@ -454,6 +481,13 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   ChangeFileMode(file_name, S_IRUSR);
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is for dumping the whole graph. It is used for old runtime in GPU and Ascend and
+ * super-kernel mindRT in Ascend.
+ */
 void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
   bool success = false;
@@ -491,6 +525,12 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: This function is for dumping a single node. It is used for mindrt in GPU and Ascend kernel-by-kernel.
+ */
 bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
@@ -529,6 +569,13 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
 }
 
 #ifdef ENABLE_D
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is for ascend A+M dump only. It parses and converts each slot of tensor in DumpData object
+ * and dump the tensor data in npy file or statistic data in csv file.
+ */
 void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
                                char *data_ptr) {
   // dump input tensors
@@ -555,6 +602,12 @@ void E2eDump::DumpTensorToFile(const std::string &dump_path, const debugger::dum
   }
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: It serves for A+M dump. Save statistic of the tensor data into dump path as configured.
+ */
 template <typename T>
 bool DumpTensorStatsIfNeeded(const std::string &dump_path, const T &tensor, char *data_ptr, const std::string &io,
                              uint32_t slot, const ShapeVector &shape, TypeId type) {
@@ -591,6 +644,13 @@ bool DumpTensorStatsIfNeeded(const std::string &dump_path, const T &tensor, char
   return stat_dump.DumpTensorStatsToFile(dump_path.substr(0, pos), data);
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: It serves for A+M dump. Parse each attributes in Dumpdata proto object from device format to mindspore
+ * supported format and save tensor data or statistic as configured.
+ */
 template <typename T>
 bool E2eDump::ConvertFormatForTensorAndDump(std::string dump_path, const T &tensor, char *data_ptr,
                                             const std::string &io, uint32_t slot) {
@@ -707,6 +767,12 @@ nlohmann::json E2eDump::ParseOverflowInfo(char *data_ptr) {
   return overflow_info;
 }
 
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: This function is for Ascend A+M dump. It parses and dump op overflow info in json file.
+ */
 void E2eDump::DumpOpDebugToFile(const std::string &dump_path, const debugger::dump::DumpData &dump_data,
                                 char *data_ptr) {
   std::string out_path = dump_path + ".output.";

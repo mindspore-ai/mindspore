@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -597,6 +597,12 @@ AscendDeviceAddress::~AscendDeviceAddress() {
 }
 
 #ifndef ENABLE_SECURITY
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Dump tensor data to file for e2e dump.
+ */
 bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
   bool ret = false;
@@ -640,6 +646,12 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
 #endif
 
 #ifdef ENABLE_DEBUGGER
+/*
+ * Feature group: Dump, Online debugger.
+ * Target device group: Ascend.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Load tensor to host and create tensor_data object for the loaded tensor.
+ */
 bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,
                                         const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
                                         uint32_t root_graph_id) const {

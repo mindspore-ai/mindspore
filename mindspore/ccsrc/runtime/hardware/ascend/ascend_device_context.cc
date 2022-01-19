@@ -203,6 +203,13 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   UnfoldRecursiveExecOrder(kernel_graph);
 }
 }  // namespace
+
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend.
+ * Runtime category: MindRT.
+ * Description: Parse config json file and register callback to adx.
+ */
 #ifndef ENABLE_SECURITY
 void DumpInit(uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();

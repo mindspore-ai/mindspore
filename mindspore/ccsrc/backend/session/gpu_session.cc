@@ -126,7 +126,7 @@ void GPUSession::Init(uint32_t device_id) {
   }
 #ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();
-  // Dump json config file if dump is enabled
+  // Dump json config file if dump is enabled for GPU old runtime.
   json_parser.CopyDumpJsonToDir(rank_id_);
   json_parser.CopyMSCfgJsonToDir(rank_id_);
 #endif
@@ -413,7 +413,7 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
 GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  // Prepare ms context info for dump .pb graph
+  // Prepare ms context info for dump .pb graph for GPU old runtime.
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
@@ -471,6 +471,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   }
 #endif
 #ifndef ENABLE_SECURITY
+  // GPU old runtime.
   if (json_parser.e2e_dump_enabled()) {
     graph->set_root_graph_id(graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
@@ -509,6 +510,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   return graph->graph_id();
 }
 
+// GPU old runtime.
 void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
 #ifdef ENABLE_DEBUGGER
@@ -525,6 +527,7 @@ void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
 #endif
 }
 
+// GPU old runtime.
 void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                   const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   // Summary
@@ -730,6 +733,7 @@ void GPUSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) con
 }
 
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  // Dump graph and graph history file if e2e_dump is enabled and update cur_dump_iter for GPU old runtime.
   if (debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     E2eDump::DumpRunIter(kernel_graph, rank_id_);
