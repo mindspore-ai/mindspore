@@ -557,6 +557,7 @@ inline const PrimitivePtr kPrimBesselI0 = std::make_shared<Primitive>("BesselI0"
 inline const PrimitivePtr kPrimBesselI1 = std::make_shared<Primitive>("BesselI1");
 inline const PrimitivePtr kPrimGer = std::make_shared<Primitive>("Ger");
 inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
+inline const PrimitivePtr kPrimLuSolve = std::make_shared<Primitive>("LuSolve");
 inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
 inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>(kAdd);
 inline const PrimitivePtr kPrimAddcdiv = std::make_shared<Primitive>(kAddcdiv);

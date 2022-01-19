@@ -5779,6 +5779,7 @@ class Trunc(Primitive):
     def __init__(self):
         """Initialize Trunc"""
 
+
 class IsClose(Primitive):
     r"""
     Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
@@ -5835,3 +5836,55 @@ class IsClose(Primitive):
             raise ValueError("For IsClose, the `equal_nan` must be True, but got False.")
         validator.check_non_negative_float(rtol, 'rtol', self.name)
         validator.check_non_negative_float(atol, 'atol', self.name)
+
+
+class LuSolve(Primitive):
+    """
+    Return the solution of the linear equation Ax = b.
+
+    Note:
+        The batch dimensions of lu_pivots must match the batch dimensions of lu_data, the size of the dimension and the
+        number of each dimension must be the same. For example, lu_data is (3, 3, 2, 2) lu_pivots is (3, 3, 2),
+        lu_data's batch dimensions is (3, 3), lu_pivots's batch dimensions is (3, 3).
+
+        The batch dimensions of lu_data must match the batch dimensions of x, the batch dimensions may have
+        different sizes, from right to left, the corresponding dimensions must be equal. For example, lu_data
+        is (3, 3, 2, 2) x is (2, 3, 3, 2, 1), lu_data's batch dimensions is (3, 3), x's batch dimensions is (2, 3, 3).
+
+    Inputs:
+        - **x** (Tensor) - The input is a tensor of size (*, m, k), where * is batch dimensions, with data type
+          float32, float16.
+        - **lu_data** (Tensor) - The input is a tensor of size (*, m, m), where * is batch dimensions, that can
+          be decomposed into an upper
+          triangular matrix U and a lower triangular matrix L, with data type float32, float16.
+        - **lu_pivots** (Tensor) - The input is a tensor of size (*, m), where * is batch dimensions, that can
+          be converted to a permutation matrix P, with data type int32.
+
+    Outputs:
+        Tensor, the same data type as the x and lu_data.
+
+    Raises:
+        TypeError: If dtype of `x` or `lu_data` is not one of: float32, float16.
+        TypeError: If dtype of `lu_pivots` is not: int32.
+        TypeError: If `x`, `lu_data` or `lu_pivots` is not Tensor.
+        TypeError: If dtype of `x` is not same as dtype of `lu_data`.
+        ValueError: If the batch dimensions of lu_pivots does not match the batch dimensions of lu_data.
+        ValueError: If `x` dimension less than 2, `lu_data` dimension less than 2 or `lu_pivots` dimension less than 1.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1], [3], [3]]), mindspore.float32)
+        >>> lu_data = Tensor(np.array([[2, 1, 1], [0.5, 1, 1.5], [0.5, 0, 2.5]]), mindspore.float32)
+        >>> lu_pivots = Tensor(np.array([2, 2, 3]), mindspore.int32)
+        >>> net = ops.LuSolve()
+        >>> y = net(x, lu_data, lu_pivots)
+        >>> print(y)
+        [[ 1.9000002]
+         [-1.4000001]
+         [ 0.6      ]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
