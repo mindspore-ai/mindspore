@@ -569,9 +569,17 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
                       << ", arguments no: " << args_spec_list.size();
   }
+  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
+  static const auto enable_eliminate_unused_element = (eliminate_unused_element != "0");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_spec_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+    // For VirtualAbstractClosure, likely J's bprop, we just set its tuple arguments as used before really grad.
+    if (enable_eliminate_unused_element && args_spec_list[i]->isa<abstract::AbstractSequence>()) {
+      MS_LOG(INFO) << "Notice: For VirtualAbstractClosure, update all use flags as true for arguments[" << i
+                   << "]: " << args_spec_list[i]->ToString();
+      SetSequenceElementsUseFlagsRecursively(args_spec_list[i], true);
+    }
     (void)args_spec_list[i]->Join(args_spec_list_[i]);
   }
   return std::make_shared<EvalResult>(output_, std::make_shared<AttrValueMap>());
