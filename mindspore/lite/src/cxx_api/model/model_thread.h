@@ -1,0 +1,67 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
+#ifdef USING_SERVING
+#include <queue>
+#include <string>
+#include <mutex>
+#include <future>
+#include <vector>
+#include <utility>
+#include <memory>
+#include "include/api/model.h"
+namespace mindspore {
+using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
+struct ModelData {
+  const std::vector<MSTensor> *inputs;
+  std::vector<MSTensor> *outputs;
+  MSKernelCallBack before;
+  MSKernelCallBack after;
+};
+
+class ModelThread {
+ public:
+  ModelThread() = default;
+
+  ~ModelThread() = default;
+
+  // the model pool is initialized once and can always accept model run requests
+  Status Init(const std::string &model_path, const std::shared_ptr<Context> &model_context, const Key &dec_key = {},
+              const std::string &dec_mode = kDecModeAesGcm);
+
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                 const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+ private:
+  std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
+                                                                    const std::vector<MSTensor> &inputs);
+
+  Status ModelRun(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+ private:
+  std::shared_ptr<mindspore::Model> model_ = nullptr;
+  std::mutex mtx_model_;
+  std::condition_variable model_cond_;
+
+  // num thread is configured according to the hardware
+  int num_models_;
+};
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
+#endif
