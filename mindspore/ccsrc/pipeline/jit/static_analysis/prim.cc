@@ -89,6 +89,7 @@ mindspore::HashSet<std::string> prims_use_sequence_elements{
   prim::kPrimSparseToDense->name(),
   prim::kPrimSparseTensorDenseMatmul->name(),
   prim::kPrimBroadcast->name(),
+  prim::kPrimEinsumGrad->name(),
   "InvertPermutation",
   "Meshgrid",
   "TransShape",
