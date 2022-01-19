@@ -36,20 +36,20 @@ class PassGroup {
   // Delete graph pass before the pass manager is freed.
   bool DeletePass(const std::string &pass_name);
   // Run passes added in pass manager on the input graph
-  // @param [inout] graph The graph to be optimized
+  // @param [in out] graph The graph to be optimized
   // @return true, graph changed
   // @return false, graph not changed
   bool Run(const FuncGraphPtr &func_graph) const;
   // Run the given graph passes on the input graph
-  // @param [inout] func_graph The graph to be optimized
+  // @param [in out] func_graph The graph to be optimized
   // @param [in] passes The given graph passes
-  // @param [inout] res MatchResult used to collect all matched patterns and nodes
+  // @param [in out] res MatchResult used to collect all matched patterns and nodes
   // @return true, graph changed
   // @return false, graph not changed
   bool Run(const FuncGraphPtr &func_graph, const std::vector<PythonPassPtr> &passes, const MatchResultPtr &res) const;
   std::string name() const { return name_; }
   void SetRunOnlyOnce(bool run_only_once) { run_only_once_ = run_only_once; }
-  size_t size() { return passes_.size(); }
+  size_t size() const { return passes_.size(); }
 
  private:
   const std::string name_;

@@ -153,7 +153,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       return func_graph;
     }
     // Optimizer step counter;
-    int64_t counter = 1;
+    int counter = 1;
     bool changes = true;
     // If no changes since last renormalization, then no need to do the renormalization again.
     // Set the initial value to true, so the renormalization can be executed once if it's the
@@ -180,7 +180,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                   if (is_untyped_generated_) {
                     std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
                                    std::back_inserter(maybe_new_args_spec),
-                                   [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
+                                   [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
                     func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
                     clear_is_untyped_generated();
                   } else {
@@ -189,7 +189,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                 } else {
                   std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
                                  std::back_inserter(maybe_new_args_spec),
-                                 [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
+                                 [](const AnfNodePtr &param) -> AbstractBasePtr { return param->abstract(); });
                   func_graph = pipeline::Renormalize(resource, func_graph, maybe_new_args_spec);
                 }
               }
@@ -241,12 +241,12 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 
   void enable_watch_renormalize() { is_watch_renormalize_ = true; }
   void disable_watch_renormalize() { is_watch_renormalize_ = false; }
-  bool is_watch_renormalize() { return is_watch_renormalize_; }
+  bool is_watch_renormalize() const { return is_watch_renormalize_; }
   void set_enable(bool enable) { is_enable_ = enable; }
 
-  bool traverse_nodes_first() { return traverse_nodes_first_; }
+  bool traverse_nodes_first() const { return traverse_nodes_first_; }
 
-  bool is_first_order_j() { return is_first_order_j_; }
+  bool is_first_order_j() const { return is_first_order_j_; }
   void set_is_first_order_j(bool is_first_order_j) { is_first_order_j_ = is_first_order_j; }
 
   struct {

@@ -88,7 +88,7 @@ class Prim final : public Pattern {
  public:
   Prim() { unique_name_ = std::to_string(g_id_++); }
   ~Prim() = default;
-  Prim(vector<py::object> prim_objs, string name) : name_(name) {
+  Prim(const vector<py::object> &prim_objs, const string &name) : name_(name) {
     unique_name_ = std::to_string(g_id_++) + "Prim_" + name;
     for (auto &prim_obj : prim_objs) {
       if (py::isinstance<PrimitivePyAdapter>(prim_obj)) {
@@ -123,7 +123,7 @@ class Call final : public Pattern {
  public:
   Call() { unique_name_ = std::to_string(g_id_++); }
   ~Call() = default;
-  Call(PatternPtr prim_pattern, vector<PatternPtr> inputs) {
+  Call(const PatternPtr &prim_pattern, const vector<PatternPtr> &inputs) {
     // NOTE: should_replace is ignored in this case, since each sub-pattern has its own setting
     prim_pattern_ = prim_pattern;
     unique_name_ = std::to_string(g_id_++) + "Call_" + prim_pattern->unique_name();
@@ -200,7 +200,7 @@ class NewTensor final : public Pattern {
  public:
   NewTensor() { unique_name_ = std::to_string(g_id_++); }
   ~NewTensor() = default;
-  explicit NewTensor(tensor::TensorPtr input_tensor) : input_tensor_(input_tensor) {
+  explicit NewTensor(const tensor::TensorPtr &input_tensor) : input_tensor_(input_tensor) {
     unique_name_ = std::to_string(g_id_++) + "NewTensor";
   }
   MS_DECLARE_PARENT(NewTensor, Pattern);
@@ -216,7 +216,8 @@ class NewTensor final : public Pattern {
 class NewParameter final : public Pattern {
  public:
   NewParameter() { unique_name_ = std::to_string(g_id_++); }
-  explicit NewParameter(string para_name, tensor::TensorPtr default_tensor, bool requires_grad, bool layerwise_parallel)
+  explicit NewParameter(const string &para_name, tensor::TensorPtr default_tensor, bool requires_grad,
+                        bool layerwise_parallel)
       : para_name_(para_name), requires_grad_(requires_grad), layerwise_parallel_(layerwise_parallel) {
     unique_name_ = std::to_string(g_id_++) + "NewParameter_" + para_name;
     default_tensor_ = std::make_shared<tensor::Tensor>(*default_tensor.get());
@@ -227,22 +228,22 @@ class NewParameter final : public Pattern {
   MatchResultPtr match(const AnfNodePtr &node) override {
     MS_LOG(EXCEPTION) << "Find NewParameter in pattern, NewParameter should only appear in the target.\n";
   }
-  string para_name() { return para_name_; }
-  tensor::TensorPtr default_tensor() { return default_tensor_; }
-  bool requires_grad() { return requires_grad_; }
-  bool layerwise_parallel() { return layerwise_parallel_; }
-  bool built() { return built_; }
+  const string &para_name() const { return para_name_; }
+  tensor::TensorPtr default_tensor() const { return default_tensor_; }
+  bool requires_grad() const { return requires_grad_; }
+  bool layerwise_parallel() const { return layerwise_parallel_; }
+  bool built() const { return built_; }
   void set_built(bool built) { built_ = built; }
   void reset() override { built_ = false; }
-  bool should_last() { return last_across_passes_; }
+  bool should_last() const { return last_across_passes_; }
   void set_last(bool last) { last_across_passes_ = last; }
 
  private:
   string para_name_;
-  bool requires_grad_;
-  bool layerwise_parallel_;
+  bool requires_grad_{false};
+  bool layerwise_parallel_{false};
   bool last_across_passes_{false};
-  bool built_;
+  bool built_{false};
   tensor::TensorPtr default_tensor_;
 };
 
@@ -253,7 +254,7 @@ class Imm final : public Pattern {
   ~Imm() = default;
   MS_DECLARE_PARENT(Imm, Pattern);
   MatchResultPtr match(const AnfNodePtr &node) override;
-  int value() { return value_; }
+  int value() const { return value_; }
 
  private:
   int64_t value_;
@@ -263,8 +264,8 @@ class MatchResult {
  public:
   MatchResult() {}
   ~MatchResult() = default;
-  void add_entry(PatternPtr pattern, AnfNodePtr node) { match_result_[pattern] = node; }
-  const PatternNodeMap &result() { return match_result_; }
+  void add_entry(const PatternPtr &pattern, const AnfNodePtr &node) { match_result_[pattern] = node; }
+  const PatternNodeMap &result() const { return match_result_; }
   AnfNodePtr get_node(const PatternPtr &pattern);
   void merge(const MatchResultPtr &other_result);
   void clear() { match_result_.clear(); }
