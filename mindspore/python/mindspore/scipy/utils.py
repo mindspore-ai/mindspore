@@ -19,10 +19,8 @@ from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
-from .utils_const import _type_convert, _raise_value_error
+from .utils_const import _type_convert, _raise_value_error, _callable_const
 from ..ops.composite import GradOperation
-from ..ops.primitive import constexpr
-from .._c_expression import typing
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
 _eps_net = ops.Eps()
@@ -104,12 +102,6 @@ _BOOL_TRUE = _to_tensor(True)
 _BOOL_FALSE = _to_tensor(False)
 
 float_types = (mstype.float32, mstype.float64)
-
-
-@constexpr
-def _callable_const(x):
-    """Returns true if x is a function in graph mode."""
-    return isinstance(x, typing.Function)
 
 
 def _normalize_matvec(f):

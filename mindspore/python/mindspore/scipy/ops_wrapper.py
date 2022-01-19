@@ -21,7 +21,8 @@ from .utils_const import _raise_value_error
 
 def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
     """
-    Returns a batched matrix tensor with new batched diagonal values.
+    Calculate a batched matrix tensor with new batched diagonal values.
+
     Given `input` and `diagonal`, this operation returns a tensor with the same shape and values as `input`,
     except for the specified diagonals of the innermost matrices. These will be overwritten by the values in `diagonal`.
     `input` has `r+1` dimensions `[I, J, ..., L, M, N]`. When `k` is scalar or `k[0] == k[1]`,

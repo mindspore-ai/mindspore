@@ -105,13 +105,13 @@ class SolveTriangular(PrimitiveWithInfer):
 
 class Cholesky(PrimitiveWithInfer):
     """
-    Cholesky decomposition for A.
+    Inner API Cholesky Compute the Cholesky decomposition of a matrix.
     """
 
     @prim_attr_register
     def __init__(self, lower=False, clean=True, split_dim=0):
         super().__init__("Cholesky")
-        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.init_prim_io_names(inputs=['a'], outputs=['l'])
         self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
         self.clean = validator.check_value_type("clean", clean, [bool], self.clean)
         self.lower = lower
@@ -121,10 +121,11 @@ class Cholesky(PrimitiveWithInfer):
         self.split_dim = split_dim
         self.add_prim_attr('split_dim', self.split_dim)
 
-    def infer_shape(self, x1_shape):
+    def __infer__(self, a):
+        a_shape = a['shape']
         if self.split_dim != 0:
-            height = x1_shape[0]
-            width = x1_shape[1]
+            height = [0]
+            width = a_shape[1]
             if height <= self.split_dim:
                 out_shape = [1, height, width]
             else:
@@ -133,12 +134,13 @@ class Cholesky(PrimitiveWithInfer):
                     batch += 1
                 out_shape = [batch, self.split_dim, self.split_dim]
         else:
-            out_shape = x1_shape
-        return out_shape
-
-    def infer_dtype(self, x1_dtype):
-        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32, mstype.float64], self.name)
-        return x1_dtype
+            out_shape = a_shape
+        output = {
+            'shape': tuple(out_shape),
+            'dtype': a['dtype'],
+            'value': None
+        }
+        return output
 
 
 class CholeskySolver(PrimitiveWithInfer):

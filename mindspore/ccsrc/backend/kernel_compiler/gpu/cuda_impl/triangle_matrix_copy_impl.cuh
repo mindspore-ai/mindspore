@@ -19,8 +19,8 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void TriangleMatrixCopy(const T *input, T *output, cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                        const size_t m, cudaStream_t cuda_stream);
+void TriangleMatrixCopy(const T *input, T *output, bool clean, cublasFillMode_t uplo, const size_t count,
+                        const size_t ldb, const size_t m, cudaStream_t cuda_stream);
 
 template <typename T>
 void MatrixCopy(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);

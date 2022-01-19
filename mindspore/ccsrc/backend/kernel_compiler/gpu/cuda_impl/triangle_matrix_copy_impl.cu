@@ -16,31 +16,27 @@
 
 #include "triangle_matrix_copy_impl.cuh"
 template <typename T>
-__global__ void TriangleMatrixCopyKernel(const T *input, T *output, cublasFillMode_t uplo, const size_t count,
-                                         const size_t ldb, const size_t m) {
-  // If fill mode is 'CUBLAS_FILL_MODE_LOWER', the upper half of the matrix should be all 0;
-  // If fill mode is 'CUBLAS_FILL_MODE_UPPER', the lower half of the matrix should be all 0;
-  // special case, only upper triangle data is correct, so copy up to lower, when lower case.
-  if (uplo == CUBLAS_FILL_MODE_UPPER) {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-      size_t batchIdx = i / (ldb * m);
-      size_t row = (i - batchIdx * ldb * m) / m;
-      size_t col = (i - batchIdx * ldb * m) % m;
-      if (col < row) {
-        output[i] = 0;
-      } else {
+__global__ void TriangleMatrixCopyKernel(const T *input, T *output, bool clean, cublasFillMode_t uplo,
+                                         const size_t count, const size_t ldb, const size_t m) {
+  // If fill mode is 'CUBLAS_FILL_MODE_LOWER', if clean is false, the upper half and the positive diagonal of the matrix
+  // should not be assigned any value, otherwise they should be assigned to 0.
+  // If fill mode is 'CUBLAS_FILL_MODE_UPPER',if clean is false,  the lower half and the positive diagonal of the matrix
+  // should not be assigned any value, otherwise they should be assigned to 0.
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    size_t batchIdx = i / (ldb * m);
+    size_t row = (i - batchIdx * ldb * m) / m;
+    size_t col = (i - batchIdx * ldb * m) % m;
+    if (uplo == CUBLAS_FILL_MODE_UPPER) {
+      if (col > row && !clean) {
         output[i] = input[i];
-      }
-    }
-  } else {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-      size_t batchIdx = i / (ldb * m);
-      size_t row = (i - batchIdx * ldb * m) / m;
-      size_t col = (i - batchIdx * ldb * m) % m;
-      if (col > row) {
+      } else if (col > row && clean) {
         output[i] = 0;
-      } else {
-        output[row * m + col] = input[col * m + row];
+      }
+    } else {
+      if (col < row && !clean) {
+        output[i] = input[i];
+      } else if (col < row && clean) {
+        output[i] = 0;
       }
     }
   }
@@ -54,19 +50,21 @@ __global__ void MatrixCopyKernel(const T *input, T *output, const size_t count) 
 }
 
 template <typename T>
-void TriangleMatrixCopy(const T *input, T *output, cublasFillMode_t uplo, const size_t count, const size_t ldb,
-                        const size_t m, cudaStream_t cuda_stream) {
-  TriangleMatrixCopyKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, uplo, count, ldb, m);
+void TriangleMatrixCopy(const T *input, T *output, bool clean, cublasFillMode_t uplo, const size_t count,
+                        const size_t ldb, const size_t m, cudaStream_t cuda_stream) {
+  TriangleMatrixCopyKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, clean, uplo, count, ldb,
+                                                                               m);
   return;
 }
 
-template void TriangleMatrixCopy<float>(const float *input, float *output, cublasFillMode_t uplo, const size_t count,
-                                        const size_t ldb, const size_t m, cudaStream_t cuda_stream);
-template void TriangleMatrixCopy<half>(const half *input, half *output, cublasFillMode_t uplo, const size_t count,
-                                       const size_t ldb, const size_t m, cudaStream_t cuda_stream);
+template void TriangleMatrixCopy<float>(const float *input, float *output, bool clean, cublasFillMode_t uplo,
+                                        const size_t count, const size_t ldb, const size_t m, cudaStream_t cuda_stream);
+template void TriangleMatrixCopy<half>(const half *input, half *output, bool clean, cublasFillMode_t uplo,
+                                       const size_t count, const size_t ldb, const size_t m, cudaStream_t cuda_stream);
 
-template void TriangleMatrixCopy<double>(const double *input, double *output, cublasFillMode_t uplo, const size_t count,
-                                         const size_t ldb, const size_t m, cudaStream_t cuda_stream);
+template void TriangleMatrixCopy<double>(const double *input, double *output, bool clean, cublasFillMode_t uplo,
+                                         const size_t count, const size_t ldb, const size_t m,
+                                         cudaStream_t cuda_stream);
 
 template <typename T>
 void MatrixCopy(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {

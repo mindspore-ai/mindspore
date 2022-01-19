@@ -14,6 +14,13 @@
 # ============================================================================
 """internal graph-compatible utility functions"""
 from ..ops.primitive import constexpr
+from .._c_expression import typing
+
+
+@constexpr
+def _callable_const(x):
+    """Returns true if x is a function in graph mode."""
+    return isinstance(x, typing.Function)
 
 
 @constexpr
