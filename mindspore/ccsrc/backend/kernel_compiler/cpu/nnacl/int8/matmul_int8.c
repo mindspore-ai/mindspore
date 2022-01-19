@@ -331,6 +331,35 @@ void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int c
 }
 #endif
 
+void DynamicMatmulInt8Opt(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col, int deep16,
+                          float input_scale, int input_zp, const float *filter_scale, size_t stride) {
+  /* *
+   * row4x16-major * row16x4-major => (int8)row-major
+   * support activation per-layer asymmetric && weight per-channel symmetric
+   * */
+  for (int r = 0; r < row; r++) {
+    for (int c = 0; c < col; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM;
+      int c4div = c / C4NUM, c4mod = c % C4NUM;
+      size_t ci = r * stride + c;
+      double value = 0;
+      for (int d = 0; d < deep16; d++) {
+        int d16div = d / C16NUM, d16mod = d % C16NUM;
+        size_t ai = r4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
+        size_t bi = c4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
+        int32_t value_1 = a[ai] * b[bi];
+        int32_t value_3 = input_zp * b[bi];
+        value += input_scale * filter_scale[c] * (value_1 - value_3);
+      }
+      if (bias != NULL) {
+        value += bias[c];
+      }
+      dst[ci] = value;
+    }
+  }
+  return;
+}
+
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, const int32_t *left_shift,
                       const int32_t *right_shift, const int32_t *multiplier, int32_t output_zp, int32_t mini,
