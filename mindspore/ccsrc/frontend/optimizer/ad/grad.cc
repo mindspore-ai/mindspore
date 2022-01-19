@@ -17,7 +17,6 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/dead_node_eliminate.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
@@ -89,7 +88,6 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
       grad_fg = LiftFv(resources, func_graph);
     } else {
       lift_fv_before_grad = false;
-      opt::EliminateDeadNode(grad_fg);
     }
   } else {
     if (func_graph->func_graphs_used().size() != 0) {
