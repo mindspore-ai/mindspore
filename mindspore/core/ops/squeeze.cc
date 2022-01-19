@@ -27,7 +27,9 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
-  std::vector<int64_t> infer_shape;
+  std::vector<int64_t> ret_shape;
+  std::vector<int64_t> ret_min_shape;
+  std::vector<int64_t> ret_max_shape;
 
   auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto in_shape = shape_infos[kShape];
@@ -36,8 +38,15 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
   auto len = SizeToLong(in_shape.size());
   if (axis.empty()) {
-    (void)std::copy_if(in_shape.begin(), in_shape.end(), std::back_inserter(infer_shape),
-                       [](int64_t value) { return value != 1; });
+    for (int64_t i = 0; i < len; i++) {
+      if (in_shape[i] != 1) {
+        ret_shape.push_back(in_shape[LongToSize(i)]);
+        if (!min_shape.empty() && !max_shape.empty()) {
+          ret_min_shape.push_back(min_shape[LongToSize(i)]);
+          ret_max_shape.push_back(max_shape[LongToSize(i)]);
+        }
+      }
+    }
   } else {
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
@@ -50,11 +59,15 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
       auto it = std::find(axis.begin(), axis.end(), i);
       auto it2 = std::find(axis.begin(), axis.end(), i - len);
       if (!(it != axis.end() || it2 != axis.end())) {
-        infer_shape.push_back(in_shape[LongToSize(i)]);
+        ret_shape.push_back(in_shape[LongToSize(i)]);
+        if (!min_shape.empty() && !max_shape.empty()) {
+          ret_min_shape.push_back(min_shape[LongToSize(i)]);
+          ret_max_shape.push_back(max_shape[LongToSize(i)]);
+        }
       }
     }
   }
-  return std::make_shared<abstract::Shape>(infer_shape, min_shape, max_shape);
+  return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
