@@ -1011,17 +1011,25 @@ void ControlNodeParser::ParseDeviceContextForPartialNode(const std::vector<AnfNo
       MS_LOG(EXCEPTION) << "Failed to get device contexts for funcgraph:" << func_graph->ToString();
     }
 
+    size_t input_num = 0;
+    for (size_t i = kPartialInputStartPos; i < inputs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(inputs[i]);
+      const auto &abstract = inputs[i]->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      input_num += AnfAlgo::GetOutputNumByAbstract(abstract);
+    }
+    if (input_num > iter->second.size()) {
+      MS_LOG(EXCEPTION) << "Invalid input num:" << input_num << " for funcgraph:" << func_graph->ToString()
+                        << " device context size:" << iter->second.size()
+                        << " for partial node:" << cnode->DebugString();
+    }
+
     // Get the device contexts for the real parameters.
     std::vector<const DeviceContext *> device_contexts;
     // In partial node, the first input is always a partial, maybe a funcgraph or a partial node, so we need
     // to insert an empty device context for it.
     (void)device_contexts.emplace_back(nullptr);
-    for (size_t i = 0; i < inputs.size() - kPartialInputStartPos; ++i) {
-      if (i >= iter->second.size()) {
-        MS_LOG(EXCEPTION) << "Invalid device context index:" << i << " for funcgraph:" << func_graph->ToString()
-                          << " device context size:" << iter->second.size()
-                          << " for partial node:" << cnode->DebugString();
-      }
+    for (size_t i = 0; i < input_num; ++i) {
       MS_EXCEPTION_IF_NULL(iter->second[i]);
       (void)device_contexts.emplace_back(iter->second[i]);
     }
