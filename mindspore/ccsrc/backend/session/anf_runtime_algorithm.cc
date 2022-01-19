@@ -334,7 +334,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
         MS_LOG(EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
                           << "].";
       }
-      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], 0, skip_nop_node, return_types);
+      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
     }
     if (IsCallNode(item_with_index_tmp.first)) {
       size_t real_index = item_with_index_tmp.second;
