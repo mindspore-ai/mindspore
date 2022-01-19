@@ -105,7 +105,7 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
 
         for (size_t k = 0; k < iter.AxisSize(); ++k) {
           const auto index = iter.GetPos(k);
-          indices[index] = iter.RevertPos(idx[k]);
+          indices[index] = SizeToInt(iter.RevertPos(idx[k]));
           output[index] = input[idx[k]];
         }
         return common::SUCCESS;

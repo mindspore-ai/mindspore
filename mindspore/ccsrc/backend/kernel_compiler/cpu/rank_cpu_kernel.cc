@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/rank_cpu_kernel.h"
-#include <math.h>
+#include <cmath>
 #include <functional>
 #include <map>
 #include <type_traits>
@@ -84,7 +84,7 @@ template <typename T>
 void RankCpuKernel<T>::SetFunc() {
   switch (method_) {
     case Method::Max: {
-      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i + 1;
@@ -92,7 +92,7 @@ void RankCpuKernel<T>::SetFunc() {
       };
     } break;
     case Method::Min: {
-      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i - duplicate_count + 2;
@@ -106,7 +106,7 @@ void RankCpuKernel<T>::SetFunc() {
       // rank_sum = sum + duplicate_count = duplicate_count * (2 * i -
       // duplicate_count + 3) / 2 avg = rank_sum / duplicate_count = (2 * i -
       // duplicate_count + 3) / 2
-      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         float avg = (2 * i - duplicate_count + 3) / 2.0;
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
@@ -115,7 +115,7 @@ void RankCpuKernel<T>::SetFunc() {
       };
     } break;
     case Method::First: {
-      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = j + 1;
@@ -123,7 +123,7 @@ void RankCpuKernel<T>::SetFunc() {
       };
     } break;
     case Method::Dense: {
-      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = culmutive_rank;
@@ -149,7 +149,7 @@ void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values
   SortIndex(sort_idx, values, iter);
 
   int culmutive_rank = 1;
-  int duplicate_count = 0;
+  size_t duplicate_count = 0;
 
   for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
@@ -201,7 +201,7 @@ void RankCpuKernel<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *values
   SortIndex(sort_idx, values, iter);
 
   int culmutive_rank = 1;
-  int duplicate_count = 0;
+  size_t duplicate_count = 0;
   int nans_count = 0;
 
   for (size_t i = 0; i < n; ++i) {
