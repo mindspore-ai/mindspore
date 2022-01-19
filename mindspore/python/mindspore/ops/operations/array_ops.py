@@ -677,24 +677,23 @@ class DynamicShape(Primitive):
 
 class Squeeze(PrimitiveWithInfer):
     """
-    Returns a tensor with the same data type but dimensions of 1 are removed based on `axis`.
+    Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
 
+    If :math:`axis=()`, it will remove all the dimensions of size 1.
     If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
-    If `axis` is None, it will remove all the dimensions of size 1.
-    For example, if input is of shape: (A×1×B×C×1×D), then the out tensor will be of shape: (A×B×C×D);
-    When dim is given, a squeeze operation is done only in the given dimension.
-    If input is of shape: (A×1×B), squeeze(input, 0) leaves the tensor unchanged,
-    but squeeze(input, 1) will squeeze the tensor to the shape (A×B).
-
-    Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
-    and there is no Tensor data copy process.
+    For example, if the dimension is not specified :math:`axis=()`, input shape is (A, 1, B, C, 1, D),
+    then the shape of the output Tensor is (A, B, C, D). If the dimension is specified, the squeeze operation
+    is only performed in the specified dimension. If input shape is (A, 1, B), input Tensor will not be
+    changed when :math:`axis=0` , but when :math:`axis=1` , the shape of the input Tensor will be changed to (A, B).
 
     Note:
-        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
+        - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
+    and there is no Tensor data copy process.
+        - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
     Args:
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
-            all the dimensions that are equal to 1. If specified, it must be int32 or int64.
+            all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
             Default: (), an empty tuple.
 
     Inputs:
@@ -846,17 +845,17 @@ class Unique(Primitive):
 
 class Gather(Primitive):
     r"""
-    Returns a slice of the input tensor based on the specified indices and axis.
-
-    Slices the input tensor base on the indices at specified axis. See the following example for more clear.
+    Returns the slice of the input Tensor corresponding to the elements of `input_indices` on the specified `axis`.
 
     Inputs:
-        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The original Tensor.
-        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. Must be in the range
-          `[0, input_param.shape[axis])` which are only validated on CPU. The data type can be int32 or int64.
+        - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
         - **axis** (int) - Specifies the dimension index to gather indices.
+
+    .. note::
+         The value of input_indices must be in the range of `[0, input_param.shape[axis])`, and report an error if it
+         exceeds this range.
 
     Outputs:
         Tensor, the shape of tensor is
@@ -864,6 +863,7 @@ class Gather(Primitive):
 
     Raises:
         TypeError: If `axis` is not an int.
+        TypeError: If `input_indices` is not an int type Tensor.
         TypeError: If `input_indices` is not an int.
 
     Supported Platforms:
@@ -1266,17 +1266,17 @@ class Size(PrimitiveWithInfer):
 
 class Fill(PrimitiveWithInfer):
     """
-    Creates a tensor filled with a scalar value.
-
-    Creates a tensor with shape described by the first argument and fills it with values in the second argument.
+    Create a Tensor of the specified shape and fill it with the specified value.
 
     Inputs:
-        - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
-        - **shape** (tuple) - The specified shape of output tensor. Only constant value is allowed.
-        - **value** (scalar) - Value to fill the returned tensor. Only constant value is allowed.
+        - **type** (mindspore.dtype) - The specified type of output tensor. The data type only supports
+        `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
+        `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        - **shape** (tuple[int]) - The specified shape of output tensor.
+        - **value** (Union(number.Number, bool)) - Value to fill the returned tensor.
 
     Outputs:
-        Tensor, has the same type and shape as input value.
+        Tensor.
 
     Raises:
         TypeError: If `shape` is not a tuple.

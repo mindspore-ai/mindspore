@@ -46,6 +46,7 @@ class LossBase(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+
     def __init__(self, reduction='mean'):
         """Initialize Loss."""
         super(LossBase, self).__init__()
@@ -156,6 +157,7 @@ class _Loss(LossBase):
     """
     Base class for other losses.
     """
+
     def __init__(self, reduction='mean'):
         """Initialize _Loss."""
         log.warning("'_Loss' is deprecated from version 1.3 and "
@@ -176,11 +178,10 @@ def _check_is_tensor(param_name, input_data, cls_name):
 
 class L1Loss(LossBase):
     r"""
-    L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` element-wise,
-    where :math:`x` is the input Tensor and :math:`y` is the labels Tensor.
+    L1Loss is used to calculate the mean absolute error between the predicted value and the target value.
 
-    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
-    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length: math:`N`, then calculate the loss of :math:`x` and
+    :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). The formula is as follows:
 
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
@@ -196,21 +197,21 @@ class L1Loss(LossBase):
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
-            Default: "mean".
+            Default: "mean". If `reduction` is "mean" or "sum", then output a scalar Tensor, if `reduction` is "none",
+            the shape of the output Tensor is the broadcasted shape.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+        - **logits** (Tensor) - Predicted value, Tensor of any dimension.
+        - **labels** (Tensor) - Target value, same shape as the `logits` in common cases.
           However, it supports the shape of `logits` is different from the shape of `labels`
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
-        while the shape of output is the broadcasted shape if `reduction` is 'none'.
+        Tensor, data type is float.
 
     Raises:
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -232,6 +233,7 @@ class L1Loss(LossBase):
         [[0. 1. 2.]
          [0. 0. 1.]]
     """
+
     def __init__(self, reduction='mean'):
         """Initialize L1Loss."""
         super(L1Loss, self).__init__(reduction)
@@ -302,6 +304,7 @@ class MSELoss(LossBase):
         [[0. 1. 4.]
          [0. 0. 1.]]
     """
+
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
@@ -349,6 +352,7 @@ class RMSELoss(LossBase):
         >>> print(output)
         1.0
     """
+
     def __init__(self):
         """Initialize RMSELoss."""
         super(RMSELoss, self).__init__()
@@ -418,6 +422,7 @@ class MAELoss(LossBase):
         [[0. 1. 2.]
          [0. 0. 1.]]
     """
+
     def __init__(self, reduction='mean'):
         """Initialize MAELoss."""
         super(MAELoss, self).__init__(reduction)
@@ -432,43 +437,42 @@ class MAELoss(LossBase):
 
 class SmoothL1Loss(LossBase):
     r"""
-    A loss class for learning region proposals.
+    SmoothL1 loss function, if the absolute error element-wise between the predicted value and the target value
+    is less than the set threshold `beta`, the square term is used, otherwise the absolute error term is used.
 
-    SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
-    L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
-    squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
-    robust to outliers.
-
-    Given two input :math:`x,\  y` of length :math:`N`, the unreduced SmoothL1Loss can be described
-    as follows:
+    Given two input :math:`x,\  y`, the SmoothL1Loss can be described as follows:
 
     .. math::
         L_{i} =
         \begin{cases}
-        \frac{0.5 (x_i - y_i)^{2}}{\text{beta}}, & \text{if } |x_i - y_i| < \text{beta} \\
-        |x_i - y_i| - 0.5 \text{beta}, & \text{otherwise. }
+        \frac{0.5 (x_i - y_i)^{2}}{\beta}, & \text{if } |x_i - y_i| < {\beta} \\
+        |x_i - y_i| - 0.5 {\beta}, & \text{otherwise.}
         \end{cases}
 
-    Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
-    Its default value is 1.0. :math:`N` is the batch size. This function returns an
-    unreduced loss tensor.
+    Where :math:`{\beta}` represents the threshold `beta`.
+
+    .. note::
+        SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
+    L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
+    squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
+    robust to outliers, and the loss function has better robustness.
 
     Args:
-        beta (float): A parameter used to control the point where the function will change from
-            quadratic to linear. Default: 1.0.
+        beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
+                      Default: 1.0.
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
-          same shape and dtype as the `logits`.
+        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
         Tensor, loss float tensor, same shape and dtype as the `logits`.
 
     Raises:
         TypeError: If `beta` is not a float.
+        TypeError: If `logits` or `labels` are not Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 not float32.
+        TypeError: If dtype of `logits` or `labels` are not the same.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
 
@@ -483,6 +487,7 @@ class SmoothL1Loss(LossBase):
         >>> print(output)
         [0.  0.  0.5]
     """
+
     def __init__(self, beta=1.0):
         """Initialize SmoothL1Loss."""
         super(SmoothL1Loss, self).__init__()
@@ -534,6 +539,7 @@ class SoftMarginLoss(LossBase):
         >>> print(output)
         0.6764238
     """
+
     def __init__(self, reduction='mean'):
         super(SoftMarginLoss, self).__init__()
         self.soft_margin_loss = P.SoftMarginLoss(reduction)
@@ -605,6 +611,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         >>> print(output)
         [30.]
     """
+
     def __init__(self,
                  sparse=False,
                  reduction='none'):
@@ -675,6 +682,7 @@ class DiceLoss(LossBase):
         >>> print(output)
         0.38596618
     """
+
     def __init__(self, smooth=1e-5):
         """Initialize DiceLoss."""
         super(DiceLoss, self).__init__()
@@ -762,6 +770,7 @@ class MultiClassDiceLoss(LossBase):
         >>> print(output)
         0.54958105
     """
+
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         """Initialize MultiClassDiceLoss."""
         super(MultiClassDiceLoss, self).__init__()
@@ -802,7 +811,7 @@ class MultiClassDiceLoss(LossBase):
                     dice_loss *= self.weights[i]
                 total_loss += dice_loss
 
-        return total_loss/label.shape[1]
+        return total_loss / label.shape[1]
 
 
 class SampledSoftmaxLoss(LossBase):
@@ -1161,6 +1170,7 @@ class CosineEmbeddingLoss(LossBase):
         >>> print(output)
         0.0003425479
     """
+
     def __init__(self, margin=0.0, reduction="mean"):
         """Initialize CosineEmbeddingLoss."""
         super(CosineEmbeddingLoss, self).__init__(reduction)

@@ -879,23 +879,22 @@ class MatMul(Cell):
 
 class Moments(Cell):
     """
-    Calculates the mean and variance of `x`.
-
-    The mean and variance are calculated by aggregating the contents of `input_x` across axes.
-    If `input_x` is 1-D and axes = [0] this is just the mean and variance of a vector.
+    Calculate the mean and variance of the input `x` along the specified `axis`.
 
     Args:
-        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: None.
-        keep_dims (bool): If true, The dimension of mean and variance are identical with input's.
-                          If false, don't keep these dimensions. Default: None.
+        axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis.
+        When the value is None, it means to calculate the mean and variance of all values of `x`. Default: None.
+        keep_dims (bool): If True, the calculation result will retain the dimension of `axis`,
+        and the dimensions of the mean and variance are the same as the input. If False or None,
+        the dimension of `axis` will be reduced. Default: None.
 
     Inputs:
-        - **x** (Tensor) - The tensor to be calculated. Only float16 and float32 are supported.
-          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **x** (Tensor) - Tensor of any dimension used to calculate the mean and variance.
+        Only float16 and float32 are supported.
 
     Outputs:
-        - **mean** (Tensor) - The mean of `x`, with the same data type as input `x`.
-        - **variance** (Tensor) - The variance of `x`, with the same data type as input `x`.
+        - **mean** (Tensor) - The mean value of `x` on `axis`, with the same data type as input `x`.
+        - **variance** (Tensor) - The variance of `x` on `axis`, with the same data type as input `x`.
 
     Raises:
         TypeError: If `axis` is not one of int, tuple, None.
@@ -906,40 +905,38 @@ class Moments(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[[[1, 2, 3, 4], [3, 4, 5, 6]]]]), mindspore.float32)
+        >>> # case1: axis = 0, keep_dims=True
+        >>> x = Tensor(np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]), mindspore.float32)
         >>> net = nn.Moments(axis=0, keep_dims=True)
         >>> output = net(x)
         >>> print(output)
-        (Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
-        [[[[ 1.00000000e+00, 2.00000000e+00, 3.00000000e+00, 4.00000000e+00],
-           [ 3.00000000e+00, 4.00000000e+00, 5.00000000e+00, 6.00000000e+00]]]]),
-        Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
-        [[[[ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
-           [ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00]]]]))
-        >>> net = nn.Moments(axis=1, keep_dims=True)
+        (Tensor(shape=[1, 2, 2], dtype=Float32, value=
+        [[[ 3.00000000e+00, 4.00000000e+00],
+          [ 5.00000000e+00, 6.00000000e+00]]]), Tensor(shape=[1, 2, 2], dtype=Float32, value=
+        [[[ 4.00000000e+00, 4.00000000e+00],
+          [ 4.00000000e+00, 4.00000000e+00]]]))
+        >>> # case2: axis = 1, keep_dims=True)
         >>> output = net(x)
         >>> print(output)
-        (Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
-        [[[[ 1.00000000e+00, 2.00000000e+00, 3.00000000e+00, 4.00000000e+00],
-           [ 3.00000000e+00, 4.00000000e+00, 5.00000000e+00, 6.00000000e+00]]]]),
-        Tensor(shape=[1, 1, 2, 4], dtype=Float32, value=
-        [[[[ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
-           [ 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00]]]]))
-        >>> net = nn.Moments(axis=2, keep_dims=True)
+        (Tensor(shape=[2, 1, 2], dtype=Float32, value=
+        [[[ 2.00000000e+00, 3.00000000e+00]],
+         [[ 6.00000000e+00, 7.00000000e+00]]]), Tensor(shape=[2, 1, 2], dtype=Float32, value=
+        [[[ 1.00000000e+00, 1.00000000e+00]],
+         [[ 1.00000000e+00, 1.00000000e+00]]]))
+        >>> # case3: axis = 2, keep_dims=None(default)
+        >>> net = nn.Moments(axis=2)
         >>> output = net(x)
         >>> print(output)
-        (Tensor(shape=[1, 1, 1, 4], dtype=Float32, value=
-        [[[[ 2.00000000e+00, 3.00000000e+00, 4.00000000e+00, 5.00000000e+00]]]]),
-        Tensor(shape=[1, 1, 1, 4], dtype=Float32, value=
-        [[[[ 1.00000000e+00, 1.00000000e+00, 1.00000000e+00, 1.00000000e+00]]]]))
-        >>> net = nn.Moments(axis=3, keep_dims=True)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.50000000e+00, 3.50000000e+00],
+         [ 5.50000000e+00, 7.50000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.50000000e-01, 2.50000000e-01],
+         [ 2.50000000e-01, 2.50000000e-01]]))
+        >>> # case4: axis = None(default), keep_dims=None(default)
+        >>> net = nn.Moments()
         >>> output = net(x)
         >>> print(output)
-        (Tensor(shape=[1, 1, 2, 1], dtype=Float32, value=
-        [[[[ 2.50000000e+00],
-           [ 4.50000000e+00]]]]), Tensor(shape=[1, 1, 2, 1], dtype=Float32, value=
-        [[[[ 1.25000000e+00],
-           [ 1.25000000e+00]]]]))
+        (Tensor(shape=[], dtype=Float32, value= 4.5), Tensor(shape=[], dtype=Float32, value= 5.25))
     """
 
     def __init__(self, axis=None, keep_dims=None):

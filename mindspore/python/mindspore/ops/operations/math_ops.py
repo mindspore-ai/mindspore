@@ -3737,14 +3737,7 @@ class NotEqual(_LogicBinaryOp):
 
 class Greater(_LogicBinaryOp):
     r"""
-    Computes the boolean value of :math:`x > y` element-wise.
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
+    Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
 
     .. math::
 
@@ -3754,13 +3747,23 @@ class Greater(_LogicBinaryOp):
             \end{cases}
 
     Note:
-        Broadcasting is supported.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        - The inputs must be two tensors or one tensor and one scalar.
+        - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
+          and the shapes of them can be broadcast.
+        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - Broadcasting is supported.
+        - If the input Tensor can be broadcast, the low dimension will be extended to the corresponding high dimension
+          in another input by copying the value of the dimension.
 
     Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -5237,14 +5240,13 @@ class Inv(Primitive):
         out_i = \frac{1}{x_{i} }
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Must be one of the following types: float16, float32, int32.
+        - **x** (Tensor) - Tensor of any dimension. Must be one of the following types: float16, float32 or int32.
 
     Outputs:
         Tensor, has the same shape and data type as `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not one of float16, float32, int32.
 
     Supported Platforms:
