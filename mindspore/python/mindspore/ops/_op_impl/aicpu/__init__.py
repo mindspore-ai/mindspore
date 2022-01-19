@@ -15,6 +15,7 @@
 """aicpu ops"""
 from .unique import _unique_aicpu
 from .lu_solve import _lu_solve_aicpu
+from .cholesky_inverse import _cholesky_inverse_aicpu
 from .no_repeat_ngram import _no_repeat_ngram_aicpu
 from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu

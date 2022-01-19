@@ -5927,3 +5927,53 @@ class LuSolve(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
+
+
+class CholeskyInverse(Primitive):
+    """
+    Returns the inverse of the positive definite matrix using cholesky matrix factorization.
+
+    If upper is False, u is a lower triangular such that the output tensor is
+
+    .. math::
+                        inv = (uu^{T})^{{-1}}
+
+    If upper is True, u is an upper triangular such that the output tensor is
+
+    .. math::
+                        inv = (u^{T}u)^{{-1}}
+
+    Note:
+        The input must be either an upper triangular matrix or a lower triangular matrix.
+
+    Args:
+        upper(bool): Whether to return a lower or upper triangular matrix. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. types: float32, float64.
+
+    Outputs:
+        Tensor, has the same shape and dtype as x.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not one of: float32, float64.
+        ValueError: If the dimension of `x` is not equal to 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[2,0,0], [4,1,0], [-1,1,2]]), mindspore.float32)
+        >>> net = ops.CholeskyInverse()
+        >>> y = net(x)
+        >>> print(y)
+        [[ 5.8125 -2.625   0.625 ]
+         [-2.625   1.25   -0.25  ]
+         [ 0.625  -0.25    0.25  ]]
+    """
+    @prim_attr_register
+    def __init__(self, upper=False):
+        """Initialize CholeskyInverse"""
+        validator.check_value_type("upper", upper, [bool], self.name)
+        self.upper = upper
