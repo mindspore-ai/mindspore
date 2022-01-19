@@ -21,11 +21,3 @@ mindspore.load_checkpoint
     **异常：**
 
     - **ValueError** – checkpoint文件格式不正确。
-
-    **样例：**
-
-    >>> from mindspore import load_checkpoint
-    >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
-    >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
-    >>> print(param_dict["conv2.weight"])
-    Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)

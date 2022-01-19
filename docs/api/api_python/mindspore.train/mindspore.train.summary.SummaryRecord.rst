@@ -15,12 +15,12 @@
     **参数：**
 
     - **log_dir** (str) - `log_dir` 是用来保存summary文件的目录。
-    - **file_prefix** (str) - 文件的前缀。默认值：`events`。
-    - **file_suffix** (str) - 文件的后缀。默认值：`_MS`。
+    - **file_prefix** (str) - 文件的前缀。默认值：`events` 。
+    - **file_suffix** (str) - 文件的后缀。默认值：`_MS` 。
     - **network** (Cell) - 表示用于保存计算图的网络。默认值：None。
     - **max_file_size** (int, 可选) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，预期写入文件最大不超过4GB，则设置 `max_file_size=4*1024**3` 。默认值：None，表示无限制。
     - **raise_exception** (bool, 可选) - 设置在记录数据中发生RuntimeError或OSError异常时是否抛出异常。默认值：False，表示打印错误日志，不抛出异常。
-    - **export_options** (Union[None, dict]) - 可以将保存在summary中的数据导出，并使用字典自定义所需的数据和文件格式。注：导出的文件大小不受 `max_file_size` 的限制。例如，您可以设置{'tensor_format':'npy'}将Tensor导出为`npy`文件。支持导出的数据类型如下所示。默认值：None，表示不导出数据。
+    - **export_options** (Union[None, dict]) - 可以将保存在summary中的数据导出，并使用字典自定义所需的数据和文件格式。注：导出的文件大小不受 `max_file_size` 的限制。例如，您可以设置{'tensor_format':'npy'}将Tensor导出为 `npy` 文件。支持导出的数据类型如下所示。默认值：None，表示不导出数据。
 
         - **tensor_format** (Union[str, None]) - 自定义导出的Tensor的格式。支持["npy", None]。默认值：None，表示不导出Tensor。
 
@@ -30,20 +30,6 @@
 
     - **TypeError：** `max_file_size` 不是整型，或 `file_prefix` 和 `file_suffix` 不是字符串。
     - **ValueError：** ：编译MindSpore时，设置 `-s on` 关闭了维测功能。
-
-    **样例：**
-
-    >>> from mindspore.train.summary import SummaryRecord
-    >>> if __name__ == '__main__':
-    ...     # 在with语句中使用以自动关闭
-    ...     with SummaryRecord(log_dir="./summary_dir") as summary_record:
-    ...         pass
-    ...
-    ...     # 在try .. finally .. 语句中使用以确保关闭
-    ...     try:
-    ...         summary_record = SummaryRecord(log_dir="./summary_dir")
-    ...     finally:
-    ...         summary_record.close()
 
     .. py:method:: add_value(plugin, name, value)
 
@@ -78,39 +64,15 @@
         - **ValueError：** `plugin` 的值不在可选值内。
         - **TypeError：** `name` 不是非空字符串，或当 `plugin` 为"scalar"、"image"、"tensor"或"histogram"时，`value` 的数据类型不是"Tensor"对象。
 
-        **样例：**
-
-        >>> from mindspore import Tensor
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-        ...         summary_record.add_value('scalar', 'loss', Tensor(0.1))
-
     .. py:method:: close()
 
         将缓冲区中的数据立刻写入文件并关闭SummaryRecord。请使用with语句或try…finally语句进行自动关闭。
-
-        **样例：**
-
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     try:
-        ...         summary_record = SummaryRecord(log_dir="./summary_dir")
-        ...     finally:
-        ...         summary_record.close()
 
     .. py:method:: flush()
 
         刷新缓冲区，将缓冲区中的数据立刻写入文件。
 
         调用该函数以确保所有挂起事件都已写入到磁盘。
-
-        **样例：**
-
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-        ...         summary_record.flush()
 
     .. py:method:: log_dir
         :property:
@@ -120,13 +82,6 @@
         **返回：**
 
         str，日志文件的完整路径。
-
-        **样例：**
-
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-        ...         log_dir = summary_record.log_dir
 
     .. py:method:: record(step, train_network=None, plugin_filter=None)
 
@@ -144,16 +99,7 @@
 
         **异常：**
 
-        - **TypeError：** `step` 不为整型，或 `train_network` 的类型不为`mindspore.nn.Cell <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/nn/mindspore.nn.Cell.html?highlight=MindSpore.nn.cell#mindspore-nn-cell>`_ 。
-
-        **样例：**
-
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-        ...         summary_record.record(step=2)
-        ...
-        True
+        - **TypeError：** `step` 不为整型，或 `train_network` 的类型不为 `mindspore.nn.Cell <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/nn/mindspore.nn.Cell.html?highlight=MindSpore.nn.cell#mindspore-nn-cell>`_ 。
 
     .. py:method:: set_mode(mode)
 
@@ -169,10 +115,3 @@
         **异常：**
 
         **ValueError：** `mode` 的值不在可选值内。
-
-        **样例：**
-
-        >>> from mindspore.train.summary import SummaryRecord
-        >>> if __name__ == '__main__':
-        ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-        ...         summary_record.set_mode('eval')

@@ -24,18 +24,3 @@ mindspore.ops.ReLUV2
 
     - **TypeError** - `input_x` 不是Tensor。
     - **ValueError** - `input_x` 的shape不是4-D。
-
-    **支持平台：**
-
-    ``Ascend``
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
-    >>> relu_v2 = ops.ReLUV2()
-    >>> output, _= relu_v2(input_x)
-    >>> print(output)
-    [[[[1. 0.]
-       [0. 4.]]
-       [[0. 6.]
-       [7. 0.]]]]

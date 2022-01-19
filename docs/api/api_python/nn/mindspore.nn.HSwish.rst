@@ -25,16 +25,3 @@ mindspore.nn.HSwish
     **异常：**
 
     - **TypeError:** `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-    >>> hswish = nn.HSwish()
-    >>> result = hswish(x)
-    >>> print(result)
-    [-0.3333 -0.3333  0.      1.667   0.6665]
-    

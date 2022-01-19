@@ -43,15 +43,3 @@ mindspore.nn.LARS
     **输出：**
 
     Union[Tensor[bool], tuple[Parameter]]，取决于 `optimizer` 的输出。
-
-    **支持平台：**
-
-    ``Ascend`` ``CPU``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-    >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)
-    >>> opt_lars = nn.LARS(opt, epsilon=1e-08, coefficient=0.02)
-    >>> model = Model(net, loss_fn=loss, optimizer=opt_lars, metrics=None)

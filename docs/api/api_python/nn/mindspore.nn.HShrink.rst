@@ -25,21 +25,7 @@ mindspore.nn.HShrink
 
     Tensor，shape和数据类型与输入相同。
 
-    **支持平台：**
-
-    ``Ascend``
-
     **异常：**
 
     - **TypeError** - `lambd` 数据类型不是float。
     - **TypeError** - `input_x` 数据类型不是float。
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mstype.float32)
-    >>> hshrink = nn.HShrink()
-    >>> output = hshrink(input_x)
-    >>> print(output)
-    [[ 0.      1.      2.    ]
-    [ 0.      0.     -2.1233]]
-    

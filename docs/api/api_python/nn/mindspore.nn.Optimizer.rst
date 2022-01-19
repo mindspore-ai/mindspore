@@ -38,10 +38,6 @@ mindspore.nn.Optimizer
     - **ValueError** - `weight_decay` 小于0。
     - **ValueError** - `learning_rate` 是一个Tensor，但是Tensor的维度大于1。
 
-    **支持平台：**
-
-    ``Ascend``  ``GPU``  ``CPU``
-
     .. py:method:: broadcast_params(optim_result)
 
         按参数组的顺序进行参数广播。
@@ -87,19 +83,6 @@ mindspore.nn.Optimizer
         **返回：**
 
         Parameter，单个 `Parameter` 或 `Parameter` 列表。如果使用了动态学习率，返回用于计算学习率的 `LearningRateSchedule` 或 `LearningRateSchedule` 列表。
-
-        **样例：**
-
-        >>> from mindspore import nn
-        >>> net = Net()
-        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'lr': 0.05},
-        ...                 {'params': no_conv_params, 'lr': 0.01}]
-        >>> optim = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
-        >>> conv_lr = optim.get_lr_parameter(conv_params)
-        >>> print(conv_lr[0].asnumpy())
-        0.05
 
     .. py:method:: gradients_centralization(gradients)
 

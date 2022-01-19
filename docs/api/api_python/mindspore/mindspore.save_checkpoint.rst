@@ -18,10 +18,3 @@ mindspore.save_checkpoint
     **异常：**
 
     - **TypeError** – 如果参数 `save_obj` 类型不为nn.Cell或者list，且如果参数 `integrated_save` 及 `async_save` 非bool类型。
-
-    **样例：**
-
-    >>> from mindspore import save_checkpoint
-    >>>
-    >>> net = Net()
-    >>> save_checkpoint(net, "lenet.ckpt")

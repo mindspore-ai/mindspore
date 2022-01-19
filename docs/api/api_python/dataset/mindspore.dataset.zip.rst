@@ -14,8 +14,3 @@
 
     - **ValueError** - datasets参数的长度为1。
     - **TypeError** - datasets参数不是元组。
-
-    **样例：**
-
-    >>> # 创建一个将dataset_1和dataset_2合并后数据集dataset。
-    >>> dataset = ds.zip((dataset_1, dataset_2))

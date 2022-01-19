@@ -20,13 +20,6 @@ mindspore.dataset.GraphData
     - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效，默认值：1。
     - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出，默认值：True。
 
-    **样例：**
-
-    >>> graph_dataset_dir = "/path/to/graph_dataset_file"
-    >>> graph_dataset = ds.GraphData(dataset_file=graph_dataset_dir, num_parallel_workers=2)
-    >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-    >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[1])
-
 
     .. py:method:: get_all_edges(edge_type)
 
@@ -34,7 +27,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定`edge_type`的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
+        - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定 `edge_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
 
         **返回：**
 
@@ -43,10 +36,6 @@ mindspore.dataset.GraphData
         **异常：**
 
         **TypeError**：参数 `edge_type` 的类型不为整型。
-
-        **样例：**
-
-        >>> edges = graph_dataset.get_all_edges(edge_type=0)
 
     .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL)
 
@@ -151,23 +140,13 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `neighbor_type` 的类型不为整型。
 
-        **样例：**
-
-        >>> from mindspore.dataset.engine import OutputFormat
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
-        >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-        ...                                                 output_format=OutputFormat.COO)
-        >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-        ...                                                               output_format=OutputFormat.CSR)
-
     .. py:method:: get_all_nodes(node_type)
 
         获取图中的所有节点。
 
         **参数：**
 
-        - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定`node_type`的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
+        - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定 `node_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
 
         **返回：**
 
@@ -176,10 +155,6 @@ mindspore.dataset.GraphData
         **异常：**
 
         **TypeError**：参数 `node_type` 的类型不为整型。
-
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
 
     .. py:method:: get_edges_from_nodes(node_list)
 
@@ -196,10 +171,6 @@ mindspore.dataset.GraphData
         **异常：**
 
         **TypeError**：参数 `edge_list` 的类型不为列表或numpy.ndarray。
-
-        **样例：**
-
-        >>> edges = graph_dataset.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
 
     .. py:method:: get_edge_feature(edge_list, feature_types)
 
@@ -218,11 +189,6 @@ mindspore.dataset.GraphData
 
         - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
-
-        **样例：**
-
-        >>> edges = graph_dataset.get_all_edges(edge_type=0)
-        >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=[1])
 
 
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
@@ -245,12 +211,6 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `neg_neighbor_num` 的类型不为整型。
         - **TypeError** - 参数 `neg_neighbor_type` 的类型不为整型。
 
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
-        ...                                                         neg_neighbor_type=2)
-
     .. py:method:: get_nodes_from_edges(edge_list)
 
         从图中的边获取节点。
@@ -266,11 +226,6 @@ mindspore.dataset.GraphData
         **异常：**
 
         **TypeError：** 参数 `edge_list` 不为列表或ndarray。
-
-        **样例：**
-
-        >>> edge_list = graph_dataset.get_all_edges(node_type=1)
-        >>> nodes = graph_dataset.get_nodes_from_edges(edge_list)
 
     .. py:method:: get_node_feature(node_list, feature_types)
 
@@ -289,11 +244,6 @@ mindspore.dataset.GraphData
 
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
-
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[2, 3])
 
     .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
 
@@ -319,12 +269,6 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `neighbor_nums` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `neighbor_types`  的类型不为列表或numpy.ndarray。
 
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-        ...                                                 neighbor_types=[2, 1])
-
 
     .. py:method:: graph_info()
 
@@ -333,10 +277,6 @@ mindspore.dataset.GraphData
         **返回：**
 
         dict，图的元信息。键为 `node_num` 、 `node_type` 、 `node_feature_type` 、 `edge_num` 、 `edge_type` 和 `edge_feature_type` 。
-
-        **样例：**
-
-        >>> graph_info = graph_dataset.graph_info()
 
 
     .. py:method:: random_walk(target_nodes, meta_path, step_home_param=1.0, step_away_param=1.0, default_node=-1)
@@ -359,8 +299,3 @@ mindspore.dataset.GraphData
 
         - **TypeError** - 参数 `target_nodes` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `meta_path` 的类型不为列表或numpy.ndarray。
-
-        **样例：**
-
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> walks = graph_dataset.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])

@@ -12,10 +12,6 @@ mindspore.nn.probability.distribution.Distribution
     - **name** (str) - 分布的名称。
     - **param** (dict) - 用于初始化分布的参数。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
     .. note:: 
         派生类必须重写 `_mean` 、 `_prob` 和 `_log_prob` 等操作。必填参数必须通过 `args` 或 `kwargs` 传入，如 `_prob` 的 `value` 。
 

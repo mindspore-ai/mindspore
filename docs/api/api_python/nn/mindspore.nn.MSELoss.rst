@@ -37,26 +37,3 @@ mindspore.nn.MSELoss
 
     **ValueError** - `reduction` 不为"mean"，"sum"，或"none"。
     **ValueError** - `logits` 和 `labels` 的shape不同，且不能广播。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> #用例1：logits.shape = labels.shape = (3,)
-    >>> loss = nn.MSELoss()
-    >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-    >>> labels = Tensor(np.array([1, 1, 1]), mindspore.float32)
-    >>> output = loss(logits, labels)
-    >>> print(output)
-    1.6666667
-    >>> #用例2：logits.shape = (3,), labels.shape = (2, 3)
-    >>> loss = nn.MSELoss(reduction='none')
-    >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-    >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
-    >>> output = loss(logits, labels)
-    >>> print(output)
-    [[0. 1. 4.] [0. 0. 1.]]
-         
-    

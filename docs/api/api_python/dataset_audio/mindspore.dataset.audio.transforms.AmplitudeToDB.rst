@@ -16,12 +16,3 @@ mindspore.dataset.audio.transforms.AmplitudeToDB
        
     - **amin** (float, 可选) - 波形取值下界，低于该值的波形将会被裁切，取值必须大于0，默认值：1e-10。
     - **top_db** (float, 可选) - 最小负截止分贝值，默认值：80.0。
-
-    **样例：**
-
-    >>> import numpy as np
-    >>>
-    >>> waveform = np.random.random([1, 400//2+1, 30])
-    >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-    >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
-    >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])

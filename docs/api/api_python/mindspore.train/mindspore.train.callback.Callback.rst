@@ -7,24 +7,6 @@
     要创建自定义Callback，需要继承Callback基类并重载它相应的方法，有关自定义Callback的详细信息，请查看
     `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
 
-    **样例：**
-
-    >>> from mindspore import Model, nn
-    >>> from mindspore.train.callback import Callback
-    >>> class Print_info(Callback):
-    ...     def step_end(self, run_context):
-    ...         cb_params = run_context.original_args()
-    ...         print("step_num: ", cb_params.cur_step_num)
-    >>>
-    >>> print_cb = Print_info()
-    >>> dataset = create_custom_dataset()
-    >>> net = Net()
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-    >>> model = Model(net, loss_fn=loss, optimizer=optim)
-    >>> model.train(1, dataset, callbacks=print_cb)
-    step_num：1
-
     .. py:method:: begin(run_context)
 
         在网络执行之前被调用一次。

@@ -20,16 +20,3 @@ mindspore.dataset.deserialize
     **异常：**
 
     - **OSError:** -  `json_filepath` 不为None且JSON文件解析失败时。
-
-    **样例：**
-
-    >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
-    >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes是输入参数
-    >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
-    >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
-    >>> # 用例1：序列化/反序列化 JSON文件
-    >>> ds.serialize(dataset, json_filepath="/path/to/mnist_dataset_pipeline.json")
-    >>> dataset = ds.deserialize(json_filepath="/path/to/mnist_dataset_pipeline.json")
-    >>> # 用例2：序列化/反序列化 Python字典
-    >>> serialized_data = ds.serialize(dataset)
-    >>> dataset = ds.deserialize(input_dict=serialized_data)

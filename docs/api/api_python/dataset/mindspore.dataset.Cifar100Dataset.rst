@@ -5,7 +5,7 @@ mindspore.dataset.Cifar100Dataset
 
     读取和解析CIFAR-100数据集的源文件构建数据集。
 
-    生成的数据集有三列: `[image, coarse_label, fine_label]`。 `image` 列的数据类型为uint8。 `coarse_label` 和 `fine_labels` 列的数据类型为uint32。
+    生成的数据集有三列: `[image, coarse_label, fine_label]` 。 `image` 列的数据类型为uint8。 `coarse_label` 和 `fine_labels` 列的数据类型为uint32。
 
     **参数：**
 
@@ -18,7 +18,7 @@ mindspore.dataset.Cifar100Dataset
     - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
 
     **异常：**
 
@@ -57,18 +57,6 @@ mindspore.dataset.Cifar100Dataset
        * - `sampler` 实例
          - False
          - 不允许
-
-    **样例：**
-
-    >>> cifar100_dataset_dir = "/path/to/cifar100_dataset_directory"
-    >>>
-    >>> # 1)  按数据集文件的读取顺序，依次获取CIFAR-100数据集中的所有样本
-    >>> dataset = ds.Cifar100Dataset(dataset_dir=cifar100_dataset_dir, shuffle=False)
-    >>>
-    >>> # 2)  从CIFAR100数据集中随机抽取350个样本
-    >>> dataset = ds.Cifar100Dataset(dataset_dir=cifar100_dataset_dir, num_samples=350, shuffle=True)
-    >>>
-    >>> #  提示： 在CIFAR-100数据集生成的数据集对象中，每一次迭代得到的数据行都有"image", "fine_label" 和 "coarse_label"三个键
 
     **关于CIFAR-100数据集:**
 

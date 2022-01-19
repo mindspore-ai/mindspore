@@ -5,7 +5,7 @@ mindspore.dataset.Cifar10Dataset
 
     读取和解析CIFAR-10数据集的源文件构建数据集。该API目前仅支持解析二进制版本的CIFAR-10文件（CIFAR-10 binary version）。
 
-    生成的数据集有两列: `[image, label]`。`image` 列的数据类型是uint8。`label` 列的数据类型是uint32。
+    生成的数据集有两列: `[image, label]` 。 `image` 列的数据类型是uint8。`label` 列的数据类型是uint32。
 
     **参数：**
 
@@ -18,7 +18,7 @@ mindspore.dataset.Cifar10Dataset
     - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器，默认值：None，下表中会展示不同配置的预期行为。
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
 
     **异常：**
 
@@ -57,21 +57,6 @@ mindspore.dataset.Cifar10Dataset
        * - `sampler` 实例
          - False
          - 不允许
-
-    **样例：**
-
-    >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
-    >>>
-    >>> # 1) 按数据集文件的读取顺序，获取CIFAR-10数据集中的所有样本
-    >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, shuffle=False)
-    >>>
-    >>> # 2) 从CIFAR10数据集中随机抽取350个样本
-    >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, num_samples=350, shuffle=True)
-    >>>
-    >>> # 3) 对CIFAR10数据集进行分布式训练，并将数据集拆分为2个分片，当前数据集仅加载分片ID号为0的数据
-    >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, num_shards=2, shard_id=0)
-    >>>
-    >>> # 提示：在CIFAR-10数据集生成的数据集对象中，每一次迭代得到的数据行都有"image"和"label"两个键
 
     **关于CIFAR-10数据集:**
 

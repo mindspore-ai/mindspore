@@ -22,12 +22,4 @@ mindspore.dataset.PKSampler
     - **RuntimeError：** `num_val` 不是正值。
     - **ValueError：** `num_samples` 为负值。
 
-    **样例：**
-
-    >>> # 创建一个PKSampler，从每个类中获取3个样本。
-    >>> sampler = ds.PKSampler(3)
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

@@ -17,20 +17,6 @@ mindspore.nn.Precision
 
     - **eval_type** （str）- 支持'classification'和'multilabel'。默认值：'classification'。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> from mindspore import nn, Tensor
-    >>>
-    >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-    >>> y = Tensor(np.array([1, 0, 1]))
-    >>> metric = nn.Precision('classification')
-    >>> metric.clear()
-    >>> metric.update(x, y)
-    >>> precision = metric.eval()
-    >>> print(precision)
-    [0.5 1. ]
-
     .. py:method:: clear()
 
         内部评估结果清零。

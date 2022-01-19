@@ -9,8 +9,3 @@
 
     - **network** (Cell) - 要修饰的目标网络。
     - **micro_size** (int) - MicroBatch大小。
-
-    **样例：**
-
-    >>> net = Net()
-    >>> net = PipelineCell(net, 4)

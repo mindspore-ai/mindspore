@@ -27,13 +27,6 @@ mindspore.ops.Log
 
     - **TypeError** - `x` 不是Tensor。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-
     >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
     >>> log = ops.Log()
     >>> output = log(x)

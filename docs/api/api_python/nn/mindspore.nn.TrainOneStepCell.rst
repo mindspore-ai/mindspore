@@ -25,34 +25,3 @@ mindspore.nn.TrainOneStepCell
     **异常：**
 
     **TypeError**：`sens` 不是numbers.Number。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-    >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    >>> # 1）使用MindSpore提供的WithLossCell
-    >>> loss_net = nn.WithLossCell(net, loss_fn)
-    >>> train_net = nn.TrainOneStepCell(loss_net, optim)
-    >>>
-    >>> # 2）用户自定义的WithLossCell
-    >>> class MyWithLossCell(Cell):
-    ...    def __init__(self, backbone, loss_fn):
-    ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
-    ...        self._backbone = backbone
-    ...        self._loss_fn = loss_fn
-    ...
-    ...    def construct(self, x, y, label):
-    ...        out = self._backbone(x, y)
-    ...        return self._loss_fn(out, label)
-    ...
-    ...    @property
-    ...    def backbone_network(self):
-    ...        return self._backbone
-    ...
-    >>> loss_net = MyWithLossCell(net, loss_fn)
-    >>> train_net = nn.TrainOneStepCell(loss_net, optim)

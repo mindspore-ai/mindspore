@@ -62,11 +62,6 @@
          - False
          - 不允许
 
-    **样例：**
-
-    >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # 此列表可以包含一个或多个MindRecord文件
-    >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
-
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.rst

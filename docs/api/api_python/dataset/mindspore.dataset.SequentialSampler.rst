@@ -17,12 +17,4 @@ mindspore.dataset.SequentialSampler
     - **RuntimeError：** `start_index` 为负值。
     - **ValueError：** `num_samples` 为负值。
 
-    **样例：**
-
-    >>> # 创建SequentialSampler
-    >>> sampler = ds.SequentialSampler()
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

@@ -25,16 +25,3 @@ mindspore.nn.Tanh
     **异常：**
     
     **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
-    >>> tanh = nn.Tanh()
-    >>> output = tanh(x)
-    >>> print(output)
-    [0.7617 0.964  0.995  0.964  0.7617]
-    

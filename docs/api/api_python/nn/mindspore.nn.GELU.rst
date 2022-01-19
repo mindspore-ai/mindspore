@@ -36,16 +36,3 @@ mindspore.nn.GELU
     **异常：**
 
     **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-    >>> gelu = nn.GELU()
-    >>> output = gelu(x)
-    >>> print(output)
-    [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
-    [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]

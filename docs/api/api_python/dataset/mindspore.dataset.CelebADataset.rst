@@ -5,7 +5,7 @@ mindspore.dataset.CelebADataset
 
     读取和解析CelebA数据集的源文件构建数据集。目前仅支持解析CelebA数据集中的 `list_attr_celeba.txt` 文件作为数据集的label。
 
-    生成的数据集有两列 `[image, attr]`。`image` 列的数据类型为uint8。`attr` 列的数据类型为uint32，并以one-hot编码的形式生成。
+    生成的数据集有两列 `[image, attr]` 。 `image` 列的数据类型为uint8。`attr` 列的数据类型为uint32，并以one-hot编码的形式生成。
 
     **参数：**
 
@@ -19,7 +19,7 @@ mindspore.dataset.CelebADataset
     - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值：None，读取全部样本图片。
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后， `num_samples` 表示每个分片的最大样本数。
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
-    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
 
     **异常：**
 
@@ -58,15 +58,6 @@ mindspore.dataset.CelebADataset
        * - `sampler` 实例
          - False
          - 不允许
-
-    **样例：**
-
-    >>> celeba_dataset_dir = "/path/to/celeba_dataset_directory"
-    >>>
-    >>> # 从CelebA数据集中随机读取5张样本图片
-    >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train', num_samples=5)
-    >>>
-    >>> # 注：在生成的数据集对象中，每一次迭代得到的数据行都有"image"和"attr" 两个键
 
     **关于CelebA数据集：**
 

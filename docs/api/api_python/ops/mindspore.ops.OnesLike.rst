@@ -16,17 +16,3 @@ mindspore.ops.OnesLike
     **异常：**
 
     - **TypeError** - `input_x` 不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> oneslike = ops.OnesLike()
-    >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-    >>> output = oneslike(input_x)
-    >>> print(output)
-    [[1 1]
-     [1 1]]
-    

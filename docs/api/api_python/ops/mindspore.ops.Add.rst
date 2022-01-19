@@ -27,28 +27,3 @@ mindspore.ops.Add
     **异常：**
 
     - **TypeError** - `x` 和 `y` 不是Tensor、number.Number或bool。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> # 用例1: x和y都是Tensor。
-    >>> add = ops.Add()
-    >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-    >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
-    >>> output = add(x, y)
-    >>> print(output)
-    [5.7.9.]
-    >>> # 用例2: x是Scalar Tensor，y是Tensor。
-    >>> add = ops.Add()
-    >>> x = Tensor(1, mindspore.int32)
-    >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
-    >>> output = add(x, y)
-    >>> print(output)
-    [5. 6. 7.]
-    >>> # x的数据类型为int32，y的数据类型为float32。
-    >>> # 输出的数据类型为高精度float32。
-    >>> print(output.dtype)
-    Float32

@@ -23,42 +23,6 @@
 
     - **ValueError** - 输入参数的类型不正确。
 
-    **样例：**
-
-    >>> from mindspore import Model, nn
-    >>> from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-    >>>
-    >>> class LeNet5(nn.Cell):
-    ...     def __init__(self):
-    ...         super(LeNet5, self).__init__()
-    ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
-    ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-    ...         self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
-    ...         self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
-    ...         self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
-    ...         self.relu = nn.ReLU()
-    ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-    ...         self.flatten = nn.Flatten()
-    ...
-    ...     def construct(self, x):
-    ...         x = self.max_pool2d(self.relu(self.conv1(x)))
-    ...         x = self.max_pool2d(self.relu(self.conv2(x)))
-    ...         x = self.flatten(x)
-    ...         x = self.relu(self.fc1(x))
-    ...         x = self.relu(self.fc2(x))
-    ...         x = self.fc3(x)
-    ...         return x
-    >>>
-    >>> net = LeNet5()
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-    >>> model = Model(net, loss_fn=loss, optimizer=optim)
-    >>> data_path = './MNIST_Data'
-    >>> dataset = create_dataset(data_path)
-    >>> config = CheckpointConfig(saved_network=net)
-    >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
-    >>> model.train(10, dataset, callbacks=ckpoint_cb)
-
 
     .. py:method:: append_dict
         :property:

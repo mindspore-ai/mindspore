@@ -143,34 +143,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
 
     **ValueError**：输入key不是上下文中的属性。
 
-    **样例：**
-
-    >>> context.set_context(mode=context.PYNATIVE_MODE)
-    >>> context.set_context(precompile_only=True)
-    >>> context.set_context(device_target="Ascend")
-    >>> context.set_context(device_id=0)
-    >>> context.set_context(save_graphs=True, save_graphs_path="./model.ms")
-    >>> context.set_context(enable_reduce_precision=True)
-    >>> context.set_context(enable_dump=True, save_dump_path=".")
-    >>> context.set_context(enable_graph_kernel=True)
-    >>> context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
-    >>> context.set_context(reserve_class_name_in_scope=True)
-    >>> context.set_context(variable_memory_max_size="6GB")
-    >>> context.set_context(enable_profiling=True,
-    ...                     profiling_options='{"output":"/home/data/output","training_trace":"on"}')
-    >>> context.set_context(check_bprop=True)
-    >>> context.set_context(max_device_memory="3.5GB")
-    >>> context.set_context(mempool_block_size="1GB")
-    >>> context.set_context(print_file_path="print.pb")
-    >>> context.set_context(enable_sparse=True)
-    >>> context.set_context(max_call_depth=80)
-    >>> context.set_context(env_config_path="./env_config.json")
-    >>> context.set_context(auto_tune_mode="GA,RL")
-    >>> context.set_context(grad_for_scalar=True)
-    >>> context.set_context(save_compile_cache=True)
-    >>> context.set_context(load_compile_cache=True)
-    >>> context.set_context(pynative_synchronize=True)
-
 .. py:function:: mindspore.context.get_context(attr_key)
 
     根据输入key获取context中的属性值。如果该key没有设置，则会获取它们这些的默认值。
@@ -186,11 +158,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     **异常：**
 
     **ValueError**：输入key不是context中的属性。
-
-    **样例：**
-
-    >>> context.get_context("device_target")
-    >>> context.get_context("device_id")
 
 .. py:function:: mindspore.context.set_auto_parallel_context(**kwargs)
 
@@ -249,22 +216,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
 
     **ValueError**：输入key不是自动并行上下文中的属性。
 
-    **样例：**
-
-    >>> context.set_auto_parallel_context(device_num=8)
-    >>> context.set_auto_parallel_context(global_rank=0)
-    >>> context.set_auto_parallel_context(gradients_mean=True)
-    >>> context.set_auto_parallel_context(gradient_fp32_sync=False)
-    >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    >>> context.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
-    >>> context.set_auto_parallel_context(parameter_broadcast=False)
-    >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
-    >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
-    >>> context.set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
-    >>> context.set_auto_parallel_context(enable_parallel_optimizer=False)
-    >>> context.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
-    >>> context.set_auto_parallel_context(pipeline_stages=2)
-
 .. py:function:: mindspore.context.get_auto_parallel_context(attr_key)
 
     根据key获取自动并行的配置。
@@ -280,12 +231,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     **异常：**
 
     **ValueError**：输入key不在自动并行的配置列表中。
-
-    **样例：**
-
-    >>> from mindspore import context
-    >>> parallel_mode = context.get_auto_parallel_context("parallel_mode")
-    >>> dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
 
 .. py:function:: mindspore.context.reset_auto_parallel_context()
 
@@ -347,10 +292,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
 
     **ValueError**：输入key不是参数服务器训练模式上下文中的属性。
 
-    **样例：**
-
-    >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
-
 .. py:function:: mindspore.context.get_ps_context(attr_key)
 
     根据key获取参数服务器训练模式上下文中的属性值。
@@ -374,14 +315,6 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
 
     **ValueError** - 输入key不是参数服务器训练模式上下文中的属性。
 
-    **样例：**
-
-    >>> context.get_ps_context(enable_ps)
-
 .. py:function:: mindspore.context.reset_ps_context()
 
     将参数服务器训练模式上下文中的属性重置为默认值。各字段的含义及其默认值见'set_ps_context'接口。
-
-    **样例：**
-
-    >>> context.reset_ps_context()

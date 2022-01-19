@@ -16,12 +16,4 @@ mindspore.dataset.RandomSampler
     - **TypeError：** `num_samples` 不是整数值。
     - **ValueError：** `num_samples` 为负值。
 
-    **样例：**
-
-    >>> # 创建一个RandomSampler
-    >>> sampler = ds.RandomSampler()
-    >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-    ...                                 num_parallel_workers=8,
-    ...                                 sampler=sampler)
-
     .. include:: mindspore.dataset.BuiltinSampler.rst

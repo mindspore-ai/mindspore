@@ -25,16 +25,3 @@ mindspore.nn.LogSigmoid
     **异常：**
 
     **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> net = nn.LogSigmoid()
-    >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-    >>> output = net(x)
-    >>> print(output)
-    [-0.31326166 -0.12692806 -0.04858734]
-    

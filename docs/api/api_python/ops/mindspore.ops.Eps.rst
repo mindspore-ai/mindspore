@@ -17,14 +17,3 @@ mindspore.ops.Eps
 
     - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的数据类型不是float16或者float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor([4, 1, 2, 3], mindspore.float32)
-    >>> output = ops.Eps()(x)
-    >>> print(output)
-    [1.5258789e-05 1.5258789e-05 1.5258789e-05 1.5258789e-05]

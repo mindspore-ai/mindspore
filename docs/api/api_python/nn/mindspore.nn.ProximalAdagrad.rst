@@ -65,29 +65,5 @@ mindspore.nn.ProximalAdagrad
     - **ValueError** - `loss_scale` 小于或等于0。
     - **ValueError** - `accum`、`l1`、`l2` 或 `weight_decay` 小于0。
 
-    **支持平台：**
-
-    ``Ascend``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> #1) 所有参数使用相同的学习率和权重衰减
-    >>> optim = nn.ProximalAdagrad(params=net.trainable_params())
-    >>>
-    >>> #2) 使用参数组并设置不同的值
-    >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
-    >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-    >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
-    ...                 {'params': no_conv_params, 'lr': 0.01},
-    ...                 {'order_params': net.trainable_params()}]
-    >>> optim = nn.ProximalAdagrad(group_params, learning_rate=0.1, weight_decay=0.0)
-    >>> # conv_params参数组将使用优化器中的学习率0.1、该组的权重衰减0.01、该组的梯度中心化配置True。
-    >>> # no_conv_params参数组将使用该组的学习率0.01、优化器中的权重衰减0.0、梯度中心化使用默认值False。
-    >>> # 优化器按照"order_params"配置的参数顺序更新参数。
-    >>>
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-    >>> model = Model(net, loss_fn=loss, optimizer=optim)
-
 
 .. include:: mindspore.nn.optim_target_unique_for_sparse.rst

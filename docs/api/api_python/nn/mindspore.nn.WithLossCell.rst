@@ -25,22 +25,6 @@ mindspore.nn.WithLossCell
 
     **TypeError**：`data` 或 `label` 的数据类型既不是float16也不是float32。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> net = Net()
-    >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-    >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
-    >>>
-    >>> batch_size = 2
-    >>> data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
-    >>> label = Tensor(np.ones([batch_size, 10]).astype(np.float32))
-    >>>
-    >>> output_data = net_with_criterion(data, label)
-
 
 .. py:method:: backbone_network
     :property:

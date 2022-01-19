@@ -25,16 +25,3 @@ mindspore.ops.Sigmoid
 
     - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
     - **TypeError** - `input_x` 不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-    >>> sigmoid = ops.Sigmoid()
-    >>> output = sigmoid(input_x)
-    >>> print(output)
-    [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
-    

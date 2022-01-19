@@ -27,31 +27,6 @@
 
     numpy.ndarray，带边界框和类别置信度的图像。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> from mindspore.dataset.utils.browse_dataset import imshow_det_bbox
-    >>>
-    >>> # 读取VOC数据集.
-    >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
-    >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", shuffle=False, decode=True, num_samples=5)
-    >>> dataset_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=1)
-    >>>
-    >>> # 调用imshow_det_bbox自动标注图像
-    >>> for index, data in enumerate(dataset_iter):
-    ...     image = data["image"]
-    ...     bbox = data["bbox"]
-    ...     label = data["label"]
-    ...     # draw image with bboxes
-    ...     imshow_det_bbox(image, bbox, label,
-    ...                     class_names=['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat',
-    ...                                  'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
-    ...                                  'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'],
-    ...                     win_name="my_window",
-    ...                     wait_time=5000,
-    ...                     show=True,
-    ...                     out_file="voc_dataset_{}.jpg".format(str(index)))
-
-    **`imshow_det_bbox` 在VOC2012数据集的使用图示:**
+    ** `imshow_det_bbox` 在VOC2012数据集的使用图示:**
 
     .. image:: api_img/browse_dataset.png

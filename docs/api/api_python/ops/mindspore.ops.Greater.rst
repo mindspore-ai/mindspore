@@ -21,7 +21,7 @@ mindspore.ops.Greater
 
     **输入：**
 
-    - **x** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为`number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_或`bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_的Tensor。
+    - **x** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 的Tensor。
     - **y** (Union[Tensor, number.Number, bool]) - 第二个输入，当第一个输入是Tensor时，第二个输入应该是一个number.Number或bool值，或数据类型为number或bool_的Tensor。当第一个输入是Scalar时，第二个输入必须是数据类型为number或bool_的Tensor。
 
     **输出：**
@@ -31,17 +31,3 @@ mindspore.ops.Greater
     **异常：**
 
     **TypeError** - `x` 和 `y` 都不是Tensor。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-    >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-    >>> greater = ops.Greater()
-    >>> output = greater(x, y)
-    >>> print(output)
-    [False  True False]
-    

@@ -11,7 +11,7 @@ mindspore.nn.Tril
 
     **输入：**
 
-    - **x** (Tensor)：输入Tensor。数据类型为`number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+    - **x** (Tensor)：输入Tensor。数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
     - **k** (int)：对角线的索引。默认值：0。假设输入的矩阵的维度分别为d1，d2，则k的范围应在[-min(d1, d2)+1, min(d1, d2)-1]，超出该范围时输出值与输入 `x` 一致。
 
     **输出：**
@@ -22,58 +22,3 @@ mindspore.nn.Tril
 
     - **TypeError：** `k` 不是int。
     - **ValueError：** `x` 的维度小于1。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> # case1: k = 0
-    >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-    ...                      [ 5,  6,  7,  8],
-    ...                      [10, 11, 12, 13],
-    ...                      [14, 15, 16, 17]]))
-    >>> tril = nn.Tril()
-    >>> result = tril(x)
-    >>> print(result)
-    [[ 1  0  0  0]
-     [ 5  6  0  0]
-     [10 11 12  0]
-     [14 15 16 17]]
-    >>> # case2: k = 1
-    >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-    ...                      [ 5,  6,  7,  8],
-    ...                      [10, 11, 12, 13],
-    ...                      [14, 15, 16, 17]]))
-    >>> tril = nn.Tril()
-    >>> result = tril(x, 1)
-    >>> print(result)
-    [[ 1  2  0  0]
-     [ 5  6  7  0]
-     [10 11 12 13]
-     [14 15 16 17]]
-    >>> # case3: k = 2
-    >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-    ...                      [ 5,  6,  7,  8],
-    ...                      [10, 11, 12, 13],
-    ...                      [14, 15, 16, 17]]))
-    >>> tril = nn.Tril()
-    >>> result = tril(x, 2)
-    >>> print(result)
-    [[ 1  2  3  0]
-     [ 5  6  7  8]
-     [10 11 12 13]
-     [14 15 16 17]]
-    >>> # case4: k = -1
-    >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-    ...                      [ 5,  6,  7,  8],
-    ...                      [10, 11, 12, 13],
-    ...                      [14, 15, 16, 17]]))
-    >>> tril = nn.Tril()
-    >>> result = tril(x, -1)
-    >>> print(result)
-    [[ 0  0  0  0]
-     [ 5  0  0  0]
-     [10 11  0  0]
-     [14 15 16  0]]

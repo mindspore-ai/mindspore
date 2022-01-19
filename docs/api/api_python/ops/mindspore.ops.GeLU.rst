@@ -27,15 +27,3 @@ mindspore.ops.GeLU
 
     - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-    >>> gelu = ops.GeLU()
-    >>> result = gelu(x)
-    >>> print(result)
-    [0.841192  1.9545976  2.9963627]

@@ -13,7 +13,7 @@
     - **metrics** (Union[dict, set]) - 用于模型评估的一组评价函数。例如：{'accuracy', 'recall'}。默认值：None。
     - **eval_network** (Cell) - 用于评估的神经网络。未定义情况下，`Model` 会使用 `network` 和 `loss_fn` 封装一个 `eval_network` 。默认值：None。
     - **eval_indexes** (list) - 在定义 `eval_network` 的情况下使用。如果 `eval_indexes` 为默认值None，`Model` 会将 `eval_network` 的所有输出传给 `metrics` 。如果配置 `eval_indexes` ，必须包含三个元素，分别为损失值、预测值和标签在 `eval_network` 输出中的位置，此时，损失值将传给损失评价函数，预测值和标签将传给其他评价函数。推荐使用评价函数的 `mindspore.nn.Metric.set_indexes` 代替 `eval_indexes` 。默认值：None。
-    - **amp_level** (str) - `mindspore.build_train_network` 的可选参数 `level`，`level` 为混合精度等级，该参数支持["O0", "O2", "O3", "auto"]。默认值："O0"。
+    - **amp_level** (str) - `mindspore.build_train_network` 的可选参数 `level` ， `level` 为混合精度等级，该参数支持["O0", "O2", "O3", "auto"]。默认值："O0"。
 
       - "O0": 不变化。
       - "O2": 将网络精度转为float16，BatchNorm保持float32精度，使用动态调整损失缩放系数（loss scale）的策略。
@@ -21,8 +21,8 @@
       - auto: 为不同处理器设置专家推荐的混合精度等级，如在GPU上设为"O2"，在Ascend上设为"O3"。该设置方式可能在部分场景下不适用，建议用户根据具体的网络模型自定义设置 `amp_level` 。
 
       在GPU上建议使用"O2"，在Ascend上建议使用"O3"。
-      通过`kwargs`设置`keep_batchnorm_fp32`，可修改BatchNorm的精度策略，`keep_batchnorm_fp32`必须为bool类型；通过`kwargs`设置`loss_scale_manager`可修改损失缩放策略，`loss_scale_manager`必须为:class:`mindspore.LossScaleManager`的子类，
-      关于 `amp_level` 详见 `mindpore.build_train_network`。
+      通过 `kwargs` 设置 `keep_batchnorm_fp32` ，可修改BatchNorm的精度策略， `keep_batchnorm_fp32` 必须为bool类型；通过 `kwargs` 设置 `loss_scale_manager` 可修改损失缩放策略，`loss_scale_manager` 必须为:class:`mindspore.LossScaleManager` 的子类，
+      关于 `amp_level` 详见 `mindpore.build_train_network` 。
 
     - **boost_level** (str) – `mindspore.boost` 的可选参数, 为boost模式训练等级。支持[“O0”, “O1”, “O2”]. 默认值: “O0”.
 
@@ -30,7 +30,7 @@
       - "O1": 启用boost模式, 性能将提升约20%, 准确率保持不变。
       - "O2": 启用boost模式, 性能将提升约30%, 准确率下降小于3%。
 
-      如果你想设置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py`。
+      如果你想设置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py` 。
 
     **样例:**
 
@@ -83,21 +83,6 @@
 
           - jit_level (string): 控制计算图编译优化级别。可选项: o0/o1。默认值: o1。如果设置为o0，则计算图编译将会传入类似于图阶段的组合。
 
-        **样例：**
-
-        >>> from mindspore import Model, nn, FixedLossScaleManager
-        >>>
-        >>> # 如何构建数据集，请参考官方网站的数据集相关章节
-        >>> dataset = create_custom_dataset()
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> loss_scale_manager = FixedLossScaleManager()
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-        >>> model.build(dataset, epoch=2)
-        >>> model.train(2, dataset)
-        >>> model.train(2, dataset)
-
     .. py:method:: eval(valid_dataset, callbacks=None, dataset_sink_mode=True)
 
         模型评估接口。
@@ -117,17 +102,6 @@
         **返回：**
 
         Dict，key是用户定义的评价指标名称，value是以推理模式运行的评估结果。
-
-        **样例：**
-
-        >>> from mindspore import Model, nn
-        >>>
-        >>> # 如何构建数据集，请参考官方网站的数据集相关章节
-        >>> dataset = create_custom_dataset()
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
-        >>> acc = model.eval(dataset, dataset_sink_mode=False)
 
     .. py:method:: eval_network
         :property:
@@ -156,22 +130,6 @@
 
         - **RuntimeError** – 非图模式（GRAPH_MODE）将会抛出该异常。
 
-        **样例：**
-
-        >>> # 该例子需要在多设备上运行。请参考mindpore.cn上的教程 > 分布式训练。
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> from mindspore import Model, context, Tensor
-        >>> from mindspore.context import ParallelMode
-        >>> from mindspore.communication import init
-        >>>
-        >>> context.set_context(mode=context.GRAPH_MODE)
-        >>> init()
-        >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-        >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
-        >>> model = Model(Net())
-        >>> model.infer_predict_layout(input_data)
-
     .. py:method:: infer_train_layout(train_dataset, dataset_sink_mode=True, sink_size=-1)
 
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout，当前仅支持在数据下沉模式下使用。
@@ -189,28 +147,6 @@
         **返回：**
 
         Dict，用于加载分布式checkpoint的参数layout字典。
-
-        **样例：**
-
-        >>> # 该例子需要在多设备上运行。请参考mindpore.cn上的教程 > 分布式训练。
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> from mindspore import Model, context, Tensor, nn, FixedLossScaleManager
-        >>> from mindspore.context import ParallelMode
-        >>> from mindspore.communication import init
-        >>>
-        >>> context.set_context(mode=context.GRAPH_MODE)
-        >>> init()
-        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-        >>>
-        >>> # 如何构建数据集，请参考官方网站上关于[数据集]的章节。
-        >>> dataset = create_custom_dataset()
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> loss_scale_manager = FixedLossScaleManager()
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-        >>> layout_dict = model.infer_train_layout(dataset)
 
     .. py:method:: predict(*predict_data)
 

@@ -18,14 +18,3 @@ mindspore.load_param_into_net
     **异常：**
 
     - **TypeError** – 如果参数不是Cell，或者 `parameter_dict` 不是Parameter类型的字典。
-
-    **样例：**
-
-    >>> from mindspore import load_checkpoint, load_param_into_net
-    >>>
-    >>> net = Net()
-    >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
-    >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
-    >>> param_not_load = load_param_into_net(net, param_dict)
-    >>> print(param_not_load)
-    ['conv1.weight']

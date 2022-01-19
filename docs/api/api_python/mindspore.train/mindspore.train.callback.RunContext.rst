@@ -4,9 +4,6 @@
 
     在Model方法里提供模型的相关信息。
     回调函数可以调用 `request_stop()` 方法来停止迭代。
-    该类需要与:class:`mindspore.train.callback.Callback`一起使用。
-    有关自定义Callback的详细信息，请查看
-    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
 
     **参数：**
 

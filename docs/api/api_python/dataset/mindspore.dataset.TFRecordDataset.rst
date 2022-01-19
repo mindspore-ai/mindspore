@@ -18,7 +18,7 @@ mindspore.dataset.TFRecordDataset
       - 如果 `num_samples` 和numRows字段（由参数 `schema` 定义）的值都大于0，此时仅有参数 `num_samples` 生效且读取给定数量的数据。
     - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
     - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
-      如果`shuffle`为False，则不混洗，如果`shuffle`为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
+      如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
       通过传入枚举变量设置数据混洗的模式：
 
       - **Shuffle.GLOBAL**：混洗文件和样本。
@@ -36,25 +36,6 @@ mindspore.dataset.TFRecordDataset
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
-
-    **样例：**
-
-    >>> from mindspore import dtype as mstype
-    >>>
-    >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # 此列表可以包含一个或多个TFRecord文件
-    >>> tfrecord_schema_file = "/path/to/tfrecord_schema_file"
-    >>>
-    >>> # 1) 从tfrecord_dataset_dir路径的文件读取数据集。
-    >>> # 由于未指定Schema，则将解析TFRecord文件数据的第一行的元数据将用作Schema。
-    >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir)
-    >>>
-    >>> # 2) 用户使用自定义的Schema从tfrecord_dataset_dir路径的文件读取数据集。
-    >>> schema = ds.Schema()
-    >>> schema.add_column(name='col_1d', de_type=mstype.int64, shape=[2])
-    >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=schema)
-    >>>
-    >>> # 3) 用户通过传入JSON文件构造Schema，从tfrecord_dataset_dir路径的文件读取数据集。
-    >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=tfrecord_schema_file)
 
     .. include:: mindspore.dataset.Dataset.rst
 

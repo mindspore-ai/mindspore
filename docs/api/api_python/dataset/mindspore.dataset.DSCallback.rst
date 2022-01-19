@@ -11,18 +11,6 @@ mindspore.dataset.DSCallback
 
     - **step_size** (int, optional) - 定义相邻的 `ds_step_begin`/`ds_step_end` 调用之间相隔的step数，默认值：1，表示每个step都会调用。
 
-    **样例：**
-
-    >>> from mindspore.dataset import DSCallback
-    >>>
-    >>> class PrintInfo(DSCallback):
-    ...     def ds_epoch_end(self, ds_run_context):
-    ...         print(cb_params.cur_epoch_num)
-    ...         print(cb_params.cur_step_num)
-    >>>
-    >>> # dataset为任意数据集实例，op为任意数据处理算子
-    >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
-
     .. py:method:: ds_begin(ds_run_context)
 
         用于定义在数据处理管道启动前执行的回调方法。

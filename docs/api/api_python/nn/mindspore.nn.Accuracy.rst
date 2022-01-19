@@ -16,21 +16,6 @@ mindspore.nn.Accuracy
     - **eval_type** (str) - 评估的数据集的类型，支持'classification'和'multilabel'。'classification'为单标签分类场景，'multilabel'为多标签分类场景。
       默认值：'classification'。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> import mindspore
-    >>> from mindspore import nn, Tensor
-    >>>
-    >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mindspore.float32)
-    >>> y = Tensor(np.array([1, 0, 1]), mindspore.float32)
-    >>> metric = nn.Accuracy('classification')
-    >>> metric.clear()
-    >>> metric.update(x, y)
-    >>> accuracy = metric.eval()
-    >>> print(accuracy)
-    0.6666666666666666
-
     .. py:method:: clear()
 
         内部评估结果清零。

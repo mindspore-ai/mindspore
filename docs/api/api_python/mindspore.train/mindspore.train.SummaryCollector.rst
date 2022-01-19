@@ -30,7 +30,7 @@
     - **custom_lineage_data** (Union[dict, None]) - 允许您自定义数据并将数据显示在MindInsight的lineage页面上。在自定义数据中，key支持str类型，value支持str、int和float类型。默认值：None，表示不存在自定义数据。
     - **collect_tensor_freq** (Optional[int]) - 语义与 `collect_freq` 的相同，但仅控制TensorSummary。由于TensorSummary数据太大，无法与其他summary数据进行比较，因此此参数用于降低收集量。默认情况下，收集TensorSummary数据的最大step数量为20，但不会超过收集其他summary数据的step数量。例如，给定 `collect_freq=10` ，当总step数量为600时，TensorSummary将收集20个step，而收集其他summary数据时会收集61个step。但当总step数量为20时，TensorSummary和其他summary将收集3个step。另外请注意，在并行模式下，会平均分配总的step数量，这会影响TensorSummary收集的step的数量。默认值：None，表示要遵循上述规则。
     - **max_file_size** (Optional[int]) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，如果不大于4GB，则设置 `max_file_size=4*1024**3` 。默认值：None，表示无限制。
-    - **export_options** (Union[None, dict]) - 表示对导出的数据执行自定义操作。注：导出的文件的大小不受 `max_file_size` 的限制。您可以使用字典自定义导出的数据。例如，您可以设置{'tensor_format':'npy'}将tensor导出为`npy`文件。支持控制的数据如下所示。默认值：None，表示不导出数据。
+    - **export_options** (Union[None, dict]) - 表示对导出的数据执行自定义操作。注：导出的文件的大小不受 `max_file_size` 的限制。您可以使用字典自定义导出的数据。例如，您可以设置{'tensor_format':'npy'}将tensor导出为 `npy` 文件。支持控制的数据如下所示。默认值：None，表示不导出数据。
 
       - **tensor_format** (Union[str, None]) - 自定义导出的tensor的格式。支持["npy", None]。默认值：None，表示不导出tensor。
         
@@ -39,32 +39,3 @@
     **异常：**
 
     - **ValueError：** ：编译MindSpore时，设置 `-s on` 关闭了维测功能。
-
-    **样例：**
-    
-    >>> import mindspore.nn as nn
-    >>> from mindspore import context
-    >>> from mindspore.train.callback import SummaryCollector
-    >>> from mindspore import Model
-    >>> from mindspore.nn import Accuracy
-    >>>
-    >>> if __name__ == '__main__':
-    ...     # 如果device_target是GPU，则将device_target设为GPU。
-    ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
-    ...     # model_zoo.office.cv.lenet.src.dataset.py中显示的create_dataset方法的详细信息
-    ...     ds_train = create_dataset(mnist_dataset_dir, 32)
-    ...     # model_zoo.official.cv.lenet.src.lenet.py中显示的LeNet5的详细信息
-    ...     network = LeNet5(10)
-    ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
-    ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
-    ...
-    ...     # 简单用法：
-    ...     summary_collector = SummaryCollector(summary_dir='./summary_dir')
-    ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)
-    ...
-    ...     # 不收集metric，收集第一层参数。默认收集其他数据。
-    ...     specified={'collect_metric': False, 'histogram_regular': '^conv1.*'}
-    ...     summary_collector = SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
-    ...     model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=False)

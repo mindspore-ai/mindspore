@@ -20,16 +20,3 @@ mindspore.ops.Erf
     **异常：**
 
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU``
-
-    **样例：**
-
-    >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
-    >>> erf = ops.Erf()
-    >>> output = erf(x)
-    >>> print(output)
-    [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
-    

@@ -11,22 +11,6 @@ mindspore.nn.CellList
 
     **args** (list，可选) - Cell列表。
 
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> import mindspore.nn as nn
-    >>>
-    >>> conv = nn.Conv2d(100, 20, 3)
-    >>> bn = nn.BatchNorm2d(20)
-    >>> relu = nn.ReLU()
-    >>> cell_ls = nn.CellList([bn])
-    >>> cell_ls.insert(0, conv)
-    >>> cell_ls.append(relu)
-    >>> cell_ls.extend([relu, relu])
-
     .. py:method:: append(cell)
 
         在列表末尾添加一个Cell。

@@ -15,12 +15,6 @@ mindspore.dataset.PaddedDataset
     - **TypeError** - `padded_samples` 的元素类型不为dict。
     - **ValueError** - `padded_samples` 为空列表。
 
-    **样例：**
-
-    >>> import numpy as np
-    >>> data = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
-    >>> dataset = ds.PaddedDataset(padded_samples=data)
-
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.rst
