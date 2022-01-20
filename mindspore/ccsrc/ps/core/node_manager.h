@@ -175,7 +175,7 @@ class NodeManager {
   std::deque<uint32_t> recovery_worker_rank_id_;
   std::deque<uint32_t> recovery_server_rank_id_;
 
-  OnPersist onPersist;
+  OnPersist onPersist_;
 };
 }  // namespace core
 }  // namespace ps

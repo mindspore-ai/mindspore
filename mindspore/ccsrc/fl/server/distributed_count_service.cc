@@ -177,7 +177,7 @@ bool DistributedCountService::ReInitForScaling() {
 
   MS_LOG(INFO) << "Cluster scaling completed. Reinitialize for distributed count service.";
   local_rank_ = server_node_->rank_id();
-  server_num_ = IntToUint(server_node_->server_num());
+  server_num_ = server_node_->server_num();
   MS_LOG(INFO) << "After scheduler scaling, this server's rank is " << local_rank_ << ", server number is "
                << server_num_;
 

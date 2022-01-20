@@ -21,8 +21,12 @@ namespace fl {
 namespace server {
 IterationTimer::~IterationTimer() {
   running_ = false;
-  if (monitor_thread_.joinable()) {
-    monitor_thread_.join();
+  try {
+    if (monitor_thread_.joinable()) {
+      monitor_thread_.join();
+    }
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "monitor thread join failed: " << e.what();
   }
 }
 

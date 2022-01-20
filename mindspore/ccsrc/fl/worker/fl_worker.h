@@ -99,13 +99,13 @@ class FLWorker {
   void set_secret_pk(armour::PrivateKey *secret_pk);
   armour::PrivateKey *secret_pk() const;
 
-  void set_pw_salt(std::vector<uint8_t> pw_salt);
+  void set_pw_salt(const std::vector<uint8_t> pw_salt);
   std::vector<uint8_t> pw_salt() const;
 
-  void set_pw_iv(std::vector<uint8_t> pw_iv);
+  void set_pw_iv(const std::vector<uint8_t> pw_iv);
   std::vector<uint8_t> pw_iv() const;
 
-  void set_public_keys_list(std::vector<EncryptPublicKeys> public_keys_list);
+  void set_public_keys_list(const std::vector<EncryptPublicKeys> public_keys_list);
   std::vector<EncryptPublicKeys> public_keys_list() const;
 
   std::string fl_name() const;

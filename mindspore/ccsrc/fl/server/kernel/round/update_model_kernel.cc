@@ -97,9 +97,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
       GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
-    if (verify_result == sigVerifyResult::PASSED) {
-      MS_LOG(INFO) << "verify signature passed!";
-    }
+    MS_LOG(INFO) << "verify signature passed!";
   }
 
   result_code = UpdateModel(update_model_req, fbb);
@@ -308,7 +306,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
   std::vector<unsigned char> src_data;
   (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
   (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
-  mindspore::ps::server::CertVerify certVerify;
+  auto certVerify = mindspore::ps::server::CertVerify::GetInstance();
   unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
   certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
   if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {

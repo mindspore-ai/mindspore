@@ -414,7 +414,7 @@ void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events,
 
 void TcpServer::SetTcpNoDelay(const evutil_socket_t &fd) {
   const int one = 1;
-  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
+  int ret = setsockopt(fd, static_cast<int>(IPPROTO_TCP), static_cast<int>(TCP_NODELAY), &one, sizeof(int));
   if (ret < 0) {
     MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }

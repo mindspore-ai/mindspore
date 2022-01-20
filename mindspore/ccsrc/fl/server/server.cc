@@ -286,9 +286,11 @@ void Server::InitCipher() {
   if (prim != NULL) {
     BN_clear_free(prim);
   }
-  cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
-                     cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_push_list_sign_cnt_,
-                     cipher_get_list_sign_cnt_, cipher_reconstruct_secrets_up_cnt_);
+  if (!cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
+                          cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_push_list_sign_cnt_,
+                          cipher_get_list_sign_cnt_, cipher_reconstruct_secrets_up_cnt_)) {
+    MS_LOG(EXCEPTION) << "cipher init fail.";
+  }
 #endif
 }
 
@@ -507,7 +509,7 @@ void Server::ProcessAfterScalingOut() {
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
   }
-  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
+  if (!iteration_->ReInitForScaling(server_node_->server_num(), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
@@ -535,7 +537,7 @@ void Server::ProcessAfterScalingIn() {
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
   }
-  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
+  if (!iteration_->ReInitForScaling(server_node_->server_num(), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
   }
   if (!Executor::GetInstance().ReInitForScaling()) {

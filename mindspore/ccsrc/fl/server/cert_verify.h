@@ -37,6 +37,11 @@ namespace ps {
 namespace server {
 class CertVerify {
  public:
+  static CertVerify &GetInstance() {
+    static CertVerify instance;
+    return instance;
+  }
+
   CertVerify() {}
   ~CertVerify() = default;
 
