@@ -77,7 +77,7 @@ sigVerifyResult ReconstructSecretsKernel::VerifySignature(const schema::SendReco
   std::vector<unsigned char> src_data;
   (void)src_data.insert(src_data.end(), timestamp.begin(), timestamp.end());
   (void)src_data.insert(src_data.end(), iter_str.begin(), iter_str.end());
-  mindspore::ps::server::CertVerify certVerify;
+  auto certVerify = mindspore::ps::server::CertVerify::GetInstance();
   unsigned char srcDataHash[SHA256_DIGEST_LENGTH];
   certVerify.sha256Hash(src_data.data(), SizeToInt(src_data.size()), srcDataHash, SHA256_DIGEST_LENGTH);
   if (!certVerify.verifyRSAKey(key_attestations[fl_id], srcDataHash, signature.data(), SHA256_DIGEST_LENGTH)) {
@@ -117,7 +117,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
   const UpdateModelClientList &update_model_clients_pb = update_model_clients_pb_out.client_list();
 
   for (size_t i = 0; i < IntToSize(update_model_clients_pb.fl_id_size()); ++i) {
-    update_model_clients.push_back(update_model_clients_pb.fl_id(i));
+    update_model_clients.push_back(update_model_clients_pb.fl_id(SizeToInt(i)));
   }
   flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
   if (!verifier.VerifyBuffer<schema::SendReconstructSecret>()) {
@@ -158,10 +158,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
-
-    if (verify_result == sigVerifyResult::PASSED) {
-      MS_LOG(INFO) << "verify signature passed!";
-    }
+    MS_LOG(INFO) << "verify signature passed!";
   }
 
   std::string fl_id = reconstruct_secret_req->fl_id()->str();

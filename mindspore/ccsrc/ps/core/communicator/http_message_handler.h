@@ -111,7 +111,7 @@ class HttpMessageHandler {
   std::shared_ptr<std::vector<char>> body();
   void set_body(const std::shared_ptr<std::vector<char>> &body);
   nlohmann::json request_message() const;
-  RequestProcessResult ParseValueFromKey(const std::string &key, int32_t *const value);
+  RequestProcessResult ParseValueFromKey(const std::string &key, uint32_t *const value);
 
   // Parse node ids when receiving an http request for scale in
   RequestProcessResult ParseNodeIdsFromKey(const std::string &key, std::vector<std::string> *const value);

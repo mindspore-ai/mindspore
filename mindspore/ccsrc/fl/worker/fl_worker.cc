@@ -180,11 +180,11 @@ void FLWorker::set_data_size(int data_size) { data_size_ = data_size; }
 
 void FLWorker::set_secret_pk(armour::PrivateKey *secret_pk) { secret_pk_ = secret_pk; }
 
-void FLWorker::set_pw_salt(std::vector<uint8_t> pw_salt) { pw_salt_ = pw_salt; }
+void FLWorker::set_pw_salt(const std::vector<uint8_t> pw_salt) { pw_salt_ = pw_salt; }
 
-void FLWorker::set_pw_iv(std::vector<uint8_t> pw_iv) { pw_iv_ = pw_iv; }
+void FLWorker::set_pw_iv(const std::vector<uint8_t> pw_iv) { pw_iv_ = pw_iv; }
 
-void FLWorker::set_public_keys_list(std::vector<EncryptPublicKeys> public_keys_list) {
+void FLWorker::set_public_keys_list(const std::vector<EncryptPublicKeys> public_keys_list) {
   public_keys_list_ = public_keys_list;
 }
 
@@ -262,8 +262,8 @@ void FLWorker::ProcessBeforeScalingIn() {
 void FLWorker::ProcessAfterScalingOut() {
   MS_ERROR_IF_NULL_WO_RET_VAL(worker_node_);
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize for worker.";
-  server_num_ = IntToUint(worker_node_->server_num());
-  worker_num_ = IntToUint(worker_node_->worker_num());
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
   MS_LOG(INFO) << "After scheduler scaling out, worker number is " << worker_num_ << ", server number is "
                << server_num_ << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
@@ -273,8 +273,8 @@ void FLWorker::ProcessAfterScalingOut() {
 void FLWorker::ProcessAfterScalingIn() {
   MS_ERROR_IF_NULL_WO_RET_VAL(worker_node_);
   MS_LOG(INFO) << "Cluster scaling in completed. Reinitialize for worker.";
-  server_num_ = IntToUint(worker_node_->server_num());
-  worker_num_ = IntToUint(worker_node_->worker_num());
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
   MS_LOG(INFO) << "After scheduler scaling in, worker number is " << worker_num_ << ", server number is " << server_num_
                << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));

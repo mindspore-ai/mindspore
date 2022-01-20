@@ -60,10 +60,10 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
   T *output_buff = reinterpret_cast<T *>(recvbuff);
   uint32_t send_to_rank = (rank_id_ + 1) % rank_size;
   uint32_t recv_from_rank = (rank_id_ - 1 + rank_size) % rank_size;
-  MS_LOG(DEBUG) << "AllReduce count:" << count << ", rank_size:" << rank_size << ", rank_id_:" << rank_id_
-                << ", chunk_size:" << chunk_size << ", remainder_size:" << remainder_size
-                << ", chunk_sizes:" << chunk_sizes << ", send_to_rank:" << send_to_rank
-                << ", recv_from_rank:" << recv_from_rank;
+  MS_LOG(INFO) << "AllReduce count:" << count << ", rank_size:" << rank_size << ", rank_id_:" << rank_id_
+               << ", chunk_size:" << chunk_size << ", remainder_size:" << remainder_size
+               << ", chunk_sizes:" << chunk_sizes << ", send_to_rank:" << send_to_rank
+               << ", recv_from_rank:" << recv_from_rank;
 
   // Ring ReduceScatter.
   MS_LOG(DEBUG) << "Start Ring ReduceScatter.";
@@ -144,8 +144,8 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   uint32_t rank_size = server_num_;
-  MS_LOG(DEBUG) << "Reduce Broadcast AllReduce rank_size:" << rank_size << ", rank_id_:" << rank_id_
-                << ", count:" << count;
+  MS_LOG(INFO) << "Reduce Broadcast AllReduce rank_size:" << rank_size << ", rank_id_:" << rank_id_
+               << ", count:" << count;
 
   size_t src_size = count * sizeof(T);
   size_t dst_size = count * sizeof(T);
@@ -188,7 +188,7 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   MS_LOG(DEBUG) << "End Reduce.";
 
   // Broadcast data to not 0 rank process.
-  MS_LOG(DEBUG) << "Start broadcast from rank 0 to other processes.";
+  MS_LOG(INFO) << "Start broadcast from rank 0 to other processes.";
   if (rank_id_ == 0) {
     for (uint32_t i = 1; i < rank_size; i++) {
       MS_LOG(DEBUG) << "Broadcast data to process " << i;
@@ -236,9 +236,9 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
 
   uint32_t send_to_rank = (rank_id_ + 1) % rank_size_;
   uint32_t recv_from_rank = (rank_id_ - 1 + rank_size_) % rank_size_;
-  MS_LOG(DEBUG) << "Ring AllGather count:" << send_count << ", rank_size:" << rank_size_ << ", rank_id_:" << rank_id_
-                << ", chunk_size:" << chunk_size << ", chunk_sizes:" << chunk_sizes << ", send_to_rank:" << send_to_rank
-                << ", recv_from_rank:" << recv_from_rank;
+  MS_LOG(INFO) << "Ring AllGather count:" << send_count << ", rank_size:" << rank_size_ << ", rank_id_:" << rank_id_
+               << ", chunk_size:" << chunk_size << ", chunk_sizes:" << chunk_sizes << ", send_to_rank:" << send_to_rank
+               << ", recv_from_rank:" << recv_from_rank;
 
   T *output_buff = reinterpret_cast<T *>(recvbuff);
   size_t src_size = send_count * sizeof(T);
@@ -250,7 +250,6 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
   }
 
   // Ring AllGather.
-  MS_LOG(DEBUG) << "Start Ring AllGather.";
   for (size_t i = 0; i < rank_size_ - 1; i++) {
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
@@ -298,7 +297,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
   uint32_t global_root_rank = group_to_global_ranks[root];
 
   // Broadcast data to processes which are not the root.
-  MS_LOG(DEBUG) << "Start broadcast from root to other processes.";
+  MS_LOG(INFO) << "Start broadcast from root to other processes.";
   if (rank_id_ == global_root_rank) {
     for (uint32_t i = 1; i < group_rank_size; i++) {
       uint32_t dst_rank = group_to_global_ranks[i];
@@ -340,7 +339,7 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -365,10 +364,10 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
   rank_id_ = node_->rank_id();
   switch (node_role_) {
     case ps::core::WORKER:
-      rank_size_ = IntToUint(node_->worker_num());
+      rank_size_ = node_->worker_num();
       break;
     case ps::core::SERVER:
-      rank_size_ = IntToUint(node_->server_num());
+      rank_size_ = node_->server_num();
       break;
     default:
       MS_LOG(ERROR) << "The node role " << node_role_ << " for collective communication is invalid.";
@@ -379,7 +378,7 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -405,7 +404,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -420,7 +419,7 @@ bool CollectiveOpsImpl::ReInitForScaling() {
 
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize ring for collective communication.";
   rank_id_ = server_node_->rank_id();
-  server_num_ = IntToUint(server_node_->server_num());
+  server_num_ = server_node_->server_num();
   MS_LOG(INFO) << "After scheduler scaling out, this server's rank is " << rank_id_ << ", server number is "
                << server_num_;
   return true;

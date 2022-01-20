@@ -478,7 +478,7 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
   prepare_next_iter_req.set_reason(reason);
 
   std::vector<uint32_t> offline_servers = {};
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
     if (!communicator_->SendPbRequest(prepare_next_iter_req, i, ps::core::TcpUserCommand::kPrepareForNextIter)) {
       MS_LOG(WARNING) << "Sending prepare for next iteration request to server " << i << " failed. Retry later.";
       offline_servers.push_back(i);
@@ -535,7 +535,7 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
   proceed_to_next_iter_req.set_is_last_iter_valid(is_last_iter_valid);
   proceed_to_next_iter_req.set_last_iter_num(iteration_num_);
   proceed_to_next_iter_req.set_reason(reason);
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
     if (!communicator_->SendPbRequest(proceed_to_next_iter_req, i, ps::core::TcpUserCommand::kProceedToNextIter)) {
       MS_LOG(WARNING) << "Sending proceed to next iteration request to server " << i << " failed.";
       continue;
@@ -610,7 +610,7 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   EndLastIterRequest end_last_iter_req;
   end_last_iter_req.set_last_iter_num(last_iter_num);
   std::shared_ptr<std::vector<unsigned char>> client_info_rsp_msg = nullptr;
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
     if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter,
                                       &client_info_rsp_msg)) {
       MS_LOG(WARNING) << "Sending ending last iteration request to server " << i << " failed.";

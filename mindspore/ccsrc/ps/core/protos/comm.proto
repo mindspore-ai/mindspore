@@ -137,7 +137,7 @@ message FetchServersRespMessage {
 message ServersMeta {
   uint32 rank_id = 1;
   string ip = 2;
-  int32 port = 3;
+  uint32 port = 3;
   bool is_alive = 4;
   NodeRole role = 5;
   string node_id = 6;
@@ -147,9 +147,9 @@ message ServersMeta {
 message SendMetadataMessage {
   repeated ServersMeta servers_meta = 1;
   // the current worker number.
-  int32 worker_num = 2;
+  uint32 worker_num = 2;
   // the current server number.
-  int32 server_num = 3;
+  uint32 server_num = 3;
   // the current cluster state.
   ClusterState cluster_state = 4;
   // The rank id of the node that received this message.
@@ -169,17 +169,17 @@ message CommMessage {
 // The scheduler will broadcast the worker/server numbers after scale out to all nodes.
 message ScaleOutMessage {
   // the worker number after scale out
-  int32 worker_num = 1;
+  uint32 worker_num = 1;
   // the server number after scale out
-  int32 server_num = 2;
+  uint32 server_num = 2;
 }
 
 // The scheduler will broadcast the worker/server numbers after scale in to all nodes.
 message ScaleInMessage {
   // the worker number after scale in.
-  int32 worker_num = 1;
+  uint32 worker_num = 1;
   // the server number after scale in.
-  int32 server_num = 2;
+  uint32 server_num = 2;
   // Determine whether the current node is a scale in node.
   bool is_node_scale_in = 3;
 }

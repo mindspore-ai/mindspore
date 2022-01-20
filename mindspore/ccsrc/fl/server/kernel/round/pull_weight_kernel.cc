@@ -78,7 +78,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
   }
   std::map<std::string, AddressPtr> feature_maps = {};
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t pull_weight_iter = static_cast<size_t>(pull_weight_req->iteration());
+  size_t pull_weight_iter = IntToSize(pull_weight_req->iteration());
   // The iteration from worker should be the same as server's, otherwise return SucNotReady so that worker could retry.
   if (pull_weight_iter != current_iter) {
     std::string reason = "PullWeight iteration " + std::to_string(pull_weight_iter) +
@@ -98,7 +98,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
     weight_names.push_back(weights_names_fbs->Get(i)->str());
   }
   if (!executor_->IsWeightAggrDone(weight_names) || !executor_->unmasked()) {
-    ++retry_count_;
+    retry_count_ += 1;
     std::string reason = "The aggregation for the weights is not done yet.";
     BuildPullWeightRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps);
     if (retry_count_.load() % kPrintPullWeightForEveryRetryTime == 1) {
