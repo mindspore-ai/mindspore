@@ -50,6 +50,7 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
+#include "frontend/optimizer/irpass/ge_tensor_array.h"
 
 namespace mindspore {
 namespace opt {
@@ -273,6 +274,13 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // Workaround
   stop_gradient_special_op_ =
     MakeSubstitution(std::make_shared<StopGradientSpecialOp>(), "stop_gradient_special_op", prim::kPrimBiasAddGrad);
+
+  // ge_tensor_array_link_flow
+  ge_tensor_array_add_flow_ = MakeSubstitution(std::make_shared<GeTensorArrayAddFlow>(), "ge_tensor_array_add_flow",
+                                               {prim::kPrimTensorArrayWrite, prim::kPrimTensorArrayGather});
+  // ge_tensor_array_cast_index
+  ge_tensor_array_cast_index_ = MakeSubstitution(std::make_shared<GeTensorArrayCastIndex>(),
+                                                 "ge_tensor_array_cast_index", prim::kPrimTensorArrayWrite);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

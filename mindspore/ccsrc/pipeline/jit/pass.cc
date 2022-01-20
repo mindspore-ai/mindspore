@@ -48,6 +48,7 @@
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/meta_fg_eliminate.h"
+#include "frontend/optimizer/irpass/ge_specialized_prepare.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -294,6 +295,13 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
 }
 
+opt::OptPassConfig GetGeTensorArrayPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  return opt::OptPassConfig({
+    irpass.ge_tensor_array_add_flow_,
+    irpass.ge_tensor_array_cast_index_,
+  });
+}
+
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = GetOptPassA1(irpass);
   opt::OptPassConfig a_2 = opt::OptPassConfig(
@@ -493,6 +501,17 @@ OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
+OptPassGroupMap GetGeSpecializedPhases() {
+  opt::OptPassConfig ge_ta_size_group = opt::OptPassConfig(opt::irpass::GeTensorArrayPrepare());
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig ge_tensor_array_passes = GetGeTensorArrayPass(irpass);
+  OptPassGroupMap map({
+    {"ge_ta_size_group", ge_ta_size_group},
+    {"ge_ta_passes", ge_tensor_array_passes},
+  });
+  return map;
+}
+
 OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
   auto a3 = opt_a[opt_a.size() - 1];
@@ -671,6 +690,18 @@ bool CconvPass(const ResourcePtr &res) {
 }
 
 bool PipelineSplitPass(const ResourcePtr &res) { return PipelineSplit(res); }
+
+bool GeSpecializedPass(const ResourcePtr &res) {
+  // valid null ptr
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // get phases
+  auto ge_specialized_map = GetGeSpecializedPhases();
+  auto ge_specialized_opt = opt::Optimizer::MakeOptimizer("ge_specialized", res, ge_specialized_map, true);
+  (void)ge_specialized_opt->step(func_graph, false);
+  return true;
+}
 
 bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);

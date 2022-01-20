@@ -167,6 +167,10 @@ class OptimizeIRPassLib {
 
   // Workaround
   SubstitutionPtr stop_gradient_special_op_;
+
+  // ge TensorArray process
+  SubstitutionPtr ge_tensor_array_add_flow_;
+  SubstitutionPtr ge_tensor_array_cast_index_;
 };
 
 // the collection of irpass for resolve action
