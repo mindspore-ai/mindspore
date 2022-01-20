@@ -291,7 +291,15 @@ def get_bprop_tile(self):
 
         # 0 represents the start index, and 2 represents the step
         axis = F.make_range(0, len(r_shape), 2)
-        dx = reduce_sum(P.Reshape()(dout, r_shape), axis)
+        dout_reshaped = P.Reshape()(dout, r_shape)
+        dout_origin_dtype = dout_reshaped.dtype
+        # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
+        if dout_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+            dout_reshaped = cast(dout_reshaped, mstype.float32)
+            dx = reduce_sum(dout_reshaped, axis)
+            dx = cast(dx, dout_origin_dtype)
+        else:
+            dx = reduce_sum(dout_reshaped, axis)
         dx = reshape(dx, shapex)
         return dx, zeros_like(multiples)
 
