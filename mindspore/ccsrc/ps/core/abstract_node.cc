@@ -861,7 +861,8 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 
 void AbstractNode::InitClientToServer() {
   // create tcp client to myself in case of event dispatch failed when Send msg to server 0 failed
-  client_to_server_ = std::make_shared<TcpClient>(node_info_.ip_, node_info_.port_, config_.get());
+  client_to_server_ =
+    std::make_shared<TcpClient>(node_info_.ip_, node_info_.port_, config_.get(), node_info_.node_role_);
   MS_EXCEPTION_IF_NULL(client_to_server_);
   client_to_server_->Init();
   MS_LOG(INFO) << "The node start a tcp client to this node!";
@@ -872,7 +873,8 @@ bool AbstractNode::InitClientToScheduler() {
     MS_LOG(WARNING) << "The config is empty.";
     return false;
   }
-  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_, config_.get());
+  client_to_scheduler_ =
+    std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_, config_.get(), NodeRole::SCHEDULER);
   MS_EXCEPTION_IF_NULL(client_to_scheduler_);
   client_to_scheduler_->SetMessageCallback(
     [&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data, size_t size) {
@@ -930,7 +932,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     MS_LOG(INFO) << "Create tcp client for role: " << role << ", rank: " << rank_id;
     std::string ip = nodes_address_[key].first;
     uint16_t port = nodes_address_[key].second;
-    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
+    auto client = std::make_shared<TcpClient>(ip, port, config_.get(), role);
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                    size_t size) {

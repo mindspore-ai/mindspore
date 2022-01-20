@@ -97,8 +97,6 @@ void Server::Run() {
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
   communicator_with_server_->Join();
   MsException::Instance().CheckException();
-  func_graph_ = nullptr;
-  return;
 }
 
 void Server::InitPkiCertificate() {
@@ -375,16 +373,16 @@ void Server::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunic
 }
 
 void Server::InitExecutor() {
-  MS_EXCEPTION_IF_NULL(func_graph_);
   if (executor_threshold_ == 0) {
     MS_LOG(EXCEPTION) << "The executor's threshold should greater than 0.";
     return;
   }
+  auto func_graph = func_graph_.lock();
+  MS_EXCEPTION_IF_NULL(func_graph);
   // The train engine instance is used in both push-type and pull-type kernels,
   // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
-  Executor::GetInstance().Initialize(func_graph_, executor_threshold_);
-  func_graph_ = nullptr;
+  Executor::GetInstance().Initialize(func_graph, executor_threshold_);
   ModelStore::GetInstance().Initialize();
   return;
 }

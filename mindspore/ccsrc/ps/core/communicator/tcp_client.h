@@ -54,7 +54,7 @@ class TcpClient {
     std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
   using OnTimer = std::function<void()>;
 
-  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *const config);
+  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *const config, NodeRole peer_role);
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
@@ -76,15 +76,16 @@ class TcpClient {
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
   static void TimeoutCallback(evutil_socket_t fd, std::int16_t what, void *arg);
-  static void TimeoutCallbackInner(void *arg);
   static void ReadCallback(struct bufferevent *bev, void *ctx);
-  static void ReadCallbackInner(struct bufferevent *bev, void *ctx);
+  void ReadCallbackInner(struct bufferevent *bev);
   static void EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr);
-  static void EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *ptr);
+  void EventCallbackInner(struct bufferevent *bev, std::int16_t events);
   virtual void OnReadHandler(const void *buf, size_t num);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
   void NotifyConnected();
   bool EstablishSSL();
+
+  std::string PeerRoleName() const;
 
  private:
   OnMessage message_callback_;
@@ -107,6 +108,7 @@ class TcpClient {
 
   std::string server_address_;
   std::uint16_t server_port_;
+  NodeRole peer_role_;
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
   // The Configuration file
