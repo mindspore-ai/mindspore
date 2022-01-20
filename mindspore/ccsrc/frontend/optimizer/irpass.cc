@@ -142,6 +142,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<IncorporateEnvironGetSwitchLayer>(), "incorporate_environ_get_switch_layer",
                      prim::kPrimEnvironGet);
 
+  split_environ_get_set_with_tuple_value_ =
+    MakeSubstitution(std::make_shared<SplitEnvironGetSetWithTupleValue>(), "split_environ_get_set_with_tuple_value",
+                     {prim::kPrimEnvironGet, prim::kPrimEnvironSet});
+
   // Ref eliminate
   make_ref_eliminate_ =
     MakeSubstitution(std::make_shared<MakeRefEliminater>(), "make_ref_eliminate", prim::kPrimMakeRef);

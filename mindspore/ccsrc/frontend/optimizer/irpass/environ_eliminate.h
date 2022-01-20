@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,23 @@ class EnvironGetTransformACrossGraph {
                      mindspore::HashMap<std::pair<SymbolicKeyInstancePtr, AnfNodePtr>, FuncGraphPtr, PairHasher>>
     cache_;
 };
+
+AnfNodePtr GetIndexedEnvironValueNode(const FuncGraphPtr &fg, const AnfNodePtr &origin_value_node,
+                                      const std::size_t index) {
+  AnfNodePtr new_value_node;
+  if (IsValueNode<ValueTuple>(origin_value_node)) {
+    auto origin_value_tuple = GetValueNode<ValueTuplePtr>(origin_value_node);
+    if (index >= origin_value_tuple->size()) {
+      MS_LOG(EXCEPTION) << "Index: " << index << " is greater than Value size: " << origin_value_tuple->size()
+                        << ", Default Value: " << origin_value_node->ToString();
+    }
+    new_value_node = NewValueNode((*origin_value_tuple)[index]);
+  } else {
+    new_value_node = fg->NewCNode(
+      {NewValueNode(prim::kPrimTupleGetItem), origin_value_node, NewValueNode(MakeValue(static_cast<int64_t>(index)))});
+  }
+  return new_value_node;
+}
 }  // namespace internal
 
 // {prim::kPrimEnvironGet, C1, C2, Y} -> Y
@@ -514,6 +531,71 @@ class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
  private:
   bool is_match_{false};
   internal::EnvironGetTransformACrossGraph environ_get_transform_;
+};
+
+// {prim::kPrimEnvironSet, E, K, V} ->
+//     E1 = {prim::kPrimEnvironSet, E,  K1, V1},
+//     E2 = {prim::kPrimEnvironSet, E1, K2, V2},
+//     ...
+// {prim::kPrimEnvironGet, E, K, V} ->
+//     v1 = {prim::kPrimEnvironGet, E, K1, default_v1},
+//     v2 = {prim::kPrimEnvironGet, E, K2, devault_v2},
+//     ...
+//     v_tuple = {prim::kPrimMakeTuple, v1, v2, ...}
+class SplitEnvironGetSetWithTupleValue : public AnfVisitor {
+ public:
+  SplitEnvironGetSetWithTupleValue() = default;
+  ~SplitEnvironGetSetWithTupleValue() override = default;
+
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!(IsPrimitiveCNode(node, prim::kPrimEnvironSet) || IsPrimitiveCNode(node, prim::kPrimEnvironGet))) {
+      return nullptr;
+    }
+    // {prim::kPrimEnvironSet, E, key, node_with_abstract_is_tuple} or
+    // {prim::kPrimEnvironGet, E, key, node_with_abstract_is_tuple}
+    const auto &cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    auto &environ_node = inputs[internal::kEnvironOffset];
+    const auto &origin_value_node = inputs[internal::kValueOffset];
+    const auto &origin_key_node = GetValueNode<SymbolicKeyInstancePtr>(inputs[internal::kSymbolicKeyOffset]);
+
+    if (origin_key_node == nullptr || origin_value_node->abstract() == nullptr ||
+        !origin_value_node->abstract()->isa<abstract::AbstractTuple>()) {
+      return nullptr;
+    }
+
+    const auto &origin_value_abstract = origin_value_node->abstract()->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(origin_value_abstract);
+
+    AnfNodePtr prev_environ_node = environ_node;
+    auto fg = node->func_graph();
+
+    if (IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
+      CNodePtr new_cnode = cnode;
+      // Cascade the split CNode of EnvironSet.
+      for (std::size_t index = 0; index < origin_value_abstract->elements().size(); ++index) {
+        auto new_key = std::make_shared<SymbolicKeyInstance>(
+          origin_key_node->node(), origin_value_abstract->elements()[index], static_cast<int64_t>(index));
+        AnfNodePtr new_value_node = internal::GetIndexedEnvironValueNode(fg, origin_value_node, index);
+
+        new_cnode = fg->NewCNode({inputs[0], prev_environ_node, NewValueNode(new_key), new_value_node});
+        prev_environ_node = new_cnode;
+      }
+      return new_cnode;
+    } else {
+      // MakeTuple the split CNode of EnvironGet.
+      AnfNodePtrList tuple_item_list{NewValueNode(prim::kPrimMakeTuple)};
+      for (std::size_t index = 0; index < origin_value_abstract->elements().size(); ++index) {
+        auto new_key = std::make_shared<SymbolicKeyInstance>(
+          origin_key_node->node(), origin_value_abstract->elements()[index], static_cast<int64_t>(index));
+        AnfNodePtr new_value_node = internal::GetIndexedEnvironValueNode(fg, origin_value_node, index);
+        auto new_item_cnode = fg->NewCNode({inputs[0], environ_node, NewValueNode(new_key), new_value_node});
+        tuple_item_list.push_back(new_item_cnode);
+      }
+      auto new_cnode = fg->NewCNode(tuple_item_list);
+      return new_cnode;
+    }
+  }
 };
 }  // namespace irpass
 }  // namespace opt
