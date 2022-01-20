@@ -390,4 +390,33 @@ class MatrixBandPartNet(nn.Cell):
         return self.matrix_band_part(a, num_lower, num_upper)
 
 
+class MatrixDiagPart(PrimitiveWithInfer):
+    """
+    MatrixDiagPart()
+    """
+
+    @prim_attr_register
+    def __init__(self, align="RIGHT_LEFT"):
+        super().__init__(name="MatrixDiagPart")
+        self.add_prim_attr('alignment', align)
+        self.init_prim_io_names(inputs=['A', 'k', 'padding_value'], outputs=['output'])
+
+
+class MatrixDiagPartNet(nn.Cell):
+    """
+     Returns:
+          batched diagonal part of a batched tensor, the part between, k[0] to k[1], the shape is dynamic
+
+     Raises:
+       k[1] should not less then k[0]
+     """
+
+    def __init__(self, align="RIGHT_LEFT"):
+        super(MatrixDiagPartNet, self).__init__()
+        self.matrix_diag_part = MatrixDiagPart(align)
+
+    def construct(self, a, k, padding_value):
+        return self.matrix_diag_part(a, k, padding_value)
+
+
 from .ops_grad import get_bprpo_eigh

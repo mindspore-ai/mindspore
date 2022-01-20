@@ -574,6 +574,7 @@ inline const PrimitivePtr kPrimAddcmul = std::make_shared<Primitive>(kAddcmul);
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
 inline const PrimitivePtr kPrimMatMulV2 = std::make_shared<Primitive>("MatMulV2");
 inline const PrimitivePtr kPrimMatrixDiag = std::make_shared<Primitive>("MatrixDiag");
+inline const PrimitivePtr kPrimMatrixDiagPart = std::make_shared<Primitive>("MatrixDiagPart");
 inline const PrimitivePtr kPrimBatchMatMul = std::make_shared<Primitive>("BatchMatMul");
 inline const PrimitivePtr kPrimBatchMatMulV2 = std::make_shared<Primitive>("BatchMatMulV2");
 inline const PrimitivePtr kPrimMaximumGrad = std::make_shared<Primitive>("MaximumGrad");
