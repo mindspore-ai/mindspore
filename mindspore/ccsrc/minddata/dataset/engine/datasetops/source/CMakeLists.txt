@@ -30,6 +30,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     lj_speech_op.cc
     mappable_leaf_op.cc
     mnist_op.cc
+    multi30k_op.cc
     nonmappable_leaf_op.cc
     penn_treebank_op.cc
     photo_tour_op.cc

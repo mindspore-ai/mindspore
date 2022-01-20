@@ -74,6 +74,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "IMDBDataset",              # Text
            "IWSLT2016Dataset",         # Text
            "IWSLT2017Dataset",         # Text
+           "Multi30kDataset",          # Text
            "PennTreebankDataset",      # Text
            "SogouNewsDataset",         # Text
            "TextFileDataset",          # Text
