@@ -16,6 +16,7 @@
 import numpy as onp
 from mindspore import Tensor
 import mindspore.numpy as mnp
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 
@@ -88,3 +89,28 @@ def create_sym_pos_matrix(shape, dtype):
     n = shape[-1]
     a = (onp.random.random(shape) + onp.eye(n)).astype(dtype)
     return onp.dot(a, a.T)
+
+
+def gradient_check(x, net, epsilon=1e-3):
+    # using automatic differentiation to calculate gradient
+    grad_net = F.grad(net)
+    x_grad = grad_net(x).asnumpy()
+
+    # using the definition of a derivative to calculate gradient
+    x = x.asnumpy()
+    x_grad_approx = onp.zeros_like(x_grad)
+    for index, _ in onp.ndenumerate(x):
+        x_plus = onp.copy(x)
+        x_plus[index] = x_plus[index] + epsilon
+        y_plus = net(Tensor(x_plus)).asnumpy()
+
+        x_minus = onp.copy(x)
+        x_minus[index] = x_minus[index] - epsilon
+        y_minus = net(Tensor(x_minus)).asnumpy()
+
+        x_grad_approx[index] = (y_plus - y_minus) / (2 * epsilon)
+
+    numerator = onp.linalg.norm(x_grad - x_grad_approx)
+    denominator = onp.linalg.norm(x_grad) + onp.linalg.norm(x_grad_approx)
+    difference = numerator / denominator
+    return difference

@@ -388,3 +388,6 @@ class MatrixBandPartNet(nn.Cell):
 
     def construct(self, a, num_lower, num_upper):
         return self.matrix_band_part(a, num_lower, num_upper)
+
+
+from .ops_grad import get_bprpo_eigh
