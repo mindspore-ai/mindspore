@@ -136,7 +136,7 @@ class SliceMode(IntEnum):
     DROP = 1
 
 
-class AutoAugmentPolicy(IntEnum):
+class AutoAugmentPolicy(str, Enum):
     """
     AutoAugment policy for different datasets.
 
@@ -195,6 +195,6 @@ class AutoAugmentPolicy(IntEnum):
          (("ShearX", 0.7, 9), ("TranslateY", 0.8, 3)),         (("ShearY", 0.8, 5), ("AutoContrast", 0.7, None)),
          (("ShearX", 0.7, 2), ("Invert", 0.1, None))]
     """
-    IMAGENET = 0
-    CIFAR10 = 1
-    SVHN = 2
+    IMAGENET: str = "imagenet"
+    CIFAR10: str = "cifar10"
+    SVHN: str = "svhn"

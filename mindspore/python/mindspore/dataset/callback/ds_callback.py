@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,14 @@ from .validators import check_callback
 
 class DSCallback:
     """
-    Abstract base class used to build a dataset callback class.
+    Abstract base class used to build dataset callback classes.
+
+    Users can obtain the dataset pipeline context through `ds_run_context`, including
+    `cur_epoch_num`, `cur_step_num_in_epoch` and `cur_step_num`.
 
     Args:
-        step_size (int, optional): The number of steps between the step_begin and step_end are called (Default=1).
+        step_size (int, optional): The number of steps between adjacent `ds_step_begin`/`ds_step_end`
+            calls. Default: 1, will be called at each step.
 
     Examples:
         >>> from mindspore.dataset import DSCallback
@@ -37,7 +41,7 @@ class DSCallback:
         ...         print(cb_params.cur_epoch_num)
         ...         print(cb_params.cur_step_num)
         >>>
-        >>> # dataset is an instance of Dataset object
+        >>> # dataset is a MindSpore dataset object and op is a data processing operator
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
@@ -50,7 +54,7 @@ class DSCallback:
         Called before the data pipeline is started.
 
         Args:
-            ds_run_context (RunContext): Include some information of the pipeline.
+            ds_run_context (RunContext): Include some information of the data pipeline.
         """
 
     def ds_epoch_begin(self, ds_run_context):
@@ -58,7 +62,7 @@ class DSCallback:
         Called before a new epoch is started.
 
         Args:
-            ds_run_context (RunContext): Include some information of the pipeline.
+            ds_run_context (RunContext): Include some information of the data pipeline.
         """
 
     def ds_epoch_end(self, ds_run_context):
@@ -66,28 +70,28 @@ class DSCallback:
         Called after an epoch is finished.
 
         Args:
-            ds_run_context (RunContext): Include some information of the pipeline.
+            ds_run_context (RunContext): Include some information of the data pipeline.
         """
 
     def ds_step_begin(self, ds_run_context):
         """
-        Called before each step start.
+        Called before a step start.
 
         Args:
-            ds_run_context (RunContext): Include some information of the pipeline.
+            ds_run_context (RunContext): Include some information of the data pipeline.
         """
 
     def ds_step_end(self, ds_run_context):
         """
-        Called after each step finished.
+        Called after a step finished.
 
         Args:
-            ds_run_context (RunContext): Include some information of the pipeline.
+            ds_run_context (RunContext): Include some information of the data pipeline.
         """
 
     def create_runtime_obj(self):
         """
-        Creates a runtime (C++) object from the callback methods defined by the user.
+        Internal method, creates a runtime (C++) object from the callback methods defined by the user.
 
         Returns:
             _c_dataengine.PyDSCallback.
@@ -122,24 +126,93 @@ class DSCallback:
 
 class WaitedDSCallback(Callback, DSCallback):
     """
-    Abstract base class used to build a dataset callback class that is synchronized with the training callback.
+    Abstract base class used to build dataset callback classes that are synchronized with the training callback class
+    `mindspore.train.callback <https://mindspore.cn/docs/api/en/master/api_python/
+    mindspore.train.html#mindspore.train.callback.Callback>`_.
 
-    This class can be used to execute a user defined logic right after the previous step or epoch.
-    For example, one augmentation needs the loss from the previous trained epoch to update some of its parameters.
+    It can be used to execute a custom callback method before a step or an epoch, such as
+    updating the parameters of operators according to the loss of the previous training epoch in auto augmentation.
+
+    Note that the call is triggered only at the beginning of the second step or epoch.
+
+    Users can obtain the network training context through `train_run_context`, such as
+    `network`, `train_network`, `epoch_num`, `batch_num`, `loss_fn`, `optimizer`, `parallel_mode`,
+    `device_number`, `list_callback`, `cur_epoch_num`, `cur_step_num`, `dataset_sink_mode`,
+    `net_outputs`, etc., see
+    `mindspore.train.callback <https://mindspore.cn/docs/api/en/master/api_python/
+    mindspore.train.html#mindspore.train.callback.Callback>`_.
+
+    Users can obtain the dataset pipeline context through `ds_run_context`, including
+    `cur_epoch_num`, `cur_step_num_in_epoch` and `cur_step_num`.
 
     Args:
-       step_size (int, optional): The number of rows in each step. Usually the step size
-           will be equal to the batch size (Default=1).
+       step_size (int, optional): The number of rows in each step, usually set equal to the batch size. Default: 1.
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> from mindspore.dataset import WaitedDSCallback
+        >>> from mindspore import context
+        >>> from mindspore.train import Model
+        >>> from mindspore.train.callback import Callback
         >>>
-        >>> my_cb = WaitedDSCallback(32)
-        >>> # dataset is an instance of Dataset object
-        >>> dataset = dataset.map(operations=AugOp(), callbacks=my_cb)
-        >>> dataset = dataset.batch(32)
-        >>> # define the model
-        >>> model.train(epochs, data, callbacks=[my_cb])
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>>
+        >>> # custom callback class for data synchronization in data pipeline
+        >>> class MyWaitedCallback(WaitedDSCallback):
+        ...     def __init__(self, events, step_size=1):
+        ...         super().__init__(step_size)
+        ...         self.events = events
+        ...
+        ...     # callback method to be executed by data pipeline before the epoch starts
+        ...     def sync_epoch_begin(self, train_run_context, ds_run_context):
+        ...         event = f"ds_epoch_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+        ...         self.events.append(event)
+        ...
+        ...     # callback method to be executed by data pipeline before the step starts
+        ...     def sync_step_begin(self, train_run_context, ds_run_context):
+        ...         event = f"ds_step_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+        ...         self.events.append(event)
+        >>>
+        >>> # custom callback class for data synchronization in network training
+        >>> class MyMSCallback(Callback):
+        ...     def __init__(self, events):
+        ...         self.events = events
+        ...
+        ...     # callback method to be executed by network training after the epoch ends
+        ...     def epoch_end(self, run_context):
+        ...         cb_params = run_context.original_args()
+        ...         event = f"ms_epoch_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+        ...         self.events.append(event)
+        ...
+        ...     # callback method to be executed by network training after the step ends
+        ...     def step_end(self, run_context):
+        ...         cb_params = run_context.original_args()
+        ...         event = f"ms_step_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+        ...         self.events.append(event)
+        >>>
+        >>> # custom network
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y):
+        ...         return x
+        >>>
+        >>> # define a parameter that needs to be synchronized between data pipeline and network training
+        >>> events = []
+        >>>
+        >>> # define callback classes of data pipeline and netwok training
+        >>> my_cb1 = MyWaitedCallback(events, 1)
+        >>> my_cb2 = MyMSCallback(events)
+        >>> arr = [1, 2, 3, 4]
+        >>>
+        >>> # construct data pipeline
+        >>> data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
+        >>> # map the data callback object into the pipeline
+        >>> data = data.map(operations=(lambda x: x), callbacks=my_cb1)
+        >>>
+        >>> net = Net()
+        >>> model = Model(net)
+        >>>
+        >>> # add the data and network callback objects to the model training callback list
+        >>> model.train(2, data, dataset_sink_mode=False, callbacks=[my_cb2, my_cb1])
     """
 
     def __init__(self, step_size=1):
@@ -159,7 +232,7 @@ class WaitedDSCallback(Callback, DSCallback):
 
         Args:
             train_run_context: Include some information of the model with feedback from the previous epoch.
-            ds_run_context: Include some information of the dataset pipeline.
+            ds_run_context: Include some information of the data pipeline.
         """
 
     def sync_step_begin(self, train_run_context, ds_run_context):
@@ -168,7 +241,7 @@ class WaitedDSCallback(Callback, DSCallback):
 
         Args:
             train_run_context: Include some information of the model with feedback from the previous step.
-            ds_run_context: Include some information of the dataset pipeline.
+            ds_run_context: Include some information of the data pipeline.
         """
 
     def epoch_end(self, run_context):
@@ -183,10 +256,11 @@ class WaitedDSCallback(Callback, DSCallback):
 
     def ds_epoch_begin(self, ds_run_context):
         """
-        Internal method, do not call/override. Defines ds_epoch_begin of DSCallback to wait for MS epoch_end callback.
+        Internal method, do not call/override. Define mindspore.dataset.DSCallback.ds_epoch_begin
+        to wait for mindspore.train.callback.Callback.epoch_end.
 
         Args:
-          ds_run_context: Include some information of the pipeline.
+          ds_run_context: Include some information of the data pipeline.
         """
         if ds_run_context.cur_epoch_num > 1:
             if not self.training_ended:
@@ -209,10 +283,11 @@ class WaitedDSCallback(Callback, DSCallback):
 
     def ds_step_begin(self, ds_run_context):
         """
-        Internal method, do not call/override. Defines ds_step_begin of DSCallback to wait for MS step_end callback.
+        Internal method, do not call/override. Define mindspore.dataset.DSCallback.ds_step_begin
+        to wait for mindspore.train.callback.Callback.step_end.
 
         Args:
-            ds_run_context: Include some information of the pipeline.
+            ds_run_context: Include some information of the data pipeline.
         """
         if ds_run_context.cur_step_num > self.step_size:
             if not self.training_ended:
@@ -225,7 +300,7 @@ class WaitedDSCallback(Callback, DSCallback):
 
     def create_runtime_obj(self):
         """
-        Creates a runtime (C++) object from the callback methods defined by the user. This method is internal.
+        Internal method, creates a runtime (C++) object from the callback methods defined by the user.
 
         Returns:
             _c_dataengine.PyDSCallback.
@@ -249,7 +324,7 @@ class WaitedDSCallback(Callback, DSCallback):
 
     def end(self, run_context):
         """
-        Internal method, release the wait if training is ended.
+        Internal method, release wait when the network training ends.
 
         Args:
           run_context: Include some information of the model.

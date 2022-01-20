@@ -101,7 +101,7 @@ def test_fade_quarter_sine():
                           [5, 7, 3, 78, 8, 4],
                           [1, 2, 3, 4, 5, 6]]], dtype=np.float64)
     dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=6, fade_out_len=6, fade_shape=FadeShape.QUARTERSINE)]
+    transforms = [audio.Fade(fade_in_len=6, fade_out_len=6, fade_shape=FadeShape.QUARTER_SINE)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -124,7 +124,7 @@ def test_fade_half_sine():
                  [0.04125976562500, 0.060577392578125, 0.0499572753906250,
                   0.01306152343750, -0.019683837890625, -0.018829345703125]]]
     dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=3, fade_out_len=3, fade_shape=FadeShape.HALFSINE)]
+    transforms = [audio.Fade(fade_in_len=3, fade_out_len=3, fade_shape=FadeShape.HALF_SINE)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):

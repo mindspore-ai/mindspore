@@ -13,8 +13,8 @@ mindspore.dataset.audio.transforms.TimeStretch
     - **n_freq** (int, 可选) - STFT中的滤波器组数，默认值：201。
     - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例，默认值：None，表示保持原始速率。
 
-    .. image:: api_img/dataset/time_stretch_rate1.5.png
+    .. image:: api_img/time_stretch_rate1.5.png
 
-    .. image:: api_img/dataset/time_stretch_original.png
+    .. image:: api_img/time_stretch_original.png
 
-    .. image:: api_img/dataset/time_stretch_rate0.8.png
+    .. image:: api_img/time_stretch_rate0.8.png
