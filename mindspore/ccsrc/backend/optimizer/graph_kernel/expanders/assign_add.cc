@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class AssignAdd : public OpDesc {
     const auto &input_param = inputs[0];
     const auto &input_x = inputs[1];
     auto next_para = gb.Emit("Add", {input_param, input_x});
-    auto result = gb.Emit("InplaceAssign", {input_param, next_para, next_para}, {{"fake_output", MakeValue(true)}});
+    auto result = gb.Emit("Assign", {input_param, next_para});
     return {result};
   }
 };

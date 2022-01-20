@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -848,6 +848,14 @@ class GraphSplitGpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _assign(dom):
+            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
+                return None
+            fused = []
+            for a, _ in dom.in_relations.items():
+                fused.append(a)
+            return fused, True
+
         def _strided_slice(dom):
             if dom.dom_op().prim != "StridedSlice":
                 return None
@@ -987,6 +995,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             changed = True
             while changed:
                 changed = self.fuse(_reshape)
+                changed = self.fuse(_assign) or changed
                 changed = self.fuse(_elemwise_depth) or changed
                 changed = self.fuse(_elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed
@@ -1226,10 +1235,19 @@ class GraphSplitAscend(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _assign(dom):
+            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
+                return None
+            fused = []
+            for a, _ in dom.in_relations.items():
+                fused.append(a)
+            return fused, True
+
         def _fuse_loop():
             changed = True
             while changed:
                 changed = self.fuse(_reshape)
+                changed = self.fuse(_assign) or changed
                 changed = self.fuse(_elemwise_depth) or changed
                 changed = self.fuse(_elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed
@@ -1349,11 +1367,20 @@ class GraphSplitCpu(GraphSplitByPattern):
                     fused.append(a)
             return fused, True
 
+        def _assign(dom):
+            if len(dom.ops) != 1 or dom.dom_op().prim != "Assign":
+                return None
+            fused = []
+            for a, _ in dom.in_relations.items():
+                fused.append(a)
+            return fused, True
+
         def _fuse_loop():
             changed = True
             while changed:
                 changed = False
                 changed = self.fuse(_reshape) or changed
+                changed = self.fuse(_assign) or changed
                 changed = self.fuse(_elemwise_depth) or changed
                 changed = self.fuse(_elemwise_width) or changed
                 changed = self.fuse(_reduce_depth) or changed

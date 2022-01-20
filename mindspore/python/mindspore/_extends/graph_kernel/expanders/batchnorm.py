@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -139,8 +139,7 @@ class BatchNorm(Expander):
         momentum_v = graph_builder.value(input_scale.dtype, self.attrs['momentum'])
         current_mean_tmp = graph_builder.emit('Mul', [momentum_v, mean_muls])
         updated_moving_mean = graph_builder.emit('Add', [new_running_mean_tmp, current_mean_tmp])
-        mean_res = graph_builder.emit(
-            'InplaceAssign', [input_mean, updated_moving_mean, updated_moving_mean], attrs={'fake_output': True})
+        mean_res = graph_builder.emit('Assign', [input_mean, updated_moving_mean])
 
         # variance_res is calculated by sample variance, and need to multiply by num / (num - 1)
         var_num = float(num) / (num - 1)
@@ -149,7 +148,5 @@ class BatchNorm(Expander):
         new_running_var_tmp = graph_builder.emit('Mul', [momentum_v_sub, input_variance])
         current_var_tmp = graph_builder.emit('Mul', [momentum_v, var_mul_update])
         updated_moving_variance = graph_builder.emit('Add', [new_running_var_tmp, current_var_tmp])
-        variance_res = graph_builder.emit(
-            'InplaceAssign', [input_variance, updated_moving_variance, updated_moving_variance],
-            attrs={'fake_output': True})
+        variance_res = graph_builder.emit('Assign', [input_variance, updated_moving_variance])
         return res_y, mean_res, variance_res, mean_muls, y_sqrt_rec
