@@ -18,6 +18,33 @@
 #include "src/common/log.h"
 #include "src/common/utils.h"
 namespace mindspore {
+void ModelThread::Run() {
+  while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
+    auto task = PredictTaskQueue::GetInstance()->GetPreDictTask();
+    if (task == nullptr) {
+      break;
+    }
+    auto inputs = task->inputs;
+    auto *outputs = task->outputs;
+    auto before = task->before;
+    auto after = task->after;
+    auto status = Predict(*inputs, outputs, before, after);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "model predict failed.";
+      return;
+    }
+    auto output_size = outputs->size();
+    for (size_t i = 0; i < output_size; i++) {
+      auto copy_tensor =
+        mindspore::MSTensor::CreateTensor(outputs->at(i).Name(), outputs->at(i).DataType(), outputs->at(i).Shape(),
+                                          outputs->at(i).MutableData(), outputs->at(i).DataSize());
+      outputs->erase(outputs->begin());
+      outputs->push_back(*copy_tensor);
+    }
+    PredictTaskQueue::GetInstance()->ActiveTask();
+  }
+}
+
 Status ModelThread::Init(const std::string &model_path, const std::shared_ptr<Context> &model_context,
                          const Key &dec_key, const std::string &dec_mode) {
   model_ = std::make_shared<Model>();
@@ -30,14 +57,13 @@ Status ModelThread::Init(const std::string &model_path, const std::shared_ptr<Co
   return kSuccess;
 }
 
-Status ModelThread::ModelRun(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                             const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  auto status = model_->Predict(inputs, outputs, before, after);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "model predict failed.";
-    return status;
+std::vector<MSTensor> ModelThread::GetInputs() {
+  if (model_ == nullptr) {
+    MS_LOG(ERROR) << "model is nullptr in ModelThread.";
+    return {};
   }
-  return kSuccess;
+  auto inputs = model_->GetInputs();
+  return inputs;
 }
 
 std::pair<std::vector<std::vector<int64_t>>, bool> ModelThread::GetModelResize(
@@ -73,10 +99,9 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       return kLiteError;
     }
   }
-
-  auto status = ModelRun(inputs, outputs, before, after);
+  auto status = model_->Predict(inputs, outputs, before, after);
   if (status != kSuccess) {
-    MS_LOG(ERROR) << "model predict failed in ModelPool.";
+    MS_LOG(ERROR) << "model predict failed.";
     return status;
   }
   return kSuccess;

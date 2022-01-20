@@ -25,14 +25,9 @@
 #include <utility>
 #include <memory>
 #include "include/api/model.h"
+#include "src/cxx_api/model/predict_task_queue.h"
 namespace mindspore {
 using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
-struct ModelData {
-  const std::vector<MSTensor> *inputs;
-  std::vector<MSTensor> *outputs;
-  MSKernelCallBack before;
-  MSKernelCallBack after;
-};
 
 class ModelThread {
  public:
@@ -44,15 +39,16 @@ class ModelThread {
   Status Init(const std::string &model_path, const std::shared_ptr<Context> &model_context, const Key &dec_key = {},
               const std::string &dec_mode = kDecModeAesGcm);
 
+  std::vector<MSTensor> GetInputs();
+
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
+  void Run();
 
  private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
-
-  Status ModelRun(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
  private:
   std::shared_ptr<mindspore::Model> model_ = nullptr;

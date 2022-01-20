@@ -133,83 +133,43 @@ ModelPoolContex ModelPool::CreateModelContext(const std::string &config_path) {
   return model_pool_context;
 }
 
-void ModelPool::Run(std::shared_ptr<ModelThread> model) {
-  while (!model_pool_task_done_) {
-    std::unique_lock<std::mutex> data_lock(mtx_model_queue_);
-    while (model_data_queue_.empty() && !model_pool_task_done_) {
-      cv_in_data_.wait(data_lock);
-    }
-    if (model_pool_task_done_) {
-      cv_in_data_.notify_all();
-      break;
-    }
-    auto &model_data = model_data_queue_.front();
-    model_data_queue_.pop();
-    auto inputs = model_data->inputs;
-    auto *outputs = model_data->outputs;
-    auto before = model_data->before;
-    auto after = model_data->after;
-    cv_in_data_.notify_one();
-    data_lock.unlock();
-    auto status = model->Predict(*inputs, outputs, before, after);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "model predict failed.";
-      return;
-    }
-    auto output_size = outputs->size();
-    for (size_t i = 0; i < output_size; i++) {
-      auto copy_tensor =
-        mindspore::MSTensor::CreateTensor(outputs->at(i).Name(), outputs->at(i).DataType(), outputs->at(i).Shape(),
-                                          outputs->at(i).MutableData(), outputs->at(i).DataSize());
-      outputs->erase(outputs->begin());
-      outputs->push_back(*copy_tensor);
-    }
-    cv_in_data_.notify_one();
-    cv_out_data_.notify_all();
+std::vector<MSTensor> ModelPool::GetInputs() {
+  if (model_inputs_.empty()) {
+    MS_LOG(ERROR) << "model input is empty.";
+    return {};
   }
+  return model_inputs_;
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::string &config_path, const Key &dec_key,
                        const std::string &dec_mode) {
   auto model_pool_context = CreateModelContext(config_path);
   for (size_t i = 0; i < num_models_; i++) {
-    auto model = std::make_shared<ModelThread>();
-    auto status = model->Init(model_path, model_pool_context[i], dec_key, dec_mode);
-    model_thread_vec_.push_back(std::thread(&ModelPool::Run, this, model));
+    auto model_thread = std::make_shared<ModelThread>();
+    auto status = model_thread->Init(model_path, model_pool_context[i], dec_key, dec_mode);
+    if (model_inputs_.empty()) {
+      model_inputs_ = model_thread->GetInputs();
+    }
+    model_thread_vec_.push_back(std::thread(&ModelThread::Run, model_thread));
   }
   return kSuccess;
 }
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  {
-    std::unique_lock<std::mutex> data_lock(mtx_data_queue_);
-    auto model_data = std::make_shared<ModelData>();
-    model_data->inputs = &inputs;
-    model_data->outputs = outputs;
-    model_data->before = before;
-    model_data->after = after;
-    model_data_queue_.push(model_data);
-    cv_in_data_.notify_one();
-  }
-  {
-    std::unique_lock<std::mutex> result_loack(mtx_data_queue_);
-    while (outputs->empty()) {
-      cv_out_data_.wait(result_loack);
-    }
-  }
+  outputs->clear();
+  auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
+  PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+  PredictTaskQueue::GetInstance()->WaitUntilPredictActive(outputs);
   return kSuccess;
 }
 
 ModelPool::~ModelPool() {
-  model_pool_task_done_ = true;
-  cv_in_data_.notify_all();
   for (auto &th : model_thread_vec_) {
     if (th.joinable()) {
       th.join();
     }
   }
-  cv_in_data_.notify_one();
 }
 }  // namespace mindspore
 #endif

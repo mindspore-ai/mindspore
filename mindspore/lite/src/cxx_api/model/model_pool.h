@@ -25,6 +25,7 @@
 #include "include/api/status.h"
 #include "include/api/context.h"
 #include "src/cxx_api/model/model_thread.h"
+#include "src/cxx_api/model/predict_task_queue.h"
 namespace mindspore {
 class ModelPool {
  public:
@@ -33,6 +34,8 @@ class ModelPool {
 
   Status Init(const std::string &model_path, const std::string &config_path, const Key &dec_key = {},
               const std::string &dec_mode = kDecModeAesGcm);
+
+  std::vector<MSTensor> GetInputs();
 
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
@@ -45,15 +48,8 @@ class ModelPool {
   void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
   ModelPoolContex CreateModelContext(const std::string &config_path);
 
-  std::mutex mtx_data_queue_;
-  std::mutex mtx_model_queue_;
-  std::condition_variable cv_out_data_;
-  std::condition_variable cv_in_data_;
-  std::condition_variable cv_model_;
-
   std::vector<std::thread> model_thread_vec_;
-  std::queue<std::shared_ptr<ModelData>> model_data_queue_;
-  bool model_pool_task_done_ = false;
+  std::vector<MSTensor> model_inputs_;
   size_t num_models_ = 5;
 };
 }  // namespace mindspore
