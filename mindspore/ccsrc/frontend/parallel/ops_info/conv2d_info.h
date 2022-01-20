@@ -67,7 +67,8 @@ class Conv2DInfo : public OperatorInfo {
   void ComputeReplaceGraph(const CNodePtr &cnode);
 
   int64_t out_channel_ = 1;
-  std::vector<int64_t> kernel_size_;  // two integers
+  std::vector<int64_t> kernel_size_;               // two integers
+  std::vector<int64_t> kernel_size_use_dilation_;  // two integers, it is dilation * (kernel_size - 1) + 1
   int64_t mode_ = 1;
   int64_t pad_mode_ = 0;           // "pad": 0; "same": 1; "valid": 2;
   std::vector<int64_t> pad_list_;  // four integers

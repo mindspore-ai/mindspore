@@ -41,11 +41,11 @@ class Net(Cell):
 
 
 class Net2(Cell):
-    def __init__(self, conv2d_weight, out_channel, kernel_size, pad_mode, stride, group=1,
+    def __init__(self, conv2d_weight, out_channel, kernel_size, pad_mode, stride, group=1, dilation=1,
                  strategy1=None, strategy2=None):
         super().__init__()
-        self.conv2d_transpose = P.Conv2DTranspose(out_channel=out_channel, kernel_size=kernel_size,
-                                                  pad_mode=pad_mode, stride=stride, group=group).shard(strategy1)
+        self.conv2d_transpose = P.Conv2DTranspose(out_channel=out_channel, kernel_size=kernel_size, pad_mode=pad_mode,
+                                                  stride=stride, group=group, dilation=dilation).shard(strategy1)
         self.neg = P.Neg().shard(strategy2)
         self.weight = Parameter(conv2d_weight, "w1")
 
@@ -123,6 +123,20 @@ def test_conv2d_transpose_model_parallel2():
     strategy1 = ((2, 1, 1, 4), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
     net = Net2(_w2, out_channel=8, kernel_size=(4, 4), pad_mode="same", stride=2,
+               strategy1=strategy1, strategy2=strategy2)
+    compile_net(net)
+
+
+def test_conv2d_transpose_model_parallel_dilation():
+    """
+    Feature: test model parallel strategy and dilation is 2
+    Description: shard n/h/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 2, 2), (1, 1, 1, 1))
+    strategy2 = ((2, 1, 2, 2),)
+    net = Net2(_w4, out_channel=8, kernel_size=(3, 3), pad_mode="same", stride=2, dilation=2,
                strategy1=strategy1, strategy2=strategy2)
     compile_net(net)
 

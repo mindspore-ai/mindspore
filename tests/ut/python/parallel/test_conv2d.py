@@ -129,15 +129,14 @@ def test_conv2d_model_parallel_dilation():
     """
     Feature: test conv2d model parallel and dilation is not 1
     Description: model parallel and dilation is not 1
-    Expectation: compile failed
+    Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((8, 1, 1, 1),)
     net = Net(_w1, out_channel=8, kernel_size=2, pad_mode="same", stride=1, dilation=2,
               strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 
 def test_conv2d_model_parallel_group():
@@ -397,6 +396,20 @@ def test_kernel_size_larger_than_stride_and_slice_too_small():
     net = Net(_w3, out_channel=8, kernel_size=5, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net)
+
+
+def test_conv2d_dilation():
+    """
+    Feature: same mode, dilation is 2
+    Description: split n/h/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 2, 2), (1, 1, 1, 1))
+    strategy2 = ((2, 2, 1, 2),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, dilation=2, strategy1=strategy1,
+              strategy2=strategy2)
+    compile_net(net)
 
 
 def test_conv2d_same_mode_overlap_size_equal_to_slice_shape():

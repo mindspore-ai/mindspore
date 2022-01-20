@@ -109,13 +109,17 @@ Status Conv2DInfo::GetAttrsBase() {
     return FAILED;
   }
 
+  for (size_t i = 0; i < kernel_size_.size(); ++i) {
+    kernel_size_use_dilation_.push_back(dilation_[i + 2] * (kernel_size_[i] - 1) + 1);
+  }
+
   // group
   group_ = GetIntAttr(GROUP);
 
   MS_LOG(INFO) << name_ << ": The out channel is " << out_channel_ << ", kernel size is " << kernel_size_
                << ", mode is " << mode_ << ", pad mode is " << pad_mode_ << ", pad list is " << pad_list_
                << ", stride is " << stride_ << ", dilation is " << dilation_ << ", group is " << group_
-               << ", format is " << format_;
+               << ", format is " << format_ << ", the kernel size use dilation is " << kernel_size_use_dilation_;
 
   return SUCCESS;
 }
@@ -145,31 +149,31 @@ Status Conv2DInfo::CheckHWStrategySameModeByDimension(int64_t strategy, const st
   if (dimension == H_DIMENSION) {
     h_or_w_input_shape = inputs_shape_[0][2];
     h_or_w_slice_shape = h_or_w_input_shape / strategy;
-    h_or_w_kernel_size = kernel_size_[0];
+    h_or_w_kernel_size = kernel_size_use_dilation_[0];
     h_or_w_stride = stride_[2];
   } else {
     h_or_w_input_shape = inputs_shape_[0][3];
     h_or_w_slice_shape = h_or_w_input_shape / strategy;
-    h_or_w_kernel_size = kernel_size_[1];
+    h_or_w_kernel_size = kernel_size_use_dilation_[1];
     h_or_w_stride = stride_[3];
   }
 
   if (strategy > 1 && (h_or_w_kernel_size <= h_or_w_stride && h_or_w_slice_shape % h_or_w_stride != 0)) {
     MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                  << " when kernel_size <= stride but slice shape is not divisible by stride ";
+                  << " when kernel_size_use_dilation_ <= stride but slice shape is not divisible by stride ";
     return FAILED;
   }
 
   if (strategy > 1 && (h_or_w_kernel_size > h_or_w_stride)) {
     if (h_or_w_input_shape % h_or_w_stride != 0) {
       MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                    << " when kernel_size > stride but input shape is not divisible by stride";
+                    << " when kernel_size_use_dilation_ > stride but input shape is not divisible by stride";
       return FAILED;
     }
 
     if (h_or_w_slice_shape <= ((h_or_w_kernel_size - h_or_w_stride + 1) / 2)) {
       MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                    << " when kernel_size > stride but slice shape is smaller than or equal to (k - s + 1) / 2";
+                    << " when kernel_size_use_dilation_ > stride but slice shape <= (k - s + 1) / 2";
       return FAILED;
     }
   }
@@ -191,22 +195,26 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
   int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
 
-  if ((kernel_size_[0] > stride_[2] && h_strategy > 1) || (kernel_size_[1] > stride_[3] && w_strategy > 1)) {
-    MS_LOG(ERROR) << name_ << ": The 'valid' mode do not support to split H or W when kernel_size > stride";
+  if ((kernel_size_use_dilation_[0] > stride_[2] && h_strategy > 1) ||
+      (kernel_size_use_dilation_[1] > stride_[3] && w_strategy > 1)) {
+    MS_LOG(ERROR) << name_
+                  << ": The 'valid' mode do not support to split H or W when kernel_size_use_dilation_ > stride";
     return FAILED;
   }
 
-  if (kernel_size_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
-    MS_LOG(ERROR) << name_
-                  << ": The 'valid' mode do not support to split H when kernel_size <= stride but slice shape is "
-                     "not divisible by stride ";
+  if (kernel_size_use_dilation_[0] <= stride_[2] && h_slice_shape % stride_[2] != 0) {
+    MS_LOG(ERROR)
+      << name_
+      << ": The 'valid' mode do not support to split H when kernel_size_use_dilation_ <= stride but slice shape is "
+         "not divisible by stride ";
     return FAILED;
   }
 
-  if (kernel_size_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
-    MS_LOG(ERROR) << name_
-                  << ": The 'valid' mode do not support to split W when kernel_size <= stride but slice shape is "
-                     "not divisible by stride ";
+  if (kernel_size_use_dilation_[1] <= stride_[3] && w_slice_shape % stride_[3] != 0) {
+    MS_LOG(ERROR)
+      << name_
+      << ": The 'valid' mode do not support to split W when kernel_size_use_dilation_ <= stride but slice shape is "
+         "not divisible by stride ";
     return FAILED;
   }
 
@@ -270,19 +278,6 @@ Status Conv2DInfo::CheckStrategyBase(const StrategyPtr &strategy) {
     new_out_channel_ = out_channel_;
   }
 
-  int64_t input_except_n_shards =
-    std::accumulate(input_strategy.begin() + 1, input_strategy.end(), 1, std::multiplies<int64_t>());
-  int64_t weight_shards =
-    std::accumulate(weight_strategy.begin(), weight_strategy.end(), 1, std::multiplies<int64_t>());
-
-  bool is_data_parallel = (input_except_n_shards * weight_shards == 1);
-  if (!is_data_parallel) {
-    if (std::any_of(dilation_.begin(), dilation_.end(), [](int64_t value) { return value != 1; })) {
-      MS_LOG(ERROR) << name_ << ": It is not data parallel, the value of dilation must be 1, but got " << dilation_;
-      return FAILED;
-    }
-  }
-
   if (group_ != 1 && (weight_strategy[0] != 1 || weight_strategy[1] != 1)) {
     MS_LOG(ERROR) << name_ << ": The group is " << group_
                   << ", the cout and cin can not be split, but the shard num of cout is " << weight_strategy[0]
@@ -315,11 +310,11 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   // kernel size larger than stride and the h/w dimension is split, need to exchange overlap
-  if ((kernel_size_[0] > stride_[2]) && (input_strategy[2] > 1)) {
+  if ((kernel_size_use_dilation_[0] > stride_[2]) && (input_strategy[2] > 1)) {
     h_dim_need_exchange_overlap_ = true;
   }
 
-  if ((kernel_size_[1] > stride_[3]) && (input_strategy[3] > 1)) {
+  if ((kernel_size_use_dilation_[1] > stride_[3]) && (input_strategy[3] > 1)) {
     w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
@@ -480,7 +475,7 @@ int64_t Conv2DInfo::ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) {
   int64_t top_pad = pad_list_[0];
   int64_t h_dimension_input_shape = inputs_shape_[0][2];
   int64_t h_dimension_output_shape = outputs_shape_[0][2];
-  int64_t h_kernel_size = kernel_size_[0];
+  int64_t h_kernel_size = kernel_size_use_dilation_[0];
   int64_t h_stride = stride_[2];
 
   return (rank_bias + 1) * (h_dimension_output_shape * h_stride - h_dimension_input_shape) / h_dimension_shard_num_ +
@@ -501,7 +496,7 @@ int64_t Conv2DInfo::ComputeOverlapRightSizeByRankBias(int64_t rank_bias) {
   int64_t left_pad = pad_list_[2];
   int64_t w_dimension_input_shape = inputs_shape_[0][3];
   int64_t w_dimension_output_shape = outputs_shape_[0][3];
-  int64_t w_kernel_size = kernel_size_[1];
+  int64_t w_kernel_size = kernel_size_use_dilation_[1];
   int64_t w_stride = stride_[3];
 
   return (rank_bias + 1) * (w_dimension_output_shape * w_stride - w_dimension_input_shape) / w_dimension_shard_num_ +
@@ -926,11 +921,11 @@ Status Conv2DBackpropInputInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   // kernel size larger than stride and the h/w dimension is split, need to exchange overlap
-  if ((kernel_size_[0] > stride_[2]) && (input_strategy[2] > 1)) {
+  if ((kernel_size_use_dilation_[0] > stride_[2]) && (input_strategy[2] > 1)) {
     h_dim_need_exchange_overlap_ = true;
   }
 
-  if ((kernel_size_[1] > stride_[3]) && (input_strategy[3] > 1)) {
+  if ((kernel_size_use_dilation_[1] > stride_[3]) && (input_strategy[3] > 1)) {
     w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
@@ -1092,7 +1087,7 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapTopSizeByRankBias(int64_t rank_bi
 
   int64_t h_output_shape = outputs_shape_[0][2];
   int64_t h_input_shape = inputs_shape_[0][2];
-  int64_t h_kernel_size = kernel_size_[0];
+  int64_t h_kernel_size = kernel_size_use_dilation_[0];
   int64_t h_stride = stride_[2];
   int64_t top_pad = pad_list_[0];
   if (rank_bias == h_dimension_shard_num_ - 1) {  // the last rank
@@ -1149,7 +1144,7 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapLeftSizeByRankBias(int64_t rank_b
 
   int64_t w_output_shape = outputs_shape_[0][3];
   int64_t w_input_shape = inputs_shape_[0][3];
-  int64_t w_kernel_size = kernel_size_[1];
+  int64_t w_kernel_size = kernel_size_use_dilation_[1];
   int64_t w_stride = stride_[3];
   int64_t left_pad = pad_list_[2];
   if (rank_bias == w_dimension_shard_num_ - 1) {  // the last rank
@@ -1219,7 +1214,7 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
   if (dimension == H_DIMENSION) {
     h_or_w_output_shape = outputs_shape_[0][2];
     h_or_w_input_shape = inputs_shape_[0][2];
-    h_or_w_kernel_size = kernel_size_[0];
+    h_or_w_kernel_size = kernel_size_use_dilation_[0];
     h_or_w_stride = stride_[2];
     top_or_left_pad = pad_list_[0];
     h_or_w_rank_bias = h_rank_bias_;
@@ -1227,7 +1222,7 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
   } else {
     h_or_w_output_shape = outputs_shape_[0][3];
     h_or_w_input_shape = inputs_shape_[0][3];
-    h_or_w_kernel_size = kernel_size_[1];
+    h_or_w_kernel_size = kernel_size_use_dilation_[1];
     h_or_w_stride = stride_[3];
     top_or_left_pad = pad_list_[2];
     h_or_w_rank_bias = w_rank_bias_;
