@@ -1543,6 +1543,12 @@ test_case_math_ops = [
         'block': P.Square(),
         'desc_inputs': [[4]],
         'desc_bprop': [[4]]}),
+    ('LuSolve', {
+        'block': P.LuSolve(),
+        'desc_inputs': [Tensor(np.random.rand(3, 3), mstype.float32),
+                        Tensor(np.random.rand(3, 3), mstype.float32),
+                        Tensor(np.random.rand(3), mstype.int32)],
+        'skip': ['backward']}),
     ('Rsqrt', {
         'block': P.Rsqrt(),
         'desc_inputs': [[4]],
