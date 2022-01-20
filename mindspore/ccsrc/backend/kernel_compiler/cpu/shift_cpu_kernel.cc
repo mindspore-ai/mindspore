@@ -65,7 +65,7 @@ void ShiftCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
                                const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
@@ -103,7 +103,7 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
 
-  if (inputs[0]->size != outer_size * axis_size * inner_size * sizeof(T)) {
+  if (inputs[0]->size != LongToSize(outer_size * axis_size * inner_size) * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory size of inputs error.";
   }
 
@@ -119,16 +119,16 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
 
   // normal procedure
   std::vector<common::Task> tasks;
-  tasks.reserve(outer_size);
+  tasks.reserve(LongToSize(outer_size));
   for (int i = 0; i < outer_size; ++i) {
     (void)tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output, outputs] {
-      size_t offset = i * axis_size * inner_size;
-      size_t input_offset = offset + copy_src_begin_ * inner_size;
-      size_t output_offset = offset + copy_dst_begin_ * inner_size;
+      size_t offset = LongToSize(i * axis_size * inner_size);
+      size_t input_offset = offset + LongToSize(copy_src_begin_ * inner_size);
+      size_t output_offset = offset + LongToSize(copy_dst_begin_ * inner_size);
       size_t copy_size = copy_size_ * inner_size * sizeof(T);
       size_t dst_max_size = outputs[0]->size - output_offset;
       (void)memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
-      size_t fill_offset = offset + fill_begin_ * inner_size;
+      size_t fill_offset = offset + LongToSize(fill_begin_ * inner_size);
       (void)std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
       return common::SUCCESS;
     });

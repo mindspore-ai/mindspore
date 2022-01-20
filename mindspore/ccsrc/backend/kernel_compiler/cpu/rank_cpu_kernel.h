@@ -48,7 +48,6 @@ class RankCpuKernel : public CPUKernel {
   ~RankCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   void SetFunc();
 
@@ -58,6 +57,9 @@ class RankCpuKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
   inline void SortIndex(size_t *sort_idx, const T *values, const AxisIterator &iter) const {
@@ -84,7 +86,7 @@ class RankCpuKernel : public CPUKernel {
   // parameters
   size_t axis_{0};
   rank::Method method_{rank::MethodNotDefined};
-  std::function<void(size_t, int, int, const AxisIterator &, const size_t *const, float *const)> func_;
+  std::function<void(size_t, size_t, int, const AxisIterator &, const size_t *const, float *const)> func_;
   rank::NaOption option_{rank::OptionNotDefined};
   bool ascending_{true};
   bool pct_{false};

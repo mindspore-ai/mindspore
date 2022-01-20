@@ -41,10 +41,12 @@ class RollingCpuKernel : public CPUKernel {
   ~RollingCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
   void RollingBoundsCalculate();

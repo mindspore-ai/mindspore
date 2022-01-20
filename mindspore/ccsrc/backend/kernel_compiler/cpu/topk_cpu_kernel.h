@@ -30,9 +30,12 @@ class TopKCPUKernel : public CPUKernel {
   TopKCPUKernel() = default;
   ~TopKCPUKernel() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs) override;
+
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
   template <typename T>
