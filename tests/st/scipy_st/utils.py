@@ -16,6 +16,7 @@
 import numpy as onp
 from mindspore import Tensor
 import mindspore.numpy as mnp
+from mindspore.common import dtype as mstype
 
 
 def to_tensor(obj, dtype=None):
@@ -41,6 +42,17 @@ def match_array(actual, expected, error=0, err_msg=''):
         onp.testing.assert_almost_equal(actual, expected, decimal=error, err_msg=err_msg)
     else:
         onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+
+
+def match_matrix(actual, expected, error=0, err_msg=''):
+    if actual.shape != expected.shape:
+        raise ValueError(
+            err_msg.join(f" actual shape {actual.shape} is not equal to expected input shape {expected.shape}"))
+    sub_abs = mnp.abs(mnp.subtract(actual, expected))
+    no_zero_max = sub_abs.max()
+    if no_zero_max > Tensor(error, dtype=mstype.float64):
+        raise ValueError(
+            err_msg.join(f" actual value: {actual} is not equal to expected input value: {expected}"))
 
 
 def create_full_rank_matrix(shape, dtype):
