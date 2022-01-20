@@ -121,7 +121,7 @@ void DynamicQuantCPUKernel::CalculateScaleZp() {
   quant_parm.zeroPoint = zp;
   quant_parm.bitNum = k8Bit;
   quant_parm.inited = true;
-  this->out_tensors_.front()->AddQuantParam(quant_parm);
+  this->out_tensors_.front()->set_quant_params({quant_parm});
   return;
 }
 
