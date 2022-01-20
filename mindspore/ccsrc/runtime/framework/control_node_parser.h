@@ -198,7 +198,7 @@ class ControlNodeParser {
   // the entrance actor so that it can process next parameters. This is used to obtain the nodes corresponding to all
   // actors in the funcgraph that need to send control messages to the entrance.
   // These node are control nodes without control node input in the topological sort of the funcgraph.
-  void ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseFirstControlNodeAndKernelGraphForFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
   // Parse all funcgraphs that call nodes may call.
   void ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes);
 
@@ -273,6 +273,11 @@ class ControlNodeParser {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> kernel_to_call_nodes_;
   // Control nodes without a control node input in the topological sorting of funcgraph.
   mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>> func_graph_to_first_control_nodes_;
+  // Kernel graphs need to link a control arrow to its entrance actor.
+  // In the recursive scene, some kernel graph needs to be completed before the next set of data is sent by the
+  // entrance actor. At this time, it is necessary to connect a control arrow from the exit actor of the graph
+  // to the entrance actor.
+  mindspore::HashMap<FuncGraphPtr, std::set<KernelGraphGroupInfoPtr>> func_graph_to_first_kernel_graphs_;
   // Call nodes without recursive call. The funcgraphs of the call will not call the funcgraph where the call node
   // belong.
   std::set<AnfNodePtr> unrecursion_call_nodes_;

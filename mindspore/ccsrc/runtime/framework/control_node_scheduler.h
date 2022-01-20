@@ -58,6 +58,7 @@ class ControlNodeScheduler {
                                      std::vector<StackActorPtr> *const stack_actors);
   // Interface to link control actors.
   void LinkControlArrowForControlActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowForEntranceActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set);
   // Link all arrows between control actors.
   void LinkArrowForControlActor(ControlActorSet *const control_actor_set, const GraphCompilerInfo &graph_compiler_info);
