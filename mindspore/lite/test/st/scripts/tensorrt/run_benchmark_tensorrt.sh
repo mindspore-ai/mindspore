@@ -42,20 +42,20 @@ function Run_TensorRT_Mpirun() {
 #   fi
 
   # wide_deep_worker_
-  echo "start mpirun wide_deep_worker_ ..."
-  export BENCHMARK_UPDATE_CONFIG_ENV=0
-  model_name='wide_deep_worker_.mindir.ms'
-  model_file=${basepath}'/'${model_name}
-  input_files=${inpath}'/wide_deep_worker_.mindir.ms.bin_1,'${inpath}'/wide_deep_worker_.mindir.ms.bin_2'
-  output_file=${outpath}'/wide_deep_worker_.mindir.ms.out'
-  echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
-  mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
-  if [ $? = 0 ]; then
-      run_result='TensorRT_Server: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-  else
-      run_result='TensorRT_Server: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-  fi
-  export BENCHMARK_UPDATE_CONFIG_ENV=
+#   echo "start mpirun wide_deep_worker_ ..."
+#   export BENCHMARK_UPDATE_CONFIG_ENV=0
+#   model_name='wide_deep_worker_.mindir.ms'
+#   model_file=${basepath}'/'${model_name}
+#   input_files=${inpath}'/wide_deep_worker_.mindir.ms.bin_1,'${inpath}'/wide_deep_worker_.mindir.ms.bin_2'
+#   output_file=${outpath}'/wide_deep_worker_.mindir.ms.out'
+#   echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
+#   mpirun -np 2 ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --device=GPU >> ${run_tensorrt_mpirun_log_file}
+#   if [ $? = 0 ]; then
+#       run_result='TensorRT_Server: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+#   else
+#       run_result='TensorRT_Server: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+#   fi
+#   export BENCHMARK_UPDATE_CONFIG_ENV=
 }
 
 # Run on NVIDIA TensorRT platform:
