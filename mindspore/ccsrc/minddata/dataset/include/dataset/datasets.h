@@ -1791,6 +1791,101 @@ inline std::shared_ptr<CLUEDataset> MS_API CLUE(const std::vector<std::string> &
                                        num_samples, shuffle, num_shards, shard_id, cache);
 }
 
+/// \class CMUArcticDataset
+/// \brief A source dataset for reading and parsing CMUArctic dataset.
+class MS_API CMUArcticDataset : public Dataset {
+ public:
+  /// \brief Constructor of CMUArcticDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+  ///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                   const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of CMUArcticDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+  ///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name, const Sampler *sampler,
+                   const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of CMUArcticDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+  ///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of CMUArcticDataset.
+  ~CMUArcticDataset() = default;
+};
+
+/// \brief Function to create a CMUArcticDataset.
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcript", "utterance_id"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt" (default = "aew").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///      given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the CMUArcticDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/cmu_arctic_dataset_directory";
+///      std::shared_ptr<Dataset> ds =
+///          CMUArcticDataset(folder_path, name = "aew", std::make_shared<RandomSampler>(false, 10));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In CMUArctic dataset, each data dictionary has keys "waveform", "sample_rate", "transcript"
+///         and "utterance_id" */
+///      auto waveform = row["waveform"];
+/// \endcode
+inline std::shared_ptr<CMUArcticDataset> MS_API
+CMUArctic(const std::string &dataset_dir, const std::string &name = "aew",
+          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CMUArcticDataset>(StringToChar(dataset_dir), StringToChar(name), sampler, cache);
+}
+
+/// \brief Function to create a CMUArcticDataset.
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcript", "utterance_id"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the CMUArcticDataset.
+inline std::shared_ptr<CMUArcticDataset> MS_API CMUArctic(const std::string &dataset_dir, const std::string &name,
+                                                          const Sampler *sampler,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CMUArcticDataset>(StringToChar(dataset_dir), StringToChar(name), sampler, cache);
+}
+
+/// \brief Function to create a CMUArcticDataset.
+/// \note The generated dataset has four columns ["waveform", "sample_rate", "transcript", "utterance_id"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] name Part of dataset of CMUArctic, can be "aew", "ahw", "aup", "awb", "axb", "bdl", "clb", "eey",
+///     "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the CMUArcticDataset.
+inline std::shared_ptr<CMUArcticDataset> MS_API CMUArctic(const std::string &dataset_dir, const std::string &name,
+                                                          const std::reference_wrapper<Sampler> sampler,
+                                                          const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<CMUArcticDataset>(StringToChar(dataset_dir), StringToChar(name), sampler, cache);
+}
+
 /// \class CocoDataset
 /// \brief A source dataset for reading and parsing Coco dataset.
 class MS_API CocoDataset : public Dataset {

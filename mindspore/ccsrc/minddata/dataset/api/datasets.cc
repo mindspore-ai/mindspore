@@ -82,6 +82,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cityscapes_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/conll2000_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
@@ -1047,6 +1048,29 @@ CLUEDataset::CLUEDataset(const std::vector<std::vector<char>> &dataset_files, co
                          int32_t shard_id, const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CLUENode>(VectorCharToString(dataset_files), CharToString(task), CharToString(usage),
                                        num_samples, shuffle, num_shards, shard_id, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+CMUArcticDataset::CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const std::shared_ptr<Sampler> &sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CMUArcticNode>(CharToString(dataset_dir), CharToString(name), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+CMUArcticDataset::CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CMUArcticNode>(CharToString(dataset_dir), CharToString(name), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+CMUArcticDataset::CMUArcticDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const std::reference_wrapper<Sampler> &sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<CMUArcticNode>(CharToString(dataset_dir), CharToString(name), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

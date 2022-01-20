@@ -82,6 +82,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "WikiTextDataset",          # Text
            "YahooAnswersDataset",      # Text
            "YelpReviewDataset",        # Text
+           "CMUArcticDataset",         # Audio
            "GTZANDataset",             # Audio
            "LJSpeechDataset",          # Audio
            "SpeechCommandsDataset",    # Audio

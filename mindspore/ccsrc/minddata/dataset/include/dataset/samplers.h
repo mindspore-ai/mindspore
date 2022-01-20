@@ -38,6 +38,7 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class Cifar100Dataset;
   friend class CityscapesDataset;
   friend class CLUEDataset;
+  friend class CMUArcticDataset;
   friend class CocoDataset;
   friend class CSVDataset;
   friend class DIV2KDataset;
