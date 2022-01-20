@@ -39,6 +39,7 @@
 #define MS_ST256_F32 _mm256_storeu_ps
 #define MS_ST256_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)
 #define MS_SUB256_F32 _mm256_sub_ps
+#define MS_SUB256_EPI32 _mm256_sub_epi32
 #define MS_MAX256_F32 _mm256_max_ps
 #define MS_MAX256_EPI32 _mm256_max_epi32
 #define MS_MIN256_F32 _mm256_min_ps

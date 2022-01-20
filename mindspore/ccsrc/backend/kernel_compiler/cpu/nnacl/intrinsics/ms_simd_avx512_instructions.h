@@ -39,6 +39,7 @@
 #define MS_ST512_F32 _mm512_storeu_ps
 #define MS_ST512_EPI32(src1, src2) _mm512_storeu_si512((__m512i *)(src1), src2)
 #define MS_SUB512_F32 _mm512_sub_ps
+#define MS_SUB512_EPI32 _mm512_sub_epi32
 #define MS_MAX512_F32 _mm512_max_ps
 #define MS_MAX512_EPI32 _mm512_max_epi32
 #define MS_MIN512_F32 _mm512_min_ps
