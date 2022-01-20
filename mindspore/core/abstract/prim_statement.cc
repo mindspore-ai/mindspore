@@ -99,9 +99,6 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
     }
   }
 
-  // For F.SwitchLayer(MakeTuple(), x) or F.depend(tuple, x), set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(branches_abs, true);
-
   auto b = branches[0];
   // Return AbstractFuncUnion, otherwise the switch_layer will be replaced by branches[0]
   // which will cancel the out of bound checking for index

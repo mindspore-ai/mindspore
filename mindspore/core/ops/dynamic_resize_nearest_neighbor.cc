@@ -118,14 +118,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }  // namespace
 AbstractBasePtr DynamicResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  constexpr size_t size_index = 1;
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
                                            kEqual, input_num, prim_name);
   auto res = abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
-  // Set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(input_args[size_index], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DynamicResizeNearestNeighbor, prim::kPrimDynamicResizeNearestNeighbor,

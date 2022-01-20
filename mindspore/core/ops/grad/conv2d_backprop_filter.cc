@@ -241,8 +241,6 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
   }
   auto res = std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
                                                         Conv2DBackpropFilterInferShape(primitive, input_args));
-  // Set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(input_args[kFilterSizeIndex], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer, nullptr,

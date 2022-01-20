@@ -60,8 +60,6 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     auto key_string = GetValue<std::string>(keyPtr);
     (void)key_value.emplace_back(key_string, value_list[index]);
   }
-  SetSequenceElementsUseFlags(keys, true);
-  SetSequenceElementsUseFlags(values, true);
   return std::make_shared<AbstractDictionary>(key_value);
 }
 
@@ -167,7 +165,6 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   constexpr int target_value_index = 2;
   elements[index_unsigned_value] = args_spec_list[target_value_index];
   MS_LOG(DEBUG) << "SetItem use flags, index: " << index_unsigned_value << ", for " << queue->ToString();
-  SetSequenceElementsUseFlags(queue, index_unsigned_value, true);
   return std::make_shared<T>(elements, queue->sequence_nodes());
 }
 

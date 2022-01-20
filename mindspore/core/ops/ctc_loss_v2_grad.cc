@@ -37,7 +37,6 @@ abstract::ShapePtr CTCLossV2GradInferShape(const PrimitivePtr &primitive,
                                            prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
-    SetSequenceElementsUseFlags(item, true);
   }
   auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto log_probs_shape = log_probs_shape_map[kShape];

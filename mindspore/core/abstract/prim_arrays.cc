@@ -115,8 +115,6 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   (void)std::transform(res.begin(), res.end(), std::back_inserter(elems), [](int64_t n) -> AbstractBasePtr {
     return std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(n), kInt64);
   });
-  SetSequenceElementsUseFlags(xs, true);
-  SetSequenceElementsUseFlags(ys, true);
   return std::make_shared<AbstractTuple>(elems);
 }
 
@@ -137,8 +135,6 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
     arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
     tuple_len = arg->elements().size();
     tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-    // For Stack(tuple), set all used flags of tuple as true.
-    SetSequenceElementsUseFlags(args_spec_list[0], true);
   } else if (args_spec_list[0]->isa<AbstractTensor>()) {
     tuple_len = args_spec_list.size();
     tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
@@ -1369,8 +1365,6 @@ AbstractBasePtr InferImplDynamicStitch(const AnalysisEnginePtr &, const Primitiv
     min_shape[0] = 1;
     max_shape[0] = indices_total_size * EXPAND_MAX;
   }
-  SetSequenceElementsUseFlags(input_tuple, true);
-  SetSequenceElementsUseFlags(input_tuple_1, true);
   return std::make_shared<AbstractTensor>(infer_type,
                                           std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape));
 }
@@ -1381,9 +1375,6 @@ AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const Primi
   constexpr auto kTensorCopySlicesInputNum = 5;
   CheckArgsSize(op_name, args_spec_list, kTensorCopySlicesInputNum);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  for (size_t i = 2; i < args_spec_list.size(); ++i) {
-    SetSequenceElementsUseFlags(args_spec_list[i], true);
-  }
   return std::make_shared<AbstractTensor>(input->element(), input->shape());
 }
 }  // namespace abstract

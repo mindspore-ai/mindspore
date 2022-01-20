@@ -105,7 +105,6 @@ AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const Primitive
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = InferType(primitive, input_args);
   auto infer_shape = InferShape(primitive, input_args);
-  SetSequenceElementsUseFlags(input_args[0], true);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LpNorm, prim::kPrimLpNorm, LpNormInfer, nullptr, true);
