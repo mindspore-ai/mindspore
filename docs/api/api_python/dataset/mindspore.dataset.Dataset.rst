@@ -4,7 +4,7 @@
 
         **参数：**
 
-        `apply_func` (function)：数据集处理函数，要求该函数的输入是一个 `Dataset` 对象，返回的是处理后的 `Dataset` 对象。
+        **apply_func** (function)：数据集处理函数，要求该函数的输入是一个 `Dataset` 对象，返回的是处理后的 `Dataset` 对象。
 
         **返回：**
 

@@ -9,9 +9,9 @@
 
     - **source** (Union[Callable, Iterable, Random Accessible]) - 一个Python的可调用对象，可以是可迭代的Python对象，或支持随机访问的Python对象。
       
-      - 如果`source`是可调用对象，要求`source`对象可以通过 `source().next()` 的方式返回一个由NumPy数组构成的元组。
-      - 如果`source`是可迭代对象，要求`source`对象通过 `iter(source).next()` 的方式返回一个由NumPy数组构成的元组。
-      - 如果`source`是支持随机访问的对象，要求`source`对象通过 `source[idx]` 的方式返回一个由NumPy数组构成的元组。
+      - 如果 `source` 是可调用对象，要求 `source` 对象可以通过 `source().next()` 的方式返回一个由NumPy数组构成的元组。
+      - 如果 `source` 是可迭代对象，要求 `source` 对象通过 `iter(source).next()` 的方式返回一个由NumPy数组构成的元组。
+      - 如果 `source` 是支持随机访问的对象，要求 `source` 对象通过 `source[idx]` 的方式返回一个由NumPy数组构成的元组。
     - **column_names** (Union[str, list[str]]，可选) - 指定数据集生成的列名，默认值：None，不指定。用户可以通过此参数或 `schema` 参数指定列名。
     - **column_types** (list[mindspore.dtype]，可选) - 指定生成数据集各个数据列的数据类型，默认值：None，不指定。
       如果未指定该参数，则自动推断类型；如果指定了该参数，将在数据输出时做类型匹配检查。

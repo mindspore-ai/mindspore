@@ -12,18 +12,6 @@
     - **auto_prefix** (bool) – 是否自动为Cell及其子Cell生成NameSpace。`auto_prefix` 的设置影响网络参数的命名，如果设置为True，则自动给网络参数的名称添加前缀，否则不添加前缀。默认值：True。
     - **flags** (dict) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值：None。
 
-    **样例** :
-
-    >>> import mindspore.nn as nn
-    >>> import mindspore.ops as ops
-    >>> class MyCell(nn.Cell):
-    ...    def __init__(self):
-    ...        super(MyCell, self).__init__()
-    ...        self.relu = ops.ReLU()
-    ...
-    ...    def construct(self, x):
-    ...        return self.relu(x)
-
     .. py:method:: add_flags(**flags)
 
         为Cell添加自定义属性。
@@ -96,7 +84,7 @@
 
         **参数：**
 
-        - **cell** (str) – 需要进行迭代的Cell。默认值：None。
+        - **cells** (str) – 需要进行迭代的Cell。默认值：None。
         - **name_prefix** (str) – 作用域。默认值：''。
 
         **返回：**
@@ -210,7 +198,7 @@
         - **KeyError** – 如果子Cell的名称不正确或与其他子Cell名称重复。
         - **TypeError** – 如果子Cell的类型不正确。
 
-    .. py:method:: insert_param_to_cell(param_name, param, check_name=True)
+    .. py:method:: insert_param_to_cell(param_name, param, check_name_contain_dot=True)
 
         向当前Cell添加参数。
 
@@ -220,7 +208,7 @@
 
         - **param_name** (str) – 参数名称。
         - **param** (Parameter) – 要插入到Cell的参数。
-        - **check_name** (bool) – 是否对 `param_name` 中的"."进行检查。默认值：True。
+        - **check_name_contain_dot** (bool) – 是否对 `param_name` 中的"."进行检查。默认值：True。
 
         **异常：**
 
@@ -235,8 +223,7 @@
 
         **参数：**
 
-        - **params** (dict) – 用于初始化数据图的参数字典。
-
+        **params** (dict) – 用于初始化数据图的参数字典。
 
     .. py:method:: name_cells()
 
@@ -308,7 +295,7 @@
             - 当应用了重计算且内存充足时，可以配置'mp_comm_recompute=False'来提升性能。
             - 当应用了重计算但内存不足时，可以配置'parallel_optimizer_comm_recompute=True'来节省内存。有相同融合group的Cell应该配置相同的parallel_optimizer_comm_recompute。
 
-        **参数**：
+        **参数：**
 
         - **mp_comm_recompute** (bool) – 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值：True。
         - **parallel_optimizer_comm_recompute** (bool) – 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值：False。
@@ -370,15 +357,15 @@
 
         通过并行策略对输入张量进行切分。
 
-        **参数**：
+        **参数：**
 
-        - **inputs** (tuple) – construct方法的输入。
+        **inputs** (tuple) – construct方法的输入。
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 
         设置参数与服务器交互的方式。
 
-        **参数**：
+        **参数：**
 
         - **push_to_server** (bool) – 是否将参数推送到服务器。默认值：False。
         - **pull_from_server** (bool) – 是否从服务器提取参数。默认值：False。
@@ -390,7 +377,7 @@
 
         .. note:: 只在运行的任务处于参数服务器模式时有效。
 
-        **参数**：
+        **参数：**
 
          - **recurse** (bool) – 是否设置子网络的可训练参数。默认值：True。
          - **init_in_server** (bool) – 是否在服务器上初始化由参数服务器更新的可训练参数。默认值：False。

@@ -49,7 +49,7 @@ mindspore.nn.SGD
     - **weight_decay** (float): 权重衰减（L2 penalty），必须大于等于0。默认值：0.0。
     - **nesterov** (bool): 启用Nesterov动量。如果使用Nesterov，动量必须为正，阻尼必须等于0.0。默认值：False。
 
-    .. include:: mindspore.nn.optim_arg_loss_scale.rst
+      .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     **输入：**
 
