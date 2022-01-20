@@ -40,6 +40,7 @@ option(MSLITE_ENABLE_RUNTIME_GLOG "enable runtime glog" off)
 option(MSLITE_ENABLE_COVERAGE "enable code coverage" off)
 option(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL "enable sharing memory with OpenGL" off)
 option(MSLITE_ENABLE_SERVING "enable serving" off)
+option(MSLITE_ENABLE_SERVER_INFERENCE "enable inference on server" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -143,6 +144,9 @@ if(DEFINED ENV{MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_SERVING})
     set(MSLITE_ENABLE_SERVING $ENV{MSLITE_ENABLE_SERVING})
+endif()
+if(DEFINED ENV{MSLITE_ENABLE_SERVER_INFERENCE})
+    set(MSLITE_ENABLE_SERVER_INFERENCE $ENV{MSLITE_ENABLE_SERVER_INFERENCE})
 endif()
 
 if(MACHINE_LINUX_ARM64)
