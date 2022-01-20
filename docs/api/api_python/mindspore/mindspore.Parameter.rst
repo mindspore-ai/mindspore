@@ -77,13 +77,6 @@
         - **ValueError** - `layout` 长度小于6。
         - **TypeError** - `layout` 不是元组。
 
-    .. py:method:: is_init
-        :property:
-
-        获取参数的初始化状态。
-
-        此属性仅在GE（Graph Engine）中有效，在其他后端将设为False。
-
     .. py:method:: layerwise_parallel
         :property:
 
