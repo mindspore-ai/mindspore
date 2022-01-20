@@ -391,8 +391,18 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   }
 
   if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend710") {
+    uint32_t device_id = 0;
+    auto device_id_env = std::getenv("ASCEND_DEVICE_ID");
+    if (device_id_env != nullptr) {
+      try {
+        device_id = static_cast<uint32_t>(std::stoul(device_id_env));
+      } catch (std::invalid_argument &e) {
+        MS_LOG(WARNING) << "Invalid device id env:" << device_id_env << ". Set default device id 0.";
+      }
+      MS_LOG(INFO) << "Ascend device_id = " << device_id;
+    }
     std::shared_ptr<AscendDeviceInfo> ascend_device_info = std::make_shared<AscendDeviceInfo>();
-    ascend_device_info->SetDeviceID(0);
+    ascend_device_info->SetDeviceID(device_id);
     device_list.push_back(ascend_device_info);
   }
 

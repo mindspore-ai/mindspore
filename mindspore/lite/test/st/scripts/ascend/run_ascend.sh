@@ -1,13 +1,38 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
 
-function Run_Ascend() {
-  # copy converter files to scripts
-  scp ./scripts/ascend/run_remote_ascend.sh root@${device_ip}:${device_scripts_path} || exit 1
-    # copy benchmark files to sc
-  scp ./scripts/ascend/run_benchmark_ascend.sh root@${device_ip}:${device_scripts_path} || exit 1
+function PrePareLocal() {
+  echo "Start to copy local file"
+  rm -rf ${benchmark_test_path}
+  mkdir -p ${benchmark_test_path}
 
-  ssh root@${device_ip} "cd ${device_scripts_path}; sh run_remote_ascend.sh ${backend}"
+  cp ./scripts/base_functions.sh ${benchmark_test_path} || exit 1
+  cp ./scripts/ascend/run_converter_ascend.sh ${benchmark_test_path} || exit 1
+  cp ./scripts/ascend/run_benchmark_ascend.sh ${benchmark_test_path} || exit 1
+  cp ./../config/models_ascend.cfg ${benchmark_test_path} || exit 1
+  cp ${release_path}/centos_x86/ascend/*-linux-x64.tar.gz ${benchmark_test_path} || exit 1
+  echo "Copy file success"
+}
+
+function PrePareRemote() {
+  echo "Start to copy remote file"
+  ssh ${user_name}@${device_ip} "rm -rf ${benchmark_test_path}; mkdir -p ${benchmark_test_path}" || exit 1
+
+  scp ./scripts/ascend/run_converter_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ./scripts/ascend/run_benchmark_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ./../config/models_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ${release_path}/centos_x86/ascend/*-linux-x64.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  echo "Copy file success"
+}
+
+function Run_Ascend() {
+  if [ ${is_local} = 0 ]; then
+    cd ${benchmark_test_path} || exit 1
+    sh run_converter_ascend.sh ${backend} ${device_id}
+  else
+    ssh ${user_name}@${device_ip} "cd ${benchmark_test_path}; sh run_converter_ascend.sh ${backend} ${device_id}"
+  fi
   if [[ $? = 0 ]]; then
     run_result="run in ${backend} pass"; echo ${run_result} >> ${run_ascend_result_file};
   else
@@ -15,7 +40,7 @@ function Run_Ascend() {
   fi
 }
 
-# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -e ascend -d 8.92.9.131
+# Example:sh run_benchmark_nets.sh -r /home/temp_test -m /home/temp_test/models -e Ascend310 -d 10.92.9.100:2
 while getopts "r:m:d:e:" opt; do
     case ${opt} in
         r)
@@ -27,7 +52,8 @@ while getopts "r:m:d:e:" opt; do
             ;;
         d)
             device_ip=`echo ${OPTARG} | cut -d \: -f 1`
-            echo "device_ip is ${device_ip}."
+            device_id=`echo ${OPTARG} | cut -d \: -f 2`
+            echo "device_ip is ${device_ip}, ascend_device_id is ${device_id}."
             ;;
         e)
             backend=${OPTARG}
@@ -39,22 +65,29 @@ while getopts "r:m:d:e:" opt; do
     esac
 done
 
-basepath=$(pwd)/result
+user_name=${USER}
+echo "Current user name is ${user_name}"
+basepath=$(pwd)/"${backend}_log_${device_id}"
 rm -rf ${basepath}
 mkdir -p ${basepath}
-echo "Ascend base path is ${basepath}"
+echo "Ascend base path is ${basepath}, device_ip: ${device_ip}, device_id: ${device_id}"
+benchmark_test_path=/home/${user_name}/benchmark_test/${device_id}
 
-device_release_path=/home/ascend/release
-device_config_path=/home/ascend/config
-device_scripts_path=/home/ascend/scripts
-
-ssh root@${device_ip} "sh /home/ascend/clear.sh" || exit 1
-# copy release to device
-scp ${release_path}/centos_x86/ascend/*-linux-x64.tar.gz root@${device_ip}:${device_release_path} || exit 1
-# copy config to device
-scp ./../config/models_ascend.cfg root@${device_ip}:${device_config_path} || exit 1
-# copy comm func to device
-scp ./scripts/base_functions.sh root@${device_ip}:${device_scripts_path} || exit 1
+ls /dev/davinci0
+is_local=$?
+if [ ${is_local} = 0 ]; then
+  PrePareLocal
+  if [ $? != 0 ]; then
+    echo "Prepare local failed"
+    exit 1
+  fi
+else
+  PrePareRemote
+  if [ $? != 0 ]; then
+    echo "Prepare remote failed"
+    exit 1
+  fi
+fi
 
 # Write converter result to temp file
 run_ascend_result_file=${basepath}'/run_'${backend}'_result.txt'
@@ -65,10 +98,20 @@ Run_Ascend
 Run_ascend_status=$?
 
 run_converter_log_file=${basepath}'/run_'${backend}'_converter_log.txt'
+run_converter_result_file=${basepath}'/run_'${backend}'_converter_result.txt'
 run_benchmark_log_file=${basepath}'/run_'${backend}'_benchmark_log.txt'
-scp root@${device_ip}:${device_scripts_path}/log/run_converter_log.txt ${run_converter_log_file} || exit 1
-scp root@${device_ip}:${device_scripts_path}/log/run_benchmark_log.txt ${run_benchmark_log_file} || exit 1
-
+run_benchmark_result_file=${basepath}'/run_'${backend}'_benchmark_result.txt'
+if [ ${is_local} = 0 ]; then
+  cp ${benchmark_test_path}/run_converter_log.txt ${run_converter_log_file} || exit 1
+  cp ${benchmark_test_path}/run_converter_result.txt ${run_converter_result_file} || exit 1
+  cp ${benchmark_test_path}/run_benchmark_log.txt ${run_benchmark_log_file} || exit 1
+  cp ${benchmark_test_path}/run_benchmark_result.txt ${run_benchmark_result_file} || exit 1
+else
+  scp ${user_name}@${device_ip}:${benchmark_test_path}/run_converter_log.txt ${run_converter_log_file} || exit 1
+  scp ${user_name}@${device_ip}:${benchmark_test_path}/run_converter_result.txt ${run_converter_result_file} || exit 1
+  scp ${user_name}@${device_ip}:${benchmark_test_path}/run_benchmark_log.txt ${run_benchmark_log_file} || exit 1
+  scp ${user_name}@${device_ip}:${benchmark_test_path}/run_benchmark_result.txt ${run_benchmark_result_file} || exit 1
+fi
 echo "Run in ${backend} ended"
 Print_Converter_Result ${run_ascend_result_file}
 exit ${Run_ascend_status}
