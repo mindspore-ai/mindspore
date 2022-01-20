@@ -675,7 +675,8 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         !(host_tensor_address->format() != device_tensor->format() && strategy_ == GraphExecutionStrategy::kStep)) {
       // In the scenario of training + inference , the device address of the weight node can not be changed when
       // multi-graphs sink mode is set.
-      if (device_tensor->is_ptr_persisted() && (host_tensor_address != device_tensor)) {
+      if (device_tensor->is_ptr_persisted() && (host_tensor_address != device_tensor) &&
+          strategy_ != GraphExecutionStrategy::kStep) {
         if (!Copy(device_tensor.get(), host_tensor_address.get())) {
           std::string error_info = "Sync data error.";
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
