@@ -41,6 +41,11 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
       MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
       continue;
     }
+    auto op_name = cnode->fullname_with_scope();
+    if (flags_.commonQuantParam.skip_quant_node.find(op_name) != flags_.commonQuantParam.skip_quant_node.end()) {
+      MS_LOG(INFO) << op_name << " is skip dynamic quant.";
+      continue;
+    }
     if (!CheckNodeInSet(cnode, support_weight_quant_types)) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " of type: " << primitive->name() << " dont need weight quant.";
       continue;

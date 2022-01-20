@@ -80,6 +80,10 @@ kernel::InnerKernel *MatmulInt8CPUKernelCreator(const std::vector<lite::Tensor *
     kernel =
       new (std::nothrow) MatmulInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else if (parameter->quant_type_ == schema::QuantType_QUANT_DYNAMIC) {
+    if (inputs.front()->IsConst()) {
+      MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported A is const.";
+      return nullptr;
+    }
     kernel = new (std::nothrow)
       MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   } else {
