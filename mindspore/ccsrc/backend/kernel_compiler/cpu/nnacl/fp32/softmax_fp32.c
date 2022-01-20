@@ -18,45 +18,42 @@
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdSoftmaxNormCoreCalc1(block_size, block_num, src, cur_batch_offset, max, channel, index)  \
+  do {                                                                                               \
+    MS_FLOAT_32xN(block_num) max##block_num = MS_MOVN_F32(block_size, max);                          \
+    for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);        \
+      max##block_num = MS_MAX_F32(block_size, max##block_num, input);                                \
+    }                                                                                                \
+    max = MS_GET_MAX_F32(block_size, max##block_num);                                                \
+  } while (0)
+
+#define SimdSoftmaxNormCoreCalc2(block_size, block_num, src, dst, cur_batch_offset, max, channel, index) \
+  for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) {       \
+    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);              \
+    MS_FLOAT_32xN(block_num) output = MS_SUB_F32(block_size, input, MS_MOVN_F32(block_size, max));       \
+    MS_ST_F32(block_size, dst + cur_batch_offset + index, output);                                       \
+  }
+
 void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
   int cur_batch_offset = 0;
   for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
-    int j = 0;
-#ifdef ENABLE_NEON
-    float32x4_t max4 = vdupq_n_f32(-FLT_MAX);
-    int count = (channel / C4NUM) * C4NUM;
-    for (; j < count; j += C4NUM) {
-      float32x4_t input4 = vld1q_f32(src + cur_batch_offset + j);
-      max4 = vmaxq_f32(max4, input4);
-    }
-#ifdef ENABLE_ARM64
-    float max = vmaxvq_f32(max4);
-#else
-    float max = max4[0];
-    for (int m = 1; m < 4; ++m) {
-      max = MSMAX(max, max4[m]);
-    }
-#endif
-#else
+    int index = 0;
     float max = -FLT_MAX;
-#endif
-    for (; j < channel; j++) {
-      float input = src[cur_batch_offset + j];
+
+    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxNormCoreCalc1, src, cur_batch_offset, max, channel, index);
+    for (; index < channel; index++) {
+      float input = src[cur_batch_offset + index];
       if (input > max) {
         max = input;
       }
     }
-    int k = 0;
-#ifdef ENABLE_NEON
-    int count2 = (channel / C4NUM) * C4NUM;
-    for (; k < count2; k += C4NUM) {
-      float32x4_t input4 = vld1q_f32(src + cur_batch_offset + k);
-      float32x4_t output4 = vsubq_f32(input4, vdupq_n_f32(max));
-      vst1q_f32(dst + cur_batch_offset + k, output4);
-    }
-#endif
-    for (; k < channel; k++) {
-      int offset = cur_batch_offset + k;
+
+    index = 0;
+    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxNormCoreCalc2, src, dst, cur_batch_offset, max, channel, index);
+    for (; index < channel; index++) {
+      int offset = cur_batch_offset + index;
       dst[offset] = src[offset] - max;
     }
   }

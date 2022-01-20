@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_NNACL_NEON_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #define MINDSPORE_NNACL_NEON_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
+#include <float.h>
+
 #include <arm_neon.h>
 
 #define MS_F32X4_GETI(src, i) src[i]
@@ -87,6 +89,18 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_BLEND128_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
+
+#ifdef ENABLE_ARM64
+#define MS_GET_MAX128_F32 vmaxvq_f32
+#else
+static inline float MS_GET_MAX128_F32(MS_FLOAT32X4 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // neon block num : 4
+    result = fmaxf(result, MS_F32X4_GETI(src, i));
+  }
+  return result;
+}
+#endif
 
 static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
   int32x4_t result;
