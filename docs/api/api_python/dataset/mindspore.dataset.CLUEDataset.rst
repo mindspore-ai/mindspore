@@ -1,7 +1,7 @@
 mindspore.dataset.CLUEDataset
 =============================
 
-.. py:class:: mindspore.dataset.CLUEDataset(dataset_files, task='AFQMC', usage='train', num_samples=None, num_parallel_workers=None, shuffle=<Shuffle.GLOBAL: 'global'>, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.CLUEDataset(dataset_files, task='AFQMC', usage='train', num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
     读取和解析CLUE数据集的源文件构建数据集。
 

@@ -1,7 +1,7 @@
 mindspore.dataset.audio.transforms.AmplitudeToDB
 =================================================
 
-.. py:class:: mindspore.dataset.audio.transforms.AmplitudeToDB(stype=<ScaleType.POWER: 'power'>, ref_value=1.0, amin=1e-10, top_db=80.0)
+.. py:class:: mindspore.dataset.audio.transforms.AmplitudeToDB(stype=ScaleType.POWER, ref_value=1.0, amin=1e-10, top_db=80.0)
 
     将输入音频从振幅/功率标度转换为分贝标度。
 

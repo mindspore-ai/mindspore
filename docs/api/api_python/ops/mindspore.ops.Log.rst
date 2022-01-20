@@ -25,10 +25,5 @@ mindspore.ops.Log
 
     **异常：**
 
-    - **TypeError** - `x` 不是Tensor。
+    **TypeError** - `x` 不是Tensor。
 
-    >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-    >>> log = ops.Log()
-    >>> output = log(x)
-    >>> print(output)
-    [0.        0.6931472 1.3862944]

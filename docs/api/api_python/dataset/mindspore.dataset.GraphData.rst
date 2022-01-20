@@ -37,7 +37,7 @@ mindspore.dataset.GraphData
 
         **TypeError**：参数 `edge_type` 的类型不为整型。
 
-    .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=<OutputFormat.NORMAL)
+    .. py:method:: get_all_neighbors(node_list, neighbor_type, output_format=OutputFormat.NORMAL)
 
         获取 `node_list` 所有节点的相邻节点，以 `neighbor_type` 类型返回。格式的定义参见以下示例：1表示两个节点之间连接，0表示不连接。
 
@@ -245,7 +245,7 @@ mindspore.dataset.GraphData
         - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
         - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
 
-    .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=<SamplingStrategy.RANDOM: 0>)
+    .. py:method:: get_sampled_neighbors(node_list, neighbor_nums, neighbor_types, strategy=SamplingStrategy.RANDOM)
 
         获取已采样相邻节点信息。此API支持多跳相邻节点采样。即将上一次采样结果作为下一跳采样的输入，最多允许6跳。采样结果平铺成列表，格式为[input node, 1-hop sampling result, 2-hop samling result ...]
 
@@ -256,8 +256,8 @@ mindspore.dataset.GraphData
         - **neighbor_types** (Union[list, numpy.ndarray]) - 每跳采样的相邻节点类型。
         - **strategy** (SamplingStrategy, 可选) - 采样策略，默认值：mindspore.dataset.SamplingStrategy.RANDOM。取值范围：[SamplingStrategy.RANDOM, SamplingStrategy.EDGE_WEIGHT]。
 
-        - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
-        - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
+          - **SamplingStrategy.RANDOM**：随机抽样，带放回采样。
+          - **SamplingStrategy.EDGE_WEIGHT**：以边缘权重为概率进行采样。
 
         **返回：**
 

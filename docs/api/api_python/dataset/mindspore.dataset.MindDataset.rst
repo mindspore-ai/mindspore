@@ -11,7 +11,7 @@
     - **columns_list** (list[str]，可选) - 指定从MindRecord文件中读取的数据列。默认值：None，读取所有列。
     - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值：None，使用mindspore.dataset.config中配置的线程数。
     - **shuffle** (Union[bool, Shuffle], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定，默认值：mindspore.dataset.Shuffle.GLOBAL。
-      如果`shuffle`为False，则不混洗，如果`shuffle`为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
+      如果 `shuffle` 为False，则不混洗，如果 `shuffle` 为True，等同于将 `shuffle` 设置为mindspore.dataset.Shuffle.GLOBAL。
       通过传入枚举变量设置数据混洗的模式：
 
       - **Shuffle.GLOBAL**：混洗文件和文件中的数据。
@@ -24,7 +24,7 @@
     - **padded_sample** (dict, 可选): 指定额外添加到数据集的样本，可用于在分布式训练时补齐分片数据，注意字典的键名需要与 `column_list` 指定的列名相同。默认值：None，不添加样本。需要与 `num_padded` 参数同时使用。
     - **num_padded** (int, 可选) - 指定额外添加的数据集样本的数量。在分布式训练时可用于为数据集补齐样本，使得总样本数量可被 `num_shards` 整除。默认值：None，不添加样本。需要与 `padded_sample` 参数同时使用。
     - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值：None，读取所有样本。
-    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读`单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
+    - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
 
     **异常：**
 

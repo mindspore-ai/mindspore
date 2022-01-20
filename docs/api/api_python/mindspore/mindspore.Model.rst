@@ -32,39 +32,6 @@
 
       如果你想设置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py` 。
 
-    **样例:**
-
-    >>> from mindspore import Model, nn
-    >>>
-    >>> class Net(nn.Cell):
-    ...     def __init__(self, num_class=10, num_channel=1):
-    ...         super(Net, self).__init__()
-    ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
-    ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
-    ...         self.fc1 = nn.Dense(16*5*5, 120, weight_init='ones')
-    ...         self.fc2 = nn.Dense(120, 84, weight_init='ones')
-    ...         self.fc3 = nn.Dense(84, num_class, weight_init='ones')
-    ...         self.relu = nn.ReLU()
-    ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
-    ...         self.flatten = nn.Flatten()
-    ...
-    ...     def construct(self, x):
-    ...         x = self.max_pool2d(self.relu(self.conv1(x)))
-    ...         x = self.max_pool2d(self.relu(self.conv2(x)))
-    ...         x = self.flatten(x)
-    ...         x = self.relu(self.fc1(x))
-    ...         x = self.relu(self.fc2(x))
-    ...         x = self.fc3(x)
-    ...         return x
-    >>>
-    >>> net = Net()
-    >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-    >>> # 如何构建数据集，请参考官方网站的数据集相关章节
-    >>> dataset = create_custom_dataset()
-    >>> model.train(2, dataset)
-
     .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None)
 
         数据下沉模式下构建计算图和数据图。
@@ -160,15 +127,6 @@
 
         返回预测结果，类型是Tensor或Tensor元组。
 
-        **样例:**
-
-        >>> import mindspore as ms
-        >>> from mindspore import Model, Tensor
-        >>>
-        >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
-        >>> model = Model(Net())
-        >>> result = model.predict(input_data)
-
     .. py:method:: predict_network
         :property:
 
@@ -194,19 +152,6 @@
         - **callbacks** (Optional[list[Callback], Callback]) – 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
         - **dataset_sink_mode** (bool) – 数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
         - **sink_size** (int) – 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值：-1。
-
-        **样例:**
-
-        >>> from mindspore import Model, nn, FixedLossScaleManager
-        >>>
-        >>> # 如何构建数据集，请参考官方网站的数据集相关章节
-        >>> dataset = create_custom_dataset()
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> loss_scale_manager = FixedLossScaleManager()
-        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-        >>> model.train(2, dataset)
 
     .. py:method:: train_network
         :property:

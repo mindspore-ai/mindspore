@@ -39,13 +39,13 @@ mindspore.nn.Adagrad
 
     - **update_slots** (bool) - 如果为True，则更新累加器 :math:`h` 。默认值：True。
 
-    .. include:: mindspore.nn.optim_arg_loss_scale.rst
+      .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须大于等于0.0。默认值：0.0。
 
     **输入：**
 
-    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。
+    **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。
 
     **输出：**
 

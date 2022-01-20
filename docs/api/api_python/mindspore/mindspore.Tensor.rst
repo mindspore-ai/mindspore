@@ -224,15 +224,6 @@ mindspore.Tensor
 
         维度与输入张量的相同的Tensor。输出张量的维度必须遵守广播规则。广播规则指输出张量的维度需要扩展为输入张量的维度，如果目标张量的维度大于输入张量的维度，则不满足广播规则。
 
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor([[1, 2, 3], [1, 2, 3]], dtype=mstype.float32)
-        >>> y = Tensor(np.ones((1, 3)), dtype=mstype.float32)
-        >>> output = x.expand_as(y)
-        >>> print(output)
-        Not support shapes for broadcast, x_shape: (2, 3), target shape: (1, 3)
-
     .. py:method:: fill(value)
 
         用标量值填充数组。

@@ -1,7 +1,7 @@
 mindspore.DynamicLossScaleManager
 ==================================
 
-.. py:class:: mindspore.DynamicLossScaleManager(init_loss_scale=2**24, scale_factor=2, scale_window=2000)
+.. py:class:: mindspore.DynamicLossScaleManager(init_loss_scale=2 ** 24, scale_factor=2, scale_window=2000)
 
     动态调整损失缩放系数的管理器，继承自 :class:`mindspore.LossScaleManager` 。
 
@@ -10,15 +10,6 @@ mindspore.DynamicLossScaleManager
     - **init_loss_scale** (float) - 初始梯度放大系数。默认值：2**24。
     - **scale_factor** (int) - 放大/缩小倍数。默认值：2。
     - **scale_window** (int) - 无溢出时的连续正常step的最大数量。默认值：2000。
-
-    **样例：**
-
-    >>> from mindspore import Model, nn, DynamicLossScaleManager
-    >>>
-    >>> net = Net()
-    >>> loss_scale_manager = DynamicLossScaleManager()
-    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
 
     .. py:method:: get_drop_overflow_update()
 

@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.TextFileDataset
 ==================================
 
-.. py:class:: mindspore.dataset.TextFileDataset(dataset_files, num_samples=None, num_parallel_workers=None, shuffle=<Shuffle.GLOBAL: 'global'>, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.TextFileDataset(dataset_files, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
     读取和解析文本文件构建数据集。生成的数据集有一个数据列: `[text]` ，类型为string。
 

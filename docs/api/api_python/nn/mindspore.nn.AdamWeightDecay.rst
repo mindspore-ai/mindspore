@@ -54,7 +54,7 @@ mindspore.nn.AdamWeightDecay
 
     **输出：**
 
-    **tuple** [bool]，所有元素都为True。
+    tuple[bool]，所有元素都为True。
 
     **异常：**
 
