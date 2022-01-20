@@ -18,11 +18,13 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H
 #include <vector>
 #include <set>
+#include <string>
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/dtype/type_id.h"
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "ops/dynamic_quant.h"
 
 namespace mindspore::lite::quant {
 class InsertQuantNodeManager {
@@ -33,7 +35,8 @@ class InsertQuantNodeManager {
 
   int InsertQuantDtypeCastNode(const FuncGraphPtr &graph);
 
-  int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops);
+  int InsertDynamicQuantNode(const FuncGraphPtr &graph, const std::set<PrimitivePtr> &support_dynamic_quant_ops,
+                             const std::set<std::string> &skip_quant_node);
 
  private:
   ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params);
@@ -46,9 +49,11 @@ class InsertQuantNodeManager {
 
   int MarkDynamicQuantize(const CNodePtr &cnode);
 
+  int InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index);
+
  private:
   TypeId dst_type_ = kNumberTypeInt8;
-  bool symmetric_ = false;
+  bool symmetric_ = true;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H

@@ -50,9 +50,9 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  DynamicMatmulInt8Opt(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, fp32_bias_ptr_,
-                       batch_c_ptr_ + cur_stride, param_->row_, cur_oc, param_->deep_align_, quant_param_->input_scale_,
-                       quant_param_->input_zp_, quant_param_->filter_scale_, param_->col_);
+  DynamicMatmulInt8AIWI(pack_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, fp32_bias_ptr_,
+                        batch_c_ptr_ + cur_stride, param_->row_, cur_oc, param_->deep_align_,
+                        quant_param_->input_scale_, quant_param_->filter_scale_, param_->col_, filter_per_channel_);
   return RET_OK;
 }
 
@@ -77,33 +77,47 @@ void MatmulDynamicInt8CPUKernel::FreeQuantParam() {
 }
 
 int MatmulDynamicInt8CPUKernel::MallocQuantParam() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto weight_quant_params = weight_tensor->quant_params();
-  auto w_shape = weight_tensor->shape();
-  MS_CHECK_TRUE_MSG(weight_tensor->shape().size() >= DIMENSION_2D, lite::RET_ERROR, "weight dims should >=2");
-  int col = param_->b_transpose_ ? w_shape[w_shape.size() - kSize2] : w_shape[w_shape.size() - kSize1];
-  filter_per_channel_ = (weight_quant_params.size() > 1);
-  channel_num_ = filter_per_channel_ ? col : 1;
-
   quant_param_ = reinterpret_cast<MatmulDynamicQuantParameter *>(malloc(sizeof(MatmulQuantParameter)));
   if (quant_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc MatmulDynamicQuantParameter for Matmul int8 op failed!";
     return RET_ERROR;
   }
   memset(quant_param_, 0, sizeof(MatmulQuantParameter));
+  return RET_OK;
+}
+
+int MatmulDynamicInt8CPUKernel::InitFilterQuantParam() {
+  if (quant_param_->filter_scale_ != nullptr) {
+    free(quant_param_->filter_scale_);
+    quant_param_->filter_scale_ = nullptr;
+  }
+  if (quant_param_->filter_zp_ != nullptr) {
+    free(quant_param_->filter_zp_);
+    quant_param_->filter_zp_ = nullptr;
+  }
+
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto weight_quant_params = weight_tensor->quant_params();
+  auto w_shape = weight_tensor->shape();
+  if (w_shape.size() < DIMENSION_2D) {
+    MS_LOG(ERROR) << weight_tensor->tensor_name() << " dims < 2.";
+    return RET_ERROR;
+  }
+  int col = param_->b_transpose_ ? w_shape[w_shape.size() - kSize2] : w_shape[w_shape.size() - kSize1];
+  filter_per_channel_ = (weight_quant_params.size() > 1);
+  channel_num_ = filter_per_channel_ ? col : 1;
+  if (static_cast<int>(weight_quant_params.size()) != channel_num_) {
+    MS_LOG(ERROR) << weight_tensor->tensor_name() << " quant params size:" << weight_quant_params.size()
+                  << " != channel_num_:" << channel_num_;
+    return RET_ERROR;
+  }
   quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(channel_num_ * sizeof(float)));
   CHECK_NULL_RETURN(quant_param_->filter_scale_);
   memset(quant_param_->filter_scale_, 0, sizeof(channel_num_));
   quant_param_->filter_zp_ = reinterpret_cast<int32_t *>(malloc(channel_num_ * sizeof(int32_t)));
   CHECK_NULL_RETURN(quant_param_->filter_zp_);
   memset(quant_param_->filter_zp_, 0, sizeof(channel_num_));
-  return RET_OK;
-}
 
-int MatmulDynamicInt8CPUKernel::InitFilterQuantParam() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  auto weight_quant_params = weight_tensor->quant_params();
-  MS_CHECK_TRUE_RET(static_cast<int>(weight_quant_params.size()) == channel_num_, RET_ERROR);
   for (int i = 0; i < channel_num_; i++) {
     quant_param_->filter_scale_[i] = static_cast<float>(weight_quant_params[i].scale);
     quant_param_->filter_zp_[i] = weight_quant_params[i].zeroPoint;
@@ -212,7 +226,7 @@ int MatmulDynamicInt8CPUKernel::TransferB() {
       b_pack_func_(current_weight, current_b_pack, param_->deep_, param_->col_);
     }
   }
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int MatmulDynamicInt8CPUKernel::InitTmpBuffer() {
@@ -252,25 +266,23 @@ int MatmulDynamicInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kMinInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), kOutputSize);
   InitParameter();
-
   auto ret = MallocQuantParam();
   if (ret != RET_OK) {
     FreeQuantParam();
     return ret;
   }
-
-  ret = InitFilterQuantParam();
-  if (ret != RET_OK) {
-    FreeQuantParam();
-    return ret;
+  if (param_->b_const_) {
+    ret = InitFilterQuantParam();
+    if (ret != RET_OK) {
+      FreeQuantParam();
+      return ret;
+    }
   }
-
   ret = CopyBias();
   if (ret != RET_OK) {
     FreeQuantParam();
     return ret;
   }
-
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -313,6 +325,12 @@ int MatmulDynamicInt8CPUKernel::Run() {
     return ret;
   }
   if (!param_->b_const_) {
+    ret = InitFilterQuantParam();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init filter quant param failed.";
+      FreeQuantParam();
+      return ret;
+    }
     ret = TransferB();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "TransferB failed.";

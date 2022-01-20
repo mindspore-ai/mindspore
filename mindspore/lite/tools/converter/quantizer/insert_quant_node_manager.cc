@@ -18,18 +18,22 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <string>
 #include "ops/quant_dtype_cast.h"
-#include "ops/dynamic_quant.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
-ValueNodePtr InsertQuantNodeManager::NewQuantCastValueNode(int src_type, int dst_type_,
+namespace {
+constexpr size_t kMinSize3 = 3;
+constexpr size_t kPrimitiveCOffset = 1;
+}  // namespace
+ValueNodePtr InsertQuantNodeManager::NewQuantCastValueNode(int src_type, int dst_type,
                                                            const std::vector<schema::QuantParamT> &quant_params) {
   auto prim_c = std::make_shared<ops::QuantDTypeCast>();
   MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
-  prim_c->Init(src_type, dst_type_);
+  prim_c->Init(src_type, dst_type);
   auto quant_params_holder = std::make_shared<QuantParamHolder>(quant_params.size(), quant_params.size());
   MS_CHECK_TRUE_MSG(quant_params_holder != nullptr, nullptr, "quant_params_holder is nullptr.");
   quant_params_holder->set_quant_type(schema::QuantType_QUANT_ALL);
@@ -158,17 +162,14 @@ int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph) 
   return RET_OK;
 }
 
-int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode) {
+int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                        size_t index) {
   auto primitive_c = std::make_shared<ops::DynamicQuant>();
   primitive_c->set_dst_type(dst_type_);
   primitive_c->set_symmetric(symmetric_);
-  auto op_name = cnode->fullname_with_scope();
-  if (cnode->size() <= kInputSize1) {
-    MS_LOG(ERROR) << op_name << " cnode size <= 2.";
-    return RET_ERROR;
-  }
-  auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(1)});
-  dynamic_quant_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_dynamic_cast_node");
+  auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(index)});
+  auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + to_string(index);
+  dynamic_quant_cnode->set_fullname_with_scope(name);
   CHECK_NULL_RETURN(cnode->abstract());
   auto abstract = cnode->abstract()->Clone();
   if (abstract == nullptr) {
@@ -182,7 +183,24 @@ int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const
     return ret;
   }
   MarkDynamicQuantize(dynamic_quant_cnode);
-  cnode->set_input(1, dynamic_quant_cnode);
+  cnode->set_input(index, dynamic_quant_cnode);
+  return RET_OK;
+}
+
+int InsertQuantNodeManager::NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode) {
+  auto op_name = cnode->fullname_with_scope();
+  if (cnode->size() < kMinSize3) {
+    MS_LOG(ERROR) << op_name << " cnode size:" << cnode->size() << " < 3.";
+    return RET_ERROR;
+  }
+  auto input = cnode->input(kInputIndex + kPrimitiveCOffset);
+  if (input->isa<mindspore::CNode>() || IsGraphInput(input)) {
+    InsertDynamicQuantWithIndex(graph, cnode, kInputIndex + kPrimitiveCOffset);
+  }
+  auto weight = cnode->input(kWeightIndex + kPrimitiveCOffset);
+  if (weight->isa<mindspore::CNode>() || IsGraphInput(weight)) {
+    InsertDynamicQuantWithIndex(graph, cnode, kWeightIndex + kPrimitiveCOffset);
+  }
   return RET_OK;
 }
 
@@ -199,10 +217,16 @@ int InsertQuantNodeManager::MarkDynamicQuantize(const CNodePtr &cnode) {
 }
 
 int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
-                                                   const std::set<PrimitivePtr> &support_dynamic_quant_ops) {
+                                                   const std::set<PrimitivePtr> &support_dynamic_quant_ops,
+                                                   const std::set<std::string> &skip_quant_node) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
+    auto op_name = cnode->fullname_with_scope();
+    if (skip_quant_node.find(op_name) != skip_quant_node.end()) {
+      MS_LOG(INFO) << op_name << " is skip dynamic quant.";
+      continue;
+    }
     auto ret = CheckDataType(cnode, kNumberTypeFloat32);
     if (ret == RET_NO_CHANGE) {
       continue;
@@ -210,22 +234,22 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
     auto is_support_node = CheckNodeInSet(cnode, support_dynamic_quant_ops);
     if (!is_support_node) {
       auto type = NodePrimitiveType(cnode);
-      MS_LOG(INFO) << "node:" << cnode->fullname_with_scope() << " type:" << type << " will not quantify.";
+      MS_LOG(INFO) << "node:" << op_name << " type:" << type << " will not quantify.";
       continue;
     }
     ret = NewDynamicQuantNode(graph, cnode);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "node:" << cnode->fullname_with_scope() << " new dynamic quant node failed.";
+      MS_LOG(ERROR) << "node:" << op_name << " new dynamic quant node failed.";
       return ret;
     }
     ret = MarkDynamicQuantize(cnode);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "node:" << cnode->fullname_with_scope() << " new mark dynamic quant node failed.";
+      MS_LOG(ERROR) << "node:" << op_name << " new mark dynamic quant node failed.";
       return ret;
     }
     ret = UpdateDataType(cnode, kNumberTypeFloat32);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "node:" << cnode->fullname_with_scope() << " update datatype failed.";
+      MS_LOG(ERROR) << "node:" << op_name << " update datatype failed.";
       return ret;
     }
   }
