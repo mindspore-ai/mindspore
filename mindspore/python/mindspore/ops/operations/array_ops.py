@@ -6833,3 +6833,56 @@ class Lstsq(Primitive):
         validator.check_type_name("l2_regularizer", l2_regularizer, 0.0, self.name)
         self.fast = fast
         self.l2_regularizer = l2_regularizer
+
+
+class LowerBound(Primitive):
+    """
+    Returns a tensor that contains the index for finding the lower bound of the value
+    of the input values element in the input sorted_x.
+
+    Args:
+        out_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32` and
+            `mindspore.dtype.int64`. Default: `mindspore.dtype.int32`.
+
+    Inputs:
+        - **sorted_x** (Tensor) - The input tensor whose dtype is real number and the data of each row must be sorted
+          in ascending order. The rank must be 2.
+        - **values** (Tensor) - The input tensor whose dtype is the same as `sorted_x` and the first dimension of the
+          shape of `values` must be equal to that of `sorted_x`. The rank must be 2.
+
+    Outputs:
+        Tensor, whose dtype is determined by `out_type` and whose shape is the same as that of `values`.
+
+    Raises:
+        TypeError: If `sorted_x` is not a Tensor.
+        TypeError: If `values` is not a Tensor.
+        TypeError: If `out_type` is invalid.
+        TypeError: If the type of `sorted_x` is not the same as that of `values`.
+        ValueError: If rank of the `sorted_x` is not equal to 2.
+        ValueError: If rank of the `values` is not equal to 2.
+        ValueError: If the first dimension of the shape of `sorted_x` is not equal to that of `values`.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> lowerbound = ops.LowerBound(out_type = mindspore.int32)
+        >>> sorted_x = Tensor(np.arange(12).reshape(3, 4).astype(np.int8))
+        >>> values = Tensor(np.array([[3], [4], [8]]).astype(np.int8))
+        >>> output = lowerbound(sorted_x, values)
+        >>> print(output)
+        [[3]
+         [0]
+         [0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, out_type=mstype.int32):
+        """Initialize LowerBound"""
+        valid_values = (mstype.int32, mstype.int64)
+        validator.check_type_name("out_type", out_type, valid_values, self.name)
+        self.init_prim_io_names(inputs=['sorted_x', 'values'], outputs=['y'])

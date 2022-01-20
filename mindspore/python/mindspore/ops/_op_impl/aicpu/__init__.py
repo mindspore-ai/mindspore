@@ -93,3 +93,4 @@ from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
 from .square import _square_aicpu
+from .lower_bound import _lower_bound_aicpu
