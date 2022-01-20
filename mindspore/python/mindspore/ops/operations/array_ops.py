@@ -845,7 +845,17 @@ class Unique(Primitive):
 
 class Gather(Primitive):
     r"""
-    Returns the slice of the input Tensor corresponding to the elements of `input_indices` on the specified `axis`.
+    Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
+
+    The following figure shows the calculation process of Gather commonly:
+
+    .. image:: api_img/Gather.png
+
+    where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
+
+    .. note::
+         The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result is undefined
+         out of range.
 
     Inputs:
         - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -853,36 +863,50 @@ class Gather(Primitive):
           Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
         - **axis** (int) - Specifies the dimension index to gather indices.
 
-    .. note::
-         The value of input_indices must be in the range of `[0, input_param.shape[axis])`, and report an error if it
-         exceeds this range.
-
     Outputs:
         Tensor, the shape of tensor is
         :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
 
     Raises:
         TypeError: If `axis` is not an int.
-        TypeError: If `input_indices` is not an int type Tensor.
-        TypeError: If `input_indices` is not an int.
+        TypeError: If `input_params` is not a tensor.
+        TypeError: If `input_indices` is not a tensor of type int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
-        >>> axis = 1
-        >>> output = ops.Gather()(input_params, input_indices, axis)
-        >>> print(output)
-        [[ 2.  7.]
-         [ 4. 54.]
-         [ 2. 55.]]
+        >>> # case1: input_indices is a Tensor with shape (5, ).
+        >>> input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mindspore.int32)
         >>> axis = 0
         >>> output = ops.Gather()(input_params, input_indices, axis)
         >>> print(output)
-        [[3. 4. 54. 22.]
-         [2. 2. 55.  3.]]
+        [1. 3. 5. 3. 7.]
+        >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension, the output shape is equal to the input_indices shape.
+        >>> input_indices = Tensor(np.array([[0, 2], [2, 6]]), mindspore.int32)
+        >>> axis = 0
+        >>> output = ops.Gather()(input_params, input_indices, axis)
+        >>> print(output)
+        [[ 1. 3.]
+         [ 3. 7.]]
+        >>> # case3: input_indices is a Tensor with shape (2, ). input_params is a Tensor with shape (3, 4) and axis is 0.
+        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+        >>> axis = 0
+        >>> output = ops.Gather()(input_params, input_indices, axis)
+        >>> print(output)
+        [[1.  2.  3.  4.]
+         [9. 10. 11. 12.]]
+        >>> # case4: input_indices is a Tensor with shape (2, ). input_params is a Tensor with shape (3, 4) and axis is 1.
+        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+        >>> axis = 1
+        >>> output = ops.Gather()(input_params, input_indices, axis)
+        >>> print(output)
+        [[1.  3.]
+         [5.  7.]
+         [9. 11.]]
     """
 
     @prim_attr_register
