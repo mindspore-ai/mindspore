@@ -1435,6 +1435,10 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32)),
                         Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))]}),
+    ('CholeskyInverse', {
+        'block': P.CholeskyInverse(upper=False),
+        'desc_inputs': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))]}),
     ('Embedding_1', {
         'block': Embedding(vocab_size=10, embedding_size=3),
         'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],

@@ -208,6 +208,39 @@ def get_bprop_log_matrix_determinant(self):
 
     return bprop
 
+@bprop_getters.register(P.CholeskyInverse)
+def get_bprop_cholesky_inverse(self):
+    """Grad definition for `CholeskyInverse` operation."""
+    matmul = P.MatMul()
+    upper = self.upper
+    neg = P.Neg()
+
+    def bprop(input_x, out, dout):
+        input_perm = (1, 0)
+        if dout.dtype == mstype.float64:
+            input_x = F.cast(input_x, mstype.float32)
+            out = F.cast(out, mstype.float32)
+            dout = F.cast(dout, mstype.float32)
+            common_term = dout + transpose(dout, input_perm)
+            common_term = F.cast(common_term, mstype.float32)
+            common_term = matmul(out, matmul(common_term, out))
+            if upper is True:
+                dx = neg(matmul(input_x, common_term))
+                dx = F.cast(dx, mstype.float64)
+            else:
+                dx = neg(matmul(common_term, input_x))
+                dx = F.cast(dx, mstype.float64)
+            return (dx,)
+        common_term = dout + transpose(dout, input_perm)
+        common_term = matmul(out, matmul(common_term, out))
+        if upper is True:
+            dx = neg(matmul(input_x, common_term))
+        else:
+            dx = neg(matmul(common_term, input_x))
+        return (dx,)
+
+    return bprop
+
 
 @bprop_getters.register(P.Erfinv)
 def get_bprop_erfinv(self):
