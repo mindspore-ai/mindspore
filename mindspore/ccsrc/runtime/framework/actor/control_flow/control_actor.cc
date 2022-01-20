@@ -261,9 +261,11 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
 void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Increase dynamic ref count by the output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    IncreaseDynamicRefCount(output_data.get());
+  for (size_t i = 0; i < output_data_.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(output_data_[i]);
+    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i);
+    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i]->data_ != nullptr), error_info);
+    IncreaseDynamicRefCount(output_data_[i].get());
   }
 
   // Increase dynamic ref count by the output partial.
@@ -347,7 +349,8 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
   MS_EXCEPTION_IF_NULL(context);
   const auto &data = output_data->data_;
   MS_EXCEPTION_IF_NULL(data);
-  if ((data->GetMutablePtr() == nullptr) || (data->ref_count() != SIZE_MAX)) {
+  if ((data->GetMutablePtr() == nullptr) || (data->ref_count() != SIZE_MAX) ||
+      (data->dynamic_ref_count() != INT32_MAX)) {
     std::string error_info = "The address of the " + std::to_string(formal_parameter_position) +
                              "position real parameter is nullptr or ref count is wrong.";
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

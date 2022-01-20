@@ -806,6 +806,7 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   }
 
   if (graph->is_executing_sink()) {
+    MS_LOG(ERROR) << "Not support the execution sink fully in the control flow.";
     return true;
   }
 
@@ -826,7 +827,7 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   }
   MS_EXCEPTION_IF_NULL(front_node);
   // If parameter is a weight node in root funcgraph, it should be set to kernel actor directly.
-  if (IsRootGraphParameter(front_node) && AnfAlgo::IsParameterWeight(backend_node->cast<ParameterPtr>())) {
+  if (IsRootGraphPersistentDeviceTensor(front_node)) {
     return false;
   }
 
@@ -842,8 +843,17 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   return (front_node != nullptr && front_node->isa<Parameter>());
 }
 
-bool ControlNodeParser::IsRootGraphParameter(const AnfNodePtr &node) {
+bool ControlNodeParser::IsRootGraphPersistentDeviceTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  if (!IsPersistentDeviceTensor(node)) {
+    return false;
+  }
+
+  // No control flow.
+  if (!is_inited_) {
+    return true;
+  }
+
   return find(root_graph_parameters_.begin(), root_graph_parameters_.end(), node) != root_graph_parameters_.end();
 }
 
