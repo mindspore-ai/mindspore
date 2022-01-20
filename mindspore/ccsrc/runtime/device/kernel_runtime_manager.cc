@@ -140,5 +140,20 @@ void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, 
   runtime->ReleaseDeviceRes();
   runtime_map_.erase(runtime_iter);
 }
+
+void KernelRuntimeManager::WaitTaskFinishOnDevice() const {
+  for (const auto &iter : runtime_map_) {
+    auto kernel_runtime = iter.second;
+    try {
+      if (kernel_runtime != nullptr && !kernel_runtime->SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+        return;
+      }
+    } catch (const std::exception &ex) {
+      MS_LOG(ERROR) << "SyncStream failed, exception:" << ex.what();
+      return;
+    }
+  }
+}
 }  // namespace device
 }  // namespace mindspore

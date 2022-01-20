@@ -66,5 +66,20 @@ void DeviceContextManager::UpdateDeviceContextKey(const DeviceContextKey &old_ke
   handle.key() = new_key_str;
   (void)device_contexts_.insert(std::move(handle));
 }
+
+void DeviceContextManager::WaitTaskFinishOnDevice() const {
+  for (const auto &item : device_contexts_) {
+    auto device_context = item.second;
+    try {
+      if (device_context != nullptr && !device_context->SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+        return;
+      }
+    } catch (const std::exception &ex) {
+      MS_LOG(ERROR) << "SyncStream failed, exception:" << ex.what();
+      return;
+    }
+  }
+}
 }  // namespace device
 }  // namespace mindspore

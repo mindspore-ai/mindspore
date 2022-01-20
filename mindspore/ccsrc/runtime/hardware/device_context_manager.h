@@ -39,6 +39,7 @@ class DeviceContextManager {
   DeviceContext *GetOrCreateDeviceContext(const DeviceContextKey &device_context_key);
   void UpdateDeviceContextKey(const DeviceContextKey &old_key, const DeviceContextKey &new_key);
   void ClearDeviceContexts();
+  void WaitTaskFinishOnDevice() const;
 
  private:
   DeviceContextManager() = default;
