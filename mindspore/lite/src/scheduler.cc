@@ -515,7 +515,12 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
     }
     auto ret = ReplaceDelegateKernels(&tmp_kernels);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "NPU delegate replace delegate kernels failed.";
+      dst_kernels->insert(dst_kernels->end(), src_kernels.begin(), src_kernels.end());
+      dst_kernels->insert(dst_kernels->end(), tmp_kernels.begin(), tmp_kernels.end());
+      if (remain_kernel != nullptr) {
+        dst_kernels->push_back(remain_kernel);
+      }
+      MS_LOG(ERROR) << "Inner delegate replace delegate kernels failed.";
       return ret;
     }
 

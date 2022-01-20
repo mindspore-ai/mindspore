@@ -940,6 +940,8 @@ int LiteSession::DelegateInit() {
 int LiteSession::Init(InnerContext *context) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
+    delete context;
+    context = nullptr;
     MS_LOG(ERROR) << "Not support multi-threading";
     return RET_ERROR;
   }
@@ -1784,6 +1786,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
+    delete model;
     MS_LOG(ERROR) << "Compile model failed";
     return RET_ERROR;
   }
@@ -1808,6 +1811,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
+    delete model;
     MS_LOG(ERROR) << "Compile model failed";
     return RET_ERROR;
   }

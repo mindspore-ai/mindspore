@@ -36,6 +36,7 @@ nvinfer1::ICudaEngine *TensorRTSerializer::GetSerializedEngine() {
     return nullptr;
   }
   nvinfer1::ICudaEngine *engine = runtime->deserializeCudaEngine(trt_model_stream, size, nullptr);
+  delete[] trt_model_stream;
   runtime->destroy();
   return engine;
 }

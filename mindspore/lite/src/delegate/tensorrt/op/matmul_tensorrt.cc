@@ -49,6 +49,12 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     activation_ = primitive->activation_type();
   } else if (type_ == schema::PrimitiveType_FullConnection) {
+    auto primitive = this->GetPrimitive()->value_as_FullConnection();
+    if (primitive == nullptr) {
+      MS_LOG(ERROR) << "convert to primitive FullConnection failed for " << op_name_;
+      return RET_ERROR;
+    }
+    activation_ = primitive->activation_type();
     transpose_a_ = nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = nvinfer1::MatrixOperation::kTRANSPOSE;
   }
