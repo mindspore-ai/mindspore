@@ -27,5 +27,5 @@ mindspore.nn.HShrink
 
     **异常：**
 
-    - **TypeError** - `lambd` 数据类型不是float。
-    - **TypeError** - `input_x` 数据类型不是float。
+    - **TypeError** - `lambd` 不是float。
+    - **TypeError** - `input_x` 的dtype既不是float16也不是float32。

@@ -248,8 +248,7 @@ class L1Loss(LossBase):
 
 class MSELoss(LossBase):
     r"""
-    MSELoss creates a criterion to measure the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
-    element-wise, where :math:`x` is the input and :math:`y` is the labels.
+    Calculates the mean squared error between the predicted value and the label value.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
@@ -271,18 +270,18 @@ class MSELoss(LossBase):
             Default: "mean".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, *)`, same shape as the `logits` in common cases.
+        - **logits** (Tensor) - The predicted value of the input. Tensor of any dimension.
+        - **labels** (Tensor) - The input label. Tensor of any dimension, same shape as the `logits` in common cases.
           However, it supports the shape of `logits` is different from the shape of `labels`
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, loss float tensor, the shape is zero if `reduction` is 'mean' or 'sum',
+        Tensor, loss of type float, the shape is zero if `reduction` is 'mean' or 'sum',
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
+        ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
