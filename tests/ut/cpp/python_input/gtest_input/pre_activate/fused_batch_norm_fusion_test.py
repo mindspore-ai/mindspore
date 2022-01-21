@@ -63,8 +63,7 @@ def test_fused_batch_norm_fusion(tag):
         depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
         depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4), u1)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_mix_precision0(input0, input1, input2, input3, input4, var0, var1):
@@ -80,8 +79,7 @@ def test_fused_batch_norm_fusion(tag):
         depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
         depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4), u1)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_mix_precision1(input0, input1, input2, input3, input4, var0, var1):
@@ -97,8 +95,7 @@ def test_fused_batch_norm_fusion(tag):
         depend0 = F.depend(tuple_getitem(batch_norm, 0), assign_sub0)
         depend1 = F.depend(depend0, assign_sub1)
         outputs = make_tuple(depend1, tuple_getitem(batch_norm, 3), tuple_getitem(batch_norm, 4), u1)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, var0, var1):
@@ -107,7 +104,6 @@ def test_fused_batch_norm_fusion(tag):
                                               tuple_getitem(bn_training_reduce, 1), input1, input2, var0, var1)
         outputs = make_tuple(tuple_getitem(bn_training_update, 0), tuple_getitem(bn_training_update, 3),
                              tuple_getitem(bn_training_update, 4), U)
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     return fns[tag]

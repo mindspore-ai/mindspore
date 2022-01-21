@@ -60,8 +60,7 @@ def test_adam_apply_one_fusion(tag):
         mul4 = Mul(input4, true_div0)
         sub0 = Sub(input3, mul4)
         outputs = make_tuple(add1, add0, sub0)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond1(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -78,8 +77,7 @@ def test_adam_apply_one_fusion(tag):
         mul4 = Mul(input4, true_div0)
         sub0 = Sub(input3, mul4)
         outputs = make_tuple(add1, add0, sub0)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond2(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -96,8 +94,7 @@ def test_adam_apply_one_fusion(tag):
         mul4 = Mul(true_div0, input4)
         sub0 = Sub(input3, mul4)
         outputs = make_tuple(add1, add0, sub0)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond3(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -114,8 +111,7 @@ def test_adam_apply_one_fusion(tag):
         mul4 = Mul(true_div0, input4)
         sub0 = Sub(input3, mul4)
         outputs = make_tuple(add1, add0, sub0)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond4(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -132,16 +128,14 @@ def test_adam_apply_one_fusion(tag):
         mul4 = Mul(true_div0, input4)
         sub0 = Sub(input3, mul4)
         outputs = make_tuple(add1, add0, sub0)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
         adam_apply_one = AdamApplyOne(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y)
         outputs = make_tuple(tuple_getitem(adam_apply_one, 0), tuple_getitem(adam_apply_one, 1),
                              tuple_getitem(adam_apply_one, 2))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     return fns[tag]
 
@@ -170,8 +164,7 @@ def test_adam_apply_one_assign_fusion(tag):
         assign2 = Assign(input1, add1)
         depend2 = F.depend(depend1, assign2)
         outputs = make_tuple(add1, add0, depend2)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond1(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -194,8 +187,7 @@ def test_adam_apply_one_assign_fusion(tag):
         assign2 = Assign(input1, add1)
         depend2 = F.depend(depend1, assign2)
         outputs = make_tuple(add1, add0, depend2)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond2(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -218,8 +210,7 @@ def test_adam_apply_one_assign_fusion(tag):
         assign2 = Assign(input1, add1)
         depend2 = F.depend(depend1, assign2)
         outputs = make_tuple(add1, add0, depend2)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond3(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -242,8 +233,7 @@ def test_adam_apply_one_assign_fusion(tag):
         assign2 = Assign(input1, add1)
         depend2 = F.depend(depend1, assign2)
         outputs = make_tuple(add1, add0, depend2)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_cond4(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -266,8 +256,7 @@ def test_adam_apply_one_assign_fusion(tag):
         assign2 = Assign(input1, add1)
         depend2 = F.depend(depend1, assign2)
         outputs = make_tuple(add1, add0, depend2)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, mul0_x, mul1_x, mul2_x, mul3_x, add2_y):
@@ -275,7 +264,6 @@ def test_adam_apply_one_assign_fusion(tag):
                                                    mul3_x, add2_y)
         outputs = make_tuple(tuple_getitem(adam_apply_one_assign, 0), tuple_getitem(adam_apply_one_assign, 1),
                              tuple_getitem(adam_apply_one_assign, 2))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     return fns[tag]
