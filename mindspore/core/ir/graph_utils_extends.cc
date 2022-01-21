@@ -16,13 +16,6 @@
 
 #include "ir/graph_utils.h"
 
-#include <utility>
-#include <stack>
-#include <vector>
-#include <list>
-#include <string>
-#include <fstream>
-
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/visitor.h"

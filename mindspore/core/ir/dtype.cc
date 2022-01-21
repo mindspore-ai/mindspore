@@ -15,9 +15,7 @@
  */
 
 #include "ir/dtype.h"
-#include <string>
 #include <cstdlib>
-#include <algorithm>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
