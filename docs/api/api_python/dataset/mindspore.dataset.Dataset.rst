@@ -15,7 +15,7 @@
         - **TypeError：** `apply_func` 的类型不是函数。
         - **TypeError：** `apply_func` 未返回Dataset对象。
 
-    .. py:method:: batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False)
+    .. py:method:: batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False, max_rowsize=16)
 
         将数据集中连续 `batch_size` 条数据合并为一个批处理数据。
 
