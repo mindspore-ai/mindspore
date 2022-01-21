@@ -1788,6 +1788,10 @@ void MemoryRecycle() {
 
 void ClearResAtexit() {
   MS_LOG(INFO) << "Pipeline clear all resource";
+  // When the python process exits, the kernels on the device may not have finished executing.
+  device::KernelRuntimeManager::Instance().WaitTaskFinishOnDevice();
+  device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();
+
   RecordExitStatus();
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {

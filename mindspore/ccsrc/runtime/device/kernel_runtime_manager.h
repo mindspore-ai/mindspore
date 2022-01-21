@@ -40,6 +40,7 @@ class KernelRuntimeManager {
   void ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();
   void ClearGraphResource(uint32_t graph_id);
+  void WaitTaskFinishOnDevice() const;
 
  private:
   KernelRuntimeManager() = default;
