@@ -48,7 +48,7 @@ mindspore.nn.LazyAdam
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
     - **weight_decay** (Union[float, int]) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
 
-      .. include:: mindspore.nn.optim_arg_loss_scale.rst
+    .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     **输入：**
 

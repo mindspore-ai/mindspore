@@ -66,7 +66,7 @@ mindspore.nn.RMSProp
     - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
     - **centered** (bool) - 如果为True，则梯度将通过梯度的估计方差进行归一。默认值：False。
 
-      .. include:: mindspore.nn.optim_arg_loss_scale.rst
+    .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     - **weight_decay** (Union[float, int]) - 权重衰减（L2 penalty）。必须大于等于0。默认值：0.0。
 

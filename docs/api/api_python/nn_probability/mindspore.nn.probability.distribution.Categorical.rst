@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Categorical
 ==================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Categorical(probs=None, seed=None, dtype=mstype.float32, name='Categorical')
+.. py:class:: mindspore.nn.probability.distribution.Categorical(probs=None, seed=None, dtype=mstype.int32, name='Categorical')
 
     分类分布。
     离散随机分布，取值范围为 :math:`\{1, 2, ..., k\}` ，概率质量函数为 :math:`P(X = i) = p_i, i = 1, ..., k`。

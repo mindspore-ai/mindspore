@@ -42,7 +42,7 @@ mindspore.nn.Momentum
     - **momentum** (float) - 浮点数类型的超参，表示移动平均的动量。必须等于或大于0.0。
     - **weight_decay** (int, float) - 权重衰减（L2 penalty）值。必须大于等于0.0。默认值：0.0。
 
-      .. include:: mindspore.nn.optim_arg_loss_scale.rst
+    .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。默认值：False。
 
