@@ -53,9 +53,9 @@ int PoolingCPUKernel::ReSize() {
 int PoolingCPUKernel::RunImpl(int task_id) const {
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(out_tensors_.at(kOutputIndex));
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data());
   CHECK_NULL_RETURN(output_ptr);
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
