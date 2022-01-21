@@ -22,6 +22,7 @@
 #include "ops/elu.h"
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
+#include "ops/softplus.h"
 
 namespace mindspore {
 namespace lite {
@@ -146,6 +147,14 @@ ops::PrimitiveC *OnnxHardSigmoidParser::Parse(const onnx::GraphProto &onnx_graph
   return prim.release();
 }
 
+ops::PrimitiveC *OnnxSoftPlusParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Activation>();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  prim->set_activation_type(mindspore::ActivationType::SOFTPLUS);
+
+  return prim.release();
+}
+
 OnnxNodeRegistrar g_onnxReluParser("Relu", new OnnxReluParser());
 OnnxNodeRegistrar g_onnxLeakyReluParser("LeakyRelu", new OnnxLeakyReluParser());
 OnnxNodeRegistrar g_onnxPReluParser("PRelu", new OnnxPReluParser());
@@ -153,5 +162,6 @@ OnnxNodeRegistrar g_onnxEluParser("Elu", new OnnxEluParser());
 OnnxNodeRegistrar g_onnxTanhParser("Tanh", new OnnxTanhParser());
 OnnxNodeRegistrar g_onnxSigmoidParser("Sigmoid", new OnnxSigmoidParser());
 OnnxNodeRegistrar g_onnxHardSigmoidParser("HardSigmoid", new OnnxHardSigmoidParser());
+OnnxNodeRegistrar g_onnxSoftPlusParser("Softplus", new OnnxSoftPlusParser());
 }  // namespace lite
 }  // namespace mindspore
