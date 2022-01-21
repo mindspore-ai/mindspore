@@ -220,6 +220,12 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
     }
     auto subgraph_nodes = reinterpret_cast<kernel::SubGraphKernel *>(kernel)->nodes();
     for (auto node : subgraph_nodes) {
+      for (auto *tensor : node->out_tensors()) {
+        if (tensor->IsConst()) {
+          MS_LOG(ERROR) << "Illegitimate kernel output tensor : " << tensor->tensor_name();
+          continue;
+        }
+      }
       auto ret = HandleBuildinCpuKernelWeight(subgraph_type, node);
       if (ret != RET_OK) {
         return ret;
