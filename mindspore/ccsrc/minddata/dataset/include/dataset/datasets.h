@@ -3230,6 +3230,103 @@ inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_d
   return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class LibriTTSDataset
+/// \brief A source dataset for reading and parsing LibriTTSDataset dataset.
+class MS_API LibriTTSDataset : public Dataset {
+ public:
+  /// \brief Constructor of LibriTTSDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean",
+  ///     "test-other", "train-clean-100", "train-clean-360", "train-other-500" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                  const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LibriTTSDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean",
+  ///     "test-other", "train-clean-100", "train-clean-360", "train-other-500" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LibriTTSDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean",
+  ///     "test-other", "train-clean-100", "train-clean-360", "train-other-500" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                  const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of LibriTTSDataset.
+  ~LibriTTSDataset() = default;
+};
+
+/// \brief Function to create a LibriTTSDataset.
+/// \note The generated dataset has seven columns ['waveform', 'sample_rate', 'original_text', 'normalized_text',
+///     'speaker_id', 'chapter_id', 'utterance_id'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean", "test-other",
+///     "train-clean-100", "train-clean-360", "train-other-500", or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LibriTTSDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and LibriTTS object */
+///      std::string folder_path = "/path/to/libri_tts_dataset_directory";
+///      std::shared_ptr<Dataset> ds = LibriTTS(folder_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In LibriTTS dataset, each data dictionary has seven columns ["waveform", "sample_rate",
+///         "original_text", "normalized_text", "speaker_id", "chapter_id", "utterance_id"].*/
+///      auto waveform = row["waveform"];
+/// \endcode
+inline std::shared_ptr<LibriTTSDataset> MS_API
+LibriTTS(const std::string &dataset_dir, const std::string &usage = "all",
+         const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriTTSDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a LibriTTSDataset.
+/// \note The generated dataset has seven columns ['waveform', 'sample_rate', 'original_text', 'normalized_text',
+///     'speaker_id', 'chapter_id', 'utterance_id'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean", "test-other",
+///     "train-clean-100", "train-clean-360", "train-other-500", or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LibriTTSDataset.
+inline std::shared_ptr<LibriTTSDataset> MS_API LibriTTS(const std::string &dataset_dir, const std::string &usage,
+                                                        const Sampler *sampler,
+                                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriTTSDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a LibriTTSDataset.
+/// \note The generated dataset has seven columns ['waveform', 'sample_rate', 'original_text', 'normalized_text',
+///     'speaker_id', 'chapter_id', 'utterance_id'].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Part of dataset of LibriTTS, can be "dev-clean", "dev-other", "test-clean", "test-other",
+///     "train-clean-100", "train-clean-360", "train-other-500", or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LibriTTSDataset.
+inline std::shared_ptr<LibriTTSDataset> MS_API LibriTTS(const std::string &dataset_dir, const std::string &usage,
+                                                        const std::reference_wrapper<Sampler> &sampler,
+                                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LibriTTSDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class LJSpeechDataset
 /// \brief A source dataset for reading and parsing LJSpeech dataset.
 class MS_API LJSpeechDataset : public Dataset {

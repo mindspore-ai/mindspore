@@ -50,6 +50,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/libri_tts_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
@@ -412,6 +413,18 @@ PYBIND_REGISTER(KMnistNode, 2, ([](const py::module *m) {
                         auto kmnist = std::make_shared<KMnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                         THROW_IF_ERROR(kmnist->ValidateParams());
                         return kmnist;
+                      }));
+                }));
+
+PYBIND_REGISTER(LibriTTSNode, 2, ([](const py::module *m) {
+                  (void)py::class_<LibriTTSNode, DatasetNode, std::shared_ptr<LibriTTSNode>>(*m, "LibriTTSNode",
+                                                                                             "to create a LibriTTSNode")
+                    .def(
+                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler) {
+                        std::shared_ptr<LibriTTSNode> libri_tts =
+                          std::make_shared<LibriTTSNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                        THROW_IF_ERROR(libri_tts->ValidateParams());
+                        return libri_tts;
                       }));
                 }));
 

@@ -99,6 +99,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/libri_tts_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/lj_speech_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
@@ -1390,6 +1391,28 @@ KMnistDataset::KMnistDataset(const std::vector<char> &dataset_dir, const std::ve
                              const std::shared_ptr<DatasetCache> &cache) {
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<KMnistNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LibriTTSDataset::LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LibriTTSNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LibriTTSDataset::LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<LibriTTSNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+LibriTTSDataset::LibriTTSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                                 const std::reference_wrapper<Sampler> &sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<LibriTTSNode>(CharToString(dataset_dir), CharToString(usage), sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
