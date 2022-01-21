@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef USING_SERVING
-#include "src/cxx_api/model/model_pool.h"
+#include "src/cxx_api/model_pool/model_pool.h"
 #include <unistd.h>
 #include <future>
 #include "src/common/log.h"
@@ -22,7 +21,14 @@
 #include "src/common/config_file.h"
 namespace mindspore {
 void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
-  int core_num = sysconf(_SC_NPROCESSORS_CONF);
+  int core_num = 1;
+#if defined(_MSC_VER) || defined(_WIN32)
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  core_num = sysinfo.dwNumberOfProcessors;
+#else
+  core_num = sysconf(_SC_NPROCESSORS_CONF);
+#endif
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread num is zero.";
     return;
@@ -172,4 +178,3 @@ ModelPool::~ModelPool() {
   }
 }
 }  // namespace mindspore
-#endif

@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
 #define MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
-#ifdef USING_SERVING
 #include <map>
 #include <string>
 #include <algorithm>
@@ -61,5 +60,4 @@ class PackWeightManager {
   std::mutex mtx_weight_;
 };
 }  // namespace mindspore::lite
-#endif
 #endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_

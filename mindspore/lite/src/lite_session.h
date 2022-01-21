@@ -114,7 +114,7 @@ class LiteSession : public session::LiteSession {
     const std::vector<kernel::LiteKernel *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> isolate_input_map = std::unordered_map<Tensor *, Tensor *>());
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   int IniPackWeightData(Model *model);
 #endif
 

@@ -68,7 +68,7 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
     if (op_parameter_->is_train_session_) {
       a_pack_ptr_ = reinterpret_cast<float *>(workspace());
     } else {
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
       auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
         in_tensors()[0], static_cast<size_t>(matrix_a_pack_size_) * sizeof(float));
       a_pack_ptr_ = reinterpret_cast<float *>(a_packed.second);
@@ -96,7 +96,7 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (op_parameter_->is_train_session_) {
     b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
       in_tensors()[1], static_cast<size_t>(matrix_b_pack_size_) * sizeof(float));
     b_pack_ptr_ = reinterpret_cast<float *>(b_packed.second);
@@ -228,13 +228,12 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 }
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
-  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr &&
-      (is_pack_ || (params_->a_transpose_ && params_->deep_ != 1))) {
-#ifdef USING_SERVING
+  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr && is_pack_) {
+#ifdef SERVER_INFERENCE
     if (a_is_packed_ == lite::MALLOC) {
 #endif
       ms_context_->allocator->Free(a_pack_ptr_);
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     }
 #endif
   }
@@ -243,11 +242,11 @@ void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
   if (!op_parameter_->is_train_session_ && b_pack_ptr_ != nullptr && is_pack_) {
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     if (b_is_packed_ == lite::MALLOC) {
 #endif
       ms_context_->allocator->Free(b_pack_ptr_);
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     }
 #endif
   }
@@ -434,7 +433,7 @@ int MatmulFp32BaseCPUKernel::Prepare() {
     if (InitBufferA() != RET_OK) {
       return RET_ERROR;
     }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     if (a_is_packed_ != lite::PACKED) {
 #endif
       ret = InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data()));
@@ -442,7 +441,7 @@ int MatmulFp32BaseCPUKernel::Prepare() {
         MS_LOG(ERROR) << "InitMatrixA failed!";
         return ret;
       }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     }
 #endif
   }
@@ -452,14 +451,14 @@ int MatmulFp32BaseCPUKernel::Prepare() {
     if (InitBufferB() != RET_OK) {
       return RET_ERROR;
     }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     if (b_is_packed_ != lite::PACKED) {
 #endif
       if (InitMatrixB(static_cast<float *>(b_tensor->data())) != RET_OK) {
         MS_LOG(ERROR) << "InitMatrixB failed!";
         return RET_ERROR;
       }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     }
 #endif
   }

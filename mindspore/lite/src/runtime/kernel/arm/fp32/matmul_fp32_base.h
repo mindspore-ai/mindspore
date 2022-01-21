@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
 #include "nnacl/matmul_parameter.h"
@@ -87,7 +87,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatMulParameter *params_ = nullptr;
   float *a_pack_ptr_ = nullptr;
   float *b_pack_ptr_ = nullptr;
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   lite::PackStatus a_is_packed_ = lite::MALLOC;
   lite::PackStatus b_is_packed_ = lite::MALLOC;
 #endif

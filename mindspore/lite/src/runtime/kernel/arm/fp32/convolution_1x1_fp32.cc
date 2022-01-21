@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
 using mindspore::lite::RET_ERROR;
@@ -307,7 +307,7 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(in_tensors_[1], size);
     packed_weight_ = packed.second;
     weight_is_packed_ = packed.first;

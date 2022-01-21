@@ -28,7 +28,7 @@
 #endif
 #endif
 #include "src/inner_kernel.h"
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
 #include "include/context.h"
@@ -80,7 +80,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   bool IsRepack() { return is_repack_; }
   std::unordered_map<uintptr_t, void *> addr_map;
   void *packed_weight_ = nullptr;
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   lite::PackStatus weight_is_packed_ = lite::MALLOC;
 #endif
   void *bias_data_ = nullptr;
