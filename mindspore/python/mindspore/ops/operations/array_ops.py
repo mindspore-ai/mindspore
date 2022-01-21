@@ -1294,8 +1294,8 @@ class Fill(PrimitiveWithInfer):
 
     Inputs:
         - **type** (mindspore.dtype) - The specified type of output tensor. The data type only supports
-        `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-        `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
+          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
         - **shape** (tuple[int]) - The specified shape of output tensor.
         - **value** (Union(number.Number, bool)) - Value to fill the returned tensor.
 

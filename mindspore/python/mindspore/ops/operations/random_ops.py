@@ -159,7 +159,7 @@ class Gamma(PrimitiveWithInfer):
     Args:
         seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
         seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-        final generated random number, must be non-negative. Default: 0.
+            final generated random number, must be non-negative. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -365,7 +365,7 @@ class UniformReal(StandardNormal):
     Args:
         seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
         seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-        final generated random number, must be non-negative. Default: 0.
+            final generated random number, must be non-negative. Default: 0.
 
     .. note::
         - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
