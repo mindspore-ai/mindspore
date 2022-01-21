@@ -86,9 +86,10 @@ class PartialEliminater : public AnfVisitor {
 
     // reorder the formal parameter of fg.
     AnfNodePtrList new_params;
-    std::copy(fg->parameters().cbegin() + SizeToLong(xs_size), fg->parameters().cend(), std::back_inserter(new_params));
-    std::copy(fg->parameters().cbegin(), fg->parameters().cbegin() + SizeToLong(xs_size),
-              std::back_inserter(new_params));
+    (void)std::copy(fg->parameters().cbegin() + SizeToLong(xs_size), fg->parameters().cend(),
+                    std::back_inserter(new_params));
+    (void)std::copy(fg->parameters().cbegin(), fg->parameters().cbegin() + SizeToLong(xs_size),
+                    std::back_inserter(new_params));
     fg->manager()->SetParameters(fg, new_params);
     return new_node;
   }
@@ -122,7 +123,7 @@ class ChoicePartialEliminater : public AnfVisitor {
     if (!IsPrimitiveCNode(node, prim::kPrimPartial)) {
       if (IsValueNode<FuncGraph>(node)) {
         fg_list_.push_back(node);
-        (void)args_list_.push_back(AnfNodePtrList{});
+        (void)args_list_.emplace_back(AnfNodePtrList{});
       }
       return;
     }
@@ -243,8 +244,8 @@ class ChoicePartialEliminater : public AnfVisitor {
     AnfNodePtrList new_params;
     new_params.reserve(anchor_params_size + extra_input_counter);
     // reuse parameters for anchor_args;
-    std::copy(anchor_fg_params.cbegin(), anchor_fg_params.cbegin() + SizeToLong(anchor_args_size),
-              std::back_inserter(new_params));
+    (void)std::copy(anchor_fg_params.cbegin(), anchor_fg_params.cbegin() + SizeToLong(anchor_args_size),
+                    std::back_inserter(new_params));
     // Extra parameters;
     for (size_t i = 0; i < extra_inputs.size(); ++i) {
       TraceGuard guard(std::make_shared<TraceCopy>(extra_inputs[i]->debug_info()));

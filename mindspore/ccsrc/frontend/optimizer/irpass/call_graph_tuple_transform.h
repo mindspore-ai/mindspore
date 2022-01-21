@@ -112,7 +112,7 @@ class SwitchCallTupleTransform : public AnfVisitor {
     return nullptr;
   }
 
-  bool TransformBranchNode(const AnfNodePtr &node, FuncGraphManagerPtr mng, AnfNodePtr *trans_node) {
+  bool TransformBranchNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng, AnfNodePtr *trans_node) {
     if (IsValueNode<FuncGraph>(node)) {
       FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
       if (FuncGraphHasTupleInput(fg)) {
@@ -187,7 +187,7 @@ class SwitchLayerCallTupleTransform : public AnfVisitor {
     return nullptr;
   }
 
-  bool TransformLayerNode(const AnfNodePtr &node, FuncGraphManagerPtr mng, AnfNodePtr *trans_node) {
+  bool TransformLayerNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng, AnfNodePtr *trans_node) {
     if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
       MS_LOG(WARNING) << "SwitchLayer input is not MakeTuple";
       return false;

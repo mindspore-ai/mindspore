@@ -16,9 +16,7 @@
 
 #include "frontend/optimizer/irpass/load_eliminate.h"
 
-#include <algorithm>
 #include <memory>
-#include <set>
 #include <vector>
 
 #include "frontend/operator/ops.h"
