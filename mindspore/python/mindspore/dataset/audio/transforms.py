@@ -780,9 +780,9 @@ class FrequencyMasking(AudioTensorOperation):
         >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
-    .. image:: api_img/frequency_masking_original.png
+    .. image:: frequency_masking_original.png
 
-    .. image:: api_img/frequency_masking.png
+    .. image:: frequency_masking.png
     """
 
     @check_masking
@@ -1242,9 +1242,9 @@ class TimeMasking(AudioTensorOperation):
         >>> transforms = [audio.TimeMasking(time_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
-    .. image:: api_img/time_masking_original.png
+    .. image:: time_masking_original.png
 
-    .. image:: api_img/time_masking.png
+    .. image:: time_masking.png
     """
 
     @check_masking
@@ -1281,11 +1281,11 @@ class TimeStretch(AudioTensorOperation):
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
-    .. image:: api_img/time_stretch_rate1.5.png
+    .. image:: time_stretch_rate1.5.png
 
-    .. image:: api_img/time_stretch_original.png
+    .. image:: time_stretch_original.png
 
-    .. image:: api_img/time_stretch_rate0.8.png
+    .. image:: time_stretch_rate0.8.png
     """
 
     @check_time_stretch
