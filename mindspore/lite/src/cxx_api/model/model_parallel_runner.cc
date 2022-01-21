@@ -30,8 +30,12 @@ Status ModelParallelRunner::Init(const std::string &model_path, const std::strin
 }
 
 std::vector<MSTensor> ModelParallelRunner::GetInputs() {
-  std::vector<MSTensor> model_inputs = {};
-  return model_inputs;
+  auto inputs = ModelPool::GetInstance()->GetInputs();
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "model pool input is empty.";
+    return {};
+  }
+  return inputs;
 }
 
 Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
