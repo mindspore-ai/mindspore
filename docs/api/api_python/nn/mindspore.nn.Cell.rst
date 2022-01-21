@@ -183,7 +183,6 @@
 
         - **RuntimeError** – 如果参数不属于任何stage。
 
-
     .. py:method:: insert_child_to_cell(child_name, child_cell)
 
         将一个给定名称的子Cell添加到当前Cell。
@@ -215,7 +214,7 @@
         - **KeyError** – 如果参数名称为空或包含"."。
         - **TypeError** – 如果参数的类型不是Parameter。
 
-   .. py:method:: load_parameter_slice(params)
+    .. py:method:: load_parameter_slice(params)
 
         根据并行策略获取Tensor分片并替换原始参数。
 
@@ -379,8 +378,8 @@
 
         **参数：**
 
-         - **recurse** (bool) – 是否设置子网络的可训练参数。默认值：True。
-         - **init_in_server** (bool) – 是否在服务器上初始化由参数服务器更新的可训练参数。默认值：False。
+        - **recurse** (bool) – 是否设置子网络的可训练参数。默认值：True。
+        - **init_in_server** (bool) – 是否在服务器上初始化由参数服务器更新的可训练参数。默认值：False。
 
     .. py:method:: set_train(mode=True)
 

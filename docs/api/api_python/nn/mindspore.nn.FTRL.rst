@@ -51,7 +51,7 @@ mindspore.nn.FTRL
     - **l2** (float)：l2正则化强度，必须大于等于零。默认值：0.0。
     - **use_locking** (bool) - 如果为True，则更新操作使用锁保护。默认值：False。
 
-      .. include:: mindspore.nn.optim_arg_loss_scale.rst
+    .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
     - **weight_decay** (Union[float, int]) - 要乘以权重的权重衰减值，必须为零或正值。默认值：0.0。
 

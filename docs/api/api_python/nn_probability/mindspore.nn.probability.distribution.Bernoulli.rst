@@ -19,7 +19,6 @@ mindspore.nn.probability.distribution.Bernoulli
     **异常：**
 
     - **ValueError** - `probs` 中元素小于0或大于1。
-    - **TypeError** - `dtype` 不是float的子类。
 
     .. py:method:: probs
 

@@ -156,7 +156,7 @@
 
         input index信息的元组。
 
-    .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None)
+    .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16, offload=None)
 
         给定一组数据增强列表，按顺序将数据增强作用在数据集对象上。
 

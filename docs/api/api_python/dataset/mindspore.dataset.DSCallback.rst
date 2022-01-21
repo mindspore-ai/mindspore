@@ -45,7 +45,7 @@ mindspore.dataset.DSCallback
 
     .. py:method:: ds_step_end(ds_run_context)
 
-         用于定义在指定数据step结束后执行的回调方法。
+        用于定义在指定数据step结束后执行的回调方法。
 
         **参数：**
 
