@@ -91,6 +91,14 @@ static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   return dst;
 }
 
+static inline float MS_GET_MAX128_F32(__m128 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // sse block num : 4
+    result = fmaxf(result, MS_F32X4_GETI(src, i));
+  }
+  return result;
+}
+
 #define STORE128X8_F32(output_ptr, num, dst) \
   MS_STQ_F32(output_ptr + 0 * num, dst##1);  \
   MS_STQ_F32(output_ptr + 1 * num, dst##2);  \

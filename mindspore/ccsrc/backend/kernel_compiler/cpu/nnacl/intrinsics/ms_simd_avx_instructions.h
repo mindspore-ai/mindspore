@@ -61,6 +61,14 @@
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
 #define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
 
+static inline float MS_GET_MAX256_F32(__m256 src) {
+  float result = MS_F32X8_GETI(src, 0);
+  for (int i = 1; i < 8; i++) {  // avx block num : 8
+    result = fmaxf(result, MS_F32X8_GETI(src, i));
+  }
+  return result;
+}
+
 #define MS_DIV256_EPI32(src1, src2) \
   _mm256_cvttps_epi32(MS_DIV256_F32(_mm256_cvtepi32_ps(src1), _mm256_cvtepi32_ps(src2)))
 

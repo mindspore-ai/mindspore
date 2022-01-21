@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_NNACL_AVX512_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #define MINDSPORE_NNACL_AVX512_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
+#include <float.h>
 
 #ifdef _MSC_VER
 #include <immintrin.h>
@@ -60,6 +61,14 @@
 #define MS_BLEND512_F32(src1, src2, mask) _mm512_mask_blend_ps(mask, src1, src2)
 #define MS_BLEND512_EPI32(src1, src2, mask) _mm512_mask_blend_epi32(mask, src1, src2)
 #define MS_CAST512_F32_S32(src) _mm512_castsi512_ps(src)
+
+static inline float MS_GET_MAX512_F32(__m512 src) {
+  float result = MS_F32X16_GETI(src, 0);
+  for (int i = 1; i < 16; i++) {  // avx512 block num : 16
+    result = fmaxf(result, MS_F32X16_GETI(src, i));
+  }
+  return result;
+}
 
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))
