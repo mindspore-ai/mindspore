@@ -849,7 +849,7 @@ class Gather(Primitive):
 
     The following figure shows the calculation process of Gather commonly:
 
-    .. image:: api_img/Gather.png
+    .. image:: Gather.png
 
     where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
@@ -2087,7 +2087,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
     The following figure shows the calculation process of UnsortedSegmentSum:
 
-    .. image:: api_img/UnsortedSegmentSum.png
+    .. image:: UnsortedSegmentSum.png
 
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
@@ -2195,7 +2195,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
 
     The following figure shows the calculation process of UnsortedSegmentMin:
 
-    .. image:: api_img/UnsortedSegmentMin.png
+    .. image:: UnsortedSegmentMin.png
 
     .. math::
 
@@ -2265,7 +2265,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
 
     The following figure shows the calculation process of UnsortedSegmentMax:
 
-    .. image:: api_img/UnsortedSegmentMax.png
+    .. image:: UnsortedSegmentMax.png
 
     .. math::
 
@@ -2395,7 +2395,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
 
     The following figure shows the calculation process of UnsortedSegmentProd:
 
-    .. image:: api_img/UnsortedSegmentProd.png
+    .. image:: UnsortedSegmentProd.png
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -3723,7 +3723,7 @@ class ScatterNd(PrimitiveWithInfer):
     The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
     with two matrices of new values:
 
-    .. image:: api_img/ScatterNd.png
+    .. image:: ScatterNd.png
 
     Inputs:
         - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.

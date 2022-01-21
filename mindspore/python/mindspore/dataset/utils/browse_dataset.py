@@ -91,7 +91,7 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
 
     Examples using `imshow_det_bbox` on VOC2012:
 
-    .. image:: api_img/browse_dataset.png
+    .. image:: browse_dataset.png
 
     """
 
