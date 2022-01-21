@@ -38,10 +38,11 @@ class DSCallback:
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_epoch_end(self, ds_run_context):
-        ...         print(cb_params.cur_epoch_num)
-        ...         print(cb_params.cur_step_num)
+        ...         print(ds_run_context.cur_epoch_num)
+        ...         print(ds_run_context.cur_step_num)
         >>>
-        >>> # dataset is a MindSpore dataset object and op is a data processing operator
+        >>> # dataset is a MindSpore dataset object and op is a certain data processing operator
+        >>> op = c_transforms.Fill(3)
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
