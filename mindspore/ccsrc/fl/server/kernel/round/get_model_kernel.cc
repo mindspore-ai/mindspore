@@ -59,7 +59,7 @@ bool GetModelKernel::Launch(const uint8_t *req_data, size_t len,
     return true;
   }
 
-  ++retry_count_;
+  retry_count_ += 1;
   if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
     MS_LOG(INFO) << "Launching GetModelKernel kernel. Retry count is " << retry_count_.load();
   }
@@ -87,7 +87,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
   std::map<std::string, AddressPtr> feature_maps;
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t get_model_iter = static_cast<size_t>(get_model_req->iteration());
+  size_t get_model_iter = IntToSize(get_model_req->iteration());
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
   size_t latest_iter_num = iter_to_model.rbegin()->first;
   // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.

@@ -27,8 +27,8 @@ namespace mindspore {
 namespace ps {
 namespace server {
 #ifndef _WIN32
+static const int64_t certStartTimeDiff = -600;
 static int64_t replayAttackTimeDiff;
-static int64_t certStartTimeDiff = -600;
 
 X509 *CertVerify::readCertFromFile(const std::string &certPath) {
   BIO *bio = BIO_new_file(certPath.c_str(), "r");
@@ -216,7 +216,7 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
     char subject_keyid[512] = {0};
     for (int i = 0; i < skid->length; i++) {
       char keyid[8] = {0};
-      int base = 512;
+      size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
       int ret = strcat_s(subject_keyid, base, keyid);
       if (ret == -1) {
@@ -238,7 +238,7 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
     }
     for (int i = 0; i < akeyid->keyid->length; i++) {
       char keyid[8] = {0};
-      int base = 512;
+      size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
       int ret = strcat_s(issuer_keyid, base, keyid);
       if (ret == -1) {
@@ -403,7 +403,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
     int saltLen = -2;
     ret = RSA_verify_PKCS1_PSS(pRSAPublicKey, srcDataHash, EVP_sha256(), buffer, saltLen);
     if (ret != 1) {
-      int64_t ulErr = SizeToLong(ERR_get_error());
+      uint64_t ulErr = ERR_get_error();
       char szErrMsg[1024] = {0};
       MS_LOG(ERROR) << "verify error. error number: " << ulErr;
       std::string str_res = ERR_error_string(ulErr, szErrMsg);
@@ -501,7 +501,7 @@ void CertVerify::sha256Hash(const std::string &src, uint8_t *hash, const int len
   if (ret != 1) {
     return;
   }
-  ret = SHA256_Update(&sha_ctx, src.c_str(), src.size());
+  ret = SHA256_Update(&sha_ctx, src.c_str(), IntToSize(src.size()));
   if (ret != 1) {
     return;
   }
@@ -542,7 +542,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
     int saltLen = -2;
     ret = RSA_verify_PKCS1_PSS(pRSAPublicKey, srcData, EVP_sha256(), buffer, saltLen);
     if (ret != 1) {
-      int64_t ulErr = SizeToLong(ERR_get_error());
+      uint64_t ulErr = ERR_get_error();
       char szErrMsg[1024] = {0};
       MS_LOG(ERROR) << "verify error. error number: " << ulErr;
       std::string str_res = ERR_error_string(ulErr, szErrMsg);
@@ -577,6 +577,10 @@ bool CertVerify::initRootCertAndCRL(const std::string rootFirstCaFilePath, const
   if (!checkFileExists(rootSecondCaFilePath)) {
     MS_LOG(ERROR) << "The rootSecondCaFilePath is not exist.";
     return false;
+  }
+
+  if (!checkFileExists(equipCrlPath)) {
+    MS_LOG(WARNING) << "The equipCrlPath is not exist.";
   }
   replayAttackTimeDiff = UlongToLong(replay_attack_time_diff);
   return true;

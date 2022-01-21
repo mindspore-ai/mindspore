@@ -329,7 +329,7 @@ void HttpMessageHandler::set_body(const std::shared_ptr<std::vector<char>> &body
 
 nlohmann::json HttpMessageHandler::request_message() const { return request_message_; }
 
-RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &key, int32_t *const value) {
+RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &key, uint32_t *const value) {
   MS_EXCEPTION_IF_NULL(value);
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
   if (!request_message_.contains(key)) {
@@ -338,7 +338,7 @@ RequestProcessResult HttpMessageHandler::ParseValueFromKey(const std::string &ke
     return result;
   }
 
-  int32_t res = request_message_.at(key);
+  int32_t res = IntToUint(request_message_.at(key));
   if (res < 0) {
     std::string message = "The value should not be less than 0.";
     ERROR_STATUS(result, RequestProcessResultCode::kInvalidInputs, message);

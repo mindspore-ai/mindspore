@@ -163,7 +163,7 @@ bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
   std::string root_second_ca_path = ps::PSContext::instance()->root_second_ca_path();
   std::string equip_crl_path = ps::PSContext::instance()->equip_crl_path();
 
-  mindspore::ps::server::CertVerify certVerify;
+  auto certVerify = mindspore::ps::server::CertVerify::GetInstance();
   bool ret =
     certVerify.verifyCertAndSign(fl_id, timestamp, (const unsigned char *)sign_data, key_attestation, equip_cert,
                                  equip_ca_cert, root_first_ca_path, root_second_ca_path, equip_crl_path);

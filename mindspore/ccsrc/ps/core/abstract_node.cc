@@ -498,7 +498,6 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
     heartbeat_message.set_persistent_state(persistent_state_);
   }
 
-  MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " Send heartbeat!";
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
                        heartbeat_message.ByteSizeLong(), kCommTimeoutInSeconds)) {
     MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
@@ -840,7 +839,7 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
     return true;
   }
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  auto condition_func = [&] {
+  auto condition_func = [this] {
     if (is_finish_.load()) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success finish!";
     }
@@ -892,7 +891,7 @@ bool AbstractNode::InitClientToScheduler() {
       }
     });
   client_to_scheduler_->Init();
-  client_to_scheduler_thread_ = std::make_unique<std::thread>([&]() {
+  client_to_scheduler_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
@@ -1009,10 +1008,6 @@ void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, c
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  if (size < 0) {
-    MS_LOG(ERROR) << "size < 0";
-    return;
-  }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << meta->request_id()
                 << " the current time is:"
@@ -1137,8 +1132,8 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 }
 
 void AbstractNode::InitNodeNum() {
-  worker_num_ = UintToInt(PSContext::instance()->cluster_config().initial_worker_num);
-  server_num_ = UintToInt(PSContext::instance()->cluster_config().initial_server_num);
+  worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
+  server_num_ = PSContext::instance()->cluster_config().initial_server_num;
   scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
   scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
   MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_
