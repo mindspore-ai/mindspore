@@ -27,7 +27,7 @@ from ..common import dtype as mstype
 from .utils import float_types
 from .utils_const import _raise_value_error, _type_check
 
-__all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
+__all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
 
 
 def block_diag(*arrs):
@@ -105,6 +105,9 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
     .. math::
         A x = b
 
+    Note:
+        `solve_triangular` is not supported on Windows platform yet.
+
     Args:
         A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
             `float32` nor `float64`, then it will be casted to :class:`mstype.float32`.
@@ -112,12 +115,16 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
             Right-hand side matrix in :math:`A x = b`. Note that if the input tensor is neither `float32` nor `float64`,
             then it will be casted to :class:`mstype.float32`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
-        trans (0, 1, 2, 'N', 'T', 'C', optional), Default: 'N'.
+        trans (0, 1, 2, 'N', 'T', 'C', optional): Default: 'N'.
             Type of system to solve:
-            trans:        system:
-                0 or 'N'        a x  = b
-                1 or 'T'        a^T x = b
-                2 or 'C'        a^H x = b
+
+            ========  =========
+            trans     system
+            ========  =========
+            0 or 'N'  a x  = b
+            1 or 'T'  a^T x = b
+            2 or 'C'  a^H x = b
+            ========  =========
         unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
             will not be referenced. Default: False.
         overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
@@ -234,6 +241,9 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
     The return value can be directly used as the first parameter to cho_solve.
 
+    Note:
+        `cho_factor` is not supported on Windows platform yet.
+
     .. warning::
         The returned matrix also contains random data in the entries not
         used by the Cholesky decomposition. If you need to zero these
@@ -242,18 +252,17 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     Args:
         a (Tensor): square Matrix of (M, M) to be decomposed. Note that if the input tensor is not a `float`
             or a `double`, then it will be cast to :class:'mstype.float64'.
-        lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization
-            (Default: upper-triangular (false))
-        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default is False.
+        lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization. Default: False.
+        overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default: False.
             in mindspore, this arg does not work right now.
         check_finite(bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default is True.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
             in mindspore, this arg does not work right now.
 
     Returns:
          - Tensor, matrix whose upper or lower triangle contains the Cholesky factor of `a`.
-        Other parts of the matrix contain random data.
+           Other parts of the matrix contain random data.
          - bool, flag indicating whether the factor is in the lower or upper triangle
 
     Raises:
@@ -295,16 +304,19 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     Returns the Cholesky decomposition, :math:`A = L L^*` or
     :math:`A = U^* U` of a Hermitian positive-definite matrix A.
 
+    Note:
+        `cholesky` is not supported on Windows platform yet.
+
     Args:
         a (Tensor): square Matrix of (M, M) to be decomposed, Note that if the input tensor is not a `float`
             or `double`, then it will be casted to :class:'mstype.float64'.
         lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
-            factorization.  Default is upper-triangular, which means lower defaults to false.
-        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default is False.
+            factorization. Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
             in mindspore, this arg does not work right now.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
-            Default is True. Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            Disabling may give a performance gain, but may result in problems
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
             in mindspore, this arg does not work right now.
 
     Returns:
@@ -346,13 +358,16 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     """Solve the linear equations Ax = b, given the Cholesky factorization of A.
 
+    Note:
+        `cho_solve` is not supported on Windows platform yet.
+
     Args:
         c_and_lower ((Tensor, bool)): Cholesky factorization of a, as given by cho_factor
         b (Tensor): Right-hand side
-        overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance)
+        overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
         Tensor, the solution to the system A x = b
