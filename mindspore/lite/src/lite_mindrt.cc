@@ -253,7 +253,6 @@ void LiteOpActor::MarkArrowAsCompiled(const AID *actor_name, const size_t *to_in
 }
 
 int LiteOpActor::CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
-                                   const std::set<void *> &subgraph_inputs_set,
                                    const std::set<void *> &receiver_tensors, const size_t &output_index,
                                    std::unordered_map<AID, std::set<size_t>> *receiver_index_set) {
   for (auto receiver_tensor : receiver_tensors) {
@@ -287,7 +286,6 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
   const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) {
   auto output_tensors = this->kernel_->out_tensors();
   auto output_tensors_size = output_tensors.size();
-  auto subgraph_inputs_set = PartialSubgraphInputTensors(partial_node_);
 
   std::unordered_map<AID, std::set<size_t>> receiver_index_set{};
   for (size_t i = 0; i < output_tensors_size; ++i) {
@@ -301,37 +299,13 @@ int LiteOpActor::CompileArrowThroughOutputTensors(
       }
       continue;
     }
-    auto ret = CreateCommonArrow(receivers_map, subgraph_inputs_set, receiver_tensors, i, &receiver_index_set);
+    auto ret = CreateCommonArrow(receivers_map, receiver_tensors, i, &receiver_index_set);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "CreateCommonArrow failed, output tensor name: " << output_tensors[i]->tensor_name();
       return ret;
     }
   }
   return RET_OK;
-}
-
-std::set<void *> LiteOpActor::PartialSubgraphInputTensors(kernel::LiteKernel *partial_node) {
-  if (partial_node == nullptr) {
-    return {};
-  }
-  auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
-  if (partial_kernel == nullptr) {
-    MS_LOG(WARNING) << "cast to partial kernel failed.";
-    return {};
-  }
-  std::set<void *> ret{};
-  auto partial_subgraph_kernels = partial_kernel->subgraph_kernels();
-  if (partial_subgraph_kernels.empty()) {
-    MS_LOG(ERROR) << "partial's subgraph kernel is empty.";
-    return {};
-  }
-  // the first subgraph kernel is the input subgraph kernel
-  auto subgraph = partial_subgraph_kernels.front();
-  auto inputs = subgraph->in_tensors();
-  for (auto &input : inputs) {
-    ret.insert(input);
-  }
-  return ret;
 }
 
 void LiteOpActor::SetInputShape() {

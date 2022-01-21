@@ -70,6 +70,22 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKern
     }
     // append dst_kernels
     std::copy(new_subgraphs.begin(), new_subgraphs.end(), std::back_inserter(*dst_kernels));
+    // update partial_kernel_map
+    for (auto &item : *partial_kernel_subgraph_index_map_) {
+      auto &partial_node = item.first;
+      auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>(partial_node->kernel());
+      MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
+      auto subgraphs = partial_kernel->subgraph_kernels();
+      auto iter = std::find(subgraphs.begin(), subgraphs.end(), subgraph_kernel);
+      if (iter == subgraphs.end()) {
+        continue;
+      }
+      subgraphs.erase(iter);
+      for (auto &new_subgraph : new_subgraphs) {
+        subgraphs.insert(iter, new_subgraph);
+      }
+      partial_kernel->set_subgraph_kernels(subgraphs);
+    }
     AppendToProcessQ(&new_subgraphs, &all_non_tail_subgraphs);
   }
 
@@ -101,13 +117,42 @@ std::set<kernel::LiteKernel *> ControlFlowScheduler::GetNonTailCallSubGraphs(
   return non_tail_subgraph_kernels;
 }
 
-int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
-                                                         std::vector<kernel::LiteKernel *> *subgraph_kernels) {
+int ControlFlowScheduler::AdjustNodesForTailCallSubGraph(std::vector<kernel::LiteKernel *> *first_part_nodes,
+                                                         std::vector<kernel::LiteKernel *> *second_part_nodes) {
+  auto tail_call = second_part_nodes->back();
+  std::vector<kernel::LiteKernel *> all_need_nodes{};
+  std::copy(tail_call->in_kernels().begin(), tail_call->in_kernels().end(), std::back_inserter(all_need_nodes));
+  auto partials = kernel::LiteKernelUtil::GetCallInputPartials(tail_call);
+  std::copy(partials.begin(), partials.end(), std::back_inserter(all_need_nodes));
+  for (auto partial : partials) {
+    for (auto input : partial->in_kernels()) {
+      if (input->op_parameter()->type_ == static_cast<int>(PRIM_IDENTITY)) {
+        all_need_nodes.push_back(input);
+      }
+    }
+  }
+
+  for (auto need : all_need_nodes) {
+    if (IsContain(*second_part_nodes, need)) {
+      continue;
+    }
+    auto is_need = [&need](kernel::LiteKernel *node) { return node == need; };
+    auto iter = std::find_if(first_part_nodes->begin(), first_part_nodes->end(), is_need);
+    MS_CHECK_TRUE_MSG(iter != first_part_nodes->end(), RET_ERROR, "graph is not right");
+    second_part_nodes->insert(second_part_nodes->begin(), *iter);
+    first_part_nodes->erase(iter);
+  }
+  return RET_OK;
+}
+
+int ControlFlowScheduler::SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel *subgraph_kernel,
+                                                         std::vector<kernel::LiteKernel *> *first_part_nodes,
+                                                         std::vector<kernel::LiteKernel *> *second_part_nodes) {
   auto nodes = subgraph_kernel->nodes();
 
   // get the position of the last non-tail call op.
-  auto is_non_tail_call_subgraph = [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); };
-  auto last_non_tail_call_iter = std::find_if(nodes.rbegin(), nodes.rend(), is_non_tail_call_subgraph);
+  auto is_non_tail_call = [](kernel::LiteKernel *node) { return kernel::LiteKernelUtil::IsNonTailCall(node); };
+  auto last_non_tail_call_iter = std::find_if(nodes.rbegin(), nodes.rend(), is_non_tail_call);
   auto distance = nodes.rend() - last_non_tail_call_iter;
   if (distance == 0) {
     MS_LOG(ERROR) << "not is a non tail call subgraph.";
@@ -116,28 +161,41 @@ int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel 
 
   // recode non-tail call kernels;
   non_tail_calls_.push_back(*last_non_tail_call_iter);
-
-  // create front subgraph
-  std::vector<kernel::LiteKernel *> front_subgraph_nodes{};
-  for (auto iter = nodes.begin(); iter != nodes.begin() + distance; ++iter) {
-    front_subgraph_nodes.push_back(*iter);
-  }
-  auto cur_subgraph_type = subgraph_kernel->subgraph_type();
-  auto front_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(front_subgraph_nodes, nullptr, nullptr,
-                                                                     cur_subgraph_type, *context_, schema_version_);
-  subgraph_kernels->push_back(front_subgraph);
-
-  // create last subgraph
-  std::vector<kernel::LiteKernel *> last_subgraph_nodes{};
-  for (auto iter = nodes.begin() + distance; iter != nodes.end(); ++iter) {
-    last_subgraph_nodes.push_back(*iter);
-  }
-  auto last_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(last_subgraph_nodes, nullptr, nullptr,
-                                                                    cur_subgraph_type, *context_, schema_version_);
-  subgraph_kernels->push_back(last_subgraph);
-
   // change last non-tail call property as is tail call
   reinterpret_cast<CallParameter *>((*last_non_tail_call_iter)->op_parameter())->is_tail_call = true;
+
+  for (auto iter = nodes.begin(); iter != nodes.begin() + distance; ++iter) {
+    first_part_nodes->push_back(*iter);
+  }
+
+  for (auto iter = nodes.begin() + distance; iter != nodes.end(); ++iter) {
+    second_part_nodes->push_back(*iter);
+  }
+
+  // if second part nodes contains call node, we need call node input partials and partials' inputs.
+  if (kernel::LiteKernelUtil::IsTailCall(second_part_nodes->back())) {
+    auto ret = AdjustNodesForTailCallSubGraph(first_part_nodes, second_part_nodes);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "AdjustNodesForTailCallSubGraph failed.");
+  }
+  return RET_OK;
+}
+
+int ControlFlowScheduler::SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
+                                                         std::vector<kernel::LiteKernel *> *subgraph_kernels) {
+  std::vector<kernel::LiteKernel *> first_part_nodes{};
+  std::vector<kernel::LiteKernel *> second_part_nodes{};
+
+  auto ret = SplitSubGraphNodesIntoTwoParts(subgraph_kernel, &first_part_nodes, &second_part_nodes);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitSubGraphNodesIntoTwoParts failed.");
+
+  auto cur_subgraph_type = subgraph_kernel->subgraph_type();
+  auto first_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(first_part_nodes, nullptr, nullptr,
+                                                                     cur_subgraph_type, *context_, schema_version_);
+  subgraph_kernels->push_back(first_subgraph);
+
+  auto second_subgraph = kernel::LiteKernelUtil::CreateSubGraphKernel(second_part_nodes, nullptr, nullptr,
+                                                                      cur_subgraph_type, *context_, schema_version_);
+  subgraph_kernels->push_back(second_subgraph);
   return RET_OK;
 }
 
@@ -445,21 +503,17 @@ int ControlFlowScheduler::GetTailCallFinalSubgraphs(std::queue<kernel::LiteKerne
     MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
     // only get the output subgraph, the last subgraph is the output subgraph.
     auto subgraphs = partial_kernel->subgraph_kernels();
-    if (subgraphs.size() > 1) {
-      final_graphs->push_back(subgraphs.back());
-      return RET_OK;
-    } else {
-      auto subgraph = subgraphs.front();
-      auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
-      if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph_kernel)) {
-        if (reviewed_graphs.find(subgraph) == reviewed_graphs.end()) {
-          tail_call_q->push(subgraph_kernel->out_nodes().front());
-        }
-      } else {
-        final_graphs->push_back(subgraph);
+    auto subgraph = subgraphs.back();
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
+    MS_CHECK_TRUE_MSG(subgraph_kernel != nullptr, RET_ERROR, "cast to subgraph kernel failed.");
+    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph_kernel)) {
+      if (reviewed_graphs.find(subgraph_kernel) == reviewed_graphs.end()) {
+        tail_call_q->push(subgraph_kernel->out_nodes().front());
       }
-      reviewed_graphs.insert(subgraph);
+    } else {
+      final_graphs->push_back(subgraph);
     }
+    reviewed_graphs.insert(subgraph);
   }
   return GetTailCallFinalSubgraphs(tail_call_q, final_graphs, reviewed_graphs);
 }
