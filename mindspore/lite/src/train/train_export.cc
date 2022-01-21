@@ -389,15 +389,15 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
                            QuantizationType quant_type) {
   std::vector<std::pair<size_t, tensor_info>> map_index;
   std::set<size_t> out_set;
-  int offset = meta_graph_->allTensors.size();
-  int tensor_idx = offset;
-  quant_type_ = quant_type;
   if (meta_graph_ == nullptr) {
     int status = ExportInit(model->name_, model->version_);
     if (status != RET_OK) {
       return status;
     }
   }
+  int offset = meta_graph_->allTensors.size();
+  int tensor_idx = offset;
+  quant_type_ = quant_type;
   PrepareRemap(offset);
 
   for (const auto kernel : kernels) {
