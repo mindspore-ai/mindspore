@@ -1300,8 +1300,15 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
       const auto &input_with_index = input_with_indexs[i];
       if (IsFrontValueNode(input_with_index) &&
           front_value_nodes_.find({input_with_index, iter->second[i]}) == front_value_nodes_.end()) {
-        CreateDeviceTensorForFrontNode(input_with_index, iter->second[i]);
-        (void)front_value_nodes_.emplace(input_with_index, iter->second[i]);
+        const auto &backend_node_with_context = FetchBackendParameterWithContextByFrontParameter(input_with_index);
+        if (backend_node_with_context.first != nullptr) {
+          CreateDeviceTensorForValueNode(input_with_index, backend_node_with_context.first,
+                                         backend_node_with_context.second);
+          (void)front_value_nodes_.emplace(input_with_index, iter->second[i]);
+        } else {
+          CreateDeviceTensorForFrontNode(input_with_index, default_context);
+          (void)front_value_nodes_.emplace(input_with_index, default_context);
+        }
       }
     }
   }
