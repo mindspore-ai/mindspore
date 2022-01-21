@@ -32,8 +32,7 @@ class TransposeFp16CPUKernel : public TransposeCPUKernel {
   ~TransposeFp16CPUKernel() = default;
 
  private:
-  void GetNchwToNhwcFunc(TypeId dtype) override;
-  void GetNhwcToNchwFunc(TypeId dtype) override;
+  void SetOptTransposeFunc() override;
   int TransposeDim2to6() override;
   int TransposeDimGreaterThan6(int task_id) override;
 };

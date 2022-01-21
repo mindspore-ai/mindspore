@@ -43,18 +43,28 @@ class TransposeCPUKernel : public InnerKernel {
   int RunImpl(int task_id);
 
  protected:
-  virtual void GetNchwToNhwcFunc(TypeId dtype);
-  virtual void GetNhwcToNchwFunc(TypeId dtype);
+  virtual void SetOptTransposeFunc();
   virtual int TransposeDim2to6();
   virtual int TransposeDimGreaterThan6(int task_id);
 
-  int GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor);
+ private:
+  int GetOptParameters();
+  void DecideIfOnlyCopy();
+  int GetOptTransposeFunc();
+  int CopyInputToOutput();
+
+ protected:
   void *in_data_ = nullptr;
   void *out_data_ = nullptr;
   int *out_shape_ = nullptr;
   TransposeParameter *param_ = nullptr;
-  TransposeFunc NHNCTransposeFunc_ = nullptr;
+  TransposeFunc optTransposeFunc_ = nullptr;
+
+ private:
   int nhnc_param_[3] = {0};
+  bool only_copy_{false};
+  std::vector<int> in_shape_opt_;
+  std::vector<int> perm_opt_;
 };
 }  // namespace mindspore::kernel
 
