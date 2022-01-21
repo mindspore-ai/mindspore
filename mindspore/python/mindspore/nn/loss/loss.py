@@ -452,13 +452,13 @@ class SmoothL1Loss(LossBase):
 
     .. note::
         SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
-    L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
-    squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
-    robust to outliers, and the loss function has better robustness.
+        L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
+        squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
+        robust to outliers, and the loss function has better robustness.
 
     Args:
         beta (float): The loss function calculates the threshold of the transformation between L1Loss and L2Loss.
-                      Default: 1.0.
+            Default: 1.0.
 
     Inputs:
         - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be float16 or float32.

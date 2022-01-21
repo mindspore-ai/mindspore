@@ -883,14 +883,14 @@ class Moments(Cell):
 
     Args:
         axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis.
-        When the value is None, it means to calculate the mean and variance of all values of `x`. Default: None.
+            When the value is None, it means to calculate the mean and variance of all values of `x`. Default: None.
         keep_dims (bool): If True, the calculation result will retain the dimension of `axis`,
-        and the dimensions of the mean and variance are the same as the input. If False or None,
-        the dimension of `axis` will be reduced. Default: None.
+            and the dimensions of the mean and variance are the same as the input. If False or None,
+            the dimension of `axis` will be reduced. Default: None.
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension used to calculate the mean and variance.
-        Only float16 and float32 are supported.
+          Only float16 and float32 are supported.
 
     Outputs:
         - **mean** (Tensor) - The mean value of `x` on `axis`, with the same data type as input `x`.

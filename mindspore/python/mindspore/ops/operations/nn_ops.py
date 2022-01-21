@@ -2092,7 +2092,7 @@ class BiasAdd(Primitive):
         - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
           The data type should be float16 or float32.
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
-        `input_x`. The data type should be float16 or float32.
+          `input_x`. The data type should be float16 or float32.
 
     Outputs:
         Tensor, with the same shape and data type as `input_x`.

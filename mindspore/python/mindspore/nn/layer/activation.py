@@ -112,7 +112,7 @@ class Softmax(Cell):
 
     Args:
         axis (Union[int, tuple[int]]): The axis to apply Softmax operation, if the dimension of input `x` is x.ndim,
-        the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: -1.
+            the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: -1.
 
     Inputs:
         - **x** (Tensor) - The input of Softmax with data type of float16 or float32.

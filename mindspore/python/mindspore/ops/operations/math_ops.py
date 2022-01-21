@@ -201,8 +201,8 @@ class Add(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
@@ -1832,7 +1832,7 @@ class InplaceSub(PrimitiveWithInfer):
 
 
 class Sub(_MathBinaryOp):
-    """
+    r"""
     Subtracts the second input tensor from the first input tensor element-wise.
 
     .. math::
@@ -1854,8 +1854,8 @@ class Sub(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -1887,7 +1887,7 @@ class Sub(_MathBinaryOp):
 
 
 class Mul(_MathBinaryOp):
-    """
+    r"""
     Multiplies two tensors element-wise.
 
     .. math::
@@ -1908,8 +1908,8 @@ class Mul(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2160,7 +2160,7 @@ class Reciprocal(PrimitiveWithInfer):
 
 
 class Pow(Primitive):
-    """
+    r"""
     Calculates the `y` power of each element in `x`.
 
     .. math::
@@ -2182,8 +2182,8 @@ class Pow(Primitive):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -2565,7 +2565,7 @@ class Erf(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input Tensor of Gaussian error function. Its dimension must be less than 8 and
-        data type must be float16 or float32.
+          data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2806,8 +2806,8 @@ class Div(_MathBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
@@ -2815,7 +2815,7 @@ class Div(_MathBinaryOp):
 
     Raises:
         TypeError: If neither `x` nor `y` is a Tensor.
-        TypeError: If data types of `x` and `y` are both Tensor with bool_.
+        TypeError: If data types of `x` and `y` are both Tensor with bool\_.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3789,8 +3789,8 @@ class Greater(_LogicBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -3986,8 +3986,8 @@ class LessEqual(_LogicBinaryOp):
           `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool_.
+          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -5340,7 +5340,7 @@ class Eps(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension used to obtain the minimum value that its data type can be expressed.
-        The data type must be float16, float32 or float64.
+          The data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, has the same type and shape as `x`, but filled with `x` dtype minimum val.
