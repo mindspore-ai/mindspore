@@ -171,6 +171,7 @@ constexpr char kHighpassBiquadOp[] = "HighpassBiquadOp";
 constexpr char kLFilterOp[] = "LFilterOp";
 constexpr char kLowpassBiquadOp[] = "LowpassBiquadOp";
 constexpr char kMagphaseOp[] = "MagphaseOp";
+constexpr char kMelScaleOp[] = "MelScaleOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";
 constexpr char kOverdriveOp[] = "OverdriveOp";

@@ -702,6 +702,29 @@ TEST_F(MindDataTestExecute, TestAngleEager) {
   ASSERT_TRUE(s.IsOk());
 }
 
+/// Feature: MelScale
+/// Description: test basic usage of MelScale
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestExecute, TestMelScale) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelScale.";
+  // Original waveform
+  std::vector<float> labels = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 2, 2, 3}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mel_scale_op = std::make_shared<audio::MelScale>(2, 10, -50, 100, 2);
+  // apply melscale
+  mindspore::dataset::Execute trans({mel_scale_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestRGB2BGREager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRGB2BGREager.";
 

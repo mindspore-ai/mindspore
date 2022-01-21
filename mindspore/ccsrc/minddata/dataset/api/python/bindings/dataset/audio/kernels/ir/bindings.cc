@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
@@ -370,6 +371,19 @@ PYBIND_REGISTER(MagphaseOperation, 1, ([](const py::module *m) {
                         auto magphase = std::make_shared<audio::MagphaseOperation>(power);
                         THROW_IF_ERROR(magphase->ValidateParams());
                         return magphase;
+                      }));
+                }));
+
+PYBIND_REGISTER(MelScaleOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::MelScaleOperation, TensorOperation, std::shared_ptr<audio::MelScaleOperation>>(
+                      *m, "MelScaleOperation")
+                      .def(py::init([](int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft,
+                                       NormType norm, MelType mel_type) {
+                        auto mel_scale = std::make_shared<audio::MelScaleOperation>(n_mels, sample_rate, f_min, f_max,
+                                                                                    n_stft, norm, mel_type);
+                        THROW_IF_ERROR(mel_scale->ValidateParams());
+                        return mel_scale;
                       }));
                 }));
 

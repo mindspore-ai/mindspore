@@ -23,14 +23,15 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
+    ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
-    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, check_overdrive, \
-    check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, \
-    check_time_stretch, check_treble_biquad, check_vol
+    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mel_scale, check_mu_law_coding, \
+    check_overdrive, check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
+    check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -946,6 +947,54 @@ class Magphase(AudioTensorOperation):
 
     def parse(self):
         return cde.MagphaseOperation(self.power)
+
+
+DE_C_MEL_TYPE = {MelType.SLANEY: cde.MelType.DE_MEL_TYPE_SLANEY,
+                 MelType.HTK: cde.MelType.DE_MEL_TYPE_HTK}
+
+DE_C_NORM_TYPE = {NormType.NONE: cde.NormType.DE_NORM_TYPE_NONE,
+                  NormType.SLANEY: cde.NormType.DE_NORM_TYPE_SLANEY}
+
+
+class MelScale(AudioTensorOperation):
+    """
+    Convert normal STFT to STFT at the Mel scale.
+
+    Args:
+        n_mels (int, optional): Number of mel filterbanks (default=128).
+        sample_rate (int, optional): Sample rate of audio signal (default=16000).
+        f_min (float, optional): Minimum frequency (default=0).
+        f_max (float, optional): Maximum frequency (default=None, will be set to sample_rate // 2).
+        n_stft (int, optional): Number of bins in STFT (default=201).
+        norm (NormType, optional): Type of norm, value should be NormType.SLANEY or NormType::NONE.
+            If norm is NormType.SLANEY, divide the triangular mel weight by the width of the mel band.
+            (default=NormType.NONE).
+        mel_type (MelType, optional): Type to use, value should be MelType.SLANEY or MelType.HTK (default=MelType.HTK).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
+        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.MelScale(4000, 1500, 0.7)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_mel_scale
+    def __init__(self, n_mels=128, sample_rate=16000, f_min=0, f_max=None, n_stft=201, norm=NormType.NONE,
+                 mel_type=MelType.HTK):
+        self.n_mels = n_mels
+        self.sample_rate = sample_rate
+        self.f_min = f_min
+        self.f_max = f_max if f_max is not None else sample_rate // 2
+        self.n_stft = n_stft
+        self.norm = norm
+        self.mel_type = mel_type
+
+    def parse(self):
+        return cde.MelScaleOperation(self.n_mels, self.sample_rate, self.f_min, self.f_max, self.n_stft,
+                                     DE_C_NORM_TYPE[self.norm], DE_C_MEL_TYPE[self.mel_type])
 
 
 class MuLawDecoding(AudioTensorOperation):

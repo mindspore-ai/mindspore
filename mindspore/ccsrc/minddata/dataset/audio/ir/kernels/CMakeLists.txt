@@ -27,6 +27,7 @@ add_library(audio-ir-kernels OBJECT
         lfilter_ir.cc
         lowpass_biquad_ir.cc
         magphase_ir.cc
+        mel_scale_ir.cc
         mu_law_decoding_ir.cc
         mu_law_encoding_ir.cc
         overdrive_ir.cc

@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
 
+#include <Eigen/Dense>
+
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -315,6 +317,92 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   *output = out;
   delete[] m_px;
   delete[] m_py;
+  return Status::OK();
+}
+
+/// \brief Generate linearly spaced vector.
+/// \param[in] start Value of the startpoint.
+/// \param[in] end Value of the endpoint.
+/// \param[in] n N points in the output tensor.
+/// \param[out] output Tensor has n points with linearly space.
+///     The spacing between the points is (end - start) / (n - 1).
+/// \return Status return code.
+template <typename T>
+Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
+  if (start > end) {
+    std::string err = "Linspace: input param end must be greater than start.";
+    RETURN_STATUS_UNEXPECTED(err);
+  }
+  int hundred = 100;
+  n = std::isnan(n) ? hundred : n;
+  CHECK_FAIL_RETURN_UNEXPECTED(n >= 0, "Linspace: input param n must be non-negative.");
+
+  TensorShape out_shape({n});
+  std::vector<T> linear_vect(n);
+  T interval = (n == 1) ? 0 : ((end - start) / (n - 1));
+  for (auto i = 0; i < linear_vect.size(); ++i) {
+    linear_vect[i] = start + i * interval;
+  }
+  std::shared_ptr<Tensor> out_t;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(linear_vect, out_shape, &out_t));
+  linear_vect.clear();
+  linear_vect.shrink_to_fit();
+  *output = out_t;
+  return Status::OK();
+}
+
+/// \brief Convert normal STFT to STFT at the Mel scale.
+/// \param input: Input audio tensor.
+/// \param output: Mel scale audio tensor.
+/// \param n_mels: Number of mel filter.
+/// \param sample_rate: Sample rate of the signal.
+/// \param f_min: Minimum frequency.
+/// \param f_max: Maximum frequency.
+/// \param n_stft: Number of bins in STFT.
+/// \param norm: Enum, NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney, divide the triangle mel
+///     weight by the width of the mel band.
+/// \param mel_type: Type of calculate mel type, value should be MelType::kHtk or MelType::kSlaney.
+/// \return Status code.
+template <typename T>
+Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_mels,
+                int32_t sample_rate, T f_min, T f_max, int32_t n_stft, NormType norm, MelType mel_type) {
+  // pack
+  TensorShape input_shape = input->shape();
+  TensorShape input_reshape({input->Size() / input_shape[-1] / input_shape[-2], input_shape[-2], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(input_reshape));
+  // gen freq bin mat
+  std::shared_ptr<Tensor> freq_bin_mat;
+  RETURN_IF_NOT_OK(CreateFbanks(&freq_bin_mat, n_stft, f_min, f_max, n_mels, sample_rate, norm, mel_type));
+  auto data_ptr = &*freq_bin_mat->begin<T>();
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_fb(data_ptr, n_mels, n_stft);
+
+  // input vector
+  std::vector<T> in_vect(input->Size());
+  size_t ind = 0;
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
+    in_vect[ind] = (*itr);
+  }
+  int rows = input_reshape[1];
+  int cols = input_reshape[2];
+
+  std::vector<T> mel_specgram;
+
+  for (int c = 0; c < input_reshape[0]; c++) {
+    std::vector<T> mat_c = std::vector<T>(in_vect.begin() + rows * cols * c, in_vect.begin() + rows * cols * (c + 1));
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(mat_c.data(), cols, rows);
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_res = (matrix_c * matrix_fb.transpose());
+    std::vector<T> vec_c(mat_res.data(), mat_res.data() + mat_res.size());
+    mel_specgram.insert(mel_specgram.end(), vec_c.begin(), vec_c.end());
+  }
+
+  // unpack
+  std::vector<int64_t> out_shape_vec = input_shape.AsVector();
+  out_shape_vec[input_shape.Size() - 1] = cols;
+  out_shape_vec[input_shape.Size() - TWO] = n_mels;
+  TensorShape output_shape(out_shape_vec);
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(mel_specgram, output_shape, &out));
+  *output = out;
   return Status::OK();
 }
 
