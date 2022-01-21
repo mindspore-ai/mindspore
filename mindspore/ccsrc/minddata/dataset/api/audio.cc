@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
@@ -463,6 +464,34 @@ struct Magphase::Data {
 Magphase::Magphase(float power) : data_(std::make_shared<Data>(power)) {}
 
 std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<MagphaseOperation>(data_->power_); }
+
+// MelScale Transform Operation.
+struct MelScale::Data {
+  Data(int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft, NormType norm, MelType mel_type)
+      : n_mels_(n_mels),
+        sample_rate_(sample_rate),
+        f_min_(f_min),
+        f_max_(f_max),
+        n_stft_(n_stft),
+        norm_(norm),
+        mel_type_(mel_type) {}
+  int32_t n_mels_;
+  int32_t sample_rate_;
+  float f_min_;
+  float f_max_;
+  int32_t n_stft_;
+  NormType norm_;
+  MelType mel_type_;
+};
+
+MelScale::MelScale(int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft, NormType norm,
+                   MelType mel_type)
+    : data_(std::make_shared<Data>(n_mels, sample_rate, f_min, f_max, n_stft, norm, mel_type)) {}
+
+std::shared_ptr<TensorOperation> MelScale::Parse() {
+  return std::make_shared<MelScaleOperation>(data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_,
+                                             data_->n_stft_, data_->norm_, data_->mel_type_);
+}
 
 // MelscaleFbanks Function.
 Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels, int32_t sample_rate,

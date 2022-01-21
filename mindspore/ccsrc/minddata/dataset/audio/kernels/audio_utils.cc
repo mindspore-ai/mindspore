@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
-#include <Eigen/Dense>
 #include <fstream>
 
 #include "mindspore/core/base/float16.h"
@@ -26,30 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-/// \brief Generate linearly spaced vector.
-/// \param[in] start - Value of the startpoint.
-/// \param[in] end - Value of the endpoint.
-/// \param[in] n - N points in the output tensor.
-/// \param[out] output - Tensor has n points with linearly space. The spacing between the points is (end-start)/(n-1).
-/// \return Status return code.
-template <typename T>
-Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
-  RETURN_IF_NOT_OK(ValidateNoGreaterThan("Linspace", "start", start, "end", end));
-  n = std::isnan(n) ? 100 : n;
-  TensorShape out_shape({n});
-  std::vector<T> linear_vect(n);
-  T interval = (n == 1) ? 0 : ((end - start) / (n - 1));
-  for (auto i = 0; i < linear_vect.size(); ++i) {
-    linear_vect[i] = start + i * interval;
-  }
-  std::shared_ptr<Tensor> out_t;
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(linear_vect, out_shape, &out_t));
-  linear_vect.clear();
-  linear_vect.shrink_to_fit();
-  *output = out_t;
-  return Status::OK();
-}
-
 /// \brief Calculate complex tensor angle.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor angle.

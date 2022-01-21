@@ -21,7 +21,8 @@ from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
-from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, Modulation, ScaleType, WindowType
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
+    ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):
@@ -471,6 +472,42 @@ def check_masking(method):
         check_non_negative_float32(mask_start, "mask_start")
         type_check(mask_value, (int, float), "mask_value")
         check_non_negative_float32(mask_value, "mask_value")
+        return method(self, *args, **kwargs)
+    return new_method
+
+
+def check_mel_scale(method):
+    """Wrapper method to check the parameters of MelScale."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [n_mels, sample_rate, f_min, f_max, n_stft, norm, mel_type], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(n_mels, (int,), "n_mels")
+        check_pos_int32(n_mels, "n_mels")
+
+        type_check(sample_rate, (int,), "sample_rate")
+        check_pos_int32(sample_rate, "sample_rate")
+
+        type_check(f_min, (int, float), "f_min")
+        check_float32(f_min, "f_min")
+
+        if f_max is not None:
+            type_check(f_max, (int, float), "f_max")
+            check_pos_float32(f_max, "f_max")
+            if f_min >= f_max:
+                raise ValueError("MelScale: f_max should be greater than f_min.")
+        else:
+            if f_min >= sample_rate // 2:
+                raise ValueError("MelScale: sample_rate // 2 should be greater than f_min when f_max is set to None.")
+
+        type_check(n_stft, (int,), "n_stft")
+        check_pos_int32(n_stft, "n_stft")
+
+        type_check(norm, (NormType,), "norm")
+
+        type_check(mel_type, (MelType,), "mel_type")
+
         return method(self, *args, **kwargs)
 
     return new_method

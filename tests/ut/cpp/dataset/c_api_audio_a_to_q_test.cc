@@ -2129,3 +2129,119 @@ TEST_F(MindDataTestPipeline, TestGainPipeline) {
 
   iter->Stop();
 }
+
+/// Feature: MelScale
+/// Description: test basic usage of MelScale
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestMelScalePipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMelScalePipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 4, 3}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto mel_scale_op1 = audio::MelScale(2, 10, 0, 0, 4);
+  ds = ds->Map({mel_scale_op1});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {2, 2, 3};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+
+  std::shared_ptr<SchemaObj> schema2 = Schema();
+  ASSERT_OK(schema2->add_column("waveform", mindspore::DataType::kNumberTypeFloat64, {4, 20}));
+  ds = RandomData(10, schema2);
+  EXPECT_NE(ds, nullptr);
+  auto mel_scale_op2 = audio::MelScale(2, 10, -50, 100, 4);
+  ds = ds->Map({mel_scale_op2});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
+  expected = {2, 20};
+  i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat64);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+
+  std::shared_ptr<SchemaObj> schema3 = Schema();
+  ASSERT_OK(schema3->add_column("waveform", mindspore::DataType::kNumberTypeInt16, {8, 50}));
+  ds = RandomData(10, schema3);
+  EXPECT_NE(ds, nullptr);
+  auto mel_scale_op3 =
+    audio::MelScale(2, 100, 10, 100, 8, NormType::kSlaney, MelType::kHtk);
+  ds = ds->Map({mel_scale_op3});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
+  expected = {2, 50};
+  i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+}
+
+/// Feature: MelScale
+/// Description: test WrongArg of MelScale
+/// Expectation: return error
+TEST_F(MindDataTestPipeline, TestMelScaleWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMelScaleWrongArgs.";
+
+  // MelScale: f_max must be greater than f_min.
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto mel_scale_op = audio::MelScale(128, 16000, 1000, -100, -100, NormType::kSlaney, MelType::kSlaney);
+  ds = ds->Map({mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: n_mels must be greater than 0.
+  mel_scale_op = audio::MelScale(-128, 16000, 1000, 10, 100, NormType::kSlaney, MelType::kSlaney);
+  ds = ds->Map({mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: sample_rate must be greater than f_min.
+  mel_scale_op = audio::MelScale(128, -16000, 1000, 10, 100, NormType::kSlaney, MelType::kSlaney);
+  ds = ds->Map({mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

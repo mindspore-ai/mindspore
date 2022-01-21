@@ -616,6 +616,35 @@ class MS_API Magphase final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief MelScale TensorTransform.
+/// \notes Convert normal STFT to STFT at the Mel scale.
+class MS_API MelScale final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] n_mels Number of mel filter, which must be positive (Default: 128).
+  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero (Default: 16000).
+  /// \param[in] f_min Minimum frequency, which must be non negative (Default: 0).
+  /// \param[in] f_max Maximum frequency, which must be positive (Default: 0, will be set to sample_rate / 2).
+  /// \param[in] n_stft Number of bins in STFT, which must be positive (Default: 201).
+  /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
+  ///     divide the triangle mel weight by the width of the mel band (Default: NormType::kNone).
+  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtk).
+  explicit MelScale(int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0, float f_max = 0.0,
+                    int32_t n_stft = 201, NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
+
+  /// \brief Destructor.
+  ~MelScale() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Create a frequency transformation matrix with shape (n_freqs, n_mels).
 /// \param[in] output Tensor of the frequency transformation matrix.
 /// \param[in] n_freqs Number of frequencies to highlight/apply.
