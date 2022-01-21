@@ -330,7 +330,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     },
     false, true);
 
-  opt::OptPassConfig a_after_grad = opt::OptPassConfig({irpass.inline_without_move_});
+  opt::OptPassConfig a_after_grad = opt::OptPassConfig({irpass.inline_without_move_, irpass.stack_unstack_eliminate_});
 
   opt::OptPassConfig a_3 = opt::OptPassConfig(
     {
