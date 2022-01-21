@@ -12,6 +12,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         cifar10_node.cc
         cityscapes_node.cc
         clue_node.cc
+        cmu_arctic_node.cc
         coco_node.cc
         conll2000_node.cc
         csv_node.cc

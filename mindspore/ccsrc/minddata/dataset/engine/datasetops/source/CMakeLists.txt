@@ -11,6 +11,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     cifar_op.cc
     cityscapes_op.cc
     clue_op.cc
+    cmu_arctic_op.cc
     coco_op.cc
     conll2000_op.cc
     csv_op.cc

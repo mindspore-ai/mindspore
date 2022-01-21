@@ -21,6 +21,7 @@ SET(DE_UT_SRCS
         c_api_dataset_cifar_test.cc
         c_api_dataset_cityscapes_test.cc
         c_api_dataset_clue_test.cc
+        c_api_dataset_cmu_arctic_test.cc
         c_api_dataset_coco_test.cc
         c_api_dataset_conll2000_test.cc
         c_api_dataset_config_test.cc

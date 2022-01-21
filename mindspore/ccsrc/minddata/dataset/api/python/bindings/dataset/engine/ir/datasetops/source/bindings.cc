@@ -32,6 +32,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cityscapes_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/conll2000_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
@@ -178,6 +179,18 @@ PYBIND_REGISTER(CLUENode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(clue_node->ValidateParams());
                       return clue_node;
                     }));
+                }));
+
+PYBIND_REGISTER(CMUArcticNode, 2, ([](const py::module *m) {
+                  (void)py::class_<CMUArcticNode, DatasetNode, std::shared_ptr<CMUArcticNode>>(
+                    *m, "CMUArcticNode", "to create a CMUArcticNode")
+                    .def(
+                      py::init([](const std::string &dataset_dir, const std::string &name, const py::handle &sampler) {
+                        std::shared_ptr<CMUArcticNode> cmu_arctic =
+                          std::make_shared<CMUArcticNode>(dataset_dir, name, toSamplerObj(sampler), nullptr);
+                        THROW_IF_ERROR(cmu_arctic->ValidateParams());
+                        return cmu_arctic;
+                      }));
                 }));
 
 PYBIND_REGISTER(CocoNode, 2, ([](const py::module *m) {

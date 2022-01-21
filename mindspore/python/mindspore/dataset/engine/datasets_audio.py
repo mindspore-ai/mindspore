@@ -26,10 +26,147 @@ After declaring the dataset object, you can further apply dataset operations
 import mindspore._c_dataengine as cde
 
 from .datasets import AudioBaseDataset, MappableDataset
-from .validators import check_gtzan_dataset, check_lj_speech_dataset, check_speech_commands_dataset, check_tedlium_dataset, \
-    check_yes_no_dataset
+from .validators import check_cmu_arctic_dataset, check_gtzan_dataset, check_lj_speech_dataset, check_speech_commands_dataset, \
+    check_tedlium_dataset, check_yes_no_dataset
 
 from ..core.validator_helpers import replace_none
+
+
+class CMUArcticDataset(MappableDataset, AudioBaseDataset):
+    """
+    A source dataset that reads and parses CMUArctic dataset.
+
+    The generated dataset has four columns: :py:obj:`["waveform", "sample_rate", "transcript", "utterance_id"]`.
+    The tensor of column :py:obj:`waveform` is of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`transcript` is of a scalar of string type.
+    The tensor of column :py:obj:`utterance_id` is of a scalar of string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        name (str, optional): Part of this dataset, can be ""aew", "ahw", "aup", "awb", "axb", "bdl",
+            "clb", "eey", "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt"
+            (default=None, equal "aew").
+        num_samples (int, optional): The number of audio to be included in the dataset
+            (default=None, will read all audio).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If source raises an exception during execution.
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - CMUArctic dataset doesn't support PKSampler.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+        * - Parameter `sampler`
+          - Parameter `shuffle`
+          - Expected Order Behavior
+        * - None
+          - None
+          - random order
+        * - None
+          - True
+          - random order
+        * - None
+          - False
+          - sequential order
+        * - Sampler object
+          - None
+          - order defined by sampler
+        * - Sampler object
+          - True
+          - not allowed
+        * - Sampler object
+          - False
+          - not allowed
+
+    Examples:
+        >>> cmu_arctic_dataset_directory = "/path/to/cmu_arctic_dataset_directory"
+        >>>
+        >>> # 1) Read 500 samples (audio files) in cmu_arctic_dataset_directory
+        >>> dataset = ds.CMUArcticDataset(cmu_arctic_dataset_directory, name="ahw", num_samples=500)
+        >>>
+        >>> # 2) Read all samples (audio files) in cmu_arctic_dataset_directory
+        >>> dataset = ds.CMUArcticDataset(cmu_arctic_dataset_directory)
+
+    About CMUArctic dataset:
+
+    The CMU arctic databases are designed for the purpose of speech synthesis research.
+    These single speaker speech databases have been carefully recorded under studio conditions
+    and consist of approximately 1200 phonetically balanced English utterances. In addition to wavefiles,
+    the databases provide complete support for the Festival Speech Synthesis System, including pre-built
+    voices that may be used as is. The entire package is distributed as free software, without restriction
+    on commercial or non-commercial use.
+
+    You can construct the following directory structure from CMUArctic dataset and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── cmu_arctic_dataset_directory
+            ├── cmu_us_aew_arctic
+            │    ├── wav
+            │    │    ├──arctic_a0001.wav
+            │    │    ├──arctic_a0002.wav
+            │    │    ├──...
+            │    ├── etc
+            │    │    └── txt.done.data
+            ├── cmu_us_ahw_arctic
+            │    ├── wav
+            │    │    ├──arctic_a0001.wav
+            │    │    ├──arctic_a0002.wav
+            │    │    ├──...
+            │    └── etc
+            │         └── txt.done.data
+            └──...
+
+    Citation:
+
+    .. code-block::
+
+        @article{LTI2003CMUArctic,
+        title        = {CMU ARCTIC databases for speech synthesis},
+        author       = {John Kominek and Alan W Black},
+        journal      = {Language Technologies Institute [Online]},
+        year         = {2003}
+        howpublished = {http://www.festvox.org/cmu_arctic/}
+        }
+    """
+
+    @check_cmu_arctic_dataset
+    def __init__(self, dataset_dir, name=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.name = replace_none(name, "aew")
+
+    def parse(self, children=None):
+        return cde.CMUArcticNode(self.dataset_dir, self.name, self.sampler)
 
 
 class GTZANDataset(MappableDataset, AudioBaseDataset):
