@@ -60,11 +60,8 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  constexpr size_t origin_input_size_index = 0;
   auto res = std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                         InferShape(primitive, input_args)->shape());
-  // Set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(input_args[origin_input_size_index], true);
   return res;
 }
 

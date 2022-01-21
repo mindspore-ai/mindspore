@@ -93,20 +93,13 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  constexpr size_t input_perm_index = 1;
   // The second input is optional.
   constexpr size_t input_size1 = 1;
-  constexpr size_t input_size2 = 2;
   (void)CheckAndConvertUtils::CheckInteger("Transpose infer", SizeToLong(input_args.size()), kGreaterEqual, input_size1,
                                            primitive->name());
   auto type = InferType(primitive, input_args);
   auto shape = InferShape(primitive, input_args);
-  auto res = abstract::MakeAbstract(shape, type);
-  if (input_args.size() == input_size2) {
-    SetSequenceElementsUseFlags(input_args[input_perm_index], true);
-  }
-
-  return res;
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, nullptr, true);
 }  // namespace ops

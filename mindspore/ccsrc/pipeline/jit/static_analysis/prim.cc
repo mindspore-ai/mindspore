@@ -52,70 +52,20 @@ namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
 mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
-  "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
+  prim::kPrimMakeTuple->name(),  prim::kPrimMakeList->name(),   prim::kPrimSwitch->name(),
+  prim::kPrimEnvironSet->name(), prim::kPrimEnvironGet->name(), prim::kPrimLoad->name(),
+  prim::kPrimUpdateState->name()};
 
-// The Python primitives who use tuple/list elements.
-// We consider all tuple/list arguments are used by now.
-// Should check 'tuple argument index' and 'element use index' later.
-mindspore::HashSet<std::string> prims_use_sequence_elements{
-  prim::kPrimStack->name(),
-  prim::kPrimConcat->name(),
-  prim::kPrimTupleToArray->name(),
-  prim::kPrimPack->name(),
-  prim::kPrimSlice->name(),
-  prim::kPrimStridedSlice->name(),
-  prim::kPrimScatterNd->name(),
-  prim::kPrimReshape->name(),
-  prim::kPrimTile->name(),
-  prim::kPrimConv3DBackpropFilter->name(),
-  prim::kPrimCentralization->name(),
-  prim::kPrimMerge->name(),
-  prim::kPrimCustom->name(),
-  prim::kPrimAssert->name(),
-  prim::kPrimReduceMean->name(),
-  prim::kPrimReduceSum->name(),
-  prim::kPrimReduceAll->name(),
-  prim::kPrimReduceAny->name(),
-  prim::kPrimReduceMax->name(),
-  prim::kPrimReduceMin->name(),
-  prim::kPrimLstm->name(),
-  prim::kPrimConv3DBackpropInput->name(),
-  prim::kPrimCheckBprop->name(),
-  prim::kPrimPush->name(),
-  prim::kPrimIdentity->name(),
-  prim::kPrimPyFunc->name(),
-  prim::kPrimStandardNormal->name(),
-  prim::kPrimUniformReal->name(),
-  prim::kPrimSparseToDense->name(),
-  prim::kPrimSparseTensorDenseMatmul->name(),
-  prim::kPrimBroadcast->name(),
-  prim::kPrimEinsumGrad->name(),
-  prim::kPrimFlattenGrad->name(),
-  prim::kPrimMirror->name(),
-  prim::kPrimMirrorMiniStep->name(),
-  prim::kPrimMiniStepAllGather->name(),
-  prim::kPrimMicroStepAllGather->name(),
-  prim::kPrimVirtualDiv->name(),
-  prim::kPrimVirtualAdd->name(),
-  prim::kPrimVirtualDataset->name(),
-  prim::kPrimVirtualOutput->name(),
-  prim::kPrimFill->name(),
-  "InvertPermutation",
-  "Meshgrid",
-  "TransShape",
-  "ParallelConcat",
-  "CudnnGRU",
-  "GetModel",
-  "UpdateModel",
-  "ReduceProd",
-  "StandardLaplace",
-  "Gamma",
-  "Poisson",
-  "UniformInt",
-  "BufferSample",
-  "BufferAppend",
-  "BufferGetItem",
-};
+// The Python primitives who visit tuple/list elements, but not consume all elements.
+// Including:
+// - Consume no element. For instance, MakeTuple.
+// - Consume partial elements, not all. For instance, TupleGetItem.
+// Map{"primitive name", {vector<int>:"index to transparent pass, -1 means all elements"}}
+mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequence{
+  {prim::kPrimReturn->name(), std::vector({0})},       {prim::kPrimDepend->name(), std::vector({0})},
+  {prim::kPrimIdentity->name(), std::vector({0})},     {prim::kPrimMakeTuple->name(), std::vector({-1})},
+  {prim::kPrimMakeList->name(), std::vector({-1})},    {prim::kPrimListAppend->name(), std::vector({0})},
+  {prim::kPrimTupleGetItem->name(), std::vector({0})}, {prim::kPrimListGetItem->name(), std::vector({0})}};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
@@ -689,13 +639,14 @@ void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBa
 
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
-  auto out_dtype = output[ATTR_DTYPE];
   if (output[ATTR_VALUE].is_none()) {
     return MakePyInferRes2Abstract(output);
   }
+
   // Convert pyobject to Value, then to AbstractValue
-  ValuePtr converted_ret = nullptr;
+  auto out_dtype = output[ATTR_DTYPE];
   TypePtr dtype = py::isinstance<Type>(out_dtype) ? out_dtype.cast<TypePtr>() : nullptr;
+  ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(output[ATTR_VALUE], &converted_ret, false, dtype);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Convert data failed";
@@ -804,7 +755,61 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   return eval_result;
 }
 
+namespace {
+void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  // To check tuple/list operations with a white list of Python primitive.
+  auto iter = prims_transparent_pass_sequence.find(prim->name());
+  if (iter == prims_transparent_pass_sequence.end()) {
+    // The primitive use all elements of each argument.
+    for (size_t i = 0; i < args.size(); ++i) {
+      if (args[i]->isa<abstract::AbstractSequence>()) {
+        MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
+                      << "]: " << args[i]->ToString();
+        SetSequenceElementsUseFlags(args[i], true);
+      }
+    }
+    return;
+  }
+
+  // It's transparent pass primitive or using partial elements primitive.
+  auto index_list = iter->second;
+  if (index_list.empty()) {
+    MS_LOG(EXCEPTION) << "The primitive list should not be empty for " << prim->name();
+  }
+  // Ignore all arguments, no need checking if AbstractSequence.
+  if (index_list[0] == -1) {
+    return;
+  }
+  // Check the specific arguments index.
+  for (size_t i = 0; i < args.size(); ++i) {
+    if (!args[i]->isa<abstract::AbstractSequence>()) {
+      continue;
+    }
+    if (std::find(index_list.begin(), index_list.end(), i) == index_list.end()) {
+      // For current tuple/list argument, it's not a primitive of total transparent pass or partial element use.
+      MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming specific tuple/list arguments[" << i
+                    << "]: " << args[i]->ToString();
+      SetSequenceElementsUseFlags(args[i], true);
+    }
+  }
+}
+
+void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  // Consider all primitive implemented python infer() real use the tuple/list arguments.
+  for (size_t i = 0; i < args.size(); ++i) {
+    if (args[i]->isa<abstract::AbstractSequence>()) {
+      MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
+                    << "]: " << args[i]->ToString();
+      SetSequenceElementsUseFlags(args[i], true);
+    }
+  }
+}
+}  // namespace
+
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  // To check tuple/list operations with a white list of Python primitive.
+  CheckSequenceArgumentForCppPrimitive(prim_, args);
+
   if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
     auto ret_abstract = AbstractEval(args);
     if (ret_abstract != nullptr) {
@@ -846,6 +851,9 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
 }
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  // Consider all primitive implemented python infer() real use the tuple/list arguments.
+  CheckSequenceArgumentForPythonPrimitive(prim_py_, args);
+
   // Ensure input arguments are evaluated.
   auto ret_abstract = AbstractEval(args);
   if (ret_abstract != nullptr) {
@@ -875,9 +883,9 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
       prim_py_->EndRecordAddAttr();
       const auto &added_attrs = prim_py_->evaluate_added_attrs();
       MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
-      auto res_spec = PyInferRes2Abstract(prim_py_, output);
-      MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
-      eval_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
+      auto res_abs = PyInferRes2Abstract(prim_py_, output);
+      MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
+      eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
       // Save result to global primitive eval cache.
       if (enable_global_cache) {
         eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);
@@ -885,13 +893,6 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
     }
     // Save result to evaluator cache.
     evaluator_cache_mgr_->SetValue(args, eval_result);
-  }
-  // To check tuple/list operations with a white list of Python primitive.
-  if (prims_use_sequence_elements.find(prim_py_->name()) != prims_use_sequence_elements.end()) {
-    // Set all used flags of tuple as true.
-    for (auto &arg : args) {
-      SetSequenceElementsUseFlags(arg, true);
-    }
   }
   return eval_result;
 }

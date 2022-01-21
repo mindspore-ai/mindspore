@@ -240,8 +240,6 @@ AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const Primitive
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto res =
     std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args), InferShape(primitive, input_args));
-  // For Einsum(tuple/list), set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(input_args[0], true);
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Einsum, prim::kPrimEinsum, EinsumInfer, nullptr, true);

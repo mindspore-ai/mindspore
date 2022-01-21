@@ -191,9 +191,6 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
     return args_spec_list[0];
   }
 
-  // For F.depend(x, MakeTuple()) or F.depend(x, tuple), set all used flags of tuple as true.
-  SetSequenceElementsUseFlags(dependant_abstract, true);
-
   auto depends = args_spec_list[0]->Broaden();  // Avoid eliminating the dependent node.
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
     // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
@@ -210,12 +207,6 @@ AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitiveP
     MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
   }
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-
-  // For UpdateState(x, MakeTuple()) or UpdateState(x, tuple), set all used flags of tuple as true.
-  for (size_t i = 1; i < args_spec_list.size(); i++) {
-    SetSequenceElementsUseFlags(args_spec_list[i], true);
-  }
-
   return args_spec_list[0]->Broaden();
 }
 
@@ -279,7 +270,6 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
-  SetSequenceElementsUseFlags(dense_shape, true);
   return ret;
 }
 
@@ -383,7 +373,6 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(dense_shape);
-  SetSequenceElementsUseFlags(dense_shape, true);
   return ret;
 }
 
@@ -597,7 +586,6 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
   ret->set_indices(indices);
   ret->set_values(values);
   ret->set_dense_shape(shape);
-  SetSequenceElementsUseFlags(shape, true);
   return ret;
 }
 

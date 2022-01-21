@@ -39,7 +39,6 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                            prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
-    SetSequenceElementsUseFlags(item, true);
   }
   auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto targets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());

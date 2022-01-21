@@ -51,9 +51,6 @@ AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const Abst
   CheckArgsSize(op_name, args_spec_list, 2);
   auto input_x = CheckArg<T>(op_name, args_spec_list, 0);
   auto input_y = CheckArg<T>(op_name, args_spec_list, 1);
-  SetSequenceElementsUseFlags(input_x, true);
-  SetSequenceElementsUseFlags(input_y, true);
-
   ValuePtr x_value = input_x->BuildValue();
   ValuePtr y_value = input_y->BuildValue();
   return std::make_shared<AbstractScalar>(*x_value == *y_value);
@@ -298,8 +295,6 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
 
     return std::make_shared<AbstractTuple>(elem_list);
   }
-  SetSequenceElementsUseFlags(arg_x, true);
-  SetSequenceElementsUseFlags(arg_y, true);
   return BroadcastGradientArgsDiff(x_shape, y_shape);
 }
 
@@ -354,7 +349,6 @@ AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const Primi
   MS_EXCEPTION_IF_NULL(result2);
   MS_EXCEPTION_IF_NULL(result1->abstract());
   MS_EXCEPTION_IF_NULL(result2->abstract());
-  SetSequenceElementsUseFlags(lst, true);
   return result1->abstract()->Join(result2->abstract());
 }
 
@@ -370,7 +364,6 @@ AbstractBasePtr InferImplTupleReversed(const AnalysisEnginePtr &, const Primitiv
   AbstractBasePtrList elem_list;
   (void)std::transform(tuple_elements.rbegin(), tuple_elements.rend(), std::back_inserter(elem_list),
                        [](const AbstractBasePtr &elem) { return elem->Clone(); });
-  SetSequenceElementsUseFlags(input, true);
   return std::make_shared<AbstractTuple>(elem_list);
 }
 
@@ -412,7 +405,6 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
   auto axis_value_ptr = axis_value->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
-  SetSequenceElementsUseFlags(shape_x, true);
   return DoInferReduceShape(shape_x, x_shp_value, axis_value_ptr, primitive);
 }
 
@@ -477,8 +469,6 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
     auto result_v = MakeValue(result);
     values.push_back(std::make_shared<AbstractScalar>(result_v, result_v->type()));
   }
-  SetSequenceElementsUseFlags(shape_x, true);
-  SetSequenceElementsUseFlags(div_shp, true);
   return std::make_shared<AbstractTuple>(values);
 }
 
