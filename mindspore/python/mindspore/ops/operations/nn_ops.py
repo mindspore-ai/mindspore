@@ -8982,3 +8982,82 @@ class ApplyAdamWithAmsgrad(Primitive):
         validator.check_value_type("beta2", beta2, [float], self.name)
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
+class GridSampler3D(Primitive):
+    """
+    Given an `input_x` and a flow-field `grid`, computes the `output` using `input_x` values and pixel locations from
+    `grid`. Only volumetric (5-D) `input_x` is supported.
+
+    For `input_x` with shape :math:`(N, C, D_{in}, H_{in}, W_{in})` and `grid` with shape :math:`(N, D_{out}, H_{out},
+    W_{out}, 3)`, the `output` will have shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+
+    For each output location `output[n, :, d, h, w]`, the size-3 vector `grid[n, d, h, w]` specifies `input_x` pixel
+    locations x, y, z, which are used to interpolate the output value `output[n, :, d, h, w]`. And `interpolation_mode`
+    argument specifies "nearest" or "bilinear" interpolation method to sample the input pixels.
+
+    `grid` specifies the sampling pixel locations normalized by the `input_x` spatial dimensions. Therefore, it should
+    have most values in the range of :math:`[-1, 1]`.
+
+    If `grid` has values outside the range of :math:`[-1, 1]`, the corresponding outputs are handled as defined by
+    `padding_mode`. If `padding_mode` is set to be "zeros", use :math:`0` for out-of-bound grid locations. If
+    `padding_mode` is set to be "border", use border values for out-of-bound grid locations. If `padding_mode` is set
+    to be "reflection", use values at locations reflected by the border for out-of-bound grid locations. For location
+    far away from the border, it will keep being reflected until becoming in bound.
+
+    Args:
+        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
+            "bilinear" or "nearest". Default: "bilinear".
+        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
+            "reflection". Default: "zeros".
+        align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
+            the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
+            to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
+            `False`.
+
+    Inputs:
+        - **input_x** (Tensor) - A 5-D tensor with dtype of float32 or float64 and shape of :math:`(N, C, D_{in},
+          H_{in}, W_{in})`.
+        - **grid** (Tensor) - A 5-D tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, D_{out},
+          H_{out}, W_{out}, 3)`.
+
+    Outputs:
+        A 5-D Tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `input_x` or `grid` is not a Tensor.
+        TypeError: If the dtypes of `input_x` and `grid` are inconsistent.
+        TypeError: If the dtype of `input_x` or `grid` is not a valid type.
+        TypeError: If `align_corners` is not a boolean value.
+        ValueError: If the rank of `input_x` or `grid` is not equal to 5.
+        ValueError: If the first dimension of `input_x` is not equal to that of `grid`.
+        ValueError: If the last dimension of `grid` is not equal to 3.
+        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
+        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> gridsampler = ops.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        >>> input_x = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32))
+        >>> grid = Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))
+        >>> output = gridsampler(input_x, grid)
+        >>> print(output)
+        [[[[[ 3.3     ]]
+           [[ 4.35    ]]]
+          [[[11.300001]]
+           [[12.349999]]]]
+         [[[[21.4     ]]
+           [[22.449999]]]
+          [[[29.4     ]]
+           [[30.449999]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
+        """Initialize GridSampler3D."""
+        validator.check_string(interpolation_mode, ['bilinear', 'nearest'], 'interpolation_mode', self.name)
+        validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
+        validator.check_bool(align_corners, 'align_corners', self.name)
+        self.init_prim_io_names(inputs=['input_x', 'grid'], outputs=['output'])
