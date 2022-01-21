@@ -36,6 +36,19 @@ Status BatchNormInfo::GetAttrs() {
 
   momentum_ = GetFloatAttr(MOMENTUM);
 
+  auto attr_iter = attrs_.find(GROUP_SIZE);
+  if (attr_iter != attrs_.end()) {
+    group_size_ = GetIntAttr(GROUP_SIZE);
+    if (group_size_ < 1 || group_size_ > stage_device_size_ || (group_size_ & (group_size_ - 1)) != 0 ||
+        stage_device_size_ % group_size_ != 0) {
+      MS_LOG(ERROR) << name_ << ": The group size is out of range, it must be in [1, " << stage_device_size_
+                    << "], it must be the power of 2, and it can divide all device num " << stage_device_size_
+                    << ", but got " << group_size_;
+      return FAILED;
+    }
+    MS_LOG(INFO) << name_ << ": The group size is " << group_size_;
+  }
+
   format_ = GetStringAttr(FORMAT);
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The data format must be 'NCHW', but got " << format_;
@@ -92,6 +105,10 @@ Status BatchNormInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  if (group_size_ > 0 && stra[0][0] != stage_device_size_) {
+    MS_LOG(ERROR) << name_ << ": The config group size only support the N dimension is shard with device num";
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -137,11 +154,37 @@ Status BatchNormInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status BatchNormInfo::InferAllReduceGroupBySize() {
+  if (group_size_ == 1) {
+    MS_LOG(INFO) << name_ << ": The group size is set to 1, no need forward allreduce";
+    return SUCCESS;
+  }
+
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  int64_t tmp = rank / group_size_;
+
+  RankList group_rank_list;
+  for (size_t i = 0; i < LongToSize(group_size_); ++i) {
+    group_rank_list.push_back(tmp + i);
+  }
+  MS_LOG(INFO) << name_ << ": The group rank list is " << group_rank_list;
+
+  Group g = g_device_manager->CreateGroup(group_rank_list);
+  forward_allreduce_group_.push_back(g);
+  return SUCCESS;
+}
+
 Status BatchNormInfo::InferForwardCommunication() {
   // if it is not training, no need forward allreduce
   if (!is_training_) {
     MS_LOG(INFO) << name_ << ": It is not training, no need forward allreduce";
     return SUCCESS;
+  }
+
+  forward_allreduce_group_.clear();
+  if (group_size_ > 0) {
+    return InferAllReduceGroupBySize();
   }
 
   TensorMap tmp_map;

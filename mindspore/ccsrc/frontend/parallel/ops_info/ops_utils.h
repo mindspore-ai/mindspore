@@ -237,6 +237,7 @@ constexpr char IS_TRAINING[] = "is_training";
 constexpr char EPSILON[] = "epsilon";
 constexpr char MOMENTUM[] = "momentum";
 constexpr char DEVICE_NUM[] = "device_num";
+constexpr char GROUP_SIZE[] = "group_size";
 constexpr char REPEAT_DIM_DIRECT[] = "repeat_dim_direct";
 constexpr char RIGHT[] = "right";
 constexpr char BOOL[] = "Bool";
