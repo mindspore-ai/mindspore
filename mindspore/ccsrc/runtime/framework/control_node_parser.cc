@@ -795,7 +795,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   FetchAutoMonadNode(control_nodes);
 
-  ParseFirstControlNodeForFuncGraph(control_nodes);
+  ParseFirstControlNodeAndKernelGraphForFuncGraph(control_nodes);
 }
 
 bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node) {
@@ -1681,7 +1681,7 @@ AnfNodePtr ControlNodeParser::FetchRootGraphFrontNodeBySubFrontNode(const AnfNod
   return sub_front_node_to_root_front_node_[sub_front_node];
 }
 
-void ControlNodeParser::ParseFirstControlNodeForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
+void ControlNodeParser::ParseFirstControlNodeAndKernelGraphForFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     std::set<AnfNodePtr> checked_nodes;
     if (((AnfAlgo::IsCallNode(control_node) &&
@@ -1691,6 +1691,50 @@ void ControlNodeParser::ParseFirstControlNodeForFuncGraph(const std::vector<AnfN
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       (void)func_graph_to_first_control_nodes_[func_graph].emplace(control_node);
+
+      if (!AnfAlgo::IsCallNode(control_node)) {
+        continue;
+      }
+
+      // If there is a recursive call node in the funcgraph, the kernel graph of the topo sort before the call node
+      // needs to be executed before the call recursion, that is, the kernel graph whose level is less than the call
+      // node needs to link a control arrow to the corresponding entry actor.
+      // Fetch the level of control node.
+      const auto &level_iter = node_to_level_.find(control_node);
+      if (level_iter == node_to_level_.end()) {
+        MS_LOG(WARNING) << "Failed to get level for call node:" << control_node->DebugString();
+        continue;
+      }
+
+      // Fetch all of the kernel graph group info whose level less than the control node.
+      const auto &graph_group_iter = func_graph_to_kernel_graph_groups_.find(func_graph);
+      if (graph_group_iter == func_graph_to_kernel_graph_groups_.end()) {
+        continue;
+      }
+      for (const auto &kernel_graphs : graph_group_iter->second) {
+        // Fetch one graph from the group.
+        KernelGraphPtr dst_graph = nullptr;
+        for (const auto &graph : kernel_graphs) {
+          MS_EXCEPTION_IF_NULL(graph);
+          if (graph->execution_order().empty()) {
+            continue;
+          }
+          dst_graph = graph;
+          break;
+        }
+        if (dst_graph == nullptr) {
+          continue;
+        }
+
+        // Fetch the group info.
+        const auto &group_info_iter = kernel_graphs_to_group_info_.find(dst_graph);
+        if (group_info_iter == kernel_graphs_to_group_info_.end()) {
+          MS_LOG(EXCEPTION) << "Failed to get group info for kernel_graph:" << dst_graph->ToString();
+        }
+        if (group_info_iter->second->level_ < level_iter->second) {
+          func_graph_to_first_kernel_graphs_[func_graph].emplace(group_info_iter->second);
+        }
+      }
     }
   }
 }

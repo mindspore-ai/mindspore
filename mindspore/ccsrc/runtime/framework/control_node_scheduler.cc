@@ -830,33 +830,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
   MS_EXCEPTION_IF_NULL(control_actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-
-  // Since only one set of real parameters are allowed to be executed in funcgraph at the same time, when the funcgraph
-  // stops running, it is necessary to send the control arrow to the corresponding entrance actor at the exit of the
-  // graph to run the next set of real parameters. The corresponding nodes of the actors that need to send the control
-  // arrow have been parsed in the control node parser.
-  for (const auto &graph_to_nodes : parser->func_graph_to_first_control_nodes_) {
-    // Fetch the entrance actor.
-    const auto &func_graph = graph_to_nodes.first;
-    MS_EXCEPTION_IF_NULL(func_graph);
-    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
-    auto entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
-    MS_EXCEPTION_IF_NULL(entrance_actor);
-
-    const auto &nodes = graph_to_nodes.second;
-    for (const auto &node : nodes) {
-      // Fetch the source actor of control arrow.
-      MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
-        actor_name = func_graph->ToString() + kExitActorNameSuffix;
-      } else {
-        actor_name = GetActorName(node);
-      }
-      auto from_actor = dynamic_cast<ControlActor *>(FetchActor(actor_name));
-      MS_EXCEPTION_IF_NULL(from_actor);
-      LinkLoopBodyControlArrow(from_actor, entrance_actor);
-    }
-  }
+  LinkControlArrowForEntranceActor(actor_set, graph_compiler_info);
 
   // When the switch actor and gather actor have no input, need to link a control arrow from entrance actor.
   std::vector<ControlActor *> need_check_control_actors;
@@ -937,6 +911,62 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     auto exit_actor = FetchActor(exit_actor_name);
     MS_EXCEPTION_IF_NULL(exit_actor);
     LinkControlArrow(copy_actor.get(), exit_actor);
+  }
+}
+
+void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const actor_set,
+                                                            const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto control_actor_set = actor_set->control_actors_.get();
+  MS_EXCEPTION_IF_NULL(control_actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  // Since only one set of real parameters are allowed to be executed in funcgraph at the same time, when the funcgraph
+  // stops running, it is necessary to send the control arrow to the corresponding entrance actor at the exit of the
+  // graph to run the next set of real parameters. The corresponding nodes of the actors that need to send the control
+  // arrow have been parsed in the control node parser.
+  for (const auto &graph_to_nodes : parser->func_graph_to_first_control_nodes_) {
+    // Fetch the entrance actor.
+    const auto &func_graph = graph_to_nodes.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+    auto entrance_actor = dynamic_cast<EntranceActor *>(FetchActor(actor_name));
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+
+    const auto &nodes = graph_to_nodes.second;
+    for (const auto &node : nodes) {
+      // Fetch the source actor of control arrow.
+      MS_EXCEPTION_IF_NULL(node);
+      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        actor_name = func_graph->ToString() + kExitActorNameSuffix;
+      } else {
+        actor_name = GetActorName(node);
+      }
+      auto from_actor = dynamic_cast<ControlActor *>(FetchActor(actor_name));
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkLoopBodyControlArrow(from_actor, entrance_actor);
+    }
+  }
+
+  // In the recursive scene, some kernel graph needs to be completed before the next set of data is sent by the
+  // entrance actor. At this time, it is necessary to connect a control arrow from the exit actor of the graph
+  // to the entrance actor.
+  for (const auto &func_graph_to_group_info : parser->func_graph_to_first_kernel_graphs_) {
+    const auto &func_graph = func_graph_to_group_info.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+    auto actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(actor);
+    auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    for (const auto &group_info : func_graph_to_group_info.second) {
+      MS_EXCEPTION_IF_NULL(group_info);
+      actor_name = group_info->group_name_ + kExitActorNameSuffix;
+      auto from_actor = FetchActor(actor_name);
+      MS_EXCEPTION_IF_NULL(from_actor);
+      LinkLoopBodyControlArrow(from_actor, entrance_actor);
+    }
   }
 }
 
