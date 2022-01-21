@@ -42,22 +42,19 @@ def test_batch_norm_grad_infer_fission(tag):
     def before(input0, input1, input2, input3, input4, input5):
         batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4, input5)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_is_training(input0, input1, input2, input3, input4, input5):
         batch_norm = BatchNormGradTraining(input0, input1, input2, input3, input4, input5)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_output3_not_null(input0, input1, input2, input3, input4, input5):
         batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4, input5)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, input5):
@@ -66,7 +63,6 @@ def test_batch_norm_grad_infer_fission(tag):
         outputs = make_tuple(bn_infer_grad, tuple_getitem(bn_training_update_grad, 0),
                              tuple_getitem(bn_training_update_grad, 1))
         new_outputs = make_tuple(tuple_getitem(outputs, 0), tuple_getitem(outputs, 1), tuple_getitem(outputs, 2))
-        output = tuple_getitem(new_outputs, 0)
-        return make_tuple(output)
+        return make_tuple(new_outputs)
 
     return fns[tag]
