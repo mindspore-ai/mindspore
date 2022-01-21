@@ -2278,6 +2278,7 @@ class Exp(PrimitiveWithInfer):
             return Tensor(out)
         return None
 
+
 class Einsum(Primitive):
     """
     This operator uses equation to represent a tuple of tensors operations,
@@ -2360,6 +2361,7 @@ class Einsum(Primitive):
         >>> print(output)
         [[2., 4., 1.], [4., 8., 2.], [6., 12., 3.]]
     """
+
     @prim_attr_register
     def __init__(self, equation):
         if not isinstance(equation, str):
@@ -2369,6 +2371,7 @@ class Einsum(Primitive):
             raise TypeError("the equation can contain only one arrow !")
         self.add_prim_attr('equation', equation)
         self.init_prim_io_names(inputs=['inputs'], outputs=['output'])
+
 
 class Expm1(Primitive):
     r"""
@@ -2404,7 +2407,6 @@ class Expm1(Primitive):
     def __init__(self):
         """Initialize Expm1."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
 
 
 class HistogramFixedWidth(PrimitiveWithInfer):
@@ -2625,6 +2627,7 @@ class Erfc(Primitive):
     def __init__(self):
         """Initialize Erfc"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
 
 class Minimum(_MathBinaryOp):
     r"""
@@ -2899,7 +2902,6 @@ class DivNoNan(_MathBinaryOp):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
-
 class MulNoNan(_MathBinaryOp):
     r"""
     Computes `x` * `y` element-wise. If `y` is zero, no matter what `x` is, it will return 0.
@@ -3017,6 +3019,7 @@ class FloorDiv(Primitive):
         """Initialize FloorDiv."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
+
 class TruncateDiv(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
@@ -3115,6 +3118,7 @@ class TruncateMod(Primitive):
     def __init__(self):
         """Initialize TruncateMod."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
 
 class Mod(_MathBinaryOp):
     r"""
@@ -3339,6 +3343,7 @@ class Xdivy(Primitive):
         """Initialize Xdivy."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
+
 class Xlogy(Primitive):
     r"""
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
@@ -3430,6 +3435,7 @@ class Acosh(Primitive):
     def __init__(self):
         """Initialize Acosh"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
 
 class Cosh(Primitive):
     r"""
@@ -3532,7 +3538,6 @@ class Sinh(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Sinh"""
-
 
 
 class _LogicBinaryOp(_BinaryOp):
@@ -4044,7 +4049,6 @@ class LogicalNot(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-
 class LogicalAnd(_LogicBinaryOp):
     r"""
     Computes the "logical AND" of two tensors element-wise.
@@ -4127,7 +4131,6 @@ class LogicalOr(_LogicBinaryOp):
         >>> print(output)
         [ True  True  True]
     """
-
 
 
 class IsNan(Primitive):
@@ -4585,7 +4588,6 @@ class Sin(Primitive):
         """Initialize Sin."""
 
 
-
 class Asin(Primitive):
     r"""
     Computes arcsine of input tensors element-wise.
@@ -4838,7 +4840,6 @@ class Tan(Primitive):
         """Initialize Tan"""
 
 
-
 class Atan(Primitive):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
@@ -4911,7 +4912,6 @@ class Atanh(Primitive):
     def __init__(self):
         """Initialize Atanh"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
 
 
 class Atan2(_MathBinaryOp):
@@ -5262,7 +5262,6 @@ class BesselI1e(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs='output')
 
 
-
 class Inv(Primitive):
     r"""
     Computes Reciprocal of input tensor element-wise.
@@ -5295,7 +5294,6 @@ class Inv(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
-
 
 
 class Invert(Primitive):
@@ -5680,7 +5678,7 @@ class Conj(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5711,7 +5709,7 @@ class Real(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5775,7 +5773,7 @@ class Imag(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5865,6 +5863,7 @@ class IsClose(Primitive):
         >>> print(output)
             [true false false false true]
     """
+
     @prim_attr_register
     def __init__(self, rtol=1e-05, atol=1e-08, equal_nan=True):
         """Initialize IsClose"""
@@ -5924,6 +5923,7 @@ class LuSolve(Primitive):
          [-1.4000001]
          [ 0.6      ]]
     """
+
     @prim_attr_register
     def __init__(self):
         pass
@@ -5972,6 +5972,7 @@ class CholeskyInverse(Primitive):
          [-2.625   1.25   -0.25  ]
          [ 0.625  -0.25    0.25  ]]
     """
+
     @prim_attr_register
     def __init__(self, upper=False):
         """Initialize CholeskyInverse"""
