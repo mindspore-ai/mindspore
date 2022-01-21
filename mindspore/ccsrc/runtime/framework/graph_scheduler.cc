@@ -1867,6 +1867,7 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
   const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
@@ -1894,8 +1895,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       } else if (IsPersistentDeviceTensor(input_node)) {
         front_node = FetchFrontNodeByBackendNode(input_node, graph);
       }
-      if (front_node == nullptr || (!IsPersistentDeviceTensor(front_node)) ||
-          (parser != nullptr && parser->IsInited() && (!parser->IsRootGraphParameter(front_node)))) {
+      if (front_node == nullptr || (!parser->IsRootGraphPersistentDeviceTensor(front_node))) {
         continue;
       }
 
@@ -1923,10 +1923,10 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
     }
   }
-  PersistDeviceTensorForControlNode(graph_compiler_info);
+  PersistDeviceTensorForRootGraphControlNode(graph_compiler_info);
 }
 
-void GraphScheduler::PersistDeviceTensorForControlNode(const GraphCompilerInfo &graph_compiler_info) {
+void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info) {
   const auto &parser = graph_compiler_info.control_node_parser_;
   if (parser == nullptr || (!parser->IsInited())) {
     return;
@@ -1936,7 +1936,7 @@ void GraphScheduler::PersistDeviceTensorForControlNode(const GraphCompilerInfo &
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
     const auto &input_node = control_node_parameters[i];
     MS_EXCEPTION_IF_NULL(input_node);
-    if ((!IsPersistentDeviceTensor(input_node)) || (!parser->IsRootGraphParameter(input_node))) {
+    if (!parser->IsRootGraphPersistentDeviceTensor(input_node)) {
       continue;
     }
     const auto &backend_parameter_with_context =

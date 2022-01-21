@@ -321,6 +321,7 @@ void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                                        OpContext<DeviceTensor> *const context) {
   const auto &parser = graph_compiler_info_->control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
   for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info_->graphs_[i];
     const auto &device_context = graph_compiler_info_->device_contexts_[i];
@@ -340,15 +341,13 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto &input_tensor = tensors[j];
       MS_EXCEPTION_IF_NULL(input_node);
       const auto front_node = FetchFrontNodeByBackendNode(input_node, graph);
-      if (!IsPersistentDeviceTensor(input_node) ||
-          (parser != nullptr && parser->IsInited() && (!parser->IsRootGraphParameter(front_node)))) {
-        continue;
+      if (IsPersistentDeviceTensor(input_node) && parser->IsRootGraphPersistentDeviceTensor(front_node)) {
+        PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
       }
-      PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
     }
   }
 
-  PrepareDataForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
+  PrepareDeviceTensorStoreForControlNode(graph_compiler_info_->control_node_parser_, input_tensors.back(), context);
 }
 
 void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,
@@ -714,9 +713,9 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   CopyDataFromHostToOtherDevice(front_node, backend_node, host_tensor_address, device_context, context);
 }
 
-void DataPrepareActor::PrepareDataForControlNode(const ControlNodeParserPtr &control_node_parser,
-                                                 const std::vector<TensorPtr> &tensors,
-                                                 OpContext<DeviceTensor> *const context) {
+void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeParserPtr &control_node_parser,
+                                                              const std::vector<TensorPtr> &tensors,
+                                                              OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(control_node_parser);
   if (!control_node_parser->IsInited()) {
     return;
@@ -733,7 +732,7 @@ void DataPrepareActor::PrepareDataForControlNode(const ControlNodeParserPtr &con
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
     const auto &front_node = control_node_parameters[i];
     MS_EXCEPTION_IF_NULL(front_node);
-    if ((!IsPersistentDeviceTensor(front_node)) || (!control_node_parser->IsRootGraphParameter(front_node))) {
+    if (!control_node_parser->IsRootGraphPersistentDeviceTensor(front_node)) {
       continue;
     }
 

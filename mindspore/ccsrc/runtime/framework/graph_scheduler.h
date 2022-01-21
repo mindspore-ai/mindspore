@@ -179,7 +179,8 @@ class GraphScheduler {
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
-  void PersistDeviceTensorForControlNode(const GraphCompilerInfo &graph_compiler_info);
+  // When the parameters of root graph are not in backend kernel graphs, need persist device tensor by this function.
+  void PersistDeviceTensorForRootGraphControlNode(const GraphCompilerInfo &graph_compiler_info);
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;

@@ -349,8 +349,7 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
         MS_LOG(EXCEPTION) << "Failed to get level by from node:" << from_node->DebugString()
                           << " in graph:" << kernel_graph_group_info->group_name_;
       }
-      if (iter->second == kernel_graph_group_info->level_ &&
-          (!(parser->IsRootGraphParameter(from_node) && IsPersistentDeviceTensor(from_node)))) {
+      if (iter->second == kernel_graph_group_info->level_ && (!parser->IsRootGraphPersistentDeviceTensor(from_node))) {
         (void)formal_parameters.emplace_back(node_with_context.first);
         (void)device_contexts.emplace_back(node_with_context.second);
       } else {
@@ -430,8 +429,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
                           << " for need stack control node:" << need_stack_control_node->DebugString();
       }
 
-      if (control_node_level == iter->second &&
-          (!(parser->IsRootGraphParameter(parameter.first) && IsPersistentDeviceTensor(parameter.first)))) {
+      if (control_node_level == iter->second && (!parser->IsRootGraphPersistentDeviceTensor(parameter.first))) {
         (void)formal_parameters.emplace_back(parameter);
         (void)device_contexts.emplace_back(device_context);
       } else {
@@ -705,7 +703,8 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
                                                 const KernelWithIndex &from_node_with_index,
                                                 const KernelWithIndex &to_node_with_index,
                                                 const ControlNodeParserPtr &parser) {
-  if (parser->IsRootGraphParameter(parameter) && IsPersistentDeviceTensor(parameter)) {
+  MS_EXCEPTION_IF_NULL(parser);
+  if (parser->IsRootGraphPersistentDeviceTensor(parameter)) {
     (void)to_actor->device_tensor_store_keys_.emplace_back(to_node_with_index.second, parameter);
     return;
   }
@@ -734,6 +733,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
                                                const KernelWithIndex &from_node_with_index,
                                                const KernelWithIndex &to_node_with_index,
                                                const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(call_node);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
@@ -786,6 +786,7 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
                                              const KernelWithIndex &from_node_with_index,
                                              const KernelWithIndex &to_node_with_index,
                                              const ControlNodeParserPtr &parser) {
+  MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
