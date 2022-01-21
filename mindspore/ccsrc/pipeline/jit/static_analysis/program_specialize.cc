@@ -627,7 +627,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   auto attrs = conf->ObtainEvalResult()->attribute();
   auto c_old = node->cast<CNodePtr>();
   auto c_new = new_node->cast<CNodePtr>();
@@ -1044,7 +1044,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
 
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);

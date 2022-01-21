@@ -298,6 +298,19 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   auto new_list = AbstractBasePtrList(list->elements());
   new_list.emplace_back(item);
   MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  if (enable_eliminate_unused_element) {
+    for (auto &weak_node : list->sequence_nodes()) {
+      auto node = weak_node.lock();
+      if (node == nullptr) {
+        MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
+        continue;
+      }
+      // Add one element in flag list.
+      auto flags = GetSequenceNodeElementsUseFlags(node);
+      flags->emplace_back(false);
+    }
+  }
   return std::make_shared<AbstractList>(new_list, list->sequence_nodes());
 }
 

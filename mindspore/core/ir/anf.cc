@@ -638,7 +638,7 @@ bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set)
 
 // Set the sequence nodes' elements use flags to 'new_flag' at specific 'index' position.
 void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, bool new_flag) {
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (!enable_eliminate_unused_element) {
     return;
   }
@@ -672,7 +672,7 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, 
 
 // Set the sequence nodes' elements use flags all to 'new_flag'.
 void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (!enable_eliminate_unused_element) {
     return;
   }
@@ -701,7 +701,7 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
 
 // Set the sequence nodes' elements use flags all to 'new_flag' recursively.
 void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag) {
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (!enable_eliminate_unused_element) {
     return;
   }
