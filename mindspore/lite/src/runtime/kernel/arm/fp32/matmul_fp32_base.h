@@ -52,6 +52,9 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int Run() override;
 
  public:
+#ifdef ENABLE_ARM64
+  int ParallelRunByRow(int task_id) const;
+#endif
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
@@ -75,7 +78,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeResizeBufB();
   int CalBroadCastBiasDataElements();
   int InitTmpOutBuffer();
-  void GetThreadCuttingPolicy();
+  int GetThreadCuttingPolicy();
+#ifdef ENABLE_ARM64
+  int GetThreadCuttingPolicyForArm64WhenVb();
+#endif
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -115,6 +121,10 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   GemvFun gemvCalFun = nullptr;
 #endif
   GemmIsNotPackFun gemmIsNotPackFun = nullptr;
+#ifdef ENABLE_ARM64
+  int row_num_;
+  std::vector<int> row_split_points_;
+#endif
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_

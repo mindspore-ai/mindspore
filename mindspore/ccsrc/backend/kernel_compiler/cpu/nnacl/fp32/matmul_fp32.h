@@ -129,6 +129,10 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 
 void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k);
 
+#ifdef ENABLE_ARM64
+void GemmIsNotPackByRow(const float *a, const float *b, float *c, const float *bias, int start_row, int end_row,
+                        int deep);
+#endif
 #ifdef __cplusplus
 }
 #endif
