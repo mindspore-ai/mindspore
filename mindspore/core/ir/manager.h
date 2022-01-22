@@ -281,7 +281,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
                          public deprecated::api::FuncGraphManager {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
-  ~FuncGraphManager() noexcept {
+  ~FuncGraphManager() {
     if (is_manage_) {
       RemoveRoots();
     }
@@ -290,7 +290,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
 
   void Reset();
   void Init();
-  void Clear();
+  void Clear() noexcept;
   void AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root = false);
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
   void RemoveRoots();

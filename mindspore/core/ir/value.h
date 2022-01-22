@@ -505,7 +505,7 @@ class MS_CORE_API Monad : public Value {
   /// \brief Constructor of Monad.
   ///
   /// \param[in] type Define the type of Monad object.
-  explicit Monad(TypePtr type) : Value(type) {}
+  explicit Monad(const TypePtr &type) : Value(type) {}
 };
 
 /// \brief UMonad defines a Value class which related to memory side effect.

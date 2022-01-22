@@ -36,7 +36,7 @@ class PrimalAttrManager {
   PrimalAttrManager &operator=(const PrimalAttrManager &) = delete;
   ~PrimalAttrManager() = default;
   void SetPrimalAttr(const mindspore::HashMap<std::string, ValuePtr> &primal_attrs) { primal_attrs_ = primal_attrs; }
-  void ClearPrimalAttr() { primal_attrs_.clear(); }
+  void ClearPrimalAttr() noexcept { primal_attrs_.clear(); }
   mindspore::HashMap<std::string, ValuePtr> GetCurrentPrimalAttr() { return primal_attrs_; }
 
  private:
@@ -51,7 +51,7 @@ class PrimalAttrGuard {
   explicit PrimalAttrGuard(const mindspore::HashMap<std::string, ValuePtr> &primal_attrs) {
     PrimalAttrManager::GetInstance().SetPrimalAttr(primal_attrs);
   }
-  ~PrimalAttrGuard() noexcept { PrimalAttrManager::GetInstance().ClearPrimalAttr(); }
+  ~PrimalAttrGuard() { PrimalAttrManager::GetInstance().ClearPrimalAttr(); }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PRIMAL_ATTR_H_

@@ -267,7 +267,7 @@ class PCNode : public PBase<PCNode<TArgs...> > {
         // If it could capture the initial set of nodes specified in the Pattern
         // and there are enough extra inputs to add
         if (capture_func.captured_ && inputs.size() > pattern_arg_len) {
-          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + SizeToLong(pattern_arg_len), inputs.end());
+          (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + SizeToLong(pattern_arg_len), inputs.end());
           return true;
         }
         return capture_func.captured_;
@@ -357,7 +357,8 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
         if (capture_func.captured_) {
           captured_prim_node_ = node;
           if (inputs.size() > pattern_arg_len + 1) {
-            extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + SizeToLong(pattern_arg_len), inputs.end());
+            (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + SizeToLong(pattern_arg_len),
+                                      inputs.end());
           }
         }
         return capture_func.captured_;
