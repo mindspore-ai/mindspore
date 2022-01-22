@@ -70,6 +70,8 @@ class ProgramSpecializer {
 
   std::vector<AbstractSequencePtr> &sequence_abstract_list() { return sequence_abstract_list_; }
 
+  std::vector<AnfNodePtr> &sequence_nodes_replaced_list() { return sequence_nodes_replaced_list_; }
+
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
@@ -79,6 +81,8 @@ class ProgramSpecializer {
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
   std::vector<AbstractSequencePtr> sequence_abstract_list_;
+  // The list to hold the weak node ptr before purify abstract.
+  std::vector<AnfNodePtr> sequence_nodes_replaced_list_;
   // Map for unspecialized abstract function to specialized abstract;
   std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
     specialized_abs_map_;

@@ -266,8 +266,7 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
     auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
 

@@ -87,12 +87,13 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
   }
   auto res = SpecializeFuncGraph(fg, context);
   // Call PurifyElements() to purify tuple/list elements.
-  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_DDE_ONLY_MARK");
-  static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
+  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
   if (!enable_only_mark_unused_element) {
     for (auto &sequence_abs : sequence_abstract_list_) {
       sequence_abs->PurifyElements();
     }
+    // Clear all nodes after purify abstract.
+    sequence_nodes_replaced_list_.clear();
   }
   return res;
 }
@@ -491,7 +492,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
 
 // Purify specific input of a CNode.
 template <typename T>
-void PurifySequenceValueNode(const CNodePtr &cnode, size_t index) {
+void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecializer *const specializer) {
   const auto &old_input = cnode->input(index);
   auto sequence_value = GetValueNode<std::shared_ptr<T>>(old_input);
   if (sequence_value == nullptr) {
@@ -520,9 +521,12 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index) {
   new_sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(new_input)});
   new_input->set_abstract(new_sequence_abs);
   // Always reset tuple value node's use flags as non-use.
-  SetSequenceNodeElementsUseFlags(new_input, std::make_shared<std::vector<bool>>(new_sequence_abs->elements().size()));
+  SetSequenceNodeElementsUseFlags(new_input, flags);
   MS_LOG(DEBUG) << "Update ValueTuple/ValueList, " << old_input->DebugString() << " --> " << new_input->DebugString()
                 << ", which is inputs[" << index << "] of " << cnode->DebugString();
+  // Keep the node not to release before we purify its abstract.
+  specializer->sequence_nodes_replaced_list().emplace_back(old_input);
+  specializer->sequence_abstract_list().emplace_back(new_sequence_abs);
   cnode->set_input(index, new_input);
 }
 }  // namespace
@@ -532,13 +536,28 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
   if (cnode == nullptr || cnode->abstract() == nullptr) {
     MS_LOG(EXCEPTION) << "The parameter \'node\' and its abstract should not be null.";
   }
+  auto &sequence_abstract_list = specializer_->sequence_abstract_list();
+
+  // Add CNode's inputs if they're sequence abstract, and sequence nodes exist.
+  std::for_each(cnode->inputs().begin(), cnode->inputs().end(), [&sequence_abstract_list](const AnfNodePtr &input) {
+    const AbstractBasePtr input_abs = input->abstract();
+    AbstractSequencePtr input_sequence_abs = dyn_cast<AbstractSequence>(input_abs);
+    if (input_sequence_abs == nullptr || input_sequence_abs->sequence_nodes().empty()) {
+      return;
+    }
+    // Not call PurifyElements() here, just add to list.
+    sequence_abstract_list.emplace_back(input_sequence_abs);
+  });
+
+  // Add CNode if it's sequence abstract, and sequence nodes exist.
   const AbstractBasePtr abs = cnode->abstract();
   AbstractSequencePtr sequence_abs = dyn_cast<AbstractSequence>(abs);
   if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
     return;
   }
   // Not call PurifyElements() here, just add to list.
-  specializer_->sequence_abstract_list().emplace_back(sequence_abs);
+  sequence_abstract_list.emplace_back(sequence_abs);
+
   // Purify MakeTuple/MakeList CNode.
   if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
     auto flags = GetSequenceNodeElementsUseFlags(cnode);
@@ -546,14 +565,20 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
       std::vector<AnfNodePtr> inputs;
       inputs.emplace_back(cnode->input(0));
       for (size_t i = 0; i < (*flags).size(); ++i) {
+        auto old_input = cnode->input(i + 1);
         if (!(*flags)[i]) {
+          // Keep the node not to release before we purify its abstract.
+          if (IsPrimitiveCNode(old_input, prim::kPrimMakeTuple) || IsPrimitiveCNode(old_input, prim::kPrimMakeList)) {
+            specializer_->sequence_nodes_replaced_list().emplace_back(old_input);
+          }
+
           auto zero_value = NewValueNode(MakeValue(0));
           zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
           inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
         } else {
-          inputs.emplace_back(cnode->input(i + 1));
+          inputs.emplace_back(old_input);
         }
       }
       cnode->set_inputs(std::move(inputs));
@@ -563,9 +588,9 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
   // Purify each Tuple/List ValueNode in CNode.
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     if (IsValueNode<ValueTuple>(cnode->input(i))) {
-      PurifySequenceValueNode<ValueTuple>(cnode, i);
+      PurifySequenceValueNode<ValueTuple>(cnode, i, specializer_);
     } else if (IsValueNode<ValueList>(cnode->input(i))) {
-      PurifySequenceValueNode<ValueList>(cnode, i);
+      PurifySequenceValueNode<ValueList>(cnode, i, specializer_);
     }
   }
 }
@@ -602,8 +627,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
   auto attrs = conf->ObtainEvalResult()->attribute();
   auto c_old = node->cast<CNodePtr>();
   auto c_new = new_node->cast<CNodePtr>();
@@ -1020,10 +1044,8 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
 
-  static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ENABLE_DDE");
-  static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-  static const auto only_mark_unused_element = common::GetEnv("MS_DEV_DDE_ONLY_MARK");
-  static const auto enable_only_mark_unused_element = (only_mark_unused_element == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
