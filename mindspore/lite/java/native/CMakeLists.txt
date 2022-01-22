@@ -90,7 +90,7 @@ else()
 endif()
 
 if(SUPPORT_TRAIN)
-    set(LITE_TRAIN_SO_NAME mindspore-lite-train minddata-lite)
+    set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
         ${NEW_NATIVE_DIR}/train_config.cpp

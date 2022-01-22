@@ -136,12 +136,7 @@ bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::strin
     MS_LOG(ERROR) << "Malloc data for file head failed";
     return false;
   }
-  auto ret = memset_s(head_data, kExternalDataHeadSize, 0, kExternalDataHeadSize);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memset failed: " << ret;
-    free(head_data);
-    return false;
-  }
+  memset(head_data, 0, kExternalDataHeadSize);
   // magic number of weight file: 0x12345678
   auto sum_data = reinterpret_cast<uint32_t *>(head_data);
   sum_data[0] = 0x12345678;
