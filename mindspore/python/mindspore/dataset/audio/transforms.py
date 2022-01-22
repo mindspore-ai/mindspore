@@ -50,7 +50,7 @@ class AudioTensorOperation(TensorOperation):
 
 
 class AllpassBiquad(AudioTensorOperation):
-    """
+    r"""
     Design two-pole all-pass filter with central frequency and bandwidth for audio waveform.
 
     An all-pass filter changes the audio's frequency to phase relationship without changing
@@ -94,7 +94,7 @@ DE_C_SCALE_TYPE = {ScaleType.POWER: cde.ScaleType.DE_SCALE_TYPE_POWER,
 
 
 class AmplitudeToDB(AudioTensorOperation):
-    """
+    r"""
     Turn the input audio waveform from the amplitude/power scale to decibel scale.
 
     Note:
@@ -244,7 +244,7 @@ class BandpassBiquad(AudioTensorOperation):
 
 
 class BandrejectBiquad(AudioTensorOperation):
-    """
+    r"""
     Design two-pole Butterworth band-reject filter for audio waveform.
 
     The frequency response of the Butterworth filter is maximally flat (i.e. has no ripples)
@@ -885,7 +885,7 @@ class LFilter(AudioTensorOperation):
 
 
 class LowpassBiquad(AudioTensorOperation):
-    """
+    r"""
     Design two-pole low-pass filter for audio waveform.
 
     A low-pass filter passes frequencies lower than a selected cutoff frequency
