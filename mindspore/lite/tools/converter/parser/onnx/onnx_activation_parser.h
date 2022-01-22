@@ -78,6 +78,14 @@ class OnnxHardSigmoidParser : public OnnxNodeParser {
   ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 
+class OnnxSoftPlusParser : public OnnxNodeParser {
+ public:
+  OnnxSoftPlusParser() : OnnxNodeParser("Softplus") {}
+  ~OnnxSoftPlusParser() override = default;
+
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+};
+
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_RELU_PARSER_H
