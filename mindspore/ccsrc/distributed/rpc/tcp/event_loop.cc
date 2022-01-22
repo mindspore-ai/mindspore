@@ -48,7 +48,7 @@ int EventLoopRun(EventLoop *evloop, int timeout) {
   if (memset_s(events, size, 0, size)) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
     free(events);
-    return false;
+    return RPC_ERROR;
   }
 
   while (!evloop->is_stop_) {
@@ -116,11 +116,15 @@ void QueueReadyCallback(int fd, uint32_t events, void *arg) {
 
 void EventLoop::ReleaseResource() {
   if (task_queue_event_fd_ != -1) {
-    close(task_queue_event_fd_);
+    if (close(task_queue_event_fd_) != 0) {
+      MS_LOG(ERROR) << "Failed to close task queue event fd: " << task_queue_event_fd_;
+    }
     task_queue_event_fd_ = -1;
   }
   if (epoll_fd_ != -1) {
-    close(epoll_fd_);
+    if (close(epoll_fd_) != 0) {
+      MS_LOG(ERROR) << "Failed to close epoll fd: " << epoll_fd_;
+    }
     epoll_fd_ = -1;
   }
 }
@@ -128,10 +132,10 @@ void EventLoop::ReleaseResource() {
 int EventLoop::AddTask(std::function<void()> &&task) {
   // put func to the queue
   task_queue_mutex_.lock();
-  task_queue_.emplace(std::move(task));
+  (void)task_queue_.emplace(std::move(task));
 
-  // return the queque size to send's caller.
-  int result = task_queue_.size();
+  // return the queue size to send's caller.
+  auto result = task_queue_.size();
   task_queue_mutex_.unlock();
 
   if (result == 1) {
@@ -212,7 +216,7 @@ void EventLoop::DeleteEvent(int fd) {
   if (eventData != nullptr) {
     delete eventData;
   }
-  events_.erase(fd);
+  (void)events_.erase(fd);
 }
 
 Event *EventLoop::FindEvent(int fd) {
@@ -258,7 +262,7 @@ int EventLoop::SetEventHandler(int fd, uint32_t events, EventHandler handler, vo
 
   if (memset_s(&ev, sizeof(ev), 0, sizeof(ev))) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
-    return false;
+    return RPC_ERROR;
   }
   ev.events = events;
 
@@ -298,7 +302,7 @@ void EventLoop::AddEvent(Event *event) {
     return;
   }
   DeleteEvent(event->fd);
-  events_.emplace(event->fd, event);
+  (void)events_.emplace(event->fd, event);
 }
 
 int EventLoop::DeleteEpollEvent(int fd) {
@@ -312,7 +316,7 @@ int EventLoop::DeleteEpollEvent(int fd) {
     event_lock_.unlock();
     return RPC_ERROR;
   }
-  events_.erase(tev->fd);
+  (void)events_.erase(tev->fd);
 
   // Don't delete tev immediately, let's push it into deleted_events_, before next epoll_wait,we will free
   // all events in deleted_events_.
@@ -342,7 +346,7 @@ int EventLoop::UpdateEpollEvent(int fd, uint32_t events) {
   }
   if (memset_s(&ev, sizeof(ev), 0, sizeof(ev))) {
     MS_LOG(ERROR) << "Failed to call memset_s.";
-    return false;
+    return RPC_ERROR;
   }
 
   ev.events = events;
@@ -401,7 +405,7 @@ void EventLoop::RemoveDeletedEvents() {
       deleteEv = nullptr;
       ++eventIter;
     }
-    deleted_events_.erase(fdIter++);
+    (void)deleted_events_.erase(fdIter++);
   }
   deleted_events_.clear();
 }

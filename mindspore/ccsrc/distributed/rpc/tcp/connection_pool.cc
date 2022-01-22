@@ -37,9 +37,9 @@ void ConnectionPool::CloseConnection(Connection *conn) {
 
   if (!conn->destination.empty()) {
     if (conn->is_remote) {
-      remote_conns_.erase(conn->destination);
+      (void)remote_conns_.erase(conn->destination);
     } else {
-      local_conns_.erase(conn->destination);
+      (void)local_conns_.erase(conn->destination);
     }
   }
   conn->Close();
@@ -98,7 +98,7 @@ void ConnectionPool::ResetAllConnMetrics() {
 
 Connection *ConnectionPool::FindMaxConnection() {
   Connection *conn = nullptr;
-  int count = 0;
+  size_t count = 0;
   for (const auto &iter : local_conns_) {
     if (iter.second->send_metrics->accum_msg_count > count) {
       count = iter.second->send_metrics->accum_msg_count;
@@ -116,7 +116,7 @@ Connection *ConnectionPool::FindMaxConnection() {
 
 Connection *ConnectionPool::FindFastConnection() {
   Connection *conn = nullptr;
-  int size = 0;
+  size_t size = 0;
   for (const auto &iter : local_conns_) {
     if (iter.second->send_metrics->max_msg_size > size) {
       size = iter.second->send_metrics->max_msg_size;
@@ -165,9 +165,9 @@ void ConnectionPool::AddConnection(Connection *conn) {
   }
 
   if (conn->is_remote) {
-    remote_conns_.emplace(conn->destination, conn);
+    (void)remote_conns_.emplace(conn->destination, conn);
   } else {
-    local_conns_.emplace(conn->destination, conn);
+    (void)local_conns_.emplace(conn->destination, conn);
   }
 }
 
@@ -194,7 +194,7 @@ void ConnectionPool::DeleteConnInfo(int fd) {
     iter2 = conn_infos.erase(iter2);
     delete linkInfo;
   }
-  conn_infos_.erase(fd);
+  (void)conn_infos_.erase(fd);
 }
 
 void ConnectionPool::DeleteConnInfo(const std::string &to, int fd) {
@@ -276,7 +276,7 @@ void ConnectionPool::AddConnInfo(int fd, const AID &sAid, const AID &dAid, Delet
   linker->to = dAid;
   linker->socket_fd = fd;
   linker->delete_callback = callback;
-  conn_infos_[fd].insert(linker);
+  (void)conn_infos_[fd].insert(linker);
 }
 
 bool ConnectionPool::ReverseConnInfo(int fromFd, int toFd) {
@@ -285,7 +285,7 @@ bool ConnectionPool::ReverseConnInfo(int fromFd, int toFd) {
     return false;
   }
   auto conn_infos = iter->second;
-  conn_infos_.erase(fromFd);
+  (void)conn_infos_.erase(fromFd);
   conn_infos_[toFd] = conn_infos;
   return true;
 }
