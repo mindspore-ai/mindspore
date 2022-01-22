@@ -25,7 +25,7 @@ void MatrixBandPartCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
-    MS_LOG(EXCEPTION) << "wrong array shape, A should be a matrix max than 2.";
+    MS_LOG(EXCEPTION) << "Wrong array shape, A should be a matrix max than 2.";
   }
   m_ = shapes_[dim_size_ - kDim2];
   n_ = shapes_[dim_size_ - kDim1];
@@ -53,7 +53,7 @@ bool MatrixBandPartCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, c
   for (size_t k = 0; k < out_range_size_; k++) {
     for (size_t i = 0; i < std::min(m_, l + n_); i++) {
       const size_t s = i < l ? 0 : i - l;
-      // when i = n - u, end is n -1, because end pos is start from 0
+      // When i = n - u, end is n -1, because end pos is start from 0
       const size_t e = i >= n_ - u ? n_ - 1 : i + u;
       const size_t offset = k * m_ * n_ + i * n_;
       memcpy_s(out_value + offset + s, matrix_size_ * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
