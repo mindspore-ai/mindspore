@@ -206,3 +206,34 @@ class NonMaxSuppressionV3(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NonMaxSuppressionV3"""
+
+class HSVToRGB(Primitive):
+    """
+    Convert one or more images from HSV to RGB. The format of the image(s) should be NHWC.
+
+    Inputs:
+        - **x** (Tensor) - The input image must be a 4-D tensor of shape [batch, image_height, image_width, channel].
+          Number of channel must be 3.
+          Types allowed: float16, float32, float64.
+    Outputs:
+        A 4-D tensor of shape [batch, image_height, image_width, channel] with same type of input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of `x` is not float16, float32, float64.
+        ValueError: If rank of the `x` is not equal to 4.
+        ValueError: If the last dimension of `x` is not equal to 3.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> image = np.array([0.5, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
+        >>> hsv_to_rgb = P.HSVToRGB()
+        >>> output = hsv_to_rgb(Tensor(image))
+        >>> print(output)
+        [[[[0.25 0.5  0.5 ]]]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass

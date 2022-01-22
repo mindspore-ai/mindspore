@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """aicpu ops"""
+from .hsv_to_rgb import _hsv_to_rgb_aicpu
 from .unique import _unique_aicpu
 from .lu_solve import _lu_solve_aicpu
 from .cholesky_inverse import _cholesky_inverse_aicpu

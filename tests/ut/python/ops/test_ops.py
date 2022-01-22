@@ -3085,6 +3085,10 @@ test_case_other_ops = [
                        Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
                        Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
                        Tensor(np.random.rand(2, 8, 16).astype(np.float16))]}),
+    ('HSVToRGB', {
+        'block': P.HSVToRGB(),
+        'desc_inputs': [Tensor(np.array([[[[0.5, 0.5, 0.5]]]], np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [
