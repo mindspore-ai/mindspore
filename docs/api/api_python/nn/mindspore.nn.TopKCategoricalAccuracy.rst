@@ -7,7 +7,7 @@ mindspore.nn.TopKCategoricalAccuracy
 
     **参数：**
 
-    **k (int)** - 计算准确率使用的Top类别数。
+    **k** (int) - 计算准确率使用的Top类别数。
 
     **异常：**
 
