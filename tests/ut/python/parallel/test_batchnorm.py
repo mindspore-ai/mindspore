@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -52,6 +53,11 @@ def compile_net(net):
 
 
 def test_batchnorm_data_parallel():
+    """
+    Feature: test batchnorm2d
+    Description: shard n
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
     strategy2 = ((8, 1, 1, 1), (1,), (1,), (1,), (1,))
@@ -60,6 +66,11 @@ def test_batchnorm_data_parallel():
 
 
 def test_batchnorm_model_parallel1():
+    """
+    Feature: test batchnorm2d
+    Description: shard n/c
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
     strategy2 = ((2, 1, 2, 2), (1,), (1,), (1,), (1,))
@@ -68,6 +79,11 @@ def test_batchnorm_model_parallel1():
 
 
 def test_batchnorm_model_parallel2():
+    """
+    Feature: test batchnorm2d
+    Description: shard n/c/h/w
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 2, 2), (2, 2, 1, 1))
     strategy2 = ((1, 8, 1, 1), (8,), (8,), (8,), (8,))
@@ -76,11 +92,13 @@ def test_batchnorm_model_parallel2():
 
 
 class Net2(Cell):
-    def __init__(self, strategy1=None, strategy2=None):
+    def __init__(self, strategy1=None, strategy2=None, group_size=0):
         super().__init__()
         self.bn = BatchNorm1d(8)
         self.bn.bn_train.shard(strategy1)
         self.relu = P.ReLU().shard(strategy2)
+        if group_size > 0:
+            self.bn.bn_train.add_prim_attr("group_size", group_size)
 
     def construct(self, x, b):
         out = self.bn(x)
@@ -102,6 +120,11 @@ def compile_net2(net):
 
 
 def test_batchnorm1d_data_parallel():
+    """
+    Feature: test batchnorm1d
+    Description: shard n
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1), (1,), (1,), (1,), (1,))
     strategy2 = ((8, 1),)
@@ -110,6 +133,11 @@ def test_batchnorm1d_data_parallel():
 
 
 def test_batchnorm1d_model_parallel1():
+    """
+    Feature: test batchnorm1d
+    Description: shard c
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 8), (8,), (8,), (8,), (8,))
     strategy2 = ((1, 8),)
@@ -118,8 +146,67 @@ def test_batchnorm1d_model_parallel1():
 
 
 def test_batchnorm1d_model_parallel2():
+    """
+    Feature: test batchnorm1d
+    Description: shard n/c
+    Expectation: compile success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 4), (4,), (4,), (4,), (4,))
     strategy2 = ((2, 4),)
     net = Net2(strategy1=strategy1, strategy2=strategy2)
     compile_net2(net)
+
+
+def test_batchnorm_config_group_size():
+    """
+    Feature: test config group size
+    Description: group is 8
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((32, 1), (1,), (1,), (1,), (1,))
+    strategy2 = ((32, 1),)
+    net = Net2(strategy1=strategy1, strategy2=strategy2, group_size=8)
+    compile_net2(net)
+
+
+def test_batchnorm_config_group_size_no_allreduce():
+    """
+    Feature: test config group size
+    Description: group is 1
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((32, 1), (1,), (1,), (1,), (1,))
+    strategy2 = ((32, 1),)
+    net = Net2(strategy1=strategy1, strategy2=strategy2, group_size=1)
+    compile_net2(net)
+
+
+def test_batchnorm_config_group_size_is_not_power_of_2():
+    """
+    Feature: test config group size
+    Description: group is not the power of 2
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((32, 1), (1,), (1,), (1,), (1,))
+    strategy2 = ((32, 1),)
+    net = Net2(strategy1=strategy1, strategy2=strategy2, group_size=10)
+    with pytest.raises(RuntimeError):
+        compile_net2(net)
+
+
+def test_batchnorm_config_group_size_and_shard_n_c():
+    """
+    Feature: test config group size
+    Description: shard n/c
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
+    strategy1 = ((8, 4), (4,), (4,), (4,), (4,))
+    strategy2 = ((8, 4),)
+    net = Net2(strategy1=strategy1, strategy2=strategy2, group_size=4)
+    with pytest.raises(RuntimeError):
+        compile_net2(net)
