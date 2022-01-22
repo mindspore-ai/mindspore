@@ -95,7 +95,7 @@ class Evaluator : public Base {
   EvaluatorCacheMgrPtr evaluator_cache_mgr() const { return evaluator_cache_mgr_; }
   EvaluatorAttrCachePtr attr_cache() const { return attr_cache_; }
 
-  const std::recursive_timed_mutex &eval_lock() { return eval_lock_; }
+  const std::recursive_timed_mutex &eval_lock() const { return eval_lock_; }
 
  protected:
   std::string identifier_;
