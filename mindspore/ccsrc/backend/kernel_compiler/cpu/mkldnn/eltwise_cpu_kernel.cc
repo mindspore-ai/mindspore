@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ struct DescParam {
 };
 }  // namespace
 
-dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const dnnl::memory::desc src_desc) {
+dnnl::eltwise_forward::desc EltWiseCpuKernelMod::GetForwardEltwiseDesc(const dnnl::memory::desc src_desc) {
   static const std::unordered_map<std::string, DescParam> eltWiseOpDescMap{
     {prim::kPrimRelu->name(), DescParam{dnnl::algorithm::eltwise_relu}},
     {prim::kPrimRelu6->name(), DescParam{dnnl::algorithm::eltwise_clip, 0.0f, 6.0f}},
@@ -48,14 +48,14 @@ dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const dnnl::
   };
   const auto desc_pair = eltWiseOpDescMap.find(kernel_name_);
   if (desc_pair == eltWiseOpDescMap.end()) {
-    MS_LOG(EXCEPTION) << "EltWiseCPUKernel does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "EltWiseCpuKernelMod does not support " << kernel_name_;
   }
   auto desc = CreateDesc<dnnl::eltwise_forward::desc>(dnnl_forward_, desc_pair->second.algorithm, src_desc,
                                                       desc_pair->second.alpha, desc_pair->second.beta);
   return desc;
 }
 
-void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void EltWiseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -71,8 +71,8 @@ void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, src_desc);
 }
 
-bool EltWiseCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool EltWiseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);

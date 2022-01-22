@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,6 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(FFT3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-                      FFT3DGpuKernel, float)
+                      FFT3DGpuKernelMod, float)
 }  // namespace kernel
 }  // namespace mindspore

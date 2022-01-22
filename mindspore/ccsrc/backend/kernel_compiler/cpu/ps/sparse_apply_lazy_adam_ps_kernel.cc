@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ namespace kernel {
 namespace ps {
 constexpr size_t kSparseApplyLazyAdamPSInputsSize = 11;
 
-void SparseApplyLazyAdamPSKernel::InitKernel(
+void SparseApplyLazyAdamPSKernelMod::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < kSparseApplyLazyAdamPSInputsSize) {
-    MS_LOG(EXCEPTION) << "SparseApplyLazyAdamPSKernel needs " << kSparseApplyLazyAdamPSInputsSize
+    MS_LOG(EXCEPTION) << "SparseApplyLazyAdamPSKernelMod needs " << kSparseApplyLazyAdamPSInputsSize
                       << " input shapes, but got " << shape_vec.size();
   }
   std::vector<size_t> &var_shape = *(shape_vec[0]);
@@ -79,7 +79,7 @@ void SparseApplyLazyAdamPSKernel::InitKernel(
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
 }
 
-void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+void SparseApplyLazyAdamPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Shape should not empty";
   }
@@ -89,7 +89,7 @@ void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> 
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
-void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
+void SparseApplyLazyAdamPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyLazyAdamPSInputsSize) {
     MS_LOG(EXCEPTION) << "Input shape size should not be less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
                       << inputs.size();
@@ -100,9 +100,9 @@ void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) 
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
-bool SparseApplyLazyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
+bool SparseApplyLazyAdamPSKernelMod::Execute(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs) {
   ReInit(inputs);
   if (indices_size_ == 0) {
     return true;
@@ -110,11 +110,11 @@ bool SparseApplyLazyAdamPSKernel::Execute(const std::vector<AddressPtr> &inputs,
   return Launch(inputs, workspace, outputs);
 }
 
-const std::vector<size_t> &SparseApplyLazyAdamPSKernel::input_sizes() const { return GetInputSizeList(); }
+const std::vector<size_t> &SparseApplyLazyAdamPSKernelMod::input_sizes() const { return GetInputSizeList(); }
 
-const std::vector<size_t> &SparseApplyLazyAdamPSKernel::output_sizes() const { return GetOutputSizeList(); }
+const std::vector<size_t> &SparseApplyLazyAdamPSKernelMod::output_sizes() const { return GetOutputSizeList(); }
 
-const std::vector<size_t> &SparseApplyLazyAdamPSKernel::workspace_sizes() const { return GetWorkspaceSizeList(); }
+const std::vector<size_t> &SparseApplyLazyAdamPSKernelMod::workspace_sizes() const { return GetWorkspaceSizeList(); }
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,27 +25,27 @@ MS_REG_GPU_KERNEL_TWO(OneHot,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      OneHotGpuFwdKernel, float, int)
+                      OneHotFwdGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(OneHot,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      OneHotGpuFwdKernel, half, int)
+                      OneHotFwdGpuKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(OneHot,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      OneHotGpuFwdKernel, float, int64_t)
+                      OneHotFwdGpuKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(OneHot,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      OneHotGpuFwdKernel, half, int64_t)
+                      OneHotFwdGpuKernelMod, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class GatherV2CPUKernel : public CPUKernel {
+class GatherV2CpuKernelMod : public NativeCpuKernelMod {
  public:
-  GatherV2CPUKernel() = default;
-  ~GatherV2CPUKernel() override = default;
+  GatherV2CpuKernelMod() = default;
+  ~GatherV2CpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,43 +46,43 @@ class GatherV2CPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-  GatherV2CPUKernel, uint8_t);
+  GatherV2CpuKernelMod, uint8_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-  GatherV2CPUKernel, uint16_t);
+  GatherV2CpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-  GatherV2CPUKernel, uint32_t);
+  GatherV2CpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-  GatherV2CPUKernel, uint64_t);
+  GatherV2CpuKernelMod, uint64_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-  GatherV2CPUKernel, int8_t);
+  GatherV2CpuKernelMod, int8_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-  GatherV2CPUKernel, int16_t);
+  GatherV2CpuKernelMod, int16_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  GatherV2CPUKernel, int32_t);
+  GatherV2CpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  GatherV2CPUKernel, int64_t);
+  GatherV2CpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(
   Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  GatherV2CPUKernel, float16);
+  GatherV2CpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(
   Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  GatherV2CPUKernel, float);
+  GatherV2CpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  GatherV2CPUKernel, double);
+  GatherV2CpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
   Gather, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  GatherV2CPUKernel, bool);
+  GatherV2CpuKernelMod, bool);
 // dynamic shape ends
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
@@ -90,84 +90,84 @@ MS_REG_CPU_KERNEL_T(Gather,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeUInt8),
-                    GatherV2CPUKernel, uint8_t);
+                    GatherV2CpuKernelMod, uint8_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeUInt16)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeUInt16),
-                    GatherV2CPUKernel, uint16_t);
+                    GatherV2CpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeUInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeUInt32),
-                    GatherV2CPUKernel, uint32_t);
+                    GatherV2CpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeUInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeUInt64),
-                    GatherV2CPUKernel, uint64_t);
+                    GatherV2CpuKernelMod, uint64_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt8)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt8),
-                    GatherV2CPUKernel, int8_t);
+                    GatherV2CpuKernelMod, int8_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt16)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt16),
-                    GatherV2CPUKernel, int16_t);
+                    GatherV2CpuKernelMod, int16_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt32),
-                    GatherV2CPUKernel, int32_t);
+                    GatherV2CpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    GatherV2CPUKernel, int64_t);
+                    GatherV2CpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat16),
-                    GatherV2CPUKernel, float16);
+                    GatherV2CpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    GatherV2CPUKernel, float);
+                    GatherV2CpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat64),
-                    GatherV2CPUKernel, double);
+                    GatherV2CpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(Gather,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeBool),
-                    GatherV2CPUKernel, bool);
+                    GatherV2CpuKernelMod, bool);
 }  // namespace kernel
 }  // namespace mindspore
 

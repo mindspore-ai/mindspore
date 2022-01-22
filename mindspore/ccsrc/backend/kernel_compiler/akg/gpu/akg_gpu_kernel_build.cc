@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ constexpr int32_t ARGS_SIZE = 1;
 
 void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
-  auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);
+  auto kernel_mod_ptr = std::make_shared<AkgGpuKernelMod>(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());

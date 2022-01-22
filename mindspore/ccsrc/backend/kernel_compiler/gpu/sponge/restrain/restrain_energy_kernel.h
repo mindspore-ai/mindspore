@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RestrainEnergyGpuKernel : public GpuKernel {
+class RestrainEnergyGpuKernelMod : public NativeGpuKernelMod {
  public:
-  RestrainEnergyGpuKernel() : ele_crd(1) {}
-  ~RestrainEnergyGpuKernel() override = default;
+  RestrainEnergyGpuKernelMod() : ele_crd(1) {}
+  ~RestrainEnergyGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -55,10 +55,6 @@ class RestrainEnergyGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -90,9 +86,6 @@ class RestrainEnergyGpuKernel : public GpuKernel {
   size_t ele_restrain_list = 1;
   size_t ele_crd_ref = 1;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int restrain_numbers;
   int atom_numbers;
   float weight;

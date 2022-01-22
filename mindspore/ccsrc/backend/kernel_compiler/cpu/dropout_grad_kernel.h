@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutGradCpuBwdKernel : public CPUKernel {
+class DropoutGradBwdCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DropoutGradCpuBwdKernel() = default;
-  ~DropoutGradCpuBwdKernel() override = default;
+  DropoutGradBwdCpuKernelMod() = default;
+  ~DropoutGradBwdCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -45,7 +45,7 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradCpuBwdKernel);
+MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradBwdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

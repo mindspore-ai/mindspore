@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,23 +28,23 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-using mindspore::kernel::ApplyMomentumCPUKernel;
+using mindspore::kernel::ApplyMomentumCpuKernelMod;
 template <typename T>
-class ApplyMomentumKernel : public ApplyMomentumCPUKernel, public OptimizerKernel {
+class ApplyMomentumKernel : public ApplyMomentumCpuKernelMod, public OptimizerKernelMod {
  public:
   ApplyMomentumKernel() = default;
   ~ApplyMomentumKernel() override = default;
 
   void InitKernel(const CNodePtr &cnode) override {
     MS_EXCEPTION_IF_NULL(cnode);
-    ApplyMomentumCPUKernel::InitKernel(cnode);
+    ApplyMomentumCpuKernelMod::InitKernel(cnode);
     InitServerKernelInputOutputSize(cnode);
     GenerateReuseKernelNodeInfo();
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return ApplyMomentumCPUKernel::Launch(inputs, workspace, outputs);
+    return ApplyMomentumCpuKernelMod::Launch(inputs, workspace, outputs);
   }
 
   void GenerateReuseKernelNodeInfo() override {

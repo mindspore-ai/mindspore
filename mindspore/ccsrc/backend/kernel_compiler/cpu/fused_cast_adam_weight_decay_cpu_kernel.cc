@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ namespace mindspore {
 namespace kernel {
 static constexpr size_t BATCH_SIZE = 10000;
 static constexpr float MIN_GLOBAL_NORM = 1e-10;
-void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs,
-                                                                const std::vector<AddressPtr> &) {
+void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp32(const std::vector<AddressPtr> &inputs,
+                                                                   const std::vector<AddressPtr> &) {
   auto m = reinterpret_cast<float *>(inputs[M]->addr);
   auto v = reinterpret_cast<float *>(inputs[V]->addr);
   auto lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
@@ -62,8 +62,8 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp32(const std::vecto
   CPUKernelUtils::ParallelFor(task, lens, BATCH_SIZE);
 }
 
-void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs,
-                                                                const std::vector<AddressPtr> &) {
+void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::vector<AddressPtr> &inputs,
+                                                                   const std::vector<AddressPtr> &) {
   auto m = reinterpret_cast<float *>(inputs[M]->addr);
   auto v = reinterpret_cast<float *>(inputs[V]->addr);
   auto lr = reinterpret_cast<float *>(inputs[LR]->addr)[kScalarIndex];
@@ -103,7 +103,7 @@ void FusedCastAdamWeightDecayCPUKernel::LaunchFusedCastAdamFp16(const std::vecto
   CPUKernelUtils::ParallelFor(task, lens, BATCH_SIZE);
 }
 
-void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, VAR);
@@ -136,8 +136,8 @@ void FusedCastAdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) 
   }
 }
 
-void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
-                                                   const std::vector<kernel::AddressPtr> &outputs) const {
+void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
+                                                      const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << inputs.size();
@@ -187,9 +187,9 @@ void FusedCastAdamWeightDecayCPUKernel::CheckParam(const std::vector<kernel::Add
   }
 }
 
-bool FusedCastAdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+bool FusedCastAdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                  const std::vector<kernel::AddressPtr> &,
+                                                  const std::vector<kernel::AddressPtr> &outputs) {
   CheckParam(inputs, outputs);
   if (var_dtype_ == kNumberTypeFloat16) {
     LaunchFusedCastAdamFp16(inputs, outputs);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ constexpr size_t kAdaptiveAvgPool2dGradInputNum = 2;
 constexpr size_t kAdaptiveAvgPool2dGradMinRank = 2;
 
 template <typename T>
-class AdaptiveAvgPool2DGradKernel : public GpuKernel {
+class AdaptiveAvgPool2DGradKernelMod : public NativeGpuKernelMod {
  public:
-  AdaptiveAvgPool2DGradKernel()
+  AdaptiveAvgPool2DGradKernelMod()
       : input_size_(0),
         output_size_(0),
         input_height_(0),
@@ -42,11 +42,7 @@ class AdaptiveAvgPool2DGradKernel : public GpuKernel {
         size_(0),
         is_null_input_(false),
         kernel_name_("AdaptiveAvgPool2DGrad") {}
-  ~AdaptiveAvgPool2DGradKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~AdaptiveAvgPool2DGradKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -126,10 +122,6 @@ class AdaptiveAvgPool2DGradKernel : public GpuKernel {
   uint size_;
   bool is_null_input_;
   std::string kernel_name_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

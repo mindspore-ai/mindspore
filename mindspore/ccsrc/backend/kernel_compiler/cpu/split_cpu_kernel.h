@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SplitCPUKernel : public CPUKernel {
+class SplitCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SplitCPUKernel() = default;
-  ~SplitCPUKernel() override = default;
+  SplitCpuKernelMod() = default;
+  ~SplitCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -52,12 +52,12 @@ class SplitCPUKernel : public CPUKernel {
   std::vector<int> input_shape_;
 };
 
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, float);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, float16);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, double);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, uint32_t);
-MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, float16);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, uint32_t);
+MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCpuKernelMod, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

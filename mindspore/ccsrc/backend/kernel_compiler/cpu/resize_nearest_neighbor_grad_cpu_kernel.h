@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ResizeNearestNeighborGradCPUKernel : public CPUKernel {
+class ResizeNearestNeighborGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ResizeNearestNeighborGradCPUKernel() = default;
-  ~ResizeNearestNeighborGradCPUKernel() override = default;
+  ResizeNearestNeighborGradCpuKernelMod() = default;
+  ~ResizeNearestNeighborGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -54,23 +54,23 @@ class ResizeNearestNeighborGradCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                  ResizeNearestNeighborGradCPUKernel);
+                  ResizeNearestNeighborGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ResizeNearestNeighborGradCPUKernel);
+                  ResizeNearestNeighborGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ResizeNearestNeighborGradCPUKernel);
+                  ResizeNearestNeighborGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ResizeNearestNeighborGradCPUKernel);
+                  ResizeNearestNeighborGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ResizeNearestNeighborGradCPUKernel);
+                  ResizeNearestNeighborGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RESIZE_NEAREST_NEIGHBOR_GRAD_CPU_KERNEL_H_

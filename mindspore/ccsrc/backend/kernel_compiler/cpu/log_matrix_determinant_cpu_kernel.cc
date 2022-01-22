@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ static constexpr int kNumber1 = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-void LogMatrixDeterminantCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LogMatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -70,9 +70,9 @@ void LogMatrixDeterminantCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool LogMatrixDeterminantCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> & /* workspace */,
-                                           const std::vector<kernel::AddressPtr> &outputs) {
+bool LogMatrixDeterminantCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> & /* workspace */,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat32) {
     LaunchLogMatrixDeterminant<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
@@ -88,8 +88,8 @@ bool LogMatrixDeterminantCPUKernel::Launch(const std::vector<kernel::AddressPtr>
 }
 
 template <typename T>
-void LogMatrixDeterminantCPUKernel::LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs,
-                                                               const std::vector<AddressPtr> &outputs) {
+void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vector<AddressPtr> &inputs,
+                                                                  const std::vector<AddressPtr> &outputs) {
   auto node_ = node_wpt_.lock();
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";

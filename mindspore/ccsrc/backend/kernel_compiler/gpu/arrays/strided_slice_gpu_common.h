@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,10 +71,6 @@ class StridedSliceGpuCommon {
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   bool null_output_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

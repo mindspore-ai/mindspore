@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kDynamicShapeOutputNum = 1;
 }  // namespace
 
 template <typename T>
-void DynamicShapeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void DynamicShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -35,9 +35,9 @@ void DynamicShapeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool DynamicShapeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicShapeOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   if (node_ == nullptr) {

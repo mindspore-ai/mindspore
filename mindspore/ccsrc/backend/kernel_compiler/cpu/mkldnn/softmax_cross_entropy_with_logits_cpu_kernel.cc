@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputsNum = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-void SoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -38,7 +38,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr 
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-void SoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -62,8 +62,8 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_n
   AddArgument(DNNL_ARG_DST, mem_desc);
 }
 
-void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *logits, const float *labels,
-                                                                float *output1, float *output2) const {
+void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *logits, const float *labels,
+                                                                   float *output1, float *output2) const {
   float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
     output1[i] = 0;
@@ -77,9 +77,9 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *log
   }
 }
 
-bool SoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &workspace,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &workspace,
+                                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,52 +32,54 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::device::cpu::KernelAttr;
-using CPUKernelCreator = std::function<std::shared_ptr<CPUKernel>()>;
+using NativeCpuKernelModCreator = std::function<std::shared_ptr<NativeCpuKernelMod>()>;
 
-class CPUKernelFactory {
+class NativeCpuKernelModFactory {
  public:
-  static CPUKernelFactory &GetInstance();
-  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator);
-  std::shared_ptr<CPUKernel> Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
+  static NativeCpuKernelModFactory &GetInstance();
+  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
+                NativeCpuKernelModCreator &&kernel_creator);
+  std::shared_ptr<NativeCpuKernelMod> Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
   void SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info, std::vector<KernelAttr> *kernel_attrs);
   void UpdateKernelAttrs(const std::string &kernel_name, const std::vector<KernelAttr> &kernel_attrs);
   std::vector<KernelAttr> GetSupportedKernelAttrList(const std::string &kernel_name);
   bool SearchRegisteredOp(const std::string &kernel_name) const;
 
  private:
-  CPUKernelFactory() = default;
-  ~CPUKernelFactory() = default;
-  DISABLE_COPY_AND_ASSIGN(CPUKernelFactory)
+  NativeCpuKernelModFactory() = default;
+  ~NativeCpuKernelModFactory() = default;
+  DISABLE_COPY_AND_ASSIGN(NativeCpuKernelModFactory)
   std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo &kernel_info);
   bool CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info) const;
-  std::map<std::string, std::vector<std::pair<KernelAttr, CPUKernelCreator>>> name_to_attr_creator_;
+  std::map<std::string, std::vector<std::pair<KernelAttr, NativeCpuKernelModCreator>>> name_to_attr_creator_;
 };
 
-class CPUKernelRegistrar {
+class NativeCpuKernelRegistrar {
  public:
-  CPUKernelRegistrar(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator) {
-    CPUKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(kernel_creator));
+  NativeCpuKernelRegistrar(const std::string &kernel_name, const KernelAttr &kernel_attr,
+                           NativeCpuKernelModCreator &&kernel_creator) {
+    NativeCpuKernelModFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(kernel_creator));
   }
-  ~CPUKernelRegistrar() = default;
+  ~NativeCpuKernelRegistrar() = default;
 };
 
 #define MS_REG_CPU_KERNEL(OPNAME, ATTR, OPCLASS) MS_REG_CPU_KERNEL_(__COUNTER__, OPNAME, ATTR, OPCLASS)
 #define MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS) _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)
-#define _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)                                  \
-  static_assert(std::is_base_of<CPUKernel, OPCLASS>::value, " must be base of CPUKernel"); \
-  static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_reg(#OPNAME, ATTR,                \
-                                                             []() { return std::make_shared<OPCLASS>(); });
+#define _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)                                                    \
+  static_assert(std::is_base_of<NativeCpuKernelMod, OPCLASS>::value, " must be base of NativeCpuKernelMod"); \
+  static const NativeCpuKernelRegistrar g_cpu_kernel_##COUNT##_reg(#OPNAME, ATTR,                            \
+                                                                   []() { return std::make_shared<OPCLASS>(); });
 
 #define MS_REG_CPU_KERNEL_T(OPNAME, ATTR, OPCLASS, T) MS_REG_CPU_KERNEL_T_(__COUNTER__, OPNAME, ATTR, OPCLASS, T)
 #define MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T) _MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T)
-#define _MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T)                                \
-  static_assert(std::is_base_of<CPUKernel, OPCLASS<T>>::value, " must be base of CPUKernel"); \
-  static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_##OPNAME##_##T##_reg(                \
+#define _MS_REG_CPU_KERNEL_T_(COUNT, OPNAME, ATTR, OPCLASS, T)                                                  \
+  static_assert(std::is_base_of<NativeCpuKernelMod, OPCLASS<T>>::value, " must be base of NativeCpuKernelMod"); \
+  static const NativeCpuKernelRegistrar g_cpu_kernel_##COUNT##_##OPNAME##_##T##_reg(                            \
     #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T>>(); });
 
-#define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S)                                       \
-  static_assert(std::is_base_of<CPUKernel, OPCLASS<T, S>>::value, " must be base of CPUKernel"); \
-  static const CPUKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_##S##_reg(                       \
+#define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S)                                                         \
+  static_assert(std::is_base_of<NativeCpuKernelMod, OPCLASS<T, S>>::value, " must be base of NativeCpuKernelMod"); \
+  static const NativeCpuKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_##S##_reg(                                   \
     #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T, S>>(); });
 }  // namespace kernel
 }  // namespace mindspore

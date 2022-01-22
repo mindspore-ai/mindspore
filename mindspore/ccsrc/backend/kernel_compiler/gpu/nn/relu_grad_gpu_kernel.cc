@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +21,29 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ReluGradGpuFwdKernel, double)
+  ReluGradFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ReluGradGpuFwdKernel, float)
+  ReluGradFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ReluGradGpuFwdKernel, half)
+  ReluGradFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ReluGradGpuFwdKernel, int64_t)
+  ReluGradFwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ReluGradGpuFwdKernel, int32_t)
+  ReluGradFwdGpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ReluGradGpuFwdKernel, int16_t)
+  ReluGradFwdGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  ReluGradGpuFwdKernel, int8_t)
+  ReluGradFwdGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  ReluGradGpuFwdKernel, uint8_t)
+  ReluGradFwdGpuKernelMod, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore

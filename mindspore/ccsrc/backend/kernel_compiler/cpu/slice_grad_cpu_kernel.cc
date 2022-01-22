@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ constexpr size_t kOutputsNum = 1;
 constexpr size_t kSliceGradMaxInputShapeSize = 4;
 }  // namespace
 
-void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -83,7 +83,7 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
 
-void SliceGradCPUKernel::ClearVectors() {
+void SliceGradCpuKernelMod::ClearVectors() {
   begin_.clear();
   size_.clear();
   strides_.clear();
@@ -94,7 +94,7 @@ void SliceGradCPUKernel::ClearVectors() {
   output_shape_.clear();
 }
 
-void SliceGradCPUKernel::ExpandAllMemberDims() {
+void SliceGradCpuKernelMod::ExpandAllMemberDims() {
   auto output_len = output_shape_.size();
   constexpr size_t expand_dims = 4;
   if (output_len < expand_dims) {
@@ -116,7 +116,7 @@ void SliceGradCPUKernel::ExpandAllMemberDims() {
   }
 }
 
-void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
+void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   ClearVectors();
   output_shape_ = AnfAlgo::GetOutputInferShape(cnode, 0);
@@ -175,8 +175,9 @@ void SliceGradCPUKernel::InitParams(const std::vector<kernel::AddressPtr> &input
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
 
-bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input should be not empty.";
   }
@@ -200,8 +201,8 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
@@ -258,7 +259,7 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
-bool SliceGradCPUKernel::CanCopyMemoryOnAxis(size_t dim) const {
+bool SliceGradCpuKernelMod::CanCopyMemoryOnAxis(size_t dim) const {
   for (size_t i = dim + 1; i < 4; ++i) {
     if (begin_[i] != 0 || end_[i] != SizeToInt(output_shape_[i]) || strides_[i] != 1) {
       return false;
@@ -267,7 +268,7 @@ bool SliceGradCPUKernel::CanCopyMemoryOnAxis(size_t dim) const {
   return true;
 }
 
-int SliceGradCPUKernel::SignOfStride(size_t axis) const {
+int SliceGradCpuKernelMod::SignOfStride(size_t axis) const {
   if (strides_[axis] > 0) {
     return 1;
   }
@@ -275,9 +276,9 @@ int SliceGradCPUKernel::SignOfStride(size_t axis) const {
 }
 
 template <typename T>
-void SliceGradCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
-                                          const std::vector<kernel::AddressPtr> &outputs, size_t out_offset,
-                                          size_t copy_num, int id) const {
+void SliceGradCpuKernelMod::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
+                                             const std::vector<kernel::AddressPtr> &outputs, size_t out_offset,
+                                             size_t copy_num, int id) const {
   T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto in_buff_size = inputs[0]->size;
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
@@ -297,7 +298,7 @@ void SliceGradCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> 
   }
 }
 
-void SliceGradCPUKernel::FormatArgs(bool stride) {
+void SliceGradCpuKernelMod::FormatArgs(bool stride) {
   if (stride) {
     for (size_t i = 0; i < strides_.size(); ++i) {
       if (strides_[i] == 0) {

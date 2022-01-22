@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixDeterminantCPUKernel : public CPUKernel {
+class MatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatrixDeterminantCPUKernel() = default;
-  ~MatrixDeterminantCPUKernel() override = default;
+  MatrixDeterminantCpuKernelMod() = default;
+  ~MatrixDeterminantCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -42,18 +42,18 @@ class MatrixDeterminantCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(MatrixDeterminant, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  MatrixDeterminantCPUKernel);
+                  MatrixDeterminantCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MatrixDeterminant, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  MatrixDeterminantCPUKernel);
+                  MatrixDeterminantCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MatrixDeterminant,
                   KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-                  MatrixDeterminantCPUKernel);
+                  MatrixDeterminantCpuKernelMod);
 
 MS_REG_CPU_KERNEL(MatrixDeterminant,
                   KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-                  MatrixDeterminantCPUKernel);
+                  MatrixDeterminantCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_DETERMINANT_CPU_KERNEL_H_

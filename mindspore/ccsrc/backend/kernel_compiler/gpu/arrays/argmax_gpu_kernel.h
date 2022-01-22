@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ArgmaxGpuKernel : public GpuKernel {
+class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ArgmaxGpuKernel()
+  ArgmaxGpuKernelMod()
       : input_size_(0),
         output_size_(0),
         workspace_size_(0),
@@ -36,11 +36,7 @@ class ArgmaxGpuKernel : public GpuKernel {
         inner_size_(0),
         is_null_input_(false),
         kernel_name_("Argmax") {}
-  ~ArgmaxGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~ArgmaxGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -110,9 +106,6 @@ class ArgmaxGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   S bound_;
   size_t outer_size_;
   size_t inner_size_;

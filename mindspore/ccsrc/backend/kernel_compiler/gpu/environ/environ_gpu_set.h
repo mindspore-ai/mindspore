@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,11 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironSetGpuKernel : public GpuKernel {
+class EnvironSetGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EnvironSetGpuKernel() : value_type_attr_(kObjectTypeTensorType), handle_size_(0), key_size_(0), value_size_(0) {}
-  ~EnvironSetGpuKernel() = default;
+  EnvironSetGpuKernelMod() : value_type_attr_(kObjectTypeTensorType), handle_size_(0), key_size_(0), value_size_(0) {}
+  ~EnvironSetGpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
@@ -46,13 +43,9 @@ class EnvironSetGpuKernel : public GpuKernel {
   size_t handle_size_;
   size_t key_size_;
   size_t value_size_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_GPU_KERNEL(EnvironSet, EnvironSetGpuKernel)
+MS_REG_GPU_KERNEL(EnvironSet, EnvironSetGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReduceCPUKernel : public CPUKernel {
+class ReduceCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ReduceCPUKernel() = default;
-  ~ReduceCPUKernel() override = default;
+  ReduceCpuKernelMod() = default;
+  ~ReduceCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -46,35 +46,35 @@ class ReduceCPUKernel : public CPUKernel {
   bool simple_execute_{false};
 };
 
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCPUKernel, double);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr(), ReduceCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCPUKernel, double);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr(), ReduceCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCPUKernel, double);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCPUKernel, int64_t);
-MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCPUKernel, bool);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr(), ReduceCpuKernelMod, bool);
 
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, double);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, double);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, int64_t);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, double);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(ReduceAll, KernelAttr(), ReduceCPUKernel, bool);
+MS_REG_CPU_KERNEL_T(ReduceAll, KernelAttr(), ReduceCpuKernelMod, bool);
 
-MS_REG_CPU_KERNEL_T(ReduceAny, KernelAttr(), ReduceCPUKernel, bool);
+MS_REG_CPU_KERNEL_T(ReduceAny, KernelAttr(), ReduceCpuKernelMod, bool);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_

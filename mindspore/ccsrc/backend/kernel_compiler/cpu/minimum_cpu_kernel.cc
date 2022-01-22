@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,16 @@ namespace kernel {
 namespace {
 constexpr size_t kMinimumInputsNum = 2;
 constexpr size_t kMinimumOutputsNum = 1;
+
+constexpr size_t kIdx2 = 2;
+constexpr size_t kIdx3 = 3;
+constexpr size_t kIdx4 = 4;
+constexpr size_t kIdx5 = 5;
+constexpr size_t kIdx6 = 6;
 }  // namespace
 
 template <typename T>
-void MinimumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void MinimumCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -51,7 +57,7 @@ void MinimumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
+void MinimumCpuKernelMod<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
   if (max_input_shape_size != output_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output tensor should be equal to the max "
@@ -62,7 +68,7 @@ void MinimumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) 
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
+void MinimumCpuKernelMod<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
   if (input_x_dtype == kNumberTypeBool && input_y_dtype == kNumberTypeBool) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor types should not be both bool.";
   }
@@ -74,8 +80,9 @@ void MinimumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 }
 
 template <typename T>
-bool MinimumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool MinimumCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumOutputsNum, kernel_name_);
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
@@ -86,19 +93,19 @@ bool MinimumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod<T>::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
   if (need_broadcast_) {
-    BroadcastArithKernel(broadcast_input_x_shape_[0], broadcast_input_x_shape_[1], broadcast_input_x_shape_[2],
-                         broadcast_input_x_shape_[3], broadcast_input_x_shape_[4], broadcast_input_x_shape_[5],
-                         broadcast_input_x_shape_[6], broadcast_input_y_shape_[0], broadcast_input_y_shape_[1],
-                         broadcast_input_y_shape_[2], broadcast_input_y_shape_[3], broadcast_input_y_shape_[4],
-                         broadcast_input_y_shape_[5], broadcast_input_y_shape_[6], broadcast_output_shape_[0],
-                         broadcast_output_shape_[1], broadcast_output_shape_[2], broadcast_output_shape_[3],
-                         broadcast_output_shape_[4], broadcast_output_shape_[5], broadcast_output_shape_[6], input_x,
-                         input_y, output);
+    BroadcastArithKernel(broadcast_input_x_shape_[0], broadcast_input_x_shape_[1], broadcast_input_x_shape_[kIdx2],
+                         broadcast_input_x_shape_[kIdx3], broadcast_input_x_shape_[kIdx4],
+                         broadcast_input_x_shape_[kIdx5], broadcast_input_x_shape_[kIdx6], broadcast_input_y_shape_[0],
+                         broadcast_input_y_shape_[1], broadcast_input_y_shape_[kIdx2], broadcast_input_y_shape_[kIdx3],
+                         broadcast_input_y_shape_[kIdx4], broadcast_input_y_shape_[kIdx5],
+                         broadcast_input_y_shape_[kIdx6], broadcast_output_shape_[0], broadcast_output_shape_[1],
+                         broadcast_output_shape_[kIdx2], broadcast_output_shape_[kIdx3], broadcast_output_shape_[kIdx4],
+                         broadcast_output_shape_[kIdx5], broadcast_output_shape_[kIdx6], input_x, input_y, output);
   } else {
     if (input_x_shape_.size() == 0 || input_y_shape_.size() == 0) {
       BroadcastArithOneScalarOneTensor(input_x, input_y, output);
@@ -109,7 +116,7 @@ void MinimumCPUKernel<T>::BroadcastArith(const T *input_x, const T *input_y, T *
 }
 
 template <typename T>
-bool MinimumCPUKernel<T>::IsBroadcast() const {
+bool MinimumCpuKernelMod<T>::IsBroadcast() const {
   if (input_x_shape_.size() != input_y_shape_.size()) {
     return true;
   }
@@ -122,7 +129,7 @@ bool MinimumCPUKernel<T>::IsBroadcast() const {
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::InitTensorBroadcastShape() {
+void MinimumCpuKernelMod<T>::InitTensorBroadcastShape() {
   if (output_shape_.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output should be less than or equal to 7, but got "
@@ -150,18 +157,19 @@ void MinimumCPUKernel<T>::InitTensorBroadcastShape() {
 
 // Broadcast comparison
 template <typename T>
-size_t MinimumCPUKernel<T>::Index(const size_t &index, const size_t &dim) const {
+size_t MinimumCpuKernelMod<T>::Index(const size_t &index, const size_t &dim) const {
   return dim == 1 ? 0 : index;
 }
 
 // Broadcast Arithmetic
 template <typename T>
-void MinimumCPUKernel<T>::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                               const size_t d6, const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod<T>::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                                  const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                                  const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                                  const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                                  const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                                  const size_t d6, const T *input_x, const T *input_y,
+                                                  T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
@@ -190,7 +198,7 @@ void MinimumCPUKernel<T>::BroadcastArithKernel(const size_t l0, const size_t l1,
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod<T>::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
   if (input_x_shape_.size() == 0) {
     for (size_t i = 0; i < output_num_; ++i) {
       output[i] = MinimumFunc(input_x[0], input_y[i]);
@@ -203,7 +211,7 @@ void MinimumCPUKernel<T>::BroadcastArithOneScalarOneTensor(const T *input_x, con
 }
 
 template <typename T>
-void MinimumCPUKernel<T>::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod<T>::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
   for (size_t i = 0; i < output_num_; ++i) {
     output[i] = MinimumFunc(input_x[i], input_y[i]);
   }

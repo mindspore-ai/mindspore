@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,38 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr float kSkinDef = 2.0;
+constexpr float kCutoffDef = 10.0;
+constexpr int kMaxAtomInGridNumDef = 64;
+constexpr int kMaxNbNumDef = 800;
+
+constexpr size_t kIdx2 = 2;
+constexpr size_t kIdx3 = 3;
+constexpr size_t kIdx4 = 4;
+constexpr size_t kIdx5 = 5;
+constexpr size_t kIdx6 = 6;
+constexpr size_t kIdx7 = 7;
+constexpr size_t kIdx8 = 8;
+constexpr size_t kIdx9 = 9;
+constexpr size_t kIdx10 = 10;
+constexpr size_t kIdx11 = 11;
+constexpr size_t kIdx12 = 12;
+constexpr size_t kIdx13 = 13;
+constexpr size_t kIdx14 = 14;
+constexpr size_t kIdx15 = 15;
+constexpr size_t kIdx16 = 16;
+constexpr size_t kIdx17 = 17;
+constexpr size_t kIdx18 = 18;
+
 template <typename T, typename T1>
-class NeighborListUpdateGpuKernel : public GpuKernel {
+class NeighborListUpdateGpuKernelMod : public NativeGpuKernelMod {
  public:
-  NeighborListUpdateGpuKernel() : skin(2.0), cutoff(10.0), max_atom_in_grid_numbers(64), max_neighbor_numbers(800) {}
-  ~NeighborListUpdateGpuKernel() override = default;
+  NeighborListUpdateGpuKernelMod()
+      : skin(kSkinDef),
+        cutoff(kCutoffDef),
+        max_atom_in_grid_numbers(kMaxAtomInGridNumDef),
+        max_neighbor_numbers(kMaxNbNumDef) {}
+  ~NeighborListUpdateGpuKernelMod() override = default;
   bool Init(const CNodePtr &kernel_node) override {
     grid_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "grid_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
@@ -56,42 +83,39 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     return true;
   }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto atom_numbers_in_grid_bucket = GetDeviceAddress<int>(inputs, 0);
     auto bucket = GetDeviceAddress<int>(inputs, 1);
-    auto crd = GetDeviceAddress<float>(inputs, 2);
-    auto box_length = GetDeviceAddress<float>(inputs, 3);
-    auto grid_n = GetDeviceAddress<int>(inputs, 4);
-    auto grid_length_inverse = GetDeviceAddress<float>(inputs, 5);
-    auto atom_in_grid_serial = GetDeviceAddress<int>(inputs, 6);
-    auto old_crd = GetDeviceAddress<float>(inputs, 7);
-    auto crd_to_uint_crd_cof = GetDeviceAddress<float>(inputs, 8);
-    auto uint_crd = GetDeviceAddress<unsigned int>(inputs, 9);
-    auto gpointer = GetDeviceAddress<int>(inputs, 10);
-    auto nl_atom_numbers = GetDeviceAddress<int>(inputs, 11);
-    auto nl_atom_serial = GetDeviceAddress<int>(inputs, 12);
-    auto uint_dr_to_dr_cof = GetDeviceAddress<float>(inputs, 13);
-    auto excluded_list_start = GetDeviceAddress<int>(inputs, 14);
-    auto excluded_list = GetDeviceAddress<int>(inputs, 15);
-    auto excluded_numbers = GetDeviceAddress<int>(inputs, 16);
-    auto need_refresh_flag = GetDeviceAddress<int>(inputs, 17);
-    auto d_refresh_count = GetDeviceAddress<int>(inputs, 18);
+    auto crd = GetDeviceAddress<float>(inputs, kIdx2);
+    auto box_length = GetDeviceAddress<float>(inputs, kIdx3);
+    auto grid_n = GetDeviceAddress<int>(inputs, kIdx4);
+    auto grid_length_inverse = GetDeviceAddress<float>(inputs, kIdx5);
+    auto atom_in_grid_serial = GetDeviceAddress<int>(inputs, kIdx6);
+    auto old_crd = GetDeviceAddress<float>(inputs, kIdx7);
+    auto crd_to_uint_crd_cof = GetDeviceAddress<float>(inputs, kIdx8);
+    auto uint_crd = GetDeviceAddress<unsigned int>(inputs, kIdx9);
+    auto gpointer = GetDeviceAddress<int>(inputs, kIdx10);
+    auto nl_atom_numbers = GetDeviceAddress<int>(inputs, kIdx11);
+    auto nl_atom_serial = GetDeviceAddress<int>(inputs, kIdx12);
+    auto uint_dr_to_dr_cof = GetDeviceAddress<float>(inputs, kIdx13);
+    auto excluded_list_start = GetDeviceAddress<int>(inputs, kIdx14);
+    auto excluded_list = GetDeviceAddress<int>(inputs, kIdx15);
+    auto excluded_numbers = GetDeviceAddress<int>(inputs, kIdx16);
+    auto need_refresh_flag = GetDeviceAddress<int>(inputs, kIdx17);
+    auto d_refresh_count = GetDeviceAddress<int>(inputs, kIdx18);
 
     GRID_BUCKET *d_bucket = reinterpret_cast<GRID_BUCKET *>(GetDeviceAddress<int>(workspaces, 0));
     GRID_POINTER *d_gpointer = reinterpret_cast<GRID_POINTER *>(GetDeviceAddress<int>(workspaces, 1));
-    NEIGHBOR_LIST *nl = GetDeviceAddress<NEIGHBOR_LIST>(workspaces, 2);
-    float *half_crd_to_uint_crd_cof = GetDeviceAddress<float>(workspaces, 3);
+    NEIGHBOR_LIST *nl = GetDeviceAddress<NEIGHBOR_LIST>(workspaces, kIdx2);
+    float *half_crd_to_uint_crd_cof = GetDeviceAddress<float>(workspaces, kIdx3);
 
     for (size_t i = 0; i < h_bucket.size(); i += 1) {
       h_bucket[i].atom_serial = bucket + i * max_atom_in_grid_numbers;
     }
+    const size_t kGridSize = 125;
     for (size_t i = 0; i < h_gpointer.size(); i += 1) {
-      h_gpointer[i].grid_serial = gpointer + i * 125;
+      h_gpointer[i].grid_serial = gpointer + i * kGridSize;
     }
 
     cudaMemcpyAsync(d_bucket, h_bucket.data(), sizeof(GRID_BUCKET) * grid_numbers, cudaMemcpyHostToDevice,
@@ -125,7 +149,8 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     input_size_list_.push_back(sizeof(VECTOR));
     input_size_list_.push_back(sizeof(UNSIGNED_INT_VECTOR) * atom_numbers);
 
-    input_size_list_.push_back(sizeof(int) * grid_numbers * 125);
+    const size_t kGridSize = 125;
+    input_size_list_.push_back(sizeof(int) * grid_numbers * kGridSize);
     input_size_list_.push_back(sizeof(int) * atom_numbers);
     input_size_list_.push_back(sizeof(int) * atom_numbers * max_neighbor_numbers);
     input_size_list_.push_back(sizeof(VECTOR));
@@ -140,7 +165,8 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
     workspace_size_list_.push_back(sizeof(GRID_BUCKET) * grid_numbers);
     workspace_size_list_.push_back(sizeof(GRID_POINTER) * grid_numbers);
     workspace_size_list_.push_back(sizeof(NEIGHBOR_LIST) * atom_numbers);
-    workspace_size_list_.push_back(sizeof(float) * 3);
+    const size_t kCrdSize = 3;
+    workspace_size_list_.push_back(sizeof(float) * kCrdSize);
 
     output_size_list_.push_back(sizeof(float));
   }
@@ -162,9 +188,6 @@ class NeighborListUpdateGpuKernel : public GpuKernel {
   float half_cutoff_with_skin;
   float cutoff_with_skin_square;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   std::vector<GRID_BUCKET> h_bucket;
   std::vector<GRID_POINTER> h_gpointer;
 };

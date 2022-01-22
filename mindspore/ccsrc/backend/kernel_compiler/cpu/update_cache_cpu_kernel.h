@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class UpdateCacheCPUKernel : public CPUKernel {
+class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
  public:
-  UpdateCacheCPUKernel() = default;
-  ~UpdateCacheCPUKernel() override = default;
+  UpdateCacheCpuKernelMod() = default;
+  ~UpdateCacheCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -56,7 +56,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 
 MS_REG_CPU_KERNEL(UpdateCache,
                   KernelAttr()
@@ -65,7 +65,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 
 MS_REG_CPU_KERNEL(UpdateCache,
                   KernelAttr()
@@ -74,7 +74,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt64),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 
 MS_REG_CPU_KERNEL(UpdateCache,
                   KernelAttr()
@@ -83,7 +83,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt32),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 
 MS_REG_CPU_KERNEL(UpdateCache,
                   KernelAttr()
@@ -92,7 +92,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 
 MS_REG_CPU_KERNEL(UpdateCache,
                   KernelAttr()
@@ -101,7 +101,7 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  UpdateCacheCPUKernel);
+                  UpdateCacheCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

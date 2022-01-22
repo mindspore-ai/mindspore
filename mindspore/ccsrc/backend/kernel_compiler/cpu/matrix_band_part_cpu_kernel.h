@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MatrixBandPartCPUKernel : public CPUKernel {
+class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatrixBandPartCPUKernel() = default;
-  ~MatrixBandPartCPUKernel() override = default;
+  MatrixBandPartCpuKernelMod() = default;
+  ~MatrixBandPartCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -48,7 +48,7 @@ MS_REG_CPU_KERNEL_T(MatrixBandPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt32),
-                    MatrixBandPartCPUKernel, int32_t);
+                    MatrixBandPartCpuKernelMod, int32_t);
 
 MS_REG_CPU_KERNEL_T(MatrixBandPart,
                     KernelAttr()
@@ -56,7 +56,7 @@ MS_REG_CPU_KERNEL_T(MatrixBandPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    MatrixBandPartCPUKernel, int64_t);
+                    MatrixBandPartCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(MatrixBandPart,
                     KernelAttr()
@@ -64,7 +64,7 @@ MS_REG_CPU_KERNEL_T(MatrixBandPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    MatrixBandPartCPUKernel, float);
+                    MatrixBandPartCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(MatrixBandPart,
                     KernelAttr()
@@ -72,7 +72,7 @@ MS_REG_CPU_KERNEL_T(MatrixBandPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat64),
-                    MatrixBandPartCPUKernel, double);
+                    MatrixBandPartCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_BAND_PART_H

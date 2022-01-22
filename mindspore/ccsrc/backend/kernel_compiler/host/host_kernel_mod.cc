@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,6 @@ HostKernelFactory &HostKernelFactory::Get() {
   return instance;
 }
 
-const std::vector<size_t> &HostKernelMod::GetInputSizeList() const { return input_size_list_; }
-const std::vector<size_t> &HostKernelMod::GetOutputSizeList() const { return output_size_list_; }
-const std::vector<size_t> &HostKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);

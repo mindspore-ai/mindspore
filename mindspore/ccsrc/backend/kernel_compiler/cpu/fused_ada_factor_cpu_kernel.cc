@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@ static constexpr size_t kLastColIndex = 2;
 static constexpr float kEps = 1e-30;
 }  // namespace
 
-void FusedAdaFactorCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void FusedAdaFactorCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
   (void)workspace_size_list_.emplace_back(elem_num_ / last_row_dim_size_ * kSizeFloat32);
   (void)workspace_size_list_.emplace_back(elem_num_ / last_col_dim_size_ * kSizeFloat32);
 }
 
-void FusedAdaFactorCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   param_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, PARAM);
@@ -72,7 +72,7 @@ void FusedAdaFactorCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-float FusedAdaFactorCPUKernel::CalcRMS(T *input, size_t elem_num) {
+float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) {
   if (elem_num == 0) {
     return 0.0f;
   }
@@ -87,8 +87,8 @@ float FusedAdaFactorCPUKernel::CalcRMS(T *input, size_t elem_num) {
 }
 
 template <typename T>
-void FusedAdaFactorCPUKernel::FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspaces) {
+void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &workspaces) {
   auto beta2t = reinterpret_cast<float *>(inputs[BETA2T]->addr)[kScalarIndex];
   auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
   auto exp_avg_sq_row = reinterpret_cast<T *>(inputs[EXP_AVG_SQ_ROW]->addr);
@@ -167,8 +167,9 @@ void FusedAdaFactorCPUKernel::FactorUpdate(float *update, const std::vector<Addr
 }
 
 template <typename T>
-void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspaces, const std::vector<AddressPtr> &) {
+void FusedAdaFactorCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &workspaces,
+                                              const std::vector<AddressPtr> &) {
   auto epsilon = reinterpret_cast<float *>(inputs[EPSILON]->addr);
   auto clip_threshold = reinterpret_cast<float *>(inputs[CLIP_THRESHOLD]->addr)[kScalarIndex];
   auto beta1 = reinterpret_cast<float *>(inputs[BETA1]->addr)[kScalarIndex];
@@ -248,9 +249,9 @@ void FusedAdaFactorCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   CPUKernelUtils::ParallelFor(task, elem_num_, kBatchSize);
 }
 
-bool FusedAdaFactorCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspaces,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool FusedAdaFactorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &workspaces,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() == kStandardInputNum + 1) {
     auto global_norm = reinterpret_cast<float *>(inputs[GLOBAL_NORM]->addr)[kScalarIndex];
     if (global_norm < kEps) {
@@ -270,7 +271,7 @@ bool FusedAdaFactorCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   return true;
 }
 
-void FusedAdaFactorCPUKernel::CheckInputAddresses(const std::vector<kernel::AddressPtr> &inputs) const {
+void FusedAdaFactorCpuKernelMod::CheckInputAddresses(const std::vector<kernel::AddressPtr> &inputs) const {
   if (inputs.size() < kStandardInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be at least " << kStandardInputNum
                       << ", but got: " << inputs.size();
@@ -334,7 +335,7 @@ void FusedAdaFactorCPUKernel::CheckInputAddresses(const std::vector<kernel::Addr
   }
 }
 
-void FusedAdaFactorCPUKernel::CheckWorkspaceAddresses(const std::vector<kernel::AddressPtr> &workspaces) const {
+void FusedAdaFactorCpuKernelMod::CheckWorkspaceAddresses(const std::vector<kernel::AddressPtr> &workspaces) const {
   if (workspaces.size() != kWorkSpaceNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be " << kWorkSpaceNum
                       << ", but got: " << workspaces.size();

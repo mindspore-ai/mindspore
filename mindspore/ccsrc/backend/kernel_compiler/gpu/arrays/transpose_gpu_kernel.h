@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,21 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl_opt.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class TransposeGpuFwdKernel : public GpuKernel {
- public:
-  TransposeGpuFwdKernel() { ResetResource(); }
-  ~TransposeGpuFwdKernel() = default;
+constexpr size_t kDimSize4 = 4;
+constexpr size_t kAxisZero = 0;
+constexpr size_t kAxis1st = 1;
+constexpr size_t kAxis2nd = 2;
+constexpr size_t kAxis3rd = 3;
+constexpr size_t kAxisIndexZero = 0;
+constexpr size_t kAxisIndex1st = 1;
+constexpr size_t kAxisIndex2nd = 2;
+constexpr size_t kAxisIndex3rd = 3;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+template <typename T>
+class TransposeFwdGpuKernelMod : public NativeGpuKernelMod {
+ public:
+  TransposeFwdGpuKernelMod() { ResetResource(); }
+  ~TransposeFwdGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -56,13 +62,15 @@ class TransposeGpuFwdKernel : public GpuKernel {
 
     size_t *h_input_shape = &input_shape_[0];
     size_t *h_input_axis = &input_axis_[0];
-    // nhwc->nchw: 0,3,1,2
-    if (shape_size_ == 4 && h_input_axis[0] == 0 && h_input_axis[1] == 3 && h_input_axis[2] == 1 &&
-        h_input_axis[3] == 2) {
+    if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
+        h_input_axis[kAxisIndex1st] == kAxis3rd && h_input_axis[kAxisIndex2nd] == kAxis1st &&
+        h_input_axis[kAxisIndex3rd] == kAxis2nd) {
+      // nhwc->nchw: 0,3,1,2
       CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
                             reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else if (shape_size_ == 4 && h_input_axis[0] == 0 && h_input_axis[1] == 2 && h_input_axis[2] == 3 &&
-               h_input_axis[3] == 1) {
+    } else if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
+               h_input_axis[kAxisIndex1st] == kAxis2nd && h_input_axis[kAxisIndex2nd] == kAxis3rd &&
+               h_input_axis[kAxisIndex3rd] == kAxis1st) {
       // nchw->nhwc: 0,2,3,1
       CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
                             reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -137,9 +145,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
  private:
   std::vector<size_t> input_shape_;
   std::vector<size_t> input_axis_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   size_t shape_size_;
   size_t input_size_;
   size_t output_size_;

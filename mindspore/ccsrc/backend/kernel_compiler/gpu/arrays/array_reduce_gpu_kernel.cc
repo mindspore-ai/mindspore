@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,42 +19,42 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ArrayReduceGpuKernel, double)
+                      ArrayReduceGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ArrayReduceGpuKernel, float)
+                      ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ArrayReduceGpuKernel, half)
+                      ArrayReduceGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ArrayReduceGpuKernel, double)
+                      ArrayReduceGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ArrayReduceGpuKernel, float)
+                      ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ArrayReduceGpuKernel, half)
+                      ArrayReduceGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ArrayReduceGpuKernel, double)
+                      ArrayReduceGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ArrayReduceGpuKernel, float)
+                      ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ArrayReduceGpuKernel, half)
+                      ArrayReduceGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      ArrayReduceGpuKernel, bool)
+                      ArrayReduceGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ArrayReduceGpuKernel, double)
+                      ArrayReduceGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ArrayReduceGpuKernel, float)
+                      ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ArrayReduceGpuKernel, half)
+                      ArrayReduceGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReduceAny, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      ArrayReduceGpuKernel, bool)
+                      ArrayReduceGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(ReduceAll, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      ArrayReduceGpuKernel, bool)
+                      ArrayReduceGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      ArrayReduceGpuKernel, int8_t)
+                      ArrayReduceGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ArrayReduceGpuKernel, half)
+                      ArrayReduceGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ArrayReduceGpuKernel, float)
+                      ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ArrayReduceGpuKernel, double)
+                      ArrayReduceGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

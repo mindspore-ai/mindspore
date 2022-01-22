@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ size_t kDataSizeThreshold_ = 4 * 1024;
 namespace mindspore {
 namespace kernel {
 template <typename I, typename O>
-void LowerBoundCPUKernel<I, O>::InitKernel(const CNodePtr &kernel_node) {
+void LowerBoundCpuKernelMod<I, O>::InitKernel(const CNodePtr &kernel_node) {
   sorted_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -41,9 +41,9 @@ void LowerBoundCPUKernel<I, O>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename I, typename O>
-bool LowerBoundCPUKernel<I, O>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool LowerBoundCpuKernelMod<I, O>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto sorted_x_data_addr = reinterpret_cast<I *>(inputs[0]->addr);
   auto values_data_addr = reinterpret_cast<I *>(inputs[1]->addr);
   auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);

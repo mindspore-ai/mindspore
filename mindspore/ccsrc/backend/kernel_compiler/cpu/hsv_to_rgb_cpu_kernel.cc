@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void HSVToRGBCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void HSVToRGBCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const size_t kNumDims = 3;
   const size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -41,7 +41,7 @@ void HSVToRGBCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 template <typename T1>
-void HSVToRGBCpuKernel<T>::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) {
+void HSVToRGBCpuKernelMod<T>::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b) {
   T1 c = s * v;
   T1 m = v - c;
   T1 dh = h * 6;
@@ -110,7 +110,7 @@ void HSVToRGBCpuKernel<T>::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1 *b
 
 template <typename T>
 template <typename T1>
-void HSVToRGBCpuKernel<T>::ComputeFloat(void *input, void *output, int64_t pixel_num) {
+void HSVToRGBCpuKernelMod<T>::ComputeFloat(void *input, void *output, int64_t pixel_num) {
   T1 *input_ptr = reinterpret_cast<T1 *>(input);
   T1 *output_ptr = reinterpret_cast<T1 *>(output);
   auto shard_hsv_to_rgb = [&](size_t start, size_t end) {
@@ -128,7 +128,7 @@ void HSVToRGBCpuKernel<T>::ComputeFloat(void *input, void *output, int64_t pixel
 }
 
 template <typename T>
-void HSVToRGBCpuKernel<T>::ComputeHalf(void *input, void *output, int64_t pixel_num) {
+void HSVToRGBCpuKernelMod<T>::ComputeHalf(void *input, void *output, int64_t pixel_num) {
   float16 *input_ptr = reinterpret_cast<float16 *>(input);
   float16 *output_ptr = reinterpret_cast<float16 *>(output);
   auto shard_hsv_to_rgb = [&](size_t start, size_t end) {
@@ -147,8 +147,8 @@ void HSVToRGBCpuKernel<T>::ComputeHalf(void *input, void *output, int64_t pixel_
 }
 
 template <typename T>
-bool HSVToRGBCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                  const std::vector<AddressPtr> &outputs) {
+bool HSVToRGBCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) {
   const int64_t pixel_num =
     accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), [=](int64_t a, int64_t b) { return a * b; }) / 3;
   void *input = inputs[0]->addr;

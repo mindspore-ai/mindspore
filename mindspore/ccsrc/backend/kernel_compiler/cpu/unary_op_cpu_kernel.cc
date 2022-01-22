@@ -55,7 +55,7 @@ void Conj(const T *input, S *output, size_t start, size_t end) {
 }
 
 template <typename T, typename S>
-void UnaryOpCPUKernel<T, S>::GetUnaryOpFunc() {
+void UnaryOpCpuKernelMod<T, S>::GetUnaryOpFunc() {
   if constexpr (std::is_same<T, complex64>::value || std::is_same<T, complex128>::value) {
     static std::map<std::string, UnaryOpFunc> kComplexSupportedTypeMap = {{prim::kPrimReal->name(), &Real<T, S>},
                                                                           {prim::kPrimImag->name(), &Imag<T, S>},
@@ -71,14 +71,14 @@ void UnaryOpCPUKernel<T, S>::GetUnaryOpFunc() {
 }
 
 template <typename T, typename S>
-void UnaryOpCPUKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
+void UnaryOpCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   GetUnaryOpFunc();
 }
 
 template <typename T, typename S>
-bool UnaryOpCPUKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool UnaryOpCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) {
   auto input = inputs.front();
   auto output = outputs.front();
   const auto input_addr = reinterpret_cast<T *>(input->addr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <memory>
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,10 +35,10 @@ struct GpuKernelMeta {
 };
 using GpuKernelMetaPtr = std::shared_ptr<GpuKernelMeta>;
 
-class GpuKernelManager {
+class AkgGpuKernelManager {
  public:
-  GpuKernelManager();
-  virtual ~GpuKernelManager() {
+  AkgGpuKernelManager();
+  virtual ~AkgGpuKernelManager() {
     for (auto iter = infotable_.begin(); iter != infotable_.end(); ++iter) {
       CUresult ret = cuModuleUnload(iter->second->module_);
       if (ret != CUDA_SUCCESS && ret != CUDA_ERROR_DEINITIALIZED) {
@@ -51,32 +52,23 @@ class GpuKernelManager {
  private:
   std::unordered_map<std::string, GpuKernelMetaPtr> infotable_;
 };
-using GpuKernelManagerPtr = std::shared_ptr<GpuKernelManager>;
+using AkgGpuKernelManagerPtr = std::shared_ptr<AkgGpuKernelManager>;
 
-class GpuKernelMod : public KernelMod {
+class AkgGpuKernelMod : public GpuKernelMod {
  public:
-  explicit GpuKernelMod(const KernelPackPtr &kernel_pack);
-  virtual ~GpuKernelMod() {}
+  explicit AkgGpuKernelMod(const KernelPackPtr &kernel_pack);
+  virtual ~AkgGpuKernelMod() {}
 
-  void SetInputSizeList(const std::vector<size_t> &size_list);
-  void SetOutputSizeList(const std::vector<size_t> &size_list);
-  void SetWorkspaceSizeList(const std::vector<size_t> &size_list);
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  static GpuKernelManagerPtr kernelmanager_;
+  static AkgGpuKernelManagerPtr kernel_manager_;
 
  private:
   KernelPackPtr kernel_pack_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-using GpuKernelModPtr = std::shared_ptr<GpuKernelMod>;
+using AkgGpuKernelModPtr = std::shared_ptr<AkgGpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,10 @@ const std::map<std::string, NcclKernelType> kNcclTypeMap = {{"AllReduce", NCCL_A
                                                             {"Broadcast", NCCL_BROADCAST}};
 
 template <typename T>
-class NcclCollectiveGpuKernel : public NcclGpuKernel {
+class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
  public:
   NcclCollectiveGpuKernel() { ResetResource(); }
   ~NcclCollectiveGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -232,9 +228,6 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     return ((size + COMMUNICATION_MEM_ALIGN_SIZE - 1) / COMMUNICATION_MEM_ALIGN_SIZE) * COMMUNICATION_MEM_ALIGN_SIZE;
   }
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   NcclKernelType nccl_kernel_type_;
   ncclRedOp_t nccl_reduce_type_;
   size_t input_size_;

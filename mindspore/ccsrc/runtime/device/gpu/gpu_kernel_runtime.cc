@@ -769,9 +769,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 
     // akg kernel do not support dynamic shape by now.
     device::DynamicKernelPtr dynamic_kernel = nullptr;
-    kernel::GpuKernel *gpu_kernel = nullptr;
+    kernel::NativeGpuKernelMod *gpu_kernel = nullptr;
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
-      gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+      gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(gpu_kernel);
       dynamic_kernel = gpu_kernel->DynamicKernel();
     }
@@ -889,9 +889,9 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // akg kernel do not support dynamic shape by now.
     device::DynamicKernelPtr dynamic_kernel = nullptr;
-    kernel::GpuKernel *gpu_kernel = nullptr;
+    kernel::NativeGpuKernelMod *gpu_kernel = nullptr;
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
-      gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+      gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(gpu_kernel);
       dynamic_kernel = gpu_kernel->DynamicKernel();
     }

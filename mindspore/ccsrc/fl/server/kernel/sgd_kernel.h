@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,23 +28,23 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-using mindspore::kernel::SGDCPUKernel;
+using mindspore::kernel::SGDCpuKernelMod;
 template <typename T>
 
-class SGDKernel : public SGDCPUKernel<T>, public OptimizerKernel {
+class SGDKernelMod : public SGDCpuKernelMod<T>, public OptimizerKernelMod {
  public:
-  SGDKernel() = default;
-  ~SGDKernel() override = default;
+  SGDKernelMod() = default;
+  ~SGDKernelMod() override = default;
 
   void InitKernel(const CNodePtr &cnode) override {
-    SGDCPUKernel<T>::InitKernel(cnode);
+    SGDCpuKernelMod<T>::InitKernel(cnode);
     InitServerKernelInputOutputSize(cnode);
     GenerateReuseKernelNodeInfo();
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return SGDCPUKernel<T>::Launch(inputs, workspace, outputs);
+    return SGDCpuKernelMod<T>::Launch(inputs, workspace, outputs);
   }
 
   void GenerateReuseKernelNodeInfo() override {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ constexpr size_t kBceGradOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void BinaryCrossEntropyGradCpuKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &outputs) const {
+void BinaryCrossEntropyGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                      const std::vector<AddressPtr> &outputs) const {
   const auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input_y = reinterpret_cast<T *>(inputs[1]->addr);
   const auto *dloss = reinterpret_cast<T *>(inputs[2]->addr);
@@ -69,8 +69,8 @@ void BinaryCrossEntropyGradCpuKernel::LaunchKernel(const std::vector<AddressPtr>
   }
 }
 
-bool BinaryCrossEntropyGradCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs) {
+bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                                const std::vector<AddressPtr> &outputs) {
   const size_t expect_inputs_num = weight_defined_ ? kBceGradInputsNumWithWeight : kBceGradInputsNumWithWeight - 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBceGradOutputsNum, kernel_name_);
@@ -85,7 +85,7 @@ bool BinaryCrossEntropyGradCpuKernel::Launch(const std::vector<AddressPtr> &inpu
   return true;
 }
 
-void BinaryCrossEntropyGradCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+void BinaryCrossEntropyGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);

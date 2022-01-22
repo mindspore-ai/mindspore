@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ constexpr auto kGammaAttrName = "gamma";
 constexpr size_t kInputNum = 3;
 
 template <typename T>
-class DiscountedReturnGpuKernel : public GpuKernel {
+class DiscountedReturnGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DiscountedReturnGpuKernel() = default;
-  ~DiscountedReturnGpuKernel() = default;
+  DiscountedReturnGpuKernelMod() = default;
+  ~DiscountedReturnGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -70,10 +70,6 @@ class DiscountedReturnGpuKernel : public GpuKernel {
     return true;
   }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream) override {
     T *reward = GetDeviceAddress<T>(inputs, 0);
@@ -93,10 +89,6 @@ class DiscountedReturnGpuKernel : public GpuKernel {
   int timestep_ = 1;
   int env_num_ = 1;
   int element_per_env_ = 1;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

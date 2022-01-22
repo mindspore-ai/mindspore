@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ constexpr size_t CROP_SIZE = 3;
 constexpr size_t IMAGE_HEIGHT = 1;
 constexpr size_t IMAGE_WEIGHT = 2;
 template <typename T>
-class CropAndResizeCPUKernel : public CPUKernel {
+class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CropAndResizeCPUKernel() = default;
-  ~CropAndResizeCPUKernel() override = default;
+  CropAndResizeCpuKernelMod() = default;
+  ~CropAndResizeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -69,7 +69,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, float16);
+                    CropAndResizeCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -78,7 +78,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, float16);
+                    CropAndResizeCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -87,7 +87,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, float);
+                    CropAndResizeCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -96,7 +96,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, float);
+                    CropAndResizeCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -105,7 +105,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, double);
+                    CropAndResizeCpuKernelMod, double);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -114,7 +114,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, double);
+                    CropAndResizeCpuKernelMod, double);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -123,7 +123,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int8_t);
+                    CropAndResizeCpuKernelMod, int8_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -132,7 +132,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int8_t);
+                    CropAndResizeCpuKernelMod, int8_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -141,7 +141,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int16_t);
+                    CropAndResizeCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -150,7 +150,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int16_t);
+                    CropAndResizeCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -159,7 +159,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int8_t);
+                    CropAndResizeCpuKernelMod, int8_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -168,7 +168,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int32_t);
+                    CropAndResizeCpuKernelMod, int32_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -177,7 +177,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int64_t);
+                    CropAndResizeCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -186,7 +186,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int64_t);
+                    CropAndResizeCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -195,7 +195,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, uint8_t);
+                    CropAndResizeCpuKernelMod, uint8_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -204,7 +204,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, uint8_t);
+                    CropAndResizeCpuKernelMod, uint8_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -213,7 +213,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, uint16_t);
+                    CropAndResizeCpuKernelMod, uint16_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
@@ -222,7 +222,7 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, uint16_t);
+                    CropAndResizeCpuKernelMod, uint16_t);
 }  // namespace kernel
 }  // namespace mindspore
 

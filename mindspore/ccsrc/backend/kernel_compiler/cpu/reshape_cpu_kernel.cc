@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ constexpr size_t kReshapeInputsNum = 1;
 constexpr size_t kReshapeOutputsNum = 1;
 }  // namespace
 
-void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ReshapeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
 }
 
-bool ReshapeCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool ReshapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                 const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs should be not empty.";
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ constexpr size_t kReduceScatterInputsNum = 1;
 constexpr size_t kReduceScatterOutputsNum = 1;
 }  // namespace
 
-ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(kMPIOpTypeSum) {}
+ReduceScatterCpuKernelMod::ReduceScatterCpuKernelMod() : op_type_(kMPIOpTypeSum) {}
 
-void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ReduceScatterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
@@ -47,9 +47,9 @@ void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool ReduceScatterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool ReduceScatterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceScatterOutputsNum, kernel_name_);
   auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);

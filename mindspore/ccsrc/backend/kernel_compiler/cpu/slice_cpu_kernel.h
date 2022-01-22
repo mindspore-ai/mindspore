@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SliceCPUKernel : public CPUKernel {
+class SliceCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SliceCPUKernel() = default;
-  ~SliceCPUKernel() override = default;
+  SliceCpuKernelMod() = default;
+  ~SliceCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -43,33 +43,34 @@ class SliceCPUKernel : public CPUKernel {
   SliceParameter slice_param_;
 };
 
-MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SliceCPUKernel);
-MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SliceCPUKernel);
+MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SliceCpuKernelMod);
+MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  SliceCpuKernelMod);
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  SliceCPUKernel);
+                  SliceCpuKernelMod);
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  SliceCPUKernel);
+                  SliceCpuKernelMod);
 MS_REG_CPU_KERNEL(Slice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SliceCPUKernel);
+                  SliceCpuKernelMod);
 MS_REG_CPU_KERNEL(Slice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  SliceCPUKernel);
+                  SliceCpuKernelMod);
 MS_REG_CPU_KERNEL(Slice,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeBool)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeBool),
-                  SliceCPUKernel);
+                  SliceCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

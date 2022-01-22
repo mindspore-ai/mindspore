@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,9 @@ constexpr size_t kSecondInputIndex = 2;
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
-TensorArrayCPUWriteKernel::TensorArrayCPUWriteKernel() : value_size_(0), type_(kTypeUnknown) {}
+TensorArrayWriteCpuKernelMod::TensorArrayWriteCpuKernelMod() : value_size_(0), type_(kTypeUnknown) {}
 
-const std::vector<size_t> &TensorArrayCPUWriteKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUWriteKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUWriteKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorArrayCPUWriteKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorArrayWriteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   type_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, kSecondInputIndex);
   shapes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kSecondInputIndex);
@@ -47,8 +41,8 @@ void TensorArrayCPUWriteKernel::InitKernel(const CNodePtr &kernel_node) {
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCPUWriteKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &) {
+bool TensorArrayWriteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   auto index = GetDeviceAddress<int64_t>(inputs, 1);
   auto value = GetDeviceAddress<unsigned char>(inputs, 2);

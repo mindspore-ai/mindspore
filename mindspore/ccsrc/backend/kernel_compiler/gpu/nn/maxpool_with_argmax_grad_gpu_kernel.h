@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,19 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kXDimLowerLimit = 4;
+constexpr size_t kDyDimLowerLimit = 4;
+constexpr size_t kXIndexForN = 0;
+constexpr size_t kXIndexForC = 1;
+constexpr size_t kXIndexForH = 2;
+constexpr size_t kXIndexForW = 3;
+constexpr size_t kDyIndexForH = 2;
+constexpr size_t kDyIndexForW = 3;
+
 template <typename T, typename S>
-class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
+class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MaxPoolWithArgmaxGradGpuKernel()
+  MaxPoolWithArgmaxGradGpuKernelMod()
       : n_(0),
         c_(0),
         x_height_(0),
@@ -42,11 +51,8 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
         dy_size_(0),
         index_size_(0),
         dx_size_(0) {}
-  ~MaxPoolWithArgmaxGradGpuKernel() override = default;
+  ~MaxPoolWithArgmaxGradGpuKernelMod() override = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     if (is_null_input_) {
@@ -97,16 +103,16 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
     for (auto x : dx_shape) {
       dx_size_ *= x;
     }
-    if (x_shape.size() < 4 || dy_shape.size() < 4) {
+    if (x_shape.size() < kXDimLowerLimit || dy_shape.size() < kDyDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x and dy cannot be less than 4, but got "
                         << "the dimension of x: " << x_shape.size() << ", the dimension of dy: " << dy_shape.size();
     }
-    n_ = SizeToInt(x_shape[0]);
-    c_ = SizeToInt(x_shape[1]);
-    x_height_ = SizeToInt(x_shape[2]);
-    x_width_ = SizeToInt(x_shape[3]);
-    dy_height_ = SizeToInt(dy_shape[2]);
-    dy_width_ = SizeToInt(dy_shape[3]);
+    n_ = SizeToInt(x_shape[kXIndexForN]);
+    c_ = SizeToInt(x_shape[kXIndexForC]);
+    x_height_ = SizeToInt(x_shape[kXIndexForH]);
+    x_width_ = SizeToInt(x_shape[kXIndexForW]);
+    dy_height_ = SizeToInt(dy_shape[kDyIndexForH]);
+    dy_width_ = SizeToInt(dy_shape[kDyIndexForW]);
 
     InitSizeLists();
     return true;
@@ -120,10 +126,6 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   int n_;
   int c_;
   int x_height_;

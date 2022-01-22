@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class SparseApplyFtrlCpuKernelTest : public UT::Common {
  public:
-  SparseApplyFtrlCpuKernelTest() : sparse_ftrl_(std::make_shared<SparseApplyFtrlCPUKernel>()) {}
+  SparseApplyFtrlCpuKernelTest() : sparse_ftrl_(std::make_shared<SparseApplyFtrlCpuKernelMod>()) {}
 
   void SetUp() override {
     sparse_ftrl_->lr_ = 0.001;
@@ -71,7 +71,7 @@ class SparseApplyFtrlCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<SparseApplyFtrlCPUKernel> sparse_ftrl_;
+  std::shared_ptr<SparseApplyFtrlCpuKernelMod> sparse_ftrl_;
 };
 
 TEST_F(SparseApplyFtrlCpuKernelTest, dense_test) {

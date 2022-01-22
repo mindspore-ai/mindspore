@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ constexpr size_t kTopKOutputsNum = 2;
 }  // namespace
 
 template <typename T>
-void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                                 const std::vector<AddressPtr> &outputs) {
+void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
+                                    const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 2 outputs, but got "
                       << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
@@ -89,7 +89,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   ParallelLaunch(tasks);
 }
 
-void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -105,15 +105,15 @@ void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-void TopKCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void TopKCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = outer_size_ * inner_size_;
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
-bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                           const std::vector<kernel::AddressPtr> &workspaces,
-                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                              const std::vector<kernel::AddressPtr> &workspaces,
+                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTopKInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTopKOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {

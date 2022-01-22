@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,21 +241,21 @@ void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
     attr.AddInputAttr(output_types[j]);
   }
   std::vector<KernelAttr> kernel_attrs =
-    kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   kernel_attrs.emplace_back(attr);
-  kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
+  kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
   return;
 }
 
 void AddKernelAttr(const CNodePtr &kernel_node, const KernelAttr &kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<KernelAttr> kernel_attrs =
-    kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.size() == 1 && kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
     kernel_attrs.clear();
   }
   kernel_attrs.emplace_back(kernel_attr);
-  kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(AnfAlgo::GetCNodeName(kernel_node), kernel_attrs);
+  kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(AnfAlgo::GetCNodeName(kernel_node), kernel_attrs);
 }
 
 void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
@@ -405,13 +405,14 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
-    if (!kernel::CPUKernelFactory::GetInstance().SearchRegisteredOp(op_name)) {
+    if (!kernel::NativeCpuKernelModFactory::GetInstance().SearchRegisteredOp(op_name)) {
       auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
       if (tp == kCustomTypePyfunc) {
-        kernel::CPUKernelRegistrar(op_name, KernelAttr(), []() { return std::make_shared<kernel::PyFuncCpuKernel>(); });
+        kernel::NativeCpuKernelRegistrar(op_name, KernelAttr(),
+                                         []() { return std::make_shared<kernel::PyFuncCpuKernelMod>(); });
       } else if (tp == kCustomTypeAOT) {
-        kernel::CPUKernelRegistrar(op_name, KernelAttr(),
-                                   []() { return std::make_shared<kernel::CustomAOTCpuKernel>(); });
+        kernel::NativeCpuKernelRegistrar(op_name, KernelAttr(),
+                                         []() { return std::make_shared<kernel::CustomAOTCpuKernelMod>(); });
       } else {
         MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be 'pyfunc' or 'aot', "
                           << "but got [" << tp << "] for Custom operator [" << op_name << "]";
@@ -437,7 +438,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<TypeId> selected_output_types;
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << op_name;
   auto kernel_attrs =
-    kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty() || (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0)) {
     MS_LOG(DEBUG) << "Operator[" << op_name << "] will get ops attr info.";
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);
@@ -446,8 +447,8 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
                         << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
     }
     kernel_attrs.clear();
-    kernel::CPUKernelFactory::GetInstance().SetKernelAttrs(op_info_ptr, &kernel_attrs);
-    kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
+    kernel::NativeCpuKernelModFactory::GetInstance().SetKernelAttrs(op_info_ptr, &kernel_attrs);
+    kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
   }
   GetInputDtypes(kernel_node, &input_types, &input_not_cnode_indexes);
   GetOutputDtypes(kernel_node, &output_types);

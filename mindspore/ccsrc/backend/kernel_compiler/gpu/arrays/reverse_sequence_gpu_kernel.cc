@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,74 +22,74 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-  ReverseSequenceGpuFwdKernel, int8_t, int)
+  ReverseSequenceFwdGpuKernelMod, int8_t, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-  ReverseSequenceGpuFwdKernel, int8_t, int64_t)
+  ReverseSequenceFwdGpuKernelMod, int8_t, int64_t)
 // int16
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-  ReverseSequenceGpuFwdKernel, int16_t, int)
+  ReverseSequenceFwdGpuKernelMod, int16_t, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-  ReverseSequenceGpuFwdKernel, int16_t, int64_t)
+  ReverseSequenceFwdGpuKernelMod, int16_t, int64_t)
 // int32
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ReverseSequenceGpuFwdKernel, int, int)
+  ReverseSequenceFwdGpuKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  ReverseSequenceGpuFwdKernel, int, int64_t)
+  ReverseSequenceFwdGpuKernelMod, int, int64_t)
 // int64
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  ReverseSequenceGpuFwdKernel, int64_t, int)
+  ReverseSequenceFwdGpuKernelMod, int64_t, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ReverseSequenceGpuFwdKernel, int64_t, int64_t)
+  ReverseSequenceFwdGpuKernelMod, int64_t, int64_t)
 // float16
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  ReverseSequenceGpuFwdKernel, half, int)
+  ReverseSequenceFwdGpuKernelMod, half, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  ReverseSequenceGpuFwdKernel, half, int64_t)
+  ReverseSequenceFwdGpuKernelMod, half, int64_t)
 // float32
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ReverseSequenceGpuFwdKernel, float, int)
+  ReverseSequenceFwdGpuKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  ReverseSequenceGpuFwdKernel, float, int64_t)
+  ReverseSequenceFwdGpuKernelMod, float, int64_t)
 // float64
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ReverseSequenceGpuFwdKernel, double, int)
+  ReverseSequenceFwdGpuKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  ReverseSequenceGpuFwdKernel, double, int64_t)
+  ReverseSequenceFwdGpuKernelMod, double, int64_t)
 // bool
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  ReverseSequenceGpuFwdKernel, bool, int)
+  ReverseSequenceFwdGpuKernelMod, bool, int)
 MS_REG_GPU_KERNEL_TWO(
   ReverseSequence,
   KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  ReverseSequenceGpuFwdKernel, bool, int64_t)
+  ReverseSequenceFwdGpuKernelMod, bool, int64_t)
 
 }  // namespace kernel
 }  // namespace mindspore

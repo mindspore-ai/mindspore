@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kUnsortedSegmentInputsNum = 2;
 constexpr size_t kUnsortedSegmentOutputsNum = 1;
 }  // namespace
 
-void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void UnsortedSegmentSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -49,9 +49,9 @@ void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool UnsortedSegmentSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool UnsortedSegmentSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnsortedSegmentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUnsortedSegmentOutputsNum, kernel_name_);
   void *input_addr = inputs[0]->addr;

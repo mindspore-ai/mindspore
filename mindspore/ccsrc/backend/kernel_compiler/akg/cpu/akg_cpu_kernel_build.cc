@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 void AkgCpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
-  auto kernel_mod_ptr = std::make_shared<CpuKernelMod>(kernel_pack);
+  auto kernel_mod_ptr = std::make_shared<AkgCpuKernelMod>(kernel_pack);
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());

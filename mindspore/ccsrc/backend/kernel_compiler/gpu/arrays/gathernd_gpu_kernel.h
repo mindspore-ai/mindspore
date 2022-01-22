@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherNdGpuFwdKernel : public GpuKernel {
+class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GatherNdGpuFwdKernel() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr), memcpy_flag_(false) {}
-  ~GatherNdGpuFwdKernel() {
+  GatherNdFwdGpuKernelMod() : dev_batch_strides_(nullptr), dev_batch_indices_(nullptr), memcpy_flag_(false) {}
+  ~GatherNdFwdGpuKernelMod() {
     if (dev_batch_strides_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(dev_batch_strides_));
     }
@@ -37,10 +37,6 @@ class GatherNdGpuFwdKernel : public GpuKernel {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(dev_batch_indices_));
     }
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -58,11 +54,11 @@ class GatherNdGpuFwdKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
+                                 "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
+                                 "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
       memcpy_flag_ = true;
     }
 
@@ -161,10 +157,6 @@ class GatherNdGpuFwdKernel : public GpuKernel {
   std::vector<size_t> output_shapes_;
 
   std::vector<size_t> dims_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   std::vector<S> batch_strides_;
   std::vector<S> batch_indices_;

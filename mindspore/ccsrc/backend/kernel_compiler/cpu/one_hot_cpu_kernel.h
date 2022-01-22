@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class OneHotCPUKernel : public CPUKernel {
+class OneHotCpuKernelMod : public NativeCpuKernelMod {
  public:
-  OneHotCPUKernel() = default;
-  ~OneHotCPUKernel() override = default;
+  OneHotCpuKernelMod() = default;
+  ~OneHotCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -40,7 +40,7 @@ class OneHotCPUKernel : public CPUKernel {
   size_t axis_{0};
 };
 
-MS_REG_CPU_KERNEL(OneHot, KernelAttr(), OneHotCPUKernel);
+MS_REG_CPU_KERNEL(OneHot, KernelAttr(), OneHotCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

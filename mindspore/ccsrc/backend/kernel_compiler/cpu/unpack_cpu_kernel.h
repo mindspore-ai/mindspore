@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class UnpackCPUKernel : public CPUKernel {
+class UnpackCpuKernelMod : public NativeCpuKernelMod {
  public:
-  UnpackCPUKernel() = default;
-  ~UnpackCPUKernel() override = default;
+  UnpackCpuKernelMod() = default;
+  ~UnpackCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -48,37 +48,37 @@ class UnpackCPUKernel : public CPUKernel {
 };
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                    UnpackCPUKernel, int8_t);
+                    UnpackCpuKernelMod, int8_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                    UnpackCPUKernel, int16_t);
+                    UnpackCpuKernelMod, int16_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                    UnpackCPUKernel, int);
+                    UnpackCpuKernelMod, int);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                    UnpackCPUKernel, int64_t);
+                    UnpackCpuKernelMod, int64_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                    UnpackCPUKernel, bool);
+                    UnpackCpuKernelMod, bool);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                    UnpackCPUKernel, uint8_t);
+                    UnpackCpuKernelMod, uint8_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                    UnpackCPUKernel, uint16_t);
+                    UnpackCpuKernelMod, uint16_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                    UnpackCPUKernel, uint32_t);
+                    UnpackCpuKernelMod, uint32_t);
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                    UnpackCPUKernel, uint64_t);
+                    UnpackCpuKernelMod, uint64_t);
 MS_REG_CPU_KERNEL_T(
   Unstack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  UnpackCPUKernel, float16);
+  UnpackCpuKernelMod, float16);
 MS_REG_CPU_KERNEL_T(
   Unstack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  UnpackCPUKernel, float);
+  UnpackCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 

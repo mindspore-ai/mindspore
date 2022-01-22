@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *a
 }
 }  // namespace
 
-void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   probs_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -100,8 +100,8 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   blank_index_ = num_class_ - 1;
 }
 
-bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool CTCLossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -117,9 +117,9 @@ bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename TT>
-void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_blank,
-                                       const std::vector<std::vector<TT>> &y,
-                                       std::vector<std::vector<TT>> *log_alpha_b) const {
+void CTCLossCpuKernelMod::CalculateFwdVar(const std::vector<uint32_t> &label_with_blank,
+                                          const std::vector<std::vector<TT>> &y,
+                                          std::vector<std::vector<TT>> *log_alpha_b) const {
   int U = label_with_blank.size();
   int T = (*log_alpha_b)[0].size();
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
@@ -157,9 +157,9 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
 }
 
 template <typename TT>
-void CTCLossCPUKernel::CalculateBwdVar(const std::vector<uint32_t> &label_with_blank,
-                                       const std::vector<std::vector<TT>> &y,
-                                       std::vector<std::vector<TT>> *log_beta_b) const {
+void CTCLossCpuKernelMod::CalculateBwdVar(const std::vector<uint32_t> &label_with_blank,
+                                          const std::vector<std::vector<TT>> &y,
+                                          std::vector<std::vector<TT>> *log_beta_b) const {
   int T = (*log_beta_b)[0].size();
   int U = label_with_blank.size();
   if (U > 1) {
@@ -197,11 +197,11 @@ void CTCLossCPUKernel::CalculateBwdVar(const std::vector<uint32_t> &label_with_b
 }
 
 template <typename TT>
-void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_blank,
-                                     const std::vector<std::vector<TT>> &y,
-                                     const std::vector<std::vector<TT>> &log_alpha_b,
-                                     const std::vector<std::vector<TT>> &log_beta_b, const TT log_pzx,
-                                     std::vector<std::vector<TT>> *dy) const {
+void CTCLossCpuKernelMod::CalculateGrad(const std::vector<uint32_t> &label_with_blank,
+                                        const std::vector<std::vector<TT>> &y,
+                                        const std::vector<std::vector<TT>> &log_alpha_b,
+                                        const std::vector<std::vector<TT>> &log_beta_b, const TT log_pzx,
+                                        std::vector<std::vector<TT>> *dy) const {
   auto dy_b = dy;
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
   if (log_pzx <= kLogZero_) {
@@ -226,8 +226,9 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
   }
 }
 
-void CTCLossCPUKernel::GenLabelWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
-                                         std::vector<std::vector<uint32_t>> *label_with_blank) const {
+void CTCLossCpuKernelMod::GenLabelWithBlank(const uint32_t *seq_len,
+                                            const std::vector<std::vector<uint32_t>> &batch_label,
+                                            std::vector<std::vector<uint32_t>> *label_with_blank) const {
   for (size_t b = 0; b < batch_size_; ++b) {
     std::vector<uint32_t> l;
     const std::vector<uint32_t> &label = batch_label[b];
@@ -262,8 +263,8 @@ void CTCLossCPUKernel::GenLabelWithBlank(const uint32_t *seq_len, const std::vec
 }
 
 template <typename T>
-void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &outputs) const {
+void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                       const std::vector<AddressPtr> &outputs) const {
   const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *labels_indices_addr = reinterpret_cast<uint64_t *>(inputs[1]->addr);
   const auto *labels_values_addr = reinterpret_cast<uint32_t *>(inputs[2]->addr);

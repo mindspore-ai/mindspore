@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,16 @@ constexpr size_t kMapUniformInputsNum = 3;
 constexpr size_t kMapUniformOutputsNum = 1;
 }  // namespace
 
-void MapUniformCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MapUniformCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool MapUniformCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapUniformOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
@@ -50,8 +51,8 @@ bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void MapUniformCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t k3DSize = 3;
+constexpr size_t kInputDimLowerLimit = 2;
+constexpr size_t kWeightDimLowerLimit = 3;
 template <typename T>
-class LstmGradDataGpuKernel : public GpuKernel {
+class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LstmGradDataGpuKernel()
+  LstmGradDataGpuKernelMod()
       : batch_size_(0),
         seq_len_(0),
         input_size_(0),
@@ -56,11 +59,8 @@ class LstmGradDataGpuKernel : public GpuKernel {
         dcx_desc_(nullptr),
         handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
-  ~LstmGradDataGpuKernel() override { DestroyResource(); }
+  ~LstmGradDataGpuKernelMod() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -119,7 +119,7 @@ class LstmGradDataGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (input_shape.size() < 2) {
+    if (input_shape.size() < kInputDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
                         << input_shape.size();
     }
@@ -133,22 +133,22 @@ class LstmGradDataGpuKernel : public GpuKernel {
     CreateTensorDescGrp();
     int hx_dims[3]{num_layers_ * (bidirectional_ ? 2 : 1), batch_size_, hidden_size_};
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptorEx(dhy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
+      kernel_node_, cudnnSetTensorNdDescriptorEx(dhy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
       "set dhy_desc_ failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptorEx(dcy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
+      kernel_node_, cudnnSetTensorNdDescriptorEx(dcy_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
       "set dcy_desc_ failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetTensorNdDescriptorEx(hx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
-                                "set hx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetTensorNdDescriptorEx(cx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
-                                "set cx_desc_ failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptorEx(dhx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
+      kernel_node_, cudnnSetTensorNdDescriptorEx(hx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
+      "set hx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_, cudnnSetTensorNdDescriptorEx(cx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
+      "set cx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_, cudnnSetTensorNdDescriptorEx(dhx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
       "set dhx_desc_ failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptorEx(dcx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, hx_dims),
+      kernel_node_, cudnnSetTensorNdDescriptorEx(dcx_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, hx_dims),
       "set dcx_desc_ failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, nullptr, 0, 0),
@@ -168,13 +168,14 @@ class LstmGradDataGpuKernel : public GpuKernel {
                                                          hidden_size_, hidden_size_, num_layers_, dropout_desc_, 0),
                                 "set rnn_desc failed");
 #endif
-    auto weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    const size_t kPrevOutput4th = 4;
+    auto weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput4th);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "weight");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
-    if (weight_shape.size() < 3) {
+    if (weight_shape.size() < kWeightDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
                         << weight_shape.size();
     }
@@ -187,9 +188,9 @@ class LstmGradDataGpuKernel : public GpuKernel {
                         << " but got " << weight_size;
     }
     int w_dims[3] = {SizeToInt(weight_size_ / sizeof(T)), 1, 1};
-    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetFilterNdDescriptor(w_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, 3, w_dims),
-                                "set w_desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_, cudnnSetFilterNdDescriptor(w_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, k3DSize, w_dims),
+      "set w_desc failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_, cudnnGetRNNTrainingReserveSize(handle_, rnn_desc_, seq_len_, dx_desc_.get(), &reserved_size_),
       "get size failed");
@@ -268,17 +269,17 @@ class LstmGradDataGpuKernel : public GpuKernel {
     for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dx_desc_[i]), "create x_desc failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnSetTensorNdDescriptorEx(dx_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, x_dims),
+        kernel_node_, cudnnSetTensorNdDescriptorEx(dx_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, x_dims),
         "set dx_desc failed");
 
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&y_desc_[i]), "create y_desc failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnSetTensorNdDescriptorEx(y_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, y_dims),
+        kernel_node_, cudnnSetTensorNdDescriptorEx(y_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, y_dims),
         "set y_desc failed");
 
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&dy_desc_[i]), "create dy_desc_ failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_, cudnnSetTensorNdDescriptorEx(dy_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, 3, y_dims),
+        kernel_node_, cudnnSetTensorNdDescriptorEx(dy_desc_[i], CUDNN_TENSOR_NCHW, cudnn_data_type_, k3DSize, y_dims),
         "set dy_desc_ failed");
     }
   }
@@ -326,9 +327,6 @@ class LstmGradDataGpuKernel : public GpuKernel {
 
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

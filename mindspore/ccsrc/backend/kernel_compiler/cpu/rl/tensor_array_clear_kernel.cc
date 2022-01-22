@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,16 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
-TensorArrayCPUClearKernel::TensorArrayCPUClearKernel() {}
+TensorArrayClearCpuKernelMod::TensorArrayClearCpuKernelMod() {}
 
-const std::vector<size_t> &TensorArrayCPUClearKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUClearKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUClearKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorArrayCPUClearKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorArrayClearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_size_list_.push_back(sizeof(int64_t));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCPUClearKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<AddressPtr> &) {
+bool TensorArrayClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_EXCEPTION_IF_NULL(handle_addr);
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_addr[0]);

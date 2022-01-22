@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &EnvironGetGpuKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &EnvironGetGpuKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &EnvironGetGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool EnvironGetGpuKernel::Init(const CNodePtr &kernel_node) {
+bool EnvironGetGpuKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (!EnvironMgr::GetInstance().CheckEnvInput(kernel_node)) {
     MS_LOG(ERROR) << "The input checks invalid, kernel: " << kernel_node->fullname_with_scope();
@@ -55,15 +49,15 @@ bool EnvironGetGpuKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void EnvironGetGpuKernel::InitSizeLists() {
+void EnvironGetGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(handle_size_);
   input_size_list_.push_back(key_size_);
   input_size_list_.push_back(value_size_);
   output_size_list_.push_back(value_size_);
 }
 
-bool EnvironGetGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool EnvironGetGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto input_handle = GetDeviceAddress<int64_t>(inputs, 0);
   auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
   auto input_default_value = GetDeviceAddress<void>(inputs, 2);

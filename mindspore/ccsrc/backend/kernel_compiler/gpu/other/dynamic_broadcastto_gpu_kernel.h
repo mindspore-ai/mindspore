@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,10 @@ constexpr size_t SHAPE_SIZE = 4;
 constexpr size_t kIndex2 = 2;
 constexpr size_t kIndex3 = 3;
 template <typename T, typename S>
-class DynamicBroadcastToGpuKernel : public GpuKernel {
+class DynamicBroadcastToGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DynamicBroadcastToGpuKernel() : shape_size_(0), is_null_input_(false) { ResetResource(); }
-  ~DynamicBroadcastToGpuKernel() = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  DynamicBroadcastToGpuKernelMod() : shape_size_(0), is_null_input_(false) { ResetResource(); }
+  ~DynamicBroadcastToGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -67,7 +63,7 @@ class DynamicBroadcastToGpuKernel : public GpuKernel {
     auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes) || CHECK_NULL_INPUT(shape_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'BroadcastToGpuKernel', input or output is null";
+      MS_LOG(WARNING) << "For 'BroadcastToGpuKernelMod', input or output is null";
       InitSizeLists();
       return true;
     }
@@ -129,9 +125,6 @@ class DynamicBroadcastToGpuKernel : public GpuKernel {
   size_t output_shape_[SHAPE_SIZE] = {1, 1, 1, 1};
   bool is_null_input_ = false;
   std::vector<S> real_output_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

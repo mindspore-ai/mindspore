@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &EnvironSetCPUKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &EnvironSetCPUKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &EnvironSetCPUKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void EnvironSetCPUKernel::InitKernel(const CNodePtr &node) {
+void EnvironSetCpuKernelMod::InitKernel(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!EnvironMgr::GetInstance().CheckEnvInput(node)) {
     MS_LOG(EXCEPTION) << "The input checks invalid, kernel: " << node->fullname_with_scope();
@@ -58,8 +52,8 @@ void EnvironSetCPUKernel::InitKernel(const CNodePtr &node) {
   output_size_list_.push_back(handle_size_);
 }
 
-bool EnvironSetCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs) {
+bool EnvironSetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                    const std::vector<AddressPtr> &outputs) {
   auto input_handle = GetDeviceAddress<int64_t>(inputs, 0);
   auto input_key = GetDeviceAddress<int64_t>(inputs, 1);
   auto input_value = GetDeviceAddress<void>(inputs, 2);

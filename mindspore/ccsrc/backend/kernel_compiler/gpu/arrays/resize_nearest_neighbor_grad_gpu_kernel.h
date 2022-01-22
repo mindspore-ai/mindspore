@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,16 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
+class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ResizeNearestNeighborGradGpuKernel()
+  ResizeNearestNeighborGradGpuKernelMod()
       : align_corners_(false),
         is_null_input_(false),
         shape_size_(0),
         input_size_(0),
         output_size_(0),
         workspace_size_(0) {}
-  ~ResizeNearestNeighborGradGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -129,9 +125,6 @@ class ResizeNearestNeighborGradGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

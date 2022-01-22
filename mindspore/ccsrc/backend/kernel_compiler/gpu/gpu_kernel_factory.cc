@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@
 
 namespace mindspore {
 namespace kernel {
-GpuKernelFactory &GpuKernelFactory::GetInstance() {
-  static GpuKernelFactory instance;
+NativeGpuKernelModFactory &NativeGpuKernelModFactory::GetInstance() {
+  static NativeGpuKernelModFactory instance;
   return instance;
 }
 
-void GpuKernelFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
-                                GpuKernelCreater &&creator) {
+void NativeGpuKernelModFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
+                                         NativeGpuKernelModCreater &&creator) {
   map_kernel_name_to_creater_[kernel_name].emplace_back(kernel_attr, creator);
 }
 
-bool GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
-                                    std::vector<std::pair<KernelAttr, GpuKernelCreater>> *iter_second,
-                                    size_t attr_index) {
+bool NativeGpuKernelModFactory::CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
+                                             std::vector<std::pair<KernelAttr, NativeGpuKernelModCreater>> *iter_second,
+                                             size_t attr_index) {
   if (kernel_info->GetInputNum() != iter_second->at(attr_index).first.GetInputSize()) {
     if (!iter_second->at(attr_index).first.GetAllSame()) {
       return false;
@@ -52,7 +52,7 @@ bool GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
   return true;
 }
 
-std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) {
+std::string NativeGpuKernelModFactory::SupportedTypeList(const std::string &kernel_name) {
   std::string type_lists = "";
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
   if (map_kernel_name_to_creater_.end() == iter) {
@@ -75,7 +75,7 @@ std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) 
   return type_lists;
 }
 
-bool GpuKernelFactory::ReducePrecision(
+bool NativeGpuKernelModFactory::ReducePrecision(
   const std::string &kernel_name, std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder) {
   MS_EXCEPTION_IF_NULL(builder);
   auto kernel_info = builder->Build();
@@ -106,10 +106,10 @@ bool GpuKernelFactory::ReducePrecision(
       }
     }
   }
-  return GpuKernelFactory::SearchRegistered(kernel_name, builder->Build());
+  return NativeGpuKernelModFactory::SearchRegistered(kernel_name, builder->Build());
 }
 
-void GpuKernelFactory::CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index) {
+void NativeGpuKernelModFactory::CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index) {
   const int major_sm = GET_MAJOR_SM;
   const bool check_sm = mindspore::device::gpu::CudaCommon::GetInstance().check_sm();
   if (check_sm && major_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
@@ -123,8 +123,8 @@ void GpuKernelFactory::CheckSM(const KernelBuildInfo *kernel_info, const size_t 
   }
 }
 
-std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &kernel_name,
-                                                             const KernelBuildInfo *kernel_info) {
+std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std::string &kernel_name,
+                                                                      const KernelBuildInfo *kernel_info) {
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
   if (map_kernel_name_to_creater_.end() == iter) {
     MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
@@ -145,7 +145,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     }
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      GpuKernelFactory::CheckSM(kernel_info, input_index);
+      NativeGpuKernelModFactory::CheckSM(kernel_info, input_index);
       if (kernel_info->GetInputDeviceType(input_index) !=
           (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first) {
         flag = false;
@@ -177,7 +177,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
   return std::make_pair(false, 0);
 }
 
-GpuKernel *GpuKernelFactory::Create(const std::string &kernel_name, const CNodePtr &apply_kernel) {
+NativeGpuKernelMod *NativeGpuKernelModFactory::Create(const std::string &kernel_name, const CNodePtr &apply_kernel) {
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
@@ -189,7 +189,8 @@ GpuKernel *GpuKernelFactory::Create(const std::string &kernel_name, const CNodeP
   return nullptr;
 }
 
-bool GpuKernelFactory::SearchRegistered(const std::string &kernel_name, const KernelBuildInfoPtr &kernel_build_info) {
+bool NativeGpuKernelModFactory::SearchRegistered(const std::string &kernel_name,
+                                                 const KernelBuildInfoPtr &kernel_build_info) {
   std::pair<bool, size_t> ret_pair = GpuKernelAttrCheck(kernel_name, kernel_build_info.get());
   return ret_pair.first;
 }

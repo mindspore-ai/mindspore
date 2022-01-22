@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ enum class IterationResult {
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
-using mindspore::kernel::CPUKernel;
+using mindspore::kernel::NativeCpuKernelMod;
 using FBBuilder = flatbuffers::FlatBufferBuilder;
 using TimeOutCb = std::function<void(bool, const std::string &)>;
 using StopTimerCb = std::function<void(void)>;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kTileDynamicInputsNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 }  // namespace
 
-void TileCPUKernel::TileMultipleCompute() {
+void TileCpuKernelMod::TileMultipleCompute() {
   size_t ones = multiples_.size() - x_shape_.size();
   if (ones > 0) {
     for (size_t i = 0; i < ones; ++i) {
@@ -78,7 +78,7 @@ void TileCPUKernel::TileMultipleCompute() {
   }
 }
 
-void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
+void TileCpuKernelMod::TileTensorParamrInit(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -92,22 +92,22 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   }
 }
 
-void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   TileTensorParamrInit(kernel_node);
   cnode_ptr_ = kernel_node;
 
-  launch_map_[kNumberTypeInt8] = &TileCPUKernel::LaunchKernel<int8_t>;
-  launch_map_[kNumberTypeInt16] = &TileCPUKernel::LaunchKernel<int16_t>;
-  launch_map_[kNumberTypeInt32] = &TileCPUKernel::LaunchKernel<int>;
-  launch_map_[kNumberTypeInt64] = &TileCPUKernel::LaunchKernel<int64_t>;
-  launch_map_[kNumberTypeUInt8] = &TileCPUKernel::LaunchKernel<uint8_t>;
-  launch_map_[kNumberTypeUInt16] = &TileCPUKernel::LaunchKernel<uint16_t>;
-  launch_map_[kNumberTypeUInt32] = &TileCPUKernel::LaunchKernel<uint32_t>;
-  launch_map_[kNumberTypeUInt64] = &TileCPUKernel::LaunchKernel<uint64_t>;
-  launch_map_[kNumberTypeFloat32] = &TileCPUKernel::LaunchKernel<float>;
-  launch_map_[kNumberTypeBool] = &TileCPUKernel::LaunchKernel<bool>;
+  launch_map_[kNumberTypeInt8] = &TileCpuKernelMod::LaunchKernel<int8_t>;
+  launch_map_[kNumberTypeInt16] = &TileCpuKernelMod::LaunchKernel<int16_t>;
+  launch_map_[kNumberTypeInt32] = &TileCpuKernelMod::LaunchKernel<int>;
+  launch_map_[kNumberTypeInt64] = &TileCpuKernelMod::LaunchKernel<int64_t>;
+  launch_map_[kNumberTypeUInt8] = &TileCpuKernelMod::LaunchKernel<uint8_t>;
+  launch_map_[kNumberTypeUInt16] = &TileCpuKernelMod::LaunchKernel<uint16_t>;
+  launch_map_[kNumberTypeUInt32] = &TileCpuKernelMod::LaunchKernel<uint32_t>;
+  launch_map_[kNumberTypeUInt64] = &TileCpuKernelMod::LaunchKernel<uint64_t>;
+  launch_map_[kNumberTypeFloat32] = &TileCpuKernelMod::LaunchKernel<float>;
+  launch_map_[kNumberTypeBool] = &TileCpuKernelMod::LaunchKernel<bool>;
 
   auto iter = launch_map_.find(dtype_);
   if (iter != launch_map_.end()) {
@@ -118,8 +118,8 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                           const std::vector<kernel::AddressPtr> &outputs) {
+bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                              const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kTileInputsNum && inputs.size() != kTileDynamicInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << kTileInputsNum << " or "
                       << kTileDynamicInputsNum << ", but got " << inputs.size();
@@ -130,7 +130,7 @@ bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const 
 }
 
 template <typename T>
-void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto cnode = cnode_ptr_.lock();

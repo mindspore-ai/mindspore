@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class EltWiseCPUKernel : public MKLCPUKernel {
+class EltWiseCpuKernelMod : public MKLCpuKernelMod {
  public:
-  EltWiseCPUKernel() = default;
-  ~EltWiseCPUKernel() override = default;
+  EltWiseCpuKernelMod() = default;
+  ~EltWiseCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -40,23 +40,23 @@ class EltWiseCPUKernel : public MKLCPUKernel {
 };
 
 MS_REG_CPU_KERNEL(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(ReLU6, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Exp, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Log, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Sigmoid, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Sqrt, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Tanh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 MS_REG_CPU_KERNEL(Softplus, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EltWiseCPUKernel);
+                  EltWiseCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

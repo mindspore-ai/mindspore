@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,16 @@ static constexpr int kNumber2 = 2;
 constexpr size_t kParallelDataNums = 1 * 1024;
 }  // namespace
 
-void MatrixInverseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MatrixInverseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
 }
 
-bool MatrixInverseCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /* workspace */,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> & /* workspace */,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
 
@@ -57,8 +57,8 @@ bool MatrixInverseCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void MatrixInverseCPUKernel::LaunchMatrixInverse(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &outputs) {
+void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr> &inputs,
+                                                    const std::vector<AddressPtr> &outputs) {
   auto node_ = node_wpt_.lock();
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";

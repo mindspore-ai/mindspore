@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void MatrixSetDiagCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   constexpr size_t required_input_nums = 3;
@@ -73,9 +73,9 @@ void MatrixSetDiagCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool MatrixSetDiagCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspaces,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool MatrixSetDiagCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &workspaces,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (data_type_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, workspaces, outputs);
   } else if (data_type_ == kNumberTypeFloat32) {
@@ -94,9 +94,9 @@ bool MatrixSetDiagCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void MatrixSetDiagCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspaces,
-                                          const std::vector<AddressPtr> &outputs) {
+void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspaces,
+                                             const std::vector<AddressPtr> &outputs) {
   auto input = inputs.at(0);
   auto diag = inputs.at(1);
   constexpr int diag_k_index = 2;
@@ -141,7 +141,7 @@ void MatrixSetDiagCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto thread_pool = GetActorMgrInnerThreadPool();
   size_t task_nums = thread_pool->GetKernelThreadNum();
   if (task_nums == 0) {
-    MS_LOG(EXCEPTION) << "MatrixSetDiagCPUKernel get kernel thread_pool nums, but kernel thread is 0!";
+    MS_LOG(EXCEPTION) << "MatrixSetDiagCpuKernelMod get kernel thread_pool nums, but kernel thread is 0!";
   }
   tasks.reserve(task_nums);
   size_t max_index = IntToSize(outer_batch_ * inner_rows_ * inner_cols_);

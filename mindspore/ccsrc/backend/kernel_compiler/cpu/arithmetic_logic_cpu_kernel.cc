@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ constexpr size_t kOutputsNum = 1;
 
 template <typename T>
 template <typename Op>
-void ArithmeticLogicCPUKernel<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
+void ArithmeticLogicCpuKernelMod<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
   size_t input1_size = 1;
   size_t input2_size = 2;
 
@@ -80,56 +80,56 @@ void ArithmeticLogicCPUKernel<T>::BinaryOp(const T *input1, const T *input2, boo
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::Less(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::less<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::Equal(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::equal_to<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::NotEqual(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::not_equal_to<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::logical_and<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::logical_or<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::Greater(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::greater<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::greater_equal<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCpuKernelMod<T>::LessEqual(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::less_equal<T>());
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::InitComputeFunc() {
+void ArithmeticLogicCpuKernelMod<T>::InitComputeFunc() {
   static const std::unordered_map<std::string, TypeComputeFunc> arithmeticLogicFuncMap{
-    {prim::kPrimGreater->name(), &ArithmeticLogicCPUKernel<T>::Greater},
-    {prim::kPrimGreaterEqual->name(), &ArithmeticLogicCPUKernel<T>::GreaterEqual},
-    {prim::kPrimLogicalAnd->name(), &ArithmeticLogicCPUKernel<T>::LogicalAnd},
-    {prim::kPrimLessEqual->name(), &ArithmeticLogicCPUKernel<T>::LessEqual},
-    {prim::kPrimLogicalOr->name(), &ArithmeticLogicCPUKernel<T>::LogicalOr},
-    {prim::kPrimLess->name(), &ArithmeticLogicCPUKernel<T>::Less},
-    {prim::kPrimNotEqual->name(), &ArithmeticLogicCPUKernel<T>::NotEqual},
-    {prim::kPrimEqual->name(), &ArithmeticLogicCPUKernel<T>::Equal}};
+    {prim::kPrimGreater->name(), &ArithmeticLogicCpuKernelMod<T>::Greater},
+    {prim::kPrimGreaterEqual->name(), &ArithmeticLogicCpuKernelMod<T>::GreaterEqual},
+    {prim::kPrimLogicalAnd->name(), &ArithmeticLogicCpuKernelMod<T>::LogicalAnd},
+    {prim::kPrimLessEqual->name(), &ArithmeticLogicCpuKernelMod<T>::LessEqual},
+    {prim::kPrimLogicalOr->name(), &ArithmeticLogicCpuKernelMod<T>::LogicalOr},
+    {prim::kPrimLess->name(), &ArithmeticLogicCpuKernelMod<T>::Less},
+    {prim::kPrimNotEqual->name(), &ArithmeticLogicCpuKernelMod<T>::NotEqual},
+    {prim::kPrimEqual->name(), &ArithmeticLogicCpuKernelMod<T>::Equal}};
   if (arithmeticLogicFuncMap.find(kernel_name_) == arithmeticLogicFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
                       << Unorderedmap2Str(arithmeticLogicFuncMap) << ", but got " << kernel_name_;
@@ -138,7 +138,7 @@ void ArithmeticLogicCPUKernel<T>::InitComputeFunc() {
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ArithmeticLogicCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape1_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -175,9 +175,9 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ArithmeticLogicCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> & /* workspace */,
-                                         const std::vector<AddressPtr> &outputs) {
+bool ArithmeticLogicCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> & /* workspace */,
+                                            const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);

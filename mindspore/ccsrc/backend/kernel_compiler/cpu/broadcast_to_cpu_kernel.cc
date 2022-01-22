@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ constexpr size_t kBroadcastToOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void BroadcastToCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -43,7 +43,7 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void BroadcastToCPUKernel<T>::CheckArgs() {
+void BroadcastToCpuKernelMod<T>::CheckArgs() {
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
   if (output_shape_size < input_shape_size) {
@@ -71,8 +71,8 @@ void BroadcastToCPUKernel<T>::CheckArgs() {
 }
 
 template <typename T>
-bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                     const std::vector<AddressPtr> &outputs) {
+bool BroadcastToCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
   CheckArgs();
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);

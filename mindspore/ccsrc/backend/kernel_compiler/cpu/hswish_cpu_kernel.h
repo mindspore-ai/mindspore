@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class HSwishCPUKernel : public CPUKernel {
+class HSwishCpuKernelMod : public NativeCpuKernelMod {
  public:
-  HSwishCPUKernel() = default;
-  ~HSwishCPUKernel() override = default;
+  HSwishCpuKernelMod() = default;
+  ~HSwishCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -41,11 +41,11 @@ class HSwishCPUKernel : public CPUKernel {
   uint64_t tensor_size_ = 1;
 };
 
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int8_t);
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int16_t);
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int32_t);
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int64_t);
-MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, float);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCpuKernelMod, int8_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCpuKernelMod, int16_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCpuKernelMod, int32_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCpuKernelMod, int64_t);
+MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_

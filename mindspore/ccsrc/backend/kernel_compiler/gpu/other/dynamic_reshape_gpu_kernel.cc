@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,34 +25,34 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  DynamicReshapeKernel, double, int)
+  DynamicReshapeKernelMod, double, int)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  DynamicReshapeKernel, float, int)
+  DynamicReshapeKernelMod, float, int)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  DynamicReshapeKernel, int, int)
+  DynamicReshapeKernelMod, int, int)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  DynamicReshapeKernel, int64_t, int)
+  DynamicReshapeKernelMod, int64_t, int)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  DynamicReshapeKernel, double, int64_t)
+  DynamicReshapeKernelMod, double, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  DynamicReshapeKernel, float, int64_t)
+  DynamicReshapeKernelMod, float, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  DynamicReshapeKernel, int64_t, int64_t)
+  DynamicReshapeKernelMod, int64_t, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  DynamicReshapeKernel, int, int64_t)
+  DynamicReshapeKernelMod, int, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,9 @@ struct AkgCallBack {
   ~AkgCallBack() = default;
 };
 
-CpuKernelManagerPtr CpuKernelMod::kernelmanager_ = std::make_shared<CpuKernelManager>();
+AkgCpuKernelManagerPtr AkgCpuKernelMod::kernel_manager_ = std::make_shared<AkgCpuKernelManager>();
 
-CpuKernelManager::~CpuKernelManager() {
+AkgCpuKernelManager::~AkgCpuKernelManager() {
   for (auto &cpu_func_pair : cpu_func_map_) {
     if (cpu_func_pair.second.second != nullptr) {
       (void)dlclose(cpu_func_pair.second.second);
@@ -64,7 +64,7 @@ CpuKernelManager::~CpuKernelManager() {
   }
 }
 
-void *CpuKernelManager::SearchFunc(const std::string &kernel_name) const {
+void *AkgCpuKernelManager::SearchFunc(const std::string &kernel_name) const {
   auto iter = cpu_func_map_.find(kernel_name);
   if (iter == cpu_func_map_.end()) {
     return nullptr;
@@ -73,12 +73,12 @@ void *CpuKernelManager::SearchFunc(const std::string &kernel_name) const {
   }
 }
 
-void *CpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_name) const {
+void *AkgCpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_name) const {
   std::shared_lock lock(mutex_);
   return SearchFunc(kernel_name);
 }
 
-void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
+void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   if (auto func = SearchFuncWithSharedLock(kernel_name); func != nullptr) {
     return func;
   }
@@ -114,14 +114,14 @@ void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
   return launch_func;
 }
 
-CpuKernelMod::CpuKernelMod(const KernelPackPtr &kp) {
+AkgCpuKernelMod::AkgCpuKernelMod(const KernelPackPtr &kp) {
   auto js = nlohmann::json::parse(kp->GetJson()->contents, kp->GetJson()->contents + kp->GetJson()->len);
   kernel_name_ = js["kernelName"];
-  launch_func_ = kernelmanager_->GetFunction(kernel_name_);
+  launch_func_ = kernel_manager_->GetFunction(kernel_name_);
 }
 
-bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (launch_func_ == nullptr) {
     MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;

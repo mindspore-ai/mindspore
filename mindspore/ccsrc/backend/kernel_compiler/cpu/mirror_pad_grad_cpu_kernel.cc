@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ bool range_check(int64_t x, int64_t y, int64_t padded_width, int64_t padded_heig
 }
 }  // namespace
 
-void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
@@ -118,9 +118,9 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &workspace,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool MirrorPadGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &workspace,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16 && pad_dtype_ == kNumberTypeInt32) {
@@ -149,12 +149,12 @@ bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void MirrorPadGradCPUKernel::InitWorkspaceSize() {
+void MirrorPadGradCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(workspace_size_ * sizeof(T));
 }
 
-void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void MirrorPadGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat16) {
     InitWorkspaceSize<float16>();
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -167,11 +167,11 @@ void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 template <typename T1, typename T2>
-void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T1 *interim_dy,
-                                                        const int64_t dx_height, const int64_t dx_width,
-                                                        const int64_t dy_height, const int64_t dy_width,
-                                                        const int64_t padd_dim, const T2 *paddings_arg, int64_t mode,
-                                                        T1 *dx) const {
+void MirrorPadGradCpuKernelMod::MirrorPadGrad_Width_Height(const size_t size, const T1 *interim_dy,
+                                                           const int64_t dx_height, const int64_t dx_width,
+                                                           const int64_t dy_height, const int64_t dy_width,
+                                                           const int64_t padd_dim, const T2 *paddings_arg, int64_t mode,
+                                                           T1 *dx) const {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
@@ -236,11 +236,11 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
 }
 
 template <typename T1, typename T2>
-void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T1 *dy, T1 *interim_dy,
-                                                       const int64_t dx_batches, const int64_t dx_channels,
-                                                       const int64_t dy_height, const int64_t dy_width,
-                                                       const int64_t padd_dim, const T2 *paddings_arg,
-                                                       int64_t mode) const {
+void MirrorPadGradCpuKernelMod::MirrorPadGradBatchChannel(const size_t size, T1 *dy, T1 *interim_dy,
+                                                          const int64_t dx_batches, const int64_t dx_channels,
+                                                          const int64_t dy_height, const int64_t dy_width,
+                                                          const int64_t padd_dim, const T2 *paddings_arg,
+                                                          int64_t mode) const {
   if (dy_height == 0 || dy_width == 0 || dx_channels == 0) {
     MS_LOG(EXCEPTION) << "For  MirrorPadGradBatchChannel, the input argument 'dy_height', 'dy_width' and 'dx_channels' "
                          "should not be 0, but got "
@@ -297,9 +297,9 @@ void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T1 *dy
 }
 
 template <typename T1, typename T2>
-void MirrorPadGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) const {
+void MirrorPadGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs) const {
   auto *inputs_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
   auto *paddings = reinterpret_cast<T2 *>(inputs[1]->addr);
   auto *interim = reinterpret_cast<T1 *>(workspace[0]->addr);

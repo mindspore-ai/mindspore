@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ using double_complex = std::complex<double>;
  * @tparam C , output Type, complex
  */
 template <typename T, typename C>
-class EigCPUKernel : public CPUKernel {
+class EigCpuKernelMod : public NativeCpuKernelMod {
  public:
-  EigCPUKernel() = default;
-  ~EigCPUKernel() override = default;
+  EigCpuKernelMod() = default;
+  ~EigCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -54,26 +54,26 @@ class EigCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T_S(
   Eig,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-  EigCPUKernel, float, float_complex);
+  EigCpuKernelMod, float, float_complex);
 MS_REG_CPU_KERNEL_T_S(Eig,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
-                      EigCPUKernel, double, double_complex);
+                      EigCpuKernelMod, double, double_complex);
 
 MS_REG_CPU_KERNEL_T_S(Eig,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex64)
                         .AddOutputAttr(kNumberTypeComplex64)
                         .AddOutputAttr(kNumberTypeComplex64),
-                      EigCPUKernel, float_complex, float_complex);
+                      EigCpuKernelMod, float_complex, float_complex);
 MS_REG_CPU_KERNEL_T_S(Eig,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
-                      EigCPUKernel, double_complex, double_complex);
+                      EigCpuKernelMod, double_complex, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 

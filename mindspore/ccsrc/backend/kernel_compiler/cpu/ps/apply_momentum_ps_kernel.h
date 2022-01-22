@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-class ApplyMomentumPSKernel : public ApplyMomentumCPUKernel, public PServerKernel {
+class ApplyMomentumPSKernelMod : public ApplyMomentumCpuKernelMod, public PServerKernel {
  public:
-  ApplyMomentumPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+  ApplyMomentumPSKernelMod(size_t rank_id, size_t pserver_num, size_t worker_num)
       : PServerKernel(rank_id, pserver_num, worker_num) {}
-  ~ApplyMomentumPSKernel() override = default;
+  ~ApplyMomentumPSKernelMod() override = default;
 
   bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;

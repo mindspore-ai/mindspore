@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,11 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferGetKernel : public GpuKernel {
+class BufferGetKernelMod : public NativeGpuKernelMod {
  public:
-  BufferGetKernel();
-  ~BufferGetKernel();
+  BufferGetKernelMod();
+  ~BufferGetKernelMod();
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
@@ -45,12 +42,9 @@ class BufferGetKernel : public GpuKernel {
   size_t element_nums_;
   int64_t capacity_;
   std::vector<size_t> exp_element_list;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_GPU_KERNEL(BufferGetItem, BufferGetKernel)
+MS_REG_GPU_KERNEL(BufferGetItem, BufferGetKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

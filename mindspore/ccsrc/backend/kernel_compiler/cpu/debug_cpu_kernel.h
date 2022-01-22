@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class DebugCPUKernel : public CPUKernel {
+class DebugCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DebugCPUKernel() = default;
-  ~DebugCPUKernel() override = default;
+  DebugCpuKernelMod() = default;
+  ~DebugCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -36,7 +36,8 @@ class DebugCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Debug, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32), DebugCPUKernel);
+MS_REG_CPU_KERNEL(Debug, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+                  DebugCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

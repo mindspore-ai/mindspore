@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,27 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-                      RandpermGpuKernel, int8_t)
+                      RandpermGpuKernelMod, int8_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-                      RandpermGpuKernel, int16_t)
+                      RandpermGpuKernelMod, int16_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      RandpermGpuKernel, int32_t)
+                      RandpermGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-                      RandpermGpuKernel, int64_t)
+                      RandpermGpuKernelMod, int64_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-                      RandpermGpuKernel, uint8_t)
+                      RandpermGpuKernelMod, uint8_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-                      RandpermGpuKernel, uint16_t)
+                      RandpermGpuKernelMod, uint16_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-                      RandpermGpuKernel, uint32_t)
+                      RandpermGpuKernelMod, uint32_t)
 
 MS_REG_GPU_KERNEL_ONE(Randperm, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-                      RandpermGpuKernel, uint64_t)
+                      RandpermGpuKernelMod, uint64_t)
 }  // namespace kernel
 }  // namespace mindspore

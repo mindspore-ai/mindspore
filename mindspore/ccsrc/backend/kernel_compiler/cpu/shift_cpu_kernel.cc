@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void ShiftCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void ShiftCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -65,8 +65,9 @@ void ShiftCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /* workspace */,
-                               const std::vector<AddressPtr> &outputs) {
+bool ShiftCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                  const std::vector<AddressPtr> & /* workspace */,
+                                  const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
                       << " input(s).";

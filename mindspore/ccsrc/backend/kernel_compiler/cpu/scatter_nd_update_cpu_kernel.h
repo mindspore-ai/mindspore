@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ struct ComputeParams {
   size_t x_mem_size_{0};
 };
 
-class ScatterUpdateCPUKernel : public CPUKernel {
+class ScatterUpdateCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ScatterUpdateCPUKernel() = default;
-  ~ScatterUpdateCPUKernel() override = default;
+  ScatterUpdateCpuKernelMod() = default;
+  ~ScatterUpdateCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -60,13 +60,13 @@ class ScatterUpdateCPUKernel : public CPUKernel {
   std::vector<int> out_strides_;
 };
 
-class ScatterNdUpdateCPUKernel : public ScatterUpdateCPUKernel {
+class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  protected:
   void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &outputs) override;
 };
 
-class TensorScatterUpdateCPUKernel : public ScatterUpdateCPUKernel {
+class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  protected:
   void *ScatterUpdateRealData(const std::vector<AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &outputs) override;
@@ -78,7 +78,7 @@ MS_REG_CPU_KERNEL(ScatterNdUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  ScatterNdUpdateCPUKernel)
+                  ScatterNdUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(TensorScatterUpdate,
                   KernelAttr()
@@ -86,7 +86,7 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  TensorScatterUpdateCPUKernel)
+                  TensorScatterUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
@@ -94,7 +94,7 @@ MS_REG_CPU_KERNEL(ScatterNdUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeFloat64)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  ScatterNdUpdateCPUKernel)
+                  ScatterNdUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(TensorScatterUpdate,
                   KernelAttr()
@@ -102,7 +102,7 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeFloat64)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  TensorScatterUpdateCPUKernel)
+                  TensorScatterUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
@@ -110,7 +110,7 @@ MS_REG_CPU_KERNEL(ScatterNdUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  ScatterNdUpdateCPUKernel)
+                  ScatterNdUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(TensorScatterUpdate,
                   KernelAttr()
@@ -118,7 +118,7 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  TensorScatterUpdateCPUKernel)
+                  TensorScatterUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(ScatterNdUpdate,
                   KernelAttr()
@@ -126,7 +126,7 @@ MS_REG_CPU_KERNEL(ScatterNdUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  ScatterNdUpdateCPUKernel)
+                  ScatterNdUpdateCpuKernelMod)
 
 MS_REG_CPU_KERNEL(TensorScatterUpdate,
                   KernelAttr()
@@ -134,7 +134,7 @@ MS_REG_CPU_KERNEL(TensorScatterUpdate,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
-                  TensorScatterUpdateCPUKernel)
+                  TensorScatterUpdateCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

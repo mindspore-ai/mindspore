@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class AssignGpuKernel : public GpuKernel {
+class AssignGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AssignGpuKernel() : input_size_(0), is_null_input_(false) {}
-  ~AssignGpuKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  AssignGpuKernelMod() : input_size_(0), is_null_input_(false) {}
+  ~AssignGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -90,10 +87,6 @@ class AssignGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
   }
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   size_t input_size_;
   bool is_null_input_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LayerNormGpuKernel : public GpuKernel {
+class LayerNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LayerNormGpuKernel() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
-  ~LayerNormGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  LayerNormGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
+  ~LayerNormGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -103,10 +99,6 @@ class LayerNormGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   int input_row_;
   int input_col_;
   int param_dim_;

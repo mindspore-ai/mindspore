@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SelectCPUKernel : public CPUKernel {
+class SelectCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SelectCPUKernel() = default;
-  ~SelectCPUKernel() override = default;
+  SelectCpuKernelMod() = default;
+  ~SelectCpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
@@ -44,7 +44,7 @@ MS_REG_CPU_KERNEL_T(Select,
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    SelectCPUKernel, float);
+                    SelectCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(Select,
                     KernelAttr()
@@ -52,7 +52,7 @@ MS_REG_CPU_KERNEL_T(Select,
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddOutputAttr(kNumberTypeFloat64),
-                    SelectCPUKernel, double);
+                    SelectCpuKernelMod, double);
 
 MS_REG_CPU_KERNEL_T(Select,
                     KernelAttr()
@@ -60,7 +60,7 @@ MS_REG_CPU_KERNEL_T(Select,
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddOutputAttr(kNumberTypeFloat16),
-                    SelectCPUKernel, float16);
+                    SelectCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(Select,
                     KernelAttr()
@@ -68,7 +68,7 @@ MS_REG_CPU_KERNEL_T(Select,
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    SelectCPUKernel, int);
+                    SelectCpuKernelMod, int);
 }  // namespace kernel
 }  // namespace mindspore
 

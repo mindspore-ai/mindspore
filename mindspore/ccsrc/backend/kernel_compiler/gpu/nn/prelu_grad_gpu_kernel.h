@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PReLUGradGpuKernel : public GpuKernel {
+class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  PReLUGradGpuKernel() = default;
-  ~PReLUGradGpuKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  PReLUGradGpuKernelMod() = default;
+  ~PReLUGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -126,9 +123,6 @@ class PReLUGradGpuKernel : public GpuKernel {
   size_t weight_length_{0};
   size_t per_channel_length_{0};
   size_t workspace_size_{0};
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

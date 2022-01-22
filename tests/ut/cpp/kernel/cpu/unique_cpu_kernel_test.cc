@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class UniqueCpuKernelTest : public UT::Common {
  public:
-  UniqueCpuKernelTest() : unique_(std::make_shared<UniqueCPUKernel>()) {}
+  UniqueCpuKernelTest() : unique_(std::make_shared<UniqueCpuKernelMod>()) {}
 
   void SetUp() override {
     unique_->input_size_ = 9;
@@ -58,7 +58,7 @@ class UniqueCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<UniqueCPUKernel> unique_;
+  std::shared_ptr<UniqueCpuKernelMod> unique_;
 };
 
 TEST_F(UniqueCpuKernelTest, compute_test) {

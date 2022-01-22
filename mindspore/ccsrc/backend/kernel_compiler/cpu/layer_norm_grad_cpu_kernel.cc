@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kLayerNormGradInputsNum = 5;
 constexpr size_t kLayerNormGradOutputsNum = 3;
 }  // namespace
 
-void LayerNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LayerNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -57,9 +57,9 @@ void LayerNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool LayerNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool LayerNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLayerNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLayerNormGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -74,8 +74,8 @@ bool LayerNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
+void LayerNormGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &outputs) {
   auto *x = reinterpret_cast<T *>(inputs[0]->addr);
   auto *dy = reinterpret_cast<T *>(inputs[1]->addr);
   auto *var = reinterpret_cast<T *>(inputs[2]->addr);

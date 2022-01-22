@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      BroadcastOpGradGpuKernel, double)
+                      BroadcastOpGradGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -33,7 +33,7 @@ MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BroadcastOpGradGpuKernel, float)
+                      BroadcastOpGradGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BroadcastOpGradGpuKernel, float)
+                      BroadcastOpGradGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -49,7 +49,7 @@ MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      BroadcastOpGradGpuKernel, half)
+                      BroadcastOpGradGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -57,7 +57,7 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      BroadcastOpGradGpuKernel, half)
+                      BroadcastOpGradGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
@@ -65,7 +65,7 @@ MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      BroadcastOpGradGpuKernel, int)
+                      BroadcastOpGradGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
@@ -73,7 +73,7 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      BroadcastOpGradGpuKernel, int)
+                      BroadcastOpGradGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
@@ -81,7 +81,7 @@ MS_REG_GPU_KERNEL_ONE(MinimumGrad,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      BroadcastOpGradGpuKernel, int64_t)
+                      BroadcastOpGradGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
@@ -89,6 +89,6 @@ MS_REG_GPU_KERNEL_ONE(MaximumGrad,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      BroadcastOpGradGpuKernel, int64_t)
+                      BroadcastOpGradGpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

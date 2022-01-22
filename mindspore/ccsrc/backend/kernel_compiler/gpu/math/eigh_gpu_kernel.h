@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,10 @@ namespace kernel {
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
 constexpr char LOWER[] = "lower";
 template <typename T>
-class EighGpuKernel : public GpuKernel {
+class EighGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EighGpuKernel() : is_null_input_(false) {}
-  ~EighGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  EighGpuKernelMod() : is_null_input_(false) {}
+  ~EighGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -159,9 +156,6 @@ class EighGpuKernel : public GpuKernel {
   bool lower_{true};
   bool is_null_input_;
   std::vector<T *> h_array_{};
-  std::vector<size_t> input_size_list_{};
-  std::vector<size_t> output_size_list_{};
-  std::vector<size_t> workspace_size_list_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

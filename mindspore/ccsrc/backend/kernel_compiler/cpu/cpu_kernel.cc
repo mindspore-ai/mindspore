@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,12 @@ void CpuDynamicKernel::UpdateArgs() {
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto cpu_kernel_mod = dynamic_cast<CPUKernel *>(kernel_mod);
+  auto cpu_kernel_mod = dynamic_cast<NativeCpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
   cpu_kernel_mod->Init(cnode);
 }
 
-void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_size_list_.clear();
   output_size_list_.clear();
@@ -67,7 +67,7 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
 }
 
-void CPUKernel::Init(const CNodePtr &kernel_node) {
+void NativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
   InitKernel(kernel_node);
   InitInputOutputSize(kernel_node);
 }

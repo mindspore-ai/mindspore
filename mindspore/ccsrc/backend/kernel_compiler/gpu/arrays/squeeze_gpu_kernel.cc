@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,26 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      SqueezeGpuKernel, half)
+                      SqueezeGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      SqueezeGpuKernel, float)
+                      SqueezeGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      SqueezeGpuKernel, double)
+                      SqueezeGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      SqueezeGpuKernel, int8_t)
+                      SqueezeGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      SqueezeGpuKernel, int16_t)
+                      SqueezeGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      SqueezeGpuKernel, int)
+                      SqueezeGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      SqueezeGpuKernel, int64_t)
+                      SqueezeGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      SqueezeGpuKernel, uint8_t)
+                      SqueezeGpuKernelMod, uint8_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      SqueezeGpuKernel, uint16_t)
+                      SqueezeGpuKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      SqueezeGpuKernel, uint32_t)
+                      SqueezeGpuKernelMod, uint32_t)
 MS_REG_GPU_KERNEL_ONE(Squeeze, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      SqueezeGpuKernel, bool)
+                      SqueezeGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CholeskyCPUKernel : public CPUKernel {
+class CholeskyCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CholeskyCPUKernel() = default;
-  ~CholeskyCPUKernel() override = default;
+  CholeskyCpuKernelMod() = default;
+  ~CholeskyCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,10 +44,10 @@ class CholeskyCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL_T(Cholesky, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    CholeskyCPUKernel, float)
+                    CholeskyCpuKernelMod, float)
 
 MS_REG_CPU_KERNEL_T(Cholesky, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    CholeskyCPUKernel, double)
+                    CholeskyCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_

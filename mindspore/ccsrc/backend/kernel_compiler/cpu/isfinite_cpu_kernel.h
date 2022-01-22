@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class IsFiniteCPUKernel : public CPUKernel {
+class IsFiniteCpuKernelMod : public NativeCpuKernelMod {
  public:
-  IsFiniteCPUKernel() = default;
-  ~IsFiniteCPUKernel() override = default;
+  IsFiniteCpuKernelMod() = default;
+  ~IsFiniteCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernelNode) override;
 
@@ -52,7 +52,7 @@ class IsFiniteCPUKernel : public CPUKernel {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsFinite, KernelAttr(), IsFiniteCPUKernel);
+MS_REG_CPU_KERNEL(IsFinite, KernelAttr(), IsFiniteCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

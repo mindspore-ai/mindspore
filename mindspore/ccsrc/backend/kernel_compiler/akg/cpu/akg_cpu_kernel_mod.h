@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@
 #include <mutex>
 #include <shared_mutex>
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-class CpuKernelManager {
+class AkgCpuKernelManager {
  public:
-  CpuKernelManager() = default;
-  ~CpuKernelManager();
+  AkgCpuKernelManager() = default;
+  ~AkgCpuKernelManager();
 
   void *GetFunction(const std::string &kernel_name);
 
@@ -42,32 +43,23 @@ class CpuKernelManager {
   std::unordered_map<std::string, std::pair<void *, void *>> cpu_func_map_;
   mutable std::shared_mutex mutex_;
 };
-using CpuKernelManagerPtr = std::shared_ptr<CpuKernelManager>;
-class CpuKernelMod : public KernelMod {
+using AkgCpuKernelManagerPtr = std::shared_ptr<AkgCpuKernelManager>;
+class AkgCpuKernelMod : public CpuKernelMod {
  public:
-  explicit CpuKernelMod(const KernelPackPtr &kp);
-  ~CpuKernelMod() = default;
+  explicit AkgCpuKernelMod(const KernelPackPtr &kp);
+  ~AkgCpuKernelMod() = default;
 
-  void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
-  void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
-  void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  static CpuKernelManagerPtr kernelmanager_;
+  static AkgCpuKernelManagerPtr kernel_manager_;
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;  // workspace is not used in cpu kernel.
   void *launch_func_;
   std::string kernel_name_;
 };
 
-using CpuKernelModPtr = std::shared_ptr<CpuKernelMod>;
+using AkgCpuKernelModPtr = std::shared_ptr<AkgCpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_MOD_H_

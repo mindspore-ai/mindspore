@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
@@ -28,15 +29,35 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class Conv3dTransposeGpuFwdKernel : public GpuKernel {
- public:
-  Conv3dTransposeGpuFwdKernel() { ResetResource(); }
-  ~Conv3dTransposeGpuFwdKernel() override { DestroyResource(); }
+constexpr size_t kConv3dDimSize = 3;
+constexpr int kSymmetricCoef = 2;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+constexpr size_t k3DPadSize = 6;
+constexpr size_t kHead3DPadIdx = 0;
+constexpr size_t kTail3DPadIdx = 1;
+constexpr size_t kTop3DPadIdx = 2;
+constexpr size_t kBottom3DPadIdx = 3;
+constexpr size_t kLeft3DPadIdx = 4;
+constexpr size_t kRight3DPadIdx = 5;
+
+constexpr size_t kPadDepthIdx = 0;
+constexpr size_t kPadHeightIdx = 1;
+constexpr size_t kPadWidthIdx = 2;
+
+constexpr size_t k3DStrideSize = 5;
+constexpr size_t kDepth3DStrideIdx = 2;
+constexpr size_t kHeight3DStrideIdx = 3;
+constexpr size_t kWidth3DStrideIdx = 4;
+
+constexpr size_t k3DDilationSize = 5;
+constexpr size_t kDepth3DDilationIdx = 2;
+constexpr size_t kHeight3DDilationIdx = 3;
+constexpr size_t kWidth3DDilationIdx = 4;
+template <typename T>
+class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
+ public:
+  Conv3dTransposeFwdGpuKernelMod() { ResetResource(); }
+  ~Conv3dTransposeFwdGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -51,7 +72,8 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     const float alpha = 1;
     if (use_pad_) {
       T *input_padded = GetDeviceAddress<T>(workspace, 1);
-      T *output_padded = GetDeviceAddress<T>(workspace, 2);
+      const size_t kWsOutPadIdx = 2;
+      T *output_padded = GetDeviceAddress<T>(workspace, kWsOutPadIdx);
       CalPad3d(input_padded_size_ / sizeof(T), input_addr, input_n_, input_c_, input_old_depth_, input_old_height_,
                input_old_width_, input_old_depth_ + pad_depth_, input_old_height_ + pad_height_,
                input_old_width_ + pad_width_, input_pad_head_, input_pad_top_, input_pad_left_, pad_value_,
@@ -64,9 +86,10 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
         "ConvolutionBackwardData failed");
       if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
         CalPadGrad3d(output_size_ / sizeof(T), output_padded, n_, c_, old_depth_, old_height_, old_width_,
-                     old_depth_ + (1 + stride_[2]) * pad_depth_, old_height_ + (1 + stride_[3]) * pad_height_,
-                     old_width_ + (1 + stride_[4]) * pad_width_, pad_head_, pad_top_, pad_left_, output_addr,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+                     old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * pad_depth_,
+                     old_height_ + (1 + stride_[kHeight3DStrideIdx]) * pad_height_,
+                     old_width_ + (1 + stride_[kWidth3DStrideIdx]) * pad_width_, pad_head_, pad_top_, pad_left_,
+                     output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
                           << ", but got " << data_format_;
@@ -145,64 +168,10 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
-
-    pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+    std::vector<int> stride_pad_list(k3DPadSize, 0);
+    SetPad(kernel_node, input_shape, filter_shape, &pad_list, &stride_pad_list);
     SetStrideAndDilation(kernel_node);
-    std::vector<int> stride_pad_list(6, 0);
-    (void)CheckSize(filter_shape.size(), 5, "weight shape");
-    (void)CheckSize(pad_list.size(), 6, "pad");
-    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {  // pad_mode_ = same
-      UpdatePaddingAndDilation(input_shape, filter_shape, pad_list.data(), stride_pad_list.data());
-    }
-    pad_depth_ = pad_list[0];
-    pad_height_ = pad_list[2];
-    pad_width_ = pad_list[4];
-    use_pad_ = !((pad_depth_ == pad_list[1]) && (pad_height_ == pad_list[3]) && (pad_width_ == pad_list[5]));
-    cudnnTensorDescriptor_t output_desc_real = nullptr;
-    cudnnTensorDescriptor_t input_desc_real = nullptr;
-    int padA[3];
-    int strideA[3] = {stride_[2], stride_[3], stride_[4]};
-    int dilaA[3] = {dilation_[2], dilation_[3], dilation_[4]};
-    if (use_pad_) {
-      UsePadProcess(pad_list, strideA, dilaA);
-      output_desc_real = padded_descriptor_;
-      input_desc_real = input_padded_descriptor_;
-    } else {
-      if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
-        pad_depth_ = 0;
-        pad_height_ = 0;
-        pad_width_ = 0;
-      }
-      padA[0] = pad_depth_;
-      padA[1] = pad_height_;
-      padA[2] = pad_width_;
-      CHECK_CUDNN_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudnnSetConvolutionNdDescriptor(conv_desc_, 3, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-        "cudnnSetConvolution3dDescriptor failed");
-      if (greater_stride_) {
-        stride_pad_head_ = stride_pad_list[0];
-        stride_pad_top_ = stride_pad_list[2];
-        stride_pad_left_ = stride_pad_list[4];
-        stride_pad_depth_ = old_depth_ - stride_pad_list[0] - stride_pad_list[1];
-        stride_pad_height_ = old_height_ - stride_pad_list[2] - stride_pad_list[3];
-        stride_pad_width_ = old_width_ - stride_pad_list[4] - stride_pad_list[5];
-        int dim_a[5];
-        int strideApadded[5];
-        if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
-          auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(stride_pad_depth_),
-                               IntToSize(stride_pad_height_), IntToSize(stride_pad_width_)};
-          SetDimA(padded_shape, dim_a, 5, data_format_);
-          SetStrideA(padded_shape, strideApadded, 5, data_format_);
-        }
-        CHECK_CUDNN_RET_WITH_EXCEPT(
-          kernel_node_,
-          cudnnSetTensorNdDescriptor(stride_padded_descriptor_, cudnn_data_type_, 5, dim_a, strideApadded),
-          "cudnnSetTensor5dDescriptor failed");
-      }
-      output_desc_real = greater_stride_ ? stride_padded_descriptor_ : output_desc_;
-      input_desc_real = input_desc_;
-    }
+    auto [input_desc_real, output_desc_real] = GetInputAndOutputDescReal(pad_list, stride_pad_list);
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                   "cudnnSetConvolutionMathType failed.")
@@ -360,20 +329,14 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
+    const size_t kInputNum = 2;
+    if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-  }
-
-  void SetPad(const std::vector<int> &output_shape, const CNodePtr &kernel_node) {
-    std::vector<int> pad_list;
-    std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
-    (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
-                         [](const int64_t &value) { return static_cast<int>(value); });
   }
 
   void SelectAlgorithm(cudnnTensorDescriptor_t input_desc_real, cudnnTensorDescriptor_t output_desc_real) {
@@ -387,7 +350,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
                                 "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
     algo_ = perf_results.algo;
     if (compute_format_ == CUDNN_TENSOR_NHWC && cudnn_data_type_ == CUDNN_DATA_HALF && CUDNN_MAJOR < 8) {
-      MS_LOG(ERROR) << "Conv3dTransposeGpuFwdKernel does not support float16 data with NDHWC format.";
+      MS_LOG(ERROR) << "Conv3dTransposeFwdGpuKernelMod does not support float16 data with NDHWC format.";
     }
   }
 
@@ -399,26 +362,26 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
 
   void Set5DDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape,
                  const std::vector<size_t> &filter_shape) {
-    const int nbDims = 5;
-    int dim_a[5];
-    int stride_a_in[5];
-    int dim_a_dy[5];
-    int stride_a_dy[5];
-    int filter_dim_a[5];
-    SetDimA(output_shape, dim_a, 5, data_format_);
-    SetStrideA(output_shape, stride_a_in, 5, data_format_);
-    SetDimA(input_shape, dim_a_dy, 5, data_format_);
-    SetStrideA(input_shape, stride_a_dy, 5, data_format_);
-    SetDimA(filter_shape, filter_dim_a, 5, data_format_);
+    const int kNbDims = 5;
+    int dim_a[kNbDims];
+    int stride_a_in[kNbDims];
+    int dim_a_dy[kNbDims];
+    int stride_a_dy[kNbDims];
+    int filter_dim_a[kNbDims];
+    SetDimA(output_shape, dim_a, kNbDims, data_format_);
+    SetStrideA(output_shape, stride_a_in, kNbDims, data_format_);
+    SetDimA(input_shape, dim_a_dy, kNbDims, data_format_);
+    SetStrideA(input_shape, stride_a_dy, kNbDims, data_format_);
+    SetDimA(filter_shape, filter_dim_a, kNbDims, data_format_);
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptor(input_desc_, cudnn_data_type_, nbDims, dim_a_dy, stride_a_dy),
+      kernel_node_, cudnnSetTensorNdDescriptor(input_desc_, cudnn_data_type_, kNbDims, dim_a_dy, stride_a_dy),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetFilterNdDescriptor(filter_desc_, cudnn_data_type_, compute_format_, nbDims, filter_dim_a),
+      kernel_node_, cudnnSetFilterNdDescriptor(filter_desc_, cudnn_data_type_, compute_format_, kNbDims, filter_dim_a),
       "cudnnSetFilterNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetTensorNdDescriptor(output_desc_, cudnn_data_type_, nbDims, dim_a, stride_a_in),
+                                cudnnSetTensorNdDescriptor(output_desc_, cudnn_data_type_, kNbDims, dim_a, stride_a_in),
                                 "cudnnSetTensorNdDescriptor failed");
   }
 
@@ -429,7 +392,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    if (stride_.size() != 5) {
+    if (stride_.size() != k3DStrideSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 5, but got "
                         << stride_.size();
     }
@@ -437,7 +400,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
                         << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
-    if (dilation_.size() != 5) {
+    if (dilation_.size() != k3DDilationSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 5, but got "
                         << dilation_.size();
     }
@@ -448,74 +411,149 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
   }
   void UpdatePaddingAndDilation(const std::vector<size_t> &input_shape, const std::vector<size_t> &filter_shape,
                                 int *pad_list, int *stride_pad_list) {  // pad_mode_ = same
-    for (size_t i = 0; i < 3; i++) {
-      int pad_sum = SizeToInt(filter_shape[i + 2]) * dilation_[i + 2] - stride_[i + 2] - dilation_[i + 2] + 1;
+    const size_t kIdxOffset = 2;
+    for (size_t i = 0; i < kConv3dDimSize; i++) {
+      int pad_sum = SizeToInt(filter_shape[i + kIdxOffset]) * dilation_[i + kIdxOffset] - stride_[i + kIdxOffset] -
+                    dilation_[i + kIdxOffset] + 1;
       if (pad_sum >= 0) {
-        int pad_0 = pad_sum / 2;
+        int pad_0 = pad_sum / kSymmetricCoef;
         int pad_1 = pad_sum - pad_0;
-        pad_list[i * 2] = pad_0;
-        pad_list[i * 2 + 1] = pad_1;
-        stride_pad_list[i * 2] = 0;
-        stride_pad_list[i * 2 + 1] = 0;
+        pad_list[i * kSymmetricCoef] = pad_0;
+        pad_list[i * kSymmetricCoef + 1] = pad_1;
+        stride_pad_list[i * kSymmetricCoef] = 0;
+        stride_pad_list[i * kSymmetricCoef + 1] = 0;
       } else {  // pad_sum < 0, stride greater, need pad zero at end.
-        pad_list[i * 2] = 0;
-        pad_list[i * 2 + 1] = 0;
-        int pad_0 = (-pad_sum) / 2;
+        pad_list[i * kSymmetricCoef] = 0;
+        pad_list[i * kSymmetricCoef + 1] = 0;
+        int pad_0 = (-pad_sum) / kSymmetricCoef;
         int pad_1 = (-pad_sum) - pad_0;
-        stride_pad_list[i * 2] = pad_0;
-        stride_pad_list[i * 2 + 1] = pad_1;
+        stride_pad_list[i * kSymmetricCoef] = pad_0;
+        stride_pad_list[i * kSymmetricCoef + 1] = pad_1;
         greater_stride_ = true;
       }
     }
   }
   void UsePadProcess(const std::vector<int> &pad_list, const int *strideA, const int *dilaA) {
-    std::vector<int> padding_diff(3);
-    std::vector<int> padding_common(3, 0);
-    for (int i = 0; i < 3; i++) {
-      padding_diff[i] = std::abs(pad_list[2 * i + 1] - pad_list[2 * i]);
-      padding_common[i] = std::min(pad_list[2 * i], pad_list[2 * i + 1]);
+    std::vector<int> padding_diff(kConv3dDimSize);
+    std::vector<int> padding_common(kConv3dDimSize, 0);
+    for (int i = 0; i < SizeToInt(kConv3dDimSize); i++) {
+      padding_diff[i] = std::abs(pad_list[kSymmetricCoef * i + 1] - pad_list[kSymmetricCoef * i]);
+      padding_common[i] = std::min(pad_list[kSymmetricCoef * i], pad_list[kSymmetricCoef * i + 1]);
     }
-    pad_depth_ = padding_diff[0];
-    pad_height_ = padding_diff[1];
-    pad_width_ = padding_diff[2];
-    pad_head_ = (pad_list[0] - padding_common[0]) * (stride_[2] + 1);
-    pad_top_ = (pad_list[2] - padding_common[1]) * (stride_[3] + 1);
-    pad_left_ = (pad_list[4] - padding_common[2]) * (stride_[4] + 1);
-    input_pad_head_ = pad_list[0] - padding_common[0];
-    input_pad_top_ = pad_list[2] - padding_common[1];
-    input_pad_left_ = pad_list[4] - padding_common[2];
-    int dim_a[5];
-    int strideApadded[5];
-    int input_dim_a[5];
-    int input_strideApadded[5];
+    pad_depth_ = padding_diff[kPadDepthIdx];
+    pad_height_ = padding_diff[kPadHeightIdx];
+    pad_width_ = padding_diff[kPadWidthIdx];
+    pad_head_ = (pad_list[kHead3DPadIdx] - padding_common[kHead3DPadIdx]) * (stride_[kDepth3DStrideIdx] + 1);
+    pad_top_ = (pad_list[kTop3DPadIdx] - padding_common[kTail3DPadIdx]) * (stride_[kHeight3DStrideIdx] + 1);
+    pad_left_ = (pad_list[kLeft3DPadIdx] - padding_common[kTop3DPadIdx]) * (stride_[kWidth3DStrideIdx] + 1);
+    input_pad_head_ = pad_list[kHead3DPadIdx] - padding_common[kHead3DPadIdx];
+    input_pad_top_ = pad_list[kTop3DPadIdx] - padding_common[kTail3DPadIdx];
+    input_pad_left_ = pad_list[kLeft3DPadIdx] - padding_common[kTop3DPadIdx];
+    const size_t kDataSize = 5;
+    int dim_a[kDataSize];
+    int strideApadded[kDataSize];
+    int input_dim_a[kDataSize];
+    int input_strideApadded[kDataSize];
     if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
-      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + (1 + stride_[2]) * padding_diff[0]),
-                           IntToSize(old_height_ + (1 + stride_[3]) * padding_diff[1]),
-                           IntToSize(old_width_ + (1 + stride_[4]) * padding_diff[2])};
-      SetDimA(padded_shape, dim_a, 5, data_format_);
-      SetStrideA(padded_shape, strideApadded, 5, data_format_);
-      std::vector<size_t> input_padded_shape = {
-        IntToSize(input_n_), IntToSize(input_c_), IntToSize(input_old_depth_ + padding_diff[0]),
-        IntToSize(input_old_height_ + padding_diff[1]), IntToSize(input_old_width_ + padding_diff[2])};
-      SetDimA(input_padded_shape, input_dim_a, 5, data_format_);
-      SetStrideA(input_padded_shape, input_strideApadded, 5, data_format_);
+      auto padded_shape = {IntToSize(n_), IntToSize(c_),
+                           IntToSize(old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * padding_diff[kHead3DPadIdx]),
+                           IntToSize(old_height_ + (1 + stride_[kHeight3DStrideIdx]) * padding_diff[kTail3DPadIdx]),
+                           IntToSize(old_width_ + (1 + stride_[kWidth3DStrideIdx]) * padding_diff[kTop3DPadIdx])};
+      SetDimA(padded_shape, dim_a, kDataSize, data_format_);
+      SetStrideA(padded_shape, strideApadded, kDataSize, data_format_);
+      std::vector<size_t> input_padded_shape = {IntToSize(input_n_), IntToSize(input_c_),
+                                                IntToSize(input_old_depth_ + padding_diff[0]),
+                                                IntToSize(input_old_height_ + padding_diff[kTail3DPadIdx]),
+                                                IntToSize(input_old_width_ + padding_diff[kTop3DPadIdx])};
+      SetDimA(input_padded_shape, input_dim_a, kDataSize, data_format_);
+      SetStrideA(input_padded_shape, input_strideApadded, kDataSize, data_format_);
     } else if (data_format_ == kOpFormat_NDHWC) {
       auto padded_shape = {IntToSize(n_), IntToSize(old_depth_ + pad_depth_), IntToSize(old_height_ + pad_height_),
                            IntToSize(old_width_ + pad_width_), IntToSize(c_)};
-      SetDimA(padded_shape, dim_a, 5, data_format_);
-      SetStrideA(padded_shape, strideApadded, 5, data_format_);
+      SetDimA(padded_shape, dim_a, kDataSize, data_format_);
+      SetStrideA(padded_shape, strideApadded, kDataSize, data_format_);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, 5, dim_a, strideApadded),
-      "cudnnSetTensor5dDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnSetTensorNdDescriptor(input_padded_descriptor_, cudnn_data_type_, 5, input_dim_a, input_strideApadded),
+      kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, kDataSize, dim_a, strideApadded),
       "cudnnSetTensor5dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                cudnnSetConvolutionNdDescriptor(conv_desc_, 3, padding_common.data(), strideA, dilaA,
-                                                                CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
-                                "cudnnSetConvolutionNdDescriptor failed");
+                                cudnnSetTensorNdDescriptor(input_padded_descriptor_, cudnn_data_type_, kDataSize,
+                                                           input_dim_a, input_strideApadded),
+                                "cudnnSetTensor5dDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudnnSetConvolutionNdDescriptor(conv_desc_, kConv3dDimSize, padding_common.data(), strideA, dilaA,
+                                      CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+      "cudnnSetConvolutionNdDescriptor failed");
+  }
+
+  void SetPad(const CNodePtr &kernel_node, const std::vector<size_t> &input_shape,
+              const std::vector<size_t> &filter_shape, std::vector<int> *pad_list, std::vector<int> *stride_pad_list) {
+    pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+    const size_t kFilterSize = 5;
+    (void)CheckSize(filter_shape.size(), kFilterSize, "weight shape");
+    (void)CheckSize(pad_list->size(), k3DPadSize, "pad");
+    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {  // pad_mode_ = same
+      UpdatePaddingAndDilation(input_shape, filter_shape, pad_list->data(), stride_pad_list->data());
+    }
+    pad_depth_ = (*pad_list)[kHead3DPadIdx];
+    pad_height_ = (*pad_list)[kTop3DPadIdx];
+    pad_width_ = (*pad_list)[kLeft3DPadIdx];
+    use_pad_ = !((pad_depth_ == (*pad_list)[kTail3DPadIdx]) && (pad_height_ == (*pad_list)[kBottom3DPadIdx]) &&
+                 (pad_width_ == (*pad_list)[kRight3DPadIdx]));
+  }
+
+  std::pair<cudnnTensorDescriptor_t, cudnnTensorDescriptor_t> GetInputAndOutputDescReal(
+    const std::vector<int> &pad_list, const std::vector<int> &stride_pad_list) {
+    cudnnTensorDescriptor_t output_desc_real = nullptr;
+    cudnnTensorDescriptor_t input_desc_real = nullptr;
+    int strideA[kConv3dDimSize] = {stride_[kDepth3DStrideIdx], stride_[kHeight3DStrideIdx], stride_[kWidth3DStrideIdx]};
+    int dilaA[kConv3dDimSize] = {dilation_[kDepth3DDilationIdx], dilation_[kHeight3DDilationIdx],
+                                 dilation_[kWidth3DDilationIdx]};
+    if (use_pad_) {
+      UsePadProcess(pad_list, strideA, dilaA);
+      output_desc_real = padded_descriptor_;
+      input_desc_real = input_padded_descriptor_;
+    } else {
+      if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
+        pad_depth_ = 0;
+        pad_height_ = 0;
+        pad_width_ = 0;
+      }
+      int padA[kConv3dDimSize];
+      padA[kPadDepthIdx] = pad_depth_;
+      padA[kPadHeightIdx] = pad_height_;
+      padA[kPadWidthIdx] = pad_width_;
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetConvolutionNdDescriptor(conv_desc_, kConv3dDimSize, padA, strideA, dilaA,
+                                                                  CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
+                                  "cudnnSetConvolution3dDescriptor failed");
+      if (greater_stride_) {
+        stride_pad_head_ = stride_pad_list[kHead3DPadIdx];
+        stride_pad_top_ = stride_pad_list[kTop3DPadIdx];
+        stride_pad_left_ = stride_pad_list[kLeft3DPadIdx];
+        stride_pad_depth_ = old_depth_ - stride_pad_list[kHead3DPadIdx] - stride_pad_list[kTail3DPadIdx];
+        stride_pad_height_ = old_height_ - stride_pad_list[kTop3DPadIdx] - stride_pad_list[kBottom3DPadIdx];
+        stride_pad_width_ = old_width_ - stride_pad_list[kLeft3DPadIdx] - stride_pad_list[kRight3DPadIdx];
+        const size_t kDataLen = 5;
+        int dim_a[kDataLen];
+        int strideApadded[kDataLen];
+        if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
+          auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(stride_pad_depth_),
+                               IntToSize(stride_pad_height_), IntToSize(stride_pad_width_)};
+          SetDimA(padded_shape, dim_a, kDataLen, data_format_);
+          SetStrideA(padded_shape, strideApadded, kDataLen, data_format_);
+        }
+        CHECK_CUDNN_RET_WITH_EXCEPT(
+          kernel_node_,
+          cudnnSetTensorNdDescriptor(stride_padded_descriptor_, cudnn_data_type_, kDataLen, dim_a, strideApadded),
+          "cudnnSetTensor5dDescriptor failed");
+      }
+      output_desc_real = greater_stride_ ? stride_padded_descriptor_ : output_desc_;
+      input_desc_real = input_desc_;
+    }
+
+    return std::make_pair(input_desc_real, output_desc_real);
   }
 
   cudnnHandle_t cudnn_handle_;
@@ -530,9 +568,6 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
   bool algo_selected_;
   std::string pad_mode_;
   std::string data_format_ = kOpFormat_NCDHW;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   cudnnDataType_t cudnn_data_type_;
   cudnnTensorFormat_t compute_format_;
   int old_depth_;

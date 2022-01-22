@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,16 @@ namespace kernel {
 // The duration between two PullWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
 template <typename T>
-class FusedPullWeightKernel : public CPUKernel {
+class FusedPullWeightKernelMod : public NativeCpuKernelMod {
  public:
-  FusedPullWeightKernel()
+  FusedPullWeightKernelMod()
       : server_num_(0), indices_({}), weight_full_names_({}), fl_iteration_(0), total_iteration_(0) {}
-  ~FusedPullWeightKernel() override = default;
+  ~FusedPullWeightKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(DEBUG) << "Launch FusedPullWeightKernel.";
+    MS_LOG(DEBUG) << "Launch FusedPullWeightKernelMod.";
     if (inputs.size() != weight_full_names_.size()) {
-      MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPullWeightKernel needs "
+      MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPullWeightKernelMod needs "
                         << weight_full_names_.size() << " weights as inputs.";
     }
 
@@ -140,7 +140,7 @@ class FusedPullWeightKernel : public CPUKernel {
                  << ", server number is " << server_num_;
     if (server_num_ == 0 || weight_full_names_.empty() || indices_.empty()) {
       MS_LOG(EXCEPTION)
-        << "Attributes of FusedPullWeightKernel are invalid: server number is 0 or weight_full_names_ is "
+        << "Attributes of FusedPullWeightKernelMod are invalid: server number is 0 or weight_full_names_ is "
            "empty or indices_ is UINT32_MAX.";
     }
 
@@ -178,7 +178,7 @@ class FusedPullWeightKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(pull_weight_rsp);
     auto fbs_feature_map = pull_weight_rsp->feature_map();
     if (fbs_feature_map->size() != weight_full_names_.size()) {
-      MS_LOG(EXCEPTION) << "FusedPullWeightKernel should get " << weight_full_names_.size() << " weights, but got "
+      MS_LOG(EXCEPTION) << "FusedPullWeightKernelMod should get " << weight_full_names_.size() << " weights, but got "
                         << fbs_feature_map->size() << " weights.";
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,11 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BiasAddGpuKernel : public GpuKernel {
+class BiasAddGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BiasAddGpuKernel() { ResetResource(); }
-  ~BiasAddGpuKernel() override { DestroyResource(); }
+  BiasAddGpuKernelMod() { ResetResource(); }
+  ~BiasAddGpuKernelMod() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
@@ -164,9 +161,6 @@ class BiasAddGpuKernel : public GpuKernel {
   cudnnOpTensorDescriptor_t op_desc_;
   bool is_null_input_;
   std::string kernel_name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

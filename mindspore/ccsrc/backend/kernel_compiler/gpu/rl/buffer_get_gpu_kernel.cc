@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
-BufferGetKernel::BufferGetKernel() : element_nums_(0), capacity_(0) {}
+BufferGetKernelMod::BufferGetKernelMod() : element_nums_(0), capacity_(0) {}
 
-BufferGetKernel::~BufferGetKernel() {}
+BufferGetKernelMod::~BufferGetKernelMod() {}
 
-void BufferGetKernel::ReleaseResource() {}
+void BufferGetKernelMod::ReleaseResource() {}
 
-const std::vector<size_t> &BufferGetKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &BufferGetKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &BufferGetKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool BufferGetKernel::Init(const CNodePtr &kernel_node) {
+bool BufferGetKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
   auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
@@ -60,10 +54,10 @@ bool BufferGetKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void BufferGetKernel::InitSizeLists() { return; }
+void BufferGetKernelMod::InitSizeLists() { return; }
 
-bool BufferGetKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs, void *stream) {
+bool BufferGetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                const std::vector<AddressPtr> &outputs, void *stream) {
   int *count_addr = GetDeviceAddress<int>(inputs, element_nums_);
   int *head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
   int *origin_index_addr = GetDeviceAddress<int>(inputs, element_nums_ + 2);

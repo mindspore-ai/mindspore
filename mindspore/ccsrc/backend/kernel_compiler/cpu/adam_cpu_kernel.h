@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class AdamCPUKernel : public CPUKernel {
+class AdamCpuKernelMod : public NativeCpuKernelMod {
  public:
-  AdamCPUKernel() = default;
-  ~AdamCPUKernel() override = default;
+  AdamCpuKernelMod() = default;
+  ~AdamCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -45,7 +45,7 @@ class AdamCPUKernel : public CPUKernel {
   enum input_list_ { VAR, M, V, BETA1_POWER, BETA2_POWER, LR, BETA1, BETA2, EPSILON, GRAD };
 };
 
-MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCPUKernel);
+MS_REG_CPU_KERNEL(Adam, KernelAttr(), AdamCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

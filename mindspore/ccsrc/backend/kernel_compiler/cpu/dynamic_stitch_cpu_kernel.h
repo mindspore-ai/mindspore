@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DynamicStitchCPUKernel : public CPUKernel {
+class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DynamicStitchCPUKernel() = default;
-  ~DynamicStitchCPUKernel() override = default;
+  DynamicStitchCpuKernelMod() = default;
+  ~DynamicStitchCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -41,16 +41,16 @@ class DynamicStitchCPUKernel : public CPUKernel {
   size_t input_tuple_num_{1};
 };
 
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, float);
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, int8_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, int16_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, int32_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, int64_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, uint64_t)
-MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCPUKernel, bool)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(DynamicStitch, KernelAttr(), DynamicStitchCpuKernelMod, bool)
 
 }  // namespace kernel
 }  // namespace mindspore

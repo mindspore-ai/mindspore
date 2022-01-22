@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ constexpr size_t kCastOutputsNum = 1;
 }  // namespace
 
 template <typename S, typename T>
-void Cast(CastCPUKernel<S, T> *content, const S *in, T *out, size_t size) {
+void Cast(CastCpuKernelMod<S, T> *content, const S *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(in[i]);
@@ -40,7 +40,7 @@ void Cast(CastCPUKernel<S, T> *content, const S *in, T *out, size_t size) {
 }
 
 template <typename S, typename T>
-void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
+void CastCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   source_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -48,8 +48,9 @@ void CastCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename S, typename T>
-bool CastCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool CastCpuKernelMod<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {

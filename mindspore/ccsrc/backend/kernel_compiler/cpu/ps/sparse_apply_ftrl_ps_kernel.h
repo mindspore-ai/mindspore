@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-using mindspore::kernel::SparseApplyFtrlCPUKernel;
-class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerKernel {
+using mindspore::kernel::SparseApplyFtrlCpuKernelMod;
+class SparseApplyFtrlPSKernelMod : public SparseApplyFtrlCpuKernelMod, public PServerKernel {
  public:
-  SparseApplyFtrlPSKernel(size_t rank_id, size_t pserver_num, size_t worker_num)
+  SparseApplyFtrlPSKernelMod(size_t rank_id, size_t pserver_num, size_t worker_num)
       : PServerKernel(rank_id, pserver_num, worker_num), init_accum_(0.1) {}
-  ~SparseApplyFtrlPSKernel() override = default;
+  ~SparseApplyFtrlPSKernelMod() override = default;
 
   void InitKernel(const CNodePtr &cnode,
                   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) override;

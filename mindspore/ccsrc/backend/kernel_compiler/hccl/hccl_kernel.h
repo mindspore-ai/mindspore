@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,10 @@ class HcclKernel : public AscendKernelMod {
   explicit HcclKernel(const AnfNodePtr &anf_node);
   ~HcclKernel() override;
   virtual bool Init(const AnfNodePtr &anf_node);
+
+  void SetInputSizeList(const std::vector<size_t> &size_list) override;
+  void SetOutputSizeList(const std::vector<size_t> &size_list) override;
+  void SetWorkspaceSizeList(const std::vector<size_t> &size_list) override;
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
@@ -60,9 +64,9 @@ class HcclKernel : public AscendKernelMod {
   uint32_t root_id_;
   uint32_t src_rank_;
   uint32_t dest_rank_;
-  mutable std::vector<size_t> input_size_list_;
-  mutable std::vector<size_t> output_size_list_;
-  mutable std::vector<size_t> workspace_size_list_;
+  mutable std::vector<size_t> mutable_input_size_list_;
+  mutable std::vector<size_t> mutable_output_size_list_;
+  mutable std::vector<size_t> mutable_workspace_size_list_;
   std::string op_name_;
   std::string group_;
   std::mutex hccl_mutex_;

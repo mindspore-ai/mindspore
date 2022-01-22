@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,10 @@ constexpr size_t PADDING_SHAPE_0 = 2;
 constexpr size_t PADDING_SHAPE_1 = 2;
 
 template <typename T>
-class SpaceToBatchGpuKernel : public GpuKernel {
+class SpaceToBatchGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SpaceToBatchGpuKernel() { ResetResource(); }
-  ~SpaceToBatchGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  SpaceToBatchGpuKernelMod() { ResetResource(); }
+  ~SpaceToBatchGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -149,9 +146,7 @@ class SpaceToBatchGpuKernel : public GpuKernel {
   }
 
   std::string kernel_name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
   size_t block_size_;

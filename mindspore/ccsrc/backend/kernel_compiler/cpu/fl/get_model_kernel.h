@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@
 
 namespace mindspore {
 namespace kernel {
-class GetModelKernel : public CPUKernel {
+class GetModelKernelMod : public NativeCpuKernelMod {
  public:
-  GetModelKernel() = default;
-  ~GetModelKernel() override = default;
+  GetModelKernelMod() = default;
+  ~GetModelKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(INFO) << "Launching client GetModelKernel";
+    MS_LOG(INFO) << "Launching client GetModelKernelMod";
     if (!BuildGetModelReq(fbb_, inputs)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
       return false;

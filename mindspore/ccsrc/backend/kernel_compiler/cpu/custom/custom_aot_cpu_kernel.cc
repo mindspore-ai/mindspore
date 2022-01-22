@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-CustomAOTCpuKernel::~CustomAOTCpuKernel() {
+CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 #if !defined(_WIN32) && !defined(_WIN64)
   if (handle_ != nullptr) {
     dlclose(handle_);
@@ -38,7 +38,7 @@ CustomAOTCpuKernel::~CustomAOTCpuKernel() {
 #endif
 }
 
-void CustomAOTCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
@@ -92,8 +92,8 @@ void CustomAOTCpuKernel::InitKernel(const CNodePtr &kernel_node) {
                  [](auto &str) { return str.c_str(); });
 }
 
-bool CustomAOTCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs) {
+bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &outputs) {
   std::vector<void *> params;
 
   for (size_t i = 0; i < num_input_; i++) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ MS_REG_GPU_KERNEL_ONE(BatchNorm,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, float)
+                      BatchNormGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(BatchNorm,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -43,7 +43,7 @@ MS_REG_GPU_KERNEL_ONE(BatchNorm,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, half)
+                      BatchNormGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(BatchNormWithActivation,
                       KernelAttr()
@@ -57,7 +57,7 @@ MS_REG_GPU_KERNEL_ONE(BatchNormWithActivation,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, float)
+                      BatchNormGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(BatchNormWithActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -70,7 +70,7 @@ MS_REG_GPU_KERNEL_ONE(BatchNormWithActivation,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, half)
+                      BatchNormGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(BatchNormWithAddAndActivation,
                       KernelAttr()
@@ -85,7 +85,7 @@ MS_REG_GPU_KERNEL_ONE(BatchNormWithAddAndActivation,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, float)
+                      BatchNormGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(BatchNormWithAddAndActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -99,6 +99,6 @@ MS_REG_GPU_KERNEL_ONE(BatchNormWithAddAndActivation,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      BatchNormGpuKernel, half)
+                      BatchNormGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

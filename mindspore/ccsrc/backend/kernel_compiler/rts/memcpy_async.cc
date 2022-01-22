@@ -101,8 +101,8 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   }
   total_size = SizetMulWithOverflowCheck(total_size, type_size);
   MS_LOG(INFO) << "MemCpyAsync size[" << total_size << "]";
-  input_size_list_.emplace_back(total_size);
-  output_size_list_.emplace_back(total_size);
+  mutable_input_size_list_.emplace_back(total_size);
+  mutable_output_size_list_.emplace_back(total_size);
 }
 
 std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr> &inputs,

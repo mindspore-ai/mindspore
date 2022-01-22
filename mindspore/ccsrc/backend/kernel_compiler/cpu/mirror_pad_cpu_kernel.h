@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MirrorPadCPUKernel : public CPUKernel {
+class MirrorPadCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MirrorPadCPUKernel() = default;
-  ~MirrorPadCPUKernel() override = default;
+  MirrorPadCpuKernelMod() = default;
+  ~MirrorPadCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -54,40 +54,40 @@ class MirrorPadCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 
 MS_REG_CPU_KERNEL(
   MirrorPad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MirrorPadCPUKernel);
+  MirrorPadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_

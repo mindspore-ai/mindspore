@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -835,7 +835,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
     }
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
-    AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
+    AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), kernel_node);
   }
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {

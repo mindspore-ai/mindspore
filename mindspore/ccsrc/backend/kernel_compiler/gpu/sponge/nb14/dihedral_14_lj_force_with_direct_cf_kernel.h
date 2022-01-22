@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class Dihedral14LJForceWithDirectCFGpuKernel : public GpuKernel {
+class Dihedral14LJForceWithDirectCFGpuKernelMod : public NativeGpuKernelMod {
  public:
-  Dihedral14LJForceWithDirectCFGpuKernel() : ele_uint_crd(1) {}
-  ~Dihedral14LJForceWithDirectCFGpuKernel() override = default;
+  Dihedral14LJForceWithDirectCFGpuKernelMod() : ele_uint_crd(1) {}
+  ~Dihedral14LJForceWithDirectCFGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
@@ -64,10 +64,6 @@ class Dihedral14LJForceWithDirectCFGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -118,9 +114,6 @@ class Dihedral14LJForceWithDirectCFGpuKernel : public GpuKernel {
   size_t ele_LJ_type_A = 1;
   size_t ele_LJ_type_B = 1;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int dihedral_14_numbers;
   int atom_numbers;
 };

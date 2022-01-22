@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class TensorCopySlicesGpuKernel : public GpuKernel {
+class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TensorCopySlicesGpuKernel()
+  TensorCopySlicesGpuKernelMod()
       : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false), kernel_name_("TensorCopySlices") {}
-  ~TensorCopySlicesGpuKernel() {}
+  ~TensorCopySlicesGpuKernelMod() {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -53,10 +53,6 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
                reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
@@ -189,10 +185,6 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
-
   std::vector<size_t> input_shape_;
   std::vector<size_t> update_shape_;
   std::vector<size_t> output_shape_;

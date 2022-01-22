@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ const std::map<TypeId, size_t> input_x_dtype_size_map = {
   {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)},   {kNumberTypeFloat64, sizeof(double)}};
 }  // namespace
 
-void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -62,8 +62,8 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_x_dtype_size_ = type_len->second;
 }
 
-bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs) {
+bool AssignCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
   static std::string kernel_name = kernel_name_;

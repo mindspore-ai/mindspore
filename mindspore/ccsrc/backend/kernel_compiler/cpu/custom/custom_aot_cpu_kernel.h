@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 
-class CustomAOTCpuKernel : public CPUKernel {
+class CustomAOTCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CustomAOTCpuKernel() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
-  ~CustomAOTCpuKernel();
+  CustomAOTCpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
+  ~CustomAOTCpuKernelMod();
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

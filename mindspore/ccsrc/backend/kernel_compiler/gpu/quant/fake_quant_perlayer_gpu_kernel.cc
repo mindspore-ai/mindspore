@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-FakeQuantPerLayerGpuKernel::FakeQuantPerLayerGpuKernel()
+FakeQuantPerLayerGpuKernelMod::FakeQuantPerLayerGpuKernelMod()
     : input_size_(0),
       quant_min_(0),
       quant_max_(0),
@@ -36,13 +36,7 @@ FakeQuantPerLayerGpuKernel::FakeQuantPerLayerGpuKernel()
       is_null_input_(false),
       symmetric_(false) {}
 
-const std::vector<size_t> &FakeQuantPerLayerGpuKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &FakeQuantPerLayerGpuKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &FakeQuantPerLayerGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool FakeQuantPerLayerGpuKernel::Init(const CNodePtr &kernel_node) {
+bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -97,7 +91,7 @@ bool FakeQuantPerLayerGpuKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void FakeQuantPerLayerGpuKernel::InitSizeLists() {
+void FakeQuantPerLayerGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(input_size_);        // x
   input_size_list_.push_back(sizeof(float));      // min
   input_size_list_.push_back(sizeof(float));      // max
@@ -107,8 +101,9 @@ void FakeQuantPerLayerGpuKernel::InitSizeLists() {
   workspace_size_list_.push_back(sizeof(float));  // nudge_max
 }
 
-bool FakeQuantPerLayerGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool FakeQuantPerLayerGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -146,6 +141,6 @@ bool FakeQuantPerLayerGpuKernel::Launch(const std::vector<AddressPtr> &inputs, c
   return true;
 }
 
-MS_REG_GPU_KERNEL(FakeQuantPerLayer, FakeQuantPerLayerGpuKernel)
+MS_REG_GPU_KERNEL(FakeQuantPerLayer, FakeQuantPerLayerGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

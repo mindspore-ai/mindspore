@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ConcatOffsetCPUKernel : public CPUKernel {
+class ConcatOffsetCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ConcatOffsetCPUKernel() = default;
-  ~ConcatOffsetCPUKernel() override = default;
+  ConcatOffsetCpuKernelMod() = default;
+  ~ConcatOffsetCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -39,16 +39,16 @@ class ConcatOffsetCPUKernel : public CPUKernel {
   size_t axis_{0};
 };
 
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, int8_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, int16_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, int32_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, int64_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, uint64_t)
-MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCPUKernel, bool)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(ConcatOffset, KernelAttr(), ConcatOffsetCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 

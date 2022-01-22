@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1, typename T2>
-class BondEnergyCudaGpuKernel : public GpuKernel {
+class BondEnergyCudaGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BondEnergyCudaGpuKernel() : ele_uint_crd(1) {}
-  ~BondEnergyCudaGpuKernel() override = default;
+  BondEnergyCudaGpuKernelMod() : ele_uint_crd(1) {}
+  ~BondEnergyCudaGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     // get bond_numbers
@@ -58,10 +58,6 @@ class BondEnergyCudaGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -99,9 +95,6 @@ class BondEnergyCudaGpuKernel : public GpuKernel {
   size_t ele_bond_k = 1;
   size_t ele_bond_r0 = 1;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int bond_numbers;
   int atom_numbers;
 };

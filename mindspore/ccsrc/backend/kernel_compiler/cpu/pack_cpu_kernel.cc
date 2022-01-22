@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kPackOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void PackCpuFwdKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void PackFwdCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -50,8 +50,8 @@ void PackCpuFwdKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool PackCpuFwdKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) {
+bool PackFwdCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
@@ -68,7 +68,7 @@ bool PackCpuFwdKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 template <typename T>
-void PackCpuFwdKernel<T>::PackTensor(T *output, size_t start, size_t end) const {
+void PackFwdCpuKernelMod<T>::PackTensor(T *output, size_t start, size_t end) const {
   for (size_t pos = start; pos < end; ++pos) {
     size_t cur_input_index = pos / dims_behind_axis_ % input_num_;
     size_t cycle_len = input_num_ * dims_behind_axis_;

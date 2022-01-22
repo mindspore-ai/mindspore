@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SliceGradCPUKernel : public CPUKernel {
+class SliceGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SliceGradCPUKernel() = default;
-  ~SliceGradCPUKernel() override = default;
+  SliceGradCpuKernelMod() = default;
+  ~SliceGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -61,17 +61,17 @@ class SliceGradCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   SliceGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SliceGradCPUKernel);
+  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(
   SliceGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  SliceGradCPUKernel);
+  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(
   SliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  SliceGradCPUKernel);
+  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(
   SliceGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  SliceGradCPUKernel);
+  SliceGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(SliceGrad,
                   KernelAttr()
@@ -80,7 +80,7 @@ MS_REG_CPU_KERNEL(SliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(SliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat64)
@@ -88,7 +88,7 @@ MS_REG_CPU_KERNEL(SliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(SliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
@@ -96,7 +96,7 @@ MS_REG_CPU_KERNEL(SliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(SliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeBool)
@@ -104,16 +104,16 @@ MS_REG_CPU_KERNEL(SliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeBool),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 
 MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
@@ -121,7 +121,7 @@ MS_REG_CPU_KERNEL(StridedSliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
@@ -129,7 +129,7 @@ MS_REG_CPU_KERNEL(StridedSliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat64)
@@ -137,7 +137,7 @@ MS_REG_CPU_KERNEL(StridedSliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeFloat64),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 MS_REG_CPU_KERNEL(StridedSliceGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeBool)
@@ -145,7 +145,7 @@ MS_REG_CPU_KERNEL(StridedSliceGrad,
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeBool),
-                  SliceGradCPUKernel);
+                  SliceGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

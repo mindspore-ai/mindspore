@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kResizeNearestNeighborInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborAttrSize = 2;
 }  // namespace
 
-void ResizeNearestNeighborCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -55,9 +55,9 @@ void ResizeNearestNeighborCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   output_size_ = batch_size_ * channel_ * out_height_ * out_width_;
 }
 
-bool ResizeNearestNeighborCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeNearestNeighborCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -79,8 +79,8 @@ bool ResizeNearestNeighborCPUKernel::Launch(const std::vector<kernel::AddressPtr
 }
 
 template <typename T>
-void ResizeNearestNeighborCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &outputs) {
+void ResizeNearestNeighborCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                     const std::vector<AddressPtr> &outputs) {
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 

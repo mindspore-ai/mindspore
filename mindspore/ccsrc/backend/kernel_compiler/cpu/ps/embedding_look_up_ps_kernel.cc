@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ using mindspore::ps::Util;
 constexpr int kAxis = 0;
 constexpr size_t kEmbeddingLookUpPSInputSize = 3;
 
-void EmbeddingLookUpPSKernel::InitKernel(
+void EmbeddingLookUpPSKernelMod::InitKernel(
   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < kEmbeddingLookUpPSInputSize) {
-    MS_LOG(EXCEPTION) << "EmbeddingLookUpPSKernel needs " << kEmbeddingLookUpPSInputSize << " input shapes, but got "
+    MS_LOG(EXCEPTION) << "EmbeddingLookUpPSKernelMod needs " << kEmbeddingLookUpPSInputSize << " input shapes, but got "
                       << shape_vec.size();
   }
   for (auto shape : shape_vec) {
@@ -67,7 +67,7 @@ void EmbeddingLookUpPSKernel::InitKernel(
   (void)output_size_list_.emplace_back(output_size);
 }
 
-void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+void EmbeddingLookUpPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Shape should not empty";
   }
@@ -82,13 +82,14 @@ void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &sha
   (void)output_size_list_.emplace_back(output_size);
 }
 
-bool EmbeddingLookUpPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool EmbeddingLookUpPSKernelMod::Execute(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
   return Launch(inputs, workspace, outputs);
 }
 
-void EmbeddingLookUpPSKernel::UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids,
-                                               const float *update_vals, size_t ids_size) {
+void EmbeddingLookUpPSKernelMod::UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids,
+                                                  const float *update_vals, size_t ids_size) {
   size_t copy_len = outer_dim_size_ * sizeof(float);
   size_t dest_len = copy_len;
   for (size_t i = 0; i < ids_size; ++i) {
@@ -104,13 +105,13 @@ void EmbeddingLookUpPSKernel::UpdateEmbeddings(float *embedding_table, const siz
   }
 }
 
-const std::vector<size_t> &EmbeddingLookUpPSKernel::input_sizes() const { return input_shape_; }
+const std::vector<size_t> &EmbeddingLookUpPSKernelMod::input_sizes() const { return input_shape_; }
 
-const std::vector<size_t> &EmbeddingLookUpPSKernel::output_sizes() const { return GetOutputSizeList(); }
+const std::vector<size_t> &EmbeddingLookUpPSKernelMod::output_sizes() const { return GetOutputSizeList(); }
 
-const std::vector<size_t> &EmbeddingLookUpPSKernel::workspace_sizes() const { return GetWorkspaceSizeList(); }
+const std::vector<size_t> &EmbeddingLookUpPSKernelMod::workspace_sizes() const { return GetWorkspaceSizeList(); }
 
-int64_t EmbeddingLookUpPSKernel::offset() const { return offset_; }
+int64_t EmbeddingLookUpPSKernelMod::offset() const { return offset_; }
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

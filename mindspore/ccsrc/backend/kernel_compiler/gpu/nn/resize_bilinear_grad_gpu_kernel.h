@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,22 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class ResizeBilinearGradGpuKernel : public GpuKernel {
- public:
-  ResizeBilinearGradGpuKernel() { ResetResource(); }
-  ~ResizeBilinearGradGpuKernel() override = default;
+constexpr size_t kInputsNum = 2;
+constexpr size_t kDyShapeSize = 4;
+constexpr size_t kxShapeSize = 4;
+constexpr size_t kDxShapeSize = 4;
+constexpr size_t kDyIndexForN = 0;
+constexpr size_t kDyIndexForC = 1;
+constexpr size_t kDyIndexForH = 2;
+constexpr size_t kDyIndexForW = 3;
+constexpr size_t kDxIndexForH = 2;
+constexpr size_t kDxIndexForW = 3;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+template <typename T>
+class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
+ public:
+  ResizeBilinearGradGpuKernelMod() { ResetResource(); }
+  ~ResizeBilinearGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -59,7 +66,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
+    if (input_num != kInputsNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -75,24 +82,24 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (dy_shape.size() != 4) {
+    if (dy_shape.size() != kDyShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dy should be equal to 4, but got "
                         << dy_shape.size();
     }
-    if (x_shape.size() != 4) {
+    if (x_shape.size() != kxShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x should be equal to 4, but got "
                         << x_shape.size();
     }
-    if (dx_shape.size() != 4) {
+    if (dx_shape.size() != kDxShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dx should be equal to 4, but got "
                         << dx_shape.size();
     }
-    n_ = SizeToInt(dy_shape[0]);
-    c_ = SizeToInt(dy_shape[1]);
-    dy_h_ = SizeToInt(dy_shape[2]);
-    dy_w_ = SizeToInt(dy_shape[3]);
-    dx_h_ = SizeToInt(dx_shape[2]);
-    dx_w_ = SizeToInt(dx_shape[3]);
+    n_ = SizeToInt(dy_shape[kDyIndexForN]);
+    c_ = SizeToInt(dy_shape[kDyIndexForC]);
+    dy_h_ = SizeToInt(dy_shape[kDyIndexForH]);
+    dy_w_ = SizeToInt(dy_shape[kDyIndexForW]);
+    dx_h_ = SizeToInt(dx_shape[kDxIndexForH]);
+    dx_w_ = SizeToInt(dx_shape[kDxIndexForW]);
     dy_size_ = sizeof(T);
     for (auto x : dy_shape) {
       dy_size_ *= x;
@@ -148,9 +155,6 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
   size_t dy_size_;
   size_t dx_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kSearchSortedOutputsNum = 1;
 }  // namespace
 
 template <typename S, typename T>
-void SearchSortedCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
+void SearchSortedCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   right_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "right");
@@ -38,7 +38,7 @@ void SearchSortedCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename S, typename T>
-const S *SearchSortedCPUKernel<S, T>::CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) {
+const S *SearchSortedCpuKernelMod<S, T>::CustomizedLowerBound(const S *seq_start, const S *seq_end, const S key) {
   while (seq_start < seq_end) {
     const S *mid = seq_start + ((seq_end - seq_start) / 2);
     if (!(key <= *mid)) {
@@ -51,9 +51,9 @@ const S *SearchSortedCPUKernel<S, T>::CustomizedLowerBound(const S *seq_start, c
 }
 
 template <typename S, typename T>
-bool SearchSortedCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool SearchSortedCpuKernelMod<S, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
   CheckParam(inputs, outputs);
   auto sequence = reinterpret_cast<S *>(inputs[0]->addr);
   auto values = reinterpret_cast<S *>(inputs[1]->addr);
@@ -75,8 +75,8 @@ bool SearchSortedCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename S, typename T>
-void SearchSortedCPUKernel<S, T>::CheckParam(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &outputs) {
+void SearchSortedCpuKernelMod<S, T>::CheckParam(const std::vector<AddressPtr> &inputs,
+                                                const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
 

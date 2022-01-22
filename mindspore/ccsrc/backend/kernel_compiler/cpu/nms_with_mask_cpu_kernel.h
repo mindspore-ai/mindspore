@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ constexpr int SCORE = 4;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 3;
 template <typename T>
-class NMSWithMaskCPUKernel : public CPUKernel {
+class NMSWithMaskCpuKernelMod : public NativeCpuKernelMod {
  public:
-  NMSWithMaskCPUKernel() = default;
-  ~NMSWithMaskCPUKernel() override = default;
+  NMSWithMaskCpuKernelMod() = default;
+  ~NMSWithMaskCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -74,7 +74,7 @@ MS_REG_CPU_KERNEL_T(NMSWithMask,
                       .AddOutputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeBool),
-                    NMSWithMaskCPUKernel, float);
+                    NMSWithMaskCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(NMSWithMask,
                     KernelAttr()
@@ -82,7 +82,7 @@ MS_REG_CPU_KERNEL_T(NMSWithMask,
                       .AddOutputAttr(kNumberTypeFloat16)
                       .AddOutputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeBool),
-                    NMSWithMaskCPUKernel, float16);
+                    NMSWithMaskCpuKernelMod, float16);
 
 }  // namespace kernel
 }  // namespace mindspore

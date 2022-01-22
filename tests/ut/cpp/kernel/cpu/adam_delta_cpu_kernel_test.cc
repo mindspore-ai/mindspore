@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 class AdamDeltaCpuKernelTest : public UT::Common {
  public:
-  AdamDeltaCpuKernelTest() : adam_delta_(std::make_shared<AdamDeltaCPUKernel>()) {}
+  AdamDeltaCpuKernelTest() : adam_delta_(std::make_shared<AdamDeltaCpuKernelMod>()) {}
 
   void SetUp() override {
     delta_.clear();
@@ -65,7 +65,7 @@ class AdamDeltaCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<AdamDeltaCPUKernel> adam_delta_;
+  std::shared_ptr<AdamDeltaCpuKernelMod> adam_delta_;
   float beta1_power_ = 0.9;
   float beta2_power_ = 0.999;
   float lr_ = 0.001;

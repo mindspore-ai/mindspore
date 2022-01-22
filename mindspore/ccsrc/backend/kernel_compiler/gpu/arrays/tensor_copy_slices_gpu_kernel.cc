@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,30 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  TensorCopySlicesGpuKernel, double)
+  TensorCopySlicesGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TensorCopySlicesGpuKernel, float)
+  TensorCopySlicesGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  TensorCopySlicesGpuKernel, half)
+  TensorCopySlicesGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  TensorCopySlicesGpuKernel, int64_t)
+  TensorCopySlicesGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  TensorCopySlicesGpuKernel, int)
+  TensorCopySlicesGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  TensorCopySlicesGpuKernel, char)
+  TensorCopySlicesGpuKernelMod, char)
 MS_REG_GPU_KERNEL_ONE(
   TensorCopySlices,
   KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  TensorCopySlicesGpuKernel, uchar)
+  TensorCopySlicesGpuKernelMod, uchar)
 }  // namespace kernel
 }  // namespace mindspore

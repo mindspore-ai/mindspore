@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ namespace {
 constexpr size_t kApplyMomentumInputsNum = 5;
 }  // namespace
 
-void ApplyMomentumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ApplyMomentumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
 }
 
-bool ApplyMomentumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &) {
+bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyMomentumInputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

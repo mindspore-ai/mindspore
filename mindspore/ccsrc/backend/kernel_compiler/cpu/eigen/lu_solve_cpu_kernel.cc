@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ constexpr size_t kColIndex = 1;
 }  // namespace
 
 template <typename T>
-void LUSolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -74,9 +74,9 @@ void LUSolverCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool LUSolverCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool LUSolverCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   T *a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
   Map<Matrix<T, RowMajor>> input_a(a_value, a_row_, a_col_);
 

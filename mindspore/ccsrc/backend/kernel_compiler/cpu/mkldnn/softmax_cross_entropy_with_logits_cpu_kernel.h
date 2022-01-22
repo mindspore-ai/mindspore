@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCrossEntropyWithLogitsCPUKernel : public MKLCPUKernel {
+class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
  public:
-  SoftmaxCrossEntropyWithLogitsCPUKernel() = default;
-  ~SoftmaxCrossEntropyWithLogitsCPUKernel() override = default;
+  SoftmaxCrossEntropyWithLogitsCpuKernelMod() = default;
+  ~SoftmaxCrossEntropyWithLogitsCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -47,7 +47,7 @@ MS_REG_CPU_KERNEL(SoftmaxCrossEntropyWithLogits,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SoftmaxCrossEntropyWithLogitsCPUKernel);
+                  SoftmaxCrossEntropyWithLogitsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

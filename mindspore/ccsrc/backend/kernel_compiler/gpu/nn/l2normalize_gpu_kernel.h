@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
 template <typename T>
-class L2NormalizeGpuKernel : public GpuKernel {
+class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  L2NormalizeGpuKernel()
+  L2NormalizeGpuKernelMod()
       : cudnn_handle_(nullptr),
         data_type_(CUDNN_DATA_FLOAT),
         nan_prop_(CUDNN_NOT_PROPAGATE_NAN),
@@ -47,11 +47,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
         workspace_size_(0),
         epsilon_(0.0),
         axis_(0) {}
-  ~L2NormalizeGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~L2NormalizeGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -118,7 +114,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
 
     std::vector<size_t> outputC_shape = output_shape;
     if ((size_t)axis_ >= output_shape.size()) {
-      MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernel', axis_ should be less than the rank of output "
+      MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernelMod', axis_ should be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
     }
     outputC_shape[axis_] = 1;
@@ -249,9 +245,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
   bool all_match_;
   bool is_null_input_;
   std::string kernel_name_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

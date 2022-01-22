@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,10 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
 };
 template <typename T>
-class ArrayReduceGpuKernel : public GpuKernel {
+class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ArrayReduceGpuKernel() { ResetResource(); }
-  ~ArrayReduceGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ArrayReduceGpuKernelMod() { ResetResource(); }
+  ~ArrayReduceGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -59,7 +55,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "cudaMemcpyAsync failed in ArrayReduceGpuKernel::Launch.");
+                                 "cudaMemcpyAsync failed in ArrayReduceGpuKernelMod::Launch.");
     } else {
       if (data_type_ == CUDNN_DATA_DOUBLE) {
         CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -296,9 +292,6 @@ class ArrayReduceGpuKernel : public GpuKernel {
   bool keep_dims_;
   bool all_match_;
   bool is_null_input_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

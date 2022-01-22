@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ namespace mindspore {
 namespace kernel {
 constexpr int kMaxDimsSize = 3;
 template <typename T>
-class CumProdGpuKernel : public GpuKernel {
+class CumProdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CumProdGpuKernel()
+  CumProdGpuKernelMod()
       : exclusive_(false),
         reverse_(false),
         is_null_input_(false),
@@ -36,11 +36,7 @@ class CumProdGpuKernel : public GpuKernel {
         input_size_0_(0),
         stride_(0),
         stride2_(0) {}
-  ~CumProdGpuKernel() = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~CumProdGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -117,9 +113,6 @@ class CumProdGpuKernel : public GpuKernel {
   size_t stride2_;
   size_t dims_[kMaxDimsSize] = {};
   std::vector<size_t> shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

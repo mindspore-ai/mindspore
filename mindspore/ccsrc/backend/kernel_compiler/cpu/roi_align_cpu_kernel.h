@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ constexpr int CHANNEL = 1;
 constexpr int HEIGHT = 2;
 constexpr int WIDTH = 3;
 template <typename T>
-class ROIAlignCPUKernel : public CPUKernel {
+class ROIAlignCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ROIAlignCPUKernel() = default;
-  ~ROIAlignCPUKernel() override = default;
+  ROIAlignCpuKernelMod() = default;
+  ~ROIAlignCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -64,12 +64,12 @@ class ROIAlignCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   ROIAlign,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ROIAlignCPUKernel, float);
+  ROIAlignCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(
   ROIAlign,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ROIAlignCPUKernel, float16);
+  ROIAlignCpuKernelMod, float16);
 
 }  // namespace kernel
 }  // namespace mindspore

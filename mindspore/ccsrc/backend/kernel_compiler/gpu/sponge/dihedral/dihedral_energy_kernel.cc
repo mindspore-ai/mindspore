@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,6 @@ MS_REG_GPU_KERNEL_TWO(DihedralEnergy,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      DihedralEnergyGpuKernel, float, int)
+                      DihedralEnergyGpuKernelMod, float, int)
 }  // namespace kernel
 }  // namespace mindspore

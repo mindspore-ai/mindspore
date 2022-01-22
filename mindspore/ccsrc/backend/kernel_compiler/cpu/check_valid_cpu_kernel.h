@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t COORDINATE = 4;
 template <typename T>
-class CheckValidCPUKernel : public CPUKernel {
+class CheckValidCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CheckValidCPUKernel() = default;
-  ~CheckValidCPUKernel() override = default;
+  CheckValidCpuKernelMod() = default;
+  ~CheckValidCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,20 +46,20 @@ class CheckValidCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  CheckValidCPUKernel, float);
+  CheckValidCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(
   CheckValid,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  CheckValidCPUKernel, float16);
+  CheckValidCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(
   CheckValid, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  CheckValidCPUKernel, int16_t);
+  CheckValidCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(
   CheckValid, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  CheckValidCPUKernel, uint8_t);
+  CheckValidCpuKernelMod, uint8_t);
 }  // namespace kernel
 }  // namespace mindspore
 

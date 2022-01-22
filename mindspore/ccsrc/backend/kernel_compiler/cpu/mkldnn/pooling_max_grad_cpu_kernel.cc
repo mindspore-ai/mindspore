@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ constexpr size_t kMaxPoolingGradStrideSize = 4;
 constexpr size_t kMaxPoolingGradInputShapeSize = 4;
 }  // namespace
 
-void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MaxPoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   src_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -57,9 +57,9 @@ void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   GetPadding(kernel_node, pad_mode, src_shape_, kernel_size_, stride_, &padding_l_, &padding_r, dummy_dilation);
 }
 
-void MaxPoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, float diff,
-                                             const std::vector<std::pair<size_t, size_t>> &box,
-                                             std::vector<std::pair<size_t, float>> *row_max_pair) {
+void MaxPoolingGradCpuKernelMod::RowPoolingGrad(const float *input, float *output, float diff,
+                                                const std::vector<std::pair<size_t, size_t>> &box,
+                                                std::vector<std::pair<size_t, float>> *row_max_pair) {
   float max_value = 0;
   size_t max_index = box[1].second;
   size_t src_width = src_shape_[3];
@@ -86,7 +86,7 @@ void MaxPoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, 
   output[(*row_max_pair)[max_index].first] += diff;
 }
 
-void MaxPoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *diff, float *output) {
+void MaxPoolingGradCpuKernelMod::ChannelPoolingGrad(const float *input, const float *diff, float *output) {
   int src_width = SizeToInt(src_shape_[3]);
   int src_height = SizeToInt(src_shape_[2]);
   std::vector<std::pair<size_t, float>> row_max_pair(src_shape_[3]);
@@ -112,9 +112,9 @@ void MaxPoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float
   }
 }
 
-bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxPoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolingGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolingGradOutputsNum, kernel_name_);
   auto input = reinterpret_cast<float *>(inputs[0]->addr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,6 @@ class AkgKernelMod : public AscendKernelMod {
  public:
   explicit AkgKernelMod(const KernelPackPtr &kernel_pack);
   ~AkgKernelMod() final {}
-
-  void SetInputSizeList(const std::vector<size_t> &size_list);
-  void SetOutputSizeList(const std::vector<size_t> &size_list);
-  void SetWorkspaceSizeList(const std::vector<size_t> &size_list);
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -42,9 +35,6 @@ class AkgKernelMod : public AscendKernelMod {
 
  private:
   KernelPackPtr kernel_pack_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
 using AkgKernelModPtr = std::shared_ptr<AkgKernelMod>;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ReshapeCPUKernel : public CPUKernel {
+class ReshapeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ReshapeCPUKernel() = default;
-  ~ReshapeCPUKernel() override = default;
+  ReshapeCpuKernelMod() = default;
+  ~ReshapeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -35,125 +35,131 @@ class ReshapeCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
+MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(
   Reshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  ReshapeCPUKernel)
+  ReshapeCpuKernelMod)
 MS_REG_CPU_KERNEL(
   Reshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  ReshapeCPUKernel)
+  ReshapeCpuKernelMod)
 MS_REG_CPU_KERNEL(
   Reshape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ReshapeCPUKernel);
+  ReshapeCpuKernelMod);
 
-MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
+MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(FlattenGrad, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 
-MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                  ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
+MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 MS_REG_CPU_KERNEL(Squeeze, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                  ReshapeCPUKernel);
+                  ReshapeCpuKernelMod);
 
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class EqualCountCPUKernel : public CPUKernel {
+class EqualCountCpuKernelMod : public NativeCpuKernelMod {
  public:
-  EqualCountCPUKernel() = default;
-  ~EqualCountCPUKernel() override = default;
+  EqualCountCpuKernelMod() = default;
+  ~EqualCountCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -35,7 +35,7 @@ class EqualCountCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(EqualCount, KernelAttr(), EqualCountCPUKernel);
+MS_REG_CPU_KERNEL(EqualCount, KernelAttr(), EqualCountCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

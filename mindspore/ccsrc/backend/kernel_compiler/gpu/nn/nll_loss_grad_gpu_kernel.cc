@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NLLLossGradGpuKernel, float, float)
+                      NLLLossGradGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -35,7 +35,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NLLLossGradGpuKernel, float, half)
+                      NLLLossGradGpuKernelMod, float, half)
 MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -44,7 +44,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      NLLLossGradGpuKernel, half, float)
+                      NLLLossGradGpuKernelMod, half, float)
 MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -53,6 +53,6 @@ MS_REG_GPU_KERNEL_TWO(NLLLossGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      NLLLossGradGpuKernel, half, half)
+                      NLLLossGradGpuKernelMod, half, half)
 }  // namespace kernel
 }  // namespace mindspore

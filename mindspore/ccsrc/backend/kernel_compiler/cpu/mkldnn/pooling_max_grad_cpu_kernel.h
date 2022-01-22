@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MaxPoolingGradCPUKernel : public MKLCPUKernel {
+class MaxPoolingGradCpuKernelMod : public MKLCpuKernelMod {
  public:
-  MaxPoolingGradCPUKernel() = default;
-  ~MaxPoolingGradCPUKernel() override = default;
+  MaxPoolingGradCpuKernelMod() = default;
+  ~MaxPoolingGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,7 +51,7 @@ MS_REG_CPU_KERNEL(MaxPoolGrad,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  MaxPoolingGradCPUKernel);
+                  MaxPoolingGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

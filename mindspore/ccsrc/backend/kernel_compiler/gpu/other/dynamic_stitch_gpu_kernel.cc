@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,14 @@
 
 namespace mindspore {
 namespace kernel {
-DynamicStitchKernel::DynamicStitchKernel()
+DynamicStitchKernelMod::DynamicStitchKernelMod()
     : n_(0), real_ele_num_(0), max_index_(0), one_data_ele_num_(0), data_type_size_(0) {
   ResetResource();
 }
 
-DynamicStitchKernel::~DynamicStitchKernel() {}
+DynamicStitchKernelMod::~DynamicStitchKernelMod() {}
 
-const std::vector<size_t> &DynamicStitchKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &DynamicStitchKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &DynamicStitchKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool DynamicStitchKernel::Init(const CNodePtr &kernel_node) {
+bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   // Inputs: (indexlist, datalist)
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -65,7 +59,7 @@ bool DynamicStitchKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DynamicStitchKernel::PostExecute() {
+void DynamicStitchKernelMod::PostExecute() {
   auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node_.lock(), 0);
   output_shape[0] = max_index_ + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
@@ -73,16 +67,16 @@ void DynamicStitchKernel::PostExecute() {
   MS_LOG(DEBUG) << "Run PostExecute for dynamicstitch, real output shape is " << output_shape;
 }
 
-void DynamicStitchKernel::ResetResource() noexcept {
+void DynamicStitchKernelMod::ResetResource() noexcept {
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
-void DynamicStitchKernel::InitSizeLists() { return; }
+void DynamicStitchKernelMod::InitSizeLists() { return; }
 
-bool DynamicStitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, void *stream) {
+bool DynamicStitchKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs, void *stream) {
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream);
   auto max_index_dev = GetDeviceAddress<int>(workspace, 0);
   auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);

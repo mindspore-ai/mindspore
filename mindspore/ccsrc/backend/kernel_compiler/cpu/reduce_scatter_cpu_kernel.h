@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ReduceScatterCPUKernel : public CPUKernel {
+class ReduceScatterCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ReduceScatterCPUKernel();
-  ~ReduceScatterCPUKernel() override = default;
+  ReduceScatterCpuKernelMod();
+  ~ReduceScatterCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -40,7 +40,7 @@ class ReduceScatterCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(_HostReduceScatter, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReduceScatterCPUKernel);
+                  ReduceScatterCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &EnvironCreateCPUKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &EnvironCreateCPUKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &EnvironCreateCPUKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void EnvironCreateCPUKernel::InitKernel(const CNodePtr &node) {
+void EnvironCreateCpuKernelMod::InitKernel(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   // Check the output handle.
   auto handle_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
@@ -39,8 +33,8 @@ void EnvironCreateCPUKernel::InitKernel(const CNodePtr &node) {
   output_size_list_.push_back(handle_size_);
 }
 
-bool EnvironCreateCPUKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs) {
+bool EnvironCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &outputs) {
   // Generate an unique handle.
   int64_t env_handle = EnvironMgr::GetInstance().Create();
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,15 +211,15 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }
 }  // namespace
 
-void PyFuncCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+void PyFuncCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   func_id_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
   fake_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
   single_scalar_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
   BuildFuncInfo(kernel_node);
 }
 
-bool PyFuncCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                             const std::vector<AddressPtr> &outputs) {
+bool PyFuncCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &outputs) {
   if (!init_) {
     py_func_ = GetPythonFunc();
     init_ = true;
@@ -228,7 +228,7 @@ bool PyFuncCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
   return ExecuteKernel(inputs, outputs);
 }
 
-void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
+void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
   std::vector<TypeId> in_types;
   std::vector<TypeId> out_types;
   std::vector<std::vector<int64_t>> in_shapes;
@@ -305,7 +305,7 @@ void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
   }
 }
 
-bool PyFuncCpuKernel::ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PyFuncCpuKernelMod::ExecuteKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   if (Py_IsInitialized() != true) {
     MS_LOG(ERROR) << "Py_IsInitialized failed.";
     return false;
@@ -334,7 +334,7 @@ bool PyFuncCpuKernel::ExecuteKernel(const std::vector<AddressPtr> &inputs, const
   return true;
 }
 
-py::function PyFuncCpuKernel::GetPythonFunc() {
+py::function PyFuncCpuKernelMod::GetPythonFunc() {
   py::gil_scoped_acquire gil_acquire;
   static const std::string &module_name = "mindspore.ops.operations._pyfunc_registry";
   static const std::string &entrance = "get_pyfunc";
@@ -353,6 +353,6 @@ py::function PyFuncCpuKernel::GetPythonFunc() {
   return py_func_obj.cast<py::function>();
 }
 
-MS_REG_CPU_KERNEL(PyFunc, KernelAttr(), PyFuncCpuKernel)
+MS_REG_CPU_KERNEL(PyFunc, KernelAttr(), PyFuncCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

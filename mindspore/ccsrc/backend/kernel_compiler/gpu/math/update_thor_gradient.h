@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,11 @@ struct GradientSize {
   cudaDataType_t dtype;
 };
 template <typename T>
-class UpdateThorGradientGpuKernel : public GpuKernel {
+class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UpdateThorGradientGpuKernel() : split_dim(128), handle_(nullptr) {}
-  ~UpdateThorGradientGpuKernel() = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  UpdateThorGradientGpuKernelMod() : split_dim(128), handle_(nullptr) {}
+  ~UpdateThorGradientGpuKernelMod() = default;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -249,10 +247,6 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   struct GradientSize gradient_size;
   cublasHandle_t handle_;
   cublasGemmAlgo_t algo_ = CUBLAS_GEMM_DEFAULT;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -34,10 +34,10 @@ constexpr int IDX_INP_SHAPE = 1;
 constexpr int IDX_PARAM = 2;
 constexpr int IDX_OUT_SHAPE = 3;
 template <typename T>
-class EinsumGradGpuKernel : public GpuKernel {
+class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  EinsumGradGpuKernel() { ResetResource(); }
-  ~EinsumGradGpuKernel() = default;
+  EinsumGradGpuKernelMod() { ResetResource(); }
+  ~EinsumGradGpuKernelMod() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
@@ -371,9 +371,6 @@ class EinsumGradGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   EinsumHelper<T> func_helper_;
   TypeId type_id_;
   size_t work_size_;

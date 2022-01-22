@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class EmbeddingLookUpCommGradCPUKernel : public CPUKernel {
+class EmbeddingLookUpCommGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  EmbeddingLookUpCommGradCPUKernel() : split_num_(1) {}
-  ~EmbeddingLookUpCommGradCPUKernel() override{};
+  EmbeddingLookUpCommGradCpuKernelMod() : split_num_(1) {}
+  ~EmbeddingLookUpCommGradCpuKernelMod() override{};
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -40,7 +40,7 @@ class EmbeddingLookUpCommGradCPUKernel : public CPUKernel {
 
 MS_REG_CPU_KERNEL(EmbeddingLookupCommGrad,
                   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  EmbeddingLookUpCommGradCPUKernel);
+                  EmbeddingLookUpCommGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

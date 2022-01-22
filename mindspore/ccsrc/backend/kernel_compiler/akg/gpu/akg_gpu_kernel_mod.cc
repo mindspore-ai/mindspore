@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
 
+#include <algorithm>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 
@@ -30,11 +31,11 @@ const int REGISTER_UNIT_IN_WARP = 256;
 const int WARP_SIZE = 32;
 const int WARP_ALLOC_GRAN = 4;
 
-GpuKernelManagerPtr GpuKernelMod::kernelmanager_ = std::make_shared<GpuKernelManager>();
-GpuKernelManager::GpuKernelManager() {}
+AkgGpuKernelManagerPtr AkgGpuKernelMod::kernel_manager_ = std::make_shared<AkgGpuKernelManager>();
+AkgGpuKernelManager::AkgGpuKernelManager() {}
 
-CUresult GpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool force_reload,
-                                       vector<uint32_t> *thread_info, CUfunction *func) {
+CUresult AkgGpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool force_reload,
+                                          vector<uint32_t> *thread_info, CUfunction *func) {
   if (kernel_pack->GetJson() == nullptr || kernel_pack->GetJson()->contents == nullptr ||
       kernel_pack->GetKernel() == nullptr || kernel_pack->GetKernel()->contents == nullptr) {
     MS_LOG(ERROR) << "GPU:Invalid kernel pack, json or kernel is nullptr.";
@@ -85,22 +86,10 @@ CUresult GpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool fo
   return result;
 }
 
-GpuKernelMod::GpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {}
+AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {}
 
-void GpuKernelMod::SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
-
-void GpuKernelMod::SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
-
-void GpuKernelMod::SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
-
-const std::vector<size_t> &GpuKernelMod::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &GpuKernelMod::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &GpuKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
@@ -111,7 +100,7 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   }
   vector<uint32_t> thread_info;
   CUfunction kernel_addr;
-  CUresult result = kernelmanager_->GetFunction(kernel_pack_, false, &thread_info, &kernel_addr);
+  CUresult result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info, &kernel_addr);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);

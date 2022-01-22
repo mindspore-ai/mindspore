@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ using double_complex = std::complex<double>;
  * @tparam C , output Type, complex
  */
 template <typename T>
-class EighCPUKernel : public CPUKernel {
+class EighCpuKernelMod : public NativeCpuKernelMod {
  public:
-  EighCPUKernel() = default;
-  ~EighCPUKernel() override = default;
+  EighCpuKernelMod() = default;
+  ~EighCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -54,24 +54,24 @@ class EighCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   Eigh,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EighCPUKernel, float);
+  EighCpuKernelMod, float);
 MS_REG_CPU_KERNEL_T(
   Eigh,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EighCPUKernel, double);
+  EighCpuKernelMod, double);
 
 MS_REG_CPU_KERNEL_T(Eigh,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeComplex64)
                       .AddOutputAttr(kNumberTypeComplex64)
                       .AddOutputAttr(kNumberTypeComplex64),
-                    EighCPUKernel, float_complex);
+                    EighCpuKernelMod, float_complex);
 MS_REG_CPU_KERNEL_T(Eigh,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeComplex128)
                       .AddOutputAttr(kNumberTypeComplex128)
                       .AddOutputAttr(kNumberTypeComplex128),
-                    EighCPUKernel, double_complex);
+                    EighCpuKernelMod, double_complex);
 }  // namespace kernel
 }  // namespace mindspore
 

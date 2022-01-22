@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 using rolling::Method;
 template <typename T, typename S>
-void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
+void RollingCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -63,15 +63,15 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T, typename S>
-void RollingCpuKernel<T, S>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void RollingCpuKernelMod<T, S>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // input values
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 template <typename T, typename S>
-void RollingCpuKernel<T, S>::RollingBoundsCalculate() {
+void RollingCpuKernelMod<T, S>::RollingBoundsCalculate() {
   int offset = 0;
   if (center_) {
     offset = (window_ - 1) / 2;
@@ -99,7 +99,7 @@ void RollingCpuKernel<T, S>::RollingBoundsCalculate() {
 }
 
 template <typename T, typename S>
-void RollingCpuKernel<T, S>::MethodSwitch() {
+void RollingCpuKernelMod<T, S>::MethodSwitch() {
   switch (method_) {
     case Method::Max:
       reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
@@ -158,8 +158,8 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
 }
 
 template <typename T, typename S>
-bool RollingCpuKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool RollingCpuKernelMod<T, S>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) {
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto workspace_addr = reinterpret_cast<size_t *>(workspace[0]->addr);
   auto output_addr = reinterpret_cast<S *>(outputs[0]->addr);

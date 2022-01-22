@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingGpuBackKernel : public GpuKernel {
+class PsROIPoolingBackGpuKernelMod : public NativeGpuKernelMod {
  public:
-  PsROIPoolingGpuBackKernel()
+  PsROIPoolingBackGpuKernelMod()
       : batch_size_(0),
         num_rois_(0),
         spatial_scale_(),
@@ -55,11 +55,8 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
         rois_size_(0),
         mapping_channel_size_(0),
         output_size_(0) {}
-  ~PsROIPoolingGpuBackKernel() = default;
+  ~PsROIPoolingBackGpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -82,14 +79,14 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
     // Get the number of input args
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPoolingGpuBackKernel needs 3 input.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPoolingBackGpuKernelMod needs 3 input.";
       return false;
     }
 
     // Get the number of output args
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != OUTPUT_NUM) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPoolingGpuBackKernel needs 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPoolingBackGpuKernelMod needs 1 output.";
       return false;
     }
 
@@ -102,7 +99,7 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
                      CHECK_SHAPE_NULL(rois_shape, kernel_name, "rois") ||
                      CHECK_SHAPE_NULL(mapping_channel_shape, kernel_name, "map");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PsROIPoolingGpuBackKernel', input is null.";
+      MS_LOG(WARNING) << "For 'PsROIPoolingBackGpuKernelMod', input is null.";
       InitSizeLists();
       return true;
     }
@@ -114,7 +111,7 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
     }
 
     if (rois_shape.size() != ROI_SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For 'PsROIPoolingGpuFwdKernel', the rank of rois_shape should be 2 "
+      MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of rois_shape should be 2 "
                         << "(number_rois, (bs, xmin, ymin, xmax, ymax)), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }
@@ -122,7 +119,7 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
     rois_size_ = rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1] * sizeof(T);
 
     if (mapping_channel_shape.size() != MAPPING_CHANNEL_SHAPE) {
-      MS_LOG(EXCEPTION) << "For 'PsROIPoolingGpuFwdKernel', the rank of mapping_channel_shape should be"
+      MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of mapping_channel_shape should be"
                         << "(number_rois, out_dim, height_ width), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }
@@ -177,9 +174,6 @@ class PsROIPoolingGpuBackKernel : public GpuKernel {
   int out_dim_;
   bool is_null_input_;
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   std::vector<int> dx_shape_;
   std::vector<int> rois_shape_;
   std::vector<int> mapping_channel_shape_;

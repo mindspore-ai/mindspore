@@ -20,12 +20,12 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   Einsum, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  EinsumGpuKernel, double)
+  EinsumGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   Einsum, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  EinsumGpuKernel, half)
+  EinsumGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   Einsum, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  EinsumGpuKernel, float)
+  EinsumGpuKernelMod, float)
 }  // namespace kernel
 }  // namespace mindspore

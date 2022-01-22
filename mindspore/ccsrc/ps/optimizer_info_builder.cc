@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ps {
-using mindspore::kernel::ps::SparseApplyFtrlPSKernel;
+using mindspore::kernel::ps::SparseApplyFtrlPSKernelMod;
 OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> &pserver_kernel,
                                            const WeightPtr &weight, const Keys &keys, const Values &values,
                                            const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
@@ -220,7 +220,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   accum->size = weight->size() * sizeof(float);
   for (size_t i = 0; i < weight->size(); i++) {
     float *tmp = reinterpret_cast<float *>(accum->addr);
-    tmp[i] = std::dynamic_pointer_cast<SparseApplyFtrlPSKernel>(pserver_kernel)->init_accum();
+    tmp[i] = std::dynamic_pointer_cast<SparseApplyFtrlPSKernelMod>(pserver_kernel)->init_accum();
   }
 
   AddressPtr linear = std::make_shared<kernel::Address>();

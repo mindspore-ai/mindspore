@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyFtrlCPUKernel : public SparseOptimizerCPUKernel {
+class SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod {
  public:
-  SparseApplyFtrlCPUKernel() = default;
-  ~SparseApplyFtrlCPUKernel() override = default;
+  SparseApplyFtrlCpuKernelMod() = default;
+  ~SparseApplyFtrlCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -58,7 +58,7 @@ MS_REG_CPU_KERNEL(FusedSparseFtrl,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyFtrlCPUKernel);
+                  SparseApplyFtrlCpuKernelMod);
 
 MS_REG_CPU_KERNEL(FusedSparseFtrl,
                   KernelAttr()
@@ -70,7 +70,7 @@ MS_REG_CPU_KERNEL(FusedSparseFtrl,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  SparseApplyFtrlCPUKernel);
+                  SparseApplyFtrlCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

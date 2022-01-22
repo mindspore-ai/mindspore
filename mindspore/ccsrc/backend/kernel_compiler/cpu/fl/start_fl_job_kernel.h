@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
-class StartFLJobKernel : public CPUKernel {
+class StartFLJobKernelMod : public NativeCpuKernelMod {
  public:
-  StartFLJobKernel() = default;
-  ~StartFLJobKernel() override = default;
+  StartFLJobKernelMod() = default;
+  ~StartFLJobKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
-    MS_LOG(INFO) << "Launching client StartFLJobKernel";
+    MS_LOG(INFO) << "Launching client StartFLJobKernelMod";
     if (!BuildStartFLJobReq(fbb_)) {
       MS_LOG(EXCEPTION) << "Building request for StartFLJob failed.";
       return false;

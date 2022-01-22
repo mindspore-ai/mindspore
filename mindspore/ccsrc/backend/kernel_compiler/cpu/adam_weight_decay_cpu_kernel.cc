@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ constexpr size_t kAdamWeightDecayOutputsNum = 3;
 }  // namespace
 
 template <typename T>
-void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &) {
+void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs,
+                                                        const std::vector<AddressPtr> &) {
   T *var = reinterpret_cast<T *>(inputs[VAR]->addr);
   T *m = reinterpret_cast<T *>(inputs[M]->addr);
   T *v = reinterpret_cast<T *>(inputs[V]->addr);
@@ -64,8 +64,8 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPt
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
-void AdamWeightDecayCPUKernel::LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs,
-                                                          const std::vector<AddressPtr> &) {
+void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecayNnacl(const std::vector<AddressPtr> &inputs,
+                                                             const std::vector<AddressPtr> &) {
   auto var = reinterpret_cast<float *>(inputs[VAR]->addr);
   auto m = reinterpret_cast<float *>(inputs[M]->addr);
   auto v = reinterpret_cast<float *>(inputs[V]->addr);
@@ -88,15 +88,15 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecayNnacl(const std::vector<Addr
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
 }
 
-void AdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
-bool AdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   if (inputs[VAR]->size != inputs[M]->size) {

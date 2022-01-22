@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ constexpr int kRetryDurationOfPushMetrics = 500;
 // Retry for 30 minutes.
 constexpr int kMaxRetryTime = 3600;
 template <typename T>
-class PushMetricsKernel : public CPUKernel {
+class PushMetricsKernelMod : public NativeCpuKernelMod {
  public:
-  PushMetricsKernel() : fbb_(nullptr), total_iteration_(0) {}
-  ~PushMetricsKernel() override = default;
+  PushMetricsKernelMod() : fbb_(nullptr), total_iteration_(0) {}
+  ~PushMetricsKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
     if (inputs.size() != 2) {
-      MS_LOG(EXCEPTION) << "Input number of PushMetricsKernel should be " << 2 << ", but got " << inputs.size();
+      MS_LOG(EXCEPTION) << "Input number of PushMetricsKernelMod should be " << 2 << ", but got " << inputs.size();
       return false;
     }
 

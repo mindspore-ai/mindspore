@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,17 @@ constexpr size_t kDebugInputsNum = 1;
 constexpr size_t kDebugOutputsNum = 1;
 }  // namespace
 
-void DebugCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void DebugCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
 }
 
-bool DebugCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool DebugCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDebugInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDebugOutputsNum, kernel_name_);
   const auto *val = reinterpret_cast<int *>(inputs[0]->addr);
-  MS_LOG(DEBUG) << " launch DebugCountCPUKernel";
+  MS_LOG(DEBUG) << " launch DebugCpuKernelMod";
 
   auto output = reinterpret_cast<int *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(int);

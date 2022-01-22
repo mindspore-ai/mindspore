@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "backend/kernel_compiler/kernel.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel_mod.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "ir/anf.h"
@@ -119,10 +120,10 @@ class CpuDynamicKernel : public device::DynamicKernel {
   void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with cpu backend"; }
 };
 
-class CPUKernel : public kernel::KernelMod {
+class NativeCpuKernelMod : public CpuKernelMod {
  public:
-  CPUKernel() = default;
-  ~CPUKernel() override = default;
+  NativeCpuKernelMod() = default;
+  ~NativeCpuKernelMod() override = default;
   virtual void Init(const CNodePtr &kernel_node);
   virtual void InitKernel(const CNodePtr &kernel_node) = 0;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -131,9 +132,6 @@ class CPUKernel : public kernel::KernelMod {
   };
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) = 0;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   void SetCNodePtr(const CNodePtr &kernel_node) { cnode_ptr_ = kernel_node; }
   const CNodeWeakPtr &GetCNodePtr() { return cnode_ptr_; }
@@ -144,9 +142,6 @@ class CPUKernel : public kernel::KernelMod {
 
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   CNodeWeakPtr cnode_ptr_;
   device::DynamicKernelPtr dynamic_kernel_;
 

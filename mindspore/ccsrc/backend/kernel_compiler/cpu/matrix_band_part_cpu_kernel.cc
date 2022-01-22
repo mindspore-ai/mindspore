@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void MatrixBandPartCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixBandPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
@@ -36,8 +36,9 @@ void MatrixBandPartCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool MatrixBandPartCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs) {
+bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &workspace,
+                                           const std::vector<AddressPtr> &outputs) {
   T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
   const int64_t *lower = reinterpret_cast<int64_t *>(inputs[1]->addr);
   const int64_t *upper = reinterpret_cast<int64_t *>(inputs[2]->addr);

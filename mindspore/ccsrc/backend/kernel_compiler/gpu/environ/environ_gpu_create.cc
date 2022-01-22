@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &EnvironCreateGpuKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &EnvironCreateGpuKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &EnvironCreateGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool EnvironCreateGpuKernel::Init(const CNodePtr &kernel_node) {
+bool EnvironCreateGpuKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // Check the output handle.
   auto handle_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
@@ -41,10 +35,10 @@ bool EnvironCreateGpuKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void EnvironCreateGpuKernel::InitSizeLists() { output_size_list_.push_back(handle_size_); }
+void EnvironCreateGpuKernelMod::InitSizeLists() { output_size_list_.push_back(handle_size_); }
 
-bool EnvironCreateGpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool EnvironCreateGpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto output = GetDeviceAddress<int64_t>(outputs, 0);
 
   // Generate an unique handle.

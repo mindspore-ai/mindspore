@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantPerLayerGpuKernel : public GpuKernel {
+class FakeQuantPerLayerGpuKernelMod : public NativeGpuKernelMod {
  public:
-  FakeQuantPerLayerGpuKernel();
-  ~FakeQuantPerLayerGpuKernel() = default;
+  FakeQuantPerLayerGpuKernelMod();
+  ~FakeQuantPerLayerGpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel) override;
@@ -40,9 +37,6 @@ class FakeQuantPerLayerGpuKernel : public GpuKernel {
 
  private:
   size_t input_size_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   float quant_min_;
   float quant_max_;

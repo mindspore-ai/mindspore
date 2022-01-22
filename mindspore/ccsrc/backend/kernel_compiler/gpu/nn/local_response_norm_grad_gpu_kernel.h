@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,21 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class LocalResponseNormGradGpuKernel : public GpuKernel {
- public:
-  LocalResponseNormGradGpuKernel() { ResetResource(); }
-  ~LocalResponseNormGradGpuKernel() override { DestroyResource(); }
+constexpr size_t k4DSize = 4;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+constexpr size_t kIdx2 = 2;
+constexpr size_t kIdx3 = 3;
+constexpr size_t kIdx4 = 4;
+constexpr size_t kIdx5 = 5;
+constexpr size_t kIdx6 = 6;
+constexpr size_t kIdx7 = 7;
+constexpr size_t kIdx8 = 8;
+
+template <typename T>
+class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
+ public:
+  LocalResponseNormGradGpuKernelMod() { ResetResource(); }
+  ~LocalResponseNormGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -45,7 +51,7 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
     }
     auto dy = GetDeviceAddress<T>(inputs, 0);
     auto x = GetDeviceAddress<T>(inputs, 1);
-    auto y = GetDeviceAddress<T>(inputs, 2);
+    auto y = GetDeviceAddress<T>(inputs, kIdx2);
     auto dx = GetDeviceAddress<T>(outputs, 0);
     const float alpha = 1;
     const float beta = 0;
@@ -53,18 +59,18 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
     if (use_native_) {
       MS_LOG(WARNING) << "TOM: grad use native";
       MS_LOG(WARNING) << "TOM: num_elements_ " << num_elements_;
-      std::vector<size_t> to_nhwc_axis = {0, 2, 3, 1};
-      std::vector<size_t> to_nchw_axis = {0, 3, 1, 2};
-      const size_t shape_size = 4 * sizeof(size_t);
+      std::vector<size_t> to_nhwc_axis = {0, kIdx2, kIdx3, 1};
+      std::vector<size_t> to_nchw_axis = {0, kIdx3, 1, kIdx2};
+      const size_t shape_size = k4DSize * sizeof(size_t);
       size_t *ws_input_shape = GetDeviceAddress<size_t>(workspace, 0);
       size_t *ws_transpose_shape = GetDeviceAddress<size_t>(workspace, 1);
-      size_t *ws_to_nhwc_axis = GetDeviceAddress<size_t>(workspace, 2);
-      size_t *ws_to_nchw_axis = GetDeviceAddress<size_t>(workspace, 3);
-      T *ws_dy = GetDeviceAddress<T>(workspace, 4);
-      T *ws_x = GetDeviceAddress<T>(workspace, 5);
-      T *ws_y = GetDeviceAddress<T>(workspace, 6);
-      T *ws_dx = GetDeviceAddress<T>(workspace, 7);
-      float *ws_scale = GetDeviceAddress<float>(workspace, 8);
+      size_t *ws_to_nhwc_axis = GetDeviceAddress<size_t>(workspace, kIdx2);
+      size_t *ws_to_nchw_axis = GetDeviceAddress<size_t>(workspace, kIdx3);
+      T *ws_dy = GetDeviceAddress<T>(workspace, kIdx4);
+      T *ws_x = GetDeviceAddress<T>(workspace, kIdx5);
+      T *ws_y = GetDeviceAddress<T>(workspace, kIdx6);
+      T *ws_dx = GetDeviceAddress<T>(workspace, kIdx7);
+      float *ws_scale = GetDeviceAddress<float>(workspace, kIdx8);
 
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                  cudaMemcpyAsync(ws_input_shape, &input_shape_[0], shape_size, cudaMemcpyHostToDevice,
@@ -83,17 +89,17 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync to_nchw_axis failed");
 
-      CalNCHW2NHWCInterface(num_elements_, 4, dy, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape, ws_to_nhwc_axis,
-                            ws_dy, reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalNCHW2NHWCInterface(num_elements_, 4, x, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape, ws_to_nhwc_axis,
-                            ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalNCHW2NHWCInterface(num_elements_, 4, y, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape, ws_to_nhwc_axis,
-                            ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalNCHW2NHWCInterface(num_elements_, k4DSize, dy, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape,
+                            ws_to_nhwc_axis, ws_dy, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalNCHW2NHWCInterface(num_elements_, k4DSize, x, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape,
+                            ws_to_nhwc_axis, ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CalNCHW2NHWCInterface(num_elements_, k4DSize, y, &input_shape_[0], &to_nhwc_axis[0], ws_input_shape,
+                            ws_to_nhwc_axis, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
 
       CalLocalResponseNormGradNHWC(ws_dy, ws_x, ws_y, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3],
                                    num_elements_, ws_scale, ws_dx, reinterpret_cast<cudaStream_t>(stream_ptr));
 
-      CalNHWC2NCHWInterface(num_elements_, 4, ws_dx, &transpose_shape_[0], &to_nchw_axis[0], ws_transpose_shape,
+      CalNHWC2NCHWInterface(num_elements_, k4DSize, ws_dx, &transpose_shape_[0], &to_nchw_axis[0], ws_transpose_shape,
                             ws_to_nchw_axis, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
@@ -116,7 +122,8 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
     beta_ = GetAttr<float>(kernel_node, "beta");
 
     use_native_ = false;
-    const unsigned int lrnN = 2 * depth_radius_ + 1;
+    const unsigned int kCoef = 2;
+    const unsigned int lrnN = kCoef * depth_radius_ + 1;
     double lrnAlpha = lrnN * alpha_;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
       use_native_ = true;
@@ -129,7 +136,8 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (input_shape.size() != 4) {
+    const size_t kInputNum = 4;
+    if (input_shape.size() != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
@@ -141,8 +149,8 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
         num_elements_ *= x;
       }
       transpose_shape_.push_back(input_shape_[0]);
-      transpose_shape_.push_back(input_shape_[2]);
-      transpose_shape_.push_back(input_shape_[3]);
+      transpose_shape_.push_back(input_shape_[kIdx2]);
+      transpose_shape_.push_back(input_shape_[kIdx3]);
       transpose_shape_.push_back(input_shape_[1]);
     } else {
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
@@ -207,7 +215,7 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
       if (use_native_) {
         input_size_ = num_elements_ * sizeof(T);
         output_size_ = num_elements_ * sizeof(T);
-        const size_t shape_size = 4 * sizeof(size_t);
+        const size_t shape_size = k4DSize * sizeof(size_t);
         workspace_size_list_.push_back(shape_size);
         workspace_size_list_.push_back(shape_size);
         workspace_size_list_.push_back(shape_size);
@@ -249,8 +257,8 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
   void SetCUDNNDescriptors(const std::vector<size_t> &shape, int lrnN, double lrnAlpha) {
     int batch = SizeToInt(shape[0]);
     int channel = SizeToInt(shape[1]);
-    int height = SizeToInt(shape[2]);
-    int width = SizeToInt(shape[3]);
+    int height = SizeToInt(shape[kIdx2]);
+    int width = SizeToInt(shape[kIdx3]);
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_,
@@ -296,9 +304,6 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
   size_t num_elements_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> transpose_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

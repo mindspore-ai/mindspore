@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,24 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      ZerosLikeGpuKernel, bool)
+                      ZerosLikeGpuKernelMod, bool)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      ZerosLikeGpuKernel, int8_t)
+                      ZerosLikeGpuKernelMod, int8_t)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      ZerosLikeGpuKernel, uint8_t)
+                      ZerosLikeGpuKernelMod, uint8_t)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      ZerosLikeGpuKernel, int32_t)
+                      ZerosLikeGpuKernelMod, int32_t)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      ZerosLikeGpuKernel, half)
+                      ZerosLikeGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      ZerosLikeGpuKernel, float)
+                      ZerosLikeGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      ZerosLikeGpuKernel, double)
+                      ZerosLikeGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

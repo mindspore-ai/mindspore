@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherGradGpuKernel : public GpuKernel {
+class GatherGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GatherGradGpuKernel() : axis_(0), is_null_input_(false) {}
-  ~GatherGradGpuKernel() = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  GatherGradGpuKernelMod() : axis_(0), is_null_input_(false) {}
+  ~GatherGradGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -133,10 +129,6 @@ class GatherGradGpuKernel : public GpuKernel {
   size_t dims_[4] = {};
   int axis_;
   bool is_null_input_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kTensorCopySlicesInputsNum = 2;
 constexpr size_t kTensorCopySlicesOutputsNum = 1;
 }  // namespace
 
-void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -51,9 +51,9 @@ void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
 }
 
-bool TensorCopySlicesCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> & /* workspace */,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorCopySlicesCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> & /* workspace */,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorCopySlicesInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorCopySlicesOutputsNum, kernel_name_);
 

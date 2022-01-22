@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,11 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputXDimSize = 4;
 template <typename T>
-class InstanceNormGpuKernel : public GpuKernel {
+class InstanceNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  InstanceNormGpuKernel()
+  InstanceNormGpuKernelMod()
       : input_x_size_(0),
         input_z_size_(0),
         para_size_(0),
@@ -47,11 +48,7 @@ class InstanceNormGpuKernel : public GpuKernel {
         scale_bias_mean_var_desc_(nullptr),
         handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT) {}
-  ~InstanceNormGpuKernel() override { DestroyResource(); }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~InstanceNormGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -112,7 +109,7 @@ class InstanceNormGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
     }
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    if (input_shape_.size() != 4) {
+    if (input_shape_.size() != kInputXDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input_x should be 4, but got "
                         << input_shape_.size();
     }
@@ -217,9 +214,6 @@ class InstanceNormGpuKernel : public GpuKernel {
   cudnnHandle_t handle_;
   cudnnDataType_t cudnn_data_type_;
   std::vector<size_t> input_shape_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

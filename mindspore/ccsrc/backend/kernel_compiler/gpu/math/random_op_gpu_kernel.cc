@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,17 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(StandardNormal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      RandomOpGpuKernel, float)
+                      RandomOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(UniformInt,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      RandomOpGpuKernel, int)
+                      RandomOpGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(UniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      RandomOpGpuKernel, float)
+                      RandomOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(CudnnUniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      RandomOpGpuKernel, float)
+                      RandomOpGpuKernelMod, float)
 }  // namespace kernel
 }  // namespace mindspore

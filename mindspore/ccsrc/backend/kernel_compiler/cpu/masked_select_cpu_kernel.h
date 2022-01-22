@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MaskedSelectCPUKernel : public CPUKernel {
+class MaskedSelectCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MaskedSelectCPUKernel() = default;
-  ~MaskedSelectCPUKernel() override = default;
+  MaskedSelectCpuKernelMod() = default;
+  ~MaskedSelectCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -46,32 +46,32 @@ class MaskedSelectCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat32),
-  MaskedSelectCPUKernel, float);
+  MaskedSelectCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-  MaskedSelectCPUKernel, int);
+  MaskedSelectCpuKernelMod, int);
 
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt16),
-  MaskedSelectCPUKernel, int16_t);
+  MaskedSelectCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-  MaskedSelectCPUKernel, int64_t);
+  MaskedSelectCpuKernelMod, int64_t);
 
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat16),
-  MaskedSelectCPUKernel, float16);
+  MaskedSelectCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(
   MaskedSelect,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
-  MaskedSelectCPUKernel, double);
+  MaskedSelectCpuKernelMod, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_CPU_KERNEL_H_

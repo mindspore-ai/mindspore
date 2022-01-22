@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ namespace kernel {
 constexpr size_t MIN_MAX_SHAPE_SIZE = 2;
 constexpr size_t INPUT_NUMS = 2;
 template <typename T>
-class BoundingBoxDecodeCPUKernel : public CPUKernel {
+class BoundingBoxDecodeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  BoundingBoxDecodeCPUKernel() = default;
-  ~BoundingBoxDecodeCPUKernel() override = default;
+  BoundingBoxDecodeCpuKernelMod() = default;
+  ~BoundingBoxDecodeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -48,12 +48,12 @@ class BoundingBoxDecodeCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T(
   BoundingBoxDecode,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BoundingBoxDecodeCPUKernel, float);
+  BoundingBoxDecodeCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(
   BoundingBoxDecode,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BoundingBoxDecodeCPUKernel, float16);
+  BoundingBoxDecodeCpuKernelMod, float16);
 
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ MS_REG_GPU_KERNEL_TWO(FusedWeightApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      FusedWeightDecayMomentumGpuKernel, float, float)
+                      FusedWeightDecayMomentumGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(FusedWeightApplyMomentum,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)  // variable
@@ -38,6 +38,6 @@ MS_REG_GPU_KERNEL_TWO(FusedWeightApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat16)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
-                      FusedWeightDecayMomentumGpuKernel, float, half)
+                      FusedWeightDecayMomentumGpuKernelMod, float, half)
 }  // namespace kernel
 }  // namespace mindspore

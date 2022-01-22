@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class L2NormalizeCPUKernel : public CPUKernel {
+class L2NormalizeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  L2NormalizeCPUKernel() = default;
-  ~L2NormalizeCPUKernel() override = default;
+  L2NormalizeCpuKernelMod() = default;
+  ~L2NormalizeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -51,10 +51,10 @@ class L2NormalizeCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL_T(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                    L2NormalizeCPUKernel, float16);
+                    L2NormalizeCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(L2Normalize, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    L2NormalizeCPUKernel, float);
+                    L2NormalizeCpuKernelMod, float);
 }  // namespace kernel
 }  // namespace mindspore
 

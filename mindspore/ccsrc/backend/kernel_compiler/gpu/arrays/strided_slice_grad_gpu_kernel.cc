@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,28 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      StridedSliceGradGpuKernel, double)
+                      StridedSliceGradGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      StridedSliceGradGpuKernel, float)
+                      StridedSliceGradGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      StridedSliceGradGpuKernel, half)
+                      StridedSliceGradGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      StridedSliceGradGpuKernel, int64_t)
+                      StridedSliceGradGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      StridedSliceGradGpuKernel, int)
+                      StridedSliceGradGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      StridedSliceGradGpuKernel, short)  // NOLINT
+                      StridedSliceGradGpuKernelMod, short)  // NOLINT
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      StridedSliceGradGpuKernel, int8_t)
+                      StridedSliceGradGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      StridedSliceGradGpuKernel, uint64_t)
+                      StridedSliceGradGpuKernelMod, uint64_t)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      StridedSliceGradGpuKernel, uint32_t)
+                      StridedSliceGradGpuKernelMod, uint32_t)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      StridedSliceGradGpuKernel, uint16_t)
+                      StridedSliceGradGpuKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      StridedSliceGradGpuKernel, uchar)
+                      StridedSliceGradGpuKernelMod, uchar)
 MS_REG_GPU_KERNEL_ONE(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      StridedSliceGradGpuKernel, bool)
+                      StridedSliceGradGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

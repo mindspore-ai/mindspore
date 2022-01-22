@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ template <typename T>
 using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
 
 template <typename T, typename C>
-void EigCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
+void EigCpuKernelMod<T, C>::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   compute_eigen_vectors = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -53,8 +53,8 @@ void EigCPUKernel<T, C>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T, typename C>
-void EigCPUKernel<T, C>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void EigCpuKernelMod<T, C>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.template emplace_back(m_ * m_ * sizeof(T));
 }
 
@@ -81,8 +81,8 @@ bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *out
 }
 
 template <typename T, typename C>
-bool EigCPUKernel<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs) {
+bool EigCpuKernelMod<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 

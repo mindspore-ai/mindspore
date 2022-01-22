@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,32 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/ctcloss_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr size_t kPrevOutput0th = 0;
+constexpr size_t kPrevOutput1st = 1;
+constexpr size_t kPrevOutput2nd = 2;
+constexpr size_t kPrevOutput3rd = 3;
+constexpr size_t kProbDimSize = 3;
+constexpr size_t kIndicesDimSize = 2;
+constexpr size_t kInputIdxForProbs = 0;
+constexpr size_t kInputIdxForLabelIndices = 1;
+constexpr size_t kInputIdxForLabelValues = 2;
+constexpr size_t kInputIdxForSeqLen = 3;
+constexpr size_t kWsIdxForSoftmaxProbs = 0;
+constexpr size_t kWsIdxForCumLabelLen = 1;
+constexpr size_t kWsIdxForLabelSquenceLen = 2;
+constexpr size_t kWsIdxForLabelValueSp = 3;
+constexpr size_t kWsIdxForLabelValuePcr = 4;
+constexpr size_t kWsIdxForProbNum = 5;
+constexpr size_t kWsIdxForPrecumLabelLen = 6;
+constexpr size_t kWsIdxForMaxLabelLen = 7;
+constexpr size_t kProbDimsIdxForMaxTime = 0;
+constexpr size_t kProbDimsIdxForBatch = 1;
+constexpr size_t kProbDimsIdxForNumClass = 2;
+
 template <typename T>
-class CtcLossGpuKernel : public GpuKernel {
+class CtcLossGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CtcLossGpuKernel()
+  CtcLossGpuKernelMod()
       : label_indice_size_(0),
         label_size_(0),
         sequence_lengths_size_(0),
@@ -62,11 +84,7 @@ class CtcLossGpuKernel : public GpuKernel {
         label_value_with_blank(nullptr),
         log_alpha_b(nullptr),
         log_beta_b(nullptr) {}
-  ~CtcLossGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~CtcLossGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -82,10 +100,10 @@ class CtcLossGpuKernel : public GpuKernel {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    auto probs_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto sequence_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto probs_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th);
+    auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput1st);
+    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput2nd);
+    auto sequence_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput3rd);
     is_null_input_ = CHECK_SHAPE_NULL(probs_shape, kernel_name_, "x") ||
                      CHECK_SHAPE_NULL(indice_dims, kernel_name_, "labels_indices") ||
                      CHECK_SHAPE_NULL(labels_dims, kernel_name_, "labels_values") ||
@@ -94,19 +112,19 @@ class CtcLossGpuKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    if (probs_shape.size() != 3) {
+    if (probs_shape.size() != kProbDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of x should be 3, but got "
                         << probs_shape.size();
     }
-    probs_dims_[0] = probs_shape[0];
-    probs_dims_[1] = probs_shape[1];
-    probs_dims_[2] = probs_shape[2];
+    probs_dims_[kProbDimsIdxForMaxTime] = probs_shape[kProbDimsIdxForMaxTime];
+    probs_dims_[kProbDimsIdxForBatch] = probs_shape[kProbDimsIdxForBatch];
+    probs_dims_[kProbDimsIdxForNumClass] = probs_shape[kProbDimsIdxForNumClass];
 
     if (labels_dims.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_values should be 1, but got "
                         << labels_dims.size();
     }
-    if (indice_dims.size() != 2) {
+    if (indice_dims.size() != kIndicesDimSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_indices should be 2, but got "
                         << indice_dims.size();
     }
@@ -130,23 +148,23 @@ class CtcLossGpuKernel : public GpuKernel {
  protected:
   void LaunchInit(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                   const std::vector<AddressPtr> &outputs) {
-    probs = GetDeviceAddress<T>(inputs, 0);
-    label_indices = GetDeviceAddress<int64_t>(inputs, 1);
-    label_values = GetDeviceAddress<int>(inputs, 2);
-    sequence_length = GetDeviceAddress<int>(inputs, 3);
+    probs = GetDeviceAddress<T>(inputs, kInputIdxForProbs);
+    label_indices = GetDeviceAddress<int64_t>(inputs, kInputIdxForLabelIndices);
+    label_values = GetDeviceAddress<int>(inputs, kInputIdxForLabelValues);
+    sequence_length = GetDeviceAddress<int>(inputs, kInputIdxForSeqLen);
     costs = GetDeviceAddress<T>(outputs, 0);
     grads = GetDeviceAddress<T>(outputs, 1);
-    softmax_probs = GetDeviceAddress<T>(workspace, 0);
-    cum_labels_length = GetDeviceAddress<int>(workspace, 1);
-    label_squence_length = GetDeviceAddress<int>(workspace, 2);
-    label_value_sp = GetDeviceAddress<int>(workspace, 3);
-    label_value_pcr = GetDeviceAddress<int>(workspace, 4);
-    prob_num = GetDeviceAddress<T>(workspace, 5);
-    precum_labels_length = GetDeviceAddress<int>(workspace, 6);
-    max_labels_length = GetDeviceAddress<int>(workspace, 7);
-    numclass = SizeToInt(probs_dims_[2]);
-    batch = SizeToInt(probs_dims_[1]);
-    max_time = SizeToInt(probs_dims_[0]);
+    softmax_probs = GetDeviceAddress<T>(workspace, kWsIdxForSoftmaxProbs);
+    cum_labels_length = GetDeviceAddress<int>(workspace, kWsIdxForCumLabelLen);
+    label_squence_length = GetDeviceAddress<int>(workspace, kWsIdxForLabelSquenceLen);
+    label_value_sp = GetDeviceAddress<int>(workspace, kWsIdxForLabelValueSp);
+    label_value_pcr = GetDeviceAddress<int>(workspace, kWsIdxForLabelValuePcr);
+    prob_num = GetDeviceAddress<T>(workspace, kWsIdxForProbNum);
+    precum_labels_length = GetDeviceAddress<int>(workspace, kWsIdxForPrecumLabelLen);
+    max_labels_length = GetDeviceAddress<int>(workspace, kWsIdxForMaxLabelLen);
+    numclass = SizeToInt(probs_dims_[kProbDimsIdxForNumClass]);
+    batch = SizeToInt(probs_dims_[kProbDimsIdxForBatch]);
+    max_time = SizeToInt(probs_dims_[kProbDimsIdxForMaxTime]);
     max_sequence = 0;
     max_labels_length_host = 0;
     batch_label = 0;
@@ -227,38 +245,44 @@ class CtcLossGpuKernel : public GpuKernel {
   }
 
   void InitSizeLists() override {
-    input_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    input_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                               probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     input_size_list_.push_back(label_indice_size_);
     input_size_list_.push_back(label_size_);
     input_size_list_.push_back(sequence_lengths_size_);
-    workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    workspace_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                                   probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     workspace_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(label_size_);
     workspace_size_list_.push_back(label_size_);
-    workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    workspace_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                                   probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     workspace_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(sizeof(int));
-    output_size_list_.push_back(probs_dims_[1] * sizeof(T));
-    output_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
+    output_size_list_.push_back(probs_dims_[kProbDimsIdxForBatch] * sizeof(T));
+    output_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                                probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
   }
   void MemsetForWS(int *label_value_pcr, int *cum_labels_length, int *label_squence_length, T *costs, T *grads,
                    cudaStream_t stream) {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
-                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemsetAsync(cum_labels_length, static_cast<int>(0), sequence_lengths_size_, stream),
-                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_, cudaMemsetAsync(label_squence_length, static_cast<int>(0), sequence_lengths_size_, stream),
-      "cudaMemSet failed in CtcLossGpuKernel::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[1] * sizeof(T), stream),
-                               "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+      "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudaMemsetAsync(grads, static_cast<T>(0), probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T), stream),
-      "cudaMemSet failed in CtcLossGpuKernel::Launch.");
+      kernel_node_, cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[kProbDimsIdxForBatch] * sizeof(T), stream),
+      "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(grads, static_cast<T>(0),
+                                               probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
+                                                 probs_dims_[kProbDimsIdxForNumClass] * sizeof(T),
+                                               stream),
+                               "cudaMemSet failed in CtcLossGpuKernelMod::Launch.");
   }
   void MemManageForCus(T **log_alpha_b, T **log_beta_b, int **label_value_with_blank, int *cum_labels_length,
                        int log_prob_size, int batch, cudaStream_t stream) {
@@ -284,10 +308,6 @@ class CtcLossGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_alpha_b), "cudaFree failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_beta_b), "cudaFree failed.");
   }
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   size_t probs_dims_[3] = {0};
   int label_indice_size_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ MS_REG_GPU_KERNEL_ONE(SparseApplyProximalAdagrad,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SparseApplyProximalAdagradKernel, float)
+                      SparseApplyProximalAdagradKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(SparseApplyProximalAdagrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -41,6 +41,6 @@ MS_REG_GPU_KERNEL_ONE(SparseApplyProximalAdagrad,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      SparseApplyProximalAdagradKernel, half)
+                      SparseApplyProximalAdagradKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore

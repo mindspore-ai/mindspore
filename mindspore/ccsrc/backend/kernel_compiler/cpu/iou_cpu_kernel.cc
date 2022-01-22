@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ constexpr size_t kBoxCoordinateLen = 4;
 }  // namespace
 
 template <typename T>
-void IOUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void IOUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
@@ -58,8 +58,8 @@ void IOUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool IOUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                             const std::vector<kernel::AddressPtr> &outputs) {
+bool IOUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
   auto anchor_boxes = reinterpret_cast<T *>(inputs[ANCHOR_BOXES]->addr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputsNum = 1;
 constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -39,7 +39,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNo
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -68,8 +68,8 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &ke
   AddArgument(DNNL_ARG_DST, mem_desc);
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *labels, const float *losses,
-                                                                      float *output) const {
+void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const int *labels, const float *losses,
+                                                                         float *output) const {
   float total_loss = 0;
   float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
@@ -85,8 +85,8 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int 
   output[0] = total_loss / batch_size_;
 }
 
-void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *labels, const float *losses,
-                                                                   float *output) const {
+void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::GradPostExecute(const int *labels, const float *losses,
+                                                                      float *output) const {
   size_t row_start = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
@@ -108,9 +108,9 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
   }
 }
 
-bool SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &workspace,
-                                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                             const std::vector<kernel::AddressPtr> &workspace,
+                                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);

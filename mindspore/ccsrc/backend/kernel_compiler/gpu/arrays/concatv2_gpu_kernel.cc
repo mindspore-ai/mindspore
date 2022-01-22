@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,42 +20,42 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ConcatV2GpuFwdKernel, double)
+  ConcatV2FwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConcatV2GpuFwdKernel, float)
+  ConcatV2FwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  ConcatV2GpuFwdKernel, half)
+  ConcatV2FwdGpuKernelMod, half)
 
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      ConcatV2GpuFwdKernel, int64_t)
+                      ConcatV2FwdGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      ConcatV2GpuFwdKernel, int)
+                      ConcatV2FwdGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      ConcatV2GpuFwdKernel, short)  // NOLINT
+                      ConcatV2FwdGpuKernelMod, short)  // NOLINT
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      ConcatV2GpuFwdKernel, char)
+                      ConcatV2FwdGpuKernelMod, char)
 
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  ConcatV2GpuFwdKernel, uint64_t)
+  ConcatV2FwdGpuKernelMod, uint64_t)
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  ConcatV2GpuFwdKernel, uint)
+  ConcatV2FwdGpuKernelMod, uint)
 MS_REG_GPU_KERNEL_ONE(
   Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-  ConcatV2GpuFwdKernel, uint16_t)
+  ConcatV2FwdGpuKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      ConcatV2GpuFwdKernel, uchar)
+                      ConcatV2FwdGpuKernelMod, uchar)
 
 MS_REG_GPU_KERNEL_ONE(Concat,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      ConcatV2GpuFwdKernel, bool)
+                      ConcatV2FwdGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

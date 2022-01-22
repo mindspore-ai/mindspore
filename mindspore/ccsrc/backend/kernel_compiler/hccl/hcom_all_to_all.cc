@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,22 +47,22 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
     data_type_ = hccl_data_type_list_[0];
   }
 
-  workspace_size_list_ = {LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node, data_type_))};
+  mutable_workspace_size_list_ = {LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node, data_type_))};
   return true;
 }
 
 const std::vector<size_t> &HcomAllToAllKernel::GetOutputSizeList() const {
-  if (!output_size_list_.empty()) {
-    return output_size_list_;
+  if (!mutable_output_size_list_.empty()) {
+    return mutable_output_size_list_;
   }
   for (size_t i = 0; i < hccl_kernel_output_shape_list_.size(); ++i) {
     size_t size = 0;
     if (!HcomUtil::GetHcclOpSize(data_type_, hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(EXCEPTION) << "AllToAllv get output size failed.";
     }
-    output_size_list_.push_back(size);
+    mutable_output_size_list_.push_back(size);
   }
-  return output_size_list_;
+  return mutable_output_size_list_;
 }
 
 std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPtr> &inputs,

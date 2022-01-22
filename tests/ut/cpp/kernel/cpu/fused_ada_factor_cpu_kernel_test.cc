@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace kernel {
 static constexpr size_t kSizeFloat32 = sizeof(float);
 class FusedAdaFactorCpuKernelTest : public UT::Common {
  public:
-  FusedAdaFactorCpuKernelTest() : ada_factor_(std::make_shared<FusedAdaFactorCPUKernel>()) {}
+  FusedAdaFactorCpuKernelTest() : ada_factor_(std::make_shared<FusedAdaFactorCpuKernelMod>()) {}
 
   void SetUp() override {
     ada_factor_->elem_num_ = elem_num_;
@@ -163,7 +163,7 @@ class FusedAdaFactorCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<FusedAdaFactorCPUKernel> ada_factor_;
+  std::shared_ptr<FusedAdaFactorCpuKernelMod> ada_factor_;
 
   size_t last_row_dim_size_ = 4;
   size_t last_col_dim_size_ = 6;

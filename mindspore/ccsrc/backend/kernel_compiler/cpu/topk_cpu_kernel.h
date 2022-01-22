@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class TopKCPUKernel : public CPUKernel {
+class TopKCpuKernelMod : public NativeCpuKernelMod {
  public:
-  TopKCPUKernel() = default;
-  ~TopKCPUKernel() override = default;
+  TopKCpuKernelMod() = default;
+  ~TopKCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
@@ -47,7 +47,7 @@ class TopKCPUKernel : public CPUKernel {
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(TopK, KernelAttr(), TopKCPUKernel)
+MS_REG_CPU_KERNEL(TopK, KernelAttr(), TopKCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TOPK_CPU_KERNEL_H_

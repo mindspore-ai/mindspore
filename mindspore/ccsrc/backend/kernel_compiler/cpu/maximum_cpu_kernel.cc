@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,19 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr auto kShapeIndexZero = 0;
+constexpr auto kShapeIndex1st = 1;
+constexpr auto kShapeIndex2nd = 2;
+constexpr auto kShapeIndex3rd = 3;
+constexpr auto kShapeIndex4th = 4;
+constexpr auto kShapeIndex5th = 5;
+constexpr auto kShapeIndex6th = 6;
 constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void MaximumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void MaximumCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -51,7 +58,7 @@ void MaximumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
+void MaximumCpuKernelMod<T>::InitInputTensorAndScalar(size_t max_input_shape_size) {
   if (max_input_shape_size != output_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output tensor should be equal to the max "
@@ -62,7 +69,7 @@ void MaximumCPUKernel<T>::InitInputTensorAndScalar(size_t max_input_shape_size) 
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
+void MaximumCpuKernelMod<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_dtype) {
   if (input_x_dtype == kNumberTypeBool && input_y_dtype == kNumberTypeBool) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor types should not be both bool.";
   }
@@ -74,8 +81,9 @@ void MaximumCPUKernel<T>::InitInputTensors(TypeId input_x_dtype, TypeId input_y_
 }
 
 template <typename T>
-bool MaximumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+bool MaximumCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumOutputsNum, kernel_name_);
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
@@ -86,19 +94,22 @@ bool MaximumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod<T>::BroadcastArith(const T *input_x, const T *input_y, T *output) const {
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_y);
   MS_EXCEPTION_IF_NULL(output);
   if (need_broadcast_) {
-    BroadcastArithKernel(broadcast_input_x_shape_[0], broadcast_input_x_shape_[1], broadcast_input_x_shape_[2],
-                         broadcast_input_x_shape_[3], broadcast_input_x_shape_[4], broadcast_input_x_shape_[5],
-                         broadcast_input_x_shape_[6], broadcast_input_y_shape_[0], broadcast_input_y_shape_[1],
-                         broadcast_input_y_shape_[2], broadcast_input_y_shape_[3], broadcast_input_y_shape_[4],
-                         broadcast_input_y_shape_[5], broadcast_input_y_shape_[6], broadcast_output_shape_[0],
-                         broadcast_output_shape_[1], broadcast_output_shape_[2], broadcast_output_shape_[3],
-                         broadcast_output_shape_[4], broadcast_output_shape_[5], broadcast_output_shape_[6], input_x,
-                         input_y, output);
+    BroadcastArithKernel(broadcast_input_x_shape_[kShapeIndexZero], broadcast_input_x_shape_[kShapeIndex1st],
+                         broadcast_input_x_shape_[kShapeIndex2nd], broadcast_input_x_shape_[kShapeIndex3rd],
+                         broadcast_input_x_shape_[kShapeIndex4th], broadcast_input_x_shape_[kShapeIndex5th],
+                         broadcast_input_x_shape_[kShapeIndex6th], broadcast_input_y_shape_[kShapeIndexZero],
+                         broadcast_input_y_shape_[kShapeIndex1st], broadcast_input_y_shape_[kShapeIndex2nd],
+                         broadcast_input_y_shape_[kShapeIndex3rd], broadcast_input_y_shape_[kShapeIndex4th],
+                         broadcast_input_y_shape_[kShapeIndex5th], broadcast_input_y_shape_[kShapeIndex6th],
+                         broadcast_output_shape_[kShapeIndexZero], broadcast_output_shape_[kShapeIndex1st],
+                         broadcast_output_shape_[kShapeIndex2nd], broadcast_output_shape_[kShapeIndex3rd],
+                         broadcast_output_shape_[kShapeIndex4th], broadcast_output_shape_[kShapeIndex5th],
+                         broadcast_output_shape_[kShapeIndex6th], input_x, input_y, output);
   } else {
     if (input_x_shape_.size() == 0 || input_y_shape_.size() == 0) {
       BroadcastArithOneScalarOneTensor(input_x, input_y, output);
@@ -109,7 +120,7 @@ void MaximumCPUKernel<T>::BroadcastArith(const T *input_x, const T *input_y, T *
 }
 
 template <typename T>
-bool MaximumCPUKernel<T>::IsBroadcast() const {
+bool MaximumCpuKernelMod<T>::IsBroadcast() const {
   if (input_x_shape_.size() != input_y_shape_.size()) {
     return true;
   }
@@ -122,7 +133,7 @@ bool MaximumCPUKernel<T>::IsBroadcast() const {
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::InitTensorBroadcastShape() {
+void MaximumCpuKernelMod<T>::InitTensorBroadcastShape() {
   if (output_shape_.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output should be less than or equal to 7, but got "
@@ -150,18 +161,19 @@ void MaximumCPUKernel<T>::InitTensorBroadcastShape() {
 
 // Broadcast comparison
 template <typename T>
-size_t MaximumCPUKernel<T>::Index(const size_t &index, const size_t &dim) const {
+size_t MaximumCpuKernelMod<T>::Index(const size_t &index, const size_t &dim) const {
   return dim == 1 ? 0 : index;
 }
 
 // Broadcast Arithmetic
 template <typename T>
-void MaximumCPUKernel<T>::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                               const size_t d6, const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod<T>::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
+                                                  const size_t l4, const size_t l5, const size_t l6, const size_t r0,
+                                                  const size_t r1, const size_t r2, const size_t r3, const size_t r4,
+                                                  const size_t r5, const size_t r6, const size_t d0, const size_t d1,
+                                                  const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                                  const size_t d6, const T *input_x, const T *input_y,
+                                                  T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
     size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
     size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
@@ -190,7 +202,7 @@ void MaximumCPUKernel<T>::BroadcastArithKernel(const size_t l0, const size_t l1,
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod<T>::BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const {
   if (input_x_shape_.size() == 0) {
     for (size_t i = 0; i < output_num_; ++i) {
       output[i] = MaximumFunc(input_x[0], input_y[i]);
@@ -203,7 +215,7 @@ void MaximumCPUKernel<T>::BroadcastArithOneScalarOneTensor(const T *input_x, con
 }
 
 template <typename T>
-void MaximumCPUKernel<T>::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
+void MaximumCpuKernelMod<T>::BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const {
   for (size_t i = 0; i < output_num_; ++i) {
     output[i] = MaximumFunc(input_x[i], input_y[i]);
   }

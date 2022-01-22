@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,9 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::cpu::CPUTensorArray;
 using mindspore::device::cpu::CPUTensorArrayPtr;
-TensorArrayCPUCreateKernel::TensorArrayCPUCreateKernel() : is_dynamic_(true), size_(0), type_(nullptr) {}
+TensorArrayCreateCpuKernelMod::TensorArrayCreateCpuKernelMod() : is_dynamic_(true), size_(0), type_(nullptr) {}
 
-const std::vector<size_t> &TensorArrayCPUCreateKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUCreateKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCPUCreateKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-void TensorArrayCPUCreateKernel::InitKernel(const CNodePtr &kernel_node) {
+void TensorArrayCreateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   for (auto i : shape) {
@@ -45,8 +39,8 @@ void TensorArrayCPUCreateKernel::InitKernel(const CNodePtr &kernel_node) {
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCPUCreateKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                        const std::vector<AddressPtr> &outputs) {
+bool TensorArrayCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &outputs) {
   // Create a tensorarray, and generate an unique handle.
   int64_t tensor_array_handle = TensorArrayMgr::GetInstance().GetHandleCount();
   auto name = "CPUTensorArray_" + name_ + "_" + std::to_string(tensor_array_handle);

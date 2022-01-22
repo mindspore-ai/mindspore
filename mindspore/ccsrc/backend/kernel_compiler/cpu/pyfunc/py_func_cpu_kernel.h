@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,10 @@ struct PyFuncArgumentInfo {
   std::vector<PythonOjectType> object_types;
 };
 
-class PyFuncCpuKernel : public CPUKernel {
+class PyFuncCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PyFuncCpuKernel() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
-  ~PyFuncCpuKernel() = default;
+  PyFuncCpuKernelMod() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
+  ~PyFuncCpuKernelMod() = default;
 
   // Init kernel including analyse PyFunc input and output info.
   void InitKernel(const CNodePtr &kernel_node) override;

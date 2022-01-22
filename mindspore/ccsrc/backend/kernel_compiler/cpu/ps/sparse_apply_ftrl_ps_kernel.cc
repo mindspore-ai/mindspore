@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ namespace kernel {
 namespace ps {
 constexpr size_t kSparseApplyFtrlPSInputSize = 5;
 
-void SparseApplyFtrlPSKernel::InitKernel(
+void SparseApplyFtrlPSKernelMod::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < kSparseApplyFtrlPSInputSize) {
-    MS_LOG(EXCEPTION) << "SparseApplyAdamPSKernel needs " << kSparseApplyFtrlPSInputSize << " input shapes, but got "
+    MS_LOG(EXCEPTION) << "SparseApplyAdamPSKernelMod needs " << kSparseApplyFtrlPSInputSize << " input shapes, but got "
                       << shape_vec.size();
   }
   std::vector<size_t> var_shape = *(shape_vec[0]);
@@ -89,7 +89,7 @@ void SparseApplyFtrlPSKernel::InitKernel(
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
 }
 
-void SparseApplyFtrlPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Shape should not empty";
   }
@@ -99,7 +99,7 @@ void SparseApplyFtrlPSKernel::ReInit(const std::vector<std::vector<size_t>> &sha
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
-void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
+void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyFtrlPSInputSize) {
     MS_LOG(EXCEPTION) << "Input numbers should not be less than " << kSparseApplyFtrlPSInputSize << ", but got "
                       << inputs.size();
@@ -110,8 +110,9 @@ void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }
 
-bool SparseApplyFtrlPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) {
+bool SparseApplyFtrlPSKernelMod::Execute(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &workspace,
+                                         const std::vector<AddressPtr> &outputs) {
   ReInit(inputs);
   if (indices_size_ == 0) {
     return true;
@@ -119,11 +120,11 @@ bool SparseApplyFtrlPSKernel::Execute(const std::vector<AddressPtr> &inputs, con
   return Launch(inputs, workspace, outputs);
 }
 
-const std::vector<size_t> &SparseApplyFtrlPSKernel::input_sizes() const { return GetInputSizeList(); }
+const std::vector<size_t> &SparseApplyFtrlPSKernelMod::input_sizes() const { return GetInputSizeList(); }
 
-const std::vector<size_t> &SparseApplyFtrlPSKernel::output_sizes() const { return GetOutputSizeList(); }
+const std::vector<size_t> &SparseApplyFtrlPSKernelMod::output_sizes() const { return GetOutputSizeList(); }
 
-const std::vector<size_t> &SparseApplyFtrlPSKernel::workspace_sizes() const { return GetWorkspaceSizeList(); }
+const std::vector<size_t> &SparseApplyFtrlPSKernelMod::workspace_sizes() const { return GetWorkspaceSizeList(); }
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
 template <typename T>
-class CholeskyInverseCPUKernel : public CPUKernel {
+class CholeskyInverseCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CholeskyInverseCPUKernel() = default;
-  ~CholeskyInverseCPUKernel() override = default;
+  CholeskyInverseCpuKernelMod() = default;
+  ~CholeskyInverseCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -39,9 +39,9 @@ class CholeskyInverseCPUKernel : public CPUKernel {
   CNodePtr node_wpt_;
 };
 MS_REG_CPU_KERNEL_T(CholeskyInverse, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                    CholeskyInverseCPUKernel, float)
+                    CholeskyInverseCpuKernelMod, float)
 MS_REG_CPU_KERNEL_T(CholeskyInverse, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                    CholeskyInverseCPUKernel, double)
+                    CholeskyInverseCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKYINVERSE_CPU_KERNEL_H_

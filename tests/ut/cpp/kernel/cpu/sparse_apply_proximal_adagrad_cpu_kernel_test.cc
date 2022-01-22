@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace kernel {
 class SparseApplyProximalAdagradCpuKernelTest : public UT::Common {
  public:
   SparseApplyProximalAdagradCpuKernelTest()
-      : sparse_proximal_adagrad_(std::make_shared<SparseApplyProximalAdagradCPUKernel>()) {}
+      : sparse_proximal_adagrad_(std::make_shared<SparseApplyProximalAdagradCpuKernelMod>()) {}
 
   void SetUp() override {
     var_.clear();
@@ -68,7 +68,7 @@ class SparseApplyProximalAdagradCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
-  std::shared_ptr<SparseApplyProximalAdagradCPUKernel> sparse_proximal_adagrad_;
+  std::shared_ptr<SparseApplyProximalAdagradCpuKernelMod> sparse_proximal_adagrad_;
   float lr_ = 0.01;
   float l1_ = 0.0;
   float l2_ = 0.0;

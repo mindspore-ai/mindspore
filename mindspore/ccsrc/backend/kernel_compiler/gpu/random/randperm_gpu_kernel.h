@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,12 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class RandpermGpuKernel : public GpuKernel {
+class RandpermGpuKernelMod : public NativeGpuKernelMod {
  public:
   // initialize rng here to minimize how many times we seed it.
-  RandpermGpuKernel() : rng_(std::random_device()()) { ResetResource(); }
+  RandpermGpuKernelMod() : rng_(std::random_device()()) { ResetResource(); }
 
-  ~RandpermGpuKernel() = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~RandpermGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -50,7 +46,7 @@ class RandpermGpuKernel : public GpuKernel {
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Failed to copy error code to host.");
 
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed in RandpermGpuKernel");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed in RandpermGpuKernelMod");
 
     if (static_cast<size_t>(n) > max_length_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', n (" << n << ") cannot exceed max_length_ (" << max_length_
@@ -115,10 +111,6 @@ class RandpermGpuKernel : public GpuKernel {
   std::mt19937 rng_;
   size_t max_length_;
   T pad_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

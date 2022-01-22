@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,20 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironCreateCPUKernel : public CPUKernel {
+class EnvironCreateCpuKernelMod : public NativeCpuKernelMod {
  public:
-  EnvironCreateCPUKernel() : handle_size_(0) {}
-  ~EnvironCreateCPUKernel() = default;
+  EnvironCreateCpuKernelMod() : handle_size_(0) {}
+  ~EnvironCreateCpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  const std::vector<size_t> &GetWorkspaceSizeList() const override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &node) override;
 
  private:
   size_t handle_size_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 
-MS_REG_CPU_KERNEL(EnvironCreate, KernelAttr().AddOutputAttr(kNumberTypeInt64), EnvironCreateCPUKernel);
+MS_REG_CPU_KERNEL(EnvironCreate, KernelAttr().AddOutputAttr(kNumberTypeInt64), EnvironCreateCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

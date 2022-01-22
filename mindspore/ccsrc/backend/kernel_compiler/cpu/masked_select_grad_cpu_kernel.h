@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MaskedSelectGradCPUKernel : public CPUKernel {
+class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MaskedSelectGradCPUKernel() = default;
-  ~MaskedSelectGradCPUKernel() override = default;
+  MaskedSelectGradCpuKernelMod() = default;
+  ~MaskedSelectGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -50,7 +50,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    MaskedSelectGradCPUKernel, float);
+                    MaskedSelectGradCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
@@ -58,7 +58,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeInt32),
-                    MaskedSelectGradCPUKernel, int);
+                    MaskedSelectGradCpuKernelMod, int);
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
@@ -66,7 +66,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeFloat16)
                       .AddOutputAttr(kNumberTypeFloat16),
-                    MaskedSelectGradCPUKernel, float16);
+                    MaskedSelectGradCpuKernelMod, float16);
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
@@ -74,7 +74,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddOutputAttr(kNumberTypeFloat64),
-                    MaskedSelectGradCPUKernel, double);
+                    MaskedSelectGradCpuKernelMod, double);
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
@@ -82,7 +82,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeInt16)
                       .AddOutputAttr(kNumberTypeInt16),
-                    MaskedSelectGradCPUKernel, int16_t);
+                    MaskedSelectGradCpuKernelMod, int16_t);
 
 MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                     KernelAttr()
@@ -90,7 +90,7 @@ MS_REG_CPU_KERNEL_T(MaskedSelectGrad,
                       .AddInputAttr(kNumberTypeBool)
                       .AddInputAttr(kNumberTypeInt64)
                       .AddOutputAttr(kNumberTypeInt64),
-                    MaskedSelectGradCPUKernel, int64_t);
+                    MaskedSelectGradCpuKernelMod, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_

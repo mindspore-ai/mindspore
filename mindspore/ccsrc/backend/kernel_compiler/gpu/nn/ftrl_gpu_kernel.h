@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 8;
 template <typename T>
-class FtrlGpuKernel : public GpuKernel {
+class FtrlGpuKernelMod : public NativeGpuKernelMod {
  public:
-  FtrlGpuKernel()
+  FtrlGpuKernelMod()
       : variable_size_(0),
         accumulation_size_(0),
         linear_size_(0),
@@ -40,11 +40,7 @@ class FtrlGpuKernel : public GpuKernel {
         is_null_input_(false),
         kernel_name_("ApplyFtrl") {}
 
-  ~FtrlGpuKernel() override = default;
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~FtrlGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *stream_ptr) override {
@@ -137,10 +133,6 @@ class FtrlGpuKernel : public GpuKernel {
   size_t learning_rate_power_size_;
   bool is_null_input_;
   std::string kernel_name_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

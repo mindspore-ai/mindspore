@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                           const std::vector<AddressPtr> &) {
-  MS_LOG(INFO) << "Launching client GetKeysKernel";
+bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                              const std::vector<AddressPtr> &) {
+  MS_LOG(INFO) << "Launching client GetKeysKernelMod";
   BuildGetKeysReq(fbb_);
 
   std::shared_ptr<std::vector<unsigned char>> get_keys_rsp_msg = nullptr;
@@ -57,7 +57,7 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
   return true;
 }
 
-void GetKeysKernel::Init(const CNodePtr &kernel_node) {
+void GetKeysKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
   server_num_ = fl::worker::FLWorker::GetInstance().server_num();
@@ -82,9 +82,9 @@ void GetKeysKernel::Init(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "Initialize GetKeys kernel successfully.";
 }
 
-void GetKeysKernel::InitKernel(const CNodePtr &kernel_node) { return; }
+void GetKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
 
-void GetKeysKernel::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
+void GetKeysKernelMod::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
   int iter = fl::worker::FLWorker::GetInstance().fl_iteration_num();
   auto fbs_fl_id = fbb->CreateString(fl_id_);
@@ -96,7 +96,7 @@ void GetKeysKernel::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_LOG(INFO) << "BuildGetKeysReq successfully.";
 }
 
-bool GetKeysKernel::SavePublicKeyList(
+bool GetKeysKernelMod::SavePublicKeyList(
   const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key) {
   if (remote_public_key == nullptr) {
     MS_LOG(EXCEPTION) << "Input remote_pubic_key is nullptr.";
@@ -137,6 +137,6 @@ bool GetKeysKernel::SavePublicKeyList(
   return true;
 }
 
-MS_REG_CPU_KERNEL(GetKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), GetKeysKernel);
+MS_REG_CPU_KERNEL(GetKeys, KernelAttr().AddOutputAttr(kNumberTypeFloat32), GetKeysKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ constexpr int kZeroThreshold = INT32_MIN;
 }  // namespace
 
 template <typename T>
-void LUCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void LUCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   constexpr size_t lu_min_dim = 1;
   if (shape.size() <= lu_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "shape is " << shape.size() << " which is invalid.";
@@ -51,7 +51,7 @@ void LUCPUKernel<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *ro
 }
 
 template <typename T>
-void LUCPUKernel<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void LUCpuKernelMod<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   constexpr size_t pivot_min_dim = 1;
   if (shape.size() < pivot_min_dim) {
     MS_LOG_EXCEPTION << kernel_name_ << "pivots shape is " << shape.size() << " which is invalid.";
@@ -65,7 +65,7 @@ void LUCPUKernel<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *
 }
 
 template <typename T>
-void LUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void LUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -84,22 +84,22 @@ void LUCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void LUCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void LUCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t lu_size = lu_col_ * sizeof(T);
   (void)workspace_size_list_.emplace_back(lu_size);
   (void)workspace_size_list_.emplace_back(lu_size);
 }
 
 template <typename T>
-T LUCPUKernel<T>::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
+T LUCpuKernelMod<T>::GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j) {
   const T *pered_lu_value = lu_value + per_value[i] * lu_col_ + j;
   return *pered_lu_value;
 }
 
 template <typename T>
-bool LUCPUKernel<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *const per_value, int *pivots, size_t k,
-                                            size_t rows) {
+bool LUCpuKernelMod<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *const per_value, int *pivots, size_t k,
+                                               size_t rows) {
   T max_major_value = static_cast<T>(kZeroThreshold);
   int max_major_index = 0;
   for (size_t i = k; i < rows; ++i) {
@@ -118,16 +118,16 @@ bool LUCPUKernel<T>::UpdateMajorPermutation(T *lu_value, std::vector<int> *const
 }
 
 template <typename T>
-void LUCPUKernel<T>::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
-                                        const T &value) {
+void LUCpuKernelMod<T>::SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j,
+                                           const T &value) {
   T *per_lu_value = lu_value + per_value[i] * lu_col_ + j;
   *per_lu_value = value;
 }
 
 template <typename T>
-bool LUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> &workspace,
-                            const std::vector<kernel::AddressPtr> &outputs) {
+bool LUCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                               const std::vector<kernel::AddressPtr> &workspace,
+                               const std::vector<kernel::AddressPtr> &outputs) {
   // input matrix of (m,n) PA = LU
   T *batch_a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
   T *batch_lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);

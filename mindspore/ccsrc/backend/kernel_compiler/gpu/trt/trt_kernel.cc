@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-const std::vector<size_t> &TrtKernel::GetInputSizeList() const { return input_size_list_; }
-const std::vector<size_t> &TrtKernel::GetOutputSizeList() const { return output_size_list_; }
-const std::vector<size_t> &TrtKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool TrtKernel::Init(const CNodePtr &kernel_node) {
+bool TrtKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_num; i++) {
@@ -68,15 +64,15 @@ bool TrtKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void TrtKernel::ReleaseResource() {
+void TrtKernelMod::ReleaseResource() {
   // Make sure destroy trt object before TrtLoader destruct.
   context_.reset();
   engine_.reset();
   runtime_.reset();
 }
 
-bool TrtKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &outputs, void *stream) {
+bool TrtKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                          const std::vector<AddressPtr> &outputs, void *stream) {
   MS_EXCEPTION_IF_NULL(context_);
   std::vector<void *> device_buffer;
   std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(device_buffer),

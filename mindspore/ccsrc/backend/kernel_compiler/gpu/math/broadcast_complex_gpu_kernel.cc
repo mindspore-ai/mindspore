@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ namespace kernel {
 #define MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(OPNAME, T0_MS_DTYPE, T1_MS_DTYPE, T0_DTYPE, T1_DTYPE)                      \
   MS_REG_GPU_KERNEL_THREE(OPNAME,                                                                                      \
                           KernelAttr().AddInputAttr(T0_MS_DTYPE).AddInputAttr(T0_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
-                          BroadcastComplexOpGpuKernel, T0_DTYPE, T0_DTYPE, T0_DTYPE)                                   \
+                          BroadcastComplexOpGpuKernelMod, T0_DTYPE, T0_DTYPE, T0_DTYPE)                                \
   MS_REG_GPU_KERNEL_THREE(OPNAME,                                                                                      \
                           KernelAttr().AddInputAttr(T0_MS_DTYPE).AddInputAttr(T1_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
-                          BroadcastComplexOpGpuKernel, T0_DTYPE, T1_DTYPE, T0_DTYPE)                                   \
+                          BroadcastComplexOpGpuKernelMod, T0_DTYPE, T1_DTYPE, T0_DTYPE)                                \
   MS_REG_GPU_KERNEL_THREE(OPNAME,                                                                                      \
                           KernelAttr().AddInputAttr(T1_MS_DTYPE).AddInputAttr(T0_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
-                          BroadcastComplexOpGpuKernel, T1_DTYPE, T0_DTYPE, T0_DTYPE)
+                          BroadcastComplexOpGpuKernelMod, T1_DTYPE, T0_DTYPE, T0_DTYPE)
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
@@ -45,10 +45,10 @@ MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(RealDiv, kNumberTypeComplex128, kNumberTypeF
 MS_REG_GPU_KERNEL_THREE(
   Complex,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
-  BroadcastComplexOpGpuKernel, float, float, Complex<float>)
+  BroadcastComplexOpGpuKernelMod, float, float, Complex<float>)
 MS_REG_GPU_KERNEL_THREE(
   Complex,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
-  BroadcastComplexOpGpuKernel, double, double, Complex<double>)
+  BroadcastComplexOpGpuKernelMod, double, double, Complex<double>)
 }  // namespace kernel
 }  // namespace mindspore

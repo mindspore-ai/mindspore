@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class IsNanCPUKernel : public CPUKernel {
+class IsNanCpuKernelMod : public NativeCpuKernelMod {
  public:
-  IsNanCPUKernel() = default;
-  ~IsNanCPUKernel() override = default;
+  IsNanCpuKernelMod() = default;
+  ~IsNanCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernelNode) override;
 
@@ -52,29 +52,35 @@ class IsNanCPUKernel : public CPUKernel {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool), IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool), IsNanCPUKernel);
+MS_REG_CPU_KERNEL(IsNan, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
+                  IsNanCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class TotalC6GetGpuKernel : public GpuKernel {
+class TotalC6GetGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TotalC6GetGpuKernel() : ele_atom_lj_type(1) {}
-  ~TotalC6GetGpuKernel() override = default;
+  TotalC6GetGpuKernelMod() : ele_atom_lj_type(1) {}
+  ~TotalC6GetGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
@@ -47,10 +47,6 @@ class TotalC6GetGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -75,9 +71,7 @@ class TotalC6GetGpuKernel : public GpuKernel {
  private:
   size_t ele_atom_lj_type = 1;
   size_t ele_lj_b = 1;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
+
   int atom_numbers;
 };
 }  // namespace kernel

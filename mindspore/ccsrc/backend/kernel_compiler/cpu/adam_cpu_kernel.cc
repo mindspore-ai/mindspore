@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ constexpr float kAdamBlock = 1000;
 }  // namespace
 
 template <typename T>
-void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &) {
   T *var = reinterpret_cast<T *>(inputs[VAR]->addr);
   T *m = reinterpret_cast<T *>(inputs[M]->addr);
   T *v = reinterpret_cast<T *>(inputs[V]->addr);
@@ -64,8 +65,8 @@ void AdamCPUKernel::LaunchAdam(const std::vector<kernel::AddressPtr> &inputs, co
   ParallelLaunch(task, lens, kAdamBlock, this);
 }
 
-void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &) {
+void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &) {
   float *var = reinterpret_cast<float *>(inputs[VAR]->addr);
   float *m = reinterpret_cast<float *>(inputs[M]->addr);
   float *v = reinterpret_cast<float *>(inputs[V]->addr);
@@ -93,7 +94,7 @@ void AdamCPUKernel::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &input
   ParallelLaunch(task, lens, kAdamBlock, this);
 }
 
-void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -104,8 +105,8 @@ void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
 }
 
-bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                           const std::vector<kernel::AddressPtr> &outputs) {
+bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
 

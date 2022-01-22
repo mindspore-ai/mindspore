@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class IsInfCPUKernel : public CPUKernel {
+class IsInfCpuKernelMod : public NativeCpuKernelMod {
  public:
-  IsInfCPUKernel() = default;
-  ~IsInfCPUKernel() override = default;
+  IsInfCpuKernelMod() = default;
+  ~IsInfCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernelNode) override;
 
@@ -46,11 +46,14 @@ class IsInfCPUKernel : public CPUKernel {
   TypeId input_dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool), IsInfCPUKernel);
+MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+                  IsInfCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool), IsInfCPUKernel);
+MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+                  IsInfCpuKernelMod);
 
-MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool), IsInfCPUKernel);
+MS_REG_CPU_KERNEL(IsInf, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+                  IsInfCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

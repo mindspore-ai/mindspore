@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ constexpr size_t kLogSoftmaxGradInputsNum = 2;
 constexpr size_t kLogSoftmaxGradOutputsNum = 1;
 }  // namespace
 
-void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void LogSoftmaxGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -49,9 +49,9 @@ void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DIFF_DST, src_desc);
 }
 
-bool LogSoftmaxGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool LogSoftmaxGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_DST, inputs[0]->addr);

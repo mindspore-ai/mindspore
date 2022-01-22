@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ struct ComputeParams {
 };
 
 template <typename S, typename T>
-class ScatterNdCPUKernel : public CPUKernel {
+class ScatterNdCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ScatterNdCPUKernel() = default;
-  ~ScatterNdCPUKernel() override = default;
+  ScatterNdCpuKernelMod() = default;
+  ~ScatterNdCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -58,92 +58,92 @@ class ScatterNdCPUKernel : public CPUKernel {
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ScatterNdCPUKernel, int64_t, double);
+  ScatterNdCpuKernelMod, int64_t, double);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ScatterNdCPUKernel, int64_t, float);
+  ScatterNdCpuKernelMod, int64_t, float);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ScatterNdCPUKernel, int64_t, int64_t);
+  ScatterNdCpuKernelMod, int64_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ScatterNdCPUKernel, int64_t, int32_t);
+  ScatterNdCpuKernelMod, int64_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ScatterNdCPUKernel, int64_t, int16_t);
+  ScatterNdCpuKernelMod, int64_t, int16_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  ScatterNdCPUKernel, int64_t, int8_t);
+  ScatterNdCpuKernelMod, int64_t, int8_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  ScatterNdCPUKernel, int64_t, uint64_t);
+  ScatterNdCpuKernelMod, int64_t, uint64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  ScatterNdCPUKernel, int64_t, uint32_t);
+  ScatterNdCpuKernelMod, int64_t, uint32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-  ScatterNdCPUKernel, int64_t, uint16_t);
+  ScatterNdCpuKernelMod, int64_t, uint16_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  ScatterNdCPUKernel, int64_t, uint8_t);
+  ScatterNdCpuKernelMod, int64_t, uint8_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  ScatterNdCPUKernel, int32_t, double);
+  ScatterNdCpuKernelMod, int32_t, double);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ScatterNdCPUKernel, int32_t, float);
+  ScatterNdCpuKernelMod, int32_t, float);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  ScatterNdCPUKernel, int32_t, int64_t);
+  ScatterNdCpuKernelMod, int32_t, int64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ScatterNdCPUKernel, int32_t, int32_t);
+  ScatterNdCpuKernelMod, int32_t, int32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-  ScatterNdCPUKernel, int32_t, int16_t);
+  ScatterNdCpuKernelMod, int32_t, int16_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-  ScatterNdCPUKernel, int32_t, int8_t);
+  ScatterNdCpuKernelMod, int32_t, int8_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-  ScatterNdCPUKernel, int32_t, uint64_t);
+  ScatterNdCpuKernelMod, int32_t, uint64_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-  ScatterNdCPUKernel, int32_t, uint32_t);
+  ScatterNdCpuKernelMod, int32_t, uint32_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-  ScatterNdCPUKernel, int32_t, uint16_t);
+  ScatterNdCpuKernelMod, int32_t, uint16_t);
 
 MS_REG_CPU_KERNEL_T_S(
   ScatterNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-  ScatterNdCPUKernel, int32_t, uint8_t);
+  ScatterNdCpuKernelMod, int32_t, uint8_t);
 
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ArgMinWithValueCPUKernel : public CPUKernel {
+class ArgMinWithValueCpuKernelMod : public NativeCpuKernelMod {
  public:
-  ArgMinWithValueCPUKernel() = default;
-  ~ArgMinWithValueCPUKernel() override = default;
+  ArgMinWithValueCpuKernelMod() = default;
+  ~ArgMinWithValueCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -45,8 +45,8 @@ class ArgMinWithValueCPUKernel : public CPUKernel {
   size_t dim_axis_{0};
 };
 
-MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCPUKernel, float);
-MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(ArgMinWithValue, KernelAttr(), ArgMinWithValueCpuKernelMod, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,41 +24,41 @@ MS_REG_GPU_KERNEL_ONE(Select,
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      SelectGpuKernel, double)
+                      SelectGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Select,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      SelectGpuKernel, float)
+                      SelectGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Select,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      SelectGpuKernel, half)
+                      SelectGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(Select,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      SelectGpuKernel, int)
+                      SelectGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(Select,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      SelectGpuKernel, int64_t)
+                      SelectGpuKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(Select,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeBool)
                         .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeBool),
-                      SelectGpuKernel, bool)
+                      SelectGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore

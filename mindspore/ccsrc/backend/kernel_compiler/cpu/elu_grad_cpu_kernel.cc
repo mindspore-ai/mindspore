@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kEleGradInputsNum = 2;
 constexpr size_t kEleGradOutputsNum = 1;
 }  // namespace
 
-void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void EluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -39,8 +39,8 @@ void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
+bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEleGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEleGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
@@ -55,7 +55,7 @@ bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 }
 
 template <typename T>
-void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void EluGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   const auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *input1 = reinterpret_cast<T *>(inputs[1]->addr);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);

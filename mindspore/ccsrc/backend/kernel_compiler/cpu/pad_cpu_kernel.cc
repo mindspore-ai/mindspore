@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ constexpr size_t kPadOutputsNum = 1;
 constexpr size_t kPadElemSize = 2;
 }  // namespace
 
-void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<std::vector<int64_t>> paddings_ =
@@ -74,8 +74,8 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                          const std::vector<kernel::AddressPtr> &outputs) {
+bool PadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -95,7 +95,7 @@ bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const s
 }
 
 template <typename T>
-bool PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+bool PadCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
   if (memset_s(outputs_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kResizeBilinearInputsShapeSize = 4;
 constexpr size_t kResizeBilinearAttrSize = 2;
 }  // namespace
 
-void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -50,9 +50,9 @@ void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   width_scale = Scaling(in_width, out_width, align_corners_);
 }
 
-bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool ResizeBilinearCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
@@ -66,8 +66,8 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T1, typename T2>
-bool ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) const {
+bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &outputs) const {
   auto *output_addr_T2 = reinterpret_cast<T2 *>(outputs[0]->addr);
   float *float_input_addr = NULL;
   float *float_output_addr = NULL;

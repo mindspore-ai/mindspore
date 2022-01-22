@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,22 @@ namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, float)
+  Dropout3DFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, half)
+  Dropout3DFwdGpuKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, int8_t)
+  Dropout3DFwdGpuKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, int16_t)
+  Dropout3DFwdGpuKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, int32_t)
+  Dropout3DFwdGpuKernelMod, int32_t)
 MS_REG_GPU_KERNEL_ONE(
   Dropout3D, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
-  Dropout3DGpuFwdKernel, int64_t)
+  Dropout3DFwdGpuKernelMod, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

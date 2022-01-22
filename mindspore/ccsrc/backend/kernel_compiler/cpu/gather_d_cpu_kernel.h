@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename I>
-class GatherDCPUKernel : public CPUKernel {
+class GatherDCpuKernelMod : public NativeCpuKernelMod {
  public:
-  GatherDCPUKernel() = default;
-  ~GatherDCPUKernel() override = default;
+  GatherDCpuKernelMod() = default;
+  ~GatherDCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -39,16 +39,16 @@ class GatherDCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float16, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, float16, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, bool, int32_t);
-MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCPUKernel, bool, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float16, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, float16, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int32_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int32_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int64_t, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, int64_t, int64_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, bool, int32_t);
+MS_REG_CPU_KERNEL_T_S(GatherD, KernelAttr(), GatherDCpuKernelMod, bool, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

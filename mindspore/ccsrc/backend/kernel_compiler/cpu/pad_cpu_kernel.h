@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class PadCPUKernel : public CPUKernel {
+class PadCpuKernelMod : public NativeCpuKernelMod {
  public:
-  PadCPUKernel() = default;
-  ~PadCPUKernel() override = default;
+  PadCpuKernelMod() = default;
+  ~PadCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -49,7 +49,7 @@ class PadCPUKernel : public CPUKernel {
   size_t output_size_{1};
 };
 
-MS_REG_CPU_KERNEL(Pad, KernelAttr(), PadCPUKernel);
+MS_REG_CPU_KERNEL(Pad, KernelAttr(), PadCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_

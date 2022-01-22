@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,15 +62,15 @@ void ComputeLazyAdam(MultiThreadComputeParams<T> *input_params, size_t start, si
 }  // namespace
 
 template <typename T>
-void SparseApplyLazyAdamCPUKernel::InitWorkspaceSize() {
+void SparseApplyLazyAdamCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SparseApplyLazyAdamCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
@@ -81,7 +81,7 @@ void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_no
   }
 }
 
-void SparseApplyLazyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SparseApplyLazyAdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -137,8 +137,8 @@ void SparseApplyLazyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SparseApplyLazyAdamCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &workspace) const {
+void SparseApplyLazyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                   const std::vector<kernel::AddressPtr> &workspace) const {
   auto *var = reinterpret_cast<float *>(inputs[0]->addr);
   auto *m = reinterpret_cast<float *>(inputs[1]->addr);
   auto *v = reinterpret_cast<float *>(inputs[2]->addr);
@@ -185,9 +185,9 @@ void SparseApplyLazyAdamCPUKernel::LaunchKernel(const std::vector<kernel::Addres
   MultiThreadCompute<T>(ComputeLazyAdam<T>, &input_params, unique_sparse_grad.indices_size_);
 }
 
-bool SparseApplyLazyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &workspace,
-                                          const std::vector<kernel::AddressPtr> &) {
+bool SparseApplyLazyAdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &workspace,
+                                             const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyLazyAdamInputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyLazyAdamWorkspaceSize, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {

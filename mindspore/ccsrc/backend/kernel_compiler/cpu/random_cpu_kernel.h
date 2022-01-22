@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFO
 const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
   {"StandardNormal", RANDOM_OP_NORMAL}, {"UniformInt", RANDOM_OP_UNIFORM_INT}, {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
 
-class RandomCPUKernel : public CPUKernel {
+class RandomCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RandomCPUKernel() = default;
-  ~RandomCPUKernel() override = default;
+  RandomCpuKernelMod() = default;
+  ~RandomCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -46,16 +46,16 @@ class RandomCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(StandardNormal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                  RandomCPUKernel);
+                  RandomCpuKernelMod);
 MS_REG_CPU_KERNEL(UniformInt,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddInputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
-                  RandomCPUKernel)
+                  RandomCpuKernelMod)
 MS_REG_CPU_KERNEL(UniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                  RandomCPUKernel)
+                  RandomCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CPU_KERNEL_H_

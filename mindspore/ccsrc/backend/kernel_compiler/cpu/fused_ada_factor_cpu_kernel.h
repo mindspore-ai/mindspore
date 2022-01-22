@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-class FusedAdaFactorCPUKernel : public CPUKernel {
+class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
  public:
-  FusedAdaFactorCPUKernel() = default;
-  ~FusedAdaFactorCPUKernel() override = default;
+  FusedAdaFactorCpuKernelMod() = default;
+  ~FusedAdaFactorCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
@@ -90,7 +90,7 @@ MS_REG_CPU_KERNEL(FusedAdaFactor,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  FusedAdaFactorCPUKernel)
+                  FusedAdaFactorCpuKernelMod)
 
 MS_REG_CPU_KERNEL(FusedAdaFactor,
                   KernelAttr()
@@ -107,7 +107,7 @@ MS_REG_CPU_KERNEL(FusedAdaFactor,
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddOutputAttr(kNumberTypeFloat16),
-                  FusedAdaFactorCPUKernel)
+                  FusedAdaFactorCpuKernelMod)
 
 MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
                   KernelAttr()
@@ -125,7 +125,7 @@ MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
-                  FusedAdaFactorCPUKernel)
+                  FusedAdaFactorCpuKernelMod)
 
 MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
                   KernelAttr()
@@ -143,7 +143,7 @@ MS_REG_CPU_KERNEL(FusedAdaFactorWithGlobalNorm,
                     .AddInputAttr(kNumberTypeFloat16)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat16),
-                  FusedAdaFactorCPUKernel)
+                  FusedAdaFactorCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 

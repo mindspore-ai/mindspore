@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,10 @@ typedef ncclResult_t (*GroupStart)();
 typedef ncclResult_t (*GroupEnd)();
 typedef std::vector<int> (*GetGroupRanks)(const std::string &);
 
-class NcclGpuKernel : public GpuKernel {
+class NcclGpuKernelMod : public NativeGpuKernelMod {
  public:
-  NcclGpuKernel() : collective_handle_(nullptr), group_name_(""), nccl_data_type_(ncclHalf), use_mpi_(true) {}
-  ~NcclGpuKernel() override = default;
+  NcclGpuKernelMod() : collective_handle_(nullptr), group_name_(""), nccl_data_type_(ncclHalf), use_mpi_(true) {}
+  ~NcclGpuKernelMod() override = default;
 
  protected:
   ncclDataType_t nccl_dtype(const TypeId &type_id) { return kNcclDtypeMap[TypeIdLabel(type_id)]; }

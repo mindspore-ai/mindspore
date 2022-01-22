@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLoss,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NLLLossGpuKernel, float, float)
+                      NLLLossGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(NLLLoss,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -33,7 +33,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLoss,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      NLLLossGpuKernel, float, half)
+                      NLLLossGpuKernelMod, float, half)
 MS_REG_GPU_KERNEL_TWO(NLLLoss,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -41,7 +41,7 @@ MS_REG_GPU_KERNEL_TWO(NLLLoss,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      NLLLossGpuKernel, half, float)
+                      NLLLossGpuKernelMod, half, float)
 MS_REG_GPU_KERNEL_TWO(NLLLoss,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -49,6 +49,6 @@ MS_REG_GPU_KERNEL_TWO(NLLLoss,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      NLLLossGpuKernel, half, half)
+                      NLLLossGpuKernelMod, half, half)
 }  // namespace kernel
 }  // namespace mindspore

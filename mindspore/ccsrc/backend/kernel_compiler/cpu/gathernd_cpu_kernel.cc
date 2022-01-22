@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kGatherNdOutputsNum = 1;
 }  // namespace
 
 template <typename T>
-void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void GatherNdCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -71,9 +71,9 @@ void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool GatherNdCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool GatherNdCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherNdInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherNdOutputsNum, kernel_name_);
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);

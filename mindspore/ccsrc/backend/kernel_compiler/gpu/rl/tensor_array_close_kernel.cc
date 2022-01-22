@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,27 +24,21 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::gpu::GPUTensorArray;
 using mindspore::device::gpu::GPUTensorArrayPtr;
-TensorArrayCloseKernel::TensorArrayCloseKernel() {}
+TensorArrayCloseKernelMod::TensorArrayCloseKernelMod() {}
 
-const std::vector<size_t> &TensorArrayCloseKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &TensorArrayCloseKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &TensorArrayCloseKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
-
-bool TensorArrayCloseKernel::Init(const CNodePtr &kernel_node) {
+bool TensorArrayCloseKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   InitSizeLists();
   return true;
 }
 
-void TensorArrayCloseKernel::InitSizeLists() {
+void TensorArrayCloseKernelMod::InitSizeLists() {
   input_size_list_.push_back(sizeof(int64_t));
   output_size_list_.push_back(sizeof(int64_t));
 }
 
-bool TensorArrayCloseKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &, void *stream) {
+bool TensorArrayCloseKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                       const std::vector<AddressPtr> &, void *stream) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   int64_t handle = 0;

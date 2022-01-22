@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace server {
 namespace kernel {
 constexpr size_t kDenseGradAccumKernelInputsNum = 2;
 template <typename T>
-class DenseGradAccumKernel : public AggregationKernel {
+class DenseGradAccumKernel : public AggregationKernelMod {
  public:
   DenseGradAccumKernel() = default;
   ~DenseGradAccumKernel() override = default;

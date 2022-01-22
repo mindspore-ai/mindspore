@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kDynamicAssignInputsNum = 2;
 constexpr size_t kDynamicAssignOutputsNum = 1;
 }  // namespace
 
-void DynamicAssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void DynamicAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
@@ -35,9 +35,9 @@ void DynamicAssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
 }
 
-bool DynamicAssignCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
-                                    const std::vector<kernel::AddressPtr> &outputs) {
+bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDynamicAssignInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicAssignOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
@@ -57,8 +57,8 @@ bool DynamicAssignCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-void DynamicAssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;

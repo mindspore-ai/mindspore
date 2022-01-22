@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,24 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      SpaceToDepthFwdKernel, float)
+                      SpaceToDepthFwdKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      SpaceToDepthFwdKernel, half)
+                      SpaceToDepthFwdKernelMod, half)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      SpaceToDepthFwdKernel, int)
+                      SpaceToDepthFwdKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      SpaceToDepthFwdKernel, int64_t)
+                      SpaceToDepthFwdKernelMod, int64_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      SpaceToDepthFwdKernel, int16_t)
+                      SpaceToDepthFwdKernelMod, int16_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-                      SpaceToDepthFwdKernel, int8_t)
+                      SpaceToDepthFwdKernelMod, int8_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      SpaceToDepthFwdKernel, uint8_t)
+                      SpaceToDepthFwdKernelMod, uint8_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-                      SpaceToDepthFwdKernel, uint16_t)
+                      SpaceToDepthFwdKernelMod, uint16_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-                      SpaceToDepthFwdKernel, uint32_t)
+                      SpaceToDepthFwdKernelMod, uint32_t)
 MS_REG_GPU_KERNEL_ONE(SpaceToDepth, KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-                      SpaceToDepthFwdKernel, uint64_t)
+                      SpaceToDepthFwdKernelMod, uint64_t)
 }  // namespace kernel
 }  // namespace mindspore

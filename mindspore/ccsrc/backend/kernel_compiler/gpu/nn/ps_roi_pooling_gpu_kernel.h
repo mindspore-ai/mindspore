@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingGpuFwdKernel : public GpuKernel {
+class PsROIPoolingFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  PsROIPoolingGpuFwdKernel()
+  PsROIPoolingFwdGpuKernelMod()
       : pooled_height_(0),
         pooled_width_(0),
         group_size_(0),
@@ -54,11 +54,8 @@ class PsROIPoolingGpuFwdKernel : public GpuKernel {
         x_size_(0),
         rois_size_(0),
         output_size_(0) {}
-  ~PsROIPoolingGpuFwdKernel() = default;
+  ~PsROIPoolingFwdGpuKernelMod() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
@@ -98,7 +95,7 @@ class PsROIPoolingGpuFwdKernel : public GpuKernel {
     is_null_input_ =
       CHECK_SHAPE_NULL(x_shape, kernel_name, "input") || CHECK_SHAPE_NULL(rois_shape, kernel_name, "roi");
     if (is_null_input_) {
-      MS_LOG(WARNING) << "For 'PsROIPoolingGpuFwdKernel', input is null.";
+      MS_LOG(WARNING) << "For 'PsROIPoolingFwdGpuKernelMod', input is null.";
       InitSizeLists();
       return true;
     }
@@ -118,7 +115,7 @@ class PsROIPoolingGpuFwdKernel : public GpuKernel {
     x_size_ = batch_size * channels_ * height_ * width_ * sizeof(T);
 
     if (rois_shape.size() != ROI_SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For 'PsROIPoolingGpuFwdKernel', the rank of rois_shape should be 2 "
+      MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of rois_shape should be 2 "
                         << "(number_rois, (bs, xmin, ymin, xmax, ymax)), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }
@@ -167,10 +164,6 @@ class PsROIPoolingGpuFwdKernel : public GpuKernel {
   int width_;
   int num_rois_;
   bool is_null_input_;
-
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 
   std::vector<int> x_shape_;
   std::vector<int> rois_shape_;

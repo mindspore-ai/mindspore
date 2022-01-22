@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,16 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-bool ApplyMomentumPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) {
+bool ApplyMomentumPSKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) {
   return Launch(inputs, workspace, outputs);
 }
 
-const std::vector<size_t> &ApplyMomentumPSKernel::input_sizes() const { return GetInputSizeList(); }
+const std::vector<size_t> &ApplyMomentumPSKernelMod::input_sizes() const { return GetInputSizeList(); }
 
-const std::vector<size_t> &ApplyMomentumPSKernel::output_sizes() const { return GetOutputSizeList(); }
+const std::vector<size_t> &ApplyMomentumPSKernelMod::output_sizes() const { return GetOutputSizeList(); }
 
-const std::vector<size_t> &ApplyMomentumPSKernel::workspace_sizes() const { return GetWorkspaceSizeList(); }
+const std::vector<size_t> &ApplyMomentumPSKernelMod::workspace_sizes() const { return GetWorkspaceSizeList(); }
 }  // namespace ps
 }  // namespace kernel
 }  // namespace mindspore

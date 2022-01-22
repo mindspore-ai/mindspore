@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,10 +153,10 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
 };
 #endif
 
-class MKLCPUKernel : public CPUKernel {
+class MKLCpuKernelMod : public NativeCpuKernelMod {
  public:
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
-  MKLCPUKernel() : engine_(dnnl::engine::kind::cpu, 0) {
+  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {
     auto thread_pool = GetActorMgrInnerThreadPool();
     mkl_threadpool_ = std::make_shared<mkl_threadpool>(thread_pool);
     MS_LOG(DEBUG) << "begin to invoke dnnl::threadpool_interop::make_stream";
@@ -164,9 +164,9 @@ class MKLCPUKernel : public CPUKernel {
     MS_LOG(DEBUG) << "end to invoke dnnl::threadpool_interop::make_stream";
   }
 #else
-  MKLCPUKernel() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
+  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
 #endif
-  ~MKLCPUKernel() override = default;
+  ~MKLCpuKernelMod() override = default;
 
  protected:
   bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,

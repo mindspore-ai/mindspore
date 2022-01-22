@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,10 @@
 
 namespace mindspore {
 namespace kernel {
-MinMaxUpdatePerChannelGpuKernel::MinMaxUpdatePerChannelGpuKernel()
+MinMaxUpdatePerChannelGpuKernelMod::MinMaxUpdatePerChannelGpuKernelMod()
     : input_size_(0), quant_num_(1), ema_(false), is_null_input_(false), ema_decay_(0), num_channels_(0) {}
 
-const std::vector<size_t> &MinMaxUpdatePerChannelGpuKernel::GetInputSizeList() const { return input_size_list_; }
-
-const std::vector<size_t> &MinMaxUpdatePerChannelGpuKernel::GetOutputSizeList() const { return output_size_list_; }
-
-const std::vector<size_t> &MinMaxUpdatePerChannelGpuKernel::GetWorkspaceSizeList() const {
-  return workspace_size_list_;
-}
-
-bool MinMaxUpdatePerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
@@ -73,7 +65,7 @@ bool MinMaxUpdatePerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void MinMaxUpdatePerChannelGpuKernel::InitSizeLists() {
+void MinMaxUpdatePerChannelGpuKernelMod::InitSizeLists() {
   input_size_list_.push_back(input_size_);                     // input
   input_size_list_.push_back(sizeof(float) * num_channels_);   // min
   input_size_list_.push_back(sizeof(float) * num_channels_);   // max
@@ -81,8 +73,8 @@ void MinMaxUpdatePerChannelGpuKernel::InitSizeLists() {
   output_size_list_.push_back(sizeof(float) * num_channels_);  // output max
 }
 
-bool MinMaxUpdatePerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MinMaxUpdatePerChannelGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -98,6 +90,6 @@ bool MinMaxUpdatePerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inpu
   return true;
 }
 
-MS_REG_GPU_KERNEL(MinMaxUpdatePerChannel, MinMaxUpdatePerChannelGpuKernel)
+MS_REG_GPU_KERNEL(MinMaxUpdatePerChannel, MinMaxUpdatePerChannelGpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore

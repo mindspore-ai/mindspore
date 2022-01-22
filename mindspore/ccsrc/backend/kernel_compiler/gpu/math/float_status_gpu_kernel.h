@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,10 @@ enum Optype { OP_STATUS = 0, OP_INF, OP_NAN, OP_FINITE, OP_INVALID = 255 };
 static const std::map<std::string, Optype> kOpTypeMap = {
   {"FloatStatus", OP_STATUS}, {"IsInf", OP_INF}, {"IsNan", OP_NAN}, {"IsFinite", OP_FINITE}};
 template <typename T>
-class FloatStatusGpuKernel : public GpuKernel {
+class FloatStatusGpuKernelMod : public NativeGpuKernelMod {
  public:
-  FloatStatusGpuKernel() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0), is_null_input_(false) {}
-  ~FloatStatusGpuKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  FloatStatusGpuKernelMod() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0), is_null_input_(false) {}
+  ~FloatStatusGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -124,9 +121,6 @@ class FloatStatusGpuKernel : public GpuKernel {
     }
   }
 
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   Optype kernel_name_;
   size_t input_size_;
   size_t output_size_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -101,9 +101,9 @@ void CropAndResizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CropAndResizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+bool CropAndResizeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->addr);
   auto *input_boxes = reinterpret_cast<float *>(inputs[BOXES]->addr);
   auto *input_box_index = reinterpret_cast<int *>(inputs[BOX_INDEX]->addr);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ void ComputeWeight(MultiThreadComputeParams<T> *input_params, size_t start, size
 }  // namespace
 
 template <typename T>
-void SparseApplyAdamCPUKernel::InitWorkspaceSize() {
+void SparseApplyAdamCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
@@ -92,8 +92,8 @@ void SparseApplyAdamCPUKernel::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
 }
 
-void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
-  CPUKernel::InitInputOutputSize(kernel_node);
+void SparseApplyAdamCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else {
@@ -101,7 +101,7 @@ void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) 
   }
 }
 
-void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void SparseApplyAdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -156,8 +156,8 @@ void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SparseApplyAdamCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &workspace) const {
+void SparseApplyAdamCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &workspace) const {
   auto *var = reinterpret_cast<float *>(inputs[0]->addr);
   auto *m = reinterpret_cast<float *>(inputs[1]->addr);
   auto *v = reinterpret_cast<float *>(inputs[2]->addr);
@@ -214,9 +214,9 @@ void SparseApplyAdamCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   MultiThreadCompute<T>(ComputeWeight<T>, &input_params, total_dim_size);
 }
 
-bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &workspace,
-                                      const std::vector<kernel::AddressPtr> &) {
+bool SparseApplyAdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdamInputsNum, kernel_name_);
   CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyAdamWorkspaceSize, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {

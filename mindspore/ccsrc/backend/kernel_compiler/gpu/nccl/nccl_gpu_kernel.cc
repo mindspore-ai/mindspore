@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
-void NcclGpuKernel::SelectCollectiveHandle() {
+void NcclGpuKernelMod::SelectCollectiveHandle() {
   use_mpi_ = common::CheckUseMPI();
   if (use_mpi_) {
     collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
@@ -31,7 +31,7 @@ void NcclGpuKernel::SelectCollectiveHandle() {
   }
 }
 
-bool NcclGpuKernel::LoadNvidiaCommLib() {
+bool NcclGpuKernelMod::LoadNvidiaCommLib() {
   std::string nvidia_comm_lib_name = "libnvidia_collective.so";
   auto loader = std::make_shared<device::CollectiveCommLibLoader>(nvidia_comm_lib_name);
   MS_EXCEPTION_IF_NULL(loader);
@@ -44,8 +44,8 @@ bool NcclGpuKernel::LoadNvidiaCommLib() {
   return true;
 }
 
-bool NcclGpuKernel::AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                              ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
+bool NcclGpuKernelMod::AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                                 ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
   if (use_mpi_) {
     auto all_reduce_funcptr =
       reinterpret_cast<kernel::AllReduce>(dlsym(const_cast<void *>(collective_handle_), "AllReduce"));
@@ -62,8 +62,8 @@ bool NcclGpuKernel::AllReduce(const void *input_addr, void *output_addr, size_t 
   return true;
 }
 
-bool NcclGpuKernel::AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                              cudaStream_t stream, const std::string &group_name) {
+bool NcclGpuKernelMod::AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                                 cudaStream_t stream, const std::string &group_name) {
   if (use_mpi_) {
     auto all_gather_funcptr =
       reinterpret_cast<kernel::AllGather>(dlsym(const_cast<void *>(collective_handle_), "AllGather"));
@@ -80,8 +80,8 @@ bool NcclGpuKernel::AllGather(const void *input_addr, void *output_addr, size_t 
   return true;
 }
 
-bool NcclGpuKernel::ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                                  ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
+bool NcclGpuKernelMod::ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                                     ncclRedOp_t reduce_op, cudaStream_t stream, const std::string &group_name) {
   if (use_mpi_) {
     auto reduce_scatter_funcptr =
       reinterpret_cast<kernel::ReduceScatter>(dlsym(const_cast<void *>(collective_handle_), "ReduceScatter"));
@@ -98,8 +98,8 @@ bool NcclGpuKernel::ReduceScatter(const void *input_addr, void *output_addr, siz
   return true;
 }
 
-bool NcclGpuKernel::Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
-                              int root, cudaStream_t stream, const std::string &group_name) {
+bool NcclGpuKernelMod::Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                                 int root, cudaStream_t stream, const std::string &group_name) {
   if (use_mpi_) {
     auto broadcast_funcptr =
       reinterpret_cast<kernel::Broadcast>(dlsym(const_cast<void *>(collective_handle_), "Broadcast"));
@@ -116,8 +116,8 @@ bool NcclGpuKernel::Broadcast(const void *input_addr, void *output_addr, size_t 
   return true;
 }
 
-bool NcclGpuKernel::Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank,
-                         cudaStream_t stream, const std::string &group_name) {
+bool NcclGpuKernelMod::Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank,
+                            cudaStream_t stream, const std::string &group_name) {
   if (use_mpi_) {
     auto nccl_send_func = reinterpret_cast<kernel::Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
     MS_EXCEPTION_IF_NULL(nccl_send_func);
@@ -131,8 +131,8 @@ bool NcclGpuKernel::Send(const void *send_addr, size_t count, ncclDataType_t dat
   return true;
 }
 
-bool NcclGpuKernel::Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
-                         const std::string &group_name) {
+bool NcclGpuKernelMod::Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
+                            const std::string &group_name) {
   if (use_mpi_) {
     auto nccl_recv_func = reinterpret_cast<kernel::Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
     MS_EXCEPTION_IF_NULL(nccl_recv_func);
@@ -146,7 +146,7 @@ bool NcclGpuKernel::Recv(void *recv_addr, size_t count, ncclDataType_t data_type
   return true;
 }
 
-bool NcclGpuKernel::GroupStart() {
+bool NcclGpuKernelMod::GroupStart() {
   if (use_mpi_) {
     auto nccl_gstart_func =
       reinterpret_cast<kernel::GroupStart>(dlsym(const_cast<void *>(collective_handle_), "GroupStart"));
@@ -159,7 +159,7 @@ bool NcclGpuKernel::GroupStart() {
   return true;
 }
 
-bool NcclGpuKernel::GroupEnd() {
+bool NcclGpuKernelMod::GroupEnd() {
   if (use_mpi_) {
     auto nccl_gend_func = reinterpret_cast<kernel::GroupEnd>(dlsym(const_cast<void *>(collective_handle_), "GroupEnd"));
     MS_EXCEPTION_IF_NULL(nccl_gend_func);

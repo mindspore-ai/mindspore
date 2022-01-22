@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ enum Method : int {
 };
 }
 template <typename T, typename S>
-class RollingCpuKernel : public CPUKernel {
+class RollingCpuKernelMod : public NativeCpuKernelMod {
  public:
-  RollingCpuKernel() = default;
-  ~RollingCpuKernel() override = default;
+  RollingCpuKernelMod() = default;
+  ~RollingCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -82,22 +82,22 @@ class RollingCpuKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      RollingCpuKernel, float, float)
+                      RollingCpuKernelMod, float, float)
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      RollingCpuKernel, double, double)
+                      RollingCpuKernelMod, double, double)
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      RollingCpuKernel, int32_t, int32_t)
+                      RollingCpuKernelMod, int32_t, int32_t)
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      RollingCpuKernel, int64_t, int64_t)
+                      RollingCpuKernelMod, int64_t, int64_t)
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      RollingCpuKernel, int32_t, float)
+                      RollingCpuKernelMod, int32_t, float)
 
 MS_REG_CPU_KERNEL_T_S(Rolling, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-                      RollingCpuKernel, int64_t, double)
+                      RollingCpuKernelMod, int64_t, double)
 
 }  // namespace kernel
 }  // namespace mindspore

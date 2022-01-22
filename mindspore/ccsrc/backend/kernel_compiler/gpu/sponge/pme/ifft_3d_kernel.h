@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 template <typename T>
-class IFFT3DGpuKernel : public GpuKernel {
+class IFFT3DGpuKernelMod : public NativeGpuKernelMod {
  public:
-  IFFT3DGpuKernel() = default;
-  ~IFFT3DGpuKernel() override = default;
+  IFFT3DGpuKernelMod() = default;
+  ~IFFT3DGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
@@ -46,10 +46,6 @@ class IFFT3DGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
-
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -68,9 +64,6 @@ class IFFT3DGpuKernel : public GpuKernel {
   }
 
  private:
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
   int fftx;
   int ffty;
   int fftz;

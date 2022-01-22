@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr size_t kAllGatherOutputsNum = 1;
 constexpr auto kRanksGroup = "group";
 }  // namespace
 
-void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void AllGatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -35,8 +35,9 @@ void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   ranks_group_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
 }
 
-bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                const std::vector<kernel::AddressPtr> &outputs) {
+bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAllGatherInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAllGatherOutputsNum, kernel_name_);
   auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);

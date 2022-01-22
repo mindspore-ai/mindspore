@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ConcatV2GpuFwdKernel : public GpuKernel {
+class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ConcatV2GpuFwdKernel()
+  ConcatV2FwdGpuKernelMod()
       : axis_(0),
         input_num_(1),
         output_size_(0),
@@ -38,10 +38,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
         kernel_name_("ConcatV2"),
         inputs_host_(nullptr),
         len_axis_(nullptr) {}
-  ~ConcatV2GpuFwdKernel() override = default;
-  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+  ~ConcatV2FwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -150,9 +147,6 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
   std::string kernel_name_;
   std::unique_ptr<T *[]> inputs_host_;
   std::unique_ptr<int[]> len_axis_;
-  std::vector<size_t> input_size_list_;
-  std::vector<size_t> output_size_list_;
-  std::vector<size_t> workspace_size_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
