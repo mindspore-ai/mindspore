@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -44,6 +45,8 @@ constexpr int32_t MAX_ERROR_LEN = 1024;
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
 
+#define ACQUIRE_LOCK LockMng lock(fd_, __func__, __LINE__)
+
 inline std::string GetErrorInfo() {
   char buf[MAX_ERROR_LEN + 1] = {0};
   auto ret = strerror_r(errno, buf, MAX_ERROR_LEN);
@@ -59,8 +62,9 @@ inline std::string GetErrorInfo() {
 }
 
 bool AkgKernelPool::LockMng::TryLock() const {
-  // Try to lock 100 times. Return errno if lock unsuccessfully
-  uint32_t trial = 100;
+  // Try to lock trial times. Return errno if lock unsuccessfully
+  uint32_t trial = 2000;
+  const uint32_t sleep_time_us = 5000;
 
   int32_t ret = -1;
   while (trial > 0) {
@@ -70,14 +74,15 @@ bool AkgKernelPool::LockMng::TryLock() const {
     }
 
     trial--;
-    (void)usleep(5000);
+    (void)usleep(sleep_time_us);
   }
 
   if (ret == -1) {
-    MS_LOG(ERROR) << "Failed to acquire the lock, error msg:" << GetErrorInfo() << ".";
+    MS_LOG(ERROR) << "Failed to acquire the lock, error msg:" << GetErrorInfo() << ", left trying times: " << trial;
     return false;
   }
 
+  MS_LOG(INFO) << "AkgKernelBuild successfully acquire lock called at " << calling_position_;
   return true;
 }
 
@@ -86,6 +91,7 @@ void AkgKernelPool::LockMng::Unlock() const {
   if (ret == -1) {
     MS_LOG(ERROR) << "Failed to release the lock, error msg:" << GetErrorInfo();
   }
+  MS_LOG(INFO) << "AkgKernelBuild successfully release lock called at " << calling_position_;
 }
 
 std::string AkgKernelPool::GetCurrentPath() const {
@@ -114,7 +120,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
   auto mem_size = sizeof(size_t) * kListNum_ * (kMaxKernelNum_ + 1) + 512;
 
   {
-    LockMng lock(fd_);
+    ACQUIRE_LOCK;
     if (!lock.locked_) {
       MS_LOG(ERROR) << "Failed to acquire lock.";
       return nullptr;
@@ -140,7 +146,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
     }
   }
 
-  LockMng lock(fd_);
+  ACQUIRE_LOCK;
   if (!lock.locked_) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
     return nullptr;
@@ -203,7 +209,7 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
 
 int32_t AkgKernelPool::Release() const {
   {
-    LockMng lock(fd_);
+    ACQUIRE_LOCK;
     if (!lock.locked_) {
       MS_LOG(ERROR) << "Failed to acquire lock.";
       return -1;
@@ -244,7 +250,7 @@ int32_t AkgKernelPool::Release() const {
 }
 
 int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
-  LockMng lock(fd_);
+  ACQUIRE_LOCK;
   if (!lock.locked_) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
     return -1;
@@ -293,7 +299,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
 }
 
 int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
-  LockMng lock(fd_);
+  ACQUIRE_LOCK;
   if (!lock.locked_) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
     return -1;
@@ -301,7 +307,7 @@ int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
 
   std::set<size_t> left_in_todo_list;
 
-  // filter out kernels which belongs to other processes
+  // filter out kernels which does not belongs to this process
   auto FilterBySelfList = [&left_in_todo_list, &out, this](size_t id) {
     if (this->self_kernel_ids_.count(id) != 0) {
       (void)out->emplace(id);
@@ -323,7 +329,7 @@ int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
 
 int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
   if (!ids.empty()) {
-    LockMng lock(fd_);
+    ACQUIRE_LOCK;
     if (!lock.locked_) {
       MS_LOG(ERROR) << "Failed to acquire lock.";
       return -1;
@@ -355,10 +361,11 @@ int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
 int32_t AkgKernelPool::Wait() const {
   // wait until all the kernels which belong to this process finish compiling
   uint32_t trials = 1000;
+  const uint32_t sleep_time_us = 1000000;
 
   while (trials > 0) {
     {
-      LockMng lock(fd_);
+      ACQUIRE_LOCK;
       if (!lock.locked_) {
         MS_LOG(ERROR) << "Failed to acquire lock.";
         return -1;
@@ -372,7 +379,7 @@ int32_t AkgKernelPool::Wait() const {
       }
     }
 
-    (void)usleep(1000000);
+    (void)usleep(sleep_time_us);
     trials--;
   }
 
