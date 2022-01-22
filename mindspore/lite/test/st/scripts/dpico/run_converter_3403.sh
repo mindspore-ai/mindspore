@@ -230,9 +230,11 @@ models_tf_3403_config=${st_dir}/../config/models_tf_3403.cfg
 run_benchmark_script=${st_dir}/scripts/dpico/run_benchmark_3403.sh
 
 # Set version
-file_name=$(ls ${x86_path}/*linux-x64.tar.gz)
+cd ${x86_path}
+file_name=$(ls *-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
-version=${file_name_array[3]}
+version=${file_name_array[2]}
+cd -
 
 # Set ms models output path
 ms_models_path=${st_dir}/ms_models
