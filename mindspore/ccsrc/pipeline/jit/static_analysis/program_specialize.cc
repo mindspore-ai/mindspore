@@ -89,8 +89,11 @@ FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisConte
   // Call PurifyElements() to purify tuple/list elements.
   static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
   if (!enable_only_mark_unused_element) {
-    for (auto &sequence_abs : sequence_abstract_list_) {
-      sequence_abs->PurifyElements();
+    for (auto &p : sequence_abstract_list_) {
+      auto &sequence_abs = p.first;
+      if (!sequence_abs->PurifyElements()) {
+        MS_LOG(INFO) << "Purify elements failed, node: " << p.second->DebugString();
+      }
     }
     // Clear all nodes after purify abstract.
     sequence_nodes_replaced_list_.clear();
@@ -451,12 +454,13 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     return;
   }
   AbstractSequencePtr old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
-  if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes().empty()) {
+  if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes() == nullptr ||
+      old_sequence_abs->sequence_nodes()->empty()) {
     MS_LOG(DEBUG) << "No sequence node in old abs, " << old_node->DebugString() << " --> " << new_node->DebugString();
     return;
   }
 
-  for (auto &weak_node : old_sequence_abs->sequence_nodes()) {
+  for (auto &weak_node : *old_sequence_abs->sequence_nodes()) {
     auto sequence_node = weak_node.lock();
     if (sequence_node == nullptr) {
       MS_LOG(DEBUG) << "The sequence_nodes is free. " << old_node->DebugString() << " --> " << new_node->DebugString();
@@ -471,7 +475,7 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     MS_LOG(DEBUG) << "Update sequence node, " << old_node->DebugString() << " --> " << new_node->DebugString()
                   << ", elements_use_flags: " << (*flags);
     SetSequenceNodeElementsUseFlags(new_node, flags);
-    old_sequence_abs->update_sequence_node(sequence_node, new_node);
+    old_sequence_abs->UpdateSequenceNode(sequence_node, new_node);
 
     // Update new sequence abstract if it's not equal to old one.
     const AbstractBasePtr &new_abs = new_node->abstract();
@@ -482,10 +486,12 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     if (new_sequence_abs == nullptr) {
       MS_LOG(EXCEPTION) << "New node should be sequence type as well, but got " << new_abs->ToString();
     }
-    if (new_sequence_abs->sequence_nodes().empty()) {
-      new_sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(new_node)});
+    if (new_sequence_abs->sequence_nodes() == nullptr || new_sequence_abs->sequence_nodes()->empty()) {
+      std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+      sequence_nodes->emplace_back(AnfNodeWeakPtr(new_node));
+      new_sequence_abs->set_sequence_nodes(sequence_nodes);
     } else {
-      new_sequence_abs->insert_sequence_node(new_node);
+      new_sequence_abs->InsertSequenceNode(new_node);
     }
   }
 }
@@ -518,15 +524,16 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   auto new_input_abs = new_sequence_value->ToAbstract();
   AbstractSequencePtr new_sequence_abs = dyn_cast<AbstractSequence>(new_input_abs);
   MS_EXCEPTION_IF_NULL(new_sequence_abs);
-  new_sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(new_input)});
+  std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
+  new_sequence_abs->set_sequence_nodes(sequence_nodes);
   new_input->set_abstract(new_sequence_abs);
   // Always reset tuple value node's use flags as non-use.
   SetSequenceNodeElementsUseFlags(new_input, flags);
   MS_LOG(DEBUG) << "Update ValueTuple/ValueList, " << old_input->DebugString() << " --> " << new_input->DebugString()
                 << ", which is inputs[" << index << "] of " << cnode->DebugString();
   // Keep the node not to release before we purify its abstract.
-  specializer->sequence_nodes_replaced_list().emplace_back(old_input);
-  specializer->sequence_abstract_list().emplace_back(new_sequence_abs);
+  specializer->sequence_abstract_list().emplace_back(std::pair(new_sequence_abs, old_input));
   cnode->set_input(index, new_input);
 }
 }  // namespace
@@ -542,21 +549,22 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
   std::for_each(cnode->inputs().begin(), cnode->inputs().end(), [&sequence_abstract_list](const AnfNodePtr &input) {
     const AbstractBasePtr input_abs = input->abstract();
     AbstractSequencePtr input_sequence_abs = dyn_cast<AbstractSequence>(input_abs);
-    if (input_sequence_abs == nullptr || input_sequence_abs->sequence_nodes().empty()) {
+    if (input_sequence_abs == nullptr || input_sequence_abs->sequence_nodes() == nullptr ||
+        input_sequence_abs->sequence_nodes()->empty()) {
       return;
     }
     // Not call PurifyElements() here, just add to list.
-    sequence_abstract_list.emplace_back(input_sequence_abs);
+    sequence_abstract_list.emplace_back(std::pair(input_sequence_abs, input));
   });
 
   // Add CNode if it's sequence abstract, and sequence nodes exist.
   const AbstractBasePtr abs = cnode->abstract();
   AbstractSequencePtr sequence_abs = dyn_cast<AbstractSequence>(abs);
-  if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
   // Not call PurifyElements() here, just add to list.
-  sequence_abstract_list.emplace_back(sequence_abs);
+  sequence_abstract_list.emplace_back(std::pair(sequence_abs, cnode));
 
   // Purify MakeTuple/MakeList CNode.
   if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) || IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
@@ -1044,6 +1052,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
 
+  // Eliminate the unused elements in the tuple/list.
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {

@@ -734,9 +734,12 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
 
   AbstractBasePtr last_spec = out_specs[0];
   AbstractBasePtr joined_spec = out_specs[0];
-  for (const auto &spec : out_specs) {
+  for (size_t i = 1; i < out_specs.size(); ++i) {
+    const auto &spec = out_specs[i];
     MS_EXCEPTION_IF_NULL(spec);
     try {
+      MS_LOG(DEBUG) << "Join node: " << node->DebugString() << ", " << joined_spec->ToString() << ", and "
+                    << spec->ToString();
       joined_spec = joined_spec->Join(spec);
     } catch (const py::type_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
@@ -844,10 +847,10 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
     AbstractBasePtr new_abs;
     if (orig_abs->isa<AbstractTuple>()) {
       new_abs = std::make_shared<AbstractTuple>(
-        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : nullptr));
     } else if (orig_abs->isa<AbstractList>()) {
       new_abs = std::make_shared<AbstractList>(
-        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : AnfNodeWeakPtrList()));
+        new_elements, (enable_eliminate_unused_element ? sequence_abs->sequence_nodes() : nullptr));
     } else {
       MS_LOG(EXCEPTION) << "FirstResult is not AbstractTuple or AbstractList, but: " << orig_abs->ToString();
     }
@@ -1083,7 +1086,9 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     MS_EXCEPTION_IF_NULL(sequence_abs);
     if (anf_node != nullptr) {
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
-      sequence_abs->set_sequence_nodes({AnfNodeWeakPtr(anf_node)});
+      std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+      sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));
+      sequence_abs->set_sequence_nodes(sequence_nodes);
     }
     return abs;
   }

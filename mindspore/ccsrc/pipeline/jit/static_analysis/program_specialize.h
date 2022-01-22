@@ -68,7 +68,7 @@ class ProgramSpecializer {
   AbstractBasePtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
   void SpecializeCNodeInput0FuncGraph();
 
-  std::vector<AbstractSequencePtr> &sequence_abstract_list() { return sequence_abstract_list_; }
+  std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
 
   std::vector<AnfNodePtr> &sequence_nodes_replaced_list() { return sequence_nodes_replaced_list_; }
 
@@ -80,7 +80,7 @@ class ProgramSpecializer {
     specializations_;
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
-  std::vector<AbstractSequencePtr> sequence_abstract_list_;
+  std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
   // The list to hold the weak node ptr before purify abstract.
   std::vector<AnfNodePtr> sequence_nodes_replaced_list_;
   // Map for unspecialized abstract function to specialized abstract;
