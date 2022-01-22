@@ -18,6 +18,7 @@
 #include "runtime/framework/actor/control_flow/entrance_actor.h"
 #include "abstract/utils.h"
 #include "runtime/framework/actor/output_actor.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace runtime {
@@ -52,11 +53,10 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
   size_t index = GetIndex(context);
   if (!output_partial_arrows_.empty()) {
     if (index + kSwitchCondPos >= input_partials_.size()) {
-      string error_info = "Given index " + std::to_string(index) +
-                          " out of range. Please make sure the value of index in [" +
-                          std::to_string(1 - SizeToInt(input_partials_.size())) + ", " +
-                          std::to_string(input_partials_.size() - 1) + "), and the type is int32.";
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      MS_EXCEPTION(IndexError) << "Given index " << std::to_string(index)
+                               << " out of range. Please make sure the value of index in ["
+                               << std::to_string(1 - SizeToInt(input_partials_.size())) << ", "
+                               << std::to_string(input_partials_.size() - 1) + "), and the type is int32.";
     }
     MS_EXCEPTION_IF_NULL(input_partials_[index + kSwitchCondPos]);
     auto func_graph = input_partials_[index + kSwitchCondPos]->func_graph_;

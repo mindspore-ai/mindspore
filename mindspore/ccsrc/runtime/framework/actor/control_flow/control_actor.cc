@@ -105,16 +105,22 @@ size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
 }
 
 void ControlActor::Run(OpContext<DeviceTensor> *const context) {
-  FetchInput(context);
+  try {
+    FetchInput(context);
 
-  // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
-  // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
-  // incremented.
-  IncreaseDynamicRefCounts(context);
-  SendMemoryFreeReq(context);
+    // Note that IncreaseDynamicRefCounts must be in front of SendMemoryFreeReq. SendMemoryFreeReq will decreasing the
+    // dynamic ref count. Avoid the illegal timing problem that the dynamic reference count is decremented and then
+    // incremented.
+    IncreaseDynamicRefCounts(context);
+    SendMemoryFreeReq(context);
 
-  EraseInput(context);
-  SendOutput(context);
+    EraseInput(context);
+    SendOutput(context);
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
+    std::string error_info = "Actor fun failed:" + GetAID().Name();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), error_info);
+  }
 }
 
 void ControlActor::RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) {
@@ -176,7 +182,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
                                  " for actor:" + GetAID().Name();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
-
+      MS_EXCEPTION_IF_NULL(input_data->data_);
       input_device_tensors_[input_data->index_] = input_data->data_;
     }
   }
@@ -211,6 +217,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
         " current:" + std::to_string(input_device_tensors_.size()) + " for actor:" + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
+    MS_EXCEPTION_IF_NULL(device_tensors[0]);
     input_device_tensors_[device_tensor_store_key.first] = device_tensors[0].get();
   }
 

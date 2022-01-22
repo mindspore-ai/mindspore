@@ -714,18 +714,27 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
   const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
   auto actor = FetchActor(actor_name);
   MS_EXCEPTION_IF_NULL(actor);
-  auto entrance_actor = dynamic_cast<EntranceActor *>(actor);
-  MS_EXCEPTION_IF_NULL(entrance_actor);
+
+  // If the input of the exit actor of the kernel graph is a parameter node, and there is a corresponding stack actor,
+  // it should be linked to the stack actor.
+  if (to_actor->type() == KernelTransformType::kExitActor) {
+    auto stack_actor_name = (to_actor->node_ == nullptr ? GetStackActorNameByExitName(to_actor->GetAID().Name())
+                                                        : GetActorName(to_actor->node_) + kStackActorNameSuffix);
+    auto stack_actor = FetchActor(stack_actor_name);
+    actor = (stack_actor == nullptr ? actor : stack_actor);
+  }
+
+  auto from_actor = dynamic_cast<ControlActor *>(actor);
+  MS_EXCEPTION_IF_NULL(from_actor);
 
   auto abstract = parameter->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
   auto dst_abstract = FetchAbstractByIndex(abstract, from_node_with_index.second);
   if (dst_abstract->isa<abstract::AbstractFunction>()) {
-    LinkPartialArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
+    LinkPartialArrow(from_actor, to_actor, from_actor->FetchNodePosition(from_node_with_index),
                      to_node_with_index.second);
   } else {
-    LinkDataArrow(entrance_actor, to_actor, entrance_actor->FetchNodePosition(from_node_with_index),
-                  to_node_with_index.second);
+    LinkDataArrow(from_actor, to_actor, from_actor->FetchNodePosition(from_node_with_index), to_node_with_index.second);
   }
 }
 
