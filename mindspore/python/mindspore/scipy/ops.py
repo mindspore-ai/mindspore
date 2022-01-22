@@ -418,5 +418,5 @@ class MatrixDiagPartNet(nn.Cell):
     def construct(self, a, k, padding_value):
         return self.matrix_diag_part(a, k, padding_value)
 
-
-from .ops_grad import get_bprpo_eigh
+# pylint: disable=C0413,W0611
+from .ops_grad import get_bprpo_eigh, get_bprpo_trsm
