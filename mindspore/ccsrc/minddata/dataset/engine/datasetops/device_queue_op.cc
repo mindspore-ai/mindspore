@@ -224,6 +224,12 @@ Status DeviceQueueOp::SendDataToAscend() {
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
 #endif
       PrintBeginInfoWhenFirstBatch(first_push_flag_);
+      // when training stopped, handle might have been destroyed immediately
+      if (tdtInstancePtr->acl_handle_ == nullptr) {
+        MS_LOG(WARNING) << "Thread has already been terminated.";
+        is_break_loop = true;
+        continue;
+      }
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
@@ -258,20 +264,8 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow dummy_row;
       auto status = tdtInstancePtr->hostPush(dummy_row, true, channel_name_, is_profiling_enable, tdt_cost,
                                              ACL_TENSOR_DATA_END_OF_SEQUENCE);
-      if (status != Status::OK()) {
-        if (stop_send_) {
-          send_finished_ = true;
-          MS_LOG(INFO) << "stop_send received";
-          return Status::OK();
-        }
-        return Status(StatusCode::kMDTDTPushFailure,
-                      "TDT Push data into device Failed, check the first error or TraceBack first, following are"
-                      " several possible checking way: 1) if training is not ready, still in network graph compiling"
-                      " stage, check error raised by Network used operator or environment configuration. 2) if"
-                      " interrupt in middle process of training, may check whether dataset sending num and network"
-                      " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
-                      " try find ascend host log or checking info log etc or search this in mindspore's FAQ.");
-      }
+
+      RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, &is_break_loop));
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
     }
@@ -322,19 +316,39 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable,
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
     }
-    return Status(StatusCode::kMDTDTPushFailure,
-                  "TDT Push data into device Failed, check the first error or TraceBack first, following are"
-                  " several possible checking way: 1) if training is not ready, still in network graph compiling"
-                  " stage, check error raised by Network used operator or environment configuration. 2) if"
-                  " interrupt in middle process of training, may check whether dataset sending num and network"
-                  " training num mismatch. 3) if this error raised in end of training, ignore this. 4) other cases,"
-                  " try find ascend host log or checking info log ects or search this in mindspore's FAQ.");
+    return Status(
+      StatusCode::kMDTDTPushFailure,
+      "TDT Push data into device Failed, check the first error or TraceBack first, more checking advises are: "
+      "1) if training is not ready, error might raised by network computing operator or environment configuration. "
+      "2) other cases, checking info level log or search this error in mindspore's FAQ for detail solution.");
   }
   if (create_data_info_queue_) {
     DATA_INFO data_info;
     (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
                          [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
     RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+  }
+  return Status::OK();
+}
+
+Status DeviceQueueOp::CheckPushStatus(Status status, bool stop_send, bool *send_finished, bool *is_break_loop) {
+  if (status != Status::OK()) {
+    if (stop_send) {
+      *send_finished = true;
+      MS_LOG(INFO) << "stop_send received";
+      return Status::OK();
+    }
+    // when training stopped, handle might have been destroyed immediately
+    if (tdtInstancePtr->acl_handle_ == nullptr) {
+      *is_break_loop = true;
+      MS_LOG(WARNING) << "Thread has already been terminated.";
+      return Status::OK();
+    }
+    return Status(
+      StatusCode::kMDTDTPushFailure,
+      "TDT Push data into device Failed, check the first error or TraceBack first, more checking advises are: "
+      "1) if training is not ready, error might raised by network computing operator or environment configuration. "
+      "2) other cases, checking info level log or search this error in mindspore's FAQ for detail solution.");
   }
   return Status::OK();
 }
