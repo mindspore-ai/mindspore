@@ -31,3 +31,4 @@ mindspore.ops.L2Normalize
     - **TypeError** - `epsilon` 不是float。
     - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    - **ValueError** - `x` 的维度不大于0。
