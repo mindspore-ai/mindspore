@@ -141,6 +141,7 @@ class AscendDeviceContext : public DeviceContext {
   bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
   void GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const;
+  void InsertEventBeforeRunTask(const KernelGraphPtr &graph) const;
 
   void ReportErrorMessage() const;
   void ReportWarningMessage() const;
@@ -166,6 +167,8 @@ class AscendDeviceContext : public DeviceContext {
   // node_atomics_ will be cleaned up in CompileGraph.
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_persistent_cache_;
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
+  // Event for multi-stream
+  mutable std::map<uint32_t, std::shared_ptr<DeviceEvent>> graph_event_;
   // Some NOP nodes have be hide in execution order, it doesn't have output device address, this function creates
   // output device address for these nodes, and the output device address is the same with input device address.
   void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const;

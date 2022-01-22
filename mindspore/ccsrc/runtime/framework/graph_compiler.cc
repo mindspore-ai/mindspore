@@ -345,7 +345,7 @@ void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_wit
 GraphCompilerInfo::~GraphCompilerInfo() { GraphScheduler::GetInstance().Clear(name_, graphs_); }
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
-                                    const DeviceContext *device_context) {
+                                    const DeviceContext *device_context, bool run_in_pynative) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_LOG(INFO) << "Status record: start compile graph.";
@@ -372,7 +372,17 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   session_->SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();
 
-  auto graph_id = CompileGraphImpl(graph, device_context);
+  GraphId graph_id;
+  if (run_in_pynative) {
+    MS_EXCEPTION_IF_NULL(session_);
+    // Graphkernel not support pynative mode now, so when users open graphkernel in pynative mode
+    // should print a warning log to reminder users by using GetInstance func.
+    (void)graphkernel::GraphKernelFlags::GetInstance();
+    session_->InitAllBucket(graph, device_context);
+    graph_id = graph->graph_id();
+  } else {
+    graph_id = CompileGraphImpl(graph, device_context);
+  }
 
   session_->DumpGraphs({graph});
 
@@ -435,14 +445,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    // graphkernel not support pynative mode now, so when users open graphkernel
-    // in pynative mode should print a warning log to reminder users by using GetInstance func.
-    graphkernel::GraphKernelFlags::GetInstance();
-    MS_EXCEPTION_IF_NULL(session_);
-    session_->InitAllBucket(graph, device_context);
-    return graph->graph_id();
-  }
 
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
