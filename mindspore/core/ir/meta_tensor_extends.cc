@@ -15,13 +15,6 @@
  */
 
 #include "ir/meta_tensor.h"
-
-#include <functional>
-#include <numeric>
-#include <vector>
-#include <sstream>
-#include <string>
-
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

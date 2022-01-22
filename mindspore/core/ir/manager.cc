@@ -349,7 +349,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
 }
 
 // Clear the all information in manager
-void FuncGraphManager::Clear() {
+void FuncGraphManager::Clear() noexcept {
   for (auto graph : func_graphs_) {
     graph->DecAttachedMngCnt();
     if (graph->attached_mng_cnt() == 0) {

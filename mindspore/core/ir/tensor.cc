@@ -15,20 +15,7 @@
  */
 
 #include "ir/tensor.h"
-
-#include <atomic>
-#include <functional>
-#include <numeric>
-#include <vector>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <utility>
 #include <iomanip>
-#include <algorithm>
-#include <type_traits>
-#include <typeinfo>
-
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"

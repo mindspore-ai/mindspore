@@ -38,7 +38,7 @@ class PrimalDebugInfoManager {
     std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
                   [this](const NodeDebugInfoPtr &debug_info) { primal_debug_infos_.emplace(debug_info); });
   }
-  void ClearPrimalDebugInfo() { primal_debug_infos_.clear(); }
+  void ClearPrimalDebugInfo() noexcept { primal_debug_infos_.clear(); }
   std::set<NodeDebugInfoPtr, DebugInfoCompare> GetCurrentPrimalDebugInfo() { return primal_debug_infos_; }
 
  private:
@@ -53,7 +53,7 @@ class PrimalDebugInfoGuard {
   explicit PrimalDebugInfoGuard(const std::vector<NodeDebugInfoPtr> &primal_debug_infos) {
     PrimalDebugInfoManager::GetInstance().SetPrimalDebugInfo(primal_debug_infos);
   }
-  ~PrimalDebugInfoGuard() noexcept { PrimalDebugInfoManager::GetInstance().ClearPrimalDebugInfo(); }
+  ~PrimalDebugInfoGuard() { PrimalDebugInfoManager::GetInstance().ClearPrimalDebugInfo(); }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PRIMAL_DEBUG_INFO_H
