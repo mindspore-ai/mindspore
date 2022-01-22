@@ -315,7 +315,14 @@ public class FLLiteClient {
         }
         retCode = ResponseCode.SUCCEED;
         LOGGER.info(Common.addTag("[train] train in " + flParameter.getFlName()));
-        Status tag = client.trainModel(epochs);
+        LOGGER.info(Common.addTag("[train] lr for client is: " + localFLParameter.getLr()));
+        Status tag = client.setLearningRate(localFLParameter.getLr());
+        if (!Status.SUCCESS.equals(tag)) {
+            LOGGER.severe(Common.addTag("[train] setLearningRate failed, return -1, please check"));
+            retCode = ResponseCode.RequestError;
+            return FLClientStatus.FAILED;
+        }
+        tag = client.trainModel(epochs);
         if (!Status.SUCCESS.equals(tag)) {
             failed("[train] unsolved error code in <client.trainModel>", ResponseCode.RequestError);
         }
@@ -568,12 +575,12 @@ public class FLLiteClient {
         float acc = 0;
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
             LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
-            client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig());
+            client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
             LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getInferModelPath()));
             acc = client.evalModel();
         } else {
             LOGGER.info(Common.addTag("[evaluate] evaluateModel by " + localFLParameter.getServerMod()));
-            client.initSessionAndInputs(flParameter.getTrainModelPath(), localFLParameter.getMsConfig());
+            client.initSessionAndInputs(flParameter.getTrainModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
             LOGGER.info(Common.addTag("[evaluate] modelPath: " + flParameter.getTrainModelPath()));
             acc = client.evalModel();
         }

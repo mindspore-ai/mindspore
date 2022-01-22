@@ -519,7 +519,7 @@ public class Common {
         LOGGER.info(Common.addTag("==========Loading model, " + modelPath + " Create " +
                 " Session============="));
         Client client = ClientManager.getClient(flParameter.getFlName());
-        tag = client.initSessionAndInputs(modelPath, localFLParameter.getMsConfig());
+        tag = client.initSessionAndInputs(modelPath, localFLParameter.getMsConfig(), flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe(Common.addTag("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
                     "is -1"));

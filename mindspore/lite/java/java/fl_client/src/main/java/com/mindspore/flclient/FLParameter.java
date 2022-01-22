@@ -83,6 +83,7 @@ public class FLParameter {
     private Map<RunType, List<String>> dataMap = new HashMap<>();
     private ServerMod serverMod;
     private int batchSize;
+    private int[][] inputShape;
 
     private FLParameter() {
         clientID = UUID.randomUUID().toString();
@@ -574,5 +575,13 @@ public class FLParameter {
             throw new IllegalArgumentException();
         }
         this.batchSize = batchSize;
+    }
+
+    public int[][] getInputShape() {
+        return inputShape;
+    }
+
+    public void setInputShape(int[][] inputShape) {
+        this.inputShape = inputShape;
     }
 }

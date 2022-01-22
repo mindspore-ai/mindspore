@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 public abstract class Callback {
     private static final Logger logger = Logger.getLogger(LossCallback.class.toString());
 
-    LiteSession session;
+    protected LiteSession session;
 
     public int steps = 0;
 
