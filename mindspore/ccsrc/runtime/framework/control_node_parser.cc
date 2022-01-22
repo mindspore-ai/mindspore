@@ -369,7 +369,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address
+  MS_LOG(DEBUG) << "Create address for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address
                 << " size:" << tensor_size;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node.get());
   UpdateRefCount(address.get(), true);
@@ -396,7 +396,8 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   // Create device tensor.
   device::DeviceAddressPtr address = device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id);
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(node) << " addr:" << address;
+  MS_LOG(INFO) << "Create address for node that has no corresponding backend node:" << AnfAlgo::GetNodeDebugString(node)
+               << " addr:" << address << " size:" << size << ", type id:" << type_id;
   AnfAlgo::SetOutputAddr(address, front_node_with_index.second, node.get());
   UpdateRefCount(address.get(), true);
 }

@@ -181,7 +181,8 @@ void IntHandler(int, siginfo_t *, void *) {
 #endif
 }  // namespace
 
-void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept {
+void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
+                           const std::vector<AnfNodePtr> &root_graph_parameters) noexcept {
   // Terminate the actors of actor info.
   if (actors_.count(actor_info) > 0) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
@@ -201,6 +202,11 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
   // Clear device tensor and device tensor store.
   for (auto &graph : graphs) {
     ClearNodeInfo(graph);
+  }
+
+  // Clear the member of DeviceTensorStore.
+  for (auto &root_graph_parameter : root_graph_parameters) {
+    DeviceTensorStore::GetInstance().Remove(root_graph_parameter.get());
   }
 
   // Clear global maps of actor info.
@@ -1932,28 +1938,42 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     return;
   }
 
-  const auto &control_node_parameters = parser->control_node_parameters();
-  for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    const auto &input_node = control_node_parameters[i];
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (!parser->IsRootGraphPersistentDeviceTensor(input_node)) {
+  for (auto &root_graph_parameter : graph_compiler_info.origin_parameters_order_) {
+    MS_EXCEPTION_IF_NULL(root_graph_parameter);
+    if (!IsPersistentDeviceTensor(root_graph_parameter)) {
       continue;
     }
+    // The device tensor store has been done in the backend kernel graph corresponding to the root graph.
+    if (!DeviceTensorStore::GetInstance().Fetch(root_graph_parameter.get()).empty()) {
+      continue;
+    }
+
+    // The different root graph parameters may correspond to parameter of same sub kernel graph when call the same sub
+    // graph using the different root graph parameters. So can not use the device tensor of sub kernel graph parameter
+    // directly and choose the first backend parameter in sub kernel graphs to create new device tensor to make sure
+    // that the device tensor of root graph parameters are different.
     const auto &backend_parameter_with_context =
-      parser->FetchBackendParameterWithContextByFrontParameter({input_node, 0});
+      parser->FetchBackendParameterWithContextByFrontParameter({root_graph_parameter, 0});
     if (backend_parameter_with_context.first == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << input_node->DebugString();
+      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << root_graph_parameter->DebugString();
     }
     const auto &backend_node = backend_parameter_with_context.first;
     const auto &device_context = backend_parameter_with_context.second;
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
-    if (!DeviceTensorStore::GetInstance().Fetch(input_node.get()).empty()) {
-      continue;
-    }
-    auto device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_tensor);
-    AddDeviceTensorStore(input_node.get(), device_tensor);
+    auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+    MS_EXCEPTION_IF_NULL(sub_device_tensor);
+
+    auto new_device_tensor = device_context->CreateDeviceAddress(
+      nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id());
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+    new_device_tensor->SetNodeIndex(backend_node, 0);
+    new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());
+    new_device_tensor->set_from_persistent_mem(true);
+    AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);
+    MS_LOG(INFO) << "Add device tensor store by root graph parameter:" << root_graph_parameter->fullname_with_scope()
+                 << ", backend node:" << backend_node->DebugString()
+                 << ", type:" << device_context->GetDeviceAddressType();
   }
 }
 
