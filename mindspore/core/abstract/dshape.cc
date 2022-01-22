@@ -18,11 +18,6 @@
 
 #include "abstract/dshape.h"
 
-#include <exception>
-#include <iostream>
-
-#include "utils/log_adapter.h"
-
 namespace mindspore {
 namespace abstract {
 namespace {

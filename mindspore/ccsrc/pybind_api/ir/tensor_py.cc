@@ -16,12 +16,6 @@
 
 #include "pybind_api/ir/tensor_py.h"
 
-#include <vector>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <complex>
-
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
@@ -125,6 +119,8 @@ static std::string GetPyTypeFormat(TypeId data_type) {
       return py::format_descriptor<std::complex<float>>::format();
     case TypeId::kNumberTypeComplex128:
       return py::format_descriptor<std::complex<double>>::format();
+    case TypeId::kMetaTypeType:
+    case TypeId::kMetaTypeEllipsis:
     default:
       MS_LOG(WARNING) << "Unsupported DataType " << data_type << ".";
       return "";
@@ -182,7 +178,7 @@ class TensorDataNumpy : public TensorData {
   }
 
  private:
-  void *buffer_data() { return buffer_.ptr; }
+  void *buffer_data() const { return buffer_.ptr; }
 
   // The internal buffer.
   py::buffer_info buffer_;
