@@ -17,7 +17,6 @@ import pytest
 import numpy as onp
 import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
-from mindspore.scipy.ops import MatrixBandPartNet
 from tests.st.scipy_st.utils import match_matrix
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
@@ -342,7 +341,6 @@ def test_matrix_band_part_net_cpu(band_inputs):
     Description: test general matrix cases for matrix_band_diag in graph mode
     Expectation: the result match expected_diag_band_matrix.
     """
-    msp_matrixbandpart = MatrixBandPartNet()
     batch_shape, rows, cols = band_inputs
     for dtype in [onp.int32, onp.float64]:
         mat = onp.ones(batch_shape + [rows, cols]).astype(dtype)
@@ -355,5 +353,5 @@ def test_matrix_band_part_net_cpu(band_inputs):
                     band_np = onp.tril(band_np, upper)
                 if batch_shape:
                     band_np = onp.tile(band_np, batch_shape + [1, 1])
-                band = msp_matrixbandpart(Tensor(band_np), lower, upper)
+                band = msp.ops_wrapper.matrix_band_part(Tensor(band_np), lower, upper)
                 match_matrix(band, Tensor(band_np))

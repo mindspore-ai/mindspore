@@ -67,7 +67,6 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddOutputAttr(kNumberTypeFloat32),
-
                     MatrixDiagPartCpuKernelMod, float);
 
 MS_REG_CPU_KERNEL_T(MatrixDiagPart,

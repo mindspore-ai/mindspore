@@ -22,6 +22,7 @@
 
 #include "utils/profile.h"
 #include "runtime/framework/actor/actor_common.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -246,6 +247,28 @@ void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
   } else {
     ParallelLaunch(task, count, parallel_search_info->best_block_size, content);
   }
+}
+
+void ParallelLaunch(size_t index_range, std::function<void(size_t)> func) {
+  // An arg which depends on hardware.
+  std::vector<common::Task> tasks;
+  auto thread_pool = GetActorMgrInnerThreadPool();
+  size_t task_nums = thread_pool->GetKernelThreadNum();
+  // If thead nums more than task blocks, then set it to block range
+  task_nums = std::min(task_nums, index_range);
+  if (task_nums == 0) {
+    MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
+  }
+  tasks.reserve(task_nums);
+  for (size_t t_index = 0; t_index < task_nums; t_index++) {
+    (void)tasks.emplace_back([=, &func]() {
+      for (size_t t = t_index; t < index_range; t += task_nums) {
+        func(t);
+      }
+      return common::SUCCESS;
+    });
+  }
+  ParallelLaunch(tasks);
 }
 
 std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &shape, int axis) {

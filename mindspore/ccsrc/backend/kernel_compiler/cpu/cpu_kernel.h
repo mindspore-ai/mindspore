@@ -221,6 +221,7 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, C
 void ParallelLaunch(const std::vector<common::Task> &tasks, Content content = nullptr);
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
                               ParallelSearchInfo *parallel_search_info);
+void ParallelLaunch(size_t index_range, std::function<void(size_t)> func);
 
 class AxisIterator {
  public:
