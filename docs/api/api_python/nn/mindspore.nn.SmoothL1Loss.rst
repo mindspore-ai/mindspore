@@ -17,7 +17,9 @@ mindspore.nn.SmoothL1Loss
     其中，:math:`{\beta}` 代表阈值 `beta` 。
 
     .. note::
-        SmoothL1Loss可以看成 :class:`mindspore.nn.L1Loss` 的修改版本，也可以看成 :class:`mindspore.nn.L1Loss` 和 :class:`mindspore.ops.L2Loss` 的组合。 :class:`mindspore.nn.L1Loss` 计算两个输入Tensor之间的绝对误差，而 :class:`mindspore.ops.L2Loss` 计算两个输入Tensor之间的平方误差。 :class:`mindspore.ops.L2Loss` 通常更快收敛，但对离群值的鲁棒性较差。该损失函数具有较好的鲁棒性。
+        - SmoothL1Loss可以看成 :class:`mindspore.nn.L1Loss` 的修改版本，也可以看成 :class:`mindspore.nn.L1Loss` 和 :class:`mindspore.ops.L2Loss` 的组合。 
+        - :class:`mindspore.nn.L1Loss` 计算两个输入Tensor之间的绝对误差，而 :class:`mindspore.ops.L2Loss` 计算两个输入Tensor之间的平方误差。 
+        - :class:`mindspore.ops.L2Loss` 通常更快收敛，但对离群值的鲁棒性较差。该损失函数具有较好的鲁棒性。
 
     **参数：**
 

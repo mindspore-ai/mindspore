@@ -14,7 +14,7 @@ mindspore.dataset.audio.transforms.FrequencyMasking
     - **mask_start** (int, 可选) - 添加掩码的起始位置，只有当 `iid_masks` 为True时，该值才会生效。取值范围为[0, freq_length - frequency_mask_param]，其中 `freq_length` 为音频波形在频域的长度，默认值：0。
     - **mask_value** (float, 可选) - 掩码填充值，默认值：0.0。
 
-    .. image:: api_img/frequency_masking_original.png
+    .. image:: frequency_masking_original.png
 
-    .. image:: api_img/frequency_masking.png
+    .. image:: frequency_masking.png
 

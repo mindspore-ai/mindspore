@@ -26,11 +26,11 @@ mindspore.nn.WithLossCell
     **TypeError**：`data` 或 `label` 的数据类型既不是float16也不是float32。
 
 
-.. py:method:: backbone_network
-    :property:
-
-    获取骨干网络。
-
-    **返回：**
-
-    Cell，骨干网络。
+    .. py:method:: backbone_network
+        :property:
+    
+        获取骨干网络。
+    
+        **返回：**
+    
+        Cell，骨干网络。

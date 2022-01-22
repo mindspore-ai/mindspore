@@ -2,10 +2,10 @@ mindspore.communication
 ========================
 集合通信接口。
 
-注意，集合通信接口需要预先设置环境变量。对于Ascend，用户需要配置rank_table，设置rank_id和device_id，相关教程可参考：
-<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html>`_。
-对于GPU，用户需要预先配置host_file以及mpi，相关教程参考：
-<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_gpu.html>`_。
+注意，集合通信接口需要预先设置环境变量。对于Ascend，用户需要配置rank_table，设置rank_id和device_id，相关教程可参考： 
+`<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_ascend.html>`_。
+对于GPU，用户需要预先配置host_file以及mpi，相关教程参考： 
+`<https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_gpu.html>`_。
 
 目前尚不支持CPU。
 

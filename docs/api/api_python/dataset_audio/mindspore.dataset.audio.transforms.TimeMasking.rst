@@ -14,6 +14,6 @@ mindspore.dataset.audio.transforms.TimeMasking
     - **mask_start** (int, 可选) - 添加掩码的起始位置，只有当 `iid_masks` 为True时，该值才会生效。取值范围为[0, time_length - time_mask_param]，其中 `time_length` 为音频波形在时域的长度，默认值：0。
     - **mask_value** (float, 可选) - 掩码填充值，默认值：0.0。
 
-    .. image:: api_img/time_masking_original.png
+    .. image:: time_masking_original.png
 
-    .. image:: api_img/time_masking.png
+    .. image:: time_masking.png

@@ -10,22 +10,6 @@ mindspore.FixedLossScaleManager
     - **loss_scale** (float) - 梯度放大系数。注：如果将 `drop_overflow_update` 设为False，则定义优化器时需要将优化器的 `loss_scale` 设为相同的值。默认值：128.0。
     - **drop_overflow_update** (bool) - 出现溢出时，是否执行优化器。如果值为True，则出现溢出时不会执行优化器。默认值：True。
 
-    **样例：**
-
-    >>> from mindspore import Model, nn, FixedLossScaleManager
-    >>>
-    >>> net = Net()
-    >>> # 1) 如果存在溢出，则不执行参数更新
-    >>> loss_scale_manager = FixedLossScaleManager()
-    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
-    >>>
-    >>> # 2) 即使发生溢出，也执行参数更新
-    >>> loss_scale = 1024.0
-    >>> loss_scale_manager = FixedLossScaleManager(loss_scale, False)
-    >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
-    >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
-
     .. py:method:: get_drop_overflow_update()
 
         返回 `drop_overflow_update` ，该值表示是否在发生溢出时放弃本轮参数更新。
