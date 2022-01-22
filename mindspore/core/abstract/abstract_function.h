@@ -169,7 +169,7 @@ class MS_CORE_API FuncGraphAbstractClosure final : public AbstractFuncAtom {
   bool specialized() const { return specialized_; }
 
   AbstractFunctionPtr Copy() const override {
-    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id());
+    return std::make_shared<FuncGraphAbstractClosure>(func_graph_, context_, tracking_id(), specialized_);
   }
 
   bool operator==(const AbstractFunction &other) const override;

@@ -406,7 +406,7 @@ void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inpu
 AnfNodePtr BuildFuncGraphValueNode(const FuncGraphPtr &func_graph) {
   auto new_node = NewValueNode(func_graph);
   auto abstract = std::make_shared<abstract::FuncGraphAbstractClosure>(
-    func_graph, abstract::AnalysisContext::DummyContext(), new_node);
+    func_graph, abstract::AnalysisContext::DummyContext(), new_node, true);
   new_node->set_abstract(abstract);
   return new_node;
 }
