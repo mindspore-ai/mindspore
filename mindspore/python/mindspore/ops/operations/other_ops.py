@@ -15,7 +15,6 @@
 
 """Other operators."""
 import functools
-import mindspore.common._monad as monad
 from mindspore import log as logger
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
@@ -59,8 +58,7 @@ class Assign(Primitive):
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('value', dtype=sig.sig_dtype.T),
-        sig.make_sig('u', default=monad.U, dtype=sig.sig_dtype.T1)
+        sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
