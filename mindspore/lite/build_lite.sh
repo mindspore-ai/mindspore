@@ -379,13 +379,18 @@ build_lite_arm64_and_jni() {
         is_train=off
     fi
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
-        cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+        cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+        cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
-    local npu_so=$pkg_name/runtime/third_party/hiai_ddk/lib/libhiai.so
-    if [ -e "$npu_so" ]; then
+    minddata_so=${pkg_name}/runtime/lib/libminddata-lite.so
+    if [ -e "${minddata_so}" ]; then
+       cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+       cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+       cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
+       cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    fi
+    local npu_so=${pkg_name}/runtime/third_party/hiai_ddk/lib/libhiai.so
+    if [ -e "${npu_so}" ]; then
       cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
       cp ./${pkg_name}/runtime/third_party/hiai_ddk/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
@@ -429,10 +434,15 @@ build_lite_arm32_and_jni() {
         is_train=off
     fi
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
-        cp ./${pkg_name}/runtime/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
-        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+        cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+        cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    fi
+    local minddata_so=${pkg_name}/runtime/lib/libminddata-lite.so
+    if [ -e "${minddata_so}" ]; then
+       cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+       cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+       cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
+       cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
     fi
     local npu_so=$pkg_name/runtime/third_party/hiai_ddk/lib/libhiai.so
     if [ -e "$npu_so" ]; then
@@ -504,13 +514,15 @@ build_aar() {
     cp ${LITE_JAVA_PATH}/build/libs/mindspore-lite-java.jar ${LITE_JAVA_PATH}/java/app/libs
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/app
     ${gradle_command} assembleRelease  -p ${LITE_JAVA_PATH}/java/app
-    ${gradle_command} publish -PLITE_VERSION=${VERSION_STR} -p ${LITE_JAVA_PATH}/java/app
 
     cd ${LITE_JAVA_PATH}/java/app/build
     [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/*.tar.gz*
-    zip -r ${BASEPATH}/output/mindspore-lite-maven-${VERSION_STR}.zip mindspore
-    cd ${BASEPATH}/output
-    sha256sum mindspore-lite-maven-${VERSION_STR}.zip > mindspore-lite-maven-${VERSION_STR}.zip.sha256
+    local minddata_so=${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/libminddata-lite.so
+    if [ -e "${minddata_so}" ]; then
+      cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar
+    else
+      cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar
+    fi
 }
 
 update_submodule()
