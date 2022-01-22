@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/optimizer_caller.h"
