@@ -39,10 +39,8 @@ int ControlFlowScheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernel
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateInputOfMultipleCalledGraph failed.");
   ret = this->BuildBoundaryForMultipleCalledGraph(dst_kernels);
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "BuildBoundaryForMultipleCalledGraph failed.");
-  ret = this->RecordControlFlowLinkInfo();
-  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordControlFlowLinkInfo failed.");
-  ret = this->RecordAllTailCallLinkInfo(dst_kernels);
-  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
+  ret = this->RecordLinkInfo(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordLinkInfo failed.");
   ret = this->SplitNonTailCallSubGraphs(dst_kernels);
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "SplitNonTailCallSubGraphs failed");
   return ret;
@@ -91,7 +89,7 @@ int ControlFlowScheduler::SplitNonTailCallSubGraphs(std::vector<kernel::LiteKern
 
   RemoveUselessKernels(dst_kernels, &all_non_tail_subgraphs);
 
-  return RecordNonTailCallLinkInfo();
+  return RET_OK;
 }
 
 std::set<kernel::LiteKernel *> ControlFlowScheduler::GetNonTailCallSubGraphs(
@@ -159,8 +157,6 @@ int ControlFlowScheduler::SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel 
     return RET_ERROR;
   }
 
-  // recode non-tail call kernels;
-  non_tail_calls_.push_back(*last_non_tail_call_iter);
   // change last non-tail call property as is tail call
   reinterpret_cast<CallParameter *>((*last_non_tail_call_iter)->op_parameter())->is_tail_call = true;
 
@@ -234,39 +230,55 @@ void ControlFlowScheduler::AppendToProcessQ(std::vector<kernel::LiteKernel *> *n
   return;
 }
 
-int ControlFlowScheduler::RecordNonTailCallLinkInfo() {
-  for (auto non_tail_call : non_tail_calls_) {
-    size_t non_tail_call_output_size = non_tail_call->out_tensors().size();
-    auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(non_tail_call);
-    for (auto node : partial_nodes) {
-      auto partial_node = reinterpret_cast<kernel::PartialFusionKernel *>(node->kernel());
-      MS_CHECK_TRUE_MSG(partial_node != nullptr, RET_ERROR, "node cast to partial node failed.");
-      auto kernels = partial_node->subgraph_kernels();
-      MS_CHECK_TRUE_MSG(!kernels.empty(), RET_ERROR, "partial subgraph kernels empty.");
-      auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernels.back());
-      MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "partial node's subgraph kernel is nullptr.");
-      if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph)) {
-        std::queue<kernel::LiteKernel *> tail_call_q{};
-        tail_call_q.push(subgraph->out_nodes().front());
-        std::vector<kernel::LiteKernel *> final_graphs{};
-        std::set<kernel::LiteKernel *> reviewed_graphs{};
-        auto ret = GetTailCallFinalSubgraphs(&tail_call_q, &final_graphs, reviewed_graphs);
-        MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "GetTailCallFinalSubgraphs failed.");
-        for (auto item : final_graphs) {
-          MS_CHECK_TRUE_MSG(item->out_tensors().size() == non_tail_call_output_size, RET_ERROR,
-                            "subgraph outputs and corresponding call outputs size not same.");
-          for (size_t i = 0; i < non_tail_call_output_size; ++i) {
-            context_->SetLinkInfo(item->out_tensors()[i], non_tail_call->out_tensors()[i]);
-          }
-        }
-      } else {
-        MS_CHECK_TRUE_MSG(subgraph->out_tensors().size() == non_tail_call_output_size, RET_ERROR,
-                          "partial inputs and corresponding call outputs size not same.");
+int ControlFlowScheduler::RecordNonTailCallLinkInfo(kernel::LiteKernel *non_tail_call) {
+  size_t non_tail_call_output_size = non_tail_call->out_tensors().size();
+  auto partial_nodes = kernel::LiteKernelUtil::GetCallInputPartials(non_tail_call);
+  for (auto node : partial_nodes) {
+    auto partial_node = reinterpret_cast<kernel::PartialFusionKernel *>(node->kernel());
+    MS_CHECK_TRUE_MSG(partial_node != nullptr, RET_ERROR, "node cast to partial node failed.");
+    auto kernels = partial_node->subgraph_kernels();
+    MS_CHECK_TRUE_MSG(!kernels.empty(), RET_ERROR, "partial subgraph kernels empty.");
+    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernels.back());
+    MS_CHECK_TRUE_MSG(subgraph != nullptr, RET_ERROR, "partial node's subgraph kernel is nullptr.");
+    if (kernel::LiteKernelUtil::IsTailCallSubGraph(subgraph)) {
+      std::queue<kernel::LiteKernel *> tail_call_q{};
+      tail_call_q.push(subgraph->out_nodes().front());
+      std::vector<kernel::LiteKernel *> final_graphs{};
+      std::set<kernel::LiteKernel *> reviewed_graphs{};
+      auto ret = GetTailCallFinalSubgraphs(&tail_call_q, &final_graphs, reviewed_graphs);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "GetTailCallFinalSubgraphs failed.");
+      for (auto item : final_graphs) {
+        MS_CHECK_TRUE_MSG(item->out_tensors().size() == non_tail_call_output_size, RET_ERROR,
+                          "subgraph outputs and corresponding call outputs size not same.");
         for (size_t i = 0; i < non_tail_call_output_size; ++i) {
-          context_->SetLinkInfo(subgraph->out_tensors()[i], non_tail_call->out_tensors()[i]);
+          context_->SetLinkInfo(item->out_tensors()[i], non_tail_call->out_tensors()[i]);
         }
       }
+    } else {
+      MS_CHECK_TRUE_MSG(subgraph->out_tensors().size() == non_tail_call_output_size, RET_ERROR,
+                        "partial inputs and corresponding call outputs size not same.");
+      for (size_t i = 0; i < non_tail_call_output_size; ++i) {
+        context_->SetLinkInfo(subgraph->out_tensors()[i], non_tail_call->out_tensors()[i]);
+      }
     }
+  }
+  return RET_OK;
+}
+
+int ControlFlowScheduler::RecordAllNonTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  for (auto dst_kernel : *dst_kernels) {
+    auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(dst_kernel);
+    MS_CHECK_TRUE_MSG(subgraph_kernel != nullptr, RET_ERROR, "node cast to subgraph kernel failed.");
+    for (auto node : subgraph_kernel->nodes()) {
+      if (kernel::LiteKernelUtil::IsNonTailCall(node)) {
+        non_tail_calls_.push_back(node);
+      }
+    }
+  }
+
+  for (auto non_tail_call : non_tail_calls_) {
+    auto ret = RecordNonTailCallLinkInfo(non_tail_call);
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordNonTailCallLinkInfo, failed");
   }
   return RET_OK;
 }
@@ -555,10 +567,7 @@ int ControlFlowScheduler::RecordAllTailCallLinkInfo(std::vector<kernel::LiteKern
 
   for (auto tail_call : all_tail_calls) {
     auto ret = RecordTailCallLinkInfo(tail_call);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "record tail call: " << tail_call->name() << " failed.";
-      return ret;
-    }
+    MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordTailCallLinkInfo, failed");
   }
   return RET_OK;
 }
@@ -735,7 +744,17 @@ void ControlFlowScheduler::UpdateSubGraphMap(kernel::LiteKernel *new_subgraph, k
   return;
 }
 
-int ControlFlowScheduler::RecordControlFlowLinkInfo() {
+int ControlFlowScheduler::RecordLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  auto ret = RecordPartialInputLinkInfo();
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordPartialInputLinkInfo failed.");
+  ret = this->RecordAllTailCallLinkInfo(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordAllTailCallLinkInfo failed");
+  ret = this->RecordAllNonTailCallLinkInfo(dst_kernels);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "RecordAllNonTailCallLinkInfo failed");
+  return RET_OK;
+}
+
+int ControlFlowScheduler::RecordPartialInputLinkInfo() {
   for (auto &pair : *partial_kernel_subgraph_index_map_) {
     auto partial_kernel = reinterpret_cast<kernel::PartialFusionKernel *>((pair.first)->kernel());
     MS_CHECK_TRUE_MSG(partial_kernel != nullptr, RET_ERROR, "cast to partial kernel failed.");
