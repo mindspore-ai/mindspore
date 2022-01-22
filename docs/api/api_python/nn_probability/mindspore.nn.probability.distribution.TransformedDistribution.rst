@@ -21,4 +21,3 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
     - **TypeError** - bijector不是Bijector类。
     - **TypeError** - distribution不是Distribution类。
-
