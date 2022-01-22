@@ -53,7 +53,7 @@ void StartFLJobKernel::InitKernel(size_t) {
 
 bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "Launching StartFLJobKernel kernel.";
+  MS_LOG(DEBUG) << "Launching StartFLJobKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
     std::string reason = "inputs or outputs size is invalid.";
     MS_LOG(ERROR) << reason;
@@ -73,7 +73,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (!verifier.VerifyBuffer<schema::RequestFLJob>()) {
     std::string reason = "The schema of RequestFLJob is invalid.";
     BuildStartFLJobRsp(fbb, schema::ResponseCode_RequestError, reason, false, "");
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
@@ -90,7 +90,7 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, reason.c_str(), reason.size());
     return true;
   }
@@ -150,7 +150,7 @@ bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return false;
   }
   unsigned char sign_data[sign_data_vector->size()];
@@ -179,9 +179,9 @@ bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
   } else {
-    MS_LOG(INFO) << "JudgeFLJobVerify success." << ret;
+    MS_LOG(DEBUG) << "JudgeFLJobVerify success." << ret;
   }
 
   return ret;
@@ -208,7 +208,7 @@ bool StartFLJobKernel::StoreKeyAttestation(const std::shared_ptr<FBBuilder> &fbb
   bool ret = fl::server::DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxClientKeyAttestation, pb_data);
   if (!ret) {
     std::string reason = "startFLJob: store key attestation failed";
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
@@ -239,7 +239,7 @@ ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<F
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(WARNING) << reason;
+    MS_LOG(DEBUG) << reason;
     return ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
@@ -253,7 +253,7 @@ DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *st
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
-  MS_LOG(INFO) << "DeviceMeta fl_name:" << fl_name << ", fl_id:" << fl_id << ", data_size:" << data_size;
+  MS_LOG(DEBUG) << "DeviceMeta fl_name:" << fl_name << ", fl_id:" << fl_id << ", data_size:" << data_size;
 
   DeviceMeta device_meta;
   device_meta.set_fl_name(fl_name);
@@ -273,7 +273,7 @@ ResultCode StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder>
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(WARNING) << reason;
+    MS_LOG(DEBUG) << reason;
   }
   return ret;
 }
@@ -289,7 +289,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
@@ -312,7 +312,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           const std::string &next_req_time,
                                           std::map<std::string, AddressPtr> feature_maps) {
   if (fbb == nullptr) {
-    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    MS_LOG(WARNING) << "Input fbb is nullptr.";
     return;
   }
   auto fbs_reason = fbb->CreateString(reason);

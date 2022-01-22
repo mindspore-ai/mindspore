@@ -243,6 +243,7 @@ void TcpServer::AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConn
 
 void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
   std::lock_guard<std::mutex> lock(connection_mutex_);
+  MS_LOG(INFO) << "Remove connection fd: " << fd;
   connections_.erase(fd);
 }
 
@@ -387,7 +388,7 @@ void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events,
   MS_EXCEPTION_IF_NULL(srv);
 
   if (events & BEV_EVENT_EOF) {
-    MS_LOG(INFO) << "Event buffer end of file, a client is disconnected from this server!";
+    MS_LOG(INFO) << "BEV_EVENT_EOF event is trigger!";
     // Notify about disconnection
     if (srv->client_disconnection_) {
       srv->client_disconnection_(*srv, *conn);
@@ -395,7 +396,7 @@ void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events,
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
   } else if (events & BEV_EVENT_ERROR) {
-    MS_LOG(WARNING) << "Connect to server error.";
+    MS_LOG(WARNING) << "BEV_EVENT_ERROR event is trigger!";
     if (PSContext::instance()->enable_ssl()) {
       uint64_t err = bufferevent_get_openssl_error(bev);
       MS_LOG(WARNING) << "The error number is:" << err;

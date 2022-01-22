@@ -43,8 +43,7 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configurati
       server_address_(std::move(address)),
       server_port_(port),
       is_stop_(true),
-      is_connected_(false),
-      config_(config) {
+      is_connected_(false) {
   message_handler_.SetCallback(
     [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {

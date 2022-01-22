@@ -68,7 +68,7 @@ void SchedulerNode::RunRecovery() {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   // create tcp client to myself in case of event dispatch failed when Send reconnect msg to server failed
   client_to_scheduler_ =
-    std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port, config_.get());
+    std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port);
   MS_EXCEPTION_IF_NULL(client_to_scheduler_);
   client_to_scheduler_->Init();
   client_thread_ = std::make_unique<std::thread>([this]() {
@@ -95,7 +95,7 @@ void SchedulerNode::RunRecovery() {
   for (const auto &kvs : initial_node_infos) {
     auto &node_id = kvs.first;
     auto &node_info = kvs.second;
-    auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_, config_.get());
+    auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_);
     client->SetMessageCallback([this](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *, size_t) {
       MS_LOG(INFO) << "received the response. ";
       NotifyMessageArrival(meta);
@@ -647,7 +647,7 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     MS_LOG(INFO) << "ip:" << ip << ", port:" << port << ", node id:" << node_info.node_id_;
-    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
+    auto client = std::make_shared<TcpClient>(ip, port);
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback(
       [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {

@@ -80,8 +80,8 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::
   if (!client->SendMessage(meta, protos, data, size)) {
     MS_LOG(WARNING) << "Client send message failed.";
   }
-  MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
 }
 

@@ -53,14 +53,16 @@ class UpdateModelKernel : public RoundKernel {
 
  private:
   ResultCode ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb);
-  ResultCode UpdateModel(const schema::RequestUpdateModel *update_model_req, const std::shared_ptr<FBBuilder> &fbb);
+  ResultCode UpdateModel(const schema::RequestUpdateModel *update_model_req, const std::shared_ptr<FBBuilder> &fbb,
+                         const PBMetadata &device_metas);
   std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
   sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);
   void BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                            const std::string &reason, const std::string &next_req_time);
-
+  ResultCode VerifyUpdateModel(const schema::RequestUpdateModel *update_model_req,
+                               const std::shared_ptr<FBBuilder> &fbb, const PBMetadata &device_metas);
   // The executor is for updating the model for updateModel request.
   Executor *executor_{nullptr};
 

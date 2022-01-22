@@ -20,11 +20,13 @@ namespace mindspore {
 namespace ps {
 namespace core {
 std::string SchedulerRecovery::GetMetadata(const std::string &key) {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   MS_EXCEPTION_IF_NULL(recovery_storage_);
   return recovery_storage_->Get(key, "");
 }
 
 bool SchedulerRecovery::Recover() {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   if (recovery_storage_ == nullptr) {
     return false;
   }
