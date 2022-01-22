@@ -27,4 +27,3 @@ mindspore.nn.probability.distribution.Normal
 
     - **ValueError** - `sd` 中元素小于0。
     - **TypeError** - `dtype` 不是float的子类。
-

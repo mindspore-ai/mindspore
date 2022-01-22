@@ -17,6 +17,8 @@ mindspore.dataset.Schema
 
     **RuntimeError**： 模式文件加载失败。
 
+    .. py:method::add_column(name, de_type, shape=None)
+
         向schema中添加新列。
 
         **参数：**
