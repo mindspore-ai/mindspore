@@ -109,6 +109,19 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
 int ConvolutionDelegateCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+
+  if (in_tensors_.at(SECOND_INPUT)->data_type() != kNumberTypeFloat32 &&
+      in_tensors_.at(SECOND_INPUT)->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "conv weight data type invalid. " << in_tensors_.at(SECOND_INPUT)->data_type();
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == DIMENSION_3D && in_tensors_.at(THIRD_INPUT) != nullptr &&
+      in_tensors_.at(THIRD_INPUT)->data_type() != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "conv bias data type invalid. " << in_tensors_.at(THIRD_INPUT)->data_type();
+    return RET_ERROR;
+  }
+
   auto ret = GetWeightAndBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get weight and bias failed.";
