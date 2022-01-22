@@ -37,7 +37,7 @@ class MS_CORE_API ReduceSum : public Reduce {
   ~ReduceSum() = default;
   MS_DECLARE_PARENT(ReduceSum, Reduce);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);

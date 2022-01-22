@@ -35,7 +35,7 @@ class MS_CORE_API Maximum : public PrimitiveC {
   ~Maximum() = default;
   MS_DECLARE_PARENT(Maximum, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Maximum for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);

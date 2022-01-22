@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <string>
-
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 namespace mindspore {

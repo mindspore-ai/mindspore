@@ -29,7 +29,7 @@ class MS_CORE_API MulGrad : public PrimitiveC {
   MulGrad() : PrimitiveC(kNameMulGrad) {}
   ~MulGrad() = default;
   MS_DECLARE_PARENT(MulGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 }  // namespace ops

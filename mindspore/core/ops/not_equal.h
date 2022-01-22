@@ -36,7 +36,7 @@ class MS_CORE_API NotEqual : public PrimitiveC {
   ~NotEqual() = default;
   MS_DECLARE_PARENT(NotEqual, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NotEqual for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr NotEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

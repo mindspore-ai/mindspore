@@ -38,7 +38,7 @@ class MS_CORE_API Where : public PrimitiveC {
   MS_DECLARE_PARENT(Where, PrimitiveC);
 
   /// \brief Method to init the op's attributes
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

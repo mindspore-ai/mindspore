@@ -35,7 +35,7 @@ class MS_CORE_API Mod : public PrimitiveC {
   ~Mod() = default;
   MS_DECLARE_PARENT(Mod, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mod for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);

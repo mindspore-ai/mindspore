@@ -37,7 +37,7 @@ class MS_CORE_API ReduceMax : public Reduce {
   ~ReduceMax() = default;
   MS_DECLARE_PARENT(ReduceMax, Reduce);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReduceMax for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

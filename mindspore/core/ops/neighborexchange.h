@@ -35,7 +35,7 @@ class MS_CORE_API NeighborExchange : public PrimitiveC {
   ~NeighborExchange() = default;
   MS_DECLARE_PARENT(NeighborExchange, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NeighborExchange for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);

@@ -28,7 +28,7 @@ class MS_CORE_API SqrtGrad : public PrimitiveC {
   SqrtGrad() : PrimitiveC(kNameSqrtGrad) { InitIOName({"out_backprop", "input"}, {"output"}); }
   ~SqrtGrad() = default;
   MS_DECLARE_PARENT(SqrtGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

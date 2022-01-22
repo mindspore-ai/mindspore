@@ -32,7 +32,7 @@ class MS_CORE_API BiasAddGrad : public PrimitiveC {
   BiasAddGrad() : PrimitiveC(prim::kPrimBiasAddGrad->name()) { InitIOName({"x"}, {"output"}); }
   ~BiasAddGrad() = default;
   MS_DECLARE_PARENT(BiasAddGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);

@@ -39,7 +39,7 @@ class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
   ~SoftmaxCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SoftmaxCrossEntropyWithLogits, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args);

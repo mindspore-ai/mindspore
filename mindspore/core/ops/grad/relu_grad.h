@@ -32,7 +32,7 @@ class MS_CORE_API ReLUGrad : public PrimitiveC {
   ReLUGrad() : PrimitiveC(prim::kPrimReluGrad->name()) { InitIOName({"x"}, {"output"}); }
   ~ReLUGrad() = default;
   MS_DECLARE_PARENT(ReLUGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

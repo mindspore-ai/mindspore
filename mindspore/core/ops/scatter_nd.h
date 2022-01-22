@@ -36,7 +36,7 @@ class MS_CORE_API ScatterNd : public PrimitiveC {
   ~ScatterNd() = default;
   MS_DECLARE_PARENT(ScatterNd, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);

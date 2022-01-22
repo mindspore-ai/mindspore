@@ -38,7 +38,7 @@ class MS_CORE_API Tanh : public PrimitiveC {
   ~Tanh() = default;
   MS_DECLARE_PARENT(Tanh, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);

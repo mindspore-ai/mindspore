@@ -36,7 +36,7 @@ class MS_CORE_API Shape : public PrimitiveC {
   ~Shape() = default;
   MS_DECLARE_PARENT(Shape, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

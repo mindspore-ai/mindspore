@@ -37,7 +37,7 @@ class MS_CORE_API Softplus : public PrimitiveC {
   ~Softplus() = default;
   MS_DECLARE_PARENT(Softplus, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

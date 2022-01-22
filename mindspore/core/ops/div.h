@@ -37,7 +37,7 @@ class MS_CORE_API Div : public PrimitiveC {
   ~Div() = default;
   MS_DECLARE_PARENT(Div, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Div for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);

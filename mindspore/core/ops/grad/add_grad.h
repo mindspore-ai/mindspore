@@ -32,7 +32,7 @@ class MS_CORE_API AddGrad : public PrimitiveC {
   AddGrad() : PrimitiveC(kNameAddGrad) {}
   ~AddGrad() = default;
   MS_DECLARE_PARENT(AddGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

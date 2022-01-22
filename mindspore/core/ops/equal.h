@@ -36,7 +36,7 @@ class MS_CORE_API Equal : public PrimitiveC {
   ~Equal() = default;
   MS_DECLARE_PARENT(Equal, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Equal for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

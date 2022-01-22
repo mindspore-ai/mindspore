@@ -36,7 +36,7 @@ class MS_CORE_API NegGrad : public PrimitiveC {
   NegGrad() : PrimitiveC(kNameNegGrad) {}
   ~NegGrad() = default;
   MS_DECLARE_PARENT(NegGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

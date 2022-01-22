@@ -37,7 +37,7 @@ class MS_CORE_API Reshape : public PrimitiveC {
   ~Reshape() = default;
   MS_DECLARE_PARENT(Reshape, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -37,7 +37,7 @@ class MS_CORE_API HashtableLookup : public PrimitiveC {
   MS_DECLARE_PARENT(HashtableLookup, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

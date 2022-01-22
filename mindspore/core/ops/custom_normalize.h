@@ -30,7 +30,7 @@ class MS_CORE_API CustomNormalize : public PrimitiveC {
   CustomNormalize() : PrimitiveC(kNameCustomNormalize) {}
   ~CustomNormalize() = default;
   MS_DECLARE_PARENT(CustomNormalize, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

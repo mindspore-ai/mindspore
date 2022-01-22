@@ -35,7 +35,7 @@ class MS_CORE_API DropoutGenMask : public PrimitiveC {
   ~DropoutGenMask() = default;
   MS_DECLARE_PARENT(DropoutGenMask, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DropoutGenMask for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);

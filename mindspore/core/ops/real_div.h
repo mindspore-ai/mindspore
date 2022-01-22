@@ -36,7 +36,7 @@ class MS_CORE_API RealDiv : public PrimitiveC {
   ~RealDiv() = default;
   MS_DECLARE_PARENT(RealDiv, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.RealDiv for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

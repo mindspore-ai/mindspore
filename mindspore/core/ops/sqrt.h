@@ -32,7 +32,7 @@ class MS_CORE_API Sqrt : public PrimitiveC {
   ~Sqrt() = default;
   MS_DECLARE_PARENT(Sqrt, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -37,7 +37,7 @@ class MS_CORE_API Add : public PrimitiveC {
   ~Add() = default;
   MS_DECLARE_PARENT(Add, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Add for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -16,9 +16,6 @@
 
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 
-#include <iostream>
-#include <string>
-
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/gpu/cuda_common.h"

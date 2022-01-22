@@ -36,7 +36,7 @@ class MS_CORE_API Ceil : public PrimitiveC {
   ~Ceil() = default;
   MS_DECLARE_PARENT(Ceil, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Ceil for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);

@@ -35,7 +35,7 @@ class MS_CORE_API SquaredDifference : public PrimitiveC {
   ~SquaredDifference() = default;
   MS_DECLARE_PARENT(SquaredDifference, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args);

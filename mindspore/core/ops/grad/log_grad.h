@@ -32,7 +32,7 @@ class MS_CORE_API LogGrad : public PrimitiveC {
   LogGrad() : PrimitiveC(kNameLogGrad) {}
   ~LogGrad() = default;
   MS_DECLARE_PARENT(LogGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

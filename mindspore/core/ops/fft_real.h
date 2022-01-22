@@ -37,7 +37,7 @@ class MS_CORE_API FftReal : public PrimitiveC {
   MS_DECLARE_PARENT(FftReal, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr FftRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

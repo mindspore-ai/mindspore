@@ -35,7 +35,7 @@ class MS_CORE_API Identity : public PrimitiveC {
   ~Identity() = default;
   MS_DECLARE_PARENT(Identity, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Identity for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

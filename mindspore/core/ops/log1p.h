@@ -37,7 +37,7 @@ class MS_CORE_API Log1p : public PrimitiveC {
   ~Log1p() = default;
   MS_DECLARE_PARENT(Log1p, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Log1p for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

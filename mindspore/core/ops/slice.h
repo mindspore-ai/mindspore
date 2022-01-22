@@ -36,7 +36,7 @@ class MS_CORE_API Slice : public PrimitiveC {
   ~Slice() = default;
   MS_DECLARE_PARENT(Slice, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);

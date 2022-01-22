@@ -39,7 +39,7 @@ class MS_CORE_API CTCLossV2 : public PrimitiveC {
   ~CTCLossV2() = default;
   MS_DECLARE_PARENT(CTCLossV2, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLossV2 for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -35,7 +35,7 @@ class MS_CORE_API ExpandDims : public PrimitiveC {
   ~ExpandDims() = default;
   MS_DECLARE_PARENT(ExpandDims, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ExpandDims for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);

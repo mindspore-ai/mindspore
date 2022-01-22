@@ -29,7 +29,7 @@ class MS_CORE_API SubGrad : public PrimitiveC {
   SubGrad() : PrimitiveC(kNameSubGrad) {}
   ~SubGrad() = default;
   MS_DECLARE_PARENT(SubGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 }  // namespace ops

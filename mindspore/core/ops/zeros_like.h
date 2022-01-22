@@ -34,7 +34,7 @@ class MS_CORE_API ZerosLike : public PrimitiveC {
   ~ZerosLike() = default;
   MS_DECLARE_PARENT(ZerosLike, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);

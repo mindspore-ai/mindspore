@@ -34,7 +34,7 @@ class MS_CORE_API GatherNd : public PrimitiveC {
   ~GatherNd() = default;
   MS_DECLARE_PARENT(GatherNd, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GatherNd for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);

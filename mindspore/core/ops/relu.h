@@ -37,7 +37,7 @@ class MS_CORE_API ReLU : public PrimitiveC {
   ~ReLU() = default;
   MS_DECLARE_PARENT(ReLU, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore
