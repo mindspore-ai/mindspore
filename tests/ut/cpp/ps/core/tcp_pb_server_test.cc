@@ -60,7 +60,7 @@ class TestTcpServer : public UT::Common {
 
 TEST_F(TestTcpServer, ServerSendMessage) {
   std::unique_ptr<Configuration> config = std::make_unique<FileConfiguration>("");
-  client_ = std::make_unique<TcpClient>("127.0.0.1", server_->BoundPort(), config.get(), NodeRole::SERVER);
+  client_ = std::make_unique<TcpClient>("127.0.0.1", server_->BoundPort(), NodeRole::SERVER);
   std::cout << server_->BoundPort() << std::endl;
   std::unique_ptr<std::thread> http_client_thread(nullptr);
   http_client_thread = std::make_unique<std::thread>([&]() {

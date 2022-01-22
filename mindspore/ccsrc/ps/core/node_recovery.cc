@@ -20,6 +20,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 bool NodeRecovery::Recover() {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   if (recovery_storage_ == nullptr) {
     return false;
   }

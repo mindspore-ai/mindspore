@@ -28,8 +28,7 @@ class TestTcpClient : public UT::Common {
 };
 
 TEST_F(TestTcpClient, InitClientIPError) {
-  std::unique_ptr<Configuration> config = std::make_unique<FileConfiguration>("");
-  auto client = std::make_unique<TcpClient>("127.0.0.13543", 9000, config.get(), NodeRole::SERVER);
+  auto client = std::make_unique<TcpClient>("127.0.0.13543", 9000, NodeRole::SERVER);
 
   client->SetMessageCallback([&](std::shared_ptr<MessageMeta>, const Protos &, const void *data, size_t size) {
     CommMessage message;
@@ -42,8 +41,7 @@ TEST_F(TestTcpClient, InitClientIPError) {
 }
 
 TEST_F(TestTcpClient, InitClientPortErrorNoException) {
-  std::unique_ptr<Configuration> config = std::make_unique<FileConfiguration>("");
-  auto client = std::make_unique<TcpClient>("127.0.0.1", -1, config.get(), NodeRole::SERVER);
+  auto client = std::make_unique<TcpClient>("127.0.0.1", -1, NodeRole::SERVER);
 
   client->SetMessageCallback([&](std::shared_ptr<MessageMeta>, const Protos &, const void *data, size_t size) {
     CommMessage message;

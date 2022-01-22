@@ -135,9 +135,9 @@ class FedAvgKernel : public AggregationKernel {
       ClearWeightAndDataSize();
     }
 
-    MS_LOG(INFO) << "Iteration: " << LocalMetaStore::GetInstance().curr_iter_num() << " launching FedAvgKernel for "
-                 << name_ << " new data size is " << new_data_size_addr[0] << ", current total data size is "
-                 << data_size_addr[0];
+    MS_LOG(DEBUG) << "Iteration: " << LocalMetaStore::GetInstance().curr_iter_num() << " launching FedAvgKernel for "
+                  << name_ << " new data size is " << new_data_size_addr[0] << ", current total data size is "
+                  << data_size_addr[0];
     for (size_t i = 0; i < inputs[2]->size / sizeof(T); i++) {
       weight_addr[i] += new_weight_addr[i];
     }

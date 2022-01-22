@@ -43,7 +43,7 @@ class MemoryRegister {
   // avoid its data being released.
   template <typename T>
   void RegisterArray(const std::string &name, std::unique_ptr<T[]> *array, size_t size) {
-    MS_EXCEPTION_IF_NULL(array);
+    MS_ERROR_IF_NULL_WO_RET_VAL(array);
     void *data = array->get();
     AddressPtr addr = std::make_shared<Address>();
     addr->addr = data;
@@ -62,7 +62,7 @@ class MemoryRegister {
       auto char_arr = CastUniquePtr<char, T>(array);
       StoreCharArray(&char_arr);
     } else {
-      MS_LOG(ERROR) << "MemoryRegister does not support type " << typeid(T).name();
+      MS_LOG(WARNING) << "MemoryRegister does not support type " << typeid(T).name();
       return;
     }
 

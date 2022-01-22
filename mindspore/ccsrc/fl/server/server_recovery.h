@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "ps/core/recovery_base.h"
 #include "ps/core/file_configuration.h"
 #include "ps/core/communicator/tcp_communicator.h"
@@ -58,6 +59,7 @@ class ServerRecovery : public ps::core::RecoveryBase {
 
   // The server recovery file object.
   std::fstream server_recovery_file_;
+  std::mutex server_recovery_file_mtx_;
 };
 }  // namespace server
 }  // namespace fl

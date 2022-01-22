@@ -435,7 +435,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
   notify_leader_to_next_iter_rsp.set_result("success");
   if (!communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
                                    notify_leader_to_next_iter_rsp.SerializeAsString().size(), message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
+    MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
 

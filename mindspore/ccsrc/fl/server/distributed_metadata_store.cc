@@ -43,7 +43,7 @@ void DistributedMetadataStore::RegisterMessageCallback(const std::shared_ptr<ps:
 
 void DistributedMetadataStore::RegisterMetadata(const std::string &name, const PBMetadata &meta) {
   if (router_ == nullptr) {
-    MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
+    MS_LOG(WARNING) << "The consistent hash ring is not initialized yet.";
     return;
   }
 
@@ -63,14 +63,14 @@ void DistributedMetadataStore::RegisterMetadata(const std::string &name, const P
 
 void DistributedMetadataStore::ResetMetadata(const std::string &name) {
   if (router_ == nullptr) {
-    MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
+    MS_LOG(WARNING) << "The consistent hash ring is not initialized yet.";
     return;
   }
 
   uint32_t stored_rank = router_->Find(name);
   if (local_rank_ == stored_rank) {
     if (metadata_.count(name) == 0) {
-      MS_LOG(ERROR) << "The metadata for " << name << " is not registered.";
+      MS_LOG(WARNING) << "The metadata for " << name << " is not registered.";
       return;
     }
 
@@ -84,15 +84,15 @@ void DistributedMetadataStore::ResetMetadata(const std::string &name) {
 
 bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBMetadata &meta, std::string *reason) {
   if (router_ == nullptr) {
-    MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
+    MS_LOG(WARNING) << "The consistent hash ring is not initialized yet.";
     return false;
   }
 
   uint32_t stored_rank = router_->Find(name);
-  MS_LOG(INFO) << "Rank " << local_rank_ << " update value for " << name << " which is stored in rank " << stored_rank;
+  MS_LOG(DEBUG) << "Rank " << local_rank_ << " update value for " << name << " which is stored in rank " << stored_rank;
   if (local_rank_ == stored_rank) {
     if (!DoUpdateMetadata(name, meta)) {
-      MS_LOG(ERROR) << "Updating meta data failed.";
+      MS_LOG(WARNING) << "Updating meta data failed.";
       return false;
     }
   } else {
@@ -102,7 +102,7 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
     std::shared_ptr<std::vector<unsigned char>> update_meta_rsp_msg = nullptr;
     if (!communicator_->SendPbRequest(metadata_with_name, stored_rank, ps::core::TcpUserCommand::kUpdateMetadata,
                                       &update_meta_rsp_msg)) {
-      MS_LOG(ERROR) << "Sending updating metadata message to server " << stored_rank << " failed.";
+      MS_LOG(WARNING) << "Sending updating metadata message to server " << stored_rank << " failed.";
       if (reason != nullptr) {
         *reason = kNetworkError;
       }
@@ -113,7 +113,7 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
     std::string update_meta_rsp =
       std::string(reinterpret_cast<char *>(update_meta_rsp_msg->data()), update_meta_rsp_msg->size());
     if (update_meta_rsp != kSuccess) {
-      MS_LOG(ERROR) << "Updating metadata in server " << stored_rank << " failed. " << update_meta_rsp;
+      MS_LOG(WARNING) << "Updating metadata in server " << stored_rank << " failed. " << update_meta_rsp;
       return false;
     }
   }
@@ -122,11 +122,11 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
 
 PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
   if (router_ == nullptr) {
-    MS_LOG(ERROR) << "The consistent hash ring is not initialized yet.";
+    MS_LOG(WARNING) << "The consistent hash ring is not initialized yet.";
     return {};
   }
   uint32_t stored_rank = router_->Find(name);
-  MS_LOG(INFO) << "Rank " << local_rank_ << " get metadata for " << name << " which is stored in rank " << stored_rank;
+  MS_LOG(DEBUG) << "Rank " << local_rank_ << " get metadata for " << name << " which is stored in rank " << stored_rank;
   if (local_rank_ == stored_rank) {
     std::unique_lock<std::mutex> lock(mutex_[name]);
     return metadata_[name];
@@ -138,7 +138,7 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
     std::shared_ptr<std::vector<unsigned char>> get_meta_rsp_msg = nullptr;
     if (!communicator_->SendPbRequest(get_metadata_req, stored_rank, ps::core::TcpUserCommand::kGetMetadata,
                                       &get_meta_rsp_msg)) {
-      MS_LOG(ERROR) << "Sending getting metadata message to server " << stored_rank << " failed.";
+      MS_LOG(WARNING) << "Sending getting metadata message to server " << stored_rank << " failed.";
       return get_metadata_rsp;
     }
 
@@ -184,17 +184,17 @@ void DistributedMetadataStore::HandleUpdateMetadataRequest(const std::shared_ptr
   PBMetadataWithName meta_with_name;
   (void)meta_with_name.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = meta_with_name.name();
-  MS_LOG(INFO) << "Update metadata for " << name;
+  MS_LOG(DEBUG) << "Update metadata for " << name;
 
   std::string update_meta_rsp_msg;
   if (!DoUpdateMetadata(name, meta_with_name.metadata())) {
     update_meta_rsp_msg = "Updating meta data failed.";
-    MS_LOG(ERROR) << update_meta_rsp_msg;
+    MS_LOG(WARNING) << update_meta_rsp_msg;
   } else {
     update_meta_rsp_msg = "Success";
   }
   if (!communicator_->SendResponse(update_meta_rsp_msg.data(), update_meta_rsp_msg.size(), message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
+    MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
   return;
@@ -205,17 +205,17 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
   GetMetadataRequest get_metadata_req;
   (void)get_metadata_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const std::string &name = get_metadata_req.name();
-  MS_LOG(INFO) << "Getting metadata for " << name;
+  MS_LOG(DEBUG) << "Getting metadata for " << name;
 
   std::unique_lock<std::mutex> lock(mutex_[name]);
   if (metadata_.count(name) == 0) {
-    MS_LOG(ERROR) << "The metadata of " << name << " is not registered.";
+    MS_LOG(WARNING) << "The metadata of " << name << " is not registered.";
     return;
   }
   PBMetadata stored_meta = metadata_[name];
   std::string getting_meta_rsp_msg = stored_meta.SerializeAsString();
   if (!communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
+    MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
   return;
@@ -224,7 +224,7 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
 bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const PBMetadata &meta) {
   std::unique_lock<std::mutex> lock(mutex_[name]);
   if (metadata_.count(name) == 0) {
-    MS_LOG(ERROR) << "The metadata of " << name << " is not registered.";
+    MS_LOG(WARNING) << "The metadata of " << name << " is not registered.";
     return false;
   }
   if (meta.has_device_meta()) {
@@ -265,13 +265,13 @@ bool DistributedMetadataStore::DoUpdateEncryptMetadata(const std::string &name, 
   if (meta.has_pair_client_keys()) {
     bool keys_update_succeed = UpdatePairClientKeys(name, meta);
     if (!keys_update_succeed) {
-      MS_LOG(ERROR) << "Update pair_client_keys failed.";
+      MS_LOG(WARNING) << "Update pair_client_keys failed.";
       return false;
     }
   } else if (meta.has_pair_client_shares()) {
     bool shares_update_succeed = UpdatePairClientShares(name, meta);
     if (!shares_update_succeed) {
-      MS_LOG(ERROR) << "Update pair_client_shares failed.";
+      MS_LOG(WARNING) << "Update pair_client_shares failed.";
       return false;
     }
   } else if (meta.has_one_client_noises()) {
@@ -305,8 +305,8 @@ bool DistributedMetadataStore::DoUpdateEncryptMetadata(const std::string &name, 
     auto &certificate = meta.pair_key_attestation().certificate();
     key_attestation_map[fl_id] = certificate;
   } else {
-    MS_LOG(ERROR) << "Leader server updating value for " << name
-                  << " failed: The Protobuffer of this value is not defined.";
+    MS_LOG(WARNING) << "Leader server updating value for " << name
+                    << " failed: The Protobuffer of this value is not defined.";
     return false;
   }
   return true;
@@ -321,8 +321,8 @@ bool DistributedMetadataStore::UpdatePairClientKeys(const std::string &name, con
   for (auto iter = client_keys_map.begin(); iter != client_keys_map.end(); ++iter) {
     if (fl_id == iter->first) {
       add_flag = false;
-      MS_LOG(ERROR) << "Leader server updating value for " << name
-                    << " failed: The Protobuffer of this value already exists.";
+      MS_LOG(WARNING) << "Leader server updating value for " << name
+                      << " failed: The Protobuffer of this value already exists.";
       break;
     }
   }
@@ -344,8 +344,8 @@ bool DistributedMetadataStore::UpdatePairClientShares(const std::string &name, c
   for (auto iter = client_shares_map.begin(); iter != client_shares_map.end(); ++iter) {
     if (fl_id == iter->first) {
       add_flag = false;
-      MS_LOG(ERROR) << "Leader server updating value for " << name
-                    << " failed: The Protobuffer of this value already exists.";
+      MS_LOG(WARNING) << "Leader server updating value for " << name
+                      << " failed: The Protobuffer of this value already exists.";
       break;
     }
   }
