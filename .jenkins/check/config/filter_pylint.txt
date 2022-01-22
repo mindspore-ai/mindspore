@@ -35,6 +35,8 @@
 "mindspore/mindspore/python/mindspore/train/serialization.py"                                                            "protected-access"
 "mindspore/mindspore/python/mindspore/train/model.py"                                                                    "protected-access"
 "mindspore/mindspore/python/mindspore/log.py"                                                                            "protected-access"
+"mindspore/mindspore/python/mindspore/scipy/ops.py"                                                                      "unused-import"
+"mindspore/mindspore/python/mindspore/scipy/ops.py"                                                                      "wrong-import-position"
 "mindspore/model_zoo/official/cv"                                                                       "missing-docstring"
 "mindspore/model_zoo/official/cv"                                                                       "c-extension-no-member"
 "mindspore/model_zoo/official/nlp/bert_thor/src/bert_model.py"                                          "redefined-outer-name"
