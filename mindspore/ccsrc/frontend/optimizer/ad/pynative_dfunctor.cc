@@ -16,9 +16,6 @@
 
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
 
-#include <memory>
-#include <vector>
-
 namespace mindspore {
 namespace ad {
 tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {

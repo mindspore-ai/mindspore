@@ -19,8 +19,6 @@
 
 #include "frontend/operator/composite/composite.h"
 #include <algorithm>
-#include <utility>
-#include <sstream>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -1112,8 +1110,12 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
   *start_index = CheckSliceMember(slice->start(), start_default, start_name);
   *stop_index = CheckSliceMember(slice->stop(), stop_default, stop_name);
 
-  if (*start_index < -tuple_size) *start_index = 0;
-  if (*stop_index > tuple_size) *stop_index = tuple_size;
+  if (*start_index < -tuple_size) {
+    *start_index = 0;
+  }
+  if (*stop_index > tuple_size) {
+    *stop_index = tuple_size;
+  }
   if (*start_index > tuple_size || *stop_index < -tuple_size) {
     *start_index = 0;
     *stop_index = 0;

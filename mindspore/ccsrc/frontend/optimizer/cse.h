@@ -34,7 +34,7 @@ class CSE {
   CSE() = default;
   virtual ~CSE() = default;
 
-  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const;
+  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const;
 
   virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
 

@@ -192,9 +192,9 @@ FuncGraphPtr BuildFakeBProp(const PrimitivePtr &prim, size_t inputs_num) {
 
 class PynativeAdjoint {
  public:
-  enum FuncGraphType { kForwardPropagate, kBackwardPropagate };
+  enum class FuncGraphType { kForwardPropagate, kBackwardPropagate };
   PynativeAdjoint(const FuncGraphPtr &tape, const ValuePtrList &op_args, const ValuePtr &out, const FuncGraphPtr &fg,
-                  FuncGraphType fg_type = kBackwardPropagate)
+                  FuncGraphType fg_type = FuncGraphType::kBackwardPropagate)
       : tape_(tape), op_args_(op_args), out_(out), fg_(fg), fg_type_(fg_type) {}
 
   ~PynativeAdjoint() = default;
@@ -293,7 +293,7 @@ class KPynativeCellImpl : public KPynativeCell {
   PynativeAdjointPtr ForgeMakeSequenceAdjoint(const CNodePtr &cnode);
   bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                     const FuncGraphPtr &bprop_fg,
-                    PynativeAdjoint::FuncGraphType fg_type = PynativeAdjoint::kBackwardPropagate);
+                    PynativeAdjoint::FuncGraphType fg_type = PynativeAdjoint::FuncGraphType::kBackwardPropagate);
   void BuildAdjointForInput(const CNodePtr &cnode, const ValuePtrList &op_args);
   void PropagateStopGradient();
   bool AllReferencesStopped(const CNodePtr &curr_cnode);
@@ -439,7 +439,7 @@ bool KPynativeCellImpl::KPynativeWithFProp(const CNodePtr &cnode, const ValuePtr
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(fprop_fg);
 
-  (void)BuildAdjoint(cnode, op_args, out, fprop_fg, PynativeAdjoint::kForwardPropagate);
+  (void)BuildAdjoint(cnode, op_args, out, fprop_fg, PynativeAdjoint::FuncGraphType::kForwardPropagate);
 
   return true;
 }
@@ -645,7 +645,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
                        [](const ValuePtr &value) { return ShallowCopyValue(value); });
   ValuePtr cloned_out = ShallowCopyValue(out);
   PynativeAdjointPtr cnode_adjoint;
-  if (fg_type == PynativeAdjoint::kBackwardPropagate) {
+  if (fg_type == PynativeAdjoint::FuncGraphType::kBackwardPropagate) {
     auto optimized_bprop_fg = OptimizeBPropFuncGraph(fg, cnode, cloned_op_args, cloned_out);
     cnode_adjoint = std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
   } else {
@@ -852,7 +852,7 @@ bool KPynativeCellImpl::BackPropagate(bool by_value) {
     MS_LOG(DEBUG) << "BackPropagate for CNode: " << cnode->DebugString();
     auto fg = iter->second->fg();
     auto fg_type = iter->second->fg_type();
-    if (fg_type == PynativeAdjoint::kBackwardPropagate) {
+    if (fg_type == PynativeAdjoint::FuncGraphType::kBackwardPropagate) {
       (void)BackPropagateOneCNodeWithBPropFuncGraph(cnode, iter->second, fg, by_value);
     } else {
       (void)BackPropagateOneCNodeWithFPropFuncGraph(cnode, iter->second, fg, by_value);

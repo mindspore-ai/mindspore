@@ -52,7 +52,7 @@ class HyperMap : public MetaFuncGraph {
   explicit HyperMap(bool reverse = false, const std::shared_ptr<MultitypeFuncGraph> &fn_leaf = nullptr);
   HyperMap(const HyperMap &h);
   void Init();
-  HyperMap &operator=(const HyperMap &h) {
+  HyperMap &operator=(const HyperMap &h) noexcept {
     if (this != &h) {
       fn_leaf_ = h.fn_leaf_;
       reverse_ = h.reverse_;

@@ -50,7 +50,7 @@ class Map : public MetaFuncGraph {
         nonleaf_(map.nonleaf_) {
     Init();
   }
-  Map &operator=(const Map &map) {
+  Map &operator=(const Map &map) noexcept {
     if (this != &map) {
       fn_leaf_ = map.fn_leaf_;
       reverse_ = map.reverse_;

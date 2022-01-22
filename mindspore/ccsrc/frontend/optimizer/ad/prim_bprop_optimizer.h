@@ -57,7 +57,7 @@ using PrimTupleListCache =
 struct PrimitiveTupleListHasher {
   bool operator()(const TupleListKey &key) const {
     abstract::AbstractBasePtrListHasher hasher;
-    return hasher(key.second);
+    return hasher(key.second) != 0;
   }
 };
 
@@ -120,7 +120,6 @@ class PrimBpropOptGraphLevel2Info {
   void AalysisForTupleGetItem(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
                               ParamUsingInfo *arg_info, const AnfNodePtr &user_node) const;
 
- private:
   // the level2 opt func_graph
   FuncGraphPtr opt_func_graph_;
   // to indicate arguments value using or not, if not using should free device memory
@@ -175,7 +174,6 @@ class PrimBpropOptimizer {
   FuncGraphPtr GenSpecOptBprop(const FuncGraphPtr &bprop_fg, const ValuePtrList &op_args, const ValuePtr &out,
                                const PrimitivePtr &prim, bool hook_flg);
 
- private:
   // cache optimized bprop graph
   PrimBpropCache prim_bprop_cache_;
   PrimTupleListCache tuple_list_bprop_cache_;
