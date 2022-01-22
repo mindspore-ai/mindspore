@@ -361,7 +361,7 @@ void SynchronizeSequenceNodesElementsUseFlagsInner(const AnfNodeWeakPtrList &seq
 
 AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {
   AnfNodeWeakPtrList sequence_nodes;
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (!enable_eliminate_unused_element) {
     return sequence_nodes;
   }
@@ -377,7 +377,8 @@ AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &ot
   CollectSequenceNodes(sequence_nodes_, &sequence_nodes);
   CollectSequenceNodes(other_sequence->sequence_nodes_, &sequence_nodes);
   if (sequence_nodes.empty()) {
-    MS_LOG(EXCEPTION) << "Sequence nodes size should not be empty.";
+    MS_LOG(INFO) << "Sequence nodes size should not be empty.";
+    return AnfNodeWeakPtrList();
   }
   // Synchronize the elements use flags for all sequence nodes.
   SynchronizeSequenceNodesElementsUseFlagsInner(sequence_nodes);
@@ -443,7 +444,7 @@ void AbstractSequence::PurifyElements() {
   }
   auto &elements_use_flags = *elements_use_flags_ptr;
   if (elements_use_flags.size() != elements_.size()) {
-    MS_LOG(EXCEPTION) << "Elements size should be equal to elements use flags size.";
+    MS_LOG(EXCEPTION) << "Elements size should be equal to elements use flags size. " << ToString();
   }
   for (size_t i = 0; i < elements_use_flags.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
