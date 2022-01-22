@@ -31,29 +31,29 @@ int TCPSocketOperation::Receive(Connection *connection, char *recvBuf, uint32_t 
 
   *recvLen = 0;
   while (*recvLen != totalRecvLen) {
-    int retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, 0);
+    int retval = recv(fd, curRecvBuf, totalRecvLen - *recvLen, static_cast<int>(0));
     if (retval > 0) {
-      *recvLen += retval;
+      *recvLen += IntToUint(retval);
       if (*recvLen == totalRecvLen) {
-        return totalRecvLen;
+        return UintToInt(totalRecvLen);
       }
       curRecvBuf = curRecvBuf + retval;
       // Failed to receive message.
     } else if (retval < 0) {
       if (EAGAIN == errno) {
-        return *recvLen;
+        return UintToInt(*recvLen);
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
         connection->error_code = errno;
         return -1;
       } else {
-        return *recvLen;
+        return UintToInt(*recvLen);
       }
     } else {
       connection->error_code = errno;
       return -1;
     }
   }
-  return *recvLen;
+  return UintToInt(*recvLen);
 }
 
 int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *recvMsg, uint32_t recvLen) {
@@ -64,10 +64,9 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
   }
 
   while (totalRecvLen) {
-    int retval = recvmsg(connection->socket_fd, recvMsg, 0);
+    auto retval = recvmsg(connection->socket_fd, recvMsg, 0);
     if (retval > 0) {
-      totalRecvLen -= retval;
-
+      totalRecvLen -= IntToSize(retval);
       if (totalRecvLen == 0) {
         recvMsg->msg_iovlen = 0;
         break;
@@ -75,12 +74,12 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 
       unsigned int iovlen = recvMsg->msg_iovlen;
       if (iovlen > 0) {
-        unsigned int tmpLen = 0;
+        size_t tmpLen = 0;
         for (unsigned int i = 0; i < iovlen; ++i) {
           if (recvMsg->msg_iov[i].iov_len + tmpLen <= (size_t)retval) {
             tmpLen += recvMsg->msg_iov[i].iov_len;
           } else {
-            recvMsg->msg_iov[i].iov_len -= (retval - tmpLen);
+            recvMsg->msg_iov[i].iov_len -= IntToSize(retval - tmpLen);
             recvMsg->msg_iov[i].iov_base =
               reinterpret_cast<char *>(recvMsg->msg_iov[i].iov_base) + static_cast<unsigned int>(retval) - tmpLen;
 
@@ -91,15 +90,15 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
         }
       }
     } else if (retval == 0) {
-      return -1;
+      return UintToInt(-1);
     } else {
       if (EAGAIN == errno) {
         return recvLen - totalRecvLen;
       } else if (ECONNRESET == errno || ECONNABORTED == errno || ENOTCONN == errno || EPIPE == errno) {
-        connection->error_code = errno;
+        connection->error_code = UintToInt(errno);
         return -1;
       } else {
-        return recvLen - totalRecvLen;
+        return UintToInt(recvLen - totalRecvLen);
       }
     }
   }
@@ -109,7 +108,7 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, uint32_t *sendLen) {
   int eagainCount = EAGAIN_RETRY;
   uint32_t totalLen = *sendLen;
-  uint32_t unsendLen = *sendLen;
+  int32_t unsendLen = *sendLen;
 
   while (*sendLen != 0) {
     int retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
@@ -131,9 +130,9 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
         break;
       }
 
-      unsigned int tmpBytes = 0;
+      size_t tmpBytes = 0;
       for (unsigned int i = 0; i < sendMsg->msg_iovlen; ++i) {
-        if (sendMsg->msg_iov[i].iov_len + tmpBytes < (size_t)retval) {
+        if (sendMsg->msg_iov[i].iov_len + tmpBytes < IntToSize(retval)) {
           tmpBytes += sendMsg->msg_iov[i].iov_len;
         } else {
           sendMsg->msg_iov[i].iov_len -= (retval - tmpBytes);
@@ -149,7 +148,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
     }
   }
   if (unsendLen > 0) {
-    unsendLen = totalLen - *sendLen;
+    unsendLen = UintToInt(totalLen - *sendLen);
   }
   return unsendLen;
 }

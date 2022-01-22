@@ -209,7 +209,9 @@ void Connection::Disconnect(int fd) {
 
 void Connection::Close() {
   if (recv_event_loop != nullptr) {
-    recv_event_loop->DeleteEpollEvent(socket_fd);
+    if (recv_event_loop->DeleteEpollEvent(socket_fd) == RPC_ERROR) {
+      MS_LOG(ERROR) << "Failed to delete epoll event " << socket_fd;
+    }
   }
   if (!destination.empty()) {
     if (recv_message != nullptr) {
@@ -329,7 +331,7 @@ std::string Connection::GenerateHttpMessage(MessageBase *msg) {
   if (msg->Body().size() > 0) {
     std::ostringstream bodyLine;
     bodyLine << std::hex << msg->Body().size() << "\r\n";
-    bodyLine.write(msg->Body().data(), msg->Body().size());
+    (void)bodyLine.write(msg->Body().data(), msg->Body().size());
     return postLine + userAgentLine + fromLine + connectLine + hostLine + chunkedBeginLine + bodyLine.str() +
            chunkedEndLine;
   }
@@ -364,9 +366,9 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       send_io_vec[index].iov_len = msg->body.size();
       ++index;
       send_kernel_msg.msg_iov = send_io_vec;
-      send_kernel_msg.msg_iovlen = index;
+      send_kernel_msg.msg_iovlen = IntToSize(index);
       total_send_len =
-        sizeof(send_msg_header) + msg->name.size() + send_to.size() + send_from.size() + msg->body.size();
+        UlongToUint(sizeof(send_msg_header)) + msg->name.size() + send_to.size() + send_from.size() + msg->body.size();
       send_message = msg;
 
       // update metrics
@@ -390,8 +392,8 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
     send_io_vec[index].iov_len = msg->body.size();
     ++index;
     send_kernel_msg.msg_iov = send_io_vec;
-    send_kernel_msg.msg_iovlen = index;
-    total_send_len = msg->body.size();
+    send_kernel_msg.msg_iovlen = IntToSize(index);
+    total_send_len = UlongToUint(msg->body.size());
     send_message = msg;
 
     // update metrics
@@ -435,8 +437,8 @@ void Connection::FillRecvMessage() {
   ++i;
 
   recv_kernel_msg.msg_iov = recv_io_vec;
-  recv_kernel_msg.msg_iovlen = i;
-  total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + msg->body.size();
+  recv_kernel_msg.msg_iovlen = IntToSize(i);
+  total_recv_len = UlongToUint(msg->name.size()) + recv_to.size() + recv_from.size() + msg->body.size();
   recv_message = msg;
 }
 
@@ -488,7 +490,7 @@ bool Connection::ParseMessage() {
           state = ConnectionState::kDisconnecting;
           return false;
         }
-        total_recv_len -= retval;
+        total_recv_len -= IntToSize(retval);
         return false;
       }
       recv_state = State::kMsgHeader;
@@ -499,7 +501,7 @@ bool Connection::ParseMessage() {
   return true;
 }
 
-void Connection::ReorderHeader(MessageHeader *header) {
+void Connection::ReorderHeader(MessageHeader *header) const {
   header->name_len = ntohl(header->name_len);
   header->to_len = ntohl(header->to_len);
   header->from_len = ntohl(header->from_len);
