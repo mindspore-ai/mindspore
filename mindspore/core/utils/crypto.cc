@@ -66,22 +66,19 @@ bool IsCipherFile(const Byte *model_data) {
   return static_cast<unsigned int>(flag) == MAGIC_NUM;
 }
 #ifndef ENABLE_OPENSSL
-std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, size_t plain_len, const Byte *key,
-                                size_t key_len, const std::string &enc_mode) {
+std::unique_ptr<Byte[]> Encrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
   MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
                    "when the OPENSSL compilation option is enabled.";
   return nullptr;
 }
 
-std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
-                                size_t key_len, const std::string &dec_mode) {
+std::unique_ptr<Byte[]> Decrypt(size_t *, const std::string &, const Byte *, size_t, const std::string &) {
   MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
                    "when the OPENSSL compilation option is enabled.";
   return nullptr;
 }
 
-std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, size_t data_size, const Byte *key,
-                                size_t key_len, const std::string &dec_mode) {
+std::unique_ptr<Byte[]> Decrypt(size_t *, const Byte *, size_t, const Byte *, size_t, const std::string &) {
   MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
                    "when the OPENSSL compilation option is enabled.";
   return nullptr;

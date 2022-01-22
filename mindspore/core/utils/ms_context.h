@@ -163,7 +163,7 @@ class MsContext {
   static void device_type_seter(const DeviceTypeSeter &device_type) { device_type_seter_ = device_type; }
 
   template <typename T>
-  void set_param(MsCtxParam, const T &value) {
+  void set_param(MsCtxParam, const T &) {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 

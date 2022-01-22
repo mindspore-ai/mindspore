@@ -17,8 +17,6 @@
 #include "ir/value.h"
 #include <algorithm>
 #include <memory>
-#include <cmath>
-#include <cfloat>
 
 #include "abstract/abstract_value.h"
 
