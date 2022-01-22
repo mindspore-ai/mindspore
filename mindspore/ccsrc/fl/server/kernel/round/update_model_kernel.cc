@@ -170,19 +170,19 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   }
 
   PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
-  FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
+  const auto &fl_id_to_meta = device_metas.device_metas().fl_id_to_meta();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   MS_LOG(INFO) << "UpdateModel for fl id " << update_model_fl_id;
-  if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
-    if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
-      std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
-      BuildUpdateModelRsp(
-        fbb, schema::ResponseCode_OutOfTime, reason,
-        std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-      MS_LOG(ERROR) << reason;
-      return ResultCode::kSuccessAndReturn;
-    }
-  } else {
+
+  if (fl_id_to_meta.count(update_model_fl_id) == 0) {
+    std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
+    BuildUpdateModelRsp(
+      fbb, schema::ResponseCode_OutOfTime, reason,
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
+    MS_LOG(ERROR) << reason;
+    return ResultCode::kSuccessAndReturn;
+  }
+  if (ps::PSContext::instance()->encrypt_type() == ps::kPWEncryptType) {
     std::vector<std::string> get_secrets_clients;
 #ifdef ENABLE_ARMOUR
     mindspore::armour::CipherMetaStorage cipher_meta_storage;
@@ -199,8 +199,8 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
     }
   }
 
-  size_t data_size = fl_id_to_meta.fl_id_to_meta().at(update_model_fl_id).data_size();
-  auto feature_map = ParseFeatureMap(update_model_req);
+  size_t data_size = fl_id_to_meta.at(update_model_fl_id).data_size();
+  const auto &feature_map = ParseFeatureMap(update_model_req);
   if (feature_map.empty()) {
     std::string reason = "Feature map is empty.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");

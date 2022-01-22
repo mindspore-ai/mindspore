@@ -83,7 +83,6 @@ class Server {
         use_tcp_(false),
         use_http_(false),
         http_port_(0),
-        func_graph_(nullptr),
         executor_threshold_(0),
         communicator_with_server_(nullptr),
         communicators_with_worker_({}),
@@ -194,7 +193,7 @@ class Server {
   CipherConfig cipher_config_;
 
   // The graph passed by the frontend without backend optimizing.
-  FuncGraphPtr func_graph_;
+  FuncGraphWeakPtr func_graph_;
 
   // The threshold count for executor to do aggregation or optimizing.
   size_t executor_threshold_;

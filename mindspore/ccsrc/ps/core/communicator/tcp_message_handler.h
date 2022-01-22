@@ -35,27 +35,27 @@ namespace ps {
 namespace core {
 using messageReceive =
   std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
-constexpr int kHeaderLen = 16;
+
+constexpr size_t kHeaderLen = sizeof(MessageHeader);
 
 class TcpMessageHandler {
  public:
-  TcpMessageHandler()
-      : is_parsed_(false), message_buffer_(nullptr), remaining_length_(0), header_index_(-1), last_copy_len_(0) {}
+  TcpMessageHandler() : remaining_length_(0), cur_header_len_(0), last_copy_len_(0) {}
   virtual ~TcpMessageHandler() = default;
 
   void SetCallback(const messageReceive &cb);
   void ReceiveMessage(const void *buffer, size_t num);
 
+  void Reset();
+
  private:
   messageReceive message_callback_;
-  bool is_parsed_;
-  std::unique_ptr<unsigned char[]> message_buffer_;
+  std::vector<uint8_t> message_buffer_;
+  uint8_t header_[kHeaderLen]{0};
   size_t remaining_length_;
-  unsigned char header_[16]{0};
-  int header_index_;
+  size_t cur_header_len_ = 0;
   size_t last_copy_len_;
   MessageHeader message_header_;
-  std::string mBuffer;
 };
 }  // namespace core
 }  // namespace ps

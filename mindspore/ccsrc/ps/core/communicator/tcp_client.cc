@@ -37,11 +37,12 @@ event_base *TcpClient::event_base_ = nullptr;
 std::mutex TcpClient::event_base_mutex_;
 bool TcpClient::is_started_ = false;
 
-TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *const config)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *const config, NodeRole peer_role)
     : event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
+      peer_role_(peer_role),
       is_stop_(true),
       is_connected_(false),
       config_(config) {
@@ -69,6 +70,19 @@ std::string TcpClient::GetServerAddress() const { return server_address_; }
 void TcpClient::set_disconnected_callback(const OnDisconnected &disconnected) { disconnected_callback_ = disconnected; }
 
 void TcpClient::set_connected_callback(const OnConnected &connected) { connected_callback_ = connected; }
+
+std::string TcpClient::PeerRoleName() const {
+  switch (peer_role_) {
+    case SERVER:
+      return "Server";
+    case WORKER:
+      return "Worker";
+    case SCHEDULER:
+      return "Scheduler";
+    default:
+      return "RoleUndefined";
+  }
+}
 
 bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
   std::unique_lock<std::mutex> lock(connection_mutex_);
@@ -167,36 +181,32 @@ void TcpClient::SetTcpNoDelay(const evutil_socket_t &fd) {
 
 void TcpClient::TimeoutCallback(evutil_socket_t, std::int16_t, void *const arg) {
   try {
-    TimeoutCallbackInner(arg);
+    MS_EXCEPTION_IF_NULL(arg);
+    auto tcp_client = reinterpret_cast<TcpClient *>(arg);
+    tcp_client->Init();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Catch exception: " << e.what();
   }
-}
-
-void TcpClient::TimeoutCallbackInner(void *const arg) {
-  MS_EXCEPTION_IF_NULL(arg);
-  auto tcp_client = reinterpret_cast<TcpClient *>(arg);
-  tcp_client->Init();
 }
 
 void TcpClient::ReadCallback(struct bufferevent *bev, void *const ctx) {
   try {
-    ReadCallbackInner(bev, ctx);
+    MS_EXCEPTION_IF_NULL(ctx);
+    auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
+    tcp_client->ReadCallbackInner(bev);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Catch exception: " << e.what();
   }
 }
 
-void TcpClient::ReadCallbackInner(struct bufferevent *bev, void *const ctx) {
+void TcpClient::ReadCallbackInner(struct bufferevent *bev) {
   MS_EXCEPTION_IF_NULL(bev);
-  MS_EXCEPTION_IF_NULL(ctx);
-  auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
 
   char read_buffer[kMessageChunkLength];
   size_t read = 0;
 
   while ((read = bufferevent_read(bev, &read_buffer, sizeof(read_buffer))) > 0) {
-    tcp_client->OnReadHandler(read_buffer, read);
+    OnReadHandler(read_buffer, read);
   }
 }
 
@@ -217,7 +227,8 @@ void TcpClient::TimerCallback(evutil_socket_t, int16_t, void *arg) {
 }
 
 void TcpClient::NotifyConnected() {
-  MS_LOG(INFO) << "Client connected to the server!";
+  MS_LOG(INFO) << "Client connected to the server! Peer " << PeerRoleName() << " ip: " << server_address_
+               << ", port: " << server_port_;
   is_connected_ = true;
   connection_cond_.notify_all();
 }
@@ -236,34 +247,37 @@ bool TcpClient::EstablishSSL() {
 
 void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void *const ptr) {
   try {
-    EventCallbackInner(bev, events, ptr);
+    MS_EXCEPTION_IF_NULL(ptr);
+    auto tcp_client = reinterpret_cast<TcpClient *>(ptr);
+    tcp_client->EventCallbackInner(bev, events);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Catch exception: " << e.what();
   }
 }
 
-void TcpClient::EventCallbackInner(struct bufferevent *bev, std::int16_t events, void *const ptr) {
+void TcpClient::EventCallbackInner(struct bufferevent *bev, std::int16_t events) {
   MS_EXCEPTION_IF_NULL(bev);
-  MS_EXCEPTION_IF_NULL(ptr);
-  auto tcp_client = reinterpret_cast<TcpClient *>(ptr);
   if (events & BEV_EVENT_CONNECTED) {
     // Connected
-    if (tcp_client->connected_callback_) {
-      tcp_client->connected_callback_();
+    if (connected_callback_) {
+      connected_callback_();
     }
-    tcp_client->NotifyConnected();
+    NotifyConnected();
     evutil_socket_t fd = bufferevent_getfd(bev);
     SetTcpNoDelay(fd);
-    MS_LOG(INFO) << "Client connected!";
+    MS_LOG(INFO) << "Client connected! Peer " << PeerRoleName() << " ip: " << server_address_
+                 << ", port: " << server_port_;
   } else if (events & BEV_EVENT_ERROR) {
-    MS_LOG(WARNING) << "The client will retry to connect to the server!";
-    if (tcp_client->disconnected_callback_) {
-      tcp_client->disconnected_callback_();
+    MS_LOG(WARNING) << "The client will retry to connect to the server! Peer " << PeerRoleName()
+                    << " ip: " << server_address_ << ", port: " << server_port_;
+    if (disconnected_callback_) {
+      disconnected_callback_();
     }
   } else if (events & BEV_EVENT_EOF) {
-    MS_LOG(WARNING) << "Client connected end of file";
-    if (tcp_client->disconnected_callback_) {
-      tcp_client->disconnected_callback_();
+    MS_LOG(WARNING) << "Client connected end of file! Peer " << PeerRoleName() << " ip: " << server_address_
+                    << ", port: " << server_port_;
+    if (disconnected_callback_) {
+      disconnected_callback_();
     }
   }
 }
