@@ -88,7 +88,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
   int CompileArrowThroughOutputTensors(
     const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map);
-  std::set<void *> PartialSubgraphInputTensors(kernel::LiteKernel *partial_node);
   int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                        std::unordered_map<Tensor *, Tensor *> *input_map);
   virtual int PrepareOutputData();
@@ -105,8 +104,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 
  private:
   int CreateCommonArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
-                        const std::set<void *> &subgraph_inputs_set, const std::set<void *> &receiver_tensors,
-                        const size_t &output_index, std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
+                        const std::set<void *> &receiver_tensors, const size_t &output_index,
+                        std::unordered_map<AID, std::set<size_t>> *receiver_index_set);
   int CreateEmptyArrow(const size_t &output_index);
   bool ArrowHasCompiled(const AID &actor_name, const size_t &to_index,
                         const std::unordered_map<AID, std::set<size_t>> &receiver_index_set);

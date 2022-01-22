@@ -61,6 +61,11 @@ class ControlFlowScheduler {
  private:
   int SplitSingleNonTailCallSubGraph(kernel::SubGraphKernel *subgraph_kernel,
                                      std::vector<kernel::LiteKernel *> *subgraph_kernels);
+  int SplitSubGraphNodesIntoTwoParts(kernel::SubGraphKernel *subgraph_kernel,
+                                     std::vector<kernel::LiteKernel *> *first_part_nodes,
+                                     std::vector<kernel::LiteKernel *> *second_part_nodes);
+  int AdjustNodesForTailCallSubGraph(std::vector<kernel::LiteKernel *> *first_part_nodes,
+                                     std::vector<kernel::LiteKernel *> *second_part_nodes);
   std::set<kernel::LiteKernel *> GetNonTailCallSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels);
   void RemoveUselessKernels(std::vector<kernel::LiteKernel *> *dst_kernels,
                             std::set<kernel::LiteKernel *> *useless_kernels);
