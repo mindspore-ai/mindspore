@@ -26,8 +26,8 @@ After declaring the dataset object, you can further apply dataset operations
 import mindspore._c_dataengine as cde
 
 from .datasets import AudioBaseDataset, MappableDataset
-from .validators import check_cmu_arctic_dataset, check_gtzan_dataset, check_lj_speech_dataset, check_speech_commands_dataset, \
-    check_tedlium_dataset, check_yes_no_dataset
+from .validators import check_cmu_arctic_dataset, check_gtzan_dataset, check_libri_tts_dataset, check_lj_speech_dataset, \
+    check_speech_commands_dataset, check_tedlium_dataset, check_yes_no_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -297,6 +297,156 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     def parse(self, children=None):
         return cde.GTZANNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class LibriTTSDataset(MappableDataset, AudioBaseDataset):
+    """
+    A source dataset that reads and parses the LibriTTS dataset.
+
+    The generated dataset has seven columns :py:obj:`['waveform', 'sample_rate', 'original_text', 'normalized_text',
+    'speaker_id', 'chapter_id', 'utterance_id']`.
+    The tensor of column :py:obj:`waveform` is of the float32 type.
+    The tensor of column :py:obj:`sample_rate` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`original_text` is of a scalar of string type.
+    The tensor of column :py:obj:`normalized_text` is of a scalar of string type.
+    The tensor of column :py:obj:`speaker_id` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`chapter_id` is of a scalar of uint32 type.
+    The tensor of column :py:obj:`utterance_id` is of a scalar of string type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Part of this dataset, can be ""dev-clean", "dev-other", "test-clean", "test-other",
+            "train-clean-100", "train-clean-360", "train-other-500", or "all" (default=None, equal "all").
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all audio).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If source raises an exception during execution.
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - LibriTTS dataset doesn't support PKSampler.
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> libri_tts_dataset_dir = "/path/to/libri_tts_dataset_directory"
+        >>>
+        >>> # 1) Read 500 samples (audio files) in libri_tts_dataset_directory
+        >>> dataset = ds.LibriTTSDataset(libri_tts_dataset_dir, usage="train-clean-100", num_samples=500)
+        >>>
+        >>> # 2) Read all samples (audio files) in libri_tts_dataset_directory
+        >>> dataset = ds.LibriTTSDataset(libri_tts_dataset_dir)
+
+    About LibriTTS dataset:
+
+    LibriTTS is a multi-speaker English corpus of approximately 585 hours of read English speech at 24kHz
+    sampling rate, prepared by Heiga Zen with the assistance of Google Speech and Google Brain team members.
+    The LibriTTS corpus is designed for TTS research. It is derived from the original materials (mp3 audio
+    files from LibriVox and text files from Project Gutenberg) of the LibriSpeech corpus.
+
+    You can construct the following directory structure from LibriTTS dataset and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── libri_tts_dataset_directory
+            ├── dev-clean
+            │    ├── 116
+            │    │    ├── 288045
+            |    |    |    ├── 116_288045.trans.tsv
+            │    │    │    ├── 116_288045_000003_000000.wav
+            │    │    │    └──...
+            │    │    ├── 288046
+            |    |    |    ├── 116_288046.trans.tsv
+            |    |    |    ├── 116_288046_000003_000000.wav
+            │    |    |    └── ...
+            |    |    └── ...
+            │    ├── 1255
+            │    │    ├── 138279
+            |    |    |    ├── 1255_138279.trans.tsv
+            │    │    │    ├── 1255_138279_000001_000000.wav
+            │    │    │    └── ...
+            │    │    ├── 74899
+            |    |    |    ├── 1255_74899.trans.tsv
+            |    |    |    ├── 1255_74899_000001_000000.wav
+            │    |    |    └── ...
+            |    |    └── ...
+            |    └── ...
+            └── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{lecun2010mnist,
+        title        = {LIBRITTS handwritten digit database},
+        author       = {zpw, NBU},
+        journal      = {ATT Labs [Online]},
+        volume       = {2},
+        year         = {2010},
+        howpublished = {http://www.openslr.org/resources/60/},
+        description  = {The LibriSpeech ASR corpus (http://www.openslr.org/12/) [1] has been used in
+                        various research projects. However, as it was originally designed for ASR research,
+                        there are some undesired properties when using for TTS research}
+        }
+    """
+
+    @check_libri_tts_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.LibriTTSNode(self.dataset_dir, self.usage, self.sampler)
 
 
 class LJSpeechDataset(MappableDataset, AudioBaseDataset):
