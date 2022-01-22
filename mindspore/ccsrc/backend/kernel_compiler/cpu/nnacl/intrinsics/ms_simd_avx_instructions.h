@@ -44,6 +44,15 @@
 #define MS_MAX256_EPI32 _mm256_max_epi32
 #define MS_MIN256_F32 _mm256_min_ps
 #define MS_MIN256_EPI32 _mm256_min_epi32
+#define MS_SQRT256_F32 _mm256_sqrt_ps
+#define MS_RSQRT256_F32 _mm256_rsqrt_ps
+#define MS_LOG256_F32 _mm256_log_ps
+#define MS_COS256_F32 _mm256_cos_ps
+#define MS_SIN256_F32 _mm256_sin_ps
+#define MS_ERF256_F32 _mm256_erf_ps
+#define MS_ROUND256_F32(src) _mm256_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+#define MS_FLOOR256_F32 _mm256_floor_ps
+#define MS_CEIL256_F32 _mm256_ceil_ps
 #define MS_MUL256_F32(src1, src2) _mm256_mul_ps(src1, src2)
 #define MS_MUL256_EPI32(src1, src2) _mm256_mul_epi32(src1, src2)
 #define MS_DIV256_F32(src1, src2) _mm256_div_ps(src1, src2)

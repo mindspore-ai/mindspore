@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version C2NUM.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,16 @@
 #define MS_MAX128_EPI32 _mm_max_epi32
 #define MS_MINQ_F32 _mm_min_ps
 #define MS_MINQ_EPI32 _mm_min_epi32
+#define MS_SQRT128_F32 _mm_sqrt_ps
+#define MS_RSQRT128_F32 _mm_rsqrt_ps
+#define MS_LOG128_F32 _mm_log_ps
+#define MS_COS128_F32 _mm_cos_ps
+#define MS_SIN128_F32 _mm_sin_ps
+#define MS_ERF128_F32 _mm_erf_ps
+#define MS_ABS128_F32 _mm_abs_ps
+#define MS_ROUND128_F32(src) _mm_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+#define MS_FLOOR128_F32 _mm_floor_ps
+#define MS_CEIL128_F32 _mm_ceil_ps
 #define MS_MULQ_F32(src1, src2) _mm_mul_ps(src1, src2)
 #define MS_MULQ_EPI32(src1, src2) _mm_mul_epi32(src1, src2)
 #define MS_MIN128_F32 _mm_min_ps
