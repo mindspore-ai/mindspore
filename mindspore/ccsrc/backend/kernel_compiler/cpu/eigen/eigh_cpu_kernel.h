@@ -41,9 +41,6 @@ class EighCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
-  void InitInputOutputSize(const CNodePtr &kernel_node);
-
  private:
   size_t m_{1};
   bool compute_eigen_vectors_{false};
