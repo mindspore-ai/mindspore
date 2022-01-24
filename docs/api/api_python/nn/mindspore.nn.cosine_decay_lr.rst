@@ -13,7 +13,7 @@ mindspore.nn.cosine_decay_lr
 
     其中 :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`。
 
-   **参数：**
+    **参数：**
 
     - **min_lr** (float) - 学习率的最小值。
     - **max_lr** (float) - 学习率的最大值。
@@ -21,7 +21,7 @@ mindspore.nn.cosine_decay_lr
     - **step_per_epoch** (int) - 每个epoch的step数。
     - **decay_epoch** (int) - 进行衰减的epoch数。
 
-   **返回：**
+    **返回：**
 
     list[float]。列表大小为 `total_step`。
 

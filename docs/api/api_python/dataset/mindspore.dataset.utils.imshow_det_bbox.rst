@@ -27,6 +27,6 @@
 
     numpy.ndarray，带边界框和类别置信度的图像。
 
-    ** `imshow_det_bbox` 在VOC2012数据集的使用图示:**
+    **imshow_det_bbox在VOC2012数据集的使用图示：**
 
-    .. image:: api_img/browse_dataset.png
+    .. image:: browse_dataset.png

@@ -22,17 +22,3 @@ mindspore.connect_network_with_dataset
     **异常：**
 
     - **RuntimeError** - 如果该接口在非数据下沉模式调用。
-
-    **支持平台：**
-
-    ``Ascend``  ``GPU``
-
-    **样例：**
-
-    >>> from mindspore import DatasetHelper
-    >>>
-    >>> # 调用create_dataset函数创建一个通用的数据集，参考mindpore.dataset
-    >>> train_dataset = create_custom_dataset()
-    >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
-    >>> net = Net()
-    >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)

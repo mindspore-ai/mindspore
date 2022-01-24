@@ -101,7 +101,7 @@
 
         在 `AUTO_PARALLEL` 或 `SEMI_AUTO_PARALLEL` 模式下为训练网络生成参数layout，当前仅支持在数据下沉模式下使用。
 
-        .. warning:: 这是一个实验性的原型，可能会被改变和/或删除。
+        .. warning:: 这是一个实验性的原型，可能会被改变或删除。
 
         .. note:: 这是一个预编译函数。参数必须与Model.train()函数相同。
 
@@ -143,7 +143,11 @@
         使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。
 
         .. note::
-            如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的上限是256M。如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用。如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。每次epoch将从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
+            - 如果 `dataset_sink_mode` 配置为True，数据将被送到处理器中。如果处理器是Ascend，数据特征将被逐一传输，每次数据传输的上限是256M。
+            - 如果 `dataset_sink_mode` 配置为True，仅在每个epoch结束时调用Callback实例的step_end方法。
+            - 如果 `dataset_sink_mode` 配置为True，数据集仅能在当前模型中使用。
+            - 如果 `sink_size` 大于零，每次epoch可以无限次遍历数据集，直到遍历数据量等于 `sink_size` 为止。
+            - 每次epoch将从上一次遍历的最后位置继续开始遍历。该接口会构建并执行计算图，如果使用前先执行了 `Model.build` ，那么它会直接执行计算图而不构建。
 
         **参数：**
 

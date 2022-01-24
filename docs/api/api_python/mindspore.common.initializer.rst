@@ -44,7 +44,7 @@ mindspore.common.initializer
     生成一个服从HeKaiming均匀分布U(-boundary, boundary)的随机数组用于初始化Tensor，其中：
     
     .. math::
-        boundary = \text{gain} \times \sqrt{\frac{3}{fan_mode}}
+        boundary = \text{gain} \times \sqrt{\frac{3}{fan\_mode}}
 
     其中，gain是一个可选的缩放因子。fan_mode是权重Tensor中输入或输出单元的数量，取决于mode是"fan_in"或是"fan_out"。
 
@@ -59,7 +59,7 @@ mindspore.common.initializer
     生成一个服从HeKaiming正态分布N(0, sigma^2)的随机数组用于初始化Tensor，其中：
 
     .. math::
-        sigma = \frac{gain} {\sqrt{fan_mode}}
+        sigma = \frac{gain} {\sqrt{fan\_mode}}
 
     其中，gain是一个可选的缩放因子。如果mode是"fan_in"，则fan_mode是权重Tensor中输入单元的数量，如果mode是"fan_out"，
     fan_mode是权重Tensor中输出单元的数量。

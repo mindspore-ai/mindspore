@@ -20,18 +20,3 @@ mindspore.nn.Vjp
 
     - **net_output** (Tensor or Tuple of Tensor) - 输入网络的正向计算结果。
     - **vjp** (Tensor or Tuple of Tensor) - 向量雅可比积的结果。
-
-    **支持平台：**
-
-    ``Ascend`` ``GPU`` ``CPU``
-
-    **样例：**
-
-    >>> from mindspore.nn import Vjp
-    >>> class Net(nn.Cell):
-    ...     def construct(self, x, y):
-    ...         return x**3 + y
-    >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    >>> y = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    >>> v = Tensor(np.array([[1, 1], [1, 1]]).astype(np.float32))
-    >>> output = Vjp(Net())(x, y, v)

@@ -16,7 +16,10 @@ mindspore.nn.probability.bijector.GumbelCDF
     - **name** (str) - Bijector名称。默认值：'GumbelCDF'。
 
     .. note::
-        `scale` 中元素必须大于零。对于 `inverse` 和 `inverse_log_jacobian` ，输入应在(0, 1)范围内。`loc` 和 `scale` 中元素的数据类型必须为float。如果 `loc` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
+        - `scale` 中元素必须大于零。
+        - 对于 `inverse` 和 `inverse_log_jacobian` ，输入应在(0, 1)范围内。
+        - `loc` 和 `scale` 中元素的数据类型必须为float。
+        - 如果 `loc` 、 `scale` 作为numpy.ndarray或Tensor传入，则它们必须具有相同的数据类型，否则将引发错误。
 
     **异常：**
 
