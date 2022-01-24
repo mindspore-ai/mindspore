@@ -85,13 +85,17 @@ int Fp32Relu6(const float *src, int length, float *dst) {
 }
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdLReluCoreCalc(block_size, block_num, src, length, dst, alpha, i)                            \
-  for (int block_max_size = length - block_num + 1; i < block_max_size; i += block_num) {               \
-    MS_FLOAT_32xN(block_num) src_tmp = MS_LD_F32(block_size, src + i);                                  \
-    MS_FLOAT_32xN(block_num) mul_tmp = MS_MUL_N_F32(block_size, src_tmp, alpha);                        \
-    MS_MASK##block_size##_TYPE mask = MS_CMPGT_F32(block_size, src_tmp, MS_MOVN_F32(block_size, 0.0f)); \
-    MS_ST_F32(block_size, dst + i, MS_BLEND_F32(block_size, mul_tmp, src_tmp, mask));                   \
-  }
+#define SimdLReluCoreCalc(block_size, block_num, src, length, dst, alpha, i)                \
+  do {                                                                                      \
+    MS_FLOAT_32xN(block_num) zero_data = MS_MOVN_F32(block_size, 0.0f);                     \
+    MS_FLOAT_32xN(block_num) alpha_data = MS_MOVN_F32(block_size, alpha);                   \
+    for (int block_max_size = length - block_num + 1; i < block_max_size; i += block_num) { \
+      MS_FLOAT_32xN(block_num) src_tmp = MS_LD_F32(block_size, src + i);                    \
+      MS_FLOAT_32xN(block_num) mul_tmp = MS_MUL_F32(block_size, src_tmp, alpha_data);       \
+      MS_MASK##block_size##_TYPE mask = MS_CMPGT_F32(block_size, zero_data, src_tmp);       \
+      MS_ST_F32(block_size, dst + i, MS_BLEND_F32(block_size, src_tmp, mul_tmp, mask));     \
+    }                                                                                       \
+  } while (0)
 
 int LRelu(const float *src, int length, float *dst, float alpha) {
   int i = 0;

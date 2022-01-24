@@ -60,25 +60,52 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
   if (real_c == 4) {
     MS_FLOAT32X4 src[16];
     MS_FLOAT32X4 t[16];
-    MS_FLOAT32X4 m[16];
-    Load16Data;
-    for (int l = 0; l < 4; ++l) {
+
+    src[0] = MS_LDQ_F32(src_data);
+    src[1] = MS_LDQ_F32(src_data + src_step);
+    src[2] = MS_LDQ_F32(src_data + 2 * src_step);
+    src[3] = MS_LDQ_F32(src_data + 3 * src_step);
+
+    for (int l = 0; l < 3; ++l) {
       int offset = l * 4;
       t[l] = MS_SUBQ_F32(src[offset], src[2 + offset]);
+      src[offset + 4] = MS_LDQ_F32(src_data + (offset + 4) * src_step);
       t[4 + l] = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+      src[offset + 5] = MS_LDQ_F32(src_data + (offset + 5) * src_step);
       t[8 + l] = MS_SUBQ_F32(src[2 + offset], src[1 + offset]);
+      src[offset + 6] = MS_LDQ_F32(src_data + (offset + 6) * src_step);
       t[12 + l] = MS_SUBQ_F32(src[3 + offset], src[1 + offset]);
+      src[offset + 7] = MS_LDQ_F32(src_data + (offset + 7) * src_step);
     }
-    for (int l = 0; l < 4; ++l) {
-      int offset = l * 4;
-      m[l] = MS_SUBQ_F32(t[offset], t[2 + offset]);
-      m[4 + l] = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
-      m[8 + l] = MS_SUBQ_F32(t[2 + offset], t[1 + offset]);
-      m[12 + l] = MS_SUBQ_F32(t[3 + offset], t[1 + offset]);
+
+    int offset = 3 * 4;
+    t[3] = MS_SUBQ_F32(src[offset], src[2 + offset]);
+    t[7] = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    t[11] = MS_SUBQ_F32(src[2 + offset], src[1 + offset]);
+    t[15] = MS_SUBQ_F32(src[3 + offset], src[1 + offset]);
+
+    src[0] = MS_SUBQ_F32(t[0], t[2]);
+    src[1] = MS_ADDQ_F32(t[1], t[2]);
+    src[2] = MS_SUBQ_F32(t[2], t[1]);
+    src[3] = MS_SUBQ_F32(t[3], t[1]);
+
+    for (int l = 1; l < 4; ++l) {
+      offset = l * 4;
+      src[offset] = MS_SUBQ_F32(t[offset], t[2 + offset]);
+      MS_STQ_F32(dst_data + (l - 1) * dst_step, src[offset - 4]);
+      src[offset + 1] = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+      MS_STQ_F32(dst_data + (3 + l) * dst_step, src[offset - 3]);
+      src[offset + 2] = MS_SUBQ_F32(t[2 + offset], t[1 + offset]);
+      MS_STQ_F32(dst_data + (7 + l) * dst_step, src[offset - 2]);
+      src[offset + 3] = MS_SUBQ_F32(t[3 + offset], t[1 + offset]);
+      MS_STQ_F32(dst_data + (11 + l) * dst_step, src[offset - 1]);
     }
-    for (int i = 0; i < 16; i++) {
-      MS_STQ_F32(dst_data + i * dst_step, m[i]);
-    }
+
+    MS_STQ_F32(dst_data + 3 * dst_step, src[12]);
+    MS_STQ_F32(dst_data + dst_step * 7, src[13]);
+    MS_STQ_F32(dst_data + dst_step * 11, src[14]);
+    MS_STQ_F32(dst_data + dst_step * 15, src[15]);
+
   } else {
 #endif
     float src[16];
