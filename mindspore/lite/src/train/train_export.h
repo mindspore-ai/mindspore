@@ -72,7 +72,7 @@ class TrainExport {
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
                                               const Model *model);
-  int IsInputTensor(const schema::TensorT &t);
+  bool IsInputTensor(const schema::TensorT &t);
   int CreateAndAddCNode(const mindspore::kernel::LiteKernel *kernel, std::vector<uint32_t> inputIndex,
                         std::vector<uint32_t> outputIndex, const Model *model);
   std::unique_ptr<schema::CNodeT> CreateTransformNode(std::vector<uint32_t> inputIndex,
