@@ -26,6 +26,17 @@
 #include "utils/file_utils.h"
 
 namespace mindspore {
+namespace {
+/// \brief Trace context stack for current thread.
+thread_local std::vector<TraceContext> trace_context_stack_;
+
+/// \brief Record a debug info for print.
+thread_local DebugInfoPtr record_debug_info_ = nullptr;
+
+/// \brief A flag to decide whether record a debug info or not.
+thread_local bool record_debug_info_flag_ = false;
+}  // namespace
+
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
   std::string temp_line = line;
   if (col_begin < col_end && col_begin != -1 && col_end <= SizeToLong(temp_line.length()) &&
@@ -136,6 +147,13 @@ LocationPtr GraphDebugInfo::location() const {
 
 void GraphDebugInfo::set_deco_location(const LocationPtr &deco_list_loc) { deco_loc_ = deco_list_loc; }
 
+TraceContextPtr TraceManager::CurrentContextInfo() {
+  if (!trace_context_stack_.empty()) {
+    return &trace_context_stack_.back();
+  }
+  return nullptr;
+}
+
 void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &location) {
   MS_EXCEPTION_IF_NULL(location);
   (void)trace_context_stack_.emplace_back(location, func_name);
@@ -143,9 +161,9 @@ void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &l
 
 void TraceManager::DebugTrace(const LocationPtr &location) {
   MS_EXCEPTION_IF_NULL(location);
-  (void)TraceManager::trace_context_stack_.emplace_back(location);
+  (void)trace_context_stack_.emplace_back(location);
   if (record_debug_info_flag_) {
-    TraceManager::record_debug_info_ = std::make_shared<DebugInfo>(location);
+    record_debug_info_ = std::make_shared<DebugInfo>(location);
   }
 }
 
@@ -153,9 +171,9 @@ void TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
   MS_EXCEPTION_IF_NULL(trace_info);
   auto &debug_info = trace_info->debug_info();
   MS_EXCEPTION_IF_NULL(debug_info);
-  (void)TraceManager::trace_context_stack_.emplace_back(trace_info);
+  (void)trace_context_stack_.emplace_back(trace_info);
   if (record_debug_info_flag_) {
-    TraceManager::record_debug_info_ = debug_info;
+    record_debug_info_ = debug_info;
   }
 }
 
@@ -164,24 +182,20 @@ void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr
   MS_EXCEPTION_IF_NULL(trace_info);
   auto cloned_info = trace_info->clone();
   cloned_info->set_debug_info(debug_info);
-  (void)TraceManager::trace_context_stack_.emplace_back(cloned_info);
+  (void)trace_context_stack_.emplace_back(cloned_info);
 }
 
-DebugInfoPtr TraceManager::record_debug_info() { return TraceManager::record_debug_info_; }
+void TraceManager::EndTrace() noexcept { trace_context_stack_.pop_back(); }
 
-void TraceManager::ClearParseOrResolveDebugInfo() { TraceManager::record_debug_info_ = nullptr; }
+DebugInfoPtr TraceManager::record_debug_info() { return record_debug_info_; }
+
+void TraceManager::ClearParseOrResolveDebugInfo() { record_debug_info_ = nullptr; }
 
 void TraceManager::CloseRecordDebugInfoFlag() { record_debug_info_flag_ = false; }
 
 void TraceManager::OpenRecordDebugInfoFlag() { record_debug_info_flag_ = true; }
 
 bool TraceManager::record_debug_info_flag() { return record_debug_info_flag_; }
-
-thread_local std::vector<TraceContext> TraceManager::trace_context_stack_;
-
-thread_local DebugInfoPtr TraceManager::record_debug_info_ = nullptr;
-
-thread_local bool TraceManager::record_debug_info_flag_ = false;
 
 LocationPtr GetFirstLocation(const DebugInfoPtr &debug_info) {
   auto tmp = debug_info;

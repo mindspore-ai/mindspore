@@ -10,7 +10,6 @@ if(ENABLE_CACHE)
       _c_mindrecord
       mindspore
       mindspore::protobuf
-      mindspore_gvar
       ${PYTHON_LIBRARIES}
       pthread)
 
@@ -24,7 +23,6 @@ if(ENABLE_CACHE)
       _c_mindrecord
       mindspore
       mindspore::protobuf
-      mindspore_gvar
       ${PYTHON_LIBRARIES}
       pthread)
 

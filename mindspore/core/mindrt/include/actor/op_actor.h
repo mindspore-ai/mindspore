@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include "utils/hash_map.h"
+#include "utils/visible.h"
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
@@ -48,13 +49,10 @@ struct OpData {
   int index_;
 };
 
-class RandInt {
+class MS_CORE_API RandInt {
  public:
   int Get() { return rand(); }
-  static RandInt &Instance() {
-    static RandInt instance;
-    return instance;
-  }
+  static RandInt &Instance();
 
  private:
   RandInt() { srand(time(NULL)); }

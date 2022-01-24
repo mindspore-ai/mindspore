@@ -172,7 +172,7 @@ void InsertTransformOpForOutput(const FuncGraphPtr &graph, const AnfNodePtr &nod
 }
 }  // namespace
 
-const mindspore::HashSet<std::string> kChannelLastKernel = {prim::kPrimBiasAdd->name()};
+const mindspore::HashSet<std::string> kChannelLastKernel = {prim::kBiasAdd};
 
 bool InsertFormatTransformOpCPU::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);

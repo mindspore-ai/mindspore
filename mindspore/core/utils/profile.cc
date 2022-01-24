@@ -288,6 +288,11 @@ ProfTransaction::~ProfTransaction() {
   ctx_ = nullptr;
 }
 
+DumpTime &DumpTime::GetInstance() {
+  static DumpTime instance;
+  return instance;
+}
+
 void DumpTime::Record(const std::string &step_name, const double time, const bool is_start) {
   file_ss_ << "    {" << std::endl;
   file_ss_ << "        \"name\": "

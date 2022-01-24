@@ -76,8 +76,8 @@ if(ENABLE_CACHE)
         _c_dataengine
         _c_mindrecord
         mindspore
+        mindspore_core
         mindspore::protobuf
-        mindspore_gvar
         ${CUDNN_LIBRARY_PATH}
         ${PYTHON_LIBRARIES}
         ${SECUREC_LIBRARY}
@@ -91,8 +91,8 @@ if(ENABLE_CACHE)
         _c_dataengine
         _c_mindrecord
         mindspore
+        mindspore_core
         mindspore::protobuf
-        mindspore_gvar
         ${PYTHON_LIBRARIES}
         ${SECUREC_LIBRARY}
         pthread

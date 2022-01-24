@@ -33,7 +33,7 @@ static constexpr uint32 kMaskDelta = 0xa282ead8ul;
 static const int kRightShift = 15;
 static const int kLeftShift = (32 - kRightShift);
 // Provide the Crc32c function
-class Crc32c {
+class MS_CORE_API Crc32c {
  public:
   Crc32c() = default;
   ~Crc32c() = default;

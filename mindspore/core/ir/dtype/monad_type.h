@@ -63,8 +63,8 @@ class IOMonadType : public MonadType {
 };
 using IOMonadTypePtr = std::shared_ptr<IOMonadType>;
 
-extern const TypePtr kIOMonadType;
-extern const TypePtr kUMonadType;
+MS_CORE_API extern const TypePtr kIOMonadType;
+MS_CORE_API extern const TypePtr kUMonadType;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_MONDA_H_

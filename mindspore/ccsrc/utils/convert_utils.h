@@ -84,23 +84,18 @@ size_t CountValueNum(const ValueTuplePtr &value_tuple);
 // to CNode{kPrimTupleGetItem, SparseTensor, int64_t(index)}, used
 // in backend common optimization pass: sparse_process.cc
 const mindspore::HashMap<std::string, int64_t> sparse_attr_map = {
-  {prim::kPrimCSRTensorGetIndptr->name(), 0},    {prim::kPrimCSRTensorGetIndices->name(), 1},
-  {prim::kPrimCSRTensorGetValues->name(), 2},    {prim::kPrimCSRTensorGetDenseShape->name(), 3},
-  {prim::kPrimCOOTensorGetIndices->name(), 0},   {prim::kPrimCOOTensorGetValues->name(), 1},
-  {prim::kPrimCOOTensorGetDenseShape->name(), 2}};
+  {prim::kCSRTensorGetIndptr, 0},     {prim::kCSRTensorGetIndices, 1}, {prim::kCSRTensorGetValues, 2},
+  {prim::kCSRTensorGetDenseShape, 3}, {prim::kCOOTensorGetIndices, 0}, {prim::kCOOTensorGetValues, 1},
+  {prim::kCOOTensorGetDenseShapes, 2}};
 // make_sparse_set records all make_sparse primitives, and tries to replace
 // make_sparse to make_tuple, used in backend common optimization pass:
 // sparse_process.cc
-const mindspore::HashSet<std::string> make_sparse_set = {{prim::kPrimMakeCSRTensor->name()},
-                                                         {prim::kPrimMakeCOOTensor->name()}};
+const mindspore::HashSet<std::string> make_sparse_set = {{prim::kMakeCSRTensor}, {prim::kMakeCOOTensor}};
 // sparse_op_set records all sparse_compute operators, which takes sparsetensor
 // and (possibly) dense tensors, used in backend common optimization pass:
 // sparse_process.cc
-const mindspore::HashSet<std::string> sparse_op_set = {{prim::kPrimCOOTensorDenseMatmul->name()},
-                                                       {prim::kPrimCSRDenseMul->name()},
-                                                       {prim::kPrimCSRReduceSum->name()},
-                                                       {prim::kPrimCSRMV->name()},
-                                                       {prim::kPrimCSRMul->name()}};
+const mindspore::HashSet<std::string> sparse_op_set = {
+  {prim::kSparseTensorDenseMatmul}, {prim::kCSRDenseMul}, {prim::kCSRReduceSum}, {prim::kCSRMV}, {prim::kCSRMul}};
 
 bool IsCustomCSROP(const AnfNodePtr &cnode);
 }  // namespace mindspore

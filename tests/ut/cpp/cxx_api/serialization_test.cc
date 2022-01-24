@@ -90,12 +90,6 @@ TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_x1_SUCCESS) {
                                   ModelType::kMindIR, &graphs) == kSuccess);
 }
 
-TEST_F(TestCxxApiSerialization, test_load_no_encrpty_mindir_x2_SUCCESS) {
-  std::vector<Graph> graphs;
-  ASSERT_TRUE(Serialization::Load(std::vector<std::string>(2, "./data/mindir/add_no_encrpty.mindir"),
-                                  ModelType::kMindIR, &graphs) == kSuccess);
-}
-
 TEST_F(TestCxxApiSerialization, test_load_file_not_exist_x2_FAILED) {
   std::vector<Graph> graphs;
   auto status = Serialization::Load(std::vector<std::string>(2, "./data/mindir/file_not_exist.mindir"),
@@ -103,14 +97,5 @@ TEST_F(TestCxxApiSerialization, test_load_file_not_exist_x2_FAILED) {
   ASSERT_TRUE(status != kSuccess);
   auto err_mst = status.GetErrDescription();
   ASSERT_TRUE(err_mst.find("exist") != std::string::npos);
-}
-
-TEST_F(TestCxxApiSerialization, test_load_encrpty_mindir_without_key_x2_FAILED) {
-  std::vector<Graph> graphs;
-  auto status = Serialization::Load(
-    std::vector<std::string>(2, "./data/mindir/add_encrpty_key_0123456789ABCDEF.mindir"), ModelType::kMindIR, &graphs);
-  ASSERT_TRUE(status != kSuccess);
-  auto err_mst = status.GetErrDescription();
-  ASSERT_TRUE(err_mst.find("be encrypted") != std::string::npos);
 }
 }  // namespace mindspore

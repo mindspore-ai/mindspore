@@ -37,8 +37,7 @@ namespace {
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr size_t k5dDims = 5;
-const std::set<std::string> kOpAssignKernelNameList = {prim::kPrimAssign->name(), prim::kPrimAssignAdd->name(),
-                                                       prim::kPrimAssignSub->name()};
+const std::set<std::string> kOpAssignKernelNameList = {prim::kAssign, prim::kAssignAdd, prim::kAssignSub};
 
 void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
                        mindspore::HashSet<AnfNodePtr> *visited_nodes) {

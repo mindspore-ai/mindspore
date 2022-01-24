@@ -55,9 +55,7 @@ constexpr size_t kPartialFuncGraphPos = 1;
 constexpr size_t kSwitchLayerBranchPos = 2;
 constexpr size_t kSwitchTrueBranchPos = 2;
 constexpr size_t kMakeTupleInputStartPos = 1;
-const std::set<std::string> kNodeTupleOutSet = {prim::kPrimMakeTuple->name(), prim::kPrimGetNext->name()};
-
-const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
+const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -367,6 +365,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
     return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, skip_nop_node, return_types);
   }
+  const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
   if (IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
     return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, skip_nop_node, return_types);
   }

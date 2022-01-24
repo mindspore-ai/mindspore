@@ -18,7 +18,9 @@
 #define MINDSPORE_CORE_UTILS_MS_EXCEPTION_H_
 #include <exception>
 #include <set>
+#include <mutex>
 #include "utils/ms_utils.h"
+#include "utils/visible.h"
 namespace mindspore {
 class ExceptionListener {
  public:
@@ -26,12 +28,9 @@ class ExceptionListener {
   virtual ~ExceptionListener() = default;
 };
 
-class MsException {
+class MS_CORE_API MsException {
  public:
-  static MsException &Instance() {
-    static MsException instance;
-    return instance;
-  }
+  static MsException &Instance();
 
   void SetException() {
     exception_ptr_ = std::current_exception();
@@ -60,12 +59,9 @@ class MsException {
   std::exception_ptr exception_ptr_{nullptr};
 };
 
-class StaticAnalysisException {
+class MS_CORE_API StaticAnalysisException {
  public:
-  static StaticAnalysisException &Instance() {
-    static StaticAnalysisException instance;
-    return instance;
-  }
+  static StaticAnalysisException &Instance();
 
   void ClearException() {
     std::lock_guard<std::mutex> lock(lock_);

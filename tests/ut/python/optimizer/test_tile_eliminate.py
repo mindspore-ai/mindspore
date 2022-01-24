@@ -1,4 +1,5 @@
 import numpy as np
+from mindspore import context
 from mindspore import ms_function, ops, Tensor, dtype
 
 
@@ -14,6 +15,7 @@ def test_tile_eliminate():
     Description: All value of multiplier is '1' but length of multiplier is greater than tensor dims, can't do eliminate
     Expectation: success
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     tensor_ = Tensor(np.ndarray([1, 448, 448]), dtype=dtype.float32)
     out = ops.tile(tensor_, (1, 1, 1))
     assert out.shape == (1, 448, 448)

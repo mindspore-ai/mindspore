@@ -35,7 +35,7 @@ class ActorThreadPool;
 // should be at least greater than 1
 constexpr uint32_t MAX_ACTOR_RECORD_SIZE = 3;
 
-class ActorBase {
+class MS_CORE_API ActorBase {
  public:
   inline const AID &GetAID() const { return id; }
 

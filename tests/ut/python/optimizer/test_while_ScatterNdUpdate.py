@@ -17,9 +17,6 @@ from mindspore import context, nn, Tensor, Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
-
-context.set_context(mode=context.GRAPH_MODE)
-
 class Net(nn.Cell):
     def __init__(self, data):
         super(Net, self).__init__()
@@ -40,6 +37,7 @@ class Net(nn.Cell):
 
 
 def test_x():
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.arange(10 * 2 * 3).reshape(10, 2, 3).astype(np.float32))
     net = Net(x)
     net(x)

@@ -23,14 +23,12 @@
 #include <set>
 #include "utils/hash_map.h"
 #include "utils/info.h"
+#include "utils/visible.h"
 
 namespace mindspore {
-class PrimalDebugInfoManager {
+class MS_CORE_API PrimalDebugInfoManager {
  public:
-  static PrimalDebugInfoManager &GetInstance() noexcept {
-    static PrimalDebugInfoManager instance;
-    return instance;
-  }
+  static PrimalDebugInfoManager &GetInstance() noexcept;
   PrimalDebugInfoManager(const PrimalDebugInfoManager &) = delete;
   PrimalDebugInfoManager &operator=(const PrimalDebugInfoManager &) = delete;
   ~PrimalDebugInfoManager() = default;

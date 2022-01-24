@@ -15,12 +15,6 @@ endif()
 # build mindspore_shared_lib
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
-if(NOT BUILD_LITE)
-    set(LOAD_MINDIR_SRC
-            ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
-            ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
-            )
-endif()
 
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
@@ -36,11 +30,6 @@ if(ENABLE_D OR ENABLE_ACL)
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
-
-    if(NOT ENABLE_D)
-        list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
-        list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_vm_obj>)
-    endif()
 endif()
 
 if(ENABLE_D)
@@ -79,25 +68,30 @@ if(BUILD_LITE)
             "${CMAKE_CURRENT_SOURCE_DIR}/types.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc"
-            ${ACL_REMOVE_SRC}
-            $<TARGET_OBJECTS:_mindspore_vm_obj>)
+            ${ACL_REMOVE_SRC})
 endif()
 
-add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
+add_library(mindspore_shared_lib_obj OBJECT ${MSLIB_SRC})
+add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
+if(BUILD_LITE)
+    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+elseif(ENABLE_ACL AND NOT ENABLE_D)
+    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
+            $<TARGET_OBJECTS:_mindspore_vm_obj>)
+endif()
 if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
 endif()
 
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
-        mindspore::protobuf)
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore::protobuf)
 else()
     if(BUILD_LITE)
         target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
     else()
         target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
-                mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
+                mindspore mindspore_core proto_input mindspore::protobuf)
     endif()
 endif()
 

@@ -30,6 +30,7 @@
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "utils/hashing.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 class Cloner;
@@ -54,7 +55,7 @@ struct UpdateInfo {
 
 using UpdateInfoPtr = std::shared_ptr<UpdateInfo>;
 
-class Cloner {
+class MS_CORE_API Cloner {
  public:
   explicit Cloner(const FuncGraphVector &func_graphs = {}, bool clone_all_valuenodes = false,
                   bool clone_all_child_graphs = true, bool clone_all_used_graphs = false,
@@ -134,17 +135,17 @@ class Cloner {
   mindspore::HashMap<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;
 };
 
-AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
-                       const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr);
+MS_CORE_API AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
+                                   const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr);
 
-FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph);
+MS_CORE_API FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph);
 
-ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation);
+MS_CORE_API ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation);
 
-FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph,
-                                const TraceInfoPtr &relation = std::make_shared<TraceTransform>());
-FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes = false,
-                        const UpdateInfoPtr update_info = nullptr);
+MS_CORE_API FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph,
+                                            const TraceInfoPtr &relation = std::make_shared<TraceTransform>());
+MS_CORE_API FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes = false,
+                                    const UpdateInfoPtr update_info = nullptr);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_FUNC_GRAPH_CLONER_H_

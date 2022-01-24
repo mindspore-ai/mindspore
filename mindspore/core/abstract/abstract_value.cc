@@ -92,6 +92,8 @@ static inline bool IsUndeterminedType(const TypePtr &type) {
   return (type != nullptr) && (type->type_id() == kObjectTypeUndeterminedType);
 }
 
+AbstractBase::TraceNodeProvider AbstractBase::trace_node_provider_ = nullptr;
+
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
     // Same object.

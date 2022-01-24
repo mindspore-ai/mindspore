@@ -151,7 +151,7 @@ class MS_CORE_API AbstractBase : public Base {
     trace_node_provider_ = trace_node_provider;
   }
 
-  inline static TraceNodeProvider trace_node_provider_ = nullptr;
+  static TraceNodeProvider trace_node_provider_;
 
   /// \brief Broaden the abstract. It will upgrade the abstract to a higher level.
   ///
@@ -1580,7 +1580,7 @@ class MS_CORE_API AbstractCSRTensor : public AbstractUndetermined {
 };
 using AbstractCSRTensorPtr = std::shared_ptr<AbstractCSRTensor>;
 
-class AbstractMonad : public AbstractBase {
+class MS_CORE_API AbstractMonad : public AbstractBase {
  public:
   ~AbstractMonad() override = default;
   MS_DECLARE_PARENT(AbstractMonad, AbstractBase)
@@ -1600,7 +1600,7 @@ class AbstractMonad : public AbstractBase {
 };
 using AbstractMonadPtr = std::shared_ptr<AbstractMonad>;
 
-class AbstractUMonad final : public AbstractMonad {
+class MS_CORE_API AbstractUMonad final : public AbstractMonad {
  public:
   explicit AbstractUMonad(const ValuePtr &value = kUMonad) : AbstractMonad(value, kUMonadType) {}
   ~AbstractUMonad() override = default;
@@ -1613,7 +1613,7 @@ class AbstractUMonad final : public AbstractMonad {
 };
 using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
 
-class AbstractIOMonad final : public AbstractMonad {
+class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
  public:
   explicit AbstractIOMonad(const ValuePtr &value = kIOMonad) : AbstractMonad(value, kIOMonadType) {}
   ~AbstractIOMonad() override = default;
@@ -1627,10 +1627,11 @@ class AbstractIOMonad final : public AbstractMonad {
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
 
 AnfNodePtr GetTraceNode(const AbstractBasePtr &abs);
-std::string ExtractLoggingInfo(const std::string &info);
 
-void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
-                                                    const AbstractSequencePtr &rhs_sequence);
+MS_CORE_API std::string ExtractLoggingInfo(const std::string &info);
+
+MS_CORE_API void SynchronizeSequenceElementsUseFlagsRecursively(const AbstractSequencePtr &lhs_sequence,
+                                                                const AbstractSequencePtr &rhs_sequence);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

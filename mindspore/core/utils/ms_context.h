@@ -141,7 +141,7 @@ enum MsCtxParam : unsigned {
   NUM_STRING_PARAMS = MS_CTX_TYPE_STRING_END - MS_CTX_TYPE_STRING_BEGIN
 };
 
-class MsContext {
+class MS_CORE_API MsContext {
  public:
   MsContext(const std::string &backend_policy, const std::string &target);
   ~MsContext() = default;
@@ -183,8 +183,8 @@ class MsContext {
   }
 
  private:
-  inline static DeviceSeter seter_ = nullptr;
-  inline static DeviceTypeSeter device_type_seter_ = nullptr;
+  static DeviceSeter seter_;
+  static DeviceTypeSeter device_type_seter_;
   static std::shared_ptr<MsContext> inst_context_;
   static std::map<std::string, MsBackendPolicy> policy_map_;
 

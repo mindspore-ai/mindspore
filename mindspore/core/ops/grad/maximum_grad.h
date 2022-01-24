@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaximumGrad = "MaximumGrad";
-class MaximumGrad : public PrimitiveC {
+class MS_CORE_API MaximumGrad : public PrimitiveC {
  public:
   MaximumGrad() : PrimitiveC(kNameMaximumGrad) { InitIOName({"x1", "x2", "grads"}, {"y1", "y2"}); }
   ~MaximumGrad() = default;

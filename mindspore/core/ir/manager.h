@@ -66,11 +66,11 @@ using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
 // func_graph, be managed graph
 // manage: if true, created manager will be set in func_graph
 // FuncGraphManagerPtr: return created manager
-FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage = true);
 
-FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage = true);
 
-FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {}, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {}, bool manage = true);
 
 struct Signals {
   Signal<void()> InvalidateComputer;
@@ -277,8 +277,8 @@ class FuncGraphJTotalComputer final : public DepComputer {
   bool SeekJ(const FuncGraphPtr &fg, size_t seen_num);
 };
 
-class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
-                         public deprecated::api::FuncGraphManager {
+class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
+                                     public deprecated::api::FuncGraphManager {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
   ~FuncGraphManager() {
@@ -376,7 +376,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
   bool is_manage_;
 };
 
-class FuncGraphTransaction {
+class MS_CORE_API FuncGraphTransaction {
  public:
   explicit FuncGraphTransaction(FuncGraphManager *manager) : manager_(manager) {}
   FuncGraphTransaction() : manager_(nullptr) {}

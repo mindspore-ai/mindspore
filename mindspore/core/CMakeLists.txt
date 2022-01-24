@@ -14,8 +14,6 @@ if(NOT(BUILD_LITE))
     add_subdirectory(mindrt)
 endif()
 
-message("************ build core ***************")
-
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "abstract/*.cc"
   "base/*.cc"
@@ -48,9 +46,23 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
-set_property(SOURCE ${PROTO_SRCS} PROPERTY COMPILE_OPTIONS -Wno-array-bounds)
-add_library(mindspore_core STATIC ${CORE_SRC_LIST} ${PROTO_SRCS})
-target_link_libraries(mindspore_core PRIVATE mindspore_gvar)
+add_library(core_obj OBJECT ${CORE_SRC_LIST})
+add_library(core_proto_obj OBJECT ${PROTO_SRCS})
+add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>
+        $<TARGET_OBJECTS:mindspore_gvar>)
+target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(mindspore_core PRIVATE -Wl,-init,mindspore_log_init)
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set_target_properties(mindspore_core PROPERTIES MACOSX_RPATH ON)
+    set_target_properties(mindspore_core PROPERTIES INSTALL_RPATH @loader_path)
+else()
+    set_target_properties(mindspore_core PROPERTIES INSTALL_RPATH $ORIGIN)
+endif()
+
 if(NOT(BUILD_LITE))
     target_link_libraries(mindspore_core PRIVATE mindrt_mid)
 endif()
@@ -65,3 +77,4 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         add_compile_definitions(ENABLE_OPENSSL)
     endif()
 endif()
+

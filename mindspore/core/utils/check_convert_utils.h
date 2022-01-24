@@ -103,7 +103,7 @@ const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeT
   {kIncludeRight, {"in (", "]"}},
   {kIncludeBoth, {"in [", "]"}}};
 
-class CheckAndConvertUtils {
+class MS_CORE_API CheckAndConvertUtils {
  public:
   static std::vector<int64_t> CheckPositiveVector(const std::string &arg_name, const std::vector<int64_t> &arg_value,
                                                   const std::string &prim_name);

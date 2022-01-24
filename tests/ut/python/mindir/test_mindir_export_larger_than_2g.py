@@ -24,6 +24,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
+from mindspore import context
 from mindspore import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
@@ -63,6 +64,7 @@ def test_mindir_export_split():
     Description: MindIR Export model is exceed TOTAL_SAVE should be split save as model file and data file
     Expectation: No exception.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     ms.train.serialization.TOTAL_SAVE = 0
 
     class Net(nn.Cell):
@@ -124,6 +126,7 @@ def test_mindir_export_larger_parameter_exceed_1t_mock():
     it will be split to another file named data_0,data_1,data_2...
     Expectation: No exception.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     ms.train.serialization.TOTAL_SAVE = 0
     ms.train.serialization.PARAMETER_SPLIT_SIZE = 129 / 1024
 

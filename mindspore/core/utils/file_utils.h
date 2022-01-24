@@ -19,9 +19,10 @@
 
 #include <string>
 #include <optional>
+#include "utils/visible.h"
 
 namespace mindspore {
-class FileUtils {
+class MS_CORE_API FileUtils {
  public:
   FileUtils() = default;
   ~FileUtils() = default;

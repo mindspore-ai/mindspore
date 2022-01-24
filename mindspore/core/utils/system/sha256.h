@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_UTILS_SYSTEM_SHA256_H_
 
 #include <string>
+#include "utils/visible.h"
 
 namespace mindspore {
 namespace system {
@@ -41,7 +42,7 @@ std::string Encrypt(const std::string &message);
 
 std::string GetHashFromString(const std::string &data);
 
-std::string GetHashFromFile(const std::string &path);
+MS_CORE_API std::string GetHashFromFile(const std::string &path);
 
 #ifndef _WIN32
 std::string GetHashFromDir(const std::string &dir);

@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace label_manage {
 enum class TraceLabelType { kShortSymbol, kFullName, kWithUniqueId };
-TraceLabelType GetGlobalTraceLabelType();
-std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_type = TraceLabelType::kShortSymbol);
+MS_CORE_API TraceLabelType GetGlobalTraceLabelType();
+MS_CORE_API std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_type = TraceLabelType::kShortSymbol);
 }  // namespace label_manage
 }  // namespace mindspore
 

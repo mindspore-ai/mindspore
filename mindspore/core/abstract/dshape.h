@@ -108,7 +108,7 @@ class MS_CORE_API NoShape final : public BaseShape {
   bool IsDimUnknown() const override { return false; }
 };
 
-inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
+MS_CORE_API inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
 
 /// \brief Shape defines dimensions of tensor.
 class MS_CORE_API Shape final : public BaseShape {
@@ -235,7 +235,23 @@ class MS_CORE_API SequenceShape : public BaseShape {
   /// \param[in] other Another SequenceShape object.
   /// \return True if current SequenceShape object is equal to another BaseShape object, otherwise false.
   template <typename T>
-  bool SequenceEqual(const BaseShape &other) const;
+  bool SequenceEqual(const BaseShape &other) const {
+    if (tid() != other.tid()) {
+      return false;
+    }
+    auto other_shapes = static_cast<const T &>(other).p_shapes_;
+    if (other_shapes.size() != p_shapes_.size()) {
+      return false;
+    }
+    for (uint64_t i = 0; i < p_shapes_.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(p_shapes_[i]);
+      MS_EXCEPTION_IF_NULL(other_shapes[i]);
+      if (!(*p_shapes_[i] == *other_shapes[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /// \brief Get all element-shapes.
   ///

@@ -18,18 +18,17 @@
 #define MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 
 #include <string>
+#include "utils/hash_set.h"
+#include "utils/visible.h"
 
 namespace mindspore {
-class InterpretNodeRecorder {
+class MS_CORE_API InterpretNodeRecorder {
  public:
   explicit InterpretNodeRecorder(InterpretNodeRecorder &&) = delete;
   explicit InterpretNodeRecorder(const InterpretNodeRecorder &) = delete;
   void operator=(const InterpretNodeRecorder &) = delete;
   void operator=(const InterpretNodeRecorder &&) = delete;
-  static InterpretNodeRecorder &GetInstance() {
-    static InterpretNodeRecorder instance;
-    return instance;
-  }
+  static InterpretNodeRecorder &GetInstance();
 
   void PushLineInfo(const std::string &line) { interpret_nodes_lines_.emplace(line); }
 

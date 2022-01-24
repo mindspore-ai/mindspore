@@ -84,12 +84,7 @@ class MS_CORE_API TraceManager {
   /// \brief Get current trace context.
   ///
   /// \return The current trace context.
-  static TraceContextPtr CurrentContextInfo() {
-    if (!trace_context_stack_.empty()) {
-      return &trace_context_stack_.back();
-    }
-    return nullptr;
-  }
+  static TraceContextPtr CurrentContextInfo();
 
   /// \brief Debug trace with the given function name and location.
   ///
@@ -114,7 +109,7 @@ class MS_CORE_API TraceManager {
   static void DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info);
 
   /// \brief End current debug trace.
-  static void EndTrace() noexcept { trace_context_stack_.pop_back(); }
+  static void EndTrace() noexcept;
 
   /// \brief Clear debug info for parse or resolve.
   static void ClearParseOrResolveDebugInfo();
@@ -134,16 +129,6 @@ class MS_CORE_API TraceManager {
 
   /// \brief Set the flag to true for recording a debug info.
   static void OpenRecordDebugInfoFlag();
-
- private:
-  /// \brief Trace context stack for current thread.
-  thread_local static std::vector<TraceContext> trace_context_stack_;
-
-  /// \brief Record a debug info for print.
-  thread_local static DebugInfoPtr record_debug_info_;
-
-  /// \brief A flag to decide whether record a debug info or not.
-  thread_local static bool record_debug_info_flag_;
 };
 
 class TraceGuard {
@@ -317,7 +302,7 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
 
 using NodeDebugInfoPtr = std::shared_ptr<NodeDebugInfo>;
 
-class GraphDebugInfo : public DebugInfo {
+class MS_CORE_API GraphDebugInfo : public DebugInfo {
  public:
   GraphDebugInfo() : DebugInfo() {
     auto top = TraceManager::CurrentContextInfo();
@@ -388,11 +373,11 @@ inline TraceContext::TraceContext(const LocationPtr &loc, const std::string &fun
   }
 }
 
-struct DebugInfoCompare {
+struct MS_CORE_API DebugInfoCompare {
   bool operator()(const DebugInfoPtr &left, const DebugInfoPtr &right) const;
 };
 
-void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info);
+MS_CORE_API void UpdateDebugInfo(const FuncGraphPtr &func_graph, const ScopePtr &scope, const DebugInfoPtr &debug_info);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_INFO_H_

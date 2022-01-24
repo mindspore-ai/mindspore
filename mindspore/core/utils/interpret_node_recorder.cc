@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
-#define MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
-#include <vector>
-#include <memory>
 
-#include "ir/tensor.h"
-#include "base/base_ref.h"
+#include "utils/interpret_node_recorder.h"
 
 namespace mindspore {
-MS_CORE_API std::vector<tensor::TensorPtr> TransformVectorRefToMultiTensor(const VectorRef &base_ref);
+InterpretNodeRecorder &InterpretNodeRecorder::GetInstance() {
+  static InterpretNodeRecorder instance;
+  return instance;
+}
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_BASE_BASE_REF_UTILS_H

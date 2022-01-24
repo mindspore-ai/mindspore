@@ -795,4 +795,6 @@ api::FuncGraphPtr api::FuncGraph::GetFuncGraphFromAnfNode(const AnfNodePtr &inpu
   auto fg = GetValueNode<mindspore::FuncGraphPtr>(input);
   return fg;
 }
+
+FuncGraph::Drawer FuncGraph::drawer_ = nullptr;
 }  // namespace mindspore

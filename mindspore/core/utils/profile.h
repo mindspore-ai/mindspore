@@ -28,7 +28,7 @@ namespace mindspore {
 struct TimeInfo;
 using TimeInfoMap = std::map<std::string, const TimeInfo *>;
 
-extern double GetTime();
+MS_CORE_API double GetTime();
 
 class ProfileBase;
 
@@ -43,7 +43,7 @@ struct TimeInfo {
 };
 
 // Utility class for Profile.
-class ProfContext {
+class MS_CORE_API ProfContext {
   friend class Profile;
   friend class ProfileBase;
   friend class ProfTransaction;
@@ -66,7 +66,7 @@ class ProfContext {
   TimeInfo *time_info_;
 };
 
-class ProfileBase {
+class MS_CORE_API ProfileBase {
   friend class ProfContext;
   friend class ProfTransaction;
 
@@ -85,7 +85,7 @@ class ProfileBase {
   ProfContext *ctx_ptr_ = nullptr;
 };
 
-class Profile : public ProfileBase {
+class MS_CORE_API Profile : public ProfileBase {
  public:
   Profile() = default;
   ~Profile() override = default;
@@ -98,7 +98,7 @@ class Profile : public ProfileBase {
   void Pop(void) noexcept override;
 };
 
-class ProfTransaction {
+class MS_CORE_API ProfTransaction {
  public:
   explicit ProfTransaction(const ProfileBase *prof);
   explicit ProfTransaction(ProfContext *const ctx) : ctx_(ctx) {}
@@ -131,7 +131,7 @@ class NoProfTransaction {
   }
 };
 
-class DumpTime {
+class MS_CORE_API DumpTime {
  public:
   ~DumpTime() {
     try {
@@ -144,10 +144,7 @@ class DumpTime {
   }
   DumpTime(const DumpTime &) = delete;
   DumpTime &operator=(const DumpTime &) = delete;
-  static DumpTime &GetInstance() {
-    static DumpTime instance;
-    return instance;
-  }
+  static DumpTime &GetInstance();
   void set_file_path(const std::string &save_path) { file_path_ = save_path; }
   void Record(const std::string &name, const double time, const bool is_start);
   void Save();
@@ -181,7 +178,7 @@ struct TimeStat {
   int count_;
 };
 
-class MsProfile {
+class MS_CORE_API MsProfile {
  public:
   ~MsProfile() { Clear(); }
 

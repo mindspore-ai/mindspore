@@ -74,7 +74,7 @@ AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitiveP
   abstract::CheckArgsSize(op_name, args_spec_list, kSwitchLayerInputNum);
   auto index = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto &input_shape = index->shape()->shape();
-  if (!input_shape.empty()) {
+  if (!input_shape.empty() && (input_shape.size() != 1 || input_shape[0] != 1)) {
     MS_EXCEPTION(ValueError) << op_name << " index must be a 0 dimension tensor, but got a " << input_shape.size()
                              << " dimension tensor";
   }

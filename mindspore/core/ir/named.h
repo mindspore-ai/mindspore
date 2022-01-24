@@ -121,7 +121,7 @@ class MS_CORE_API None final : public Named {
   MS_DECLARE_PARENT(None, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-inline const NamedPtr kNone = std::make_shared<None>();
+MS_CORE_API inline const NamedPtr kNone = std::make_shared<None>();
 
 /// \beief Null defines interface for null data.
 class MS_CORE_API Null final : public Named {
@@ -133,7 +133,7 @@ class MS_CORE_API Null final : public Named {
   MS_DECLARE_PARENT(Null, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-inline const NamedPtr kNull = std::make_shared<Null>();
+MS_CORE_API inline const NamedPtr kNull = std::make_shared<Null>();
 
 /// \beief Ellipsis defines interface for ... data.
 class MS_CORE_API Ellipsis final : public Named {
@@ -145,6 +145,7 @@ class MS_CORE_API Ellipsis final : public Named {
   MS_DECLARE_PARENT(Ellipsis, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-inline const NamedPtr kEllipsis = std::make_shared<Ellipsis>();
+
+MS_CORE_API inline const NamedPtr kEllipsis = std::make_shared<Ellipsis>();
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_NAMED_H_

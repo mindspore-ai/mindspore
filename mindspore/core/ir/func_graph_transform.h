@@ -23,7 +23,7 @@
 namespace mindspore {
 // ANF transform class.
 // Either a primitive or a func_graph.
-class FuncGraphTransform {
+class MS_CORE_API FuncGraphTransform {
  public:
   enum Type { kGtPrimitive, kGtFuncGraph };
 

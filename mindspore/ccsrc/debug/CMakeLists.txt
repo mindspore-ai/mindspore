@@ -73,11 +73,17 @@ if(ENABLE_DEBUGGER)
         target_link_libraries(_mindspore_offline_debug PRIVATE
             mindspore::pybind11_module
             mindspore::glog
-            mindspore_gvar
+            mindspore_core
             )
         set_target_properties(_mindspore_offline_debug PROPERTIES
             PREFIX "${PYTHON_MODULE_PREFIX}"
             SUFFIX "${PYTHON_MODULE_EXTENSION}"
             )
+        if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+            set_target_properties(_mindspore_offline_debug PROPERTIES MACOSX_RPATH ON)
+            set_target_properties(_mindspore_offline_debug PROPERTIES INSTALL_RPATH @loader_path/lib)
+        else()
+            set_target_properties(_mindspore_offline_debug PROPERTIES INSTALL_RPATH $ORIGIN/lib)
+        endif()
     endif()
 endif()

@@ -28,9 +28,6 @@ from mindspore.train import Model
 from mindspore.train.loss_scale_manager import FixedLossScaleManager, DynamicLossScaleManager
 from ....dataset_mock import MindData
 
-context.set_context(mode=context.GRAPH_MODE)
-
-
 class MindDataSet(MindData):
     def __init__(self, dataset_types, dataset_shapes):
         super(MindDataSet, self).__init__(size=2, batch_size=32,
@@ -98,6 +95,7 @@ class MSELoss(nn.Cell):
 
 
 def test_momentum_compile():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
     label = Tensor(np.zeros([15, 1]).astype(np.float32))
     net = Net(1, 1)
@@ -114,6 +112,7 @@ def test_momentum_compile():
 
 
 def test_compile_fp16_not_overflow():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     net = NetFP16(16, 16)
@@ -130,6 +129,7 @@ def test_compile_fp16_not_overflow():
 
 
 def test_compile_fp16_lr_overflow():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -147,6 +147,7 @@ def test_compile_fp16_lr_overflow():
 
 
 def test_compile_fp16_overflow():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     net = NetFP16(16, 16)
@@ -163,6 +164,7 @@ def test_compile_fp16_overflow():
 
 
 def test_compile_fp16_lr_overflow_with_lossscale_update():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -180,6 +182,7 @@ def test_compile_fp16_lr_overflow_with_lossscale_update():
 
 
 def test_compile_f16_model_train():
+    context.set_context(mode=context.GRAPH_MODE)
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
 
@@ -194,6 +197,7 @@ def test_compile_f16_model_train():
 
 
 def test_compile_f16_model_train_fixed():
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_context(device_target='Ascend')
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
@@ -209,6 +213,7 @@ def test_compile_f16_model_train_fixed():
 
 
 def test_compile_fp16_lr_overflow_fixed_feed():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -226,6 +231,7 @@ def test_compile_fp16_lr_overflow_fixed_feed():
 
 
 def test_compile_fp16_lr_overflow_dynamic_feed():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -243,6 +249,7 @@ def test_compile_fp16_lr_overflow_dynamic_feed():
 
 
 def test_compile_fp16_lr_overflow_fixed_graph():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -260,6 +267,7 @@ def test_compile_fp16_lr_overflow_fixed_graph():
 
 
 def test_compile_fp16_lr_overflow_dynamic_graph():
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
     lr = Tensor(np.ones([1], np.float32) * 0.1)
@@ -277,6 +285,7 @@ def test_compile_fp16_lr_overflow_dynamic_graph():
 
 
 def adam_compile(loss_scale=1.0):
+    context.set_context(mode=context.GRAPH_MODE)
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
     label = Tensor(np.zeros([15, 1]).astype(np.float32))
     net = Net(1, 1)
@@ -294,9 +303,11 @@ def adam_compile(loss_scale=1.0):
 
 
 def test_adam_compile():
+    context.set_context(mode=context.GRAPH_MODE)
     adam_compile()
 
 
 def test_adam_loss_scale_compile():
     """ test setting loss_scale to 1e-40 """
+    context.set_context(mode=context.GRAPH_MODE)
     adam_compile(loss_scale=1e-40)

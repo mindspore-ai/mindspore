@@ -18,6 +18,11 @@
 namespace mindspore {
 const ScopePtr kDefaultScope = std::make_shared<Scope>("Default");
 
+ScopeManager &ScopeManager::GetInstance() noexcept {
+  static ScopeManager instance;
+  return instance;
+}
+
 void ScopeManager::EnterScope(const ScopePtr &scope) {
   if (scope != kDefaultScope) {
     scope_stack_.push(scope);
