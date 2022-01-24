@@ -211,6 +211,29 @@ void SetNodeStreamIDAttr(const NotNull<KernelGraphPtr> &graph_ptr) {
 }
 }  // namespace
 
+void AscendStreamAssign::GetMaxStreamTaskNum() {
+  auto ret = rtGetMaxStreamAndTask(RT_NORMAL_STREAM, &max_stream_count_, &max_task_count_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "call rtGetMaxStreamAndTask failed.";
+  }
+  MS_LOG(INFO) << "AscendStreamAssign::max_stream_count_: " << max_stream_count_;
+  MS_LOG(INFO) << "AscendStreamAssign::max_task_count_: " << max_task_count_;
+}
+
+uint32_t AscendStreamAssign::max_stream_count() {
+  if (!max_stream_count_) {
+    GetMaxStreamTaskNum();
+  }
+  return max_stream_count_;
+}
+
+uint32_t AscendStreamAssign::max_task_count() {
+  if (!max_task_count_) {
+    GetMaxStreamTaskNum();
+  }
+  return max_task_count_;
+}
+
 void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels) {
   if (kernels.empty()) {
     return;
@@ -250,11 +273,15 @@ void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> 
 }
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
+  MS_LOG(INFO) << "Status record: start assign stream. graph id: " << graph_ptr->graph_id();
+  PROF_START(assign_stream);
   if (!IsTaskSink()) {
     auto kernels = graph_ptr->execution_order();
     AssignStreamForNonTaskSink(kernels);
     MS_LOG(INFO) << "After finish stream assign";
     graph_ptr->PrintGraphExecuteOrder();
+    PROF_END(assign_stream);
+    MS_LOG(INFO) << "Status record: end assign stream. graph id: " << graph_ptr->graph_id();
     return;
   }
   if (!graph_ptr->is_dynamic_shape()) {
@@ -295,6 +322,8 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     PrintStreamGroups();
     FindEventRelations(graph_ptr);
   }
+  PROF_END(assign_stream);
+  MS_LOG(INFO) << "Status record: end assign stream. graph id: " << graph_ptr->graph_id();
 }
 
 void AscendStreamAssign::SetLoopSink() {
@@ -672,14 +701,8 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
                << ", hcom stream number: " << hcom_stream_num << "*" << (kHcomSecondaryStreamNum + 1)
                << ", independent stream number: " << independent_stream_num << ".";
 
-  uint32_t max_stream_count = 0;
-  uint32_t max_task_count = 0;
-  auto ret = rtGetMaxStreamAndTask(RT_NORMAL_STREAM, &max_stream_count, &max_task_count);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "call rtGetMaxStreamAndTask failed.";
-  }
-  if (total_stream_num > max_stream_count) {
-    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count
+  if (total_stream_num > max_stream_count()) {
+    MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count()
                       << ", search details information in mindspore's FAQ.";
   }
 
@@ -781,13 +804,7 @@ uint32_t AscendStreamAssign::AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, b
     AnfAlgo::SetStreamId(cur_hcom_stream_id, cur_cnode_ptr.get());
     hcom_stream_map_.emplace(cur_hcom_stream_id, task_num);
   } else {
-    uint32_t max_stream_count = 0;
-    uint32_t max_task_count = 0;
-    auto ret = rtGetMaxStreamAndTask(RT_NORMAL_STREAM, &max_stream_count, &max_task_count);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "call rtGetMaxStreamAndTask failed.";
-    }
-    if (it->second <= max_task_count - task_num) {
+    if (it->second <= max_task_count() - task_num) {
       AnfAlgo::SetStreamId(it->first, cur_cnode_ptr.get());
       it->second = Uint32tAddWithOverflowCheck(it->second, task_num);
     } else {

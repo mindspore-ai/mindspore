@@ -109,6 +109,7 @@ void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &
 void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start optimize execution order. graph id: " << graph->graph_id();
+  PROF_START(optimize_execution_order);
   // root root_graph validate,include generate execute order and so on
   RootGraphExecutorValidate(NOT_NULL(graph));
 
@@ -137,6 +138,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
     DumpIR("after_adjust_kernel.ir", graph);
   }
 #endif
+  PROF_END(optimize_execution_order);
   MS_LOG(INFO) << "Status record: end optimize execution order. graph id: " << graph->graph_id();
 }
 
@@ -205,8 +207,10 @@ void AscendGraphOptimization::IRFusionOptimization(const KernelGraphPtr &graph) 
 
 void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> graph) {
   MS_LOG(INFO) << "Status record: start handle control flow. graph id: " << graph->graph_id();
+  PROF_START(handle_control_flow);
   AscendAutoMonad auto_monad(graph);
   auto_monad.Run();
+  PROF_END(handle_control_flow);
   MS_LOG(INFO) << "Status record: end handle control flow. graph id: " << graph->graph_id();
 }
 
@@ -244,6 +248,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
 
 void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
+  PROF_START(select_kernel);
   raise_precision_count_ = 0;
   reduce_precision_count_ = 0;
   memo_.clear();
@@ -260,6 +265,7 @@ void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
                       << " node/nodes used reduce precision to selected the kernel!";
     }
   }
+  PROF_END(select_kernel);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 }
 
@@ -290,8 +296,10 @@ void AscendGraphOptimization::UpdateRefOutputMap(const KernelGraphPtr &graph) {
 void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start unify mindir. graph id: " << graph->graph_id();
+  PROF_START(unify_mindir);
   opt::CommonUnifyMindIR(graph);
   opt::AscendUnifyMindIR(graph);
+  PROF_END(unify_mindir);
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 

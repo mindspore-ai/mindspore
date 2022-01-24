@@ -62,10 +62,13 @@ class AscendStreamAssign {
   void AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels);
   const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
+  uint32_t max_stream_count();
+  uint32_t max_task_count();
 
  private:
   AscendStreamAssign() = default;
   ~AscendStreamAssign() = default;
+  void GetMaxStreamTaskNum();
   void Reset();
   CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
@@ -187,6 +190,9 @@ class AscendStreamAssign {
   // new policy end
   bool IsAllOutGraphOut(const KernelGraphPtr &graph, const CNodePtr &cnode);
   vector<CNodePtr>::iterator FindGraphEnd(vector<CNodePtr>::iterator begin, vector<CNodePtr>::iterator end);
+
+  uint32_t max_stream_count_ = 0;
+  uint32_t max_task_count_ = 0;
 };
 }  // namespace ascend
 }  // namespace device
