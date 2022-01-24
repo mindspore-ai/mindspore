@@ -8,7 +8,7 @@ mindspore.nn.MAE
     计算输入 :math:`x` 和目标 :math:`y` 各元素之间的平均绝对误差。
 
     .. math::
-        \text{MAE} = \frac{\sum_{i=1}^n \|y_{pred}_i - y_i\|}{n}
+        \text{MAE} = \frac{\sum_{i=1}^n \|{y\_pred}_i - y_i\|}{n}
 
     这里， :math:`n` 是batch size。
 

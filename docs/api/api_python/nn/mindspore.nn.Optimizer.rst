@@ -112,6 +112,6 @@ mindspore.nn.Optimizer
 
         tuple[Tensor]，还原后的梯度。
 
-.. include:: mindspore.nn.optim_target_unique_for_sparse.rst
+    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
 
-.. include:: mindspore.nn.optim_target_unique_for_sparse.b.rst
+    .. include:: mindspore.nn.optim_target_unique_for_sparse.b.rst

@@ -8,7 +8,7 @@ mindspore.nn.MSE
     计算输入 :math:`x` 和目标 :math:`y` 各元素之间的平均平方误差。
 
     .. math::
-        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_{pred}_i - y_i)^2}{n}
+        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n({y\_pred}_i - y_i)^2}{n}
 
     其中， :math:`n` 为batch size。
 
