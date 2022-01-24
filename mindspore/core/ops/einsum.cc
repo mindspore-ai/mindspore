@@ -193,6 +193,12 @@ std::string Einsum::get_equation() const {
 
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
   if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(TypeError) << "The input of Einsum must be list or tuple of tensors.";
   }
@@ -203,9 +209,17 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   for (size_t idx = 0; idx < elements.size(); ++idx) {
     auto shape = elements[idx]->BuildShape();
     auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
+    for (auto &val : shape_vec) {
+      if (val == 0) {
+        MS_EXCEPTION(ValueError) << "The dim in each shape can not be zero";
+      }
+    }
     input_shapes.emplace_back(shape_vec);
   }
   equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
+  if (equation.length() == 0) {
+    MS_EXCEPTION(ValueError) << "the equation can not be none";
+  }
   const std::string seg_arrow = "->";
   const auto seg_pos = equation.find(seg_arrow);
   const auto left_equation = equation.substr(0, seg_pos);
