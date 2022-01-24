@@ -569,7 +569,6 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
     auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(shape_tensor->data().nbytes()), &shape[0], elem_num);
     if (ret_code != 0) {
       MS_LOG(EXCEPTION) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
-      return nullptr;
     }
     shape_value = shape_tensor;
     abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
