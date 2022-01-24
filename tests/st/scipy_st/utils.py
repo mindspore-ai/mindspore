@@ -13,10 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """utility functions for mindspore.scipy st tests"""
+from typing import List
+
 import numpy as onp
 from mindspore import Tensor
+import mindspore.ops as ops
 import mindspore.numpy as mnp
-from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 
 
@@ -92,24 +94,46 @@ def create_sym_pos_matrix(shape, dtype):
 
 
 def gradient_check(x, net, epsilon=1e-3):
+    # some utils
+    def _tensor_to_numpy(arg: List[Tensor]) -> List[onp.ndarray]:
+        return [_arg.asnumpy() for _arg in arg]
+
+    def _numpy_to_tensor(arg: List[onp.ndarray]) -> List[Tensor]:
+        return [Tensor(_arg) for _arg in arg]
+
+    def _add_value(arg: List[onp.ndarray], outer, inner, value):
+        arg[outer][inner] += value
+        return arg
+
+    def _flatten(arg: List[onp.ndarray]) -> onp.ndarray:
+        arg = [_arg.reshape((-1,)) for _arg in arg]
+        return onp.concatenate(arg)
+
+    if isinstance(x, Tensor):
+        x = [x]
+
     # using automatic differentiation to calculate gradient
-    grad_net = F.grad(net)
-    x_grad = grad_net(x).asnumpy()
+    grad_net = ops.GradOperation(get_all=True)(net)
+    x_grad = grad_net(*x)
+    x_grad = _tensor_to_numpy(x_grad)
 
     # using the definition of a derivative to calculate gradient
-    x = x.asnumpy()
-    x_grad_approx = onp.zeros_like(x_grad)
-    for index, _ in onp.ndenumerate(x):
-        x_plus = onp.copy(x)
-        x_plus[index] = x_plus[index] + epsilon
-        y_plus = net(Tensor(x_plus)).asnumpy()
+    x = _tensor_to_numpy(x)
+    x_grad_approx = [onp.zeros_like(_x) for _x in x_grad]
+    for outer, _x in enumerate(x):
+        for inner, _ in onp.ndenumerate(_x):
+            x = _add_value(x, outer, inner, epsilon)
+            y_plus = net(*_numpy_to_tensor(x)).asnumpy()
 
-        x_minus = onp.copy(x)
-        x_minus[index] = x_minus[index] - epsilon
-        y_minus = net(Tensor(x_minus)).asnumpy()
+            x = _add_value(x, outer, inner, -2 * epsilon)
+            y_minus = net(*_numpy_to_tensor(x)).asnumpy()
 
-        x_grad_approx[index] = (y_plus - y_minus) / (2 * epsilon)
+            y_grad = (y_plus - y_minus) / (2 * epsilon)
+            x = _add_value(x, outer, inner, epsilon)
+            x_grad_approx = _add_value(x_grad_approx, outer, inner, y_grad)
 
+    x_grad = _flatten(x_grad)
+    x_grad_approx = _flatten(x_grad_approx)
     numerator = onp.linalg.norm(x_grad - x_grad_approx)
     denominator = onp.linalg.norm(x_grad) + onp.linalg.norm(x_grad_approx)
     difference = numerator / denominator

@@ -14,7 +14,7 @@
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
-from .ops import Eigh, Eig
+from .ops import Eigh, Eig, SolveTriangular
 from .. import dtype as mstype
 from ..ops import operations as P
 from ..ops import functional as F
@@ -82,12 +82,13 @@ def get_bprpo_eigh(self):
     """
     is_compute_v = self.compute_eigenvectors
     is_lower = self.lower
+    eigh = Eigh(compute_eigenvectors=True)
 
     def bprop(a, out, dout):
         w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
         if not is_compute_v:
             # w, _ = Eigh(compute_eigenvectors=False)(a) -> a * _ = w * _
-            _, v = Eigh(compute_eigenvectors=True)(a)
+            _, v = eigh(a)
             grad_a = _matmul(v * F.expand_dims(grad_w, -2), _adjoint(v))
         else:
             # w, v = Eigh(compute_eigenvectors=True)(a)  -> a * v = w * v
@@ -105,5 +106,37 @@ def get_bprpo_eigh(self):
         grad_a = grad_a - 0.5 * _diag(grad_a.diagonal(0, -2, -1))
 
         return (grad_a,)
+
+    return bprop
+
+
+@bprop_getters.register(SolveTriangular)
+def get_bprpo_trsm(self):
+    """Grad definition for `SolveTriangular` operation.
+    Appendix(see trsm) from Matthias Seeger, et al. 'Auto-Differentiating Linear Algebra', 2017, pg. 28-29
+    """
+    is_lower = self.lower
+    is_unit_diagonal = self.unit_diagonal
+    k = int(is_unit_diagonal)
+    bp_trans = ("N" if self.trans == "T" else "T")
+    solve_triangular = SolveTriangular(is_lower, is_unit_diagonal, bp_trans)
+
+    def bprop(a, b, out, dout):
+        x, grad_x = out, dout
+        grad_b = solve_triangular(a, grad_x)
+        grad_b_align = F.reshape(grad_b, (F.shape(a)[-2], -1))
+        x_align = F.reshape(x, (F.shape(a)[-2], -1))
+
+        if bp_trans == "T":
+            grad_a = _matmul(grad_b_align, _adjoint(x_align))
+        else:
+            grad_a = _matmul(x_align, _adjoint(grad_b_align))
+
+        if is_lower:
+            grad_a = -mnp.tril(grad_a, -k)
+        else:
+            grad_a = -mnp.triu(grad_a, k)
+
+        return grad_a, grad_b
 
     return bprop
