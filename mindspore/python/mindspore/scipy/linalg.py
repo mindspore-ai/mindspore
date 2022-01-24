@@ -110,13 +110,12 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
 
     Args:
         A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
-            `float32` nor `float64`, then it will be casted to :class:`mstype.float32`.
+            `float32` nor `float64`, then it will be cast to :class:`mstype.float32`.
         b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
             Right-hand side matrix in :math:`A x = b`. Note that if the input tensor is neither `float32` nor `float64`,
-            then it will be casted to :class:`mstype.float32`.
+            then it will be cast to :class:`mstype.float32`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
-        trans (0, 1, 2, 'N', 'T', 'C', optional): Default: 'N'.
-            Type of system to solve:
+        trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 'N'.
 
             ========  =========
             trans     system
@@ -141,14 +140,15 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         TypeError: If `A` is not Tensor.
         TypeError: If `b` is not Tensor.
         TypeError: If dtype of `A` and `b` are not the same.
+        RuntimeError: If shape of `A` and `b` are not matched or more than 2D.
         TypeError: If `trans` is not int or str.
+        RuntimeError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
         TypeError: If `lower` is not bool.
         TypeError: If `unit_diagonal` is not bool.
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `check_finite` is not bool.
         ValueError: If `A` is singular matrix.
         ValueError: If the shape of `A` and `b` not match.
-        ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -173,12 +173,14 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         >>> print(mnp.dot(A, x))  # Check the result
         [4. 2. 4. 2.]
     """
-    _type_check(overwrite_b, 'overwrite_b', bool)
-    _type_check(check_finite, 'check_finite', bool)
-    if F.dtype(A) not in float_types:
+    _type_check('overwrite_b', overwrite_b, bool, 'solve_triangular')
+    _type_check('check_finite', check_finite, bool, 'solve_triangular')
+    if F.dtype(A) in (mstype.int32, mstype.int64):
         A = F.cast(A, mstype.float32)
-    if F.dtype(b) not in float_types:
+    if F.dtype(b) in (mstype.int32, mstype.int64):
         b = F.cast(b, mstype.float32)
+    if trans not in (0, 1, 2, 'N', 'T', 'C'):
+        _raise_value_error("The value of trans should be one of (0, 1, 2, 'N', 'T', 'C'), but got " + str(trans))
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]
@@ -224,8 +226,8 @@ def inv(a, overwrite_a=False, check_finite=True):
         [[1.0000000e+00 0.0000000e+00]
          [8.8817842e-16 1.0000000e+00]]
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'inv')
+    _type_check('check_finite', check_finite, bool, 'inv')
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
 
@@ -283,8 +285,8 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 1.          5.          2.2933078   0.8559526 ]
          [ 5.          1.          2.          1.5541857 ]]
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'cho_factor')
+    _type_check('check_finite', check_finite, bool, 'cho_factor')
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
@@ -309,7 +311,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): square Matrix of (M, M) to be decomposed, Note that if the input tensor is not a `float`
-            or `double`, then it will be casted to :class:'mstype.float64'.
+            or `double`, then it will be cast to :class:'mstype.float64'.
         lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
             factorization. Default: False.
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
@@ -338,8 +340,8 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         [[1. 0.]
          [2. 1.]]
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'cholesky')
+    _type_check('check_finite', check_finite, bool, 'cholesky')
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float64)
 
@@ -386,8 +388,8 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         >>> print(x)
         [-0.01749266  0.11953348  0.01166185  0.15743434]
     """
-    _type_check(overwrite_b, "overwrite_b", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_b', overwrite_b, bool, 'cho_solve')
+    _type_check('check_finite', check_finite, bool, 'cho_solve')
     (c, lower) = c_and_lower
     cholesky_solver_net = CholeskySolver(lower=lower)
     x = cholesky_solver_net(c, b)
@@ -449,9 +451,18 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         - Tensor with shape :math:`(M, N)`, (if ``eigvals_only == False``)
 
     Raises:
-        LinAlgError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
+        RuntimeError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
             definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
             be reported but results will be wrong.
+        TypeError: If `A` is not Tensor.
+        Runtime: If `A` is not square matrix.
+        ValueError: If `b` is not None.
+        TypeError: If `lower` is not bool.
+        TypeError: If `eigvals_only` is not bool.
+        TypeError: If `overwrite_a` is not bool.
+        TypeError: If `overwrite_b` is not bool.
+        TypeError: If `turbo` is not bool.
+        TypeError: If `check_finite` is not bool.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -465,10 +476,18 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         >>> print(mnp.sum(mnp.dot(A, v) - mnp.dot(v, mnp.diag(w))) < 1e-10)
         True
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(overwrite_b, "overwrite_b", bool)
-    _type_check(check_finite, "check_finite", bool)
-    eigh_net = EighNet(not eigvals_only, lower=True)
+    _type_check('lower', lower, bool, 'eigh')
+    _type_check('eigvals_only', eigvals_only, bool, 'eigh')
+    _type_check('overwrite_a', overwrite_a, bool, 'eigh')
+    _type_check('overwrite_b', overwrite_b, bool, 'eigh')
+    _type_check('turbo', turbo, bool, 'eigh')
+    _type_check('check_finite', check_finite, bool, 'eigh')
+    if b is not None:
+        _raise_value_error("Currently only case b=None of eigh is Implemented. "
+                           "Which means that b must be identity matrix.")
+    if eigvals is not None:
+        _raise_value_error("Currently only case eigvals=None of eighis Implemented.")
+    eigh_net = EighNet(not eigvals_only, lower=lower)
     return eigh_net(a)
 
 
@@ -585,8 +604,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> print(piv)
         [2 2 3 3]
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'lu_factor')
+    _type_check('check_finite', check_finite, bool, 'lu_factor')
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
     if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
@@ -657,8 +676,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.          0.         -1.03999996  3.07999992]
          [ 0.         -0.         -0.          7.46153831]]
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'lu')
+    _type_check('check_finite', check_finite, bool, 'lu')
     if F.dtype(a) not in float_types:
         a = F.cast(a, mstype.float32)
     msp_lu = LU()
@@ -712,8 +731,8 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         >>> print(lu_solve((lu, piv), b))
         [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
     """
-    _type_check(overwrite_b, "overwrite_b", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_b', overwrite_b, bool, 'lu_solve')
+    _type_check('check_finite', check_finite, bool, 'lu_solve')
     m_lu, pivots = lu_and_piv
     # 1. check shape
     check_lu_shape(m_lu, b)
@@ -778,8 +797,8 @@ def det(a, overwrite_a=False, check_finite=True):
         >>> print(det(a))
         3.0
     """
-    _type_check(overwrite_a, "overwrite_a", bool)
-    _type_check(check_finite, "check_finite", bool)
+    _type_check('overwrite_a', overwrite_a, bool, 'det')
+    _type_check('check_finite', check_finite, bool, 'det')
     # special case
     if a.ndim >= 2 and a.shape[-1] == 2 and a.shape[-2] == 2:
         return _det_2x2(a)

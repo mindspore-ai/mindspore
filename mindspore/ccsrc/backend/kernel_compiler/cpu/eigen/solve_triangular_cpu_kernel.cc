@@ -41,7 +41,9 @@ void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
-  CHECK_KERNEL_INPUTS_NUM(A_shape.size(), kAMatrixDimNum, kernel_name_);
+  if (A_shape.size() != kAMatrixDimNum) {
+    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions";
+  }
   if (A_shape[kDim0] != A_shape[kDim1]) {
     MS_LOG(EXCEPTION) << "Wrong array shape, A should be a squre matrix, but got [" << A_shape[kDim0] << " X "
                       << A_shape[kDim1] << "]";
@@ -66,6 +68,8 @@ void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   if (trans == "N") {
     trans_ = false;
   } else if (trans == "T") {
+    trans_ = true;
+  } else if (trans == "C") {
     trans_ = true;
   } else {
     MS_LOG(EXCEPTION) << "Trans should be in [N, T], but got [" << trans << "]";

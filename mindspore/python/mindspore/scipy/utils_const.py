@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """internal graph-compatible utility functions"""
+from collections.abc import Iterable
 from ..ops.primitive import constexpr
 from .._c_expression import typing
 
@@ -52,8 +53,28 @@ def _raise_type_error(info):
     """
     raise TypeError(info)
 
-
 @constexpr
-def _type_check(var, var_name, expected_type):
-    if not isinstance(var, expected_type):
-        raise TypeError(f"Type of {var_name} should be {expected_type.__name__}, but got {type(var).__name__}")
+def _type_check(arg_name, arg_value, valid_types, prim_name=None):
+    """
+    Checks whether a value is instance of some types.
+    The same as mindspore._checkparam.Validator.check_value_type.
+    This copy is to make it work in graph mode.
+    """
+    valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
+
+    def raise_error_msg():
+        """func for raising error message when check failed"""
+        type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
+        num_types = len(valid_types)
+        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+        raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
+                        f'\'{type_names if num_types > 1 else type_names[0]}\', '
+                        f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
+
+    # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
+    #         `check_value_type('x', True, [bool, int])` will check pass
+    if isinstance(arg_value, bool) and bool not in tuple(valid_types):
+        raise_error_msg()
+    if not isinstance(arg_value, tuple(valid_types)):
+        raise_error_msg()
+    return arg_value
