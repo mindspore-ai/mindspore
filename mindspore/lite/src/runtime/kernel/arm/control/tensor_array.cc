@@ -65,7 +65,7 @@ int TensorArrayCPUKernel::Prepare() {
   return RET_OK;
 }
 
-inline int TensorArrayCPUKernel::Run() {
+int TensorArrayCPUKernel::Run() {
   // set handle to outputs, fake malloc, call set_data
   void *delta = InnerKernel::ms_context_->allocator->Malloc(sizeof(char *));
   CHECK_NULL_RETURN(delta);

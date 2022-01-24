@@ -169,7 +169,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   MS_CHECK_TRUE_MSG(lstm_weight_node != nullptr, RET_ERROR, "lstm_weight_node is nullptr.");
   lite::DataInfo data_info;
   if (lstm_weight_node->isa<Parameter>()) {
-    auto ret = FetchDataFromParameterNode(lstm_cnode, kLSTMWeightIndex, converter::kFmkTypeMs, false, &data_info, true);
+    auto ret = FetchDataFromParameterNode(lstm_cnode, kLSTMWeightIndex, converter::kFmkTypeMs, &data_info, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "parse const node failed.";
       return RET_ERROR;

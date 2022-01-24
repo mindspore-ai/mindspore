@@ -20,6 +20,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <utility>
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "utils/check_convert_utils.h"
@@ -293,8 +294,8 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
   return RET_OK;
 }
 
-int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                               DataInfo *data_info, bool copy_data) {
+int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info,
+                               bool copy_data) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto param_node = cnode->input(index)->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "input node is not parameter node.");
@@ -360,8 +361,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   return ret;
 }
 
-int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                       DataInfo *data_info) {
+int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto abstract = opt::GetCNodeInputAbstract(cnode, index);
   if (abstract == nullptr) {
@@ -532,7 +532,7 @@ int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::
       return ret;
     }
     parameter->thread_num_ = 1;
-    op_parameters->insert({cnode->fullname_with_scope(), parameter});
+    op_parameters->insert(std::pair<std::string, OpParameter *>(cnode->fullname_with_scope(), parameter));
   }
   return RET_OK;
 }
