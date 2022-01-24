@@ -245,7 +245,7 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
     return false;
   }
 
-  if (client_list.size() < cipher_init_->reconstruct_secrets_threshold) {
+  if (client_list.size() < cipher_init_->clients_threshold_for_reconstruct) {
     MS_LOG(ERROR) << "illegal parameters. update model client_list size: " << client_list.size();
     BuildReconstructSecretsRsp(
       fbb, schema::ResponseCode_RequestError,
@@ -299,7 +299,7 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
   }
 
   count_client_num = count_client_num + 1;
-  if (count_client_num < cipher_init_->reconstruct_secrets_threshold) {
+  if (count_client_num < cipher_init_->clients_threshold_for_reconstruct) {
     BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SUCCEED,
                                "Success, but the server is not ready to reconstruct secret yet.", cur_iterator,
                                next_req_time);

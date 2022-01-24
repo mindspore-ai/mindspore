@@ -25,7 +25,7 @@ namespace armour {
 bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_exchange_keys_cnt,
                       size_t cipher_get_keys_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_secrets_cnt,
                       size_t cipher_get_clientlist_cnt, size_t cipher_push_list_sign_cnt,
-                      size_t cipher_get_list_sign_cnt, size_t cipher_reconstruct_secrets_up_cnt) {
+                      size_t cipher_get_list_sign_cnt, size_t cipher_clients_threshold_for_reconstruct) {
   MS_LOG(INFO) << "CipherInit::Init START";
   if (publicparam_.p == nullptr || param.p == nullptr || param.prime == nullptr || publicparam_.prime == nullptr) {
     MS_LOG(ERROR) << "CipherInit::input data invalid.";
@@ -46,7 +46,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   share_secrets_threshold = cipher_share_secrets_cnt;
   get_secrets_threshold = cipher_get_secrets_cnt;
   client_list_threshold = cipher_get_clientlist_cnt;
-  reconstruct_secrets_threshold = cipher_reconstruct_secrets_up_cnt;
+  clients_threshold_for_reconstruct = cipher_clients_threshold_for_reconstruct;
   push_list_sign_threshold = cipher_push_list_sign_cnt;
   get_list_sign_threshold = cipher_get_list_sign_cnt;
 
@@ -75,7 +75,7 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
     MS_LOG(INFO) << " CipherInit share_secrets_threshold : " << share_secrets_threshold;
     MS_LOG(INFO) << " CipherInit get_secrets_threshold : " << get_secrets_threshold;
     MS_LOG(INFO) << " CipherInit client_list_threshold : " << client_list_threshold;
-    MS_LOG(INFO) << " CipherInit reconstruct_secrets_threshold : " << reconstruct_secrets_threshold;
+    MS_LOG(INFO) << " CipherInit clients_threshold_for_reconstruct : " << clients_threshold_for_reconstruct;
     MS_LOG(INFO) << " CipherInit push_list_sign_threshold : " << push_list_sign_threshold;
     MS_LOG(INFO) << " CipherInit get_list_sign_threshold : " << get_list_sign_threshold;
     MS_LOG(INFO) << " CipherInit featuremap_ : " << featuremap_;
@@ -93,15 +93,16 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
 }
 
 bool CipherInit::Check_Parames() {
+  MS_LOG(INFO) << "Check cipher params:";
   if (featuremap_ < 1) {
     MS_LOG(ERROR) << "Featuremap size should be positive, but got " << featuremap_;
     return false;
   }
 
-  if (share_secrets_threshold < reconstruct_secrets_threshold) {
-    MS_LOG(ERROR) << "reconstruct_secrets_threshold should not be larger than "
+  if (share_secrets_threshold < clients_threshold_for_reconstruct) {
+    MS_LOG(ERROR) << "clients_threshold_for_reconstruct(reconstruct_secrets_threshold + 1) should not be larger than "
                      "share_secrets_threshold."
-                  << "reconstruct_secrets_threshold: " << reconstruct_secrets_threshold
+                  << "clients_threshold_for_reconstruct: " << clients_threshold_for_reconstruct
                   << ", share_secrets_threshold: " << share_secrets_threshold;
     return false;
   }

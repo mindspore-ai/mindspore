@@ -41,23 +41,23 @@ class CipherInit {
   bool Init(const CipherPublicPara &param, size_t time_out_mutex, size_t cipher_exchange_keys_cnt,
             size_t cipher_get_keys_cnt, size_t cipher_share_secrets_cnt, size_t cipher_get_secrets_cnt,
             size_t cipher_get_clientlist_cnt, size_t cipher_push_list_sign_cnt, size_t cipher_get_list_sign_cnt,
-            size_t cipher_reconstruct_secrets_up_cnt);
+            size_t cipher_clients_threshold_for_reconstruct);
 
   // Get public params. which is given to start fl job thread.
   CipherPublicPara *GetPublicParams() { return &publicparam_; }
 
-  size_t share_secrets_threshold;        // the minimum number of clients to share
-                                         // secret fragments.
-  size_t reconstruct_secrets_threshold;  // the minimum number of clients to
-                                         // reconstruct secret mask.
-  size_t exchange_key_threshold;         // the minimum number of clients to send public
-                                         // keys.
-  size_t push_list_sign_threshold;       // the minimum number of clients to push
-                                         // client list signature.
-  size_t secrets_minnums_;               // the minimum number of secret fragment s to
-                                         // reconstruct secret mask.
-  size_t featuremap_;                    // the size of data to deal.
-  CipherPublicPara publicparam_;         // the param containing encrypted public parameters.
+  size_t share_secrets_threshold;            // the minimum number of clients to share
+                                             // secret fragments.
+  size_t clients_threshold_for_reconstruct;  // the minimum number of clients to
+                                             // reconstruct secret mask.
+  size_t exchange_key_threshold;             // the minimum number of clients to send public
+                                             // keys.
+  size_t push_list_sign_threshold;           // the minimum number of clients to push
+                                             // client list signature.
+  size_t secrets_minnums_;                   // the minimum number of secret fragment s to
+                                             // reconstruct secret mask.
+  size_t featuremap_;                        // the size of data to deal.
+  CipherPublicPara publicparam_;             // the param containing encrypted public parameters.
   CipherMetaStorage cipher_meta_storage_;
 
  private:
