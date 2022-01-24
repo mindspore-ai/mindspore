@@ -16,8 +16,6 @@
 
 #include "frontend/optimizer/ad/adjoint.h"
 
-#include <utility>
-
 #include "ir/anf.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 

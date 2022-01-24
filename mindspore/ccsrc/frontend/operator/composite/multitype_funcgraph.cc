@@ -18,8 +18,6 @@
  */
 
 #include "frontend/operator/composite/multitype_funcgraph.h"
-#include <utility>
-#include <sstream>
 
 #include "abstract/abstract_function.h"
 #include "abstract/dshape.h"

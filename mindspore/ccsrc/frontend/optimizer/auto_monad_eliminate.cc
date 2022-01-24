@@ -178,7 +178,7 @@ void DeleteLoadUserUpdateState(const FuncGraphManagerPtr &manager, const AnfNode
 // b = Load(para1, u2)
 // t = make_tuple(x, b)
 // u3 = UpdateState(u2, t)
-//==>
+// ==>
 // a = Load(para1, u1)
 // ...
 // b = Load(para1, u2)
@@ -202,7 +202,7 @@ void DeleteLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr 
 // b = Load(para1, u2)
 // t = make_tuple(x, y, b, z)
 // u3 = UpdateState(u2, t)
-//==>
+// ==>
 // a = Load(para1, u1)
 // ...
 // b = Load(para1, u2)

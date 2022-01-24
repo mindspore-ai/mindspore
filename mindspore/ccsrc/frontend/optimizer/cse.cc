@@ -256,7 +256,7 @@ bool CSE::DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::si
           if (main->func_graph() != node->func_graph()) {
             continue;
           }
-          if (CheckReplace(node, main)) {
+          if (CheckReplace(node, main, true)) {
             changes = true;
             UpdateDebugInfoAndDumpFlag(main, node);
             (void)manager->Replace(node, main);

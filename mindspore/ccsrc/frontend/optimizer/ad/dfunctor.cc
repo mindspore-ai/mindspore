@@ -420,12 +420,7 @@ AnfNodePtr DFunctor::AttachFvDoutToTape(const AnfNodePtr &grad_fv) {
     auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint->second->k()});
     fv_adjoint->second->RegisterKUser(node, 1);
     auto sens = fv_adjoint->second->dout();
-    new_grad_fv = tape_->NewCNode({
-      NewValueNode(prim::kPrimEnvironSet),
-      new_grad_fv,
-      node,
-      sens,
-    });
+    new_grad_fv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironSet), new_grad_fv, node, sens});
     constexpr size_t sens_index = 3;
     fv_adjoint->second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
     MS_LOG(DEBUG) << "AttachFvDoutToTape add fv sens " << sens->ToString() << " to " << new_grad_fv->ToString() << " "
@@ -447,12 +442,7 @@ AnfNodePtr DFunctor::AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv) {
     auto node = tape_->NewCNode({NewValueNode(prim::kPrimEmbed), fv_adjoint.second->k()});
     fv_adjoint.second->RegisterKUser(node, 1);
     auto sens = fv_adjoint.second->dout();
-    new_grad_fv = tape_->NewCNode({
-      NewValueNode(prim::kPrimEnvironSet),
-      new_grad_fv,
-      node,
-      sens,
-    });
+    new_grad_fv = tape_->NewCNode({NewValueNode(prim::kPrimEnvironSet), new_grad_fv, node, sens});
     constexpr size_t sens_index = 3;
     fv_adjoint.second->RegisterDoutUser(new_grad_fv->cast<CNodePtr>(), sens_index);
     MS_LOG(DEBUG) << "AttachIndirectFvDoutToTape add indirect fv sens " << sens->ToString() << " to "

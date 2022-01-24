@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "pipeline/jit/pass.h"
