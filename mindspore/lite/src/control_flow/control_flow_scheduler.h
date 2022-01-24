@@ -54,8 +54,7 @@ class ControlFlowScheduler {
   // graph, actor's input will be graph's input tensors, and actor's output will be partial's input tensors. So in this
   // case, actor input will be same as output. And we can not link the actors in the right order in this situation.
   int IsolateSameInputPartials(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
-  int RecordControlFlowLinkInfo();
+  int RecordLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
   int IsolateInputOfMultipleCalledGraph(std::vector<kernel::LiteKernel *> *dst_kernels);
 
  private:
@@ -71,19 +70,24 @@ class ControlFlowScheduler {
                             std::set<kernel::LiteKernel *> *useless_kernels);
   void AppendToProcessQ(std::vector<kernel::LiteKernel *> *new_subgraphs,
                         std::set<kernel::LiteKernel *> *all_non_tail_subgraphs);
-  // link partial output to call output.
-  int RecordNonTailCallLinkInfo();
   kernel::SubGraphKernel *CreateEntranceSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
   kernel::SubGraphKernel *CreateExitSubGraph(kernel::SubGraphKernel *subgraph, lite::Tensor *link_tensor);
   kernel::SubGraphKernel *AddOutputKernel(kernel::SubGraphKernel *subgraph);
   int GetTailCallFinalSubgraphs(std::queue<kernel::LiteKernel *> *tail_call_q,
                                 std::vector<kernel::LiteKernel *> *final_graphs,
                                 std::set<kernel::LiteKernel *> reviewed_graphs);
-  int RecordTailCallLinkInfo(kernel::LiteKernel *tail_call);
   kernel::SubGraphKernel *IsolatePartialInputs(kernel::SubGraphKernel *subgraph, kernel::LiteKernel *partial);
   std::set<kernel::LiteKernel *> GetSameInputPartials();
   void UpdateSubGraphMap(kernel::LiteKernel *new_subgraph, kernel::LiteKernel *old_subgraph);
   int GetSubGraphsWhichNeedBoundary();
+  // link partial inputs to partial's corresponding subgraph's inputs.
+  int RecordPartialInputLinkInfo();
+  // link partial's corresponding final subgraph's outputs to tail call's outputs.
+  int RecordAllTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int RecordTailCallLinkInfo(kernel::LiteKernel *tail_call);
+  // link partial's corresponding final subgraph's outputs to non-tail call's outputs.
+  int RecordAllNonTailCallLinkInfo(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int RecordNonTailCallLinkInfo(kernel::LiteKernel *non_tail_call);
 
  private:
   InnerContext *context_ = nullptr;
