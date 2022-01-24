@@ -238,7 +238,8 @@ def inv(a, overwrite_a=False, check_finite=True):
 def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the Cholesky decomposition of a matrix, to use in cho_solve
-    Note that if the input tensor is not a `float`, then it will be cast to :class:'mstype.float32'.
+    Note that if the input tensor's data type only supports `int`, `float` or `double`, and if data tpye is `int`,
+    then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
     Returns a matrix containing the Cholesky decomposition,
     ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
     The return value can be directly used as the first parameter to cho_solve.
@@ -313,8 +314,9 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         `cholesky` is not supported on Windows platform yet.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed, Note that if the input tensor is not a `float`
-            or `double`, then it will be cast to :class:'mstype.float64'.
+        a (Tensor): square Matrix of (M, M) to be decomposed.
+        Note that if the input tensor's data type only supports `int`, `float` or `double`, and if data tpye is `int`,
+        then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
         lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
             factorization. Default: False.
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
@@ -371,6 +373,8 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     Args:
         c_and_lower ((Tensor, bool)): Cholesky factorization of a, as given by cho_factor
         b (Tensor): Right-hand side
+        Note that if the input a or b tensor's data type only supports `int`, `float` or `double`,
+        and if data tpye is `int`, then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
         overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
