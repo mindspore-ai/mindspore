@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_CXX_API_PREDICT_TASK_QUEUE_H_
-#define MINDSPORE_LITE_SRC_CXX_API_PREDICT_TASK_QUEUE_H_
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
 
 #include <queue>
 #include <mutex>
@@ -41,7 +41,7 @@ class PredictTaskQueue {
 
   void PushPredictTask(std::shared_ptr<PredictTask> task);
   void WaitUntilPredictActive(std::vector<MSTensor> *outputs);
-  std::shared_ptr<PredictTask> GetPreDictTask();
+  std::shared_ptr<PredictTask> GetPredictTask();
   void ActiveTask();
   bool IsPredictTaskDone() { return predict_task_done_; }
 
@@ -50,10 +50,9 @@ class PredictTaskQueue {
   std::queue<std::shared_ptr<PredictTask>> predict_task_;
 
   std::mutex mtx_predict_task_;
-  std::mutex mtx_model_queue_;
   std::condition_variable task_pop_cond_;
   std::condition_variable task_push_cond_;
   bool predict_task_done_ = false;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_PREDICT_TASK_QUEUE_H_
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_

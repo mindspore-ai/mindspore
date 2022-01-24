@@ -16,7 +16,7 @@
 
 #include "src/lite_session.h"
 #include <set>
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
 #ifndef RUNTIME_PASS_CLIP
@@ -552,7 +552,7 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     }
   }
 }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 int LiteSession::IniPackWeightData(Model *model) {
   auto lite_model = reinterpret_cast<LiteModel *>(model);
   auto kernel_num = model->all_nodes_.size();
@@ -595,7 +595,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   ret = IniPackWeightData(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "IniPackWeightData failed.";
@@ -1681,7 +1681,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;
@@ -1705,7 +1705,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
   lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
 #endif
   return lite_buf;

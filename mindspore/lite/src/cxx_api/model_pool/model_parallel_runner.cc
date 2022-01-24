@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef USING_SERVING
-#include "src/cxx_api/model/model_parallel_runner.h"
-#include "src/cxx_api/model/model_pool.h"
+#include "src/cxx_api/model_pool/model_parallel_runner.h"
+#include "src/cxx_api/model_pool/model_pool.h"
 #include "src/common/log.h"
 
 namespace mindspore {
@@ -52,4 +51,3 @@ Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::ve
   return kSuccess;
 }
 }  // namespace mindspore
-#endif

@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef USING_SERVING
-#include "src/cxx_api/model/model_thread.h"
+#include "src/cxx_api/model_pool/model_thread.h"
 #include "src/common/log.h"
 #include "src/common/utils.h"
 namespace mindspore {
 void ModelThread::Run() {
   while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
-    auto task = PredictTaskQueue::GetInstance()->GetPreDictTask();
+    auto task = PredictTaskQueue::GetInstance()->GetPredictTask();
     if (task == nullptr) {
       break;
     }
@@ -107,4 +106,3 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   return kSuccess;
 }
 }  // namespace mindspore
-#endif

@@ -208,7 +208,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
       CHECK_LESS_RETURN(MAX_MALLOC_SIZE, trans_matrix_data_size);
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
       auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(in_tensors_[1], trans_matrix_data_size);
       packed_weight_ = packed.second;
       weight_is_packed_ = packed.first;
@@ -224,7 +224,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
         return RET_MEMORY_FAILED;
       }
     }
-#ifndef USING_SERVING
+#ifndef SERVER_INFERENCE
     memset(packed_weight_, 0, trans_matrix_data_size);
 #endif
   }

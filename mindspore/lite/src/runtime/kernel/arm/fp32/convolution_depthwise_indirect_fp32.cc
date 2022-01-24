@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "include/errorcode.h"
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 #endif
 
@@ -202,7 +202,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
     auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
       in_tensors_[1], static_cast<size_t>(pack_weight_size * sizeof(float)));
     packed_weight_ = packed.second;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef USING_SERVING
+#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 namespace mindspore::lite {
 PackWeightManager *PackWeightManager::GetInstance() {

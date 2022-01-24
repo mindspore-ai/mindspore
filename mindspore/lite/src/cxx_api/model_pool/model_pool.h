@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_INCLUDE_API_MODEL_MODEL_POOL_H
-#define MINDSPORE_INCLUDE_API_MODEL_MODEL_POOL_H
-#ifdef USING_SERVING
+#ifndef MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
+#define MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
 #include <vector>
 #include <memory>
 #include <utility>
@@ -24,8 +23,8 @@
 #include <map>
 #include "include/api/status.h"
 #include "include/api/context.h"
-#include "src/cxx_api/model/model_thread.h"
-#include "src/cxx_api/model/predict_task_queue.h"
+#include "src/cxx_api/model_pool/model_thread.h"
+#include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 class ModelPool {
  public:
@@ -53,5 +52,4 @@ class ModelPool {
   size_t num_models_ = 5;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_API_MODEL_MODEL_POOL_H
-#endif
+#endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H

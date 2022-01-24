@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/cxx_api/model/predict_task_queue.h"
+#include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 PredictTaskQueue::~PredictTaskQueue() {
   predict_task_done_ = true;
@@ -29,10 +29,7 @@ void PredictTaskQueue::WaitUntilPredictActive(std::vector<MSTensor> *outputs) {
   return;
 }
 
-void PredictTaskQueue::ActiveTask() {
-  task_push_cond_.notify_all();
-  task_pop_cond_.notify_all();
-}
+void PredictTaskQueue::ActiveTask() { task_pop_cond_.notify_all(); }
 
 PredictTaskQueue *PredictTaskQueue::GetInstance() {
   static PredictTaskQueue instance;
@@ -42,21 +39,19 @@ PredictTaskQueue *PredictTaskQueue::GetInstance() {
 void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task) {
   std::unique_lock<std::mutex> data_lock(mtx_predict_task_);
   predict_task_.push(task);
-  task_push_cond_.notify_all();
+  task_push_cond_.notify_one();
 }
 
-std::shared_ptr<PredictTask> PredictTaskQueue::GetPreDictTask() {
-  std::unique_lock<std::mutex> task_lock(mtx_model_queue_);
+std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask() {
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   while (predict_task_.empty() && !predict_task_done_) {
     task_push_cond_.wait(task_lock);
   }
   if (predict_task_done_) {
-    task_push_cond_.notify_all();
     return nullptr;
   }
   auto predict_task = predict_task_.front();
   predict_task_.pop();
-  task_push_cond_.notify_all();
   return predict_task;
 }
 }  // namespace mindspore

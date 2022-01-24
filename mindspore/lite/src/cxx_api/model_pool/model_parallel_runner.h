@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
 #define MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
-#ifdef USING_SERVING
 #include <vector>
 #include <memory>
 #include <utility>
@@ -63,4 +62,3 @@ class MS_API ModelParallelRunner {
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
-#endif

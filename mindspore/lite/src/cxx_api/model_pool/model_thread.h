@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
-#ifdef USING_SERVING
+#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
+#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
 #include <queue>
 #include <string>
 #include <mutex>
@@ -25,7 +24,7 @@
 #include <utility>
 #include <memory>
 #include "include/api/model.h"
-#include "src/cxx_api/model/predict_task_queue.h"
+#include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 using ModelPoolContex = std::vector<std::shared_ptr<Context>>;
 
@@ -59,5 +58,4 @@ class ModelThread {
   int num_models_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_THREAD_H_
-#endif
+#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_

@@ -65,6 +65,15 @@ file(GLOB CXX_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
         )
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    set(CXX_API_SRCS
+            ${CXX_API_SRCS}
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/predict_task_queue.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_thread.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_parallel_runner.cc
+            )
+endif()
 
 file(GLOB C_API_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/c_api/*.cc
@@ -120,7 +129,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 
 if(MSLITE_ENABLE_SERVER_INFERENCE)
@@ -128,6 +136,7 @@ set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 endif()
 
