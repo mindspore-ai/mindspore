@@ -456,25 +456,6 @@ void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
 /*
  * Feature group: Dump.
  * Target device group: Ascend, GPU.
- * Runtime category: Old runtime, MindRT.
- * Description: Returns true for e2e dump if dump is enabled for the current iteration.
- */
-bool Debugger::DumpDataEnabledIteration() const {
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  if (!dump_json_parser.e2e_dump_enabled()) {
-    return false;
-  }
-
-  auto cur_iter = dump_json_parser.cur_dump_iter();
-  if (dump_json_parser.IsDumpIter(cur_iter)) {
-    return true;
-  }
-  return false;
-}
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
  * Description: Returns the rank_id for GPU and Ascend kernel-bykernel mindRT.
  */
@@ -1563,7 +1544,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
 }
 
 /*
- * Feature group: Dump.
+ * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: Old runtime, MindRT.
  * Description: Load all the parameters and value nodes for the last loaded graph.
@@ -1588,7 +1569,7 @@ void Debugger::LoadParametersAndConst() {
 }
 
 /*
- * Feature group: Dump.
+ * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: Old runtime, MindRT.
  * Description: Load all the parameters and value nodes for the given graph.
@@ -1659,47 +1640,6 @@ void Debugger::LoadGraphOutputs() {
 }
 
 /*
- * Feature group: Dump.
- * Target device group: Ascend.
- * Runtime category: MindRT.
- * Description: Load a single node for kernel-by-kernel ascend mindRT dump.
- */
-void Debugger::LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id) {
-  if (device_target_ != kAscendDevice) {
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(node);
-  std::string kernel_name = GetKernelNodeName(node);
-  auto output_size = AnfAlgo::GetOutputTensorNum(node);
-  if (partial_memory_) {
-    if (!debug_services_->IsWatchPoint(kernel_name, node)) {
-      return;
-    }
-  }
-  for (size_t j = 0; j < output_size; ++j) {
-    if (!AnfAlgo::OutputAddrExist(node, j)) {
-      MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << kernel_name;
-      continue;
-    }
-    auto addr = AnfAlgo::GetOutputAddr(node, j);
-    MS_EXCEPTION_IF_NULL(addr);
-    auto type = AnfAlgo::GetOutputInferDataType(node, j);
-    if (!IsTypeDebuggerSupported(type)) {
-      return;
-    }
-    auto format = kOpFormat_DEFAULT;
-    string tensor_name = kernel_name + ':' + std::to_string(j);
-    ShapeVector int_shapes = trans::GetRuntimePaddingShape(node, j);
-    auto ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
-    if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
-    }
-  }
-}
-
-/*
  * Feature group: Online debugger.
  * Target device group: GPU.
  * Runtime category: Old runtime.
@@ -1723,7 +1663,8 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
  * Description: Update step number when DebugActor::DebugOnStepEnd is called at the end of each step.
  */
 void Debugger::UpdateStepNumGPU() {
-  if (device_target_ == kGPUDevice && (debugger_enabled_ || DumpDataEnabledIteration())) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (device_target_ == kGPUDevice && (debugger_enabled_ || dump_json_parser.DumpEnabledForIter())) {
     // access lock for public method
     std::lock_guard<std::mutex> a_lock(access_lock_);
     ++num_step_;

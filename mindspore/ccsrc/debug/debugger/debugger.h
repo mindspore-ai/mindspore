@@ -152,8 +152,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadGraphOutputs();
 
-  void LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id);
-
   void CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
   void LoadGraphs(const KernelGraphPtr &graph_ptr);

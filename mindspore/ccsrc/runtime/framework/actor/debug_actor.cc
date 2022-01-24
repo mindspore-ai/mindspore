@@ -71,7 +71,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_);
+        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -87,7 +87,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       }
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDumpAscend(cnode, exec_order_);
+        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
     exec_order_ += 1;

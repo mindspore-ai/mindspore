@@ -252,6 +252,14 @@ const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tens
 }
 #endif
 
+/*
+ * Feature group: Offline debugger, Online debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime, MindRT.
+ * Description: Goes through all the watchpoints in the watchpoint table. If the current tensor is in the list of
+ * check_nodes, that watchpoint is added to the vector of watchpoint_to_check (vector of watchpoints that should be
+ * checked for the current tensor) .
+ */
 void DebugServices::AddWatchPointsToCheck(bool init_dbg_suspend, bool step_end, bool recheck,
                                           const std::shared_ptr<TensorData> &tensor, bool *previous_iter_tensor_needed,
                                           std::string *const qualified_tensor_name,
