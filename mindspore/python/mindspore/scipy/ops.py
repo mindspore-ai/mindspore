@@ -112,8 +112,8 @@ class Cholesky(PrimitiveWithInfer):
     def __init__(self, lower=False, clean=True, split_dim=0):
         super().__init__("Cholesky")
         self.init_prim_io_names(inputs=['a'], outputs=['l'])
-        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
-        self.clean = validator.check_value_type("clean", clean, [bool], self.clean)
+        self.lower = validator.check_value_type("lower", lower, [bool], self.name)
+        self.clean = validator.check_value_type("clean", clean, [bool], self.name)
         self.lower = lower
         self.add_prim_attr('lower', self.lower)
         self.clean = clean
@@ -181,7 +181,7 @@ class CholeskySolver(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, lower=False):
         super().__init__(name="CholeskySolver")
-        self.lower = validator.check_value_type("lower", lower, [bool], self.lower)
+        self.lower = validator.check_value_type("lower", lower, [bool], self.name)
         self.init_prim_io_names(inputs=['A', 'b'], outputs=['y'])
 
     def __infer__(self, A, b):
@@ -419,5 +419,6 @@ class MatrixDiagPartNet(nn.Cell):
     def construct(self, a, k, padding_value):
         return self.matrix_diag_part(a, k, padding_value)
 
+
 # pylint: disable=C0413,W0611
-from .ops_grad import get_bprpo_eigh, get_bprpo_trsm
+from .ops_grad import get_bprop_cholesky, get_bprpo_eigh, get_bprpo_trsm

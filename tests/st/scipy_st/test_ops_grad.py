@@ -18,8 +18,42 @@ import numpy as onp
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import context, Tensor
-from mindspore.scipy.ops import Eigh, SolveTriangular
-from tests.st.scipy_st.utils import create_random_rank_matrix, gradient_check
+from mindspore.scipy.ops import Eigh, Cholesky, SolveTriangular
+from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(8, 8)])
+@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
+def test_cholesky_grad(shape, data_type):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for grad implementation of cholesky operator in graph mode and pynative mode.
+    Expectation: the result match gradient checking.
+    """
+    onp.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE)
+    dtype, epsilon, error = data_type
+
+    class CholeskyNet(nn.Cell):
+        def __init__(self):
+            super(CholeskyNet, self).__init__()
+            self.mean = ops.ReduceMean()
+            self.cholesky = Cholesky(lower=True, clean=True)
+
+        def construct(self, a):
+            c = self.cholesky(a)
+            return self.mean(c)
+
+    cholesky_net = CholeskyNet()
+    a = create_sym_pos_matrix(shape, dtype)
+    cholesky_net(Tensor(a))
+    assert gradient_check(Tensor(a), cholesky_net, epsilon) < error
+    context.set_context(mode=context.PYNATIVE_MODE)
+    cholesky_net(Tensor(a))
+    assert gradient_check(Tensor(a), cholesky_net, epsilon) < error
 
 
 @pytest.mark.level0

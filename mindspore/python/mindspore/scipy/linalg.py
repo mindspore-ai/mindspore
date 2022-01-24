@@ -24,8 +24,8 @@ from .ops import EighNet
 from ..ops import operations as P
 from ..ops import functional as F
 from ..common import dtype as mstype
-from .utils import float_types
-from .utils_const import _raise_value_error, _type_check
+from .utils import float_types, valid_data_types
+from .utils_const import _raise_value_error, _raise_type_error, _type_check
 
 __all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
 
@@ -287,7 +287,10 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
     _type_check('overwrite_a', overwrite_a, bool, 'cho_factor')
     _type_check('check_finite', check_finite, bool, 'cho_factor')
-    if F.dtype(a) not in float_types:
+    a_type = F.dtype(a)
+    if a_type not in valid_data_types:
+        _raise_type_error("mindspore.scipy.linalg.cholesky only support int32, int64, float32, float64.")
+    if a_type not in float_types:
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
     if len(a_shape) != 2:
@@ -342,9 +345,11 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     """
     _type_check('overwrite_a', overwrite_a, bool, 'cholesky')
     _type_check('check_finite', check_finite, bool, 'cholesky')
-    if F.dtype(a) not in float_types:
+    a_type = F.dtype(a)
+    if a_type not in valid_data_types:
+        _raise_type_error("mindspore.scipy.linalg.cholesky only support int32, int64, float32, float64.")
+    if a_type not in float_types:
         a = F.cast(a, mstype.float64)
-
     a_shape = a.shape
     if len(a_shape) != 2:
         _raise_value_error("input a to mindspore.scipy.linalg.cholesky must have 2 dimensions.")
@@ -391,6 +396,11 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     _type_check('overwrite_b', overwrite_b, bool, 'cho_solve')
     _type_check('check_finite', check_finite, bool, 'cho_solve')
     (c, lower) = c_and_lower
+    c_type = F.dtype(c)
+    if c_type not in valid_data_types:
+        _raise_type_error("mindspore.scipy.linalg.cholesky only support int32, int64, float32, float64.")
+    if c_type not in float_types:
+        c = F.cast(c, mstype.float64)
     cholesky_solver_net = CholeskySolver(lower=lower)
     x = cholesky_solver_net(c, b)
     return x

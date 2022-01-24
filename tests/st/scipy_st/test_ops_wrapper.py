@@ -15,7 +15,7 @@
 """st for scipy.ops_wrapper."""
 import pytest
 import numpy as onp
-import mindspore.scipy as msp
+import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
 from mindspore.scipy.ops import MatrixBandPartNet
 from tests.st.scipy_st.utils import match_matrix
@@ -310,7 +310,7 @@ def test_matrix_set_diag(data_type):
                 mask = banded_mat[0] == 0
                 input_mat = onp.random.randint(10, size=mask.shape)
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
-                output = msp.ops_wrapper.matrix_set_diag(
+                output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
                 match_matrix(output, Tensor(expected_diag_matrix))
 
@@ -333,7 +333,7 @@ def test_graph_matrix_set_diag(data_type):
                 mask = banded_mat[0] == 0
                 input_mat = onp.random.randint(10, size=mask.shape)
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
-                output = msp.ops_wrapper.matrix_set_diag(
+                output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
                 match_matrix(output, Tensor(expected_diag_matrix))
 
