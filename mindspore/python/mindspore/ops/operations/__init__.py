@@ -35,7 +35,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence,
                         EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
                         TensorScatterMax, TensorScatterMin, TensorScatterSub, ScatterElements, ExtractVolumePatches,
-                        LowerBound)
+                        LowerBound, UpperBound)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -221,6 +221,7 @@ __all__ = [
     'Stack',
     'Unpack',
     'Unstack',
+    'UpperBound',
     'Tile',
     'BiasAdd',
     'GeLU',

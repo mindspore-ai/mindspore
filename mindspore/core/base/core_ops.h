@@ -114,6 +114,7 @@ constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 constexpr auto kReshape = "Reshape";
 constexpr auto kLstsq = "Lstsq";
 constexpr auto kLowerBound = "LowerBound";
+constexpr auto kUpperBound = "UpperBound";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -335,6 +336,7 @@ MS_CORE_API inline const PrimitivePtr kPrimConj = std::make_shared<Primitive>(kC
 MS_CORE_API inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive>("ExtractVolumePatches");
 MS_CORE_API inline const PrimitivePtr kPrimLstsq = std::make_shared<Primitive>(kLstsq);
 MS_CORE_API inline const PrimitivePtr kPrimLowerBound = std::make_shared<Primitive>(kLowerBound);
+MS_CORE_API inline const PrimitivePtr kPrimUpperBound = std::make_shared<Primitive>(kUpperBound);
 
 // NN
 MS_CORE_API inline const PrimitivePtr kPrimCeLU = std::make_shared<Primitive>("CeLU");

@@ -2782,6 +2782,12 @@ test_case_array_ops = [
                         Tensor([[3], [5], [7], [8]], mstype.int8)],
         'skip': ['backward'],
     }),
+    ('UpperBound', {
+        'block': P.UpperBound(),
+        'desc_inputs': [Tensor(np.arange(20).reshape(4, 5), mstype.int8),
+                        Tensor([[3], [6], [7], [8]], mstype.int8)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_image_ops = [
