@@ -297,6 +297,14 @@ def _subprocess_handle(eof, signum, frame):
     threading.Thread(target=eof.set()).start()
 
 
+def _ignore_sigint(is_multiprocessing):
+    """
+    We need to ignore sigint signal here so subprocesses can exit normally and clear.
+    """
+    if is_multiprocessing:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing):
     """
     Multithread or multiprocess generator worker process loop.
@@ -304,15 +312,11 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
     if is_multiprocessing:
         signal.signal(signal.SIGTERM, partial(_subprocess_handle, eof))
     while True:
+        _ignore_sigint(is_multiprocessing=is_multiprocessing)
+
         # Fetch index, block
         try:
             idx = idx_queue.get(timeout=1)
-        except KeyboardInterrupt:
-            if is_multiprocessing:
-                eof.set()
-                idx_queue.cancel_join_thread()
-                result_queue.cancel_join_thread()
-            raise Exception("Generator worker receives KeyboardInterrupt.")
         except queue.Empty:
             if eof.is_set():
                 if is_multiprocessing:
@@ -341,12 +345,6 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
         while True:
             try:
                 result_queue.put(result, timeout=5)
-            except KeyboardInterrupt:
-                if is_multiprocessing:
-                    eof.set()
-                    idx_queue.cancel_join_thread()
-                    result_queue.cancel_join_thread()
-                raise Exception("Generator worker receives KeyboardInterrupt.")
             except queue.Full:
                 if eof.is_set():
                     if is_multiprocessing:
