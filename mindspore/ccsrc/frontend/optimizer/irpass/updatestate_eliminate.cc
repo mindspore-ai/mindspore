@@ -97,7 +97,7 @@ bool CheckHasMonadInput(const CNodePtr &cnode) {
 
   // Check the inputs of Call/Switch/SwitchLayer.
   auto first_input_node = cnode->input(kFirstInputIndex);
-  if (IsPrimitiveCNode(first_input_node, prim::kPrimCall) || IsPrimitiveCNode(first_input_node, prim::kPrimSwitch) ||
+  if (IsPrimitiveCNode(first_input_node, prim::kPrimSwitch) ||
       IsPrimitiveCNode(first_input_node, prim::kPrimSwitchLayer)) {
     for (auto &input : first_input_node->cast<CNodePtr>()->inputs()) {
       if (HasAbstractMonad(input)) {
@@ -765,7 +765,8 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
     return nullptr;
   }
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
-      IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+      IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
+      IsPrimitiveCNode(cnode, prim::kPrimCall) || IsValueNode<FuncGraph>(cnode->input(0))) {
     return nullptr;
   }
   if (CheckHasMonadInput(cnode)) {
