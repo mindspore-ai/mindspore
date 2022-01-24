@@ -104,7 +104,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
 }
 
 // support_fp16: current device and package support float16
-int CastKernelWeight(const kernel::SubGraphType belong_subgraph_type, const kernel::LiteKernel *kernel,
+int CastKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const kernel::LiteKernel *kernel,
                      bool support_fp16) {
   MS_ASSERT(kernel != nullptr);
   MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
@@ -177,7 +177,7 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
 }  // namespace
 
 // support_fp16: current device and package support float16
-int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType belong_subgraph_type,
+int Scheduler::HandleBuildinCpuKernelWeight(const kernel::SubGraphType &belong_subgraph_type,
                                             const kernel::LiteKernel *kernel) {
   MS_ASSERT(kernel != nullptr);
   MS_ASSERT(kernel->subgraph_type() == kernel::kNotSubGraph);
