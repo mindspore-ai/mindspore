@@ -161,15 +161,11 @@ int LiteSwitchOpActor::CompileArrow(const std::unordered_map<void *, std::set<st
 
 int LiteSwitchOpActor::CreateSwitchTypeArrow(
   const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map,
-  const std::set<void *> &receiver_tensors, const std::set<void *> &subgraph_inputs_set,
-  const Tensor *partial_in_tensor, std::vector<DataArrowPtr> *branch_output_data_arrows) {
+  const std::set<void *> &receiver_tensors, const Tensor *partial_in_tensor,
+  std::vector<DataArrowPtr> *branch_output_data_arrows) {
   for (auto receiver_tensor : receiver_tensors) {
     MS_CHECK_TRUE_MSG(receivers_map.find(receiver_tensor) != receivers_map.end(), RET_ERROR,
                       "not find receiver_tensor in receivers_map");
-    if (subgraph_inputs_set.find(receiver_tensor) == subgraph_inputs_set.end()) {
-      MS_LOG(DEBUG) << "Not is this subgraph's sender.";
-      continue;
-    }
     auto receiver_set = receivers_map.at(receiver_tensor);
     for (auto item : receiver_set) {
       for (size_t j = 0; j < kernel_->out_tensors().size(); ++j) {
@@ -195,12 +191,11 @@ int LiteSwitchOpActor::CompileArrowThroughSwitchCall(
     }
     std::vector<DataArrowPtr> branch_output_data_arrows;
     auto partial_in_tensors = partial_node->in_tensors();
-    auto subgraph_inputs_set = PartialSubgraphInputTensors(partial_node);
     for (size_t i = 0; i < partial_in_tensors.size(); ++i) {
       auto receiver_tensors = ctx_->GetLinkInfo(partial_in_tensors[i]);
       MS_CHECK_TRUE_MSG(!receiver_tensors.empty(), RET_ERROR, "no reviver for this actor");
-      auto ret = CreateSwitchTypeArrow(receivers_map, receiver_tensors, subgraph_inputs_set, partial_in_tensors[i],
-                                       &branch_output_data_arrows);
+      auto ret =
+        CreateSwitchTypeArrow(receivers_map, receiver_tensors, partial_in_tensors[i], &branch_output_data_arrows);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "create switch type arrow failed, partial in tensor name: "
                       << partial_in_tensors[i]->tensor_name();

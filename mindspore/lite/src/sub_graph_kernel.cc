@@ -27,6 +27,7 @@
 #include "src/runtime/infer_manager.h"
 #include "src/common/tensor_util.h"
 #include "src/common/utils.h"
+#include "src/common/prim_inner.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -100,6 +101,17 @@ int SubGraphKernel::ReSize() {
         MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
         return RET_ERROR;
       }
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+      // replace with custom op in the future.
+      if (parameter->type_ == static_cast<int>(lite::PRIM_IDENTITY)) {
+        ret = kernel->ReSize();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "kernel " << kernel->name() << " resize fail!ret = " << ret;
+          return ret;
+        }
+        continue;
+      }
+#endif
       ret = lite::KernelInferShape(inputs, outputs, parameter);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }

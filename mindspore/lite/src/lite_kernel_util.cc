@@ -100,7 +100,7 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
     auto &in_node_in_kernels = input_node->in_kernels();
     auto &in_node_in_tensors = input_node->in_tensors();
     for (auto &in_node_in_tensor : in_node_in_tensors) {
-      if (in_node_in_tensor->IsGraphInput()) {
+      if (in_node_in_tensor->IsGraphInput() || (in_node_in_kernels.empty() && !in_node_in_tensor->IsConst())) {
         if (!lite::IsContain(input_tensors, in_node_in_tensor)) {
           input_tensors.push_back(in_node_in_tensor);
         }
@@ -133,7 +133,7 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
     for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
-      if (out_kernel_out_tensor->IsGraphOutput()) {
+      if (out_kernel_out_tensor->IsGraphOutput() || outer_out_kernels.empty()) {
         if (!lite::IsContain(output_tensors, out_kernel_out_tensor)) {
           output_tensors.push_back(out_kernel_out_tensor);
         }
