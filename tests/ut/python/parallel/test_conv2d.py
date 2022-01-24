@@ -23,11 +23,11 @@ from mindspore.ops import operations as P
 
 
 class Net(Cell):
-    def __init__(self, conv2d_weight, out_channel, kernel_size, pad_mode, stride, dilation=1, group=1,
+    def __init__(self, conv2d_weight, out_channel, kernel_size, pad_mode, stride, dilation=1, group=1, pad=0,
                  strategy1=None, strategy2=None):
         super().__init__()
-        self.conv2d = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size,
-                               pad_mode=pad_mode, stride=stride, dilation=dilation, group=group).shard(strategy1)
+        self.conv2d = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size, pad_mode=pad_mode, pad=pad,
+                               stride=stride, dilation=dilation, group=group).shard(strategy1)
         self.neg = P.Neg().shard(strategy2)
         self.conv2d_weight = Parameter(conv2d_weight, "w1")
 
@@ -39,11 +39,13 @@ class Net(Cell):
 
 _x = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 _x2 = Tensor(np.ones([32, 16, 10, 10]), dtype=ms.float32)
+_x3 = Tensor(np.ones([32, 16, 16, 16]), dtype=ms.float32)
 _w0 = Tensor(np.ones([8, 16, 1, 1]), dtype=ms.float32)
 _w1 = Tensor(np.ones([8, 16, 2, 2]), dtype=ms.float32)
 _w2 = Tensor(np.ones([8, 16, 3, 3]), dtype=ms.float32)
 _w3 = Tensor(np.ones([8, 16, 5, 5]), dtype=ms.float32)
 _w4 = Tensor(np.ones([8, 8, 2, 2]), dtype=ms.float32)
+_w5 = Tensor(np.ones([8, 16, 4, 4]), dtype=ms.float32)
 _b = Tensor(np.ones([32, 16, 8, 8]), dtype=ms.float32)
 
 
@@ -69,11 +71,40 @@ def test_conv2d_data_parallel():
     compile_net(net)
 
 
+def test_conv2d_pad_mode_overlap_is_negative():
+    """
+    Feature: test conv2d pad mode and overlap is negative
+    Description: shard h/w
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((1, 1, 4, 4), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 1),)
+    net = Net(_w5, out_channel=8, kernel_size=4, pad_mode="pad", stride=5, pad=(3, 0, 3, 0),
+              strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x3)
+
+
+def test_conv2d_pad_mode():
+    """
+    Feature: test conv2d pad mode and overlap is non-negative
+    Description: shard h/w
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 2, 4), (1, 1, 1, 1))
+    strategy2 = ((1, 1, 1, 1),)
+    net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="pad", stride=1, pad=(3, 3, 3, 3),
+              strategy1=strategy1, strategy2=strategy2)
+    compile_net(net, _x3)
+
+
 def test_conv2d_data_parallel_invalid_stride():
     """
     Feature: test conv2d invalid stride
     Description: the first two elements of stride must be 1, but set 2
-    Expectation: compile success
+    Expectation: compile failed
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
@@ -416,14 +447,13 @@ def test_conv2d_same_mode_overlap_size_equal_to_slice_shape():
     """
     Feature: same mode, slice shape is equal to overlap shape
     Description: split w
-    Expectation: compile failed
+    Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1, 8), (1, 1, 1, 1))
     strategy2 = ((2, 1, 1, 4),)
     net = Net(_w2, out_channel=8, kernel_size=3, pad_mode="same", stride=1, strategy1=strategy1, strategy2=strategy2)
-    with pytest.raises(RuntimeError):
-        compile_net(net)
+    compile_net(net)
 
 
 def test_kernel_size_larger_than_stride_and_left_pad_is_0():
