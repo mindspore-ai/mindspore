@@ -140,7 +140,7 @@ void SubGraphKernel::InitInputOutputTensorInitRefCount() {
     int input_init_refcount = input->init_ref_count();
     for (auto *node : nodes_) {
       input_init_refcount += std::count_if(node->in_tensors().begin(), node->in_tensors().end(),
-                                           [&input](lite::Tensor *item) { return item == input; });
+                                           [&input](const lite::Tensor *item) { return item == input; });
     }
     input->set_init_ref_count(input_init_refcount);
   }

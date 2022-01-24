@@ -393,10 +393,11 @@ int WeightDecoder::DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_d
   return RET_OK;
 }
 
-int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims) {
+int WeightDecoder::GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index,
+                                         const std::vector<int> &dims) {
   int last_first_index = dims.size() - 1;
   int last_second_index = dims.size() - 2;
-  auto matmul_parameter = reinterpret_cast<MatMulParameter *>(op_parameter);
+  auto matmul_parameter = reinterpret_cast<const MatMulParameter *>(op_parameter);
   MS_ASSERT(matmul_parameter != nullptr);
   // For MatMul A
   if (input_index == 0) {
@@ -417,9 +418,9 @@ int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_in
   return 0;
 }
 
-int WeightDecoder::GetDeConvPreferredDim(OpParameter *op_parameter, const std::vector<int> &dims) {
+int WeightDecoder::GetDeConvPreferredDim(const OpParameter *op_parameter, const std::vector<int> &dims) {
   MS_ASSERT(op_parameter != nullptr);
-  auto parameter = reinterpret_cast<ConvParameter *>(op_parameter);
+  auto parameter = reinterpret_cast<const ConvParameter *>(op_parameter);
   if (parameter->input_channel_ == parameter->group_ && parameter->output_channel_ == parameter->group_) {
     // DepthWise-DeConv (CO\CI) KH KW 1
     return 0;
@@ -429,7 +430,7 @@ int WeightDecoder::GetDeConvPreferredDim(OpParameter *op_parameter, const std::v
   }
 }
 
-int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims) {
+int WeightDecoder::GetPreferredDim(const OpParameter *op_parameter, int index, const std::vector<int> &dims) {
   MS_ASSERT(op_parameter != nullptr);
   if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
     return GetMatMulPreferredDim(op_parameter, index, dims);
