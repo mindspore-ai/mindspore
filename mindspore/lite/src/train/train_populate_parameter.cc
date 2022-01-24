@@ -171,7 +171,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *prim) {
   memset(sce_param, 0, sizeof(SoftmaxCrossEntropyParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   sce_param->op_parameter_.type_ = primitive->value_type();
-  sce_param->is_grad_ = 0;
+  sce_param->is_grad_ = false;
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 

@@ -350,7 +350,7 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
                               const std::vector<std::string> &output_names, const std::set<size_t> &out_set) {
   for (auto index : map_index) {
     auto id = index.first;
-    size_t pid = id - offset;
+    size_t pid = id - static_cast<size_t>(offset);
     mindspore::lite::Tensor *tensor = tensors.at(pid);
     schema::Tensor *scTensor = model->all_tensors_.at(pid);
     auto preferred_dim =
@@ -404,7 +404,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
     std::vector<uint32_t> in_idx, out_idx;
     size_t input_index = 0;
     for (const auto tensor : kernel->in_tensors()) {
-      size_t id = TSFindTensor(tensors, tensor) + offset;
+      size_t id = TSFindTensor(tensors, tensor) + static_cast<size_t>(offset);
       if (id == tensors.size()) {
         MS_LOG(ERROR) << "cannot find tensor " + tensor->ToString() + " in model";
         return RET_ERROR;
@@ -543,7 +543,7 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
 
 int TrainExport::SaveToFile() { return MetaGraphSerializer::Save(*meta_graph_, file_name_); }
 
-int TrainExport::IsInputTensor(const schema::TensorT &t) {
+bool TrainExport::IsInputTensor(const schema::TensorT &t) {
   int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());
   return ((t.data.size() == 0) && (total_dims != 0));
 }

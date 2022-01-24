@@ -65,7 +65,9 @@ float CalcSparseClassificationAccuracy(T *predictions, int *labels, int batch_si
         max_idx = c;
       }
     }
-    if (labels[b] == max_idx) accuracy += 1.0;
+    if (labels[b] == max_idx) {
+      accuracy += 1.0;
+    }
   }
   return accuracy / (static_cast<float>(batch_size));
 }
@@ -109,7 +111,9 @@ float CalcOneHotClassificationAccuracy(T *predictions, float *labels, int batch_
         label = c;
       }
     }
-    if (label == max_idx) accuracy += 1.0;
+    if (label == max_idx) {
+      accuracy += 1.0;
+    }
   }
   return accuracy / (static_cast<float>(batch_size));
 }

@@ -271,7 +271,7 @@ int NetTrain::MarkPerformance(const std::unique_ptr<session::LiteSession> &sessi
   }
 
   if (flags_->epochs_ > 0) {
-    time_avg /= flags_->epochs_;
+    time_avg /= static_cast<size_t>(flags_->epochs_);
     MS_LOG(INFO) << "Model = " << flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
                  << ", NumThreads = " << flags_->num_threads_ << ", MinRunTime = " << time_min / 1000.0f
                  << ", MaxRuntime = " << time_max / 1000.0f << ", AvgRunTime = " << time_avg / 1000.0f;

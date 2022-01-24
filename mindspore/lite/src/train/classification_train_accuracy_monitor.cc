@@ -45,7 +45,7 @@ void ClassificationTrainAccuracyMonitor::EpochBegin(const session::TrainLoopCall
 
 int ClassificationTrainAccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
   if (cb_data.step_ > 0) accuracies_.at(cb_data.epoch_).second /= static_cast<float>(cb_data.step_ + 1);
-  if ((cb_data.epoch_ + 1) % print_every_n_ == 0) {
+  if ((static_cast<int>(cb_data.epoch_) + 1) % print_every_n_ == 0) {
     std::cout << "Epoch (" << (cb_data.epoch_ + 1) << "):\tTraining Accuracy is "
               << accuracies_.at(cb_data.epoch_).second << std::endl;
   }
