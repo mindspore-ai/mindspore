@@ -1805,6 +1805,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
+    delete[] model_buf;
     return RET_ERROR;
   }
 
