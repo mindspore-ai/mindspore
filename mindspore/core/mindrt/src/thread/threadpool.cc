@@ -61,6 +61,11 @@ void Worker::InitWorkerMask(const std::vector<int> &core_list, size_t workers_si
   static uint32_t windows_core_index = 0;
   core_id_ = windows_core_index++;
 #elif defined(BIND_CORE)
+#ifdef SERVER_INFERENCE
+  if (core_list.empty()) {
+    return;
+  }
+#endif
   cpu_set_t mask;
   CPU_ZERO(&mask);
   if (core_list.size() > 0) {
