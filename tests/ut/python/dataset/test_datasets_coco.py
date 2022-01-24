@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ DATA_DIR_2 = "../data/dataset/testCOCO/train"
 ANNOTATION_FILE = "../data/dataset/testCOCO/annotations/train.json"
 KEYPOINT_FILE = "../data/dataset/testCOCO/annotations/key_point.json"
 PANOPTIC_FILE = "../data/dataset/testCOCO/annotations/panoptic.json"
+CAPTIONS_FILE = "../data/dataset/testCOCO/annotations/captions.json"
 INVALID_FILE = "../data/dataset/testCOCO/annotations/invalid.json"
 LACKOFIMAGE_FILE = "../data/dataset/testCOCO/annotations/lack_of_images.json"
 INVALID_CATEGORY_ID_FILE = "../data/dataset/testCOCO/annotations/invalid_category_id.json"
@@ -174,6 +175,38 @@ def test_coco_panoptic():
     np.testing.assert_array_equal(np.array([[1], [3]]), category_id[1])
     np.testing.assert_array_equal(np.array([[0], [0]]), iscrowd[1])
     np.testing.assert_array_equal(np.array([[43102], [6079]]), area[1])
+
+
+def test_coco_captioning():
+    """
+    Feature: CocoDataset
+    Description: test the captioning task of CocoDataset
+    Expectation: the data is processed successfully
+    """
+    data1 = ds.CocoDataset(DATA_DIR, annotation_file=CAPTIONS_FILE, task="Captioning", decode=True, shuffle=False,
+                           extra_metadata=True)
+    data1 = data1.rename("_meta-filename", "filename")
+    num_iter = 0
+    file_name = []
+    image_shape = []
+    captions_list = []
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        file_name.append(text.to_str(data["filename"]))
+        image_shape.append(data["image"].shape)
+        captions_list.append(data["captions"])
+        num_iter += 1
+    assert num_iter == 2
+    assert file_name == ["000000391895", "000000318219"]
+    assert image_shape[0] == (2268, 4032, 3)
+    np.testing.assert_array_equal(np.array([[b"This is a banana"], [b"This banana is yellow"],
+                                            [b"This banana is on a white table"],
+                                            [b"The tail of this banana is facing up"],
+                                            [b"This banana has spots"]]), captions_list[0])
+    assert image_shape[1] == (561, 595, 3)
+    np.testing.assert_array_equal(np.array([[b"This is an orange"], [b"This orange is orange"],
+                                            [b"This orange is on a dark cloth"],
+                                            [b"The head of this orange is facing up"],
+                                            [b"This orange has spots"]]), captions_list[1])
 
 
 def test_coco_meta_column():
@@ -487,8 +520,27 @@ def test_coco_case_exception():
     except RuntimeError as e:
         assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
 
+    try:
+        data1 = ds.CocoDataset(DATA_DIR, annotation_file=CAPTIONS_FILE, task="Captioning")
+        data1 = data1.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data1 = ds.CocoDataset(DATA_DIR, annotation_file=CAPTIONS_FILE, task="Captioning")
+        data1 = data1.map(operations=exception_func, input_columns=["captions"], num_parallel_workers=1)
+        for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
 
 if __name__ == '__main__':
+    test_coco_captioning()
     test_coco_detection()
     test_coco_stuff()
     test_coco_keypoint()

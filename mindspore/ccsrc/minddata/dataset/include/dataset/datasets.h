@@ -1940,9 +1940,11 @@ class MS_API CocoDataset : public Dataset {
 ///                                 ['num_keypoints', dtype=uint32]].
 ///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
 ///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+///     - task='Captioning', column: [['image', dtype=uint8], ['captions', dtype=string]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] annotation_file Path to the annotation json.
-/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'.
+/// \param[in] task Set the task type of reading coco data. Supported task types are "Detection", "Stuff", "Panoptic",
+///     "Keypoint" and "Captioning".
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
@@ -1981,9 +1983,11 @@ Coco(const std::string &dataset_dir, const std::string &annotation_file, const s
 ///                                 ['num_keypoints', dtype=uint32]].
 ///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
 ///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+///     - task='Captioning', column: [['image', dtype=uint8], ['captions', dtype=string]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] annotation_file Path to the annotation json.
-/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'.
+/// \param[in] task Set the task type of reading coco data. Supported task types are "Detection", "Stuff", "Panoptic",
+///     "Keypoint" and "Captioning".
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
@@ -2006,9 +2010,11 @@ inline std::shared_ptr<CocoDataset> MS_API Coco(const std::string &dataset_dir, 
 ///                                 ['num_keypoints', dtype=uint32]].
 ///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
 ///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+///     - task='Captioning', column: [['image', dtype=uint8], ['captions', dtype=string]].
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] annotation_file Path to the annotation json.
-/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'.
+/// \param[in] task Set the task type of reading coco data. Supported task types are "Detection", "Stuff", "Panoptic",
+///     "Keypoint" and "Captioning".
 /// \param[in] decode Decode the images after reading.
 /// \param[in] sampler Sampler object used to choose samples from the dataset.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).

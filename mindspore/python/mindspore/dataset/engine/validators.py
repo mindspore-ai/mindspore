@@ -670,7 +670,7 @@ def check_cocodataset(method):
         task = param_dict.get('task')
         type_check(task, (str,), "task")
 
-        if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint'}:
+        if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint', 'Captioning'}:
             raise ValueError("Invalid task type: " + task + ".")
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)

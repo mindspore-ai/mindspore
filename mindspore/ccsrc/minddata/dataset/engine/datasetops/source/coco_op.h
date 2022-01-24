@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ using CoordinateRow = std::vector<std::vector<float>>;
 
 class CocoOp : public MappableLeafOp {
  public:
-  enum class TaskType { Detection = 0, Stuff = 1, Panoptic = 2, Keypoint = 3 };
+  enum class TaskType { Detection = 0, Stuff = 1, Panoptic = 2, Keypoint = 3, Captioning = 4 };
 
   class Builder {
    public:
@@ -146,126 +146,142 @@ class CocoOp : public MappableLeafOp {
     std::unique_ptr<DataSchema> builder_schema_;
   };
 
-  // Constructor
-  // @param TaskType task_type - task type of Coco
-  // @param std::string image_folder_path - image folder path of Coco
-  // @param std::string annotation_path - annotation json path of Coco
-  // @param int32_t num_workers - number of workers reading images in parallel
-  // @param int32_t queue_size - connector queue size
-  // @param int64_t num_samples - number of samples to read
-  // @param bool decode - whether to decode images
-  // @param std::unique_ptr<DataSchema> data_schema - the schema of the Coco dataset
-  // @param std::shared_ptr<Sampler> sampler - sampler tells CocoOp what to read
+  /// \brief Constructor.
+  /// \param[in] task_type Task type of Coco.
+  /// \param[in] image_folder_path Image folder path of Coco.
+  /// \param[in] annotation_path Annotation json path of Coco.
+  /// \param[in] num_workers Number of workers reading images in parallel.
+  /// \param[in] queue_size Connector queue size.
+  /// \param[in] num_samples Number of samples to read.
+  /// \param[in] decode Whether to decode images.
+  /// \param[in] data_schema The schema of the Coco dataset.
+  /// \param[in] sampler Sampler tells CocoOp what to read.
   CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
          int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
          std::shared_ptr<SamplerRT> sampler, bool extra_metadata);
 
-  // Destructor
+  /// \brief Destructor.
   ~CocoOp() = default;
 
-  // A print method typically used for debugging
-  // @param out
-  // @param show_all
+  /// \brief A print method typically used for debugging.
+  /// \param[out] out The output stream to write output to.
+  /// \param[in] show_all A bool to control if you want to show all info or just a summary.
   void Print(std::ostream &out, bool show_all) const override;
 
-  // @param int64_t *count - output rows number of CocoDataset
+  /// \param[out] count Output rows number of CocoDataset.
   Status CountTotalRows(int64_t *count);
 
-  // Op name getter
-  // @return Name of the current Op
+  /// \brief Op name getter.
+  /// \return Name of the current Op.
   std::string Name() const override { return "CocoOp"; }
 
-  /// \brief Gets the class indexing
-  /// \return Status The status code returned
+  /// \brief Gets the class indexing.
+  /// \return Status The status code returned.
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
 
  private:
-  // Load a tensor row according to image id
-  // @param row_id_type row_id - id for this tensor row
-  // @param std::string image_id - image id
-  // @param TensorRow row - image & target read into this tensor row
-  // @return Status The status code returned
+  /// \brief Load a tensor row according to image id.
+  /// \param[in] row_id Id for this tensor row.
+  /// \param[out] row Image & target read into this tensor row.
+  /// \return Status The status code returned.
   Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
-  // Load a tensor row with vector which a vector to a tensor, for "Detection" task
-  // @param row_id_type row_id - id for this tensor row
-  // @param const std::string &image_id - image is
-  // @param std::shared_ptr<Tensor> image - image tensor
-  // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
-  // @param TensorRow row - image & target read into this tensor row
-  // @return Status The status code returned
+  /// \brief Load a tensor row with vector which a vector to a tensor, for "Detection" task.
+  /// \param[in] row_id Id for this tensor row.
+  /// \param[in] image_id Image id.
+  /// \param[in] image Image tensor.
+  /// \param[in] coordinate Coordinate tensor.
+  /// \param[out] row Image & target read into this tensor row.
+  /// \return Status The status code returned.
   Status LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
-  // Load a tensor row with vector which a vector to a tensor, for "Stuff/Keypoint" task
-  // @param row_id_type row_id - id for this tensor row
-  // @param const std::string &image_id - image is
-  // @param std::shared_ptr<Tensor> image - image tensor
-  // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
-  // @param TensorRow row - image & target read into this tensor row
-  // @return Status The status code returned
+  /// \brief Load a tensor row with vector which a vector to a tensor, for "Stuff/Keypoint" task.
+  /// \param[in] row_id Id for this tensor row.
+  /// \param[in] image_id Image id.
+  /// \param[in] image Image tensor.
+  /// \param[in] coordinate Coordinate tensor.
+  /// \param[out] row Image & target read into this tensor row.
+  /// \return Status The status code returned.
   Status LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                              std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
-  // Load a tensor row with vector which a vector to multi-tensor, for "Panoptic" task
-  // @param row_id_type row_id - id for this tensor row
-  // @param const std::string &image_id - image is
-  // @param std::shared_ptr<Tensor> image - image tensor
-  // @param std::shared_ptr<Tensor> coordinate - coordinate tensor
-  // @param TensorRow row - image & target read into this tensor row
-  // @return Status The status code returned
+  /// \brief Load a tensor row with vector which a vector to multi-tensor, for "Panoptic" task.
+  /// \param[in] row_id Id for this tensor row.
+  /// \param[in] image_id Image id.
+  /// \param[in] image Image tensor.
+  /// \param[in] coordinate Coordinate tensor.
+  /// \param[out] row Image & target read into this tensor row.
+  /// \return Status The status code returned.
   Status LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                           std::shared_ptr<Tensor> coordinate, TensorRow *trow);
 
-  // @param const std::string &path - path to the image file
-  // @param const ColDescriptor &col - contains tensor implementation and datatype
-  // @param std::shared_ptr<Tensor> tensor - return
-  // @return Status The status code returned
+  /// \brief Load a tensor row with vector which a vector to multi-tensor, for "Captioning" task.
+  /// \param[in] row_id Id for this tensor row.
+  /// \param[in] image_id Image id.
+  /// \param[in] image Image tensor.
+  /// \param[in] captions Captions tensor.
+  /// \param[out] trow Image & target read into this tensor row.
+  /// \return Status The status code returned.
+  Status LoadCaptioningTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
+                                 std::shared_ptr<Tensor> captions, TensorRow *trow);
+
+  /// \param[in] path Path to the image file.
+  /// \param[in] col Contains tensor implementation and datatype.
+  /// \param[out] tensor Returned tensor.
+  /// \return Status The status code returned.
   Status ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor);
 
-  // Read annotation from Annotation folder
-  // @return Status The status code returned
+  /// \brief Read annotation from Annotation folder.
+  /// \return Status The status code returned.
   Status PrepareData() override;
 
-  // @param nlohmann::json image_tree - image tree of json
-  // @param std::vector<std::string> *image_vec - image id list of json
-  // @return Status The status code returned
+  /// \param[in] image_tree Image tree of json.
+  /// \param[out] image_vec Image id list of json.
+  /// \return Status The status code returned.
   Status ImageColumnLoad(const nlohmann::json &image_tree, std::vector<std::string> *image_vec);
 
-  // @param nlohmann::json categories_tree - categories tree of json
-  // @return Status The status code returned
+  /// \param[in] categories_tree Categories tree of json.
+  /// \return Status The status code returned.
   Status CategoriesColumnLoad(const nlohmann::json &categories_tree);
 
-  // @param nlohmann::json categories_tree - categories tree of json
-  // @param const std::string &image_file - current image name in annotation
-  // @param const int32_t &id - current unique id of annotation
-  // @return Status The status code returned
+  /// \param[in] categories_tree Categories tree of json.
+  /// \param[in] image_file Current image name in annotation.
+  /// \param[in] id Current unique id of annotation.
+  /// \return Status The status code returned.
   Status DetectionColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
-  // @param nlohmann::json categories_tree - categories tree of json
-  // @param const std::string &image_file - current image name in annotation
-  // @param const int32_t &id - current unique id of annotation
-  // @return Status The status code returned
+  /// \param[in] categories_tree Categories tree of json.
+  /// \param[in] image_file Current image name in annotation.
+  /// \param[in] id Current unique id of annotation.
+  /// \return Status The status code returned.
   Status StuffColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
-  // @param nlohmann::json categories_tree - categories tree of json
-  // @param const std::string &image_file - current image name in annotation
-  // @param const int32_t &id - current unique id of annotation
-  // @return Status The status code returned
+  /// \param[in] categories_tree Categories tree of json.
+  /// \param[in] image_file Current image name in annotation.
+  /// \param[in] id Current unique id of annotation.
+  /// \return Status The status code returned.
   Status KeypointColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
-  // @param nlohmann::json categories_tree - categories tree of json
-  // @param const std::string &image_file - current image name in annotation
-  // @param const int32_t &image_id - current unique id of annotation
-  // @return Status The status code returned
+  /// \param[in] categories_tree Categories tree of json.
+  /// \param[in] image_file Current image name in annotation.
+  /// \param[in] image_id Current unique id of annotation.
+  /// \return Status The status code returned.
   Status PanopticColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file,
                             const int32_t &image_id);
+
+  /// \brief Function for finding a caption in annotation_tree.
+  /// \param[in] annotation_tree Annotation tree of json.
+  /// \param[in] image_file Current image name in annotation.
+  /// \param[in] id Current unique id of annotation.
+  /// \return Status The status code returned.
+  Status CaptionColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file, const int32_t &id);
 
   template <typename T>
   Status SearchNodeInJson(const nlohmann::json &input_tree, std::string node_name, T *output_node);
 
-  // Private function for computing the assignment of the column name map.
-  // @return - Status
+  /// \brief Private function for computing the assignment of the column name map.
+  /// \return Status The status code returned.
   Status ComputeColMap() override;
 
   bool decode_;
@@ -280,6 +296,7 @@ class CocoOp : public MappableLeafOp {
   std::vector<std::pair<std::string, std::vector<int32_t>>> label_index_;
   std::map<std::string, CoordinateRow> coordinate_map_;
   std::map<std::string, std::vector<uint32_t>> simple_item_map_;
+  std::map<std::string, std::vector<std::string>> captions_map_;
   std::set<uint32_t> category_set_;
 };
 }  // namespace dataset

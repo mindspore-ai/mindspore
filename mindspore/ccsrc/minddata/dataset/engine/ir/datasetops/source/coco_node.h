@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,72 +28,73 @@ namespace dataset {
 
 class CocoNode : public MappableSourceNode {
  public:
-  /// \brief Constructor
+  /// \brief Constructor.
   CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
            const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
            const bool &extra_metadata);
 
-  /// \brief Destructor
+  /// \brief Destructor.
   ~CocoNode() = default;
 
-  /// \brief Node name getter
-  /// \return Name of the current node
+  /// \brief Node name getter.
+  /// \return Name of the current node.
   std::string Name() const override { return kCocoNode; }
 
-  /// \brief Print the description
-  /// \param out - The output stream to write output to
+  /// \brief Print the description.
+  /// \param[out] out The output stream to write output to.
   void Print(std::ostream &out) const override;
 
-  /// \brief Copy the node to a new object
-  /// \return A shared pointer to the new copy
+  /// \brief Copy the node to a new object.
+  /// \return A shared pointer to the new copy.
   std::shared_ptr<DatasetNode> Copy() override;
 
-  /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
-  /// \return Status Status::OK() if build successfully
+  /// \brief A base class override function to create the required runtime dataset op objects for this class.
+  /// \param[out] node_ops A vector containing shared pointer to the Dataset Ops that this object will create.
+  /// \return Status Status::OK() if build successfully.
   Status Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) override;
 
-  /// \brief Parameters validation
-  /// \return Status Status::OK() if all the parameters are valid
+  /// \brief Parameters validation.
+  /// \return Status Status::OK() if all the parameters are valid.
   Status ValidateParams() override;
 
-  /// \brief Get the shard id of node
-  /// \return Status Status::OK() if get shard id successfully
+  /// \brief Get the shard id of node.
+  /// \param[in] shard_id shard id.
+  /// \return Status Status::OK() if get shard id successfully.
   Status GetShardId(int32_t *shard_id) override;
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[in] size_getter Shared pointer to DatasetSizeGetter
+  /// \brief Base-class override for GetDatasetSize.
+  /// \param[in] size_getter Shared pointer to DatasetSizeGetter.
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
   ///     dataset size at the expense of accuracy.
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
+  /// \param[out] dataset_size the size of the dataset.
+  /// \return Status of the function.
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
-  /// \brief Getter functions
+  /// \brief Getter functions.
   const std::string &DatasetDir() const { return dataset_dir_; }
   const std::string &AnnotationFile() const { return annotation_file_; }
   const std::string &Task() const { return task_; }
   bool Decode() const { return decode_; }
 
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
+  /// \brief Get the arguments of node.
+  /// \param[out] out_json JSON string of all attributes.
+  /// \return Status of the function.
   Status to_json(nlohmann::json *out_json) override;
 
 #ifndef ENABLE_ANDROID
-  /// \brief Function to read dataset in json
-  /// \param[in] json_obj The JSON object to be deserialized
-  /// \param[out] ds Deserialized dataset
-  /// \return Status The status code returned
+  /// \brief Function to read dataset in json.
+  /// \param[in] json_obj The JSON object to be deserialized.
+  /// \param[out] ds Deserialized dataset.
+  /// \return Status The status code returned.
   static Status from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> *ds);
 #endif
 
-  /// \brief Sampler getter
-  /// \return SamplerObj of the current node
+  /// \brief Sampler getter.
+  /// \return SamplerObj of the current node.
   std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
 
-  /// \brief Sampler setter
+  /// \brief Sampler setter.
   void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
 
  private:
