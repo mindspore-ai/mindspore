@@ -18,6 +18,8 @@ Validators for TensorOps.
 
 from functools import wraps
 
+import numpy as np
+
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32, \
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
@@ -718,6 +720,20 @@ def check_spectral_centroid(method):
             type_check(hop_length, (int,), "hop_length")
             check_pos_int32(hop_length, "hop_length")
 
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_phase_vocoder(method):
+    """Wrapper method to check the parameters of PhaseVocoder."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [rate, phase_advance], _ = parse_user_args(method, *args, **kwargs)
+        type_check(rate, (int, float), "rate")
+        check_pos_float32(rate, "rate")
+        type_check(phase_advance, (np.ndarray,), "phase_advance")
         return method(self, *args, **kwargs)
 
     return new_method

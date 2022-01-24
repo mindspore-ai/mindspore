@@ -176,6 +176,7 @@ constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";
 constexpr char kOverdriveOp[] = "OverdriveOp";
 constexpr char kPhaserOp[] = "PhaserOp";
+constexpr char kPhaseVocoderOp[] = "PhaseVocoderOp";
 constexpr char kRiaaBiquadOp[] = "RiaaBiquadOp";
 constexpr char kSlidingWindowCmnOp[] = "SlidingWindowCmnOp";
 constexpr char kSpectralCentroidOp[] = "SpectralCentroidOp";

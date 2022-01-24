@@ -30,8 +30,8 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
     check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mel_scale, check_mu_law_coding, \
-    check_overdrive, check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
-    check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+    check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
+    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -1112,6 +1112,33 @@ class Phaser(AudioTensorOperation):
     def parse(self):
         return cde.PhaserOperation(self.sample_rate, self.gain_in, self.gain_out,
                                    self.delay_ms, self.decay, self.mod_speed, self.sinusoidal)
+
+
+class PhaseVocoder(AudioTensorOperation):
+    """
+    Given a STFT tensor, speed up in time without modifying pitch by a factor of rate.
+
+    Args:
+        rate (float): Speed-up factor.
+        phase_advance (numpy.ndarray): Expected phase advance in each bin in shape of (freq, 1).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.randn(2, 44, 10, 2)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> phase_advance = np.random.randn(44, 1)
+        >>> transforms = [audio.PhaseVocoder(rate=2, phase_advance=phase_advance)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_phase_vocoder
+    def __init__(self, rate, phase_advance):
+        self.rate = rate
+        self.phase_advance = cde.Tensor(phase_advance)
+
+    def parse(self):
+        return cde.PhaseVocoderOperation(self.rate, self.phase_advance)
 
 
 class RiaaBiquad(AudioTensorOperation):

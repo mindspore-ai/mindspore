@@ -475,6 +475,29 @@ Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   return Status::OK();
 }
 
+Status PhaseVocoder(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate,
+                    const std::shared_ptr<Tensor> &phase_advance) {
+  const int32_t kFrequencePosInComplex = -3;
+  RETURN_IF_NOT_OK(ValidateTensorShape("PhaseVocoder", input->shape().Size() > kDefaultAudioDim && input->IsComplex(),
+                                       "<..., freq, num_frame, complex=2>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("PhaseVocoder", input));
+  RETURN_IF_NOT_OK(ValidateEqual("PhaseVocoder", "first dimension of 'phase_advance'", phase_advance->shape()[0],
+                                 "freq dimension length of input tensor", input->shape()[kFrequencePosInComplex]));
+  CHECK_FAIL_RETURN_UNEXPECTED(phase_advance->type() == input->type(),
+                               "PhaseVocoder: invalid parameter, data type of phase_advance should be equal to data "
+                               "type of input tensor, but got: data type of phase_advance " +
+                                 phase_advance->type().ToString() + " while data type of input tensor " +
+                                 input->type().ToString() + ".");
+  std::shared_ptr<Tensor> input_tensor;
+  if (input->type().value() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(TimeStretch<float>(input_tensor, output, rate, phase_advance));
+  } else {
+    RETURN_IF_NOT_OK(TimeStretch<double>(input, output, rate, phase_advance));
+  }
+  return Status::OK();
+}
+
 Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode norm) {
   TensorShape dct_shape({n_mels, n_mfcc});
   Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output);

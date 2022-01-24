@@ -445,6 +445,15 @@ Status SpectralCentroid(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq);
 
+/// \brief Stretch STFT in time at a given rate, without changing the pitch.
+/// \param[in] input Tensor of shape <..., freq, time, 2>.
+/// \param[in] output Tensor of shape <..., freq, ceil(time/rate), 2>.
+/// \param[in] rate Speed-up factor.
+/// \param[in] phase_advance Expected phase advance in each bin in shape of (freq, 1).
+/// \return Status code.
+Status PhaseVocoder(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate,
+                    const std::shared_ptr<Tensor> &phase_advance);
+
 /// \brief Apply a mask along axis.
 /// \param input: Tensor of shape <..., freq, time>.
 /// \param output: Tensor of shape <..., freq, time>.

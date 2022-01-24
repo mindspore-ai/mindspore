@@ -2161,6 +2161,32 @@ TEST_F(MindDataTestExecute, TestDBToAmplitudeWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: PhaseVocoder
+/// Description: test PhaseVocoder in eager mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestExecute, TestPhaseVocoderEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaseVocoderEager.";
+  // testing
+  std::shared_ptr<Tensor> input_tensor, input_phase_advance_tensor;
+  Tensor::CreateFromVector(
+    std::vector<float>({0.1468,  -1.1094, 0.0525,  -0.3742, -0.7729, -0.7138, 0.3253,  0.0419,  0.8433,  -0.5313,
+                        -0.0988, -0.0927, -0.7071, -0.7740, -1.1087, -1.1925, -1.2749, -0.0862, 0.0693,  0.2937,
+                        0.1676,  0.2356,  2.7333,  2.5171,  0.8055,  0.7380,  -0.4437, -0.7257, -0.7154, 0.1801,
+                        -1.9323, 1.8184,  0.8196,  0.1371,  -0.0677, -2.2315, 0.0662,  -0.0071, -0.8639, 0.6215,
+                        -0.5144, 0.8373,  -0.1072, 0.6184,  0.1985,  -0.7692, -0.5879, -0.0029, 0.0676,  -0.5520}),
+    TensorShape({1, 5, 5, 2}), &input_tensor);
+  auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
+  float rate = 2;
+  std::vector<float> phase_advance{0.0000, 1.5708, 3.1416, 4.7124, 6.2832};
+  Tensor::CreateFromVector(phase_advance, TensorShape({5, 1}), &input_phase_advance_tensor);
+  auto phase_advance_ms =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_phase_advance_tensor));
+  std::shared_ptr<TensorTransform> pv = std::make_shared<audio::PhaseVocoder>(rate, phase_advance_ms);
+  mindspore::dataset::Execute transform({pv});
+  Status status = transform(input_tensor_ms, &input_tensor_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
 /// Feature: SlidingWindowCmn
 /// Description: test basic function of SlidingWindowCmn
 /// Expectation: get correct number of data

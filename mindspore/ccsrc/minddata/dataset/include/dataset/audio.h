@@ -751,6 +751,28 @@ class MS_API Phaser final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief PhaseVocoder TensorTransform
+/// \notes Given a STFT tensor, speed up in time without modifying pitch by factor of rate.
+class MS_API PhaseVocoder final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] rate Speed-up factor.
+  /// \param[in] phase_advance Expected phase advance in each bin in shape of (freq, 1).
+  PhaseVocoder(float rate, const MSTensor &phase_advance);
+
+  /// \brief Destructor.
+  ~PhaseVocoder() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply RIAA vinyl playback equalization.
 class MS_API RiaaBiquad final : public TensorTransform {
  public:

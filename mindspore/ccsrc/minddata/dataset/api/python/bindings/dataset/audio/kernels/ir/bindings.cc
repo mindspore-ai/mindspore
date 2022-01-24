@@ -49,6 +49,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
+#include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
@@ -431,6 +432,17 @@ PYBIND_REGISTER(PhaserOperation, 1, ([](const py::module *m) {
                       return phaser;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  PhaseVocoderOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::PhaseVocoderOperation, TensorOperation, std::shared_ptr<audio::PhaseVocoderOperation>>(
+      *m, "PhaseVocoderOperation")
+      .def(py::init([](float rate, const std::shared_ptr<Tensor> &phase_advance) {
+        auto phase_vocoder = std::make_shared<audio::PhaseVocoderOperation>(rate, phase_advance);
+        THROW_IF_ERROR(phase_vocoder->ValidateParams());
+        return phase_vocoder;
+      }));
+  }));
 
 PYBIND_REGISTER(
   RiaaBiquadOperation, 1, ([](const py::module *m) {
