@@ -17,9 +17,15 @@
 #include "src/delegate/tensorrt/op/matmul_tensorrt.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
+
 namespace mindspore::lite {
 constexpr int BIAS_INDEX = 2;
-
+MatMulTensorRT::~MatMulTensorRT() {
+  if (weight_ptr_ != nullptr) {
+    free(weight_ptr_);
+    weight_ptr_ = nullptr;
+  }
+}
 int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
                               const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -48,56 +54,20 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     activation_ = primitive->activation_type();
-  } else if (type_ == schema::PrimitiveType_FullConnection) {
-    transpose_a_ = nvinfer1::MatrixOperation::kNONE;
-    transpose_b_ = nvinfer1::MatrixOperation::kTRANSPOSE;
   }
-
-  ITensorHelper matmul_a;
-  ITensorHelper matmul_b;
-
-  int ret = PreprocessInputs(network, &matmul_a, &matmul_b);
-  if (ret != RET_OK || matmul_a.trt_tensor_ == nullptr || matmul_b.trt_tensor_ == nullptr) {
-    MS_LOG(ERROR) << "PreprocessInputs matmul failed for " << op_name_;
+  nvinfer1::ITensor *out_tensor = nullptr;
+  if (in_tensors_.size() == INPUT_SIZE3 && in_tensors_[1].Data() != nullptr &&
+      in_tensors_[BIAS_INDEX].Data() != nullptr && transpose_a_ == nvinfer1::MatrixOperation::kNONE &&
+      in_tensors_[1].Shape().size() == DIMENSION_2D &&
+      (in_tensors_[0].Shape().size() == DIMENSION_2D || in_tensors_[0].Shape().size() == DIMENSION_4D)) {
+    MS_LOG(DEBUG) << "use fully connected instead of matmul for " << op_name_;
+    out_tensor = AddAsFullConnect(network);
+  } else {
+    out_tensor = AddAsMatmul(network);
+  }
+  if (out_tensor == nullptr) {
+    MS_LOG(ERROR) << "add matmul failed for " << op_name_;
     return RET_ERROR;
-  }
-
-  MS_LOG(DEBUG) << "matmul input a " << GetTensorFormat(matmul_a);
-  MS_LOG(DEBUG) << "matmul input b " << GetTensorFormat(matmul_b);
-
-  auto matmul_layer =
-    network->addMatrixMultiply(*matmul_a.trt_tensor_, transpose_a_, *matmul_b.trt_tensor_, transpose_b_);
-  if (matmul_layer == nullptr) {
-    MS_LOG(ERROR) << "addMatrixMultiply failed for " << op_name_;
-    return RET_ERROR;
-  }
-  matmul_layer->setName(op_name_.c_str());
-  nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
-  tensor_name_map_[matmul_layer->getOutput(0)->getName()] = op_name_;
-
-  if (in_tensors_.size() == BIAS_INDEX + 1) {
-    nvinfer1::ITensor *bias = nullptr;
-    if (in_tensors_[BIAS_INDEX].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      bias =
-        ConvertTensorWithExpandDims(network, in_tensors_[BIAS_INDEX], out_tensor->getDimensions().nbDims, op_name_);
-    } else if (in_tensors_[BIAS_INDEX].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      bias = ConvertConstantTensor(network, in_tensors_[BIAS_INDEX], op_name_);
-    } else {
-      MS_LOG(ERROR) << "input tensor shape is invalid for " << op_name_;
-      return RET_ERROR;
-    }
-    if (bias == nullptr) {
-      MS_LOG(ERROR) << "create constant bias tensor failed for " << op_name_;
-      return RET_ERROR;
-    }
-    auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
-    if (bias_layer == nullptr) {
-      MS_LOG(ERROR) << "add bias add layer failed for " << op_name_;
-      return RET_ERROR;
-    }
-    auto bias_layer_name = op_name_ + "_bias";
-    bias_layer->setName(bias_layer_name.c_str());
-    out_tensor = bias_layer->getOutput(0);
   }
 
   // add activation
@@ -117,8 +87,8 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int MatMulTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a,
-                                     ITensorHelper *matmul_b) {
+int MatMulTensorRT::PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a,
+                                           ITensorHelper *matmul_b) {
   int ret;
   if (tensorrt_in_tensors_.size() == INPUT_SIZE2) {
     int a_index =
@@ -178,5 +148,111 @@ int MatMulTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network, ITen
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+nvinfer1::ITensor *MatMulTensorRT::AddAsMatmul(nvinfer1::INetworkDefinition *network) {
+  ITensorHelper matmul_a;
+  ITensorHelper matmul_b;
+
+  int ret = PreprocessMatMulInputs(network, &matmul_a, &matmul_b);
+  if (ret != RET_OK || matmul_a.trt_tensor_ == nullptr || matmul_b.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "PreprocessMatMulInputs matmul failed for " << op_name_;
+    return nullptr;
+  }
+
+  MS_LOG(DEBUG) << "matmul input a " << GetTensorFormat(matmul_a);
+  MS_LOG(DEBUG) << "matmul input b " << GetTensorFormat(matmul_b);
+
+  auto matmul_layer =
+    network->addMatrixMultiply(*matmul_a.trt_tensor_, transpose_a_, *matmul_b.trt_tensor_, transpose_b_);
+  if (matmul_layer == nullptr) {
+    MS_LOG(ERROR) << "addMatrixMultiply failed for " << op_name_;
+    return nullptr;
+  }
+  matmul_layer->setName(op_name_.c_str());
+  nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
+  tensor_name_map_[matmul_layer->getOutput(0)->getName()] = op_name_;
+
+  if (in_tensors_.size() == BIAS_INDEX + 1) {
+    nvinfer1::ITensor *bias = nullptr;
+    if (in_tensors_[BIAS_INDEX].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
+      bias =
+        ConvertTensorWithExpandDims(network, in_tensors_[BIAS_INDEX], out_tensor->getDimensions().nbDims, op_name_);
+    } else if (in_tensors_[BIAS_INDEX].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
+      bias = ConvertConstantTensor(network, in_tensors_[BIAS_INDEX], op_name_);
+    } else {
+      MS_LOG(ERROR) << "input tensor shape is invalid for " << op_name_;
+      return nullptr;
+    }
+    if (bias == nullptr) {
+      MS_LOG(ERROR) << "create constant bias tensor failed for " << op_name_;
+      return nullptr;
+    }
+    auto bias_layer = network->addElementWise(*matmul_layer->getOutput(0), *bias, nvinfer1::ElementWiseOperation::kSUM);
+    if (bias_layer == nullptr) {
+      MS_LOG(ERROR) << "add bias add layer failed for " << op_name_;
+      return nullptr;
+    }
+    auto bias_layer_name = op_name_ + "_bias";
+    bias_layer->setName(bias_layer_name.c_str());
+    out_tensor = bias_layer->getOutput(0);
+  }
+  return out_tensor;
+}
+
+nvinfer1::ITensor *MatMulTensorRT::AddAsFullConnect(nvinfer1::INetworkDefinition *network) {
+  nvinfer1::Weights weight;
+  nvinfer1::Weights bias = ConvertWeight(in_tensors_[BIAS_INDEX]);
+  nvinfer1::ITensor *input_a = tensorrt_in_tensors_[0].trt_tensor_;
+  out_format_ = tensorrt_in_tensors_[0].format_;
+  if (input_a->getDimensions().nbDims != DIMENSION_4D) {
+    nvinfer1::Dims in_dims(input_a->getDimensions());
+    in_dims.nbDims = DIMENSION_4D;
+    for (int i = input_a->getDimensions().nbDims; i < DIMENSION_4D; i++) {
+      in_dims.d[i] = 1;
+    }
+    input_a = Reshape(network, input_a, in_dims);
+    if (input_a == nullptr) {
+      MS_LOG(ERROR) << "reshape input failed for " << op_name_;
+      return nullptr;
+    }
+    MS_LOG(DEBUG) << "full connect expand input a to " << GetTensorFormat(input_a);
+  } else {
+    ITensorHelper tmp_input;
+    int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &tmp_input);
+    if (ret != RET_OK || tmp_input.trt_tensor_ == nullptr) {
+      MS_LOG(ERROR) << "rPreprocessInputs2SameDim failed for " << op_name_;
+      return nullptr;
+    }
+    input_a = tmp_input.trt_tensor_;
+    out_format_ = tmp_input.format_;
+    MS_LOG(DEBUG) << "full connect preprocess input a to " << GetTensorFormat(tmp_input);
+  }
+  if (transpose_b_ == nvinfer1::MatrixOperation::kNONE) {
+    // transpose weight
+    weight = TransposeWeight2D(in_tensors_[1], &weight_ptr_);
+    if (weight.values == nullptr || weight_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "TransposeWeight2D input weight failed for " << op_name_;
+      return nullptr;
+    }
+  } else {
+    weight = ConvertWeight(in_tensors_[1]);
+  }
+
+  int output_cnt = in_tensors_[BIAS_INDEX].Shape()[0];
+
+  auto fc_layer = network->addFullyConnected(*input_a, output_cnt, weight, bias);
+  if (fc_layer == nullptr) {
+    MS_LOG(ERROR) << "add fully connected layer failed for " << op_name_;
+    return nullptr;
+  }
+  fc_layer->setName((op_name_ + "_fullyconnected").c_str());
+  nvinfer1::ITensor *out_tensor = fc_layer->getOutput(0);
+  if (out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
+    std::vector<int64_t> out_dims(out_tensors_[0].Shape());
+    out_dims[0] = out_tensor->getDimensions().d[0];
+    out_tensor = Reshape(network, out_tensor, out_dims);
+  }
+  return out_tensor;
 }
 }  // namespace mindspore::lite

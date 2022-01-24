@@ -138,7 +138,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
 nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
-  if (in_tensors_[0].Shape().size() < INPUT_SIZE4) {
+  if (in_tensors_[0].Shape().size() < DIMENSION_4D) {
     // unsqueeze input Itensor to 4 dims
     scale_in_tensor = AddUnsqueezeOp(network);
     if (scale_in_tensor == nullptr) {
@@ -202,12 +202,6 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(int64_t axis) {
 }
 
 nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *network) {
-  nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*this->tensorrt_in_tensors_[0].trt_tensor_);
-  if (unsqueeze_layer == nullptr) {
-    MS_LOG(ERROR) << "addShuffle failed for: " << op_name_;
-    return nullptr;
-  }
-  unsqueeze_layer->setName((op_name_ + "_unsqueeze").c_str());
   auto unsqueeze_shape = ConvertMSShape(tensorrt_in_tensors_[0].trt_tensor_->getDimensions());
   size_t unsqueeze_size = DIMENSION_4D - unsqueeze_shape.size();
   for (size_t i = 0; i < unsqueeze_size; i++) {
@@ -223,24 +217,16 @@ nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *n
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
     return nullptr;
   }
-  unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
-  return unsqueeze_layer->getOutput(0);
+  return Reshape(network, tensorrt_in_tensors_[0].trt_tensor_, unsqueeze_shape);
 }
 
 nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvinfer1::INetworkDefinition *network) {
-  nvinfer1::IShuffleLayer *squeeze_layer = network->addShuffle(*in_tensor);
-  if (squeeze_layer == nullptr) {
-    MS_LOG(ERROR) << "addShuffle failed for: " << op_name_;
-    return nullptr;
-  }
-  squeeze_layer->setName((op_name_ + "_squeeze").c_str());
   nvinfer1::Dims squeeze_dims;
   squeeze_dims.nbDims = out_tensors_[0].Shape().size();
   for (int i = 0; i < squeeze_dims.nbDims; i++) {
     squeeze_dims.d[i] = in_tensor->getDimensions().d[i] == -1 ? 0 : in_tensor->getDimensions().d[i];
   }
   MS_LOG(DEBUG) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
-  squeeze_layer->setReshapeDimensions(squeeze_dims);
-  return squeeze_layer->getOutput(0);
+  return Reshape(network, in_tensor, squeeze_dims);
 }
 }  // namespace mindspore::lite
