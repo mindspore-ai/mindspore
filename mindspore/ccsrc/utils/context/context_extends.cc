@@ -196,7 +196,8 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
     (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
   }
 
-  if (ConfigManager::GetInstance().training()) {
+  auto training = common::GetEnv("MS_GE_TRAIN");
+  if (training == "1") {
     (*ge_options)["ge.graphRunMode"] = "1";
   }
 

@@ -19,6 +19,7 @@
 
 #define DRAW_GE_GRAPH
 
+#include <cstdlib>
 #include <memory>
 #include <map>
 #include <set>
@@ -56,7 +57,13 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     df_graph_ = std::make_shared<DfGraph>(anf_graph_->ToString());
-    training_ = anf_graph->has_flag("training");
+    auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
+    auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
+    if (env_ge == "1" && env_training == "1") {
+      training_ = true;
+    } else {
+      training_ = anf_graph->has_flag("training");
+    }
     distribute_ = anf_graph->has_flag("broadcast_flag");
     if (anf_graph->has_flag("broadcast_flag")) {
       ConfigManager::GetInstance().set_parallel_strategy(ParallelStrategy::DISTRIBUTION);
