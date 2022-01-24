@@ -61,8 +61,7 @@ void CPUSession::Init(uint32_t device_id) {
   InitExecutor(kCPUDevice, device_id);
 }
 
-ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph,
-                                                         const std::string &) {
+ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
   MS_EXCEPTION_IF_NULL(graph);
   if (!anf->isa<Parameter>()) {
@@ -118,7 +117,7 @@ void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
 
 GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
-  auto graph = ConstructKernelGraph(lst, outputs);
+  auto graph = ConstructKernelGraph(lst, outputs, DeviceAddressType::kCPU);
   MS_EXCEPTION_IF_NULL(graph);
   opt::AddDynamicShapeAttrPass(graph);
   MS_LOG(INFO) << "Set kernel info";

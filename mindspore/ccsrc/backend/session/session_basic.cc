@@ -136,7 +136,6 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   }
   return false;
 }
-
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
@@ -645,8 +644,7 @@ AnfNodePtr SessionBasic::CreateParameterFromTuple(const AnfNodePtr &node, Kernel
   return new_parameter;
 }
 
-ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph,
-                                                           const std::string &target) {
+ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(anf);
   if (!anf->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << "Anf[" << anf->DebugString() << "] is not a parameter";
@@ -658,11 +656,21 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
   ParameterPtr new_parameter = nullptr;
-  if (target == "CPU") {
+  auto func_graph = anf->func_graph();
+  if (func_graph->manager() != nullptr && func_graph->IsMultiTarget() &&
+      graph->device_target() == device::DeviceAddressType::kCPU) {
+    auto iter = default_param_map_.find(anf);
+    if (iter != default_param_map_.end()) {
+      new_parameter = iter->second;
+    }
+    if (new_parameter != nullptr) {
+      return new_parameter;
+    }
     TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
     graph_inputs->push_back(new_parameter);
     valid_inputs->push_back(true);
+    default_param_map_[anf] = new_parameter;
     return new_parameter;
   }
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
@@ -711,8 +719,7 @@ void SessionBasic::GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *
 }
 
 void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
-                                     mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode,
-                                     const std::string &target) {
+                                     mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
@@ -741,7 +748,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       }
       continue;
     } else if (anf->isa<Parameter>()) {
-      auto new_parameter = CreateNewParameterFromParameter(anf, graph, target);
+      auto new_parameter = CreateNewParameterFromParameter(anf, graph);
       cnode_inputs->push_back(new_parameter);
       graph->FrontBackendMapAdd(anf, new_parameter);
       continue;
@@ -763,15 +770,14 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
 }
 
 CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
-                                      mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode,
-                                      const std::string &target) {
+                                      mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(other_graph_cnode);
   // get primitive of old node
   std::vector<AnfNodePtr> cnode_inputs;
   GetCNodeInfo(cnode, &cnode_inputs);
-  GetNewCNodeInputs(cnode, graph, &cnode_inputs, other_graph_cnode, target);
+  GetNewCNodeInputs(cnode, graph, &cnode_inputs, other_graph_cnode);
   TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNodeWithInfos(cnode_inputs, cnode);
   return new_cnode;
@@ -1157,7 +1163,7 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
 }
 
 KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                  bool common_opt, const device::DeviceContext *device_context) {
+                                                  DeviceAddressType device_target, bool common_opt) {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1170,12 +1176,9 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    std::string target;
-    if (device_context) {
-      target = device_context->device_context_key().device_name_;
-    }
+    graph->set_device_target(device_target);
     // create a new cnode object
-    auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode, target);
+    auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
     MS_EXCEPTION_IF_NULL(new_cnode);
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
@@ -1211,7 +1214,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     SetInputNodeUsage(graph, manager);
     graph->SetOptimizerFlag();
   }
-
   return graph;
 }
 
@@ -1667,7 +1669,8 @@ bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph 
 }
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph,
-                                                                std::vector<KernelGraphPtr> *all_out_graph) {
+                                                                std::vector<KernelGraphPtr> *all_out_graph,
+                                                                DeviceAddressType device_target) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
@@ -1675,6 +1678,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   MS_EXCEPTION_IF_NULL(graph);
   front_backend_graph_map_[func_graph.get()] = graph;
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
+  graph->set_device_target(device_target);
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
@@ -1697,7 +1701,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
       // Create child kernel graph according ValueNode<FuncGraph>
       FuncGraphPtr child_graph = AnfAlgo::GetValueNodeFuncGraph(node);
       if (front_backend_graph_map_.find(child_graph.get()) == front_backend_graph_map_.end()) {
-        (void)ConstructKernelGraph(child_graph, all_out_graph);
+        (void)ConstructKernelGraph(child_graph, all_out_graph, device_target);
       }
       (void)CreateValueNodeKernelGraph(node, graph.get());
       continue;

@@ -43,6 +43,7 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       parameters_(),
       has_vararg_(false),
       has_kwarg_(false),
+      exist_multi_target_(false),
       kwonlyargs_count_(0),
       hyper_param_count_(0),
       is_generated_(false),
@@ -757,13 +758,14 @@ ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
   return parameter;
 }
 
-bool FuncGraph::ContainMultiTarget() const {
+bool FuncGraph::ContainMultiTarget() {
   auto graph_manager = manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();
   for (auto &g : graphs) {
     auto nodes = mindspore::TopoSort(g->get_return());
     if (mindspore::ContainMultiTarget(nodes)) {
+      exist_multi_target_ = true;
       return true;
     }
   }

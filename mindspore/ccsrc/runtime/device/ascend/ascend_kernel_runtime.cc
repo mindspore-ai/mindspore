@@ -804,10 +804,10 @@ DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::Ke
     if (graph_output.first == nullptr) {
       continue;
     }
-    if (!AnfAlgo::OutputAddrExist(graph_output.first, 0)) {
+    if (!AnfAlgo::OutputAddrExist(graph_output.first, graph_output.second)) {
       return nullptr;
     }
-    auto output_device_address = AnfAlgo::GetMutableOutputAddr(graph_output.first, 0);
+    auto output_device_address = AnfAlgo::GetMutableOutputAddr(graph_output.first, graph_output.second);
     MS_EXCEPTION_IF_NULL(output_device_address);
     if (output_device_address->DeviceType() == DeviceAddressType::kAscend) {
       return output_device_address;

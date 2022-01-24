@@ -49,6 +49,7 @@ struct KernelWithIndexCmp {
   }
 };
 
+using DeviceAddressType = device::DeviceAddressType;
 using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 
 class KernelGraph : public FuncGraph {
@@ -60,6 +61,7 @@ class KernelGraph : public FuncGraph {
     executable_ = true;
     summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
+    device_target_ = DeviceAddressType::kUnknown;
   }
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
@@ -68,6 +70,7 @@ class KernelGraph : public FuncGraph {
     execution_order_ = graph.execution_order_;
     mem_reuse_exec_order_ = graph.mem_reuse_exec_order_;
     graph_id_ = graph.graph_id_;
+    device_target_ = graph.device_target_;
     stream_distinction_label_ = graph.stream_distinction_label_;
     front_backend_anf_map_ = graph.front_backend_anf_map_;
     backend_front_anf_map_ = graph.backend_front_anf_map_;
@@ -148,6 +151,8 @@ class KernelGraph : public FuncGraph {
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
   uint32_t root_graph_id() const { return root_graph_id_; }
   void set_root_graph_id(uint32_t root_graph_id) { root_graph_id_ = root_graph_id; }
+  DeviceAddressType device_target() const { return device_target_; }
+  void set_device_target(DeviceAddressType target) { device_target_ = target; }
 
   // and a new front to backend anf relation to maop
   void FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf);
@@ -446,6 +451,7 @@ class KernelGraph : public FuncGraph {
   std::vector<CNodePtr> mem_reuse_exec_order_;
   uint32_t graph_id_;
   uint32_t stream_distinction_label_;
+  DeviceAddressType device_target_;
   uint32_t root_graph_id_{0};
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map
