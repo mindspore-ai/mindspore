@@ -113,6 +113,7 @@ const char NAMED_PRIMITIVE_SUBSCRIPT[] = "Subscript";
 const char NAMED_PRIMITIVE_ATTRIBUTE[] = "Attribute";
 const char NAMED_PRIMITIVE_COMPARE[] = "Compare";
 const char NAMED_PRIMITIVE_NAMECONSTANT[] = "NameConstant";
+const char NAMED_PRIMITIVE_CONSTANT[] = "Constant";
 const char NAMED_PRIMITIVE_COMPARATORS[] = "comparators";
 const char NAMED_PRIMITIVE_TARGET[] = "target";
 const char NAMED_PRIMITIVE_SLICE[] = "slice";

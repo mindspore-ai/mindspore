@@ -29,9 +29,9 @@ static mindspore::HashSet<std::string> cell_input_args_ = {};
 static const std::set<std::string> ignore_judge_dynamic_cell = {
   "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
   "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask", "Cell mindspore.nn.layer.math.MatMul"};
-static const std::set<std::string> unchanged_named_primitive = {parse::NAMED_PRIMITIVE_ATTRIBUTE,
-                                                                parse::NAMED_PRIMITIVE_NAMECONSTANT,
-                                                                parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
+static const std::set<std::string> unchanged_named_primitive = {
+  parse::NAMED_PRIMITIVE_ATTRIBUTE, parse::NAMED_PRIMITIVE_NAMECONSTANT, parse::NAMED_PRIMITIVE_CONSTANT,
+  parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
 
 std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
                                          parse::AstMainType type) {
