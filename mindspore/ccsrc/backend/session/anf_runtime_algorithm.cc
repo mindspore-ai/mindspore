@@ -336,7 +336,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
       }
       return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
     }
-    if (IsCallNode(item_with_index_tmp.first)) {
+    if (IsCallNode(item_with_index_tmp.first) || item_with_index_tmp.first->isa<Parameter>()) {
       size_t real_index = item_with_index_tmp.second;
       if (abs == nullptr) {
         abs = item_with_index_tmp.first->abstract();

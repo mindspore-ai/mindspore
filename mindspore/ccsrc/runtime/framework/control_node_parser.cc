@@ -1936,6 +1936,9 @@ void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_no
       }
     }
     for (const auto &front_output_node : kernel_graph_group_info->front_output_nodes_) {
+      if (front_output_node.second.first.first->isa<Parameter>()) {
+        continue;
+      }
       const auto &output_node = front_output_node.first.first;
       node_to_level_[output_node] = level;
     }

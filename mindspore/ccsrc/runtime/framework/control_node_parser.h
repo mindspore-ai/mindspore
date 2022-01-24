@@ -108,6 +108,8 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:
+  ControlNodeParser() : is_inited_(false), root_func_graph_(nullptr) {}
+
   // Parse the control node and put the results of the parsing into member variables.
   void Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
@@ -298,7 +300,7 @@ class ControlNodeParser {
   mindspore::HashMap<KernelGraphPtr, KernelGraphGroupInfoPtr> kernel_graphs_to_group_info_;
 
   // Is control flow enable.
-  bool is_inited_{false};
+  bool is_inited_;
 
   // Root funcgraph and its parameters.
   FuncGraphPtr root_func_graph_;
