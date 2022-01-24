@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ Status CocoNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoDataset", dataset_dir_));
   RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoDataset", sampler_));
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CocoDataset", {annotation_file_}, "annotation file"));
-  RETURN_IF_NOT_OK(ValidateStringValue("CocoDataset", task_, {"Detection", "Stuff", "Panoptic", "Keypoint"}));
+  RETURN_IF_NOT_OK(
+    ValidateStringValue("CocoDataset", task_, {"Detection", "Stuff", "Panoptic", "Keypoint", "Captioning"}));
 
   return Status::OK();
 }
@@ -72,6 +73,8 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
     task_type = CocoOp::TaskType::Keypoint;
   } else if (task_ == "Panoptic") {
     task_type = CocoOp::TaskType::Panoptic;
+  } else if (task_ == "Captioning") {
+    task_type = CocoOp::TaskType::Captioning;
   } else {
     std::string err_msg = "Task type:'" + task_ + "' is not supported.";
     MS_LOG(ERROR) << err_msg;
@@ -111,6 +114,10 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
         ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       RETURN_IF_NOT_OK(
         schema->AddColumn(ColDescriptor(std::string("area"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+      break;
+    case CocoOp::TaskType::Captioning:
+      RETURN_IF_NOT_OK(schema->AddColumn(
+        ColDescriptor(std::string("captions"), DataType(DataType::DE_STRING), TensorImpl::kFlexible, 1)));
       break;
     default:
       std::string err_msg = "CocoNode::Build : Invalid task type";

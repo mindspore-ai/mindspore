@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,24 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: CocoDataset
+/// Description: default test of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefault.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
   std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file);
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -57,13 +60,16 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 
   EXPECT_EQ(i, 6);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: default pipeline test of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefaultWithPipeline.";
-  // Create two Coco Dataset
+  // Create two Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
@@ -72,7 +78,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
   EXPECT_NE(ds1, nullptr);
   EXPECT_NE(ds2, nullptr);
 
-  // Create two Repeat operation on ds
+  // Create two Repeat operation on ds.
   int32_t repeat_num = 2;
   ds1 = ds1->Repeat(repeat_num);
   EXPECT_NE(ds1, nullptr);
@@ -80,23 +86,23 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
   ds2 = ds2->Repeat(repeat_num);
   EXPECT_NE(ds2, nullptr);
 
-  // Create two Project operation on ds
+  // Create two Project operation on ds.
   std::vector<std::string> column_project = {"image", "bbox", "category_id"};
   ds1 = ds1->Project(column_project);
   EXPECT_NE(ds1, nullptr);
   ds2 = ds2->Project(column_project);
   EXPECT_NE(ds2, nullptr);
 
-  // Create a Concat operation on the ds
+  // Create a Concat operation on the ds.
   ds1 = ds1->Concat({ds2});
   EXPECT_NE(ds1, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -114,13 +120,16 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
 
   EXPECT_EQ(i, 30);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: test getters of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoGetters.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
@@ -132,9 +141,12 @@ TEST_F(MindDataTestPipeline, TestCocoGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: CocoDataset
+/// Description: test detection task of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
@@ -142,12 +154,12 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
     Coco(folder_path, annotation_file, "Detection", false, std::make_shared<SequentialSampler>(0, 6));
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -188,13 +200,16 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
 
   EXPECT_EQ(i, 6);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: test fail of CocoDataset
+/// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestCocoFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoFail.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
   std::string invalid_folder_path = "./NotExist";
@@ -202,29 +217,32 @@ TEST_F(MindDataTestPipeline, TestCocoFail) {
 
   std::shared_ptr<Dataset> ds0 = Coco(invalid_folder_path, annotation_file);
   EXPECT_NE(ds0, nullptr);
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   std::shared_ptr<Iterator> iter0 = ds0->CreateIterator();
-  // Expect failure: invalid COCO input
+  // Expect failure: invalid COCO input.
   EXPECT_EQ(iter0, nullptr);
 
   std::shared_ptr<Dataset> ds1 = Coco(folder_path, invalid_annotation_file);
   EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid COCO input
+  // Expect failure: invalid COCO input.
   EXPECT_EQ(iter1, nullptr);
 
   std::shared_ptr<Dataset> ds2 = Coco(folder_path, annotation_file, "valid_mode");
   EXPECT_NE(ds2, nullptr);
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
-  // Expect failure: invalid COCO input
+  // Expect failure: invalid COCO input.
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: CocoDataset
+/// Description: test keypoint task of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoKeypoint.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/key_point.json";
 
@@ -232,12 +250,12 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
     Coco(folder_path, annotation_file, "Keypoint", false, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -280,13 +298,16 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
 
   EXPECT_EQ(i, 2);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: test panoptic task of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanoptic.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
 
@@ -294,12 +315,12 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
     Coco(folder_path, annotation_file, "Panoptic", false, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -329,7 +350,8 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
     EXPECT_MSTENSOR_EQ(bbox, expect_bbox);
 
     std::shared_ptr<Tensor> de_expect_categoryid;
-    ASSERT_OK(Tensor::CreateFromVector(expect_categoryid_vector[i], TensorShape({bbox_size, 1}), &de_expect_categoryid));
+    ASSERT_OK(
+      Tensor::CreateFromVector(expect_categoryid_vector[i], TensorShape({bbox_size, 1}), &de_expect_categoryid));
     mindspore::MSTensor expect_categoryid =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_categoryid));
     EXPECT_MSTENSOR_EQ(category_id, expect_categoryid);
@@ -352,13 +374,16 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
 
   EXPECT_EQ(i, 2);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: test get class index of panoptic task
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanopticGetClassIndex.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
 
@@ -379,9 +404,12 @@ TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
   EXPECT_EQ(class_index1[2].second[1], 1);
 }
 
+/// Feature: CocoDataset
+/// Description: test stuff task of CocoDataset
+/// Expectation: the data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoStuff) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoStuff.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
@@ -389,12 +417,12 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
     Coco(folder_path, annotation_file, "Stuff", false, std::make_shared<SequentialSampler>(0, 6));
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
+  // Iterate the dataset and get each row.
   std::unordered_map<std::string, mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
 
@@ -419,7 +447,8 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
     EXPECT_MSTENSOR_EQ(image, expect_image);
 
     std::shared_ptr<Tensor> de_expect_segmentation;
-    ASSERT_OK(Tensor::CreateFromVector(expect_segmentation_vector[i], TensorShape(expect_size[i]), &de_expect_segmentation));
+    ASSERT_OK(
+      Tensor::CreateFromVector(expect_segmentation_vector[i], TensorShape(expect_size[i]), &de_expect_segmentation));
     mindspore::MSTensor expect_segmentation =
       mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_segmentation));
     EXPECT_MSTENSOR_EQ(segmentation, expect_segmentation);
@@ -430,21 +459,74 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
 
   EXPECT_EQ(i, 6);
 
-  // Manually terminate the pipeline
+  // Manually terminate the pipeline.
   iter->Stop();
 }
 
+/// Feature: CocoDataset
+/// Description: test captioning task of CocoDataset
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestCocoCaptioning) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoCaptioning.";
+  // Create a Coco Dataset.
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/captions.json";
+  std::shared_ptr<Dataset> ds =
+    Coco(folder_path, annotation_file, "Captioning", false, std::make_shared<SequentialSampler>(0, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::string expect_file[] = {"000000391895", "000000318219"};
+  std::vector<std::vector<std::string>> expect_captions_vector = {
+    {"This is a banana", "This banana is yellow", "This banana is on a white table",
+     "The tail of this banana is facing up", "This banana has spots"},
+    {"This is an orange", "This orange is orange", "This orange is on a dark cloth",
+     "The head of this orange is facing up", "This orange has spots"}};
+  std::vector<std::vector<dsize_t>> expect_size = {{5, 1}, {5, 1}};
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto captions = row["captions"];
+
+    mindspore::MSTensor expect_image = ReadFileToTensor(folder_path + "/" + expect_file[i] + ".jpg");
+    EXPECT_MSTENSOR_EQ(image, expect_image);
+
+    std::shared_ptr<Tensor> de_expect_captions;
+    ASSERT_OK(Tensor::CreateFromVector(expect_captions_vector[i], TensorShape(expect_size[i]), &de_expect_captions));
+    mindspore::MSTensor expect_captions =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_captions));
+    EXPECT_MSTENSOR_EQ(captions, expect_captions);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline.
+  iter->Stop();
+}
+
+/// Feature: CocoDataset
+/// Description: test CocoDataset with the null sampler
+/// Expectation: throw correct error and message
 TEST_F(MindDataTestPipeline, TestCocoWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoWithNullSamplerFail.";
-  // Create a Coco Dataset
+  // Create a Coco Dataset.
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
   std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, nullptr);
   EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
+  // Create an iterator over the result of the above dataset.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: invalid COCO input, sampler cannot be nullptr
+  // Expect failure: invalid COCO input, sampler cannot be nullptr.
   EXPECT_EQ(iter, nullptr);
 }

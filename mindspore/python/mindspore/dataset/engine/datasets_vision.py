@@ -992,8 +992,8 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     """
     A source dataset that reads and parses COCO dataset.
 
-    CocoDataset supports four kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation and
-    Panoptic Segmentation of 2017 Train/Val/Test dataset.
+    CocoDataset supports five kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation,
+    Panoptic Segmentation and Captioning of 2017 Train/Val/Test dataset.
 
     The generated dataset with different task setting has different output columns:
 
@@ -1005,12 +1005,13 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         :py:obj:`[keypoints, dtype=float32]`, :py:obj:`[num_keypoints, dtype=uint32]`.
     - task = :py:obj:`Panoptic`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
         :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`, :py:obj:`[area, dtype=uint32]`.
+    - task = :py:obj:`Captioning`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[captions, dtype=string]`.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation JSON file.
         task (str, optional): Set the task type for reading COCO data. Supported task types:
-            `Detection`, `Stuff`, `Panoptic` and `Keypoint` (default= `Detection`).
+            `Detection`, `Stuff`, `Panoptic`, `Keypoint` and `Captioning` (default=`Detection`).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -1038,7 +1039,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         RuntimeError: If parse JSON file failed.
-        ValueError: If task is not in [`Detection`, `Stuff`, `Panoptic`, `Keypoint`].
+        ValueError: If task is not in [`Detection`, `Stuff`, `Panoptic`, `Keypoint`, `Captioning`].
         ValueError: If annotation_file is not exist.
         ValueError: If dataset_dir is not exist.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
@@ -1099,6 +1100,11 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
         ...                          annotation_file=coco_annotation_file,
         ...                          task='Keypoint')
+        >>>
+        >>> # 5) Read COCO data for Captioning task
+        >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+        ...                          annotation_file=coco_annotation_file,
+        ...                          task='Captioning')
         >>>
         >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
 

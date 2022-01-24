@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ const char kJsonImagesFileName[] = "file_name";
 const char kJsonId[] = "id";
 const char kJsonAnnotations[] = "annotations";
 const char kJsonAnnoSegmentation[] = "segmentation";
+const char kJsonAnnoCaption[] = "caption";
 const char kJsonAnnoCounts[] = "counts";
 const char kJsonAnnoSegmentsInfo[] = "segments_info";
 const char kJsonAnnoIscrowd[] = "iscrowd";
@@ -74,16 +75,36 @@ void CocoOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::string image_id = image_ids_[row_id];
-  std::shared_ptr<Tensor> image, coordinate;
+  std::shared_ptr<Tensor> image;
+  auto real_path = FileUtils::GetRealPath(image_folder_path_.data());
+  if (!real_path.has_value()) {
+    RETURN_STATUS_UNEXPECTED("Invalid file path, COCO dataset image folder: " + image_folder_path_ +
+                             " does not exist.");
+  }
+  Path image_folder(real_path.value());
+  Path kImageFile = image_folder / image_id;
+  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile.ToString(), data_schema_->Column(0), &image));
+  if (task_type_ == TaskType::Captioning) {
+    std::shared_ptr<Tensor> captions;
+    auto itr = captions_map_.find(image_id);
+    if (itr == captions_map_.end()) {
+      RETURN_STATUS_UNEXPECTED("Invalid annotation, the attribute of 'image_id': " + image_id +
+                               " is missing from image node in annotation file: " + annotation_path_);
+    }
+    auto captions_str = itr->second;
+    RETURN_IF_NOT_OK(
+      Tensor::CreateFromVector(captions_str, TensorShape({static_cast<dsize_t>(captions_str.size()), 1}), &captions));
+    RETURN_IF_NOT_OK(LoadCaptioningTensorRow(row_id, image_id, image, captions, trow));
+    return Status::OK();
+  }
+  std::shared_ptr<Tensor> coordinate;
   auto itr = coordinate_map_.find(image_id);
   if (itr == coordinate_map_.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid annotation, the attribute of 'image_id': " + image_id +
                              " is missing from image node in annotation file: " + annotation_path_);
   }
-
-  std::string kImageFile = image_folder_path_ + std::string("/") + image_id;
-  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->Column(0), &image));
 
   auto bboxRow = itr->second;
   std::vector<float> bbox_row;
@@ -115,7 +136,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   } else if (task_type_ == TaskType::Panoptic) {
     RETURN_IF_NOT_OK(LoadMixTensorRow(row_id, image_id, image, coordinate, trow));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid task, task type should be Detection, Stuff, Keypoint or Panoptic.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Panoptic or Captioning.");
   }
 
   return Status::OK();
@@ -123,6 +144,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
 
 Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                       std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::shared_ptr<Tensor> category_id, iscrowd;
   std::vector<uint32_t> category_id_row;
   std::vector<uint32_t> iscrowd_row;
@@ -147,8 +169,10 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
     Tensor::CreateFromVector(iscrowd_row, TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}), &iscrowd));
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)});
-  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_, annotation_path_};
+  Path image_folder(image_folder_path_);
+  Path image_full_path = image_folder / image_id;
+  std::vector<std::string> path_list = {image_full_path.ToString(), annotation_path_, annotation_path_,
+                                        annotation_path_};
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
@@ -159,7 +183,7 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
-    path_list.push_back(image_full_path);
+    path_list.push_back(image_full_path.ToString());
   }
   trow->setPath(path_list);
   return Status::OK();
@@ -167,8 +191,10 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
 
 Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                    std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::shared_ptr<Tensor> item;
   std::vector<uint32_t> item_queue;
+  Path image_folder(image_folder_path_);
   auto itr_item = simple_item_map_.find(image_id);
   if (itr_item == simple_item_map_.end()) {
     RETURN_STATUS_UNEXPECTED("Invalid image_id, the attribute of 'image_id': " + image_id +
@@ -180,8 +206,8 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(item_queue, TensorShape(bbox_dim), &item));
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(item)});
-  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_};
+  Path image_full_path = image_folder / image_id;
+  std::vector<std::string> path_list = {image_full_path.ToString(), annotation_path_, annotation_path_};
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
@@ -192,7 +218,30 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
-    path_list.push_back(image_full_path);
+    path_list.push_back(image_full_path.ToString());
+  }
+  trow->setPath(path_list);
+  return Status::OK();
+}
+
+Status CocoOp::LoadCaptioningTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
+                                       std::shared_ptr<Tensor> captions, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(captions)});
+  Path image_folder(image_folder_path_);
+  Path image_full_path = image_folder / image_id;
+  std::vector<std::string> path_list = {image_full_path.ToString(), annotation_path_};
+  if (extra_metadata_) {
+    std::string img_id;
+    size_t pos = image_id.find(".");
+    if (pos == image_id.npos) {
+      RETURN_STATUS_UNEXPECTED("Invalid image, 'image_id': " + image_id + " should be with suffix like \".jpg\".");
+    }
+    std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
+    std::shared_ptr<Tensor> filename;
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
+    trow->push_back(std::move(filename));
+    path_list.push_back(image_full_path.ToString());
   }
   trow->setPath(path_list);
   return Status::OK();
@@ -200,6 +249,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
 
 Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::shared_ptr<Tensor> category_id, iscrowd, area;
   std::vector<uint32_t> category_id_row;
   std::vector<uint32_t> iscrowd_row;
@@ -230,9 +280,10 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
 
   (*trow) = TensorRow(
     row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)});
-  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
-  std::vector<std::string> path_list = {image_full_path, annotation_path_, annotation_path_, annotation_path_,
-                                        annotation_path_};
+  Path image_folder(image_folder_path_);
+  Path image_full_path = image_folder / image_id;
+  std::vector<std::string> path_list = {image_full_path.ToString(), annotation_path_, annotation_path_,
+                                        annotation_path_, annotation_path_};
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
@@ -243,7 +294,7 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
     std::shared_ptr<Tensor> filename;
     RETURN_IF_NOT_OK(Tensor::CreateScalar(img_id, &filename));
     trow->push_back(std::move(filename));
-    path_list.push_back(image_full_path);
+    path_list.push_back(image_full_path.ToString());
   }
   trow->setPath(path_list);
   return Status::OK();
@@ -316,12 +367,27 @@ Status CocoOp::PrepareData() {
       case TaskType::Panoptic:
         RETURN_IF_NOT_OK(PanopticColumnLoad(annotation, file_name, image_id));
         break;
+      case TaskType::Captioning:
+        RETURN_IF_NOT_OK(SearchNodeInJson(annotation, std::string(kJsonId), &id));
+        RETURN_IF_NOT_OK(CaptionColumnLoad(annotation, file_name, id));
+        break;
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid task, task type should be Detection, Stuff, Keypoint or Panoptic.");
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid parameter, task type should be Detection, Stuff, Keypoint, Panoptic or Captioning.");
     }
   }
-  for (auto img : image_que) {
-    if (coordinate_map_.find(img) != coordinate_map_.end()) image_ids_.push_back(img);
+  if (task_type_ == TaskType::Captioning) {
+    for (auto img : image_que) {
+      if (captions_map_.find(img) != captions_map_.end()) {
+        image_ids_.push_back(img);
+      }
+    }
+  } else {
+    for (auto img : image_que) {
+      if (coordinate_map_.find(img) != coordinate_map_.end()) {
+        image_ids_.push_back(img);
+      }
+    }
   }
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
@@ -444,6 +510,14 @@ Status CocoOp::PanopticColumnLoad(const nlohmann::json &annotation_tree, const s
     simple_item_map_[image_file].push_back(*itr_iscrowd);
     simple_item_map_[image_file].push_back(*itr_area);
   }
+  return Status::OK();
+}
+
+Status CocoOp::CaptionColumnLoad(const nlohmann::json &annotation_tree, const std::string &image_file,
+                                 const int32_t &unique_id) {
+  std::string caption = "";
+  RETURN_IF_NOT_OK(SearchNodeInJson(annotation_tree, std::string(kJsonAnnoCaption), &caption));
+  captions_map_[image_file].push_back(caption);
   return Status::OK();
 }
 
