@@ -56,7 +56,7 @@ LRScheduler::LRScheduler(LR_Lambda lambda_func, void *lr_cb_data, int step)
     : lambda_func_(lambda_func), lr_data_(lr_cb_data), step_(step) {}
 
 int LRScheduler::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
-  if (((cb_data.epoch_ + 1) % step_) == 0) {
+  if (((static_cast<int>(cb_data.epoch_) + 1) % step_) == 0) {
     float lr = cb_data.session_->GetLearningRate();
     int update = lambda_func_(&lr, cb_data.epoch_, lr_data_);
     if (update == UPDATE_LR) {
