@@ -141,6 +141,14 @@ install(
         COMPONENT mindspore
 )
 
+## Public header files for mindapi
+install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/core/base
+        ${CMAKE_SOURCE_DIR}/mindspore/core/ir
+        DESTINATION ${INSTALL_BASE_DIR}/include/mindapi
+        COMPONENT mindspore
+)
+
 ## Public header files for minddata
 install(
         FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
