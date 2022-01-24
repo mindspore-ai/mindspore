@@ -34,8 +34,9 @@ void AccuracyMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
 }
 
 int AccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
-  if ((cb_data.epoch_ + 1) % check_every_n_ == 0) cb_data.loop_->Eval(ds_, {}, nullptr, max_steps_);
-
+  if ((static_cast<int>(cb_data.epoch_) + 1) % check_every_n_ == 0) {
+    cb_data.loop_->Eval(ds_, {}, nullptr, max_steps_);
+  }
   accuracies_.push_back(std::make_pair(cb_data.epoch_, 0.0));
   return mindspore::session::RET_CONTINUE;
 }

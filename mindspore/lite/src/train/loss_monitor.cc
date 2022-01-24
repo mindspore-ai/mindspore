@@ -52,7 +52,7 @@ void LossMonitor::StepEnd(const session::TrainLoopCallBackData &cb_data) {
     if (it->second->ElementsNum() == 1) {
       auto loss = reinterpret_cast<float *>(it->second->MutableData());
       losses_.at(cb_data.epoch_).second += loss[0];
-      if ((cb_data.step_ + 1) % print_every_n_ == 0)
+      if ((static_cast<int>(cb_data.step_) + 1) % print_every_n_ == 0)
         std::cout << (cb_data.epoch_ + 1) << "." << (cb_data.step_ + 1) << ":\tLoss is " << loss[0] << std::endl;
       return;
     }
