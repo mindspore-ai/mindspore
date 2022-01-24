@@ -29,13 +29,9 @@ mindspore.nn.AdamOffload
     - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、和"order_params"：
 
       .. include:: mindspore.nn.optim_group_param.rst
-
       .. include:: mindspore.nn.optim_group_lr.rst
-
       .. include:: mindspore.nn.optim_group_weight_decay.rst
-
       .. include:: mindspore.nn.optim_group_order.rst
-
 
     - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
 
