@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ class BaseDigraph : public Graphviz {
   explicit BaseDigraph(const std::string &name) : Graphviz(name) {}
   ~BaseDigraph() override = default;
 
-  virtual void Node(const AnfNodePtr &node, int id = 0) = 0;
-  virtual void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) = 0;
+  virtual void Node(const AnfNodePtr &node, int id) = 0;
+  virtual void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) = 0;
 
   void Start() override;
   void End() override;
@@ -78,8 +78,8 @@ class Digraph : public BaseDigraph {
   explicit Digraph(const std::string &name) : BaseDigraph(name) {}
   ~Digraph() override;
 
-  void Node(const AnfNodePtr &node, int id = 0) override;
-  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) override;
+  void Node(const AnfNodePtr &node, int id) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) override;
 };
 
 class ModelDigraph : public BaseDigraph {
@@ -89,8 +89,8 @@ class ModelDigraph : public BaseDigraph {
   ~ModelDigraph() override;
 
   std::string Shape(const AnfNodePtr &node) override;
-  void Node(const AnfNodePtr &node, int id = 0) override;
-  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start = 0) override;
+  void Node(const AnfNodePtr &node, int id) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) override;
 };
 
 // API to draw
