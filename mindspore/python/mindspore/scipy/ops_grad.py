@@ -14,7 +14,8 @@
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
-from .ops import Eigh, Eig, SolveTriangular
+from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
+from .ops_wrapper import matrix_set_diag
 from .. import dtype as mstype
 from ..ops import operations as P
 from ..ops import functional as F
@@ -23,6 +24,7 @@ from ..ops._grad.grad_base import bprop_getters
 _matmul = P.MatMul(False, False)
 _real = P.Real()
 _conj = P.Conj()
+_matrix_band_part = MatrixBandPart()
 
 
 def _compute_f(w, epsilon=1E-20):
@@ -44,6 +46,28 @@ def _diag(a):
 def _matrix_solve(a, b):
     # work in process
     return a + b
+
+
+@bprop_getters.register(Cholesky)
+def get_bprop_cholesky(self):
+    """Grad definition for `Cholesky` operation."""
+    inverse = P.MatrixInverse()
+    matmul = P.MatMul()
+
+    def bprop(a, out, dout):
+        l = out
+        l_inverse = inverse(l)
+        dout_middle = matmul(_adjoint(l), dout)
+        middle_diag = 0.5 * mnp.diag(dout_middle)
+        dout_middle = matrix_set_diag(dout_middle, middle_diag)
+        dout_middle = _matrix_band_part(dout_middle, -1, 0)
+        grad_a = matmul(matmul(_adjoint(l_inverse), dout_middle), l_inverse)
+        grad_a = mnp.tril(grad_a + _adjoint(grad_a))
+        middle_diag = 0.5 * mnp.diag(grad_a)
+        grad_a = matrix_set_diag(grad_a, middle_diag)
+        return (grad_a,)
+
+    return bprop
 
 
 @bprop_getters.register(Eig)

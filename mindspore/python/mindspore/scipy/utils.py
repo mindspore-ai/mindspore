@@ -100,7 +100,7 @@ _FLOAT_ONE = _to_tensor(1.0)
 _FLOAT_TWO = _to_tensor(2.0, dtype=float)
 _BOOL_TRUE = _to_tensor(True)
 _BOOL_FALSE = _to_tensor(False)
-
+valid_data_types = (mstype.int32, mstype.int64, mstype.float32, mstype.float64)
 float_types = (mstype.float32, mstype.float64)
 
 
