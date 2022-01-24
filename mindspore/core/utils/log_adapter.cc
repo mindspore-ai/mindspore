@@ -355,9 +355,9 @@ class LogConfigParser {
 };
 
 bool ParseLogLevel(const std::string &str_level, MsLogLevel *ptr_level) {
-  constexpr char number_start = '0';
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
+    constexpr char number_start = '0';
     ch = ch - number_start;  // subtract ASCII code of '0', which is 48
     if (ch >= static_cast<int>(DEBUG) && ch <= static_cast<int>(EXCEPTION)) {
       if (ptr_level != nullptr) {
@@ -373,11 +373,11 @@ static MsLogLevel GetGlobalLogLevel() {
 #ifdef USE_GLOG
   return static_cast<MsLogLevel>(FLAGS_v);
 #else
-  constexpr char number_start = '0';
   int log_level = WARNING;  // set default log level to WARNING
   auto str_level = GetEnv("GLOG_v");
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
+    constexpr char number_start = '0';
     ch = ch - number_start;  // subtract ASCII code of '0', which is 48
     if (ch >= DEBUG && ch <= EXCEPTION) {
       log_level = ch;
