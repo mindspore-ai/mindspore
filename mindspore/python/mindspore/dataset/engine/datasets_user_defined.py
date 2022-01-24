@@ -297,6 +297,14 @@ def _subprocess_handle(eof, signum, frame):
     threading.Thread(target=eof.set()).start()
 
 
+def _ignore_sigint(is_multiprocessing):
+    """
+    We need to ignore sigint signal here so subprocesses can exit normally and clear.
+    """
+    if is_multiprocessing:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiprocessing):
     """
     Multithread or multiprocess generator worker process loop.
@@ -304,6 +312,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
     if is_multiprocessing:
         signal.signal(signal.SIGTERM, partial(_subprocess_handle, eof))
     while True:
+        _ignore_sigint(is_multiprocessing=is_multiprocessing)
+
         # Fetch index, block
         try:
             idx = idx_queue.get(timeout=1)
