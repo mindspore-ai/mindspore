@@ -103,9 +103,8 @@ void RankCpuKernelMod<T>::SetFunc() {
       // how avg is computed directly:
       // sum = (i - duplicate_count + 1) + (i - duplicate_count + 2) +... + i
       //     = duplicate_count * (2 * i - duplicate_count + 1) / 2
-      // rank_sum = sum + duplicate_count = duplicate_count * (2 * i -
-      // duplicate_count + 3) / 2 avg = rank_sum / duplicate_count = (2 * i -
-      // duplicate_count + 3) / 2
+      // rank_sum = sum + duplicate_count = duplicate_count * (2 * i - duplicate_count + 3) / 2
+      // avg = rank_sum / duplicate_count = (2 * i - duplicate_count + 3) / 2
       func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         float avg = (2 * i - duplicate_count + 3) / 2.0;
