@@ -69,7 +69,7 @@ bool CPUDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId
 
   if (type == type_id_) {
     if (size > size_) {
-      MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
       return true;
     }
     auto ret_code = memcpy_s(host_ptr, size, ptr_, size);
@@ -116,7 +116,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
 
   if (type == type_id_) {
     if (size > size_) {
-      MS_LOG(WARNING) << "No need sync, host size: " << size << ", device size: " << size_;
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
       return true;
     }
     // Use the tensor host ptr to set the device ptr.

@@ -705,7 +705,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);
   if (is_need_sync || (host_tensor_address->GetPtr() == nullptr)) {
-    MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()
+    MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->DebugString()
                  << ", device type:" << host_tensor_address->DeviceType();
     SyncTensorData(tensor, host_tensor_address, backend_node, device_context, context, real_strategy_);
   }
@@ -730,34 +730,51 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
   }
 
   const auto &control_node_parameters = control_node_parser->control_node_parameters();
+  if (control_node_parameters.size() != tensors.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid tensor size.");
+  }
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    const auto &front_node = control_node_parameters[i];
-    MS_EXCEPTION_IF_NULL(front_node);
-    if (!control_node_parser->IsRootGraphPersistentDeviceTensor(front_node)) {
+    auto &front_parameter = control_node_parameters[i];
+    auto &tensor = tensors[i];
+    if (tensor == nullptr) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(front_parameter);
+    if (!control_node_parser->IsRootGraphPersistentDeviceTensor(front_parameter)) {
       continue;
     }
 
-    const auto &backend_parameter_with_context =
-      control_node_parser->FetchBackendParameterWithContextByFrontParameter({front_node, 0});
-    if (backend_parameter_with_context.first == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << AnfAlgo::GetNodeDebugString(front_node);
-    }
-    const auto &backend_node = backend_parameter_with_context.first;
-    const auto &device_context = backend_parameter_with_context.second;
-    MS_EXCEPTION_IF_NULL(backend_node);
-    MS_EXCEPTION_IF_NULL(device_context);
-
-    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
+    auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_parameter.get());
     if (device_tensors.empty()) {
-      std::string error_info = "Failed to get device tensor for front node:" + front_node->DebugString();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+      MS_LOG(WARNING) << "Failed to get device tensor for front node:" << front_parameter->DebugString();
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(device_tensors[0]);
+    auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+    if ((device_tensors[0] == host_tensor_address) || (device_tensors[0]->GetPtr() != nullptr)) {
+      continue;
     }
 
-    // Different from CPU, GPU platform, the subgraph weight params device addr of Ascend platform has already been
-    // allocated during the compilation, so these weight params still need to be updated.
-    if (device_tensors[0] != nullptr &&
-        (device_tensors[0]->GetPtr() == nullptr || device_tensors[0]->is_ptr_persisted())) {
-      PrepareDataForWeightNode(backend_node, front_node, tensors[i], device_context, context);
+    auto node = (device_tensors[0]->GetNodeIndex()).first;
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(INFO) << "Prepare device data for weight node by root graph parameter:"
+                 << front_parameter->fullname_with_scope() << ", backend node:" << node->DebugString()
+                 << ", device type:" << device_tensors[0]->DeviceType();
+    if (host_tensor_address == nullptr) {
+      tensor->set_device_address(device_tensors[0]);
+      auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {device_tensors[0]->device_name(), device_tensors[0]->device_id()});
+      SyncTensorData(tensor, device_tensors[0], node, device_context, context, GraphExecutionStrategy::kPipeline);
+    } else {
+      if (host_tensor_address->GetSize() != device_tensors[0]->GetSize()) {
+        MS_LOG(WARNING) << "Please check the size of parameter:" << front_parameter->fullname_with_scope()
+                        << ", host tensor size:" << host_tensor_address->GetSize()
+                        << ", device tensor size:" << device_tensors[0]->GetSize();
+      }
+      host_tensor_address->SetNodeIndex(node, 0);
+      UpdateRefCount(host_tensor_address.get(), true);
+      DeviceTensorStore::GetInstance().Remove(front_parameter.get());
+      DeviceTensorStore::GetInstance().Insert(front_parameter.get(), host_tensor_address);
     }
   }
 }
