@@ -59,7 +59,7 @@ const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_na
 
 // export GetTimeString for all sub modules
 std::string GetTimeString() {
-#define BUFLEN 80
+  constexpr auto BUFLEN = 80;
   char buf[BUFLEN];
   (void)memset(buf, '\0', BUFLEN);
 #if defined(_WIN32) || defined(_WIN64)
