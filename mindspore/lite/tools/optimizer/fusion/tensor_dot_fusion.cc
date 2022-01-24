@@ -33,7 +33,7 @@ STATUS GetIndexValue(const CNodePtr &cnode, std::vector<int> *index, int node_in
   lite::DataInfo data_info;
   int status = RET_ERROR;
   if (utils::isa<ParameterPtr>(cnode->input(node_index))) {
-    status = lite::FetchDataFromParameterNode(cnode, node_index, converter::kFmkTypeMs, false, &data_info, true);
+    status = lite::FetchDataFromParameterNode(cnode, node_index, converter::kFmkTypeMs, &data_info, true);
   } else {
     status = lite::FetchDataFromValueNode(cnode, node_index, converter::kFmkTypeMs, false, &data_info, true);
   }

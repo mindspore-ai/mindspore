@@ -164,7 +164,7 @@ STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
   lite::DataInfo data_info;
   int status;
   if (utils::isa<ParameterPtr>(cnode->input(kInputIndexTwo))) {
-    status = lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &data_info, true);
+    status = lite::FetchDataFromParameterNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, &data_info, true);
   } else {
     status = lite::FetchDataFromValueNode(cnode, kInputIndexTwo, converter::kFmkTypeMs, false, &data_info, true);
   }

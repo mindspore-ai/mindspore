@@ -270,7 +270,7 @@ int RemoveRedundantOpPass::GetConstDataFromInputNode(const CNodePtr &cnode, lite
   auto padding_node = cnode->input(kInputIndexTwo);
   MS_ASSERT(padding_node != nullptr);
   if (utils::isa<Parameter>(padding_node)) {
-    auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, false, data_info, true);
+    auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, data_info, true);
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "fetch data from parameter node failed.";
       return lite::RET_ERROR;
