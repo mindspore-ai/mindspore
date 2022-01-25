@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,9 +66,23 @@ class TestOfflineWatchpoints:
         info4 = d.TensorInfo(node_name="Default/CudnnUniformReal-op391",
                              slot=0, iteration=2, rank_id=0, root_graph_id=0, is_output=False)
 
-        tensor_info = [info1, info2, info3, info4]
-        tensor_name = [name1, name2, name2, name3]
-        tensor_list = [tensor1, tensor2, tensor3, tensor4]
+        name4 = "Cast.Cast-op4.0.0.1"
+        tensor_all_zero = np.array([[[0, 0, 0],
+                                     [0, 0, 0],
+                                     [0, 0, 0]]], np.float32)
+        info5 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/Cast-op4",
+                             slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
+
+        name5 = "Cast.Cast-op40.0.0.1"
+        tensor_all_one = np.array([[[1, 1, 1],
+                                    [1, 1, 1],
+                                    [1, 1, 1]]], np.float32)
+        info6 = d.TensorInfo(node_name="Default/network-WithLossCell/_backbone-AlexNet/Cast-op40",
+                             slot=0, iteration=0, rank_id=0, root_graph_id=0, is_output=True)
+
+        tensor_info = [info1, info2, info3, info4, info5, info6]
+        tensor_name = [name1, name2, name2, name3, name4, name5]
+        tensor_list = [tensor1, tensor2, tensor3, tensor4, tensor_all_zero, tensor_all_one]
         cls.temp_dir = build_dump_structure(tensor_name, tensor_list, "Test", tensor_info)
 
     @classmethod
@@ -180,6 +194,28 @@ class TestOfflineWatchpoints:
         watchpoint_hits_test = debugger_backend.check_watchpoints(iteration=2)
         assert not watchpoint_hits_test
         _ = debugger_backend.remove_watchpoint(watchpoint_id=2)
+
+    @security_off_wrap
+    def test_async_watchpoints_no_duplicate_wp_hit(self):
+        """
+        Feature: Offline Debugger CheckWatchpoint.
+        Description: Test check watchpoint hit with similar op name (one is the prefix of the other)
+        Expectation: Get exactly one watchpoint hit result and no duplicate watchpoints in the hit results.
+        """
+        # watchpoint set and hit only one (watch_condition=3) in async mode
+        debugger_backend = d.DbgServices(dump_file_path=self.temp_dir)
+        _ = debugger_backend.initialize(net_name="Test", is_sync_mode=False)
+        max_gt = d.Parameter(name="max_gt", disabled=False, value=0.0)
+        debugger_backend.add_watchpoint(watchpoint_id=3, watch_condition=3,
+                                        check_node_list={"Default/network-WithLossCell/_backbone-AlexNet/Cast-op4":
+                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": True
+                                                          },
+                                                         "Default/network-WithLossCell/_backbone-AlexNet/Cast-op40":
+                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": True
+                                                          }}, parameter_list=[max_gt])
+
+        watchpoint_hits_test = debugger_backend.check_watchpoints(iteration=0)
+        assert len(watchpoint_hits_test) == 1
 
     def compare_expect_actual_result(self, watchpoint_hits_list, test_index):
         """Compare actual result with golden file."""
