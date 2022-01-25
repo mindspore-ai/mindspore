@@ -110,7 +110,7 @@ STATUS AnfTransform::MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNod
       MS_LOG(DEBUG) << "Primitive is nullptr.";
       continue;
     }
-    prim->AddAttr("trainOp", MakeValue(true));
+    (void)prim->AddAttr("trainOp", MakeValue(true));
   }
   return RET_OK;
 }
@@ -131,7 +131,7 @@ STATUS AnfTransform::MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, co
     for (size_t i = 1; i < graph_cnode->inputs().size(); i++) {
       for (size_t j = 1; j < cnode->inputs().size(); j++) {
         if ((graph_cnode->input(i) == cnode->input(j)) && utils::isa<Parameter>(cnode->input(j))) {
-          graph_prim->AddAttr("trainOp", MakeValue(true));
+          (void)graph_prim->AddAttr("trainOp", MakeValue(true));
         }
       }
     }
@@ -153,7 +153,7 @@ STATUS AnfTransform::MarkTrainOp(const FuncGraphPtr &func_graph) {
       continue;
     }
     if (opt::IsTrainOp(cnode)) {
-      prim->AddAttr("trainOp", MakeValue(true));
+      (void)prim->AddAttr("trainOp", MakeValue(true));
       auto status = MarkTrainInputOp(func_graph, cnode);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "MarkTrainInputOp failed.";

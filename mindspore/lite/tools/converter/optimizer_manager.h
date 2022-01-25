@@ -33,7 +33,7 @@ class PassStorage {
   static void StorePass(const std::string &pass_name, const opt::PassPtr &pass, bool access_for_outer) {
     pass_storage_[pass_name] = pass;
     if (!access_for_outer) {
-      inaccessible_for_outer_.insert(pass_name);
+      (void)inaccessible_for_outer_.insert(pass_name);
     }
   }
   static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_storage_[pass_name]; }

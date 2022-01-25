@@ -52,7 +52,7 @@ STATUS FusionPass::Run(schema::MetaGraphT *graph) {
     }
   }
 
-  ret = MatchPatterns(graph);
+  ret = MatchPatterns(*graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MatchPattern Error " << ret;
     return ret;
@@ -69,13 +69,12 @@ STATUS FusionPass::Run(schema::MetaGraphT *graph) {
   }
 }
 
-STATUS FusionPass::MatchPatterns(const schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
+STATUS FusionPass::MatchPatterns(const schema::MetaGraphT &graph) {
   this->matchedPaths.clear();
   STATUS status;
   for (auto pattern : patterns) {
     MS_CHECK_TRUE_MSG(pattern != nullptr, RET_NULL_PTR, "pattern is nullptr");
-    status = MatchOnePattern(graph, pattern);
+    status = MatchOnePattern(graph, *pattern);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "MatchOnePatternInSubGraph failed: " << status;
       return status;
@@ -112,26 +111,24 @@ STATUS FusionPass::MatchPatterns(const schema::MetaGraphT *graph) {
 
 // assume that all nodes have only one output. if node has multi-outputs,
 // some errors may happen
-STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT *graph, FusionPattern *pattern) {
-  MS_ASSERT(graph != nullptr);
-  MS_ASSERT(pattern != nullptr);
-  auto outputOp = pattern->GetPatternOp(pattern->GetOutput());
+STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT &graph, const FusionPattern &pattern) {
+  auto outputOp = pattern.GetPatternOp(pattern.GetOutput());
   if (outputOp == nullptr) {
     MS_LOG(ERROR) << "Can not find the output of the pattern";
     return RET_NULL_PTR;
   }
   MS_ASSERT(outputOp->isTail);
-  if (graph->nodes.empty()) {
+  if (graph.nodes.empty()) {
     return RET_OK;
   }
   // find all matched entries
   std::vector<size_t> entries;
   std::queue<size_t> nodeQueue;
   std::vector<size_t> sinkIdes;
-  for (auto index : graph->outputIndex) {
-    auto subGraphOutputNodeIdxes = GetLinkedPreIdx(*graph, index);
+  for (auto index : graph.outputIndex) {
+    auto subGraphOutputNodeIdxes = GetLinkedPreIdx(graph, index);
     for (auto subGraphOutputNodeIdx : subGraphOutputNodeIdxes) {
-      MS_ASSERT(graph->nodes.size() > subGraphOutputNodeIdx);
+      MS_ASSERT(graph.nodes.size() > subGraphOutputNodeIdx);
       nodeQueue.push(subGraphOutputNodeIdx);
     }
   }
@@ -141,17 +138,17 @@ STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT *graph, FusionPatter
     if (IsContain(sinkIdes, nodeIdx)) {
       continue;
     }
-    MS_ASSERT(graph->nodes.size() > nodeIdx);
-    auto &node = graph->nodes.at(nodeIdx);
+    MS_ASSERT(graph.nodes.size() > nodeIdx);
+    auto &node = graph.nodes.at(nodeIdx);
     sinkIdes.emplace_back(nodeIdx);
 
     MS_CHECK_TRUE_MSG(node->primitive != nullptr, RET_NULL_PTR, "primitive is nullptr");
     if (IsContain(outputOp->types, node->primitive->value.type)) {
       entries.emplace_back(nodeIdx);
     }
-    auto preNodeIdxes = GetInputNodeIdx(*graph, nodeIdx);
+    auto preNodeIdxes = GetInputNodeIdx(graph, nodeIdx);
     for (auto preNodeIdx : preNodeIdxes) {
-      MS_ASSERT(graph->nodes.size() > preNodeIdx);
+      MS_ASSERT(graph.nodes.size() > preNodeIdx);
       nodeQueue.push(preNodeIdx);
     }
   }
@@ -166,18 +163,17 @@ STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT *graph, FusionPatter
     }
     pathSinkIdes.clear();
     auto path = PatternOp::Copy(outputOp);
-    auto ret = MatchTree(graph, nodeIdx, path, sinkIdes, pathSinkIdes);
+    auto ret = MatchTree(graph, nodeIdx, path, &sinkIdes, &pathSinkIdes);
     if (ret && CheckMatch(graph, path)) {
       paths.emplace_back(path);
     }
   }
-  auto patternName = pattern->GetName();
+  auto patternName = pattern.GetName();
   this->matchedPaths.insert(std::make_pair(patternName, paths));
   return RET_OK;
 }
 
-bool FusionPass::CheckMatch(const schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp) {
-  MS_ASSERT(graph != nullptr);
+bool FusionPass::CheckMatch(const schema::MetaGraphT &graph, const std::shared_ptr<PatternOp> &patternOp) {
   MS_ASSERT(patternOp != nullptr);
   // find included nodes
   std::queue<std::shared_ptr<PatternOp>> opQueue;
@@ -213,7 +209,7 @@ bool FusionPass::CheckMatch(const schema::MetaGraphT *graph, const std::shared_p
     if (inputNode->isPlaceHold) {
       continue;
     }
-    auto inputNodePostNodeIdxes = GetOutputNodeIdx(*graph, inputNode->path->nodeIdx);
+    auto inputNodePostNodeIdxes = GetOutputNodeIdx(graph, inputNode->path->nodeIdx);
     for (auto inputNodePostNodeIdx : inputNodePostNodeIdxes) {
       if (!IsContain(matchedNodeIdxes, inputNodePostNodeIdx)) {
         return false;
@@ -221,7 +217,7 @@ bool FusionPass::CheckMatch(const schema::MetaGraphT *graph, const std::shared_p
     }
   }
   // all pre node of output node should be in path
-  auto outputNodePreNodeIdxes = GetInputNodeIdx(*graph, outputNode->path->nodeIdx);
+  auto outputNodePreNodeIdxes = GetInputNodeIdx(graph, outputNode->path->nodeIdx);
   for (auto outputNodePreNodeIdx : outputNodePreNodeIdxes) {
     if (!IsContain(matchedNodeIdxes, outputNodePreNodeIdx)) {
       return false;
@@ -230,12 +226,11 @@ bool FusionPass::CheckMatch(const schema::MetaGraphT *graph, const std::shared_p
   return true;
 }
 
-bool FusionPass::MatchTree(const schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
-                           std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes) {
-  MS_ASSERT(graph != nullptr);
+bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
+                           std::vector<size_t> *sinkIdes, std::vector<size_t> *pathSinkIdes) {
   MS_ASSERT(nodeIdx < graph->nodes.size());
   // check the func params
-  if (!CheckMatchParams(graph, nodeIdx, target, sinkIdes, pathSinkIdes)) {
+  if (!CheckMatchParams(graph, nodeIdx, target, *sinkIdes, *pathSinkIdes)) {
     return false;
   }
   // path is set and not pointer to this node
@@ -246,23 +241,24 @@ bool FusionPass::MatchTree(const schema::MetaGraphT *graph, size_t nodeIdx, cons
     }
   }
   target->SetPath(-1, nodeIdx);
-  sinkIdes.push_back(nodeIdx);
-  pathSinkIdes.push_back(nodeIdx);
+  sinkIdes->push_back(nodeIdx);
+  pathSinkIdes->push_back(nodeIdx);
   // target is marked head, no need to check left and right. head-target's left
   // and right is always nullptr
   if (target->isHead) {
     return true;
   }
-  auto preNodeIdxes = GetInputNodeIdx(*graph, nodeIdx);
+  auto preNodeIdxes = GetInputNodeIdx(graph, nodeIdx);
   if (preNodeIdxes.empty() && target->left == nullptr && target->right == nullptr) {
     return true;
   }
   for (auto preNodeIdx : preNodeIdxes) {
     MS_ASSERT(graph->nodes.size() > preNodeIdx);
     // Case of multiple outputs is not supported.
-    if (GetInputNodeIdx(*graph, preNodeIdx).size() > 2 || GetOutputNodeIdx(*graph, preNodeIdx).size() > 1) {
-      sinkIdes.erase((sinkIdes.end() - 1));
-      pathSinkIdes.erase((pathSinkIdes.end() - 1));
+    constexpr int inputs_limits = 2;
+    if (GetInputNodeIdx(graph, preNodeIdx).size() > inputs_limits || GetOutputNodeIdx(graph, preNodeIdx).size() > 1) {
+      (void)sinkIdes->erase((sinkIdes->end() - 1));
+      (void)pathSinkIdes->erase((pathSinkIdes->end() - 1));
       target->UnSetPath();
       return false;
     }
@@ -283,18 +279,18 @@ bool FusionPass::MatchTree(const schema::MetaGraphT *graph, size_t nodeIdx, cons
       }
     }
   }
-  sinkIdes.erase((sinkIdes.end() - 1));
-  pathSinkIdes.erase((pathSinkIdes.end() - 1));
+  (void)sinkIdes->erase((sinkIdes->end() - 1));
+  (void)pathSinkIdes->erase((pathSinkIdes->end() - 1));
   target->UnSetPath();
   return false;
 }
 
-bool FusionPass::CheckMatchParams(const schema::MetaGraphT *graph, size_t nodeIdx,
-                                  const std::shared_ptr<PatternOp> &target, std::vector<size_t> &sinkIdes,
-                                  std::vector<size_t> &pathSinkIdes) {
+bool FusionPass::CheckMatchParams(const schema::MetaGraphT &graph, size_t nodeIdx,
+                                  const std::shared_ptr<PatternOp> &target, const std::vector<size_t> &sinkIdes,
+                                  const std::vector<size_t> &pathSinkIdes) {
   MS_ASSERT(target != nullptr);
-  MS_ASSERT(nodeIdx < graph->nodes.size());
-  auto &scope = graph->nodes.at(nodeIdx);
+  MS_ASSERT(nodeIdx < graph.nodes.size());
+  auto &scope = graph.nodes.at(nodeIdx);
   MS_CHECK_TRUE_MSG(scope != nullptr, false, "Node in graph is nullptr");
   // if target(except target is marked head) is nullptr, it means the preNode
   // has no left or right, but scope is not nullptr

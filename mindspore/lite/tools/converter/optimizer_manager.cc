@@ -37,7 +37,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     manager = Manage(func_graph, true);
-    MS_CHECK_TRUE_RET(manager != nullptr, RET_ERROR);
+    MS_CHECK_TRUE_RET(manager != nullptr, false);
     std::set<FuncGraphPtr> all_func_graphs;
     GetAllFuncGraph(func_graph, &all_func_graphs);
     for (auto &graph : all_func_graphs) {

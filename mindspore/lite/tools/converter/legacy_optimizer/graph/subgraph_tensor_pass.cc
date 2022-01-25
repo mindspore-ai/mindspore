@@ -27,8 +27,8 @@
 
 namespace mindspore {
 namespace lite {
-bool SubgraphTensorPass::IsUsing(const schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
-  for (const auto &node : graph->nodes) {
+bool SubgraphTensorPass::IsUsing(const schema::MetaGraphT &graph, const uint32_t &tensor_idx) {
+  for (const auto &node : graph.nodes) {
     if (IsContain<uint32_t>(node->inputIndex, tensor_idx)) {
       return true;
     }
@@ -36,7 +36,7 @@ bool SubgraphTensorPass::IsUsing(const schema::MetaGraphT *graph, const uint32_t
       return true;
     }
   }
-  for (const auto &subgraph : graph->subGraph) {
+  for (const auto &subgraph : graph.subGraph) {
     if (IsContain<uint32_t>(subgraph->inputIndices, tensor_idx)) {
       return true;
     }
@@ -63,7 +63,7 @@ void SubgraphTensorPass::UpdateTensorIdx(schema::MetaGraphT *graph, const uint32
 void SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
   for (auto it = graph->allTensors.begin(); it != graph->allTensors.end();) {
     uint32_t idx = it - graph->allTensors.begin();
-    if (IsUsing(graph, idx)) {
+    if (IsUsing(*graph, idx)) {
       it++;
     } else {
       it = graph->allTensors.erase(it);
@@ -72,9 +72,9 @@ void SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
   }
 }
 
-void SubgraphTensorPass::SyncMainGraphInputAndOutput(const schema::MetaGraphT *graph) {
-  MS_ASSERT(graph->subGraph.size() > 0);
-  graph->subGraph[0]->inputIndices.assign(graph->inputIndex.begin(), graph->inputIndex.end());
+void SubgraphTensorPass::SyncMainGraphInputAndOutput(const schema::MetaGraphT &graph) {
+  MS_ASSERT(graph.subGraph.size() > 0);
+  graph.subGraph[0]->inputIndices.assign(graph.inputIndex.begin(), graph.inputIndex.end());
 }
 
 STATUS SubgraphTensorPass::Run(schema::MetaGraphT *graph) {
@@ -84,7 +84,7 @@ STATUS SubgraphTensorPass::Run(schema::MetaGraphT *graph) {
 
   SetSubgraphTensorIndices(graph);
 
-  SyncMainGraphInputAndOutput(graph);
+  SyncMainGraphInputAndOutput(*graph);
 
   return RET_OK;
 }

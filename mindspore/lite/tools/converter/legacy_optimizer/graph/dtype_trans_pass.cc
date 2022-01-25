@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace lite {
-#define kMinInputNum 1
+constexpr int kMinInputNum = 1;
 
 STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
   CHECK_NULL_RETURN(graph);
