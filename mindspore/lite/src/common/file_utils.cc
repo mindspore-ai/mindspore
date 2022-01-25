@@ -99,6 +99,7 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
   if (len <= 0) {
     return nullptr;
   }
+  auto len_pos = static_cast<size_t>(len);
   if (offset < 0) {
     MS_LOG(DEBUG) << "offset is invalid, offset: " << offset;
     return nullptr;
@@ -122,7 +123,6 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
 
   ifs.seekg(0, std::ios::end);
   size_t total_size = ifs.tellg();
-  size_t len_pos = static_cast<size_t>(len);
   if (offset_pos + len_pos > total_size) {
     MS_LOG(ERROR) << "file segment out of range";
     ifs.close();

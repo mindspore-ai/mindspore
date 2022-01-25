@@ -120,7 +120,6 @@ class FusionPattern {
 
   FusionPattern &operator=(const FusionPattern &) = default;
 
- private:
   std::string name{};
 
   std::vector<std::shared_ptr<PatternOp>> ops{};

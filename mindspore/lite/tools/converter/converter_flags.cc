@@ -167,7 +167,7 @@ int Flags::InitTrainModel() {
   return RET_OK;
 }
 
-int Flags::InitInTensorShape() {
+int Flags::InitInTensorShape() const {
   if (this->inTensorShape.empty()) {
     return RET_OK;
   }

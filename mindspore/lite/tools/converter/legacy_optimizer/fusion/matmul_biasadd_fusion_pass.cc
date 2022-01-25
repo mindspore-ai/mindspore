@@ -52,14 +52,20 @@ STATUS MatMulBiasAddFusionPass::DefinePattern() {
 }
 
 STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &pattern_name,
-                                         std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) {
+                                         const std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) {
   MS_ASSERT(graph != nullptr);
   if (matched_path.size() != kNumBiasMatchPathLen) {
     MS_LOG(ERROR) << "MatMul-BiasAdd-Fusion should have two NodeIndex in matchedPair";
     return RET_PARAM_INVALID;
   }
-  auto mul_path = matched_path[MulName];
-  auto bias_path = matched_path[BiasName];
+  auto mul_path_iter = matched_path.find(MulName);
+  MS_ASSERT(mul_path_iter != matched_path.end());
+  auto &mul_path = mul_path_iter->second;
+  MS_ASSERT(mul_path != nullptr);
+  auto bias_path_iter = matched_path.find(BiasName);
+  MS_ASSERT(bias_path_iter != matched_path.end());
+  auto &bias_path = bias_path_iter->second;
+  MS_ASSERT(bias_path != nullptr);
   auto mul_index = mul_path->nodeIdx;
   auto bias_index = bias_path->nodeIdx;
   auto &mul_node = graph->nodes.at(mul_index);

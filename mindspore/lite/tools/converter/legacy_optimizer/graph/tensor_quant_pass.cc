@@ -42,7 +42,7 @@ bool TensorNeedQuant(const std::unique_ptr<TensorT> &tensor) {
 }
 
 namespace {
-#define kHalfUInt 128
+constexpr int kHalfUInt = 128;
 }  // namespace
 
 STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor) {

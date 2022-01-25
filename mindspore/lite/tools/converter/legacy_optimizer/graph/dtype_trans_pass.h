@@ -50,23 +50,22 @@ class DTypeTransPass : public GraphPass {
                                 size_t inout_idx, int32_t input_data_type, int32_t output_data_type,
                                 STATUS *error_code);
 
- private:
   size_t id_;
   TypeId input_data_dtype = TypeId::kNumberTypeFloat;
   TypeId output_data_dtype = TypeId::kNumberTypeFloat;
 
-  OpDefCopyer castOpCopyer = [](schema::CNodeT *inCNode) -> std::unique_ptr<schema::CNodeT> {
+  OpDefCopyer castOpCopyer = [](const schema::CNodeT &inCNode) -> std::unique_ptr<schema::CNodeT> {
     std::unique_ptr<schema::CNodeT> newCNode(new (std::nothrow) schema::CNodeT);
     if (newCNode == nullptr) {
       MS_LOG(ERROR) << "new CNodeT failed";
       return nullptr;
     }
-    newCNode->name = inCNode->name;
-    newCNode->quantType = inCNode->quantType;
+    newCNode->name = inCNode.name;
+    newCNode->quantType = inCNode.quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
-    newCNode->primitive->value.type = inCNode->primitive->value.type;
+    newCNode->primitive->value.type = inCNode.primitive->value.type;
 
-    auto oldQuantDTypeCastParam = inCNode->primitive->value.AsQuantDTypeCast();
+    auto oldQuantDTypeCastParam = inCNode.primitive->value.AsQuantDTypeCast();
     auto QuantDTypeCastParam = new (std::nothrow) QuantDTypeCastT;
     if (QuantDTypeCastParam == nullptr) {
       MS_LOG(ERROR) << "new QuantDTypeCast failed";

@@ -235,36 +235,6 @@ static int Convert2CKHW(int srcFormat) {
   return -1;
 }
 
-STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &inputs, std::vector<Tensor *> *outputs) {
-  flatbuffers::FlatBufferBuilder fbb(kInitialSize);
-  auto prim = ConvertToPrimitive(node.primitive.get(), &fbb);
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "get primitive failed.";
-    fbb.Clear();
-    return RET_ERROR;
-  }
-  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
-  if (parameter_gen == nullptr) {
-    fbb.Clear();
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
-    return RET_ERROR;
-  }
-  auto parameter = parameter_gen(prim);
-  if (parameter == nullptr) {
-    fbb.Clear();
-    MS_LOG(ERROR) << "parameter is nullptr.";
-    return RET_ERROR;
-  }
-  auto ret = KernelInferShape(inputs, *outputs, parameter);
-  fbb.Clear();
-  if (parameter->destroy_func_ != nullptr) {
-    parameter->destroy_func_(parameter);
-  }
-  free(parameter);
-  parameter = nullptr;
-  return ret;
-}
-
 size_t GetTensorInputIndexInCNode(const uint32_t &tensor_index, const schema::CNodeT &cnode) {
   size_t ret = -1;
   for (size_t i = 0; i < cnode.inputIndex.size(); i++) {

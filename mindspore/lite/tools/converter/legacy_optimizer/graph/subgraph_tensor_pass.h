@@ -33,9 +33,9 @@ class SubgraphTensorPass : public GraphPass {
 
  private:
   void RemoveUselessTensors(schema::MetaGraphT *graph);
-  bool IsUsing(const schema::MetaGraphT *graph, const uint32_t &tensor_idx);
+  bool IsUsing(const schema::MetaGraphT &graph, const uint32_t &tensor_idx);
   void UpdateTensorIdx(schema::MetaGraphT *graph, const uint32_t &tensor_idx);
-  void SyncMainGraphInputAndOutput(const schema::MetaGraphT *graph);
+  void SyncMainGraphInputAndOutput(const schema::MetaGraphT &graph);
 
   template <typename T>
   void UpdateVec(std::vector<T> *vec, T element) {

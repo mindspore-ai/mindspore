@@ -37,13 +37,12 @@ class QuantCastFusionPass : public FusionPass {
 
   ~QuantCastFusionPass() override = default;
 
-  STATUS Run(schema::MetaGraphT *graph) override;
-
- private:
   STATUS DefinePattern() override;
 
+  STATUS Run(schema::MetaGraphT *graph) override;
+
   STATUS DoFusion(schema::MetaGraphT *graph, const std::string &patternName,
-                  std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) override;
+                  const std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) override;
 };
 }  // namespace lite
 }  // namespace mindspore

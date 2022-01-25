@@ -160,7 +160,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
   }
   auto mirror_graph = std::make_shared<FuncGraph>();
   MS_CHECK_TRUE_RET(mirror_graph != nullptr, nullptr);
-  cloned_func_graph->insert({graph, mirror_graph});
+  cloned_func_graph->emplace(graph, mirror_graph);
   mirror_graph->set_attrs(graph->attrs());
   NodesMap origin_nodes;
   NodesMap mirror_nodes;
