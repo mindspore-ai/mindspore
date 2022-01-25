@@ -253,6 +253,7 @@ def test_csr_tensor_in_while_cpu():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_csr_ops():
     """
@@ -448,6 +449,7 @@ def test_isinstance_csr_tensor():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dtype_csr_tensor():
     """
@@ -475,6 +477,7 @@ def test_dtype_csr_tensor():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_csr_bprop():
     """
@@ -482,38 +485,25 @@ def test_csr_bprop():
     Description: Test CSRReduceSum, CSRMul, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
     Expectation: Success.
     """
-    class CSRMulNet(nn.Cell):
-        def __init__(self):
-            super(CSRMulNet, self).__init__()
-            self.op = _csr_ops.CSRMul()
+    csr_reduce_sum = _csr_ops.CSRReduceSum()
+    csrmv = _csr_ops.CSRMV()
+    grad_op = ops.GradOperation(get_all=True)
 
-        def construct(self, csr_tensor, dense):
-            return self.op(csr_tensor, dense)
+    def test_csr_mul(csr_tensor, dense):
+        return csr_tensor * dense
 
-    class CSRReduceSumNet(nn.Cell):
-        def __init__(self):
-            super(CSRReduceSumNet, self).__init__()
-            self.op = _csr_ops.CSRReduceSum()
+    def test_csr_reduce_sum(csr_tensor, axis):
+        return csr_reduce_sum(csr_tensor, axis)
 
-        def construct(self, csr_tensor, axis):
-            return self.op(csr_tensor, axis)
+    def test_csrmv(csr_tensor, dense):
+        return csrmv(csr_tensor, dense)
 
-    class CSRMVNet(nn.Cell):
-        def __init__(self):
-            super(CSRMVNet, self).__init__()
-            self.op = _csr_ops.CSRMV()
-
-        def construct(self, csr_tensor, dense):
-            return self.op(csr_tensor, dense)
-
-    class BpropNet(nn.Cell):
-        def __init__(self, net):
-            super(BpropNet, self).__init__()
-            self.net = net
-            self.grad_op = ops.GradOperation(get_all=True)
-
-        def construct(self, *inputs):
-            return self.grad_op(self.net)(*inputs)
+    test_csr_mul_grad_pynative = grad_op(test_csr_mul)
+    test_csr_mul_grad_graph = ms_function(test_csr_mul_grad_pynative)
+    test_csr_reduce_sum_grad_pynative = grad_op(test_csr_reduce_sum)
+    test_csr_reduce_sum_grad_graph = ms_function(test_csr_reduce_sum_grad_pynative)
+    test_csrmv_grad_pynative = grad_op(test_csrmv)
+    test_csrmv_grad_graph = ms_function(test_csrmv_grad_pynative)
 
     indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
     indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
@@ -522,33 +512,45 @@ def test_csr_bprop():
     csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
 
     csr_mv_arg = Tensor([[1], [2], [3], [4]], dtype=mstype.float32)
-    csr_mv_output_1, csr_mv_output_2 = BpropNet(CSRMVNet())(csr_tensor, csr_mv_arg)
     csr_mv_expect_1 = np.array([4, 1, 2, 3, 2, 4], dtype=np.float32)
     csr_mv_expect_2 = np.array([[1], [6], [3], [5]], dtype=np.float32)
+    csr_mv_output_1, csr_mv_output_2 = test_csrmv_grad_pynative(csr_tensor, csr_mv_arg)
+    assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
+    assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
+    csr_mv_output_1, csr_mv_output_2 = test_csrmv_grad_graph(csr_tensor, csr_mv_arg)
     assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
     assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
 
-    csr_reduce_sum_output = BpropNet(CSRReduceSumNet())(csr_tensor, 1)
     csr_reduce_sum_expect = np.ones(6, dtype=np.float32)
+    csr_reduce_sum_output = test_csr_reduce_sum_grad_pynative(csr_tensor, 1)
+    assert np.allclose(csr_reduce_sum_output[0].values.asnumpy(), csr_reduce_sum_expect)
+    csr_reduce_sum_output = test_csr_reduce_sum_grad_graph(csr_tensor, 1)
     assert np.allclose(csr_reduce_sum_output[0].values.asnumpy(), csr_reduce_sum_expect)
 
     csr_mul_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
-    csr_mul_output_1_1, csr_mul_output_1_2 = BpropNet(CSRMulNet())(csr_tensor, csr_mul_arg_1)
     csr_mul_expect_1_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
     csr_mul_expect_1_2 = np.array([[0], [6], [9]], dtype=np.float32)
+    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul_grad_pynative(csr_tensor, csr_mul_arg_1)
+    assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
+    assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
+    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul_grad_graph(csr_tensor, csr_mul_arg_1)
     assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
     assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
 
     csr_mul_arg_2 = Tensor(np.arange(12).reshape(3, 4), dtype=mstype.float32)
-    csr_mul_output_2_1, csr_mul_output_2_2 = BpropNet(CSRMulNet())(csr_tensor, csr_mul_arg_2)
     csr_mul_expect_2_1 = np.array([3, 4, 5, 6, 9, 11], dtype=np.float32)
     csr_mul_expect_2_2 = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
+    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul_grad_pynative(csr_tensor, csr_mul_arg_2)
+    assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
+    assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
+    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul_grad_graph(csr_tensor, csr_mul_arg_2)
     assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
     assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_csr_method():
     """

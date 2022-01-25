@@ -27,30 +27,6 @@ using ".register" decorator.
 """
 
 
-@mul.register("CSRTensor", "Tensor")
-def _mul_csrtensor_tensor(x, y):
-    """
-    Returns x * y where x is CSRTensor and y is Tensor.
-
-    Outputs:
-       CSRTensor, equal to x * y.
-    """
-    data = F.csr_mul(x, y)
-    return CSRTensor(x.indptr, x.indices, data, x.shape)
-
-
-@mul.register("Tensor", "CSRTensor")
-def _mul_tensor_csrtensor(x, y):
-    """
-    Returns x * y where x is Tensor and y is CSRTensor.
-
-    Outputs:
-       CSRTensor, equal to x * y.
-    """
-    data = F.csr_mul(y, x)
-    return CSRTensor(y.indptr, y.indices, data, y.shape)
-
-
 @mul.register("Number", "Number")
 def _mul_scalar(x, y):
     """
@@ -221,3 +197,27 @@ def _list_mul_tensor(x, y):
     """
     x = utils.sequence_to_tensor(x, y.dtype)
     return F.tensor_mul(x, y)
+
+
+@mul.register("CSRTensor", "Tensor")
+def _csrtensor_mul_tensor(x, y):
+    """
+    Returns x * y where x is CSRTensor and y is Tensor.
+
+    Outputs:
+       CSRTensor, equal to x * y.
+    """
+    data = F.csr_mul(x, y)
+    return CSRTensor(x.indptr, x.indices, data, x.shape)
+
+
+@mul.register("Tensor", "CSRTensor")
+def _tensor_mul_csrtensor(x, y):
+    """
+    Returns x * y where x is Tensor and y is CSRTensor.
+
+    Outputs:
+       CSRTensor, equal to x * y.
+    """
+    data = F.csr_mul(y, x)
+    return CSRTensor(y.indptr, y.indices, data, y.shape)

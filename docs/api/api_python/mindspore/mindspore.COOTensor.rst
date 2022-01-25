@@ -3,7 +3,10 @@ mindspore.COOTensor
 
 .. py:class:: mindspore.COOTensor(indices=None, values=None, shape=None)
 
-    用来表示某一张量在给定索引上非零元素的集合。
+    用来表示某一张量在给定索引上非零元素的集合，其中索引(indices)指示了每一个非零元素的位置。
+
+    .. note::
+        - 这是一个实验特性，在未来可能会发生API的变化。
 
     **参数：**
 
@@ -29,7 +32,7 @@ mindspore.COOTensor
     .. py:method:: shape
         :property:
 
-        稀疏矩阵的稠密形状。
+        返回稀疏矩阵的稠密形状。
 
     .. py:method:: dtype
         :property:
@@ -49,7 +52,7 @@ mindspore.COOTensor
     .. py:method:: ndim
         :property:
 
-        稀疏矩阵的稠密维度。
+        返回稀疏矩阵的稠密维度。
 
     .. py:method:: to_csr()
 

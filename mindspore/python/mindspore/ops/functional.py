@@ -149,8 +149,54 @@ tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
-csr_mul = _csr_ops.CSRMul()
-csr_div = _csr_ops.CSRDiv()
+def csr_mul(x, y):
+    """
+    Returns x * y where x is CSRTensor and y is Tensor.
+
+    Note:
+        This function returns the results of dense Tensor, represents the non-zero
+        values of the CSRTensor. If user expects a CSRTensor as output, please directly
+        use `*` operator instead. Only support dense tensor broadcast to sparse tensor
+        at the moment.
+
+    Args:
+        x (CSRTensor): Sparse CSR Tensor.
+        y (Tensor): Dense Tensor, its shape must be able to broadcast to x.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    if x.shape[0] != 1 and y.shape[0] == 1:
+        y = y.expand_as(x)
+    return _csr_ops.CSRMul()(x, y)
+
+def csr_div(x, y):
+    """
+    Returns x / y where x is CSRTensor and y is Tensor.
+
+    Note:
+        This function returns the results of dense Tensor, represents the non-zero
+        values of the CSRTensor. If user expects a CSRTensor as output, please directly
+        use `/` operator instead. Only support dense tensor broadcast to sparse tensor
+        at the moment.
+
+    Args:
+        x (CSRTensor): Sparse CSR Tensor.
+        y (Tensor): Dense Tensor, its shape must be able to broadcast to x.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    if x.shape[0] != 1 and y.shape[0] == 1:
+        y = y.expand_as(x)
+    return _csr_ops.CSRDiv()(x, y)
+
 csr_mv = _csr_ops.CSRMV()
 csr_reduce_sum = _csr_ops.CSRReduceSum()
 csr_gather = _csr_ops.CSRGather()
@@ -749,5 +795,6 @@ tensor_operator_registry.register('narrow', narrow)
 tensor_operator_registry.register('sort', sort)
 tensor_operator_registry.register('zeros', zeros)
 tensor_operator_registry.register('tensor_scatter_update', tensor_scatter_update)
+tensor_operator_registry.register('tensor_scatter_add', tensor_scatter_add)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

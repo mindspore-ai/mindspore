@@ -25,6 +25,13 @@ from .grad_base import bprops, bprop_getters
 # Unused parameters are placeholders.
 
 
+@bprops.register("MakeCSRTensor")
+def bprop_make_csr_tensor(indptr, indices, values, dense_shape, out, dout):
+    """Backpropagator for primitive `MakeCSRTensor`."""
+    res = (zeros_like(indptr), zeros_like(indices), F.csr_tensor_get_values(dout), ())
+    return res
+
+
 @bprops.register("MakeCOOTensor")
 def bprop_make_coo_tensor(indices, values, dense_shape, out, dout):
     """Backpropagator for primitive `MakeCOOTensor`."""

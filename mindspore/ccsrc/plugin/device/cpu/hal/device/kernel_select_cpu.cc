@@ -27,6 +27,7 @@
 #include "plugin/device/cpu/kernel/custom/custom_aot_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/custom/custom_julia_cpu_kernel.h"
 #include "utils/trace_base.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -259,11 +260,14 @@ void AddKernelAttr(const CNodePtr &kernel_node, const KernelAttr &kernel_attr) {
                                                                      kernel_attrs);
 }
 
-void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
+void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node, bool is_akg_op) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  // Custom op's kernel type can only be CPU_KERNEL on CPU
-  builder->SetKernelType(KernelType::CPU_KERNEL);
+  if (is_akg_op) {
+    builder->SetKernelType(KernelType::AKG_KERNEL);
+  } else {
+    builder->SetKernelType(KernelType::CPU_KERNEL);
+  }
   builder->SetProcessor(kernel::Processor::CPU);
   // Set inputs info
   std::vector<TypeId> input_types;
@@ -281,23 +285,25 @@ void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
   builder->SetOutputsDeviceType(output_types);
   builder->SetOutputsFormat(output_formats);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-  // Update kernel attrs
-  KernelAttr attr;
-  if (input_types.size() != input_formats.size()) {
-    MS_LOG(EXCEPTION) << "input types size " << input_types.size() << " is not equal to input formats size "
-                      << input_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
+  if (!is_akg_op) {
+    // Update kernel attrs
+    KernelAttr attr;
+    if (input_types.size() != input_formats.size()) {
+      MS_LOG(EXCEPTION) << "input types size " << input_types.size() << " is not equal to input formats size "
+                        << input_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
+    }
+    for (size_t i = 0; i < input_types.size(); ++i) {
+      attr.AddInputAttr(input_types[i], input_formats[i]);
+    }
+    if (output_types.size() != output_formats.size()) {
+      MS_LOG(EXCEPTION) << "output types size " << output_types.size() << " is not equal to output formats size "
+                        << output_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
+    }
+    for (size_t i = 0; i < output_types.size(); ++i) {
+      attr.AddOutputAttr(output_types[i], output_formats[i]);
+    }
+    AddKernelAttr(kernel_node, attr);
   }
-  for (size_t i = 0; i < input_types.size(); ++i) {
-    attr.AddInputAttr(input_types[i], input_formats[i]);
-  }
-  if (output_types.size() != output_formats.size()) {
-    MS_LOG(EXCEPTION) << "output types size " << output_types.size() << " is not equal to output formats size "
-                      << output_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
-  }
-  for (size_t i = 0; i < output_types.size(); ++i) {
-    attr.AddOutputAttr(output_types[i], output_formats[i]);
-  }
-  AddKernelAttr(kernel_node, attr);
 }
 
 KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::vector<TypeId> &input_types,
@@ -428,11 +434,13 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
       MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
                       << "Infer operator information from inputs. For more details, "
                       << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
-      return UpdateCustomKernelBuildInfoAndAttrs(kernel_node);
+      return UpdateCustomKernelBuildInfoAndAttrs(kernel_node, false);
     }
   } else if (IsDynamicParamKernel(op_name)) {
     // Select for dynamic kernel(both the number and data type are undetermined).
     return UpdateDynamicKernelBuildInfoAndAttrs(kernel_node);
+  } else if (IsAKGSparseOP(kernel_node)) {
+    return UpdateCustomKernelBuildInfoAndAttrs(kernel_node, true);
   }
 
   std::vector<std::string> input_formats;

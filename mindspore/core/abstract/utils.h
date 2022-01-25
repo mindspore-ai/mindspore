@@ -46,7 +46,6 @@ MS_CORE_API AbstractBasePtrList AbstractJoin(const AbstractBasePtrList &spec1, c
 MS_CORE_API AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec);
 
 ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy);
-
 MS_CORE_API size_t TypeIdSize(const TypeId data_type);
 template <typename T>
 T ShapeSize(const std::vector<T> &shape) {

@@ -29,7 +29,43 @@
 
 namespace {
 constexpr auto kRankSize = "rank_size";
+inline void CheckSparseShape(ShapeVector sparse_shp, ShapeVector dense_shp) {
+  constexpr auto kCSRMulBatchPos = 2;
+  int dlen = mindspore::SizeToInt(sparse_shp.size()) - mindspore::SizeToInt(dense_shp.size());
+  if (dlen < 0) {
+    MS_EXCEPTION(mindspore::ValueError) << "Currently, only support dense tensor broadcast to sparse tensor, "
+                                        << "but sparse tensor has " << sparse_shp.size() << " dimensions, "
+                                        << "and dense tensor has " << dense_shp.size() << " dimensions, ";
+  }
+  for (int i = 0; i < dlen; i++) {
+    (void)dense_shp.insert(dense_shp.begin(), 1);
+  }
+  if (sparse_shp.size() != dense_shp.size()) {
+    MS_LOG(EXCEPTION) << "Failure: sparse_shp.size() != dense_shp.size().";
+  }
+  if (sparse_shp.size() < 1) {
+    MS_LOG(EXCEPTION) << "Failure: dense tensor and sparse tensor shapes cannot be zero.";
+  }
+  if (dense_shp[0] != sparse_shp[0]) {
+    MS_EXCEPTION(mindspore::ValueError)
+      << "Currently, dense tensor and sparse tensor shapes must equal in first dimension.";
+  }
+  for (size_t i = 0; i < sparse_shp.size(); i++) {
+    auto s = sparse_shp[i];
+    auto d = dense_shp[i];
+    if (i < kCSRMulBatchPos) {
+      if (d != s && d != 1) {
+        MS_EXCEPTION(mindspore::ValueError) << "Dense shape cannot broadcast to sparse shape.";
+      }
+    } else {
+      if (d != s) {
+        MS_EXCEPTION(mindspore::ValueError)
+          << "Currently, sparse shape and dense shape must equal in feature dimensions.";
+      }
+    }
+  }
 }
+}  // namespace
 
 namespace mindspore {
 namespace abstract {
@@ -37,6 +73,7 @@ constexpr auto kCSRDenseShape = "dense_shape";
 constexpr auto kCSRAxis = "axis";
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";
+
 AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // An object of a subclass of AbstractBase
@@ -344,12 +381,12 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
   }
   auto indices_shp = indices->shape()->shape();
   if (indices_shp.size() != 2) {
-    MS_EXCEPTION(TypeError) << "Indices must be a 2 dimension tensor, but got a " << indices_shp.size()
+    MS_EXCEPTION(TypeError) << "Indices must be a 2 dimensional tensor, but got a " << indices_shp.size()
                             << " dimension tensor";
   }
   auto values_shp = values->shape()->shape();
   if (values_shp.size() != 1) {
-    MS_EXCEPTION(TypeError) << "Values must be a 1 dimension tensor, but got a " << values_shp.size()
+    MS_EXCEPTION(TypeError) << "Values must be a 1 dimensional tensor, but got a " << values_shp.size()
                             << " dimension tensor";
   }
   if (indices_shp[0] != values_shp[0]) {
@@ -418,13 +455,12 @@ AbstractBasePtr InferImplCOOTensorGetDenseShape(const AnalysisEnginePtr &, const
   return sparse_tensor->dense_shape();
 }
 
-AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplCSRElementWise(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: a sparse tensor and a dense tensor.
-  constexpr auto kCSRMulInputsNum = 2;
-  constexpr auto kCSRMulShapeSize = 2;
+  constexpr auto kCSRElementwiseInputsNum = 2;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kCSRMulInputsNum);
+  CheckArgsSize(op_name, args_spec_list, kCSRElementwiseInputsNum);
   auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
   auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(sparse);
@@ -435,14 +471,7 @@ AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   auto sparse_shape = sparse->shape()->shape();
   auto dense_shape = dense->shape()->shape();
-  if (sparse_shape.size() != kCSRMulShapeSize || dense_shape.size() != kCSRMulShapeSize) {
-    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMulShapeSize << "-D inputs!"
-                             << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
-                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
-  }
-  if (dense_shape[0] != sparse_shape[0]) {
-    MS_EXCEPTION(ValueError) << "Currently, only support dense tensor broadcast with last dim!";
-  }
+  CheckSparseShape(sparse_shape, dense_shape);
   auto ret = sparse->values()->Broaden();
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
@@ -451,40 +480,6 @@ AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
-  return ret;
-}
-
-AbstractBasePtr InferImplCSRDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a sparse tensor and a dense tensor.
-  constexpr auto kCSRDivInputsNum = 2;
-  constexpr auto kCSRDivShapeSize = 2;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kCSRDivInputsNum);
-  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
-  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(sparse);
-  MS_EXCEPTION_IF_NULL(sparse->shape());
-  MS_EXCEPTION_IF_NULL(sparse->values());
-  MS_EXCEPTION_IF_NULL(sparse->indices());
-  MS_EXCEPTION_IF_NULL(dense);
-
-  auto sparse_shape = sparse->shape()->shape();
-  auto dense_shape = dense->shape()->shape();
-  if (sparse_shape.size() != kCSRDivShapeSize || dense_shape.size() != kCSRDivShapeSize) {
-    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRDivShapeSize << "-D inputs!"
-                             << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
-                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
-  }
-  auto ret = sparse->values()->Broaden();
-
-  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
-  auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = nnz_vec[0] / dense_shape[0];
-  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
-  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
-  primitive->set_attr(kIsCSR, MakeValue(true));
-
   return ret;
 }
 
@@ -544,7 +539,6 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRReduceSumShapeSize << "-D inputs!"
                              << "but sparse tensor has " << sparse_shape.size() << " dimensions.";
   }
-
   ShapeVector out_shape = sparse_shape;
   MS_EXCEPTION_IF_NULL(axis->BuildValue());
   if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
@@ -682,21 +676,21 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
   }
   auto indptr_shp = indptr->shape()->shape();
   if (indptr_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Indptr must be a 1 dimension tensor, but got a " << indptr_shp.size()
-                             << " dimension tensor";
+    MS_EXCEPTION(ValueError) << "Indptr must be a 1-dimensional tensor, but got a " << indptr_shp.size()
+                             << "-dimensional tensor";
   }
   auto indices_shp = indices->shape()->shape();
   if (indices_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Indices must be a 1 dimension tensor, but got a " << indices_shp.size()
-                             << " dimension tensor";
+    MS_EXCEPTION(ValueError) << "Indices must be a 1-dimensional tensor, but got a " << indices_shp.size()
+                             << "-dimensional tensor";
   }
   auto values_shp = values->shape()->shape();
   if (values_shp.size() != 1) {
-    MS_EXCEPTION(ValueError) << "Values must be a 1 dimension tensor, but got a " << values_shp.size()
-                             << " dimension tensor";
+    MS_EXCEPTION(ValueError) << "Values must be a 1-dimensional tensor, but got a " << values_shp.size()
+                             << "-dimensional tensor";
   }
   if (indices_shp[0] != values_shp[0]) {
-    MS_EXCEPTION(ValueError) << "indices and values must have same size, but got: values length: " << values_shp[0]
+    MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: " << values_shp[0]
                              << ", indices length " << indices_shp[0];
   }
   for (const auto &elem_type : shape->ElementsType()) {
@@ -712,14 +706,19 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     auto elem = GetValue<int64_t>(e);
     return elem;
   });
-
-  for (auto shape_elem : shape_vec) {
-    if (shape_elem < 0) {
-      MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << shape_value->ToString();
-    }
+  if (values_shp.size() + 1 != shape_vec.size()) {
+    MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1.";
   }
   if (shape_vec[0] + 1 != indptr_shp[0]) {
-    MS_EXCEPTION(ValueError) << "indptr must have length (1 + shape[0]), but got: " << indptr_shp[0];
+    MS_EXCEPTION(ValueError) << "Indptr must have length (1 + shape[0]), but got: " << indptr_shp[0];
+  }
+  for (size_t i = 0; i < shape_vec.size(); ++i) {
+    if (shape_vec[i] < 0) {
+      MS_EXCEPTION(TypeError) << "The element of shape must be positive, but got " << shape_value->ToString();
+    }
+    if ((i > 1) && (shape_vec[i] != values_shp[i - 1])) {
+      MS_EXCEPTION(ValueError) << "csr_tensor's shape should match with values' shape.";
+    }
   }
   auto ret = std::make_shared<AbstractCSRTensor>(values->element()->BuildType(), shape_vec);
   ret->set_indptr(indptr);
