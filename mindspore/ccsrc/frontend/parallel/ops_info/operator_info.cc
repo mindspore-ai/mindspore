@@ -113,6 +113,18 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
         return FAILED;
       }
 
+      int64_t shape_value = sub_input_shape.at(j);
+      if ((shape_value % strategy_value) != 0) {
+        if (is_auto_parallel_) {
+          MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
+                        << " cannot be divisible by strategy value " << strategy_value;
+        } else {
+          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
+                        << " cannot be divisible by strategy value " << strategy_value;
+        }
+        return FAILED;
+      }
+
       if ((LongToUlong(strategy_value) & LongToUlong(strategy_value - 1)) != 0) {
         if ((g_device_manager->DeviceNum() & (g_device_manager->DeviceNum() - 1)) != 0) {
           MS_LOG(WARNING) << "The device num is not the power of 2, thus do not check the strategy as power of 2";
@@ -124,18 +136,6 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
         } else {
           MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
                         << ", the value of strategy must be the power of 2, but get " << strategy_value;
-        }
-        return FAILED;
-      }
-
-      int64_t shape_value = sub_input_shape.at(j);
-      if ((shape_value % strategy_value) != 0) {
-        if (is_auto_parallel_) {
-          MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
-                        << " cannot be divisible by strategy value " << strategy_value;
-        } else {
-          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
-                        << " cannot be divisible by strategy value " << strategy_value;
         }
         return FAILED;
       }

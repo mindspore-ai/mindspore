@@ -188,6 +188,9 @@ using SplitCost = CastCost;
 using ScatterUpdateCost = CastCost;
 using UniformRealCost = CastCost;
 using ResizeBilinearCost = CastCost;
+using BoundingBoxEncodeCost = CastCost;
+using IOUCost = CastCost;
+using RandomChoicWithMaskCost = CastCost;
 
 class SqrtCost : public CastCost {
  public:
