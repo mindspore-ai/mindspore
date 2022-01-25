@@ -50,7 +50,7 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   int num1 = GetElementNum(input1);
   int num2 = GetElementNum(input2);
   int nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
-  int axisout = 0;
+  size_t axisout = 0;
   size_t temp = 0;
   for (size_t j = 0; j < input0->shape_size_; j++) {
     if (j >= MAX_SHAPE_SIZE) {

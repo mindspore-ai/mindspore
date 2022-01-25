@@ -246,6 +246,10 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
         shape.push_back(src_tensor.dims()->data()[j]);
       }
     }
+    if (std::any_of(shape.begin(), shape.end(), [](const int &element) { return element < 0 && element != -1; })) {
+      MS_LOG(ERROR) << "Dims of src_tensor is unsupported";
+      return nullptr;
+    }
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(data_type) == kObjectTypeTensorType) {

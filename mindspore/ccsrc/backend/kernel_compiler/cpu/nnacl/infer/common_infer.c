@@ -41,7 +41,7 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector 
     tensor_list->tensors_[i].format_ = Format_NHWC;
     tensor_list->tensors_[i].data_type_ = dtype;
     ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
-             tensor_shape->shape_size_[i]);
+             (size_t)tensor_shape->shape_size_[i]);
   }
   return NNACL_OK;
 }
@@ -374,6 +374,20 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   return NNACL_OK;
 }
 
+int CommonInferShapeWithOneInput(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
+                                 size_t outputs_size, OpParameter *parameter) {
+  int ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 1);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  SetDataTypeFormat(outputs[0], inputs[0]);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+  SetShapeTensor(outputs[0], inputs[0]);
+  return NNACL_OK;
+}
+
 int CommonInferShapeWithNHWC(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
   if (parameter == NULL || inputs[0] == NULL || outputs[0] == NULL) {
@@ -460,7 +474,7 @@ REG_INFER(Elu, PrimType_Elu, CommonInferShape)
 REG_INFER(Erf, PrimType_Erf, CommonInferShape)
 REG_INFER(Exp, PrimType_ExpFusion, CommonInferShape)
 REG_INFER(FakeQuantWithMinMaxVars, PrimType_FakeQuantWithMinMaxVars, CommonInferShape)
-REG_INFER(Floor, PrimType_Floor, CommonInferShape)
+REG_INFER(Floor, PrimType_Floor, CommonInferShapeWithOneInput)
 REG_INFER(IsFinite, PrimType_IsFinite, CommonInferShape)
 REG_INFER(LeakyRelu, PrimType_LeakyRelu, CommonInferShape)
 REG_INFER(Log, PrimType_Log, CommonInferShape)

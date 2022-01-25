@@ -47,9 +47,7 @@ int PoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   }
 
   const TensorC *input = inputs[0];
-  if (input->format_ != Format_NHWC) {
-    return NNACL_FORMAT_ERROR;
-  }
+  MS_CHECK_TRUE_RET(input->format_ == Format_NHWC, NNACL_FORMAT_ERROR);
   for (size_t i = 0; i < outputs_size; i++) {
     TensorC *output = outputs[i];
     SetDataTypeFormat(output, input);

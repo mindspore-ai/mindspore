@@ -109,7 +109,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   int actual_axes[MAX_SHAPE_SIZE] = {0};
   size_t actual_axes_size = 0;
-  ShapeSet(actual_axes, &actual_axes_size, axes, num_axes);
+  ShapeSet(actual_axes, &actual_axes_size, axes, (size_t)num_axes);
 
   if (param->reduce_to_end_) {
     if (num_axes != 1) {
@@ -132,7 +132,7 @@ int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return ReduceOnAllAxes(input, output, out_shape, out_shape_size, keep_dims);
   }
   // reduce on selected axes
-  return ReduceOnSelectedAxes(input, num_axes, actual_axes, output, out_shape, out_shape_size, keep_dims);
+  return ReduceOnSelectedAxes(input, (size_t)num_axes, actual_axes, output, out_shape, out_shape_size, keep_dims);
 }
 
 REG_INFER(Reduce, PrimType_ReduceFusion, ReduceInferShape)

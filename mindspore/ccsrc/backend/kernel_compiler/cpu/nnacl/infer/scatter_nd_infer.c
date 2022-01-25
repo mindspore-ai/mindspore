@@ -37,7 +37,7 @@ int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   }
   int *shape_data = (int *)(shape->data_);
   MS_CHECK_TRUE_RET(GetElementNum(shape) <= MAX_SHAPE_SIZE, NNACL_ERR);
-  SetShapeArray(output, shape_data, GetElementNum(shape));
+  SetShapeArray(output, shape_data, (size_t)GetElementNum(shape));
   return NNACL_OK;
 }
 

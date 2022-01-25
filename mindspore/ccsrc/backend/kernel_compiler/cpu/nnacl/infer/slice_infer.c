@@ -42,7 +42,7 @@ int InitBeginAndSizeParam(const TensorC *const *inputs, SliceParameter *param) {
   if (slice_begin_size > MAX_AXIS_SIZE) {
     return NNACL_ERR;
   }
-  for (size_t i = 0; i < slice_begin_size; i++) {
+  for (int i = 0; i < slice_begin_size; i++) {
     param->begin_[i] = begin_ptr[i];
   }
 
@@ -55,7 +55,7 @@ int InitBeginAndSizeParam(const TensorC *const *inputs, SliceParameter *param) {
   if (slice_size_size > MAX_AXIS_SIZE) {
     return NNACL_ERR;
   }
-  for (size_t i = 0; i < slice_size_size; i++) {
+  for (int i = 0; i < slice_size_size; i++) {
     param->size_[i] = size_ptr[i];
   }
   return NNACL_OK;

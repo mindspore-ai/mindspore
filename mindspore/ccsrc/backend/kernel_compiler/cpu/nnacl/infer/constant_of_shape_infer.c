@@ -63,7 +63,7 @@ int ConstantOfShapeInferShape(const TensorC *const *inputs, size_t inputs_size, 
       return NNACL_INFER_INVALID;
   }
 
-  SetShapeArray(out_tensor, out_shape, out_shape_size);
+  SetShapeArray(out_tensor, out_shape, (size_t)out_shape_size);
   return NNACL_OK;
 }
 

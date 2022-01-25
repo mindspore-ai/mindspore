@@ -42,7 +42,7 @@ int TensorArrayWriteInferShape(const TensorC *const *inputs, size_t inputs_size,
     return NNACL_INFER_INVALID;
   }
 
-  for (int i = 0; i < handle->shape_size_; ++i) {
+  for (size_t i = 0; i < handle->shape_size_; ++i) {
     if (handle->shape_[i] != value->shape_[i]) {
       return NNACL_INFER_INVALID;
     }
