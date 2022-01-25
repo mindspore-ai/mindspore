@@ -1,20 +1,46 @@
 #!/bin/bash
+source ./scripts/base_functions.sh
 
+# Run converter for tensorrt x86 platform:
+function Run_Converter() {
+    # Unzip x86 runtime and converter
+    cd ${x86_path} || exit 1
+    tar -zxf ${x86_path}/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+
+    cp tools/converter/converter/converter_lite ./ || exit 1
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
+
+    rm -rf ${ms_models_path}
+    mkdir -p ${ms_models_path}
+
+    # Prepare the config file list
+    local tensorrt_cfg_file_list=("$models_tensorrt_config")
+    # Convert models:
+    # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
+    Convert "${tensorrt_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
+}
 
 function Run_TensorRT_Mpirun() {
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
   source /etc/profile
+  cd ${x86_path}/tensorrt || exit 1
+  tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+  tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+  cd ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64/ || exit 1
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+  cp tools/benchmark/benchmark ./ || exit 1
 
   echo "start mpirun models..."
   export ENABLE_NEW_API=true
-  data_path=${basepath}'/../../input_output/'
+  data_path=${models_path}'/input_output/'
   inpath=${data_path}'input'
   outpath=${data_path}'output'
 
   # dis_matmul_
   echo "start mpirun dis_matmul_ ..."
   model_name='dis_matmul_.mindir.ms'
-  model_file=${basepath}'/'${model_name}
+  model_file=${ms_models_path}'/'${model_name}
   input_files=${inpath}'/dis_matmul_.mindir.ms.bin'
   output_file=${outpath}'/dis_matmul_.mindir.ms.out'
   echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
@@ -29,7 +55,7 @@ function Run_TensorRT_Mpirun() {
   # wide_and_deep_
 #   echo "start mpirun wide_and_deep_ ..."
 #   model_name='wide_and_deep_.mindir.ms'
-#   model_file=${basepath}'/'${model_name}
+#   model_file=${ms_models_path}'/'${model_name}
 #   input_files=${inpath}'/wide_and_deep_.mindir.ms.bin_1,'${inpath}'/wide_and_deep_.mindir.ms.bin_2'
 #   config_file=${inpath}'/wide_and_deep_.mindir.ms.config'
 #   output_file=${outpath}'/wide_and_deep_.mindir.ms.out'
@@ -45,7 +71,7 @@ function Run_TensorRT_Mpirun() {
 #   echo "start mpirun wide_deep_worker_ ..."
 #   export BENCHMARK_UPDATE_CONFIG_ENV=0
 #   model_name='wide_deep_worker_.mindir.ms'
-#   model_file=${basepath}'/'${model_name}
+#   model_file=${ms_models_path}'/'${model_name}
 #   input_files=${inpath}'/wide_deep_worker_.mindir.ms.bin_1,'${inpath}'/wide_deep_worker_.mindir.ms.bin_2'
 #   output_file=${outpath}'/wide_deep_worker_.mindir.ms.out'
 #   echo 'mpirun -np 2 ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --device=GPU' >> "${run_tensorrt_mpirun_log_file}"
@@ -60,8 +86,14 @@ function Run_TensorRT_Mpirun() {
 
 # Run on NVIDIA TensorRT platform:
 function Run_TensorRT() {
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
     source /etc/profile
+    cd ${x86_path}/tensorrt || exit 1
+    tar -zxf ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/tensorrt/mindspore-lite-${version}-linux-x64/ || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    cp tools/benchmark/benchmark ./ || exit 1
+
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
             run_result config_file_path
@@ -93,10 +125,10 @@ function Run_TensorRT() {
         fi
 
         echo "Benchmarking ${model_name} ......"
-        model_file=${basepath}'/'${model_name}'.ms'
+        model_file=${ms_models_path}'/'${model_name}'.ms'
         input_files=""
         output_file=""
-        data_path=${basepath}'/../../input_output/'
+        data_path=${models_path}'/input_output/'
         if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.ms.bin'
         else
@@ -160,35 +192,74 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
-basepath=$(pwd)
-echo "on tensorrt device, bashpath is ${basepath}"
-
-# Example:sh run_benchmark_tensorrt.sh -d 0
-while getopts "d:" opt; do
+# Example:sh run_benchmark_tensorrt.sh -r /home/temp_test -m /home/temp_test/models -e x86_gpu -d 192.168.1.1:0
+while getopts "r:m:d:e:" opt; do
     case ${opt} in
+        r)
+            release_path=${OPTARG}
+            echo "release_path is ${OPTARG}"
+            ;;
+        m)
+            models_path=${OPTARG}
+            echo "models_path is ${OPTARG}"
+            ;;
         d)
-            cuda_device_id=${OPTARG}
-            echo "cuda_device_id is ${cuda_device_id}."
+            device_ip=`echo ${OPTARG} | cut -d \: -f 1`
+            cuda_device_id=`echo ${OPTARG} | cut -d \: -f 2`
+            echo "device_ip is ${device_ip}, cuda_device_id is ${cuda_device_id}."
+            ;;
+        e)
+            backend=${OPTARG}
+            echo "backend is ${backend}"
             ;;
         ?)
         echo "unknown para"
         exit 1;;
     esac
 done
+x86_fail_not_return="OFF" # This value could not be set to ON.
+basepath=$(pwd)/${cuda_device_id}
+rm -rf ${basepath}
+mkdir -p ${basepath}
+echo "NVIDIA TensorRT, bashpath is ${basepath}"
+
+x86_path=${release_path}/centos_x86
+file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
+IFS="-" read -r -a file_name_array <<< "$file_name"
+version=${file_name_array[2]}
+ms_models_path=${basepath}/ms_models
 
 # Set models config filepath
-models_tensorrt_config=${basepath}/models_tensorrt.cfg
+models_tensorrt_config=${basepath}/../../config/models_tensorrt.cfg
 echo ${models_tensorrt_config}
 
-# Write benchmark result to temp file
-run_benchmark_result_file=${basepath}/run_benchmark_result.txt
-echo ' ' > ${run_benchmark_result_file}
+# Write converter result to temp file
+run_converter_log_file=${basepath}/run_converter_log.txt
+echo ' ' > ${run_converter_log_file}
 
+run_converter_result_file=${basepath}/run_converter_result.txt
+echo ' ' > ${run_converter_result_file}
+
+# Run converter
+echo "Start run converter in tensorrt ..."
+Run_Converter
+Run_converter_status=$?
+
+# Check converter result and return value
+if [[ ${Run_converter_status} = 0 ]];then
+    echo "Run converter success"
+    Print_Converter_Result $run_converter_result_file
+else
+    echo "Run converter failed"
+    cat ${run_converter_log_file}
+    Print_Converter_Result $run_converter_result_file
+    exit 1
+fi
 
 ####################  run simple tensorrt models
 run_tensorrt_log_file=${basepath}/run_tensorrt_log.txt
-echo 'run tensorrt logs: ' > ${run_tensorrt_log_file}
-
+echo 'run tensorrt benchmark logs: ' > ${run_tensorrt_log_file}
+run_benchmark_result_file=${basepath}/run_tensorrt_result_filess.txt
 echo "Running in tensorrt on device ${cuda_device_id} ..."
 Run_TensorRT &
 Run_TensorRT_PID=$!
