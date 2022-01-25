@@ -109,6 +109,11 @@ AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 
+AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_spec_list) {
+  return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>());
+}
+
 AbstractBasePtr InferImplMakeRefKey(const AnalysisEnginePtr &, const PrimitivePtr &prim, const AbstractBasePtrList &) {
   ValuePtr name_value = prim->GetAttr("tag");
   MS_EXCEPTION_IF_NULL(name_value);
