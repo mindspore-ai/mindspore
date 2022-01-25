@@ -9,7 +9,7 @@ mindspore.ops.Gather
 
     .. image:: Gather.png
 
-    其中，params代表输入`input_params`，indices代表要切片的索引`input_indices`。
+    其中，params代表输入 `input_params` ，indices代表要切片的索引 `input_indices` 。
 
     .. note::
         input_indices的值必须在 `[0, input_param.shape[axis])` 范围内，超出该范围结果未定义。

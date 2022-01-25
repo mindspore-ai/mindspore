@@ -43,5 +43,5 @@ mindspore.nn.Fbeta
 
         **异常：**
 
-          - **ValueError** - 当前输入的 `y_pred` 和历史 `y_pred` 类别数不匹配。
-          - **ValueError** - 预测值和真实值包含的类别不同。
+        - **ValueError** - 当前输入的 `y_pred` 和历史 `y_pred` 类别数不匹配。
+        - **ValueError** - 预测值和真实值包含的类别不同。
