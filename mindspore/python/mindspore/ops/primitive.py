@@ -203,16 +203,16 @@ class Primitive(Primitive_):
         if not _is_in_auto_parallel_mode():
             if in_strategy is not None:
                 logger.warning(f"The in_strategy of the operator in your network will not take effect in {mode} mode. "
-                               f"This means the the shard function called in the network is ignored. "
+                               f"This means the the shard function called in the network is ignored. \n"
                                f"If you want to enable it, please use semi auto or auto parallel mode by "
                                f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL")
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
             if out_strategy is not None:
                 logger.warning(f"The out_strategy of the operator in your network will not take effect in {mode} mode."
-                               f" This means the the shard function called in the network is ignored. "
+                               f" This means the the shard function called in the network is ignored. \n"
                                f"If you want to enable it, please use semi auto or auto parallel mode by "
                                f"context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL "
-                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL")
+                               f"or context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)")
 
         self.add_prim_attr("in_strategy", in_strategy)
         self.add_prim_attr("out_strategy", out_strategy)

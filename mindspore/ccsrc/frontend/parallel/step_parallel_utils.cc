@@ -382,6 +382,10 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
   }
   auto users = node_users_map.at(node_ptr);
   for (auto &node_user : users) {
+    cnode = node_user.first->cast<CNodePtr>();
+    if (!cnode || !cnode->in_forward_flag()) {
+      continue;
+    }
     if (node_user.first) {
       visited.push(node_user.first);
     }
@@ -390,10 +394,10 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
     queue_node = visited.front();
     visited.pop();
     cnode = queue_node->cast<CNodePtr>();
-    if (!cnode || !cnode->in_forward_flag()) {
+    // MAKE_TUPLE will not appear after the load in the forward graph
+    if (IsInNodeList(cnode, {MAKE_TUPLE})) {
       continue;
-    }
-    if (IsInAllGatherNodeList(cnode) || IsInNodeList(cnode, {LOAD, RESHAPE, DEPEND, UPDATESTATE, MAKE_TUPLE})) {
+    } else if (IsInAllGatherNodeList(cnode) || IsInNodeList(cnode, {LOAD, RESHAPE})) {
       auto node_set = node_users_map.at(queue_node);
       for (auto &node_user : node_set) {
         visited.push(node_user.first);
