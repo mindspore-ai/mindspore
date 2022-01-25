@@ -44,9 +44,9 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        name (str, optional): Part of this dataset, can be ""aew", "ahw", "aup", "awb", "axb", "bdl",
-            "clb", "eey", "fem", "gka", "jmk", "ksp", "ljm", "lnh", "rms", "rxr", "slp" or "slt"
-            (default=None, equal "aew").
+        name (str, optional): Part of this dataset, can be 'aew', 'ahw', 'aup', 'awb', 'axb', 'bdl',
+            'clb', 'eey', 'fem', 'gka', 'jmk', 'ksp', 'ljm', 'lnh', 'rms', 'rxr', 'slp' or 'slt'
+            (default=None, equal 'aew').
         num_samples (int, optional): The number of audio to be included in the dataset
             (default=None, will read all audio).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -180,7 +180,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "valid", "test" or "all"
+        usage (str, optional): Usage of this dataset, can be 'train', 'valid', 'test' or 'all'
             (default=None, all samples).
         num_samples (int, optional): The number of audio to be included in the dataset
             (default=None, will read all audio).
@@ -315,8 +315,8 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Part of this dataset, can be ""dev-clean", "dev-other", "test-clean", "test-other",
-            "train-clean-100", "train-clean-360", "train-other-500", or "all" (default=None, equal "all").
+        usage (str, optional): Part of this dataset, can be 'dev-clean', 'dev-other', 'test-clean', 'test-other',
+            'train-clean-100', 'train-clean-360', 'train-other-500', or 'all' (default=None, equal 'all').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all audio).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -598,9 +598,9 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train`
-            will read from 84,843 samples, `test` will read from 11,005 samples, `valid` will read from 9,981
-            test samples and `all` will read from all 105,829 samples (default=None, will read all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test', 'valid' or 'all'. 'train'
+            will read from 84,843 samples, 'test' will read from 11,005 samples, 'valid' will read from 9,981
+            test samples and 'all' will read from all 105,829 samples (default=None, will read all samples).
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, will read all samples).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -727,14 +727,14 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        release (str): Release of the dataset, can be "release1", "release2", "release3".
+        release (str): Release of the dataset, can be 'release1', 'release2', 'release3'.
         usage (str, optional): Usage of this dataset.
-            For release1 or release2, can be `train`, `test`, `dev` or `all`.
-            `train` will read from train samples,
-            `test` will read from test samples,
-            `dev` will read from dev samples,
-            `all` will read from all samples.
-            For release3, can only be "all", it will read from data samples (default=None, all samples).
+            For release1 or release2, can be 'train', 'test', 'dev' or 'all'.
+            'train' will read from train samples,
+            'test' will read from test samples,
+            'dev' will read from dev samples,
+            'all' will read from all samples.
+            For release3, can only be 'all', it will read from data samples (default=None, all samples).
         extensions (str): Extensions of the SPH files, only '.sph' is valid.
             (default=None, ".sph").
         num_samples (int, optional): The number of audio samples to be included in the dataset

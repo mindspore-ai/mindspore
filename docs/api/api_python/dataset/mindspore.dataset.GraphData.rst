@@ -20,6 +20,18 @@ mindspore.dataset.GraphData
     - **num_client** (int, 可选) - 期望连接到服务器的最大客户端数。服务器将根据该参数分配资源。该参数仅在工作模式设置为 'server' 时有效，默认值：1。
     - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出，默认值：True。
 
+    **异常：**
+      
+    - **ValueError:** - `dataset_file` 路径下数据文件不存在或无效。
+    - **ValueError:** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **ValueError** - `working_mode` 参数取值不为'local', 'client' 或 'server'。
+    - **TypeError:** - `hostname` 参数类型错误。
+    - **ValueError:** - `port` 参数不在范围[1024, 65535]内。
+    - **ValueError:** - `num_client` 参数不在范围[1, 255]内。
+
+    **支持平台：**:
+    
+    - ``CPU``
 
     .. py:method:: get_all_edges(edge_type)
 

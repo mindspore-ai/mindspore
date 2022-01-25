@@ -25,17 +25,17 @@
     - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数，默认值：None。指定此参数后, `num_samples` 表示每个分片的最大样本数。
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
     - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算，默认值：True。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
-    - **max_rowsize** (int，可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，默认值：6，数量级为MB。仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
+    - **max_rowsize** (int，可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，默认值：6，单位为MB。仅当参数 `python_multiprocessing` 设为True时，此参数才会生效。
 
     **异常：**
 
     - **RuntimeError** - Python对象 `source` 在执行期间引发异常。
     - **RuntimeError** - `column_names` 参数指定的列名数量与 `source` 参数输出的数据数量不匹配。
-    - **RuntimeError** - `num_parallel_workers` 参数超过最大线程数。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
-    - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
-    - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError** - `num_parallel_workers` 参数超过最大线程数。
+    - **ValueError** - 同时指定了 `sampler` 和 `shuffle` 参数。
+    - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **ValueError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
+    - **ValueError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
 
     .. note::

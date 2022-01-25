@@ -104,7 +104,7 @@ class GraphData:
 
     Raises:
         ValueError: If `dataset_file` does not exist or permission denied.
-        TypeError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `working_mode` is not 'local', 'client' or 'server'.
         TypeError: If `hostname` is illegal.
         ValueError: If `port` is not in range [1024, 65535].
