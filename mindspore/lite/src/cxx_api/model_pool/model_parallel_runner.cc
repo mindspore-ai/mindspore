@@ -18,9 +18,9 @@
 #include "src/common/log.h"
 
 namespace mindspore {
-Status ModelParallelRunner::Init(const std::string &model_path, const std::string &config_path, const Key &dec_key,
-                                 const std::string &dec_mode) {
-  auto status = ModelPool::GetInstance()->Init(model_path, config_path, dec_key, dec_mode);
+Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
+                                 const Key &dec_key, const std::string &dec_mode) {
+  auto status = ModelPool::GetInstance()->Init(model_path, runner_config, dec_key, dec_mode);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;

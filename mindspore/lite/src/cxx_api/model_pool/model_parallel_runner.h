@@ -24,6 +24,7 @@
 
 namespace mindspore {
 class ModelPool;
+struct RunnerConfig;
 
 /// \brief The ModelRunner class is used to define a MindSpore ModelPoolManager, facilitating Model management.
 class MS_API ModelParallelRunner {
@@ -41,8 +42,8 @@ class MS_API ModelParallelRunner {
   /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
   /// \return Status.
-  Status Init(const std::string &model_path, const std::string &config_path, const Key &dec_key = {},
-              const std::string &dec_mode = kDecModeAesGcm);
+  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr,
+              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
 
   /// \brief Obtains all input tensors of the model.
   ///
