@@ -66,4 +66,4 @@ mindspore.nn.ProximalAdagrad
     - **ValueError** - `accum`、`l1`、`l2` 或 `weight_decay` 小于0。
 
 
-.. include:: mindspore.nn.optim_target_unique_for_sparse.rst
+    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst

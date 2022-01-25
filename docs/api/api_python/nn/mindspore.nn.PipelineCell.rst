@@ -1,3 +1,6 @@
+mindspore.nn.PipelineCell
+=========================
+
 .. py:class:: mindspore.nn.PipelineCell(network, micro_size)
 
     将MiniBatch切分成更细粒度的MicroBatch，用于流水线并行的训练中。
