@@ -6,13 +6,13 @@ mindspore.nn.Conv3d
     三维卷积层。
 
     对输入Tensor计算三维卷积，该Tensor的shape通常为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size， :math:`C` 是空间维度。:math:`D_{in}, H_{in}, W_{in}` 分别为特征层的深度、高度和宽度。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` ，公式定义如下：
-    
+
     .. math::
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
     其中，:math:`ccor` 为 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ ， :math:`C_{in}` 为输入空间维度， :math:`out_{j}` 对应输出的第 :math:`j` 个空间维度，:math:`j` 的范围在 :math:`[0，C_{out}-1]` 内，
-    :math:`\text{weight}(C_{\text{out}_j}, k)` 是shape为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` 的卷积核切片，其中 :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}和 :math:`\text{kernel_size[2]}` 是卷积核的深度、高度和宽度。 :math:`\text{bias}` 为偏置参数， :math:`\text{X}` 为输入Tensor。
+    :math:`\text{weight}(C_{\text{out}_j}, k)` 是shape为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` 的卷积核切片，其中 :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}` 和 :math:`\text{kernel_size[2]}` 是卷积核的深度、高度和宽度。 :math:`\text{bias}` 为偏置参数， :math:`\text{X}` 为输入Tensor。
     完整卷积核的shape为 :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})` ，其中 `group` 是在空间维度上分割输入 `x` 的组数。
     详细介绍请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 。
 

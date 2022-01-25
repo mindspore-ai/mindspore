@@ -22,9 +22,9 @@
     - **raise_exception** (bool, 可选) - 设置在记录数据中发生RuntimeError或OSError异常时是否抛出异常。默认值：False，表示打印错误日志，不抛出异常。
     - **export_options** (Union[None, dict]) - 可以将保存在summary中的数据导出，并使用字典自定义所需的数据和文件格式。注：导出的文件大小不受 `max_file_size` 的限制。例如，您可以设置{'tensor_format':'npy'}将Tensor导出为 `npy` 文件。支持导出的数据类型如下所示。默认值：None，表示不导出数据。
 
-        - **tensor_format** (Union[str, None]) - 自定义导出的Tensor的格式。支持["npy", None]。默认值：None，表示不导出Tensor。
+      - **tensor_format** (Union[str, None]) - 自定义导出的Tensor的格式。支持["npy", None]。默认值：None，表示不导出Tensor。
 
-          - **npy**：将Tensor导出为NPY文件。
+        - **npy**：将Tensor导出为NPY文件。
 
     **异常：**
 

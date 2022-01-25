@@ -10,9 +10,9 @@ mindspore.dataset.audio.transforms.AmplitudeToDB
     **参数：**
 
     - **stype** ( :class:`mindspore.dataset.audio.utils.ScaleType` , 可选) - 输入音频的原始标度，取值可为ScaleType.MAGNITUDE或ScaleType.POWER，默认值：ScaleType.POWER。
-    - **ref_value** (float, 可选) - 系数参考值，默认值：1.0，用于计算分贝系数 `db_multiplier` ，公式为 
-    
-       :math:`db\_multiplier = Log10(max(ref\_value, amin))`。
-       
+    - **ref_value** (float, 可选) - 系数参考值，默认值：1.0，用于计算分贝系数 `db_multiplier` ，公式为
+
+      :math:`db\_multiplier = Log10(max(ref\_value, amin))`。
+
     - **amin** (float, 可选) - 波形取值下界，低于该值的波形将会被裁切，取值必须大于0，默认值：1e-10。
     - **top_db** (float, 可选) - 最小负截止分贝值，默认值：80.0。
