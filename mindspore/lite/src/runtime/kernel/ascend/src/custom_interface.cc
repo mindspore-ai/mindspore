@@ -50,9 +50,8 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   }
   uint32_t id = 0;
   char delims[] = ",";
-  char *res = nullptr;
   char *save_ptr = nullptr;
-  res = strtok_r(buf, delims, &save_ptr);
+  char *res = strtok_r(buf, delims, &save_ptr);
   while (res != nullptr && id < outputs->size()) {
     int64_t dims_num = strtol(res, &res, kBase);
     std::vector<int64_t> shape(dims_num);

@@ -161,8 +161,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
 }
 
 int OpenCLKernel::PreProcess() {
-  int ret = RET_OK;
-  ret = ReSize();
+  int ret = ReSize();
   if (ret != RET_OK) {
     return ret;
   }

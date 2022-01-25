@@ -22,7 +22,6 @@
 int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filter_quant_zps, int kernel_h,
              int kernel_w, int input_channel, int output_channel, int32_t input_zp, bool filter_peroc,
              bool support_optimize, int8_t **packed_weight, int32_t **bias_data) {
-  int8_t *packed_weight_ = NULL;
   int32_t *bias_data_ = NULL;
   int kernel_plane = kernel_h * kernel_w;
   int up_round_deep;
@@ -43,7 +42,7 @@ int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filt
   size_t bias_size = up_round_oc * sizeof(int32_t);
 
   // init weight
-  packed_weight_ = (int8_t *)(malloc(pack_weight_size));
+  int8_t *packed_weight_ = (int8_t *)(malloc(pack_weight_size));
   if (packed_weight_ == NULL) {
     return NNACL_ERR;
   }

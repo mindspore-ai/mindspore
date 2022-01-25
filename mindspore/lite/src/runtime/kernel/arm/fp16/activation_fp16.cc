@@ -136,8 +136,7 @@ kernel::InnerKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tens
     return nullptr;
   }
 
-  kernel::InnerKernel *kernel = nullptr;
-  kernel = new (std::nothrow)
+  kernel::InnerKernel *kernel = new (std::nothrow)
     kernel::ActivationFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(DEBUG) << "Create activation fp16 kernel failed.";

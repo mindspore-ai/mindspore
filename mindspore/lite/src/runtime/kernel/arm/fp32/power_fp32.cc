@@ -66,12 +66,10 @@ int PowerCPUKernel::RunImpl(int task_id) const {
   if (len <= 0) {
     return RET_OK;
   }
-  float *exp_addr = nullptr;
-  bool broadcast = true;
   MS_ASSERT(in_tensors_.size() == 2);
-  exp_addr = reinterpret_cast<float *>(in_tensors_[1]->data());
+  float *exp_addr = reinterpret_cast<float *>(in_tensors_[1]->data());
   CHECK_NULL_RETURN(exp_addr);
-  broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
+  bool broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
 
   float *cur_exp = nullptr;
   if (broadcast) {

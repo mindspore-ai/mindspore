@@ -58,9 +58,7 @@ int main(int argc, char **argv) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  uint64_t i = 0;
   while (row.size() != 0) {
-    i++;
     iter->GetNextRow(&row);
   }
 

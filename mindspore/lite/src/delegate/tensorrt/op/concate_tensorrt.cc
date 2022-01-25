@@ -90,8 +90,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
     }
   }
-  int axis = RET_INVALID_OP_ATTR;
-  axis = concate_op->axis();
+  int axis = concate_op->axis();
   if (axis == -1) {
     axis = input_nbDims - 1;
   }

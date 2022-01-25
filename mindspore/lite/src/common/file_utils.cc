@@ -96,7 +96,7 @@ std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode ope
 
 // read file in [offset, offset + len)
 char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
-  if (len == 0) {
+  if (len <= 0) {
     return nullptr;
   }
   if (offset < 0) {
@@ -122,12 +122,7 @@ char *ReadFileSegment(const std::string &file, int64_t offset, int64_t len) {
 
   ifs.seekg(0, std::ios::end);
   size_t total_size = ifs.tellg();
-  size_t len_pos;
-  if (len < 0) {
-    len_pos = total_size - offset_pos;
-  } else {
-    len_pos = static_cast<size_t>(len);
-  }
+  size_t len_pos = static_cast<size_t>(len);
   if (offset_pos + len_pos > total_size) {
     MS_LOG(ERROR) << "file segment out of range";
     ifs.close();

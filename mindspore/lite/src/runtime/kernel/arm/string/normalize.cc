@@ -116,8 +116,7 @@ int NormalizeCPUKernel::Run() {
     std::string result = Normalize(str);
     size_t str_length = result.size();
 
-    char *normalized_str = nullptr;
-    normalized_str = reinterpret_cast<char *>(ms_context_->allocator->Malloc(sizeof(char) * str_length));
+    char *normalized_str = reinterpret_cast<char *>(ms_context_->allocator->Malloc(sizeof(char) * str_length));
     if (normalized_str == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed!";
       FreeBuffer();
