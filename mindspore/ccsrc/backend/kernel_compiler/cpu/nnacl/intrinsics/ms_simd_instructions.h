@@ -192,13 +192,28 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   static const MS_FLOAT32X4 data5 = {62370.0f, 62370.0f, 62370.0f, 62370.0f};
   static const MS_FLOAT32X4 neg = {-1.0f, -1.0f, -1.0f, -1.0f};
   static const MS_FLOAT32X4 pos = {1.0f, 1.0f, 1.0f, 1.0f};
+  static const MS_FLOAT32X4 up_limit = {5.0f, 5.0f, 5.0f, 5.0f};
+  static const MS_FLOAT32X4 down_limit = {-5.0f, -5.0f, -5.0f, -5.0f};
+
+#ifdef ENABLE_ARM
+  MS_UINT32X4 up_mask = MS_CMPGTQ_F32(src, up_limit);
+  MS_UINT32X4 down_mask = MS_CMPGTQ_F32(down_limit, src);
+#else
+  MS_FLOAT32X4 up_mask = MS_CMPGTQ_F32(src, up_limit);
+  MS_FLOAT32X4 down_mask = MS_CMPGTQ_F32(down_limit, src);
+#endif
+
   MS_FLOAT32X4 square = MS_MULQ_F32(src, src);
   MS_FLOAT32X4 a = MS_MULQ_F32(
     MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(square, data0), square), data1), square), data2), src);
   MS_FLOAT32X4 b = MS_ADDQ_F32(
     MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(MS_MULQ_F32(data3, square), data4), square), data5), square),
     data2);
-  return MS_MINQ_F32(MS_MAXQ_F32(MS_DIVQ_F32(a, b), neg), pos);
+
+  MS_FLOAT32X4 tanh_value = MS_DIVQ_F32(a, b);
+  MS_FLOAT32X4 res = MS_BLENDQ_F32(tanh_value, pos, up_mask);
+  res = MS_BLENDQ_F32(res, neg, down_mask);
+  return res;
 }
 
 static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
