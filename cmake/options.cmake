@@ -114,6 +114,10 @@ if(ENABLE_LOAD_ANF_IR)
     add_compile_definitions(ENABLE_LOAD_ANF_IR)
 endif()
 
+if(ENABLE_TESTCASES)
+    add_compile_definitions(ENABLE_TEST)
+endif()
+
 if(ENABLE_TESTCASES OR (NOT ENABLE_D))
     add_compile_definitions(NO_DLIB=1)
 endif()

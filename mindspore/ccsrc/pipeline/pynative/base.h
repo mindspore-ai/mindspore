@@ -35,18 +35,6 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 
-enum PynativeStatusCode {
-  PYNATIVE_SUCCESS = 0,
-  PYNATIVE_OP_NOT_IMPLEMENTED_ERR = 1,
-  PYNATIVE_OP_INPUTS_ERR = 2,
-  PYNATIVE_OP_PARAMS_ERR = 3,
-  PYNATIVE_OP_ATTRS_ERR = 4,
-  PYNATIVE_GRAPH_MANAGER_ERR = 5,
-  PYNATIVE_GRAPH_GE_BUILD_ERR = 6,
-  PYNATIVE_GRAPH_GE_RUN_ERR = 7,
-  PYNATIVE_UNKNOWN_STATE = 0XFF
-};
-
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
