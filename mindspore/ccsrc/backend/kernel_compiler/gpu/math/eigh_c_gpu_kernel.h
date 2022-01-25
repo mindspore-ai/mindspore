@@ -74,9 +74,14 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    if (A_shape.size() != kShape2dDims || A_shape[1] != A_shape[1]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix, but got ["
-                        << A_shape[0] << " X " << A_shape[1] << "]";
+    if (A_shape.size() != kShape2dDims) {
+      MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a should be 2D, but got ["
+                        << A_shape.size() << "] dimensions.";
+    }
+    if (A_shape[kDim0] != A_shape[kDim1]) {
+      MS_LOG(EXCEPTION) << "Wrong array shape, For '" << kernel_name_
+                        << "', a should be a squre matrix like [N X N], but got shape [" << A_shape[kDim0] << " X "
+                        << A_shape[kDim1] << "].";
     }
     m_ = A_shape[0];
     InitSizeLists();

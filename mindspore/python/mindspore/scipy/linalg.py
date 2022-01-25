@@ -98,7 +98,7 @@ def block_diag(*arrs):
 
 
 def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
-                     overwrite_b=False, debug=None, check_finite=True):
+                     overwrite_b=False, debug=None, check_finite=False):
     """
     Assuming a is a triangular matrix, solve the equation
 
@@ -106,16 +106,15 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         A x = b
 
     Note:
-        `solve_triangular` is not supported on Windows platform yet.
+        - `solve_triangular` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`. Note that if the input tensor is neither
-            `float32` nor `float64`, then it will be cast to :class:`mstype.float32`.
-        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`.
-            Right-hand side matrix in :math:`A x = b`. Note that if the input tensor is neither `float32` nor `float64`,
-            then it will be cast to :class:`mstype.float32`.
+        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
+        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
-        trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 'N'.
+        trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
 
             ========  =========
             trans     system
@@ -127,6 +126,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
             will not be referenced. Default: False.
         overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
+        debug (None): Not implemented now. Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.
@@ -142,13 +142,13 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         TypeError: If dtype of `A` and `b` are not the same.
         RuntimeError: If shape of `A` and `b` are not matched or more than 2D.
         TypeError: If `trans` is not int or str.
-        RuntimeError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
+        ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
         TypeError: If `lower` is not bool.
         TypeError: If `unit_diagonal` is not bool.
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `check_finite` is not bool.
+        ValueError: If `debug` is not None.
         ValueError: If `A` is singular matrix.
-        ValueError: If the shape of `A` and `b` not match.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -173,12 +173,14 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         >>> print(mnp.dot(A, x))  # Check the result
         [4. 2. 4. 2.]
     """
+    _type_check('trans', trans, (int, str), 'solve_triangular')
     _type_check('overwrite_b', overwrite_b, bool, 'solve_triangular')
     _type_check('check_finite', check_finite, bool, 'solve_triangular')
-    if F.dtype(A) in (mstype.int32, mstype.int64):
-        A = F.cast(A, mstype.float32)
-    if F.dtype(b) in (mstype.int32, mstype.int64):
-        b = F.cast(b, mstype.float32)
+    if debug is not None:
+        _raise_value_error("Currently only case debug=None of solve_triangular Implemented.")
+    if F.dtype(A) == F.dtype(b) and F.dtype(A) in (mstype.int32, mstype.int64):
+        A = F.cast(A, mstype.float64)
+        b = F.cast(b, mstype.float64)
     if trans not in (0, 1, 2, 'N', 'T', 'C'):
         _raise_value_error("The value of trans should be one of (0, 1, 2, 'N', 'T', 'C'), but got " + str(trans))
     if isinstance(trans, int):
@@ -427,7 +429,9 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     In the standard problem, `b` is assumed to be the identity matrix.
 
     Note:
-        `eigh` is not supported on Windows platform yet.
+        - `eigh` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
         a (Tensor): A :math:`(M, M)` complex Hermitian or real symmetric matrix whose eigenvalues and
@@ -469,7 +473,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
             be reported but results will be wrong.
         TypeError: If `A` is not Tensor.
-        Runtime: If `A` is not square matrix.
+        RuntimeError: If `A` is not square matrix.
         ValueError: If `b` is not None.
         TypeError: If `lower` is not bool.
         TypeError: If `eigvals_only` is not bool.

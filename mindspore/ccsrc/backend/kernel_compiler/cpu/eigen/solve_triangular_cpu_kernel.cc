@@ -42,20 +42,20 @@ void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
   if (A_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions";
+    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions.";
   }
   if (A_shape[kDim0] != A_shape[kDim1]) {
     MS_LOG(EXCEPTION) << "Wrong array shape, A should be a squre matrix, but got [" << A_shape[kDim0] << " X "
-                      << A_shape[kDim1] << "]";
+                      << A_shape[kDim1] << "].";
   }
   m_ = A_shape[kDim0];
 
   if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, b should be 1D or 2D, but got [" << b_shape.size() << "] dimensions";
+    MS_LOG(EXCEPTION) << "Wrong array shape, b should be 1D or 2D, but got [" << b_shape.size() << "] dimensions.";
   }
   if (SizeToInt(b_shape[kDim0]) != m_) {
     MS_LOG(EXCEPTION) << "Wrong array shape, b should match the shape of A, excepted [" << m_ << "] but got ["
-                      << b_shape[kDim0] << "]";
+                      << b_shape[kDim0] << "].";
   }
   if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
     n_ = 1;
@@ -72,7 +72,7 @@ void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   } else if (trans == "C") {
     trans_ = true;
   } else {
-    MS_LOG(EXCEPTION) << "Trans should be in [N, T], but got [" << trans << "]";
+    MS_LOG(EXCEPTION) << "Trans should be in [N, T, C], but got [" << trans << "].";
   }
 }
 
