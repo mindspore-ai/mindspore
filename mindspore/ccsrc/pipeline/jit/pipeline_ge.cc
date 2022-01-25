@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include "utils/config_manager.h"
 #include "utils/hash_map.h"
 #include "debug/anf_ir_dump.h"
 #include "ir/tensor.h"
@@ -130,7 +129,11 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
     return false;
   }
 
-  auto training = ConfigManager::GetInstance().training();
+  auto env_training = common::GetEnv("MS_GE_TRAIN");
+  bool training = false;
+  if (env_training == "1") {
+    training = true;
+  }
   if (training) {
     (void)setenv("GE_TRAIN", "1", 1);
   } else {
@@ -246,7 +249,6 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
-  ConfigManager::GetInstance().set_training(anf_graph->has_flag("training"));
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
     draw::Draw("anf_graph.dot", anf_graph);  // for debug
@@ -259,7 +261,11 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     return nullptr;
   }
 
-  auto training = ConfigManager::GetInstance().training();
+  auto env_training = common::GetEnv("MS_GE_TRAIN");
+  bool training = false;
+  if (env_training == "1") {
+    training = true;
+  }
   if (training) {
     (void)setenv("GE_TRAIN", "1", 1);
   } else {
