@@ -52,7 +52,7 @@ class TensorArrayBaseCPUKernel : public InnerKernel {
 
   int Prepare() override;
   int ReSize() override { return 0; }
-  inline int Run() override;
+  int Run() override;
 
  protected:
   lite::Tensor *handle_{nullptr};

@@ -56,7 +56,6 @@ class AffineFp32CPUKernel : public InnerKernel {
   int FullSpliceRun();
   int DoActivation(lite::Tensor *tensor);
 
- private:
   AffineParameter *affine_parameter_{nullptr};
   kernel::InnerKernel *full_mult_kernel_{nullptr};
   kernel::InnerKernel *increment_mult_kernel_{nullptr};

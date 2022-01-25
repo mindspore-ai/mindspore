@@ -348,7 +348,7 @@ int AnfExporter::ExportPartialNode(const std::unique_ptr<schema::MetaGraphT> &me
   auto fg = vnode->value()->cast<FuncGraphPtr>();
   MS_CHECK_TRUE_MSG(fg != nullptr, RET_NULL_PTR, "func graph is nullptr.");
   if (fg_subgraph_map_.find(fg) != fg_subgraph_map_.end()) {
-    partial_fusion_primc->sub_graph_index = fg_subgraph_map_.at(fg);
+    partial_fusion_primc->sub_graph_index = static_cast<int>(fg_subgraph_map_.at(fg));
     return RET_OK;
   }
 
@@ -370,7 +370,7 @@ std::list<CNodePtr> AnfExporter::InsertCallNode(const FuncGraphPtr &func_graph) 
       if (fg != nullptr) {
         auto partial_cnode = CreatePartialCnode(fg, (*it));
         auto call_cnode = CreateCallCnode(fg, partial_cnode);
-        it++;
+        ++it;
         it = cnodes.insert(it, call_cnode);
         continue;
       } else {
@@ -380,7 +380,7 @@ std::list<CNodePtr> AnfExporter::InsertCallNode(const FuncGraphPtr &func_graph) 
         (*it)->set_inputs(cnode_input);
       }
     }
-    it++;
+    ++it;
   }
   return cnodes;
 }
@@ -766,8 +766,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     return RET_OK;
   }
   DataInfo data_info;
-  if (FetchDataFromParameterNode(cnode, index, converter::FmkType(meta_graphT->fmkType), train_flag_, &data_info,
-                                 true) != RET_OK) {
+  if (FetchDataFromParameterNode(cnode, index, converter::FmkType(meta_graphT->fmkType), &data_info, true) != RET_OK) {
     MS_LOG(ERROR) << "parse const node failed.";
     return RET_ERROR;
   }

@@ -42,14 +42,13 @@ struct DataInfo {
 int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkType &fmk_type, DataInfo *data_info,
                           bool copy_data);
 
-int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                               DataInfo *data_info, bool copy_data);
+int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info,
+                               bool copy_data);
 
 int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                            DataInfo *data_info, bool copy_data);
 
-int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
-                       DataInfo *data_info);
+int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info);
 
 int RemoveIfDepend(const CNodePtr &cnode);
 

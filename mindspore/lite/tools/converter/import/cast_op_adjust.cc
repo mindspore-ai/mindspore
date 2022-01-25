@@ -39,7 +39,7 @@ bool GetInOutDataTypeValue(const CNodePtr &cast_cnode, int *output_type_value, i
   DataInfo data_info;
   auto output_type_node = cast_cnode->input(opt::kInputIndexTwo);
   if (utils::isa<ParameterPtr>(output_type_node)) {
-    if (FetchDataFromParameterNode(cast_cnode, opt::kInputIndexTwo, converter::kFmkTypeMs, false, &data_info, true) !=
+    if (FetchDataFromParameterNode(cast_cnode, opt::kInputIndexTwo, converter::kFmkTypeMs, &data_info, true) !=
         lite::RET_OK) {
       MS_LOG(ERROR) << "Fetch data from parameter node failed.";
       return false;

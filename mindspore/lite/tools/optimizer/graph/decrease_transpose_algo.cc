@@ -160,7 +160,7 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
     if (!input_node->has_default()) {
       return lite::RET_OK;
     }
-    status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info, true);
+    status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, &data_info, true);
   } else {
     status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info, true);
   }
