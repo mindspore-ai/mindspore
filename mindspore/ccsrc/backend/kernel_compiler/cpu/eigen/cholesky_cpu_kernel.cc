@@ -18,7 +18,6 @@
 #include <vector>
 #include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
-#include "Eigen/Dense"
 #include "Eigen/Cholesky"
 namespace mindspore {
 namespace kernel {
@@ -68,7 +67,7 @@ void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   T *input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
   Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
@@ -76,7 +75,7 @@ bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, cons
   T *output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
   Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
   Eigen::LLT<Matrix<T, RowMajor>> llt;
-  llt.compute(input);
+  (void)llt.compute(input);
   if (clean_) {
     if (lower_) {
       output = llt.matrixL();

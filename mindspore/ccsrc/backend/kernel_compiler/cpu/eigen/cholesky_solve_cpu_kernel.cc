@@ -16,7 +16,6 @@
 
 #include "backend/kernel_compiler/cpu/eigen/cholesky_solve_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
-#include "Eigen/Dense"
 #include "Eigen/Cholesky"
 namespace mindspore {
 namespace kernel {
@@ -67,8 +66,7 @@ void CholeskySolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool CholeskySolverCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
+bool CholeskySolverCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs) {
   T *input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
   Map<Matrix<T, RowMajor>> input(input_value, input_a_row_, input_a_col_);
