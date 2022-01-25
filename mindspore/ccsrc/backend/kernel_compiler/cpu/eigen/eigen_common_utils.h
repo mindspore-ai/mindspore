@@ -31,6 +31,10 @@ using Eigen::UnitUpper;
 using Eigen::Upper;
 template <typename T, int Major>
 using Matrix = Eigen::Matrix<T, Dynamic, Dynamic, Major>;
+template <typename T>
+using MatrixSquare = Eigen::Matrix<T, Dynamic, Dynamic, RowMajor>;
+template <typename T>
+using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGEN_COMMON_UTILS_H_

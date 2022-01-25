@@ -13,32 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/eigen/eigh_cpu_kernel.h"
-#include <Eigen/Eigenvalues>
 #include <type_traits>
+#include "backend/kernel_compiler/cpu/eigen/eigen_common_utils.h"
+#include "Eigen/Eigenvalues"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
-
 namespace {
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 2;
-
 }  // namespace
-using Eigen::Dynamic;
-using Eigen::EigenSolver;
-using Eigen::Lower;
-using Eigen::Map;
-using Eigen::MatrixBase;
-using Eigen::RowMajor;
-using Eigen::Upper;
-
-template <typename T>
-using MatrixSquare = Eigen::Matrix<T, Dynamic, Dynamic, RowMajor>;
-
-template <typename T>
-using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
 
 template <typename T>
 void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
@@ -57,35 +44,27 @@ void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void EighCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  (void)workspace_size_list_.template emplace_back(m_ * m_ * sizeof(T));
-}
-
-template <typename T>
-bool SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
+void SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
                             bool compute_eigen_vectors) {
   Eigen::SelfAdjointEigenSolver<MatrixSquare<T>> solver(A);
   output->noalias() = solver.eigenvalues();
   if (compute_eigen_vectors) {
     outputv->noalias() = solver.eigenvectors();
   }
-  return true;
 }
 
 template <typename T>
-bool SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
+void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
                         bool compute_eigen_vectors) {
   Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(A);
   output->noalias() = solver.eigenvalues();
   if (compute_eigen_vectors) {
     outputv->noalias() = solver.eigenvectors();
   }
-  return true;
 }
 
 template <typename T>
-bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
