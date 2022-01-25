@@ -740,7 +740,7 @@ class Conv3dTranspose(_Conv):
     :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the depth, height and width
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
-    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/matzeiler/deconvolutionalnetworks.pdf>`_.
+    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3dTranspose layer.
@@ -777,6 +777,13 @@ class Conv3dTranspose(_Conv):
             [1, D], [1, H] and [1, W] respectively. Default: 1.
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `group`. Default: 1. Only 1 is currently supported.
+        output_padding (Union(int, tuple[int])): The number of padding on the depth, height and width directions of
+            the output. The data type is an integer or a tuple of six integers. If `output_padding` is an integer,
+            then the head, tail, top, bottom, left, and right padding are all equal to `output_padding`.
+            If `output_padding` is a tuple of six integers, then the head, tail, top, bottom, left, and right padding
+            is equal to `output_padding[0]`, `output_padding[1]`, `output_padding[2]`, `output_padding[3]`,
+            `output_padding[4]` and `output_padding[5]` respectively. The value should be greater than or equal to 0.
+            Default: 0.
         has_bias (bool): Whether the Conv3dTranspose layer has a bias parameter. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of weight parameter.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
@@ -961,7 +968,7 @@ class Conv2dTranspose(_Conv):
     :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the height and width
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
-    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/matzeiler/deconvolutionalnetworks.pdf>`_.
+    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv2dTranspose layer.
@@ -1171,7 +1178,7 @@ class Conv1dTranspose(_Conv):
     :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to both sizes of input,
     they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv1d maps multiple input shapes to the same output shape. Deconvolutional network
-    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/matzeiler/deconvolutionalnetworks.pdf>`_.
+    can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv1dTranspose layer.

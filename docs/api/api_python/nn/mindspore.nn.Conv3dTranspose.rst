@@ -26,6 +26,7 @@ mindspore.nn.Conv3dTranspose
     - **padding** (Union(int, tuple[int])) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int或包含6个整数的tuple。如果 `padding` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `padding` 。如果 `padding` 是6个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充padding[0]、padding[1]、padding[2]、padding[3]、padding[4]和padding[5]。值应该要大于等于0，默认值：0。
     - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的tuple。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。深度、高度和宽度方向上的 ｀k｀ ，其取值范围分别为[1, D]、[1, H]和[1, W]。默认值：1。
     - **group** (int) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。当 `group` 大于1时，暂不支持Ascend平台。默认值：1。当前仅支持1。
+    - **output_padding** (Union(int, tuple[int])) - 输出的深度、高度和宽度方向上填充的数量。数据类型为int或包含6个整数的tuple。如果 `output_padding` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `output_padding` 。如果 `output_padding` 是6个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充output_padding[0]、output_padding[1]、output_padding[2]、output_padding[3]、output_padding[4]output_padding[5]。值应该要大于等于0，默认值：0。
     - **has_bias** (bool) - Conv3dTranspose层是否添加偏置参数。默认值：False。
     - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选"TruncatedNormal"，"Normal"，"Uniform"，"HeUniform"和"XavierUniform"分布以及常量"One"和"Zero"分布的值，可接受别名"xavier_uniform"，"he_uniform"，"ones"和"zeros"。上述字符串大小写均可。更多细节请参考Initializer的值。默认值："normal"。
     - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。可以使用的初始化方法与"weight_init"相同。更多细节请参考Initializer的值。默认值："zeros"。

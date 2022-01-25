@@ -471,7 +471,7 @@ class SmoothL1Loss(LossBase):
         TypeError: If `beta` is not a float.
         TypeError: If `logits` or `labels` are not Tensor.
         TypeError: If dtype of `logits` or `labels` is neither float16 not float32.
-        TypeError: If dtype of `logits` or `labels` are not the same.
+        TypeError: If dtype of `logits` is not the same as `labels`.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
 
