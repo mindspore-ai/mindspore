@@ -48,7 +48,7 @@ def test_maximum_grad_random():
     assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast_grad_cpu():
