@@ -1084,6 +1084,11 @@ class ApplyKerasMomentumNet(nn.Cell):
 
 
 test_case_math_ops = [
+    ('Cross', {
+        'block': P.Cross(dim=1),
+        'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
+                        Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
+        'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)]}),
     ('Ger', {
         'block': P.Ger(),
         'desc_inputs': [[3,], [4,]],

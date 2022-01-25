@@ -83,6 +83,9 @@ constexpr auto kImag = "Imag";
 constexpr auto kConj = "Conj";
 constexpr auto kGer = "Ger";
 
+// Math
+constexpr auto kCross = "Cross";
+
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kStack = "Stack";
@@ -596,6 +599,7 @@ MS_CORE_API inline const PrimitivePtr kPrimTensorListStack = std::make_shared<Pr
 MS_CORE_API inline const PrimitivePtr kPrimTensorListSetItem = std::make_shared<Primitive>("TensorListSetItem");
 
 // Maths
+MS_CORE_API inline const PrimitivePtr kPrimCross = std::make_shared<Primitive>(kCross);
 MS_CORE_API inline const PrimitivePtr kPrimBesselI0 = std::make_shared<Primitive>("BesselI0");
 MS_CORE_API inline const PrimitivePtr kPrimBesselI1 = std::make_shared<Primitive>("BesselI1");
 MS_CORE_API inline const PrimitivePtr kPrimGer = std::make_shared<Primitive>("Ger");
