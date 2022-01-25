@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/hsv_to_rgb_cpu_kernel.h"
-#include <iostream>
+#include <cmath>
 #include <vector>
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -47,17 +47,10 @@ void HSVToRGBCpuKernelMod<T>::ConvertOnePixel(T1 h, T1 s, T1 v, T1 *r, T1 *g, T1
   T1 dh = h * 6;
   T1 rr, gg, bb;
   const int32_t h_category = static_cast<int32_t>(std::floor(dh));
-  T1 fmodu = dh;
-  const int32_t kLimitMin = 0;
-  const int32_t kLimitMax = 2;
-  if (fmodu <= kLimitMin || fmodu >= kLimitMax) {
-    const int32_t tmp = static_cast<int32_t>(fmodu);
-    fmodu -= static_cast<T1>((tmp / kLimitMax) * kLimitMax);
-    if (fmodu <= kLimitMin) {
-      fmodu += kLimitMax;
-    } else if (fmodu >= kLimitMax) {
-      fmodu -= kLimitMax;
-    }
+  T1 fmodu = std::abs(dh);
+  const T1 kLimit = 2;
+  if (fmodu >= kLimit) {
+    fmodu = std::fmod(fmodu, kLimit);
   }
   const int32_t h_category_value_0 = 0;
   const int32_t h_category_value_1 = 1;
@@ -113,14 +106,18 @@ template <typename T1>
 void HSVToRGBCpuKernelMod<T>::ComputeFloat(void *input, void *output, int64_t pixel_num) {
   T1 *input_ptr = reinterpret_cast<T1 *>(input);
   T1 *output_ptr = reinterpret_cast<T1 *>(output);
-  auto shard_hsv_to_rgb = [&](size_t start, size_t end) {
+  auto shard_hsv_to_rgb = [&input_ptr, &output_ptr, this](size_t start, size_t end) {
+    constexpr size_t pixel_stride = 3;
+    constexpr size_t first_value = 0;
+    constexpr size_t second_value = 1;
+    constexpr size_t third_value = 2;
     for (size_t i = start; i < end; ++i) {
-      T1 *h = input_ptr + 3 * i + 0;
-      T1 *s = input_ptr + 3 * i + 1;
-      T1 *v = input_ptr + 3 * i + 2;
-      T1 *r = output_ptr + 3 * i + 0;
-      T1 *g = output_ptr + 3 * i + 1;
-      T1 *b = output_ptr + 3 * i + 2;
+      T1 *h = input_ptr + pixel_stride * i + first_value;
+      T1 *s = input_ptr + pixel_stride * i + second_value;
+      T1 *v = input_ptr + pixel_stride * i + third_value;
+      T1 *r = output_ptr + pixel_stride * i + first_value;
+      T1 *g = output_ptr + pixel_stride * i + second_value;
+      T1 *b = output_ptr + pixel_stride * i + third_value;
       ConvertOnePixel<T1>(*h, *s, *v, r, g, b);
     }
   };
@@ -131,16 +128,20 @@ template <typename T>
 void HSVToRGBCpuKernelMod<T>::ComputeHalf(void *input, void *output, int64_t pixel_num) {
   float16 *input_ptr = reinterpret_cast<float16 *>(input);
   float16 *output_ptr = reinterpret_cast<float16 *>(output);
-  auto shard_hsv_to_rgb = [&](size_t start, size_t end) {
+  auto shard_hsv_to_rgb = [&input_ptr, &output_ptr, this](size_t start, size_t end) {
+    constexpr size_t pixel_stride = 3;
+    constexpr size_t first_value = 0;
+    constexpr size_t second_value = 1;
+    constexpr size_t third_value = 2;
     float tmp[3];
     for (size_t i = start; i < end; ++i) {
-      float h = static_cast<float>(input_ptr[3 * i + 0]);
-      float s = static_cast<float>(input_ptr[3 * i + 1]);
-      float v = static_cast<float>(input_ptr[3 * i + 2]);
-      ConvertOnePixel<float>(h, s, v, tmp, tmp + 1, tmp + 2);
-      output_ptr[3 * i + 0] = float16(tmp[0]);
-      output_ptr[3 * i + 1] = float16(tmp[1]);
-      output_ptr[3 * i + 2] = float16(tmp[2]);
+      float h = static_cast<float>(input_ptr[pixel_stride * i + first_value]);
+      float s = static_cast<float>(input_ptr[pixel_stride * i + second_value]);
+      float v = static_cast<float>(input_ptr[pixel_stride * i + third_value]);
+      ConvertOnePixel<float>(h, s, v, tmp + first_value, tmp + second_value, tmp + third_value);
+      output_ptr[pixel_stride * i + first_value] = float16(tmp[first_value]);
+      output_ptr[pixel_stride * i + second_value] = float16(tmp[second_value]);
+      output_ptr[pixel_stride * i + third_value] = float16(tmp[third_value]);
     }
   };
   CPUKernelUtils::ParallelFor(shard_hsv_to_rgb, pixel_num);
