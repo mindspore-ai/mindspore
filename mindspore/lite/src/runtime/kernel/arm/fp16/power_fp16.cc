@@ -110,8 +110,7 @@ int PowerFp16CPUKernel::RunImpl(int task_id) {
   if (len <= 0) {
     return RET_OK;
   }
-  bool broadcast = true;
-  broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
+  bool broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
   float16_t *cur_exp = nullptr;
   if (broadcast) {
     cur_exp = exp_data_;

@@ -40,9 +40,7 @@ int main() {
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   iter->GetNextRow(&row);
 
-  uint64_t i = 0;
   while (row.size() != 0) {
-    i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);

@@ -1279,7 +1279,7 @@ int LiteSession::PreCheck(Model *model) {
 }
 
 int LiteSession::InitExecutor() {
-  int ret = RET_OK;
+  int ret;
 #ifdef ENABLE_MINDRT
   ret = IsolateOutputTensor();
   if (ret != RET_OK) {

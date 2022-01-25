@@ -216,8 +216,7 @@ kernel::InnerKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::
     return nullptr;
   }
 
-  kernel::InnerKernel *kernel = nullptr;
-  kernel = new (std::nothrow)
+  kernel::InnerKernel *kernel = new (std::nothrow)
     QuantDTypeCastFp16CPUKernel(opParameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new QuantDTypeCastFp16CPUKernel fail!";

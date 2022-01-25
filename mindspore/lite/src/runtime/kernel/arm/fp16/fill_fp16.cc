@@ -55,8 +55,7 @@ int FillFp16CPUKernel::DoFill(int task_id) {
     return RET_OK;
   }
   int offset = task_id * thread_sz_stride_;
-  int ret = RET_OK;
-  ret = FillFp16(fp16_out_ptr_ + offset, size, fp16_src_data_);
+  int ret = FillFp16(fp16_out_ptr_ + offset, size, fp16_src_data_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;

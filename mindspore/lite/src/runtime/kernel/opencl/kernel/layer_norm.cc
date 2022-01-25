@@ -109,10 +109,9 @@ void AlignMeanVarGlobalLocal(const std::vector<int> &global, const std::vector<i
 }
 
 void LayerNormOpenCLKernel::SetGlobalLocal() {
-  size_t OH = 1, OW = 1, OC = 1;
-  OH = in_shape_.s[0] * in_shape_.s[1];
-  OW = in_shape_.s[2];
-  OC = UP_DIV(in_shape_.s[3], C4NUM);
+  size_t OH = in_shape_.s[0] * in_shape_.s[1];
+  size_t OW = in_shape_.s[2];
+  size_t OC = UP_DIV(in_shape_.s[3], C4NUM);
   local_size_ = {1, 1, 1};  // init local
   global_size_ = {OH, OW, OC};
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();

@@ -150,7 +150,6 @@ void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const s
   std::ofstream net(net_file, std::ios::out | std::ios::trunc | std::ios::binary);
   MS_CHECK_TRUE_WITHOUT_RET(net.is_open(), "net file open failed!");
   for (auto &item : saved_weights) {
-    std::string name = item.first;
     Tensor *tensor = item.second;
     if ((CheckConstantTensor(tensor)) && tensor->data() != nullptr) {
       net.write(reinterpret_cast<const char *>(tensor->data()), tensor->Size());
