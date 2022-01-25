@@ -316,7 +316,7 @@ class _Context:
     def set_runtime_num_threads(self, runtime_num_threads):
         """Check and set runtime_num_threads."""
         if runtime_num_threads <= 0:
-            raise ValueError("The num of cpu thread must bigger than 0.")
+            raise ValueError("The num of thread must bigger than 0.")
         self.set_param(ms_ctx_param.runtime_num_threads, runtime_num_threads)
 
     setters = {

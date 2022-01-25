@@ -137,6 +137,7 @@ class TimeDistributed(Cell):
             outputs_shape_new = outputs.shape[:reshape_pos] + inputs_shape_new[reshape_pos: reshape_pos + 2]
             if reshape_pos + 1 < len(outputs.shape):
                 outputs_shape_new += outputs.shape[reshape_pos + 1:]
+            outputs_shape_new = (-1,) + outputs_shape_new[1:]
             return self.reshape(outputs, outputs_shape_new)
 
         unstack = Unstack(time_axis)

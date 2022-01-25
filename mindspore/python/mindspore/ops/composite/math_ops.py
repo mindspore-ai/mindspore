@@ -436,7 +436,9 @@ def dot(x1, x2):
         x1_reshape = reshape_op(x1, (-1, x1_shape[-1]))
         x2_reshape = reshape_op(x2_transpose, (x2_shape[-2], -1))
         mul_result = matmul_op(x1_reshape, x2_reshape)
-        return reshape_op(mul_result, x1_shape[:-1] + x2_shape[:-2] + x2_shape[-1:])
+        reshape_shape = x1_shape[:-1] + x2_shape[:-2] + x2_shape[-1:]
+        reshape_shape = (-1,) + reshape_shape[1:]
+        return reshape_op(mul_result, reshape_shape)
     return matmul_op(x1, x2)
 
 
