@@ -16,6 +16,7 @@
 from .. import numpy as mnp
 from .ops import MatrixSetDiag
 from ..common import dtype as mstype
+from .utils import _to_tensor
 from .utils_const import _raise_value_error
 
 
@@ -68,5 +69,6 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
         k_vec = k
     else:
         _raise_value_error("input k to indicate diagonal region is invalid.")
+    k_vec = _to_tensor(k_vec, dtype=mstype.int32)
     output = matrix_set_diag_net(input_x, diagonal, k_vec)
     return output

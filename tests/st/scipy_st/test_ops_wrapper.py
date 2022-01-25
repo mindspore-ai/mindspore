@@ -293,13 +293,14 @@ def fat_cases(align=None):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [onp.int])
 def test_matrix_set_diag(data_type):
     """
     Feature: ALL TO ALL
-    Description: test geneal matrix cases for matrix_set_diag in pynative mode
+    Description: test geneal matrix cases for matrix_set_diag in pynative or graph mode
     Expectation: the result match expected_diag_matrix.
     """
     onp.random.seed(0)
@@ -312,20 +313,8 @@ def test_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_matrix(output, Tensor(expected_diag_matrix))
+                match_matrix(output.astype(onp.float64), Tensor(expected_diag_matrix))
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('data_type', [onp.int])
-def test_graph_matrix_set_diag(data_type):
-    """
-    Feature: ALL TO ALL
-    Description: test general matrix cases for matrix_set_diag in graph mode
-    Expectation: the result match expected_diag_matrix.
-    """
-    onp.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE)
     for align in ALIGNMENT_LIST:
         for _, tests in [square_cases(align, data_type), tall_cases(align), fat_cases(align)]:
@@ -335,7 +324,7 @@ def test_graph_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_matrix(output, Tensor(expected_diag_matrix))
+                match_matrix(output.astype(onp.float64), Tensor(expected_diag_matrix))
 
 
 @pytest.mark.level0
