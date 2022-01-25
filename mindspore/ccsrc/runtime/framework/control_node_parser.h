@@ -80,6 +80,7 @@ using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
 using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
 using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>>;
 using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
+using GroupNameToCommuNodes = std::unordered_map<std::string, std::vector<CNodePtr>>;
 // In the control flow, heterogeneous kernel graphs need to be reconnected in the same group, and the kernel graph
 // group info is used to store the inputs and outputs of the group.
 // Need stack indicates whether a stack actor needs to be created for the group.

@@ -546,7 +546,10 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<AbstractActor *> auto_monad_actors;
-  std::vector<CNodePtr> communication_nodes;
+  GroupNameToCommuNodes group_name_to_communication_nodes;
+  std::string default_group_name = "";
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
@@ -557,11 +560,19 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     if (graph->is_executing_sink()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {
+      // In the control flow, the communication nodes need to be guaranteed to be executed in order. The order
+      // within the kernel graph group needs to add control arrows between the communication nodes, and the order
+      // between groups is guaranteed by the control flow framework. Therefore, communication nodes need to be
+      // grouped by group name. And this is not required in non-control flow, the default unified group name is used.
+      std::vector<CNodePtr> communication_nodes;
+      const auto &group_name = (parser->IsInited() ? parser->FetchGroupNameByKernelGraph(graph) : default_group_name);
       LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
+      group_name_to_communication_nodes[group_name].insert(group_name_to_communication_nodes[group_name].end(),
+                                                           communication_nodes.begin(), communication_nodes.end());
     }
   }
 
-  LinkGlobalControlArrow(actor_set, communication_nodes, auto_monad_actors, graph_compiler_info);
+  LinkGlobalControlArrow(actor_set, group_name_to_communication_nodes, auto_monad_actors, graph_compiler_info);
   LinkOutputResultArrowForOutputActor(actor_set->output_actor_.get(), graph_compiler_info);
 
   // The copy actors are built in the link, so need push into the actor set after link.
@@ -1404,13 +1415,15 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
   }
 }
 
-void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
+void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
+                                            const GroupNameToCommuNodes &communication_node_groups,
                                             const std::vector<AbstractActor *> &auto_monad_actors,
                                             const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
-
-  // Link the control arrows by the communication nodes to ensure communication nodes running order.
-  LinkControlArrowByCommunicationNode(communication_nodes, graph_compiler_info);
+  for (const auto &communication_nodes : communication_node_groups) {
+    // Link the control arrows by the communication nodes to ensure communication nodes running order.
+    LinkControlArrowByCommunicationNode(communication_nodes.second, graph_compiler_info);
+  }
 
   // Auto monad actor may modify the device tensor store.
   LinkDeviceTensorStoreForAutoMonadActor(auto_monad_actors);
