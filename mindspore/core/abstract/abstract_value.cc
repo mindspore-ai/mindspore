@@ -22,7 +22,6 @@
 #include <algorithm>
 
 #include "utils/hash_map.h"
-#include "utils/symbolic.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"

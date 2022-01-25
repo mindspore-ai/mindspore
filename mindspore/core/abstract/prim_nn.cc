@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <cmath>
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
