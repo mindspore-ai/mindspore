@@ -48,7 +48,9 @@ Status Edge::InitEdgeCost() {
       for (auto &target_input : next_op_input_) {
         auto target_input_lyt = target_input.second[next_op_input_index_].tensor_layout();
         auto target_input_str = target_input.first;
-        if (target_output_lyt == target_input_lyt) {
+        // for identity_info ops, no need to compare device_matrix
+        if ((target_output_lyt == target_input_lyt) || (target_output_lyt.IsSameWithoutSplit(target_input_lyt) &&
+                                                        edge_name().find(IDENTITY_INFO) != std::string::npos)) {
           CostPtrKey ck = {target_output_str, target_input_str};
           CostPtr cost = std::make_shared<Cost>(0.0, 0.0);
           MS_EXCEPTION_IF_NULL(cost);
@@ -383,10 +385,18 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
     MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
                  << " with zero communication cost, choose the one with minimum computation costs.";
   }
+  auto next_op = next_op_;
   std::sort(next_op_stras.begin(), next_op_stras.end(),
-            [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
-                                                        : a.first->PartitionNum() > b.first->PartitionNum();
+            [this, &next_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+              if (!IsDoubleEqual(a.second, b.second)) {
+                return a.second < b.second;
+              }
+              auto cost_a = next_op->GetCostByStrategyPtr(a.first)[0]->communication_cost_;
+              auto cost_b = next_op->GetCostByStrategyPtr(b.first)[0]->communication_cost_;
+              if (!IsDoubleEqual(cost_a, cost_b)) {
+                return cost_a < cost_b;
+              }
+              return a.first->PartitionNum() > b.first->PartitionNum();
             });
   return next_op_stras[0].first;
 }
@@ -425,10 +435,18 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPt
     MS_LOG(INFO) << "There are multiple strategies for edge: " << edge_name_
                  << " with zero communication costs, choose the one with minimum computation costs.";
   }
+  auto prev_op = prev_op_;
   std::sort(prev_op_stras.begin(), prev_op_stras.end(),
-            [this](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
-              return !IsDoubleEqual(a.second, b.second) ? a.second < b.second
-                                                        : a.first->PartitionNum() > b.first->PartitionNum();
+            [this, &prev_op](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+              if (!IsDoubleEqual(a.second, b.second)) {
+                return a.second < b.second;
+              }
+              auto cost_a = prev_op->GetCostByStrategyPtr(a.first)[0]->communication_cost_;
+              auto cost_b = prev_op->GetCostByStrategyPtr(b.first)[0]->communication_cost_;
+              if (!IsDoubleEqual(cost_a, cost_b)) {
+                return cost_a < cost_b;
+              }
+              return a.first->PartitionNum() > b.first->PartitionNum();
             });
   return prev_op_stras[0].first;
 }

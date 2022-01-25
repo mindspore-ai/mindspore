@@ -84,6 +84,8 @@ class TensorLayout {
 
   bool operator!=(const TensorLayout &t1) const;
 
+  bool IsSameWithoutSplit(const TensorLayout &t1) const;
+
   bool TensorShapeCanBeExpanded(const Arrangement &expanded_shape) const;
 
   std::shared_ptr<Arrangement> ComputeExpandedTensorShape(const Arrangement &expand_shape) const;

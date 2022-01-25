@@ -111,6 +111,23 @@ static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
       auto load_node_users = node->func_graph()->manager()->node_users()[candidate_node];
       for (auto &node_user : load_node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
+        if (IsSomePrimitive(cnode, DEPEND)) {
+          auto depend_node_users = node->func_graph()->manager()->node_users()[node_user.first];
+          for (auto depend_user : depend_node_users) {
+            if (IsPrimitiveCNode(depend_user.first, prim::kPrimLoad)) {
+              auto local_load_node_users = node->func_graph()->manager()->node_users()[depend_user.first];
+              for (auto local_load_user : local_load_node_users) {
+                auto local_cnode = local_load_user.first->cast<CNodePtr>();
+                if (local_cnode == nullptr || !local_cnode->has_user_data<OperatorInfo>() ||
+                    IsSomePrimitive(local_cnode, RECEIVE)) {
+                  continue;
+                }
+                parameter_user_info.second.second.insert(local_load_user);
+              }
+            }
+          }
+        }
+
         if (cnode == nullptr || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
           continue;
         }

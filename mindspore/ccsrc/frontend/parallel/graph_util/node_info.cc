@@ -51,10 +51,14 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
 }
 
 AnfNodePtr GetRealInput(const AnfNodePtr &input) {
-  if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
-    return input->cast<CNodePtr>()->input(1);
+  auto res = input;
+  while (IsPrimitiveCNode(res, prim::kPrimLoad) || IsPrimitiveCNode(res, prim::kPrimDepend)) {
+    res = res->cast<CNodePtr>()->input(1);
+    if (!res->isa<CNode>()) {
+      return res;
+    }
   }
-  return input;
+  return res;
 }
 
 // Given the node, return whether each input is a parameter or a output of a operator.
