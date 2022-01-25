@@ -41,7 +41,7 @@ if(MSVC)
             -DBUILD_ZLIB=ON
             -DBUILD_JPEG=ON
             -DBUILD_PNG=ON
-            -DBUILD_OPENEXR=ON
+            -DBUILD_OPENEXR=OFF
             -DBUILD_TESTS=OFF
             -DBUILD_PERF_TESTS=OFF
             -DBUILD_opencv_apps=OFF
@@ -68,7 +68,7 @@ elseif(WIN32)
                 -DBUILD_ZLIB=ON
                 -DBUILD_JPEG=ON
                 -DBUILD_PNG=ON
-                -DBUILD_OPENEXR=ON
+                -DBUILD_OPENEXR=OFF
                 -DBUILD_TESTS=OFF
                 -DBUILD_PERF_TESTS=OFF
                 -DBUILD_opencv_apps=OFF
@@ -95,7 +95,7 @@ else()
                 -DBUILD_ZLIB=ON
                 -DBUILD_JPEG=ON
                 -DBUILD_PNG=ON
-                -DBUILD_OPENEXR=ON
+                -DBUILD_OPENEXR=OFF
                 -DBUILD_TESTS=OFF
                 -DBUILD_PERF_TESTS=OFF
                 -DBUILD_opencv_apps=OFF
