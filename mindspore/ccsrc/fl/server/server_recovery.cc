@@ -22,6 +22,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 bool ServerRecovery::Initialize(const std::string &config_file) {
+  std::unique_lock<std::mutex> lock(server_recovery_file_mtx_);
   config_ = std::make_unique<ps::core::FileConfiguration>(config_file);
   MS_EXCEPTION_IF_NULL(config_);
   if (!config_->Initialize()) {
@@ -59,6 +60,7 @@ bool ServerRecovery::Initialize(const std::string &config_file) {
 }
 
 bool ServerRecovery::Recover() {
+  std::unique_lock<std::mutex> lock(server_recovery_file_mtx_);
   server_recovery_file_.open(server_recovery_file_path_, std::ios::in);
   if (!server_recovery_file_.good() || !server_recovery_file_.is_open()) {
     MS_LOG(WARNING) << "Can't open server recovery file " << server_recovery_file_path_;
@@ -80,6 +82,7 @@ bool ServerRecovery::Recover() {
 }
 
 bool ServerRecovery::Save(uint64_t current_iter) {
+  std::unique_lock<std::mutex> lock(server_recovery_file_mtx_);
   server_recovery_file_.open(server_recovery_file_path_, std::ios::out | std::ios::ate);
   if (!server_recovery_file_.good() || !server_recovery_file_.is_open()) {
     MS_LOG(WARNING) << "Can't save data to recovery file " << server_recovery_file_path_
@@ -96,6 +99,7 @@ bool ServerRecovery::Save(uint64_t current_iter) {
 
 bool ServerRecovery::SyncAfterRecovery(const std::shared_ptr<ps::core::TcpCommunicator> &communicator,
                                        uint32_t rank_id) {
+  std::unique_lock<std::mutex> lock(server_recovery_file_mtx_);
   // If this server is follower server, notify leader server that this server has recovered.
   if (rank_id != kLeaderServerRank) {
     MS_ERROR_IF_NULL_W_RET_VAL(communicator, false);

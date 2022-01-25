@@ -30,7 +30,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-constexpr uint32_t kPrintPullWeightForEveryRetryTime = 500;
+constexpr uint32_t kPrintPullWeightForEveryRetryTime = 3000;
 class PullWeightKernel : public RoundKernel {
  public:
   PullWeightKernel() : executor_(nullptr), retry_count_(0) {}

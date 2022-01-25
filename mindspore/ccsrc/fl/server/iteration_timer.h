@@ -57,6 +57,8 @@ class IterationTimer {
   // The thread that keeps timing and call timeout_callback_ when the timer expires.
   std::thread monitor_thread_;
   TimeOutCb timeout_callback_;
+
+  std::mutex timer_mtx_;
 };
 }  // namespace server
 }  // namespace fl

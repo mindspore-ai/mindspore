@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "ps/constants.h"
 #include "utils/log_adapter.h"
@@ -50,10 +51,10 @@ class RecoveryBase {
   virtual bool Recover() = 0;
 
   // Persist metadata to storage.
-  virtual void Persist(const core::ClusterConfig &clusterConfig) const;
+  virtual void Persist(const core::ClusterConfig &clusterConfig);
 
   // Persist metadata to storage.
-  virtual void PersistNodesInfo(const core::ClusterConfig &clusterConfig) const;
+  virtual void PersistNodesInfo(const core::ClusterConfig &clusterConfig);
 
  protected:
   // Persistent storage used to save metadata.
@@ -64,6 +65,8 @@ class RecoveryBase {
 
   // Storage type for recovery,Currently only supports storage of file types
   StorageType storage_type_;
+
+  std::mutex recovery_mtx_;
 };
 }  // namespace core
 }  // namespace ps
