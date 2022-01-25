@@ -116,8 +116,7 @@ class IrExportBuilder {
   bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
   bool SetAttributeProto(const AnfNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool SetShapeToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto,
-                           std::string *const seq_string);
+  bool SetShapeToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
   bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
@@ -403,13 +402,12 @@ bool IrExportBuilder::SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueIn
       return false;
     }
   } else if (type->isa<Tuple>()) {
-    std::string seq_string = "shape:";
     mind_ir::AttributeProto *attribute = value_proto->mutable_attr_info();
-    if (!SetShapeToNodeProto(node->abstract(), attribute, &seq_string)) {
+    if (!SetShapeToNodeProto(node->abstract(), attribute)) {
       MS_LOG(ERROR) << "Set shape to Proto for " << node->DebugString() << " failed.";
       return false;
     }
-    attribute->set_ref_attr_name(seq_string);
+    attribute->set_name("shape");
   } else {
     value_proto->set_denotation(type->type_name());
   }
@@ -421,7 +419,6 @@ bool IrExportBuilder::SetTensorToAttributeProto(const ValuePtr &value, mind_ir::
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
   }
-  attr_proto->set_ref_attr_name("tensor:value0");
   attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
   mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
   tensor_proto->set_name("value0");
@@ -565,45 +562,42 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
   return type_name;
 }
 
-bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto,
-                                          std::string *const seq_string) {
+bool IrExportBuilder::SetShapeToNodeProto(const AbstractBasePtr &abs, mind_ir::AttributeProto *const attr_proto) {
   auto type = abs->BuildType();
   auto shape = abs->BuildShape();
-  MS_EXCEPTION_IF_NULL(seq_string);
   if (type->isa<Tuple>()) {
-    *seq_string += "Tuple[";
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TUPLE);
     auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
     for (size_t i = 0; i < tuple_abs->size(); i++) {
-      if (!SetShapeToNodeProto((*tuple_abs)[i], attr_proto, seq_string)) {
+      mind_ir::AttributeProto *attr_values = attr_proto->add_values();
+      if (!SetShapeToNodeProto((*tuple_abs)[i], attr_values)) {
         return false;
       }
     }
-    *seq_string += "],";
   } else if (type->isa<TensorType>() && shape->isa<abstract::Shape>()) {
-    string shape_name = "shape" + std::to_string(GetTupleIndex());
-    *seq_string += shape_name + ",";
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
-    tensor_proto->set_name(shape_name);
     return SetTensorProto(abs, tensor_proto);
   } else if (type->isa<Number>()) {
     if (type->isa<Bool>()) {
       attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BOOL);
     } else {
-      string shape_name = "shape" + std::to_string(GetTupleIndex());
-      *seq_string += shape_name + ",";
+      attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
       mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
-      tensor_proto->set_name(shape_name);
       tensor_proto->set_data_type(mind_ir::TensorProto_DataType_UINT64);
       tensor_proto->add_dims(1);
     }
   } else if (type->isa<Function>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_GRAPH);
-    *seq_string += type->type_name() + ",";
-  } else if (type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
-    *seq_string += type->type_name() + ",";
+  } else if (type->isa<String>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_STRING);
+  } else if (type->isa<UMonadType>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UMONAD);
+  } else if (type->isa<IOMonadType>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_IOMONAD);
   } else if (type->isa<CSRTensorType>()) {
     auto csr_tensor_abs = abs->cast<abstract::AbstractCSRTensorPtr>();
-    if (!SetShapeToNodeProto(csr_tensor_abs->element(), attr_proto, seq_string)) {
+    if (!SetShapeToNodeProto(csr_tensor_abs->element(), attr_proto)) {
       return false;
     }
   } else {
@@ -617,7 +611,6 @@ bool IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodePro
   // Get shape of cnode
   // 1. need to get shape from tuple element
   // 2. save shape in TensorProto
-  // 3. save tuple string in ref_attr_name
   MS_EXCEPTION_IF_NULL(node);
   auto type = node->Type();
   auto shape = node->Shape();
@@ -627,14 +620,12 @@ bool IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodePro
     return true;
   }
   ResetTupleIndex();
-  std::string seq_string = "shape:";
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
-  if (!SetShapeToNodeProto(abs, attr_proto, &seq_string)) {
+  if (!SetShapeToNodeProto(abs, attr_proto)) {
     MS_LOG(ERROR) << "Set shape to NodeProto for " << node->DebugString() << " failed.";
     return false;
   }
-  attr_proto->set_ref_attr_name(seq_string);
-  MS_LOG(DEBUG) << "CNode shape: " << seq_string;
+  attr_proto->set_name("shape");
   return true;
 }
 
@@ -797,7 +788,6 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
   attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
   mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
   if (value->isa<Int>()) {
-    attr_proto->set_ref_attr_name("type:value0");
     tensor_proto->set_name("value0");
     auto int_value = value->cast<IntPtr>();
     auto data_type = GetMindirDataBitsIntType(int_value->nbits());
@@ -806,7 +796,6 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     }
     tensor_proto->set_data_type(data_type);
   } else if (value->isa<UInt>()) {
-    attr_proto->set_ref_attr_name("type:value0");
     tensor_proto->set_name("value0");
     auto float_value = value->cast<UIntPtr>();
     auto data_type = GetMindirDataBitsUIntType(float_value->nbits());
@@ -815,7 +804,6 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     }
     tensor_proto->set_data_type(data_type);
   } else if (value->isa<Float>()) {
-    attr_proto->set_ref_attr_name("type:value0");
     tensor_proto->set_name("value0");
     auto float_value = value->cast<FloatPtr>();
     auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
@@ -824,11 +812,9 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     }
     tensor_proto->set_data_type(data_type);
   } else if (value->isa<Bool>()) {
-    attr_proto->set_ref_attr_name("type:value0");
     tensor_proto->set_name("value0");
     tensor_proto->set_data_type(mind_ir::TensorProto_DataType_BOOL);
   } else if (value->isa<TensorType>()) {
-    attr_proto->set_ref_attr_name("type:tensor0");
     tensor_proto->set_name("tensor0");
     auto elem_type = value->cast<TensorTypePtr>()->element();
     if (elem_type->isa<Int>()) {
@@ -869,18 +855,17 @@ bool IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
       MS_LOG(ERROR) << "Set sequence to AttributeProto failed.";
       return false;
     }
-    attr_proto->set_ref_attr_name("Sequence");
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<tensor::Tensor>()) {
     return SetTensorToAttributeProto(value, attr_proto);
   } else if (value->isa<None>()) {
-    attr_proto->set_ref_attr_name("none");
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_NONE);
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
   } else if (value->isa<Monad>()) {
     if (value->isa<UMonad>()) {
-      attr_proto->set_ref_attr_name("Monad:UMonad");
+      attr_proto->set_type(mind_ir::AttributeProto_AttributeType_UMONAD);
     } else if (value->isa<IOMonad>()) {
-      attr_proto->set_ref_attr_name("Monad:IOMonad");
+      attr_proto->set_type(mind_ir::AttributeProto_AttributeType_IOMONAD);
     } else {
       MS_LOG(ERROR) << "Unsupported Monad type: " << value->type_name();
       return false;
@@ -896,7 +881,6 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
   if (value == nullptr || attr_proto == nullptr) {
     MS_LOG(EXCEPTION) << "ValuePtr or AttributeProto is null!";
   }
-  attr_proto->set_ref_attr_name("scalar:value0");
   if (value->isa<StringImm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_STRING);
     attr_proto->set_s(GetValue<std::string>(value));
