@@ -142,6 +142,20 @@ LiteSession::LiteSession() {
   this->is_running_.store(false);
 }
 
+int LiteSession::CheckTensorValid(lite::Tensor *dst_tensor) {
+  MS_ASSERT(dst_tensor != nullptr);
+  if (dst_tensor->data_type() == kObjectTypeTensorType) {
+    return RET_OK;
+  }
+  if (dst_tensor->IsGraphInput() || dst_tensor->IsGraphOutput()) {
+    return RET_OK;
+  }
+  if (dst_tensor->IsConst() == false && dst_tensor->data() != nullptr) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
@@ -304,6 +318,13 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       if (!dst_tensor->IsGraphInput()) {
         dst_tensor->set_category(Category::GRAPH_OUTPUT);
       }
+    }
+
+    ret = CheckTensorValid(dst_tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Check " << i << "th tensor failed";
+      delete dst_tensor;
+      return ret;
     }
 
     this->tensors_.emplace_back(dst_tensor);
