@@ -25,8 +25,8 @@ using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::kernel {
 int ExpCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
   float log_base = (param_->base_ == -1) ? 1 : logf(param_->base_);
   param_->in_scale_ = param_->scale_ * log_base;
   if (param_->shift_ == 0) {

@@ -48,7 +48,7 @@ class BatchnormCPUKernel : public InnerKernel {
   virtual int RestoreDefaultMomentum();
 
  protected:
-  void FillParam();
+  int FillParam();
   void FreeMeanAndVariance();
   void *mean_ = nullptr;
   void *variance_ = nullptr;
