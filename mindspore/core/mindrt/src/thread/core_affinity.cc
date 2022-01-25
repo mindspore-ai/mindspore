@@ -278,6 +278,11 @@ int CoreAffinity::InitHardwareCoreInfo() {
 
 std::vector<int> CoreAffinity::GetCoreId(size_t thread_num, BindMode bind_mode) {
   std::vector<int> bind_id;
+#ifdef SERVER_INFERENCE
+  if (bind_mode == Power_NoBind) {
+    return bind_id;
+  }
+#endif
 #ifdef _WIN32
   return bind_id;
 #elif defined(BIND_CORE)
