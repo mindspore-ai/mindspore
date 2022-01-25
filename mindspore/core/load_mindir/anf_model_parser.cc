@@ -276,10 +276,9 @@ bool MSANFModelParser::SetNodeAbstractFromAttrProto(const mind_ir::AttributeProt
     MS_LOG(ERROR) << "Cannot use a attr_proto " << attr_proto.ref_attr_name() << " to init shape.";
     return false;
   }
-  bool is_tuple_or_list = false;
 
   shape_ref_attr_name = attr_proto.ref_attr_name();
-  is_tuple_or_list =
+  bool is_tuple_or_list =
     shape_ref_attr_name.find("Tuple[") != string::npos || shape_ref_attr_name.find("List[") != string::npos;
   kv = GetAbstractForNode(attr_proto);
   if (kv.empty()) {
