@@ -1390,6 +1390,16 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+CostPtrList OperatorInfo::GetCostByStrategyPtr(const StrategyPtr &strategy) {
+  auto target = std::find_if(
+    strategy_cost_.begin(), strategy_cost_.end(),
+    [&](const std::shared_ptr<StrategyWithCost> &stra_cost) { return stra_cost->strategy_ptr == strategy; });
+  if (target == strategy_cost_.end()) {
+    MS_LOG(ERROR) << "There is no StrategyWithCost with a strategy";
+  }
+  return (*target)->cost_list;
+}
+
 TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(const StrategyPtr &stra, size_t input_index) {
   auto is_target = [&](const std::shared_ptr<StrategyWithCost> &swc) { return swc->strategy_ptr->IsEqual(stra); };
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);

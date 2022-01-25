@@ -99,6 +99,13 @@ void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr, O
   for (auto &op_stra : ops_stras) {
     BFS(op_stra.first, op_stra.second, ops_stras, &visited);
   }
+
+  // GetNext as a isolate op can not be propagated
+  for (auto &op : entire_costgraph->GetOperators()) {
+    if ((op->name().find(GET_NEXT) != std::string::npos) && (op->selected_strategy() == nullptr)) {
+      op->SetSelectedStrategy(op->strategy_cost()[0]->strategy_ptr, 0);
+    }
+  }
 }
 
 void CheckVisitedEdgeConsistency(const EdgePtr &edge) {
@@ -173,7 +180,7 @@ void CheckConfiguredPrevEdgeConsistency(const EdgePtr &edge,
 }
 
 void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
-                    const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> configured_ops,
+                    const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops,
                     std::map<OperatorInfoPtr, bool> *visited) {
   std::queue<std::pair<std::pair<OperatorInfoPtr, std::pair<StrategyPtr, int64_t>>, int64_t>> next_level;
   (void)next_level.emplace(std::make_pair(op, std::make_pair(op_stra, -1)), 0);

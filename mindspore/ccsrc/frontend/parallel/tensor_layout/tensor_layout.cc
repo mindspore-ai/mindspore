@@ -362,6 +362,21 @@ bool TensorLayout::operator!=(const TensorLayout &t1) const {
   return !(IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
 }
 
+bool TensorLayout::IsSameWithoutSplit(const TensorLayout &t1) const {
+  if (!IsSameTensorMap(t1) || !IsSameTensorShape(t1)) {
+    return false;
+  }
+  auto first_array = tensor_map().array();
+  auto second_array = t1.tensor_map().array();
+  auto first_pos = std::find_if(first_array.begin(), first_array.end(), [&](const int64_t ele) { return ele != -1; });
+  auto second_pos =
+    std::find_if(second_array.begin(), second_array.end(), [&](const int64_t ele) { return ele != -1; });
+  if (first_pos != first_array.end() || second_pos != second_array.end()) {
+    return false;
+  }
+  return true;
+}
+
 /*
  * remove elements equal to 1 in tensor_shape, if all elements are 1, squeeze the tensor_shape to [ 1 ]
  * example 1:

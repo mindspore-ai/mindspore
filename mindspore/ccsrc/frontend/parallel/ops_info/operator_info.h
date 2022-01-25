@@ -101,6 +101,7 @@ class OperatorInfo {
   // This is a common method for setting operator cost for a given strategy, in which the validity of this strategy
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr &strategy);
+  CostPtrList GetCostByStrategyPtr(const StrategyPtr &strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
   void SetStrategyCost(const std::vector<std::shared_ptr<StrategyWithCost>> &);
   // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
