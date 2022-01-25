@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/cpu/pyfunc/py_func_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/custom/custom_aot_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/custom/custom_julia_cpu_kernel.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -413,9 +414,13 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
       } else if (tp == kCustomTypeAOT) {
         kernel::NativeCpuKernelRegistrar(op_name, KernelAttr(),
                                          []() { return std::make_shared<kernel::CustomAOTCpuKernelMod>(); });
+      } else if (tp == kCustomTypeJULIA) {
+        kernel::NativeCpuKernelRegistrar(op_name, KernelAttr(),
+                                         []() { return std::make_shared<kernel::CustomJULIACpuKernelMod>(); });
       } else {
-        MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be 'pyfunc' or 'aot', "
-                          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
+        MS_LOG(EXCEPTION)
+          << "Unsupported func type for Custom operator on CPU, it should be 'pyfunc' or 'aot' or 'julia', "
+          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
       }
     }
     // If Custom op has not set reg info, then infer info from inputs

@@ -522,6 +522,7 @@ constexpr auto kAttrNeedDropInput = "need_drop_input";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";
+constexpr auto kCustomTypeJULIA = "julia";
 constexpr auto kCustomTypePyfunc = "pyfunc";
 constexpr auto kCustomTypeTbe = "tbe";
 constexpr auto kCustomTypeAICPU = "aicpu";
