@@ -1,3 +1,6 @@
+mindspore.dataset.zip
+=====================
+
 .. py:function:: mindspore.dataset.zip(datasets)
 
     将多个dataset对象按列进行合并压缩。

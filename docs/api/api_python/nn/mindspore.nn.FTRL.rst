@@ -75,4 +75,4 @@ mindspore.nn.FTRL
     - **ValueError** - `initial_accum`、`l1` 或 `l2` 小于0。
 
 
-.. include:: mindspore.nn.optim_target_unique_for_sparse.rst
+    .. include:: mindspore.nn.optim_target_unique_for_sparse.rst
