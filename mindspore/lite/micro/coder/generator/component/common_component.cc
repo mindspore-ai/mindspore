@@ -265,21 +265,23 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   for (size_t i = 0; i < size; ++i) {
     ofs << "  " << ctx->input_name() + std::to_string(i) << " = NULL;\n";
   }
-  ofs << "  void *allocated[] = {";
+  ofs << "  void **allocated[] = {\n";
   size_t num = 0;
   for (const auto &item : ctx->tensors_map()) {
     Tensor *tensor = item.first;
     std::string name = item.second;
     if (tensor->data() != nullptr && !(CheckConstantTensor(tensor))) {
-      ofs << name << ", ";
+      ofs << "    (void**)&" << name << ",\n";
       num++;
     }
   }
-  ofs << "  };\n";
+  ofs << "\n  };\n";
   ofs << "  for (int i = 0; i < " << num << "; ++i) {\n"
-      << "    free(allocated[i]);\n"
-      << "    allocated[i] = NULL;\n"
+      << "    *(allocated[i]) = NULL;\n"
       << "  }\n";
+  ofs << "  if (" << ctx->weight_name() << " != NULL) {\n";
+  ofs << "    free(" << ctx->weight_name() << ");\n";
+  ofs << "    " << ctx->weight_name() << " = NULL;\n  }\n";
   ofs << "}\n";
 }
 

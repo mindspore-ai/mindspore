@@ -75,6 +75,8 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   auto out_channel_size = static_cast<size_t>(out_channel);
 
   NNaclFp32Serializer init_code;
+  NNaclFp32Serializer w_init_size_code;
+
   std::string ori_weight_addr = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string init_weight_str = ori_weight_addr;
   if (de_quant_flag_) {
@@ -82,8 +84,10 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
     std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(filter_tensor_, ori_weight_addr);
     init_code << de_quant_function;
   }
-  init_code.CodeMallocExpression(packed_weight_, pack_weight_size_);
-  init_code.CodeFunction("memset", packed_weight_, 0, pack_weight_size_);
+  size_t w_buf_size = 0;
+  w_buf_size += pack_weight_size_;
+  init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), pack_weight_size_);
   if (target_ == kARM32A) {
     init_code.CodeFunction("RowMajor2Col4Major", init_weight_str, packed_weight_, out_channel_size,
                            in_channel * kernel_plane);
@@ -96,11 +100,14 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
     auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
     bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
     MS_CHECK_PTR(bias_data_);
-
-    init_code.CodeMallocExpression(bias_data_, bias_data_size);
-    init_code.CodeFunction("memset", bias_data_, 0, bias_data_size);
+    init_code.CodeBufferOffsetExpression(bias_data_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), bias_data_size);
+    w_buf_size += bias_data_size;
     init_code.CodeFunction("memcpy", bias_data_, bias_tensor_, out_channel_size * sizeof(float));
   }
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
+
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }

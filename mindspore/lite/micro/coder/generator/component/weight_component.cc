@@ -29,8 +29,10 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
     ofs << "#include \"" << h_file << "\"\n";
   }
   ofs << "#include <stdlib.h>\n"
+      << "#include <stdint.h>\n"
       << "#include <string.h>\n"
-      << "extern unsigned char *" << ctx->buffer_name() << ";\n";
+      << "extern unsigned char *" << ctx->buffer_name() << ";\n"
+      << "extern uint8_t *" << ctx->weight_name() << ";\n";
   ofs << "enum STATUS {\n"
          "  RET_OK = 0,\n"
          "  RET_ERROR = 1,\n"
@@ -98,6 +100,14 @@ void CodeInitWeightState(std::ofstream &ofs) {
 }
 
 void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  ofs << "static size_t PackWeightSize() {\n";
+  ofs << "  size_t w_size = 0;\n";
+  for (const auto &block : ctx->weight_buffer_size_code_blocks()) {
+    ofs << "  " << block;
+  }
+  ofs << "  return w_size;\n";
+  ofs << "}\n\n";
+
   ofs << "int Init(void *weight_buffer, int weight_size) {\n"
       << "  if (weight_buffer == NULL) {\n"
       << "    return RET_ERROR;\n"
@@ -107,6 +117,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
       << "    size_t size;\n"
       << "    size_t offset;\n"
       << "  };\n";
+  ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
   size_t params_num = 0;
   size_t offset = 0;
   std::string params;
@@ -131,7 +142,6 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   }
   ofs << params << "\n";
   ofs << "  struct ModelParameter model_params[] = {\n" << origins << "  };\n";
-
   ofs << "\n";
   ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
       << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
@@ -139,9 +149,17 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
          "    }\n"
       << "    memcpy(model_params[i].addr, (weight_buffer + model_params[i].offset), model_params[i].size);\n"
       << "  }\n";
+  ofs << "  if (" << ctx->weight_size_name() << " > 0) {\n";
+  ofs << "    " << ctx->weight_name() << " = malloc(" << ctx->weight_size_name() << ");\n";
+  ofs << "    if (" << ctx->weight_name() << " == NULL) {\n      return RET_ERROR;\n    }\n";
+  ofs << "    memset(" << ctx->weight_name() << ", 0, " << ctx->weight_size_name() << ");\n";
+  ofs << "  }\n";
+  ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
   for (const auto &block : ctx->init_contents()) {
     ofs << "{\n" << block << "}\n";
   }
+  ofs << "  if (" << ctx->weight_size_name() << " < " << ctx->weight_offset_name()
+      << ") {\n    return RET_ERROR;\n  }\n";
   ofs << "  return RET_OK;\n";
   ofs << "}\n\n";
 }

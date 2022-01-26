@@ -23,9 +23,15 @@ CoderContext::CoderContext() {
   this->output_name_ = kOutputPrefixName;
   this->buffer_name_ = kBufferPrefixName;
   this->weight_name_ = kWeightPrefixName;
+  this->pack_weight_offset_name_ = kPackWeightOffsetName;
+  this->pack_weight_size_name_ = kPackWeightSizeName;
 }
 
 void CoderContext::AppendCode(const std::string &codeBlock) { this->code_blocks_.emplace_back(codeBlock); }
 
 void CoderContext::AppendInitCode(const std::string &codeBlock) { this->initialContent_.push_back(codeBlock); }
+
+void CoderContext::AppendInitWeightSizeCode(const std::string &codeBlock) {
+  this->weight_buffer_size_code_blocks_.push_back(codeBlock);
+}
 }  // namespace mindspore::lite::micro

@@ -18,9 +18,24 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/errorcode.h"
 
+size_t Conv1x1PackWeightSize(int32_t input_channel, int32_t output_channel, bool support_optimize) {
+  size_t size = 0;
+#ifdef ENABLE_ARM32
+  size += UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C2NUM) * sizeof(int8_t);
+  size += (size_t)UP_ROUND(output_channel, C2NUM) * sizeof(int32_t);
+  return size;
+#else
+  size += support_optimize ? UP_ROUND(input_channel, C4NUM) * UP_ROUND(output_channel, C16NUM) * sizeof(int8_t)
+                           : UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C4NUM) * sizeof(int8_t);
+  size += support_optimize ? UP_ROUND(output_channel, C16NUM) * sizeof(int32_t)
+                           : UP_ROUND(output_channel, C4NUM) * sizeof(int32_t);
+#endif
+  return size;
+}
+
 int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int32_t input_channel,
                 int32_t output_channel, int32_t input_zp, bool support_optimize, bool filter_peroc,
-                int8_t **packed_weight, int32_t **bias_data) {
+                int8_t **packed_weight, int32_t **bias_data, uint8_t *buf, size_t *offset, size_t buf_size) {
   if (packed_weight == NULL || bias_data == NULL) {
     return NNACL_ERR;
   }
@@ -28,15 +43,20 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   /* InitWeightBiasArm32 */
   /* weight */
   size_t size = UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C2NUM) * sizeof(int8_t);
-  int8_t *packed_weight_ = (int8_t *)(malloc(size));
-  if (packed_weight_ == NULL) {
+  if ((*offset + size) > buf_size) {
     return NNACL_ERR;
   }
+  int8_t *packed_weight_ = (int8_t *)(buf + *offset);
+  *offset += size;
   memset(packed_weight_, 0, size);
   RowMajor2Row2x16MajorInt8(src_weight, packed_weight_, output_channel, input_channel);
   /* bias */
   size = (size_t)UP_ROUND(output_channel, C2NUM);
-  int32_t *bias_data_ = (int32_t *)malloc(size * sizeof(int32_t));
+  if ((*offset + size * sizeof(int32_t)) > buf_size) {
+    return NNACL_ERR;
+  }
+  int32_t *bias_data_ = (int32_t *)(buf + *offset);
+  *offset += size * sizeof(int32_t);
   if (bias_data_ == NULL) {
     free(packed_weight_);
     return NNACL_ERR;
@@ -50,10 +70,11 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   /* weight */
   size_t size = support_optimize ? UP_ROUND(input_channel, C4NUM) * UP_ROUND(output_channel, C16NUM) * sizeof(int8_t)
                                  : UP_ROUND(input_channel, C16NUM) * UP_ROUND(output_channel, C4NUM) * sizeof(int8_t);
-  int8_t *packed_weight_ = (int8_t *)(malloc(size));
+  int8_t *packed_weight_ = ((*offset + size) <= buf_size) ? (int8_t *)(buf + *offset) : NULL;
   if (packed_weight_ == NULL) {
     return NNACL_ERR;
   }
+  *offset += size;
   memset(packed_weight_, 0, size);
   if (support_optimize) {
     RowMajor2Row4x16MajorInt8(src_weight, packed_weight_, output_channel, input_channel);
@@ -62,7 +83,8 @@ int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int3
   }
   /* bias */
   size = support_optimize ? UP_ROUND(output_channel, C16NUM) : UP_ROUND(output_channel, C4NUM);
-  int32_t *bias_data_ = (int32_t *)malloc(size * sizeof(int32_t));
+  int32_t *bias_data_ = ((*offset + size * sizeof(int32_t)) <= buf_size) ? (int32_t *)(buf + *offset) : NULL;
+  *offset += size * sizeof(int32_t);
   if (bias_data_ == NULL) {
     free(packed_weight_);
     packed_weight_ = NULL;

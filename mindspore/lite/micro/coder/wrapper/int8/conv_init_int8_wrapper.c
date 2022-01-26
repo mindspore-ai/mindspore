@@ -19,9 +19,30 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/errorcode.h"
 
+size_t ConvPackWeightSize(int input_channel, int output_channel, int kernel_plane, bool support_optimize) {
+  size_t up_round_deep;
+  size_t up_round_oc;
+#ifdef ENABLE_ARM32
+  up_round_oc = UP_ROUND(output_channel, C2NUM);
+  up_round_deep = UP_ROUND(kernel_plane * input_channel, C16NUM);
+#else
+  if (support_optimize) {
+    up_round_oc = UP_ROUND(output_channel, C8NUM);
+    up_round_deep = UP_ROUND(kernel_plane * input_channel, C4NUM);
+  } else {
+    up_round_oc = UP_ROUND(output_channel, C4NUM);
+    up_round_deep = UP_ROUND(kernel_plane * input_channel, C16NUM);
+  }
+#endif
+  size_t size = up_round_oc * up_round_deep;
+  size += up_round_oc * sizeof(int32_t);
+  return size;
+}
+
 int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filter_quant_zps, int kernel_h,
              int kernel_w, int input_channel, int output_channel, int32_t input_zp, bool filter_peroc,
-             bool support_optimize, int8_t **packed_weight, int32_t **bias_data) {
+             bool support_optimize, int8_t **packed_weight, int32_t **bias_data, uint8_t *buf, size_t *offset,
+             size_t buf_size) {
   int32_t *bias_data_ = NULL;
   int kernel_plane = kernel_h * kernel_w;
   int up_round_deep;
@@ -42,10 +63,11 @@ int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filt
   size_t bias_size = up_round_oc * sizeof(int32_t);
 
   // init weight
-  int8_t *packed_weight_ = (int8_t *)(malloc(pack_weight_size));
+  int8_t *packed_weight_ = ((*offset + pack_weight_size) <= buf_size) ? (int8_t *)(buf + *offset) : NULL;
   if (packed_weight_ == NULL) {
     return NNACL_ERR;
   }
+  *offset += pack_weight_size;
   memset(packed_weight_, 0, pack_weight_size);
 #ifdef ENABLE_ARM32
   RowMajor2Row2x16MajorInt8(origin_weight, packed_weight_, output_channel, input_channel * kernel_plane);
@@ -58,11 +80,12 @@ int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filt
 #endif
 
   // init bias
-  bias_data_ = (int32_t *)(malloc(bias_size));
+  bias_data_ = ((*offset + bias_size) <= buf_size) ? (int32_t *)(buf + *offset) : NULL;
   if (bias_data_ == NULL) {
     free(packed_weight_);
     return NNACL_ERR;
   }
+  *offset += bias_size;
   memset(bias_data_, 0, bias_size);
   if (ori_bias != NULL) {
     memcpy(bias_data_, ori_bias, (unsigned int)output_channel * sizeof(int32_t));

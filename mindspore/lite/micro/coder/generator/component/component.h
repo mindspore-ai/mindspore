@@ -22,6 +22,8 @@ namespace mindspore::lite::micro {
 constexpr auto kInputPrefixName = "g_Input";
 constexpr auto kOutputPrefixName = "g_Output";
 constexpr auto kWeightPrefixName = "g_Weight";
+constexpr auto kPackWeightOffsetName = "w_offset";
+constexpr auto kPackWeightSizeName = "w_size";
 constexpr auto kBufferPrefixName = "g_Buffer";
 constexpr auto kBufferPrefixNameAdd = "g_Buffer + ";
 

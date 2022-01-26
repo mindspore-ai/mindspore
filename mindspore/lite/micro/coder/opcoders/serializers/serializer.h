@@ -134,6 +134,26 @@ class Serializer {
     code << "}\n";
   }
 
+  template <typename T>
+  void CodeBufferOffsetExpression(T t, const std::string &buf_name, const std::string &buf_off_name,
+                                  const std::string &buf_size_name, size_t size) {
+    if (size == 0) {
+      MS_LOG(ERROR) << "CodeBufferOffsetExpression size is zero";
+      exit(1);
+    }
+    GenCode(t);
+    code << " = ( (" << buf_off_name << " + " << size << ") <= " << buf_size_name << ") ? "
+         << "(void*)(" << buf_name << " + " << buf_off_name << ") : NULL;\n";
+    code << "if (";
+    GenCode(t);
+    code << " == NULL) {\n";
+    code << "  return RET_ERROR;\n";
+    code << "}\n";
+    code << buf_off_name << " += " << size << ";\n";
+  }
+
+  void CodeAddAssignExpression(const std::string &dst, size_t src) { code << dst << " += " << src << ";\n"; }
+
   std::streamsize precision(std::streamsize size) {
     std::streamsize old = code.precision(size);
     return old;

@@ -35,8 +35,12 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   weight_i_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(weight_i_ptr_);
 
-  init_code.CodeMallocExpression(weight_i_ptr_, weight_i_size);
-  init_code.CodeFunction("memset", weight_i_ptr_, 0, weight_i_size);
+  NNaclFp32Serializer w_init_size_code;
+  size_t w_buf_size = 0;
+
+  init_code.CodeBufferOffsetExpression(weight_i_ptr_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), weight_i_size);
+  w_buf_size += weight_i_size;
   init_code.CodeFunction("PackLstmWeight", weight_i_ptr_, weight_i, weight_batch_, lstm_param_->input_size_,
                          lstm_param_->hidden_size_, lstm_param_->input_col_align_, "NULL");
 
@@ -45,24 +49,32 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   input_bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(input_bias_);
   size_t bias_i_size = weight_batch_ * lstm_param_->input_col_align_ * sizeof(float);
-  init_code.CodeMallocExpression(input_bias_, bias_i_size);
-  init_code.CodeFunction("memset", input_bias_, 0, bias_i_size);
+  w_buf_size += bias_i_size;
+  init_code.CodeBufferOffsetExpression(input_bias_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), bias_i_size);
   init_code.CodeFunction("PackLstmBias", input_bias_, bias_i, weight_batch_, lstm_param_->hidden_size_,
                          lstm_param_->input_col_align_, lstm_param_->bidirectional_, "NULL");
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
+
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }
 
 int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   NNaclFp32Serializer init_code;
+  NNaclFp32Serializer w_init_size_code;
+  size_t w_buf_size = 0;
+
   Tensor *weight_h = input_tensors().at(kInputSize1);
   MS_CHECK_PTR(weight_h);
   if (!is_vec_) {
     size_t weight_h_size = weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float);
     weight_h_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
     MS_CHECK_PTR(weight_h_ptr_);
-    init_code.CodeMallocExpression(weight_i_ptr_, weight_h_size);
-    init_code.CodeFunction("memset", weight_i_ptr_, 0, weight_h_size);
+    init_code.CodeBufferOffsetExpression(weight_h_ptr_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), weight_h_size);
+    w_buf_size += weight_h_size;
     init_code.CodeFunction("PackLstmWeight", weight_h_ptr_, weight_h, weight_batch_, lstm_param_->hidden_size_,
                            lstm_param_->hidden_size_, lstm_param_->state_col_align_, "NULL");
   } else {
@@ -76,8 +88,11 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
 
   state_bias_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   size_t state_bias_size = weight_batch_ * lstm_param_->state_col_align_ * sizeof(float);
-  init_code.CodeMallocExpression(state_bias_, state_bias_size);
-  init_code.CodeFunction("memset", state_bias_, 0, state_bias_size);
+  MS_CHECK_PTR(state_bias_);
+  init_code.CodeBufferOffsetExpression(state_bias_, context->weight_name(), context->weight_offset_name(),
+                                       context->weight_size_name(), state_bias_size);
+  w_buf_size += state_bias_size;
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
   Tensor *bias_i = input_tensors_.at(kInputSize2);
   MS_CHECK_PTR(bias_i);
@@ -85,6 +100,8 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
     allocator_->GetRuntimeAddr(bias_i) + "+" + std::to_string(4 * lstm_param_->hidden_size_);
   init_code.CodeFunction("PackLstmBias", state_bias_, state_bias_addr, weight_batch_, lstm_param_->hidden_size_,
                          lstm_param_->state_col_align_, lstm_param_->bidirectional_, "NULL");
+
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }
@@ -120,17 +137,20 @@ int LstmFP32Coder::InitParam() {
 }
 
 int LstmFP32Coder::MallocRunBuffer(CoderContext *const context) {
+  constexpr int kMultiply = 4;
+  constexpr int kThirdInput = 2;
+
   buffer_[0] = reinterpret_cast<float *>(allocator_->Malloc(
     kNumberTypeFloat32, lstm_param_->input_row_align_ * lstm_param_->input_size_ * sizeof(float), kWorkspace));
   MS_CHECK_PTR(buffer_[0]);
   buffer_[1] = reinterpret_cast<float *>(allocator_->Malloc(
-    kNumberTypeFloat32, 4 * lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float),
-    kWorkspace));
+    kNumberTypeFloat32,
+    kMultiply * lstm_param_->seq_len_ * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float), kWorkspace));
   MS_CHECK_PTR(buffer_[1]);
   if (!is_vec_) {
-    buffer_[2] = reinterpret_cast<float *>(allocator_->Malloc(
+    buffer_[kThirdInput] = reinterpret_cast<float *>(allocator_->Malloc(
       kNumberTypeFloat32, lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float), kWorkspace));
-    MS_CHECK_PTR(buffer_[2]);
+    MS_CHECK_PTR(buffer_[kThirdInput]);
   }
   buffer_[3] = reinterpret_cast<float *>(allocator_->Malloc(
     kNumberTypeFloat32, 4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float), kWorkspace));

@@ -47,18 +47,23 @@ int ConvolutionDepthwiseINT8Coder::InitWeightBias(CoderContext *const context) {
   auto tmp_weight_data_size = static_cast<size_t>(pack_weight_size * sizeof(int8_t));
 
   nnacl::NNaclInt8Serializer code;
+  nnacl::NNaclInt8Serializer w_init_size_code;
+  size_t w_buf_size = 0;
 
   int8_t *tmp_weight = reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(tmp_weight);
-  code.CodeMallocExpression(tmp_weight, tmp_weight_data_size);
-  code.CodeFunction("memset", tmp_weight, 0, tmp_weight_data_size);
+  code.CodeBufferOffsetExpression(tmp_weight, context->weight_name(), context->weight_offset_name(),
+                                  context->weight_size_name(), tmp_weight_data_size);
+  w_buf_size += tmp_weight_data_size;
   code.CodeFunction("PackNCHWToNHWCInt8", filter_tensor_, tmp_weight, 1,
                     filter_tensor_->Height() * filter_tensor_->Width(), filter_tensor_->Batch());
   int weight_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;
   auto packed_weight_data_size = static_cast<size_t>(pack_weight_size * sizeof(int16_t));
   packed_weight_ = reinterpret_cast<int16_t *>(allocator_->Malloc(kNumberTypeInt16, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(packed_weight_);
-  code.CodeMallocExpression(packed_weight_, packed_weight_data_size);
+  code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
+                                  context->weight_size_name(), packed_weight_data_size);
+  w_buf_size += packed_weight_data_size;
   code << "for (int i = 0; i < " << filter_tensor_->ElementsNum() << "; i++) {\n";
   code << "  " << allocator_->GetRuntimeAddr(packed_weight_) << "[i] = (int16_t)("
        << allocator_->GetRuntimeAddr(tmp_weight) << "[i] - " << weight_zp << ");\n";
@@ -67,12 +72,17 @@ int ConvolutionDepthwiseINT8Coder::InitWeightBias(CoderContext *const context) {
   auto channel_data_size = static_cast<size_t>(channel * sizeof(int32_t));
   bias_data_ = reinterpret_cast<int32_t *>(allocator_->Malloc(kNumberTypeInt32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(bias_data_);
-  code.CodeMallocExpression(bias_data_, channel_data_size);
-  code.CodeFunction("memset", bias_data_, 0, channel_data_size);
+  code.CodeBufferOffsetExpression(bias_data_, context->weight_name(), context->weight_offset_name(),
+                                  context->weight_size_name(), channel_data_size);
+  w_buf_size += channel_data_size;
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
+
   // init bias
   if (input_tensors_.size() == kInputSize2) {
     code.CodeFunction("memcpy", bias_data_, bias_tensor_, bias_tensor_->ElementsNum() * sizeof(int32_t));
   }
+
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(code.str());
   return RET_OK;
 }

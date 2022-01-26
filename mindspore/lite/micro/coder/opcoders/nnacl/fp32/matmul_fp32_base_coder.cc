@@ -173,12 +173,17 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
   NNaclFp32Serializer code;
   NNaclFp32Serializer init_code;
+  NNaclFp32Serializer w_init_size_code;
+  size_t w_buf_size = 0;
+
   code.CodeStruct("mat_mul_parameter", *params_);
   init_code.CodeStruct("mat_mul_parameter", *params_);
   // do bias packing to init
   if (bias_ptr_) {
-    init_code.CodeMallocExpression(bias_ptr_, bias_pack_ptr_size_);
-    init_code.CodeFunction("memset", bias_ptr_, 0, bias_pack_ptr_size_);
+    init_code.CodeBufferOffsetExpression(bias_ptr_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), bias_pack_ptr_size_);
+    w_buf_size += bias_pack_ptr_size_;
+
     int max_bias_data = params_->col_align_;
     if (is_bias_broadcast_) {
       float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data()))[0];
@@ -201,8 +206,14 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // do const value packing to init
   if (!params_->a_const_) {
     code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
-    init_code.CodeMallocExpression(b_pack_ptr_, b_pack_ptr_size_);
-    init_code.CodeFunction("memset", b_pack_ptr_, 0, b_pack_ptr_size_);
+    if (!params_->b_const_) {
+      init_code.CodeMallocExpression(b_pack_ptr_, b_pack_ptr_size_);
+      init_code.CodeFunction("memset", b_pack_ptr_, 0, b_pack_ptr_size_);
+    } else {
+      init_code.CodeBufferOffsetExpression(b_pack_ptr_, context->weight_name(), context->weight_offset_name(),
+                                           context->weight_size_name(), b_pack_ptr_size_);
+      w_buf_size += b_pack_ptr_size_;
+    }
     std::string b_src_str = b_str;
     if (de_quant_flag_) {
       // reuse to b_pack_str
@@ -214,8 +225,14 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     init_code.CodeFunction("InitMatrixB", b_src_str, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
   if (!params_->b_const_) {
-    init_code.CodeMallocExpression(a_pack_str, a_pack_ptr_size_);
-    init_code.CodeFunction("memset", a_pack_ptr_, 0, a_pack_ptr_size_);
+    if (!params_->a_const_) {
+      init_code.CodeMallocExpression(a_pack_str, a_pack_ptr_size_);
+      init_code.CodeFunction("memset", a_pack_ptr_, 0, a_pack_ptr_size_);
+    } else {
+      init_code.CodeBufferOffsetExpression(a_pack_ptr_, context->weight_name(), context->weight_offset_name(),
+                                           context->weight_size_name(), a_pack_ptr_size_);
+      w_buf_size += a_pack_ptr_size_;
+    }
     std::string a_src_str = a_str;
     if (de_quant_flag_) {
       // reuse to a_pack_str
@@ -253,6 +270,9 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
                       params_->deep_, params_->row_, cur_oc, params_->col_, "OutType_Nhwc");
   }
   code << "\t\t}\n";
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
+
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendCode(code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;
