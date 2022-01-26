@@ -124,6 +124,12 @@ class CSRTensorPy {
  public:
   static py::tuple GetPyTupleShape(const CSRTensor &csr_tensor);
 };
+
+// COOTensor python wrapper and adapter class.
+class COOTensorPy {
+ public:
+  static py::tuple GetPyTupleShape(const COOTensor &coo_tensor);
+};
 }  // namespace tensor
 }  // namespace mindspore
 

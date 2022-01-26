@@ -22,11 +22,12 @@ from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import CSRTensor as CSRTensor_
+from .._c_expression import COOTensor as COOTensor_
 from .._c_expression import PynativeExecutor_
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
 
-__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'CSRTensor']
+__all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_, np.complex64, np.complex128)
@@ -2318,7 +2319,7 @@ class RowTensor:
         return self.__dense_shape
 
 
-class SparseTensor:
+class SparseTensor(COOTensor_):
     """
     A sparse representation of a set of nonzero elements from a tensor at given indices.
 
@@ -2337,7 +2338,8 @@ class SparseTensor:
          [0, 0, 0, 0]]
 
     Note:
-        SparseTensor is not supported in Pynative mode at the moment.
+        The interface is deprecated from version 1.7 and will be removed in a future version.
+        Please use 'COOTensor' instead.
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
@@ -2345,53 +2347,122 @@ class SparseTensor:
             the SparseTensor, respectively.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
             supplies the values for each element in `indices`.
-        dense_shape (tuple(int)): A integer tuple of size `ndims`,
-            which specifies the dense_shape of the sparse tensor.
+        shape (tuple(int)): A integer tuple of size `ndims`,
+            which specifies the shape of the sparse tensor.
 
     Returns:
-        SparseTensor, composed of `indices`, `values`, and `dense_shape`.
+        SparseTensor, composed of `indices`, `values`, and `shape`.
 
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, SparseTensor
-        >>> class Net(nn.Cell):
-        ...     def __init__(self, dense_shape):
-        ...         super(Net, self).__init__()
-        ...         self.dense_shape = dense_shape
-        ...     def construct(self, indices, values):
-        ...         x = SparseTensor(indices, values, self.dense_shape)
-        ...         return x.values, x.indices, x.dense_shape
-        >>>
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> out = Net((3, 4))(indices, values)
-        >>> print(out[0])
+        >>> shape = (3, 4)
+        >>> x = SparseTensor(indices, values, shape)
+        >>> print(x.values)
         [1. 2.]
-        >>> print(out[1])
+        >>> print(x.indices)
         [[0 1]
          [1 2]]
-        >>> print(out[2])
+        >>> print(x.shape)
         (3, 4)
     """
 
-    def __init__(self, indices, values, dense_shape):
-        "Init SparseTensor"
-        self.__indices = indices
-        self.__values = values
-        self.__dense_shape = dense_shape
+    def __init__(self, indices=None, values=None, shape=None, coo_tensor=None):
+        "Init COOTensor"
+        print("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+              "Please use 'COOTensor' instead.")
+        if indices is None and values is None and shape is None and coo_tensor is not None:
+            if not isinstance(coo_tensor, (COOTensor, COOTensor_)):
+                raise TypeError("If only one input provided, it must be a COOTensor.")
+            COOTensor_.__init__(self, coo_tensor)
+        else:
+            if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
+                raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+            COOTensor_.__init__(self, indices, values, shape)
 
     @property
     def indices(self):
-        return self.__indices
+        return Tensor(self._indices)
 
     @property
     def values(self):
-        return self.__values
+        return Tensor(self._values)
 
     @property
-    def dense_shape(self):
-        return self.__dense_shape
+    def shape(self):
+        return self._shape
+
+
+class COOTensor(COOTensor_):
+    """
+    A sparse representation of a set of nonzero elements from a tensor at given indices.
+
+    For a tensor dense, its COOTensor(indices, values, dense_shape) has
+    `dense[indices[i]] = values[i]`.
+
+    For example, if indices is [[0, 1], [1, 2]], values is [1, 2], dense_shape is
+    (3, 4), then the dense representation of the sparse tensor will be:
+
+    .. code-block::
+
+        [[0, 1, 0, 0],
+         [0, 0, 2, 0],
+         [0, 0, 0, 0]]
+
+    Args:
+        indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
+            where N and ndims are the number of `values` and number of dimensions in
+            the COOTensor, respectively.
+        values (Tensor): A 1-D tensor of any type and shape `[N]`, which
+            supplies the values for each element in `indices`.
+        shape (tuple(int)): A integer tuple of size `ndims`,
+            which specifies the dense_shape of the sparse tensor.
+
+    Returns:
+        COOTensor, composed of `indices`, `values`, and `shape`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, COOTensor
+        >>> indices = Tensor([[0, 1], [1, 2]])
+        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> shape = (3, 4)
+        >>> x = COOTensor(indices, values, shape)
+        >>> print(x.values)
+        [1. 2.]
+        >>> print(x.indices)
+        [[0 1]
+         [1 2]]
+        >>> print(x.shape)
+        (3, 4)
+    """
+
+    def __init__(self, indices=None, values=None, shape=None, coo_tensor=None):
+        "Init COOTensor"
+        if indices is None and values is None and shape is None and coo_tensor is not None:
+            if not isinstance(coo_tensor, (COOTensor, COOTensor_)):
+                raise TypeError("If only one input provided, it must be a COOTensor.")
+            COOTensor_.__init__(self, coo_tensor)
+        else:
+            if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
+                raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+            COOTensor_.__init__(self, indices, values, shape)
+
+    @property
+    def indices(self):
+        return Tensor(self._indices)
+
+    @property
+    def values(self):
+        return Tensor(self._values)
+
+    @property
+    def shape(self):
+        return self._shape
 
 
 class CSRTensor(CSRTensor_):

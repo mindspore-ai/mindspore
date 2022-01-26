@@ -21,7 +21,7 @@
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, Tensor, RowTensor, SparseTensor
+from mindspore import context, Tensor, RowTensor, COOTensor
 from mindspore.ops import composite as C
 
 @pytest.fixture(scope="module", autouse=True)
@@ -42,6 +42,11 @@ class GradWrap(nn.Cell):
 
 
 def test_row_tensor_attr():
+    """
+    Feature: Test RowTensor.
+    Description: Test RowTensor GetAttr.
+    Expectation: Success.
+    """
     class RowTensorGetAttr(nn.Cell):
         def __init__(self, dense_shape):
             super(RowTensorGetAttr, self).__init__()
@@ -56,13 +61,18 @@ def test_row_tensor_attr():
 
 
 def test_sparse_tensor_attr():
+    """
+    Feature: Test COOTensor.
+    Description: Test COOTensor GetAttr.
+    Expectation: Success.
+    """
     class SparseTensorGetAttr(nn.Cell):
         def __init__(self):
             super(SparseTensorGetAttr, self).__init__()
             self.dense_shape = (3, 4)
         def construct(self, indices, values):
-            x = SparseTensor(indices, values, self.dense_shape)
-            return x.values, x.indices, x.dense_shape
+            x = COOTensor(indices, values, self.dense_shape)
+            return x.values, x.indices, x.shape
 
     indices = Tensor([[0, 1], [1, 2]])
     values = Tensor([1, 2], dtype=ms.float32)

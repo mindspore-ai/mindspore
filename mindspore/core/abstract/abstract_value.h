@@ -1482,28 +1482,28 @@ class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
   AbstractTuplePtr dense_shape_;
 };
 
-/// \brief Class AbstractSparseTensor describes a SparseTensor's abstract value.
-class MS_CORE_API AbstractSparseTensor final : public AbstractUndetermined {
+/// \brief Class AbstractCOOTensor describes a COOTensor's abstract value.
+class MS_CORE_API AbstractCOOTensor final : public AbstractUndetermined {
  public:
-  /// \brief Constructor of AbstractSparseTensor.
+  /// \brief Constructor of AbstractCOOTensor.
   ///
-  /// \param[in] element The abstract which is wrapped to be the abstract value of SparseTensor.
+  /// \param[in] element The abstract which is wrapped to be the abstract value of COOTensor.
   /// \param[in] shape The dimension of the abstract.
-  explicit AbstractSparseTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
+  explicit AbstractCOOTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
 
-  /// \brief Constructor of AbstractSparseTensor.
+  /// \brief Constructor of AbstractCOOTensor.
   ///
-  /// \param[in] element_type The type of SparseTensor.
-  /// \param[in] shape The dimension of SparseTensor.
-  AbstractSparseTensor(const TypePtr &element_type, const ShapeVector &shape)
+  /// \param[in] element_type The type of COOTensor.
+  /// \param[in] shape The dimension of COOTensor.
+  AbstractCOOTensor(const TypePtr &element_type, const ShapeVector &shape)
       : AbstractUndetermined(element_type, shape) {}
 
-  /// \brief Destructor of AbstractSparseTensor.
-  ~AbstractSparseTensor() override = default;
-  MS_DECLARE_PARENT(AbstractSparseTensor, AbstractUndetermined)
+  /// \brief Destructor of AbstractCOOTensor.
+  ~AbstractCOOTensor() override = default;
+  MS_DECLARE_PARENT(AbstractCOOTensor, AbstractUndetermined)
 
-  /// \brief Get the indices of SparseTensor.
+  /// \brief Get the indices of COOTensor.
   ///
   /// \return A pointer to the abstract tensor.
   const AbstractTensorPtr indices() const { return indices_; }
@@ -1520,7 +1520,7 @@ class MS_CORE_API AbstractSparseTensor final : public AbstractUndetermined {
 
   /// \brief Set the values.
   ///
-  /// \param[in] values The values of SparseTensor.
+  /// \param[in] values The values of COOTensor.
   void set_values(const AbstractTensorPtr &values) { values_ = values; }
 
   /// \brief Get the dense shape.
@@ -1530,7 +1530,7 @@ class MS_CORE_API AbstractSparseTensor final : public AbstractUndetermined {
 
   /// \brief Set the dense shape.
   ///
-  /// \param[in] dense_shape The dense shape of SparseTensor.
+  /// \param[in] dense_shape The dense shape of COOTensor.
   void set_dense_shape(const AbstractTuplePtr &dense_shape) { dense_shape_ = dense_shape; }
 
   TypePtr BuildType() const override;

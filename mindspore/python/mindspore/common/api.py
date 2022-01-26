@@ -29,7 +29,8 @@ from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
-from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_, _ms_memory_recycle
+from .tensor import COOTensor as MsCOOTensor
+from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, COOTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
@@ -65,6 +66,8 @@ def _wrap_func(fn):
                 return MsTensor(data)
             if isinstance(data, CSRTensor) and not isinstance(data, MsCSRTensor):
                 return MsCSRTensor(csr_tensor=data)
+            if isinstance(data, COOTensor) and not isinstance(data, MsCOOTensor):
+                return MsCOOTensor(coo_tensor=data)
             if isinstance(data, tuple):
                 return tuple(_convert_data(x) for x in data)
             if isinstance(data, list):

@@ -47,6 +47,8 @@ py::object VectorRefToPyData(const VectorRef &value_list);
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output);
 // Wrap VectorRef to CSRTensor
 py::object MakeCSRTensor(const VectorRef &value_list);
+py::object MakeCOOTensor(const VectorRef &value_list);
+ShapeVector ConvertToShapeVector(const ValuePtr &shape_ptr, const VectorRef &value_list, size_t shape_idx);
 py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   auto ref = py::tuple(1);
   ref[0] = csr_tensor;
@@ -295,7 +297,7 @@ py::object AnyToPyData(const Any &value) {
 
 py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output) {
   py::object ret;
-  // If output value is a tuple, check if abstract is a SparseTensor in funcgraph output
+  // If output value is a tuple, check if abstract is a COOTensor in funcgraph output
   if (utils::isa<VectorRef>(value)) {
     MS_LOG(DEBUG) << "BaseRefToPyData, value is tuple: " << value.ToString();
     auto vec_ref = utils::cast<VectorRef>(value);
@@ -415,9 +417,12 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
 
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output) {
   MS_LOG(DEBUG) << "vector_ref";
-  // Current VectorRef reflects a SparseTensor type
+  // Current VectorRef reflects a COOTensor type
   if (output->isa<abstract::AbstractCSRTensor>()) {
     return MakeCSRTensor(value_list);
+  }
+  if (output->isa<abstract::AbstractCOOTensor>()) {
+    return MakeCOOTensor(value_list);
   }
   py::object ret;
   size_t value_size = value_list.size();
@@ -626,20 +631,10 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   return false;
 }
 
-py::object MakeCSRTensor(const VectorRef &value_list) {
-  constexpr size_t kCSRTensorInputSize{4};
-  if (value_list.size() != kCSRTensorInputSize) {
-    MS_LOG(EXCEPTION) << "CSRTensor must have 4 inputs.";
-  }
-  using TensorPtr = tensor::TensorPtr;
-  using CSRTensor = tensor::CSRTensor;
-  TensorPtr indptr = utils::cast<TensorPtr>(value_list[0]);
-  TensorPtr indices = utils::cast<TensorPtr>(value_list[1]);
-  TensorPtr values = utils::cast<TensorPtr>(value_list[2]);
-  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[3]);
+ShapeVector ConvertToShapeVector(const ValuePtr &shape_ptr, const VectorRef &value_list, size_t shape_idx) {
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  ShapeVector shape;
   ValueTuplePtr shape_tuple = shape_ptr->cast<ValueTuplePtr>();
-  ShapeVector shape{};
-  // CSRTensor shape is a tuple on GPU and CPU
   if (shape_tuple) {
     for (const auto &v : shape_tuple->value()) {
       MS_EXCEPTION_IF_NULL(v);
@@ -647,22 +642,59 @@ py::object MakeCSRTensor(const VectorRef &value_list) {
       MS_EXCEPTION_IF_NULL(scalar);
       shape.push_back(GetValue<int64_t>(scalar));
     }
-    // CSRTensor shape is a VectorRef(TensorPtr, TensorPtr) on Ascend
   } else {
-    auto shape_ref = utils::cast<VectorRef>(value_list[3]);
+    auto shape_ref = utils::cast<VectorRef>(value_list[shape_idx]);
     MS_EXCEPTION_IF_NULL(shape_ref);
     for (const auto &v : shape_ref) {
       MS_EXCEPTION_IF_NULL(v);
-      auto tensorptr = utils::cast<TensorPtr>(v);
+      auto tensorptr = utils::cast<tensor::TensorPtr>(v);
       MS_EXCEPTION_IF_NULL(tensorptr);
       if (tensorptr->DataDim() != 0) {
-        MS_LOG(EXCEPTION) << "Element in CSRTensor's shape must be scalar!";
+        MS_LOG(EXCEPTION) << "Element in COOTensor's shape must be scalar!";
       }
-      tensorptr->data_sync(false);
       shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
     }
   }
+  return shape;
+}
+
+py::object MakeCSRTensor(const VectorRef &value_list) {
+  constexpr size_t kCSRTensorInputSize{4};
+  if (value_list.size() != kCSRTensorInputSize) {
+    MS_LOG(EXCEPTION) << "CSRTensor must have 4 inputs.";
+  }
+  using TensorPtr = tensor::TensorPtr;
+  using CSRTensor = tensor::CSRTensor;
+  constexpr size_t kIndptrIdx{0};
+  constexpr size_t kIndicesIdx{1};
+  constexpr size_t kValuesIdx{2};
+  constexpr size_t kShapeIdx{3};
+  TensorPtr indptr = utils::cast<TensorPtr>(value_list[kIndptrIdx]);
+  TensorPtr indices = utils::cast<TensorPtr>(value_list[kIndicesIdx]);
+  TensorPtr values = utils::cast<TensorPtr>(value_list[kValuesIdx]);
+  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[kShapeIdx]);
+
+  ShapeVector shape = ConvertToShapeVector(shape_ptr, value_list, kShapeIdx);
   auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
   return CSRTensorToPyData(csr_tensor_ptr);
+}
+
+py::object MakeCOOTensor(const VectorRef &value_list) {
+  constexpr size_t kCOOTensorInputSize{3};
+  constexpr size_t kIndicesIdx{0};
+  constexpr size_t kValuesIdx{1};
+  constexpr size_t kShapeIdx{2};
+  if (value_list.size() != kCOOTensorInputSize) {
+    MS_LOG(EXCEPTION) << "COOTensor must have " << kCOOTensorInputSize << "inputs.";
+  }
+  tensor::TensorPtr indices = utils::cast<tensor::TensorPtr>(value_list[kIndicesIdx]);
+  tensor::TensorPtr values = utils::cast<tensor::TensorPtr>(value_list[kValuesIdx]);
+  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[kShapeIdx]);
+
+  ShapeVector shape = ConvertToShapeVector(shape_ptr, value_list, kShapeIdx);
+  auto ref = py::tuple(1);
+  auto coo_tensor_ptr = std::make_shared<tensor::COOTensor>(indices, values, shape);
+  ref[0] = coo_tensor_ptr;
+  return ref[0];
 }
 }  // namespace mindspore

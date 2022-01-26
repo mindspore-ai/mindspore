@@ -64,7 +64,7 @@ std::string GetExcptionTypeString(TypeId id) {
                                                                       {kMetaTypeObject, "MetaTypeObject"},
                                                                       {kObjectTypeNumber, "Number"},
                                                                       {kObjectTypeRowTensorType, "RowTensor"},
-                                                                      {kObjectTypeSparseTensorType, "SparseTensor"},
+                                                                      {kObjectTypeCOOTensorType, "COOTensor"},
                                                                       {kObjectTypeUndeterminedType, "Undetermined"},
                                                                       {kObjectTypeClass, "Class"},
                                                                       {kObjectTypeFunction, "Function"},
@@ -229,9 +229,9 @@ TypePtr RowTensorStrToType(const std::string &type_name) {
   return std::make_shared<RowTensorType>(element_type);
 }
 
-TypePtr SparseTensorStrToType(const std::string &type_name) {
-  if (type_name == "SparseTensor") {
-    return std::make_shared<SparseTensorType>();
+TypePtr COOTensorStrToType(const std::string &type_name) {
+  if (type_name == "COOTensor") {
+    return std::make_shared<COOTensorType>();
   }
   auto start = type_name.find_first_of('[') + 1;
   auto end = type_name.find_last_of(']');
@@ -243,7 +243,7 @@ TypePtr SparseTensorStrToType(const std::string &type_name) {
   if (element_type == nullptr) {
     return nullptr;
   }
-  return std::make_shared<SparseTensorType>(element_type);
+  return std::make_shared<COOTensorType>(element_type);
 }
 
 TypePtr CSRTensorStrToType(const std::string &type_name) {
@@ -417,7 +417,7 @@ TypePtr GetTypeByStringStarts(const std::string &type_name) {
     {"Tensor", [](const std::string &type_name) -> TypePtr { return TensorStrToType(type_name); }},
     {"Undetermined", [](const std::string &type_name) -> TypePtr { return UndeterminedStrToType(type_name); }},
     {"RowTensor", [](const std::string &type_name) -> TypePtr { return RowTensorStrToType(type_name); }},
-    {"SparseTensor", [](const std::string &type_name) -> TypePtr { return SparseTensorStrToType(type_name); }},
+    {"COOTensor", [](const std::string &type_name) -> TypePtr { return COOTensorStrToType(type_name); }},
     {"CSRTensor", [](const std::string &type_name) -> TypePtr { return CSRTensorStrToType(type_name); }},
     {"List", [](const std::string &type_name) -> TypePtr { return ListStrToType(type_name); }},
     {"Tuple", [](const std::string &type_name) -> TypePtr { return TupleStrToType(type_name); }},

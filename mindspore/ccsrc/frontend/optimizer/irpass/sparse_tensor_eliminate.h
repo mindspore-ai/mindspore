@@ -35,10 +35,10 @@ class SparseTensorEliminater : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode x, y, z;
-    auto sparse = PPrimitive(prim::kPrimMakeSparseTensor, x, y, z).MinExtraNodes(0);
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimSparseTensorGetIndices, sparse), x);
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimSparseTensorGetValues, sparse), y);
-    MATCH_REPLACE(node, PPrimitive(prim::kPrimSparseTensorGetDenseShape, sparse), z);
+    auto sparse = PPrimitive(prim::kPrimMakeCOOTensor, x, y, z).MinExtraNodes(0);
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimCOOTensorGetIndices, sparse), x);
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimCOOTensorGetValues, sparse), y);
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimCOOTensorGetDenseShape, sparse), z);
     return nullptr;
   }
 };

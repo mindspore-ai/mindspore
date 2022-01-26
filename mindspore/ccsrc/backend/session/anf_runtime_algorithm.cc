@@ -159,7 +159,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   const PrimitiveSet expand_prims{
     prim::kPrimMakeTuple,
     prim::kPrimMakeCSRTensor,
-    prim::kPrimMakeSparseTensor,
+    prim::kPrimMakeCOOTensor,
     prim::kPrimMakeRowTensor,
   };
   // The MakeTuple/MakeSparse node need expand and recurse.

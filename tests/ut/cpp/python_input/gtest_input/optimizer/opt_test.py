@@ -1173,10 +1173,10 @@ def test_row_tensor(tag):
 def test_sparse_tensor(tag):
     """ test_add_zero """
     fns = FnDict()
-    make_sparse_tensor = Primitive('MakeSparseTensor')
-    sparse_tensor_get_values = Primitive('SparseTensorGetValues')
-    sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
-    sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
+    make_sparse_tensor = Primitive('MakeCOOTensor')
+    sparse_tensor_get_values = Primitive('COOTensorGetValues')
+    sparse_tensor_get_indices = Primitive('COOTensorGetIndices')
+    sparse_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 
     @fns
     def before_get_indices(x, y, z):

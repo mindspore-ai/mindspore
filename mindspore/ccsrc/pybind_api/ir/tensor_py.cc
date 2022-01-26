@@ -16,6 +16,8 @@
 
 #include "pybind_api/ir/tensor_py.h"
 
+#include <utility>
+
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
@@ -23,6 +25,11 @@
 
 namespace mindspore {
 namespace tensor {
+constexpr ssize_t kPyBufItemSize1 = 1;
+constexpr ssize_t kPyBufItemSize2 = 2;
+constexpr ssize_t kPyBufItemSize4 = 4;
+constexpr ssize_t kPyBufItemSize8 = 8;
+
 static TypeId GetDataType(const py::buffer_info &buf) {
   if (buf.format.size() == 1) {
     switch (buf.format.front()) {
@@ -30,11 +37,11 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       case 'f':
       case 'd':
         switch (buf.itemsize) {
-          case 2:
+          case kPyBufItemSize2:
             return TypeId::kNumberTypeFloat16;
-          case 4:
+          case kPyBufItemSize4:
             return TypeId::kNumberTypeFloat32;
-          case 8:
+          case kPyBufItemSize8:
             return TypeId::kNumberTypeFloat64;
         }
         break;
@@ -44,13 +51,13 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       case 'l':
       case 'q':
         switch (buf.itemsize) {
-          case 1:
+          case kPyBufItemSize1:
             return TypeId::kNumberTypeInt8;
-          case 2:
+          case kPyBufItemSize2:
             return TypeId::kNumberTypeInt16;
-          case 4:
+          case kPyBufItemSize4:
             return TypeId::kNumberTypeInt32;
-          case 8:
+          case kPyBufItemSize8:
             return TypeId::kNumberTypeInt64;
         }
         break;
@@ -60,13 +67,13 @@ static TypeId GetDataType(const py::buffer_info &buf) {
       case 'L':
       case 'Q':
         switch (buf.itemsize) {
-          case 1:
+          case kPyBufItemSize1:
             return TypeId::kNumberTypeUInt8;
-          case 2:
+          case kPyBufItemSize2:
             return TypeId::kNumberTypeUInt16;
-          case 4:
+          case kPyBufItemSize4:
             return TypeId::kNumberTypeUInt32;
-          case 8:
+          case kPyBufItemSize8:
             return TypeId::kNumberTypeUInt64;
         }
         break;
@@ -665,5 +672,34 @@ REGISTER_PYBIND_DEFINE(
       .def("__str__", &CSRTensor::ToString)
       .def("__repr__", &CSRTensor::ToString);
   }));
+
+py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) {
+  auto &shape = coo_tensor.shape();
+  py::tuple dims(shape.size());
+  for (size_t i = 0; i < dims.size(); ++i) {
+    dims[i] = py::int_(shape[i]);
+  }
+  return dims;
+}
+
+REGISTER_PYBIND_DEFINE(COOTensor, ([](const py::module *m) {
+                         // Define python COOTensor class.
+                         (void)py::class_<COOTensor, std::shared_ptr<COOTensor>>(*m, "COOTensor")
+                           .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+                                  return std::make_shared<COOTensor>(std::make_shared<Tensor>(indices),
+                                                                     std::make_shared<Tensor>(values),
+                                                                     GetShapeFromTuple(shape));
+                                }),
+                                py::arg("indices"), py::arg("values"), py::arg("shape"))
+                           .def(py::init(
+                                  [](const COOTensor &coo_tensor) { return std::make_shared<COOTensor>(coo_tensor); }),
+                                py::arg("input"))
+                           .def_property_readonly("_shape", COOTensorPy::GetPyTupleShape)
+                           .def_property_readonly("_dtype", &COOTensor::Dtype)
+                           .def_property_readonly("_indices", &COOTensor::GetIndices)
+                           .def_property_readonly("_values", &COOTensor::GetValues)
+                           .def("__str__", &COOTensor::ToString)
+                           .def("__repr__", &COOTensor::ToString);
+                       }));
 }  // namespace tensor
 }  // namespace mindspore

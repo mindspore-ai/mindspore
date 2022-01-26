@@ -47,7 +47,7 @@ enum TypeId : int {
   kObjectTypeKeyword,
   kObjectTypeTensorType,
   kObjectTypeRowTensorType,
-  kObjectTypeSparseTensorType,
+  kObjectTypeCOOTensorType,
   kObjectTypeUndeterminedType,
   kObjectTypeClass,
   kObjectTypeDictionary,

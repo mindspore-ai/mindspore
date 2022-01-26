@@ -601,10 +601,17 @@ row_tensor_get_indices = Primitive('RowTensorGetIndices')
 row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
 row_tensor_add = Primitive('RowTensorAdd')
 
-make_sparse_tensor = Primitive('MakeSparseTensor')
-sparse_tensor_get_values = Primitive('SparseTensorGetValues')
-sparse_tensor_get_indices = Primitive('SparseTensorGetIndices')
-sparse_tensor_get_dense_shape = Primitive('SparseTensorGetDenseShape')
+make_coo_tensor = Primitive('MakeCOOTensor')
+coo_tensor_get_values = Primitive('COOTensorGetValues')
+coo_tensor_get_indices = Primitive('COOTensorGetIndices')
+coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
+
+def make_sparse_tensor(indices, values, dense_shape):
+    """Call make_coo_tensor in this function."""
+    print("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+          "Please use 'COOTensor' instead.")
+    return make_coo_tensor(indices, values, dense_shape)
+
 
 make_csr_tensor = Primitive('MakeCSRTensor')
 csr_tensor_get_values = Primitive('CSRTensorGetValues')

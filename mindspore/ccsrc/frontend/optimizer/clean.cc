@@ -29,12 +29,12 @@ namespace mindspore {
 namespace opt {
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractClass;
+using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
-using mindspore::abstract::AbstractSparseTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractUndetermined;
 
@@ -79,8 +79,8 @@ static AbstractBasePtr AdaptAbs(const AbstractBasePtr &t) {
     return std::make_shared<AbstractTuple>(abs_list->elements());
   }
 
-  if (t->isa<AbstractSparseTensor>()) {
-    auto abs_sparse = dyn_cast<AbstractSparseTensor>(t);
+  if (t->isa<AbstractCOOTensor>()) {
+    auto abs_sparse = dyn_cast<AbstractCOOTensor>(t);
     std::vector<AbstractBasePtr> abstract_list{abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
     return std::make_shared<AbstractTuple>(abstract_list);
   }
@@ -511,19 +511,15 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager
       new_node = ConvertListSetItemToTupleSetItem(cnode);
     } else if (IsValueNode<ValueList>(node)) {
       new_node = ConvertValueListNodeToValueTupleNode(node->cast<ValueNodePtr>());
-    } else if (IsPrimitiveCNode(node, prim::kPrimMakeSparseTensor) ||
-               IsPrimitiveCNode(node, prim::kPrimMakeRowTensor)) {
+    } else if (IsPrimitiveCNode(node, prim::kPrimMakeRowTensor)) {
       new_node = ConvertMakeSparseToMakeTuple(cnode);
-    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetIndices) ||
-               IsPrimitiveCNode(node, prim::kPrimRowTensorGetIndices)) {
+    } else if (IsPrimitiveCNode(node, prim::kPrimRowTensorGetIndices)) {
       constexpr int64_t indices_index = 0;
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, indices_index);
-    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetValues) ||
-               IsPrimitiveCNode(node, prim::kPrimRowTensorGetValues)) {
+    } else if (IsPrimitiveCNode(node, prim::kPrimRowTensorGetValues)) {
       constexpr int64_t value_index = 1;
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, value_index);
-    } else if (IsPrimitiveCNode(node, prim::kPrimSparseTensorGetDenseShape) ||
-               IsPrimitiveCNode(node, prim::kPrimRowTensorGetDenseShape)) {
+    } else if (IsPrimitiveCNode(node, prim::kPrimRowTensorGetDenseShape)) {
       constexpr int64_t shape_index = 2;
       new_node = ConvertSparseGetAttrToTupleGetItem(cnode, shape_index);
     }

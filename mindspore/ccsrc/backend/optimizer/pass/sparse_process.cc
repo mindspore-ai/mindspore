@@ -117,6 +117,20 @@ bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
   return true;
 }
 
+std::vector<AbstractBasePtr> GetAbstractList(const AnfNodePtr &node, const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (prim_name == prim::kPrimMakeCSRTensor->name()) {
+    auto abs_sparse = dyn_cast<abstract::AbstractCSRTensor>(node->abstract());
+    MS_EXCEPTION_IF_NULL(abs_sparse);
+    return {abs_sparse->indptr(), abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
+  } else if (prim_name == prim::kPrimMakeCOOTensor->name()) {
+    auto abs_sparse = dyn_cast<abstract::AbstractCOOTensor>(node->abstract());
+    MS_EXCEPTION_IF_NULL(abs_sparse);
+    return {abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
+  }
+  return {};
+}
+
 const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -134,13 +148,9 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
   if (make_sparse_set.find(prim_name) != make_sparse_set.end()) {
     std::vector<AnfNodePtr> inputs;
     inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items;
     (void)inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
     auto new_node = cnode->func_graph()->NewCNode(inputs);
-    auto abs_sparse = dyn_cast<abstract::AbstractCSRTensor>(node->abstract());
-    MS_EXCEPTION_IF_NULL(abs_sparse);
-    std::vector<AbstractBasePtr> abstract_list{abs_sparse->indptr(), abs_sparse->indices(), abs_sparse->values(),
-                                               abs_sparse->dense_shape()};
+    std::vector<AbstractBasePtr> abstract_list = GetAbstractList(node, prim_name);
     auto abs_res = std::make_shared<abstract::AbstractTuple>(abstract_list);
     new_node->set_abstract(abs_res);
     new_node->set_scope(cnode->scope());

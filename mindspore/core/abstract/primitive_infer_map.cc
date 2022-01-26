@@ -215,11 +215,11 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDebug, R{InferImplDebug, nullptr, true}},
     // Dynamic shape testing
     {prim::kPrimGpuConvertToDynamicShape, R{InferImplGpuConvertToDynamicShape, nullptr, true}},
-    // SparseTensor
-    {prim::kPrimMakeSparseTensor, R{InferImplMakeSparseTensor, nullptr, true}},
-    {prim::kPrimSparseTensorGetValues, R{InferImplSparseTensorGetValues, nullptr, true}},
-    {prim::kPrimSparseTensorGetIndices, R{InferImplSparseTensorGetIndices, nullptr, true}},
-    {prim::kPrimSparseTensorGetDenseShape, R{InferImplSparseTensorGetDenseShape, nullptr, true}},
+    // COOTensor
+    {prim::kPrimMakeCOOTensor, R{InferImplMakeCOOTensor, nullptr, true}},
+    {prim::kPrimCOOTensorGetValues, R{InferImplCOOTensorGetValues, nullptr, true}},
+    {prim::kPrimCOOTensorGetIndices, R{InferImplCOOTensorGetIndices, nullptr, true}},
+    {prim::kPrimCOOTensorGetDenseShape, R{InferImplCOOTensorGetDenseShape, nullptr, true}},
     // RowTensor
     {prim::kPrimMakeRowTensor, R{InferImplMakeRowTensor, nullptr, true}},
     {prim::kPrimRowTensorGetValues, R{InferImplRowTensorGetValues, nullptr, true}},

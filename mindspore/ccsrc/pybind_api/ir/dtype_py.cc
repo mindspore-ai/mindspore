@@ -154,9 +154,9 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<RowTensorType, Type, std::shared_ptr<RowTensorType>>(m_sub, "RowTensorType")
       .def(py::init())
       .def_property_readonly("ElementType", &RowTensorType::element, "Get the RowTensorType's element type.");
-    (void)py::class_<SparseTensorType, Type, std::shared_ptr<SparseTensorType>>(m_sub, "SparseTensorType")
+    (void)py::class_<COOTensorType, Type, std::shared_ptr<COOTensorType>>(m_sub, "COOTensorType")
       .def(py::init())
-      .def_property_readonly("ElementType", &SparseTensorType::element, "Get the SparseTensorType's element type.");
+      .def_property_readonly("ElementType", &COOTensorType::element, "Get the COOTensorType's element type.");
     (void)py::class_<CSRTensorType, Type, std::shared_ptr<CSRTensorType>>(m_sub, "CSRTensorType")
       .def(py::init())
       .def_property_readonly("ElementType", &CSRTensorType::element, "Get the CSRTensorType's element type.");
