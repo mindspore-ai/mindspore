@@ -165,6 +165,7 @@ class AllReduce(PrimitiveWithInfer):
         self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
         self.add_prim_attr('index', 0)
+        self.add_prim_attr('no_eliminate', True)
 
     def infer_shape(self, x_shape):
         return x_shape

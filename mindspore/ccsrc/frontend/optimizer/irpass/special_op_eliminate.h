@@ -415,13 +415,25 @@ class ZeroLikeFillZero : public AnfVisitor {
   PrimitivePtr PrimFill_, PrimShape_, PrimDType_;
 };
 
-// {prim::kPrimDepend, X, ValueCond}->X
+// {prim::kPrimDepend, X, ValueCond} -> X
+// {prim::kPrimDepend, {prim, X, ...}, X} -> {prim, X, ...}
 class DependValueElim : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    PatternNode<AnfNodePtr> x, cond;
+    PatternNode<AnfNodePtr> x, cond, x_user;
     MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x, cond), x, IsVNode(cond.GetNode(node)));
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimDepend, x_user, x), x_user,
+                     IsUsedByOther(x.GetNode(node), x_user.GetNode(node)));
     return nullptr;
+  }
+
+  bool IsUsedByOther(const AnfNodePtr &node, const AnfNodePtr &user_node) {
+    if (!user_node->isa<CNode>()) {
+      return false;
+    }
+    auto user_cnode = user_node->cast<CNodePtr>();
+    auto inputs = user_cnode->inputs();
+    return std::any_of(inputs.begin(), inputs.end(), [&node](const AnfNodePtr &input) { return input == node; });
   }
 };
 
