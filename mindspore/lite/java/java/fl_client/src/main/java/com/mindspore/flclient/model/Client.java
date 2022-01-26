@@ -17,10 +17,10 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.FLClientStatus;
 import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
+import com.mindspore.lite.Model;
 import com.mindspore.lite.TrainSession;
 import com.mindspore.lite.config.MSConfig;
 import mindspore.schema.FeatureMap;
@@ -28,11 +28,13 @@ import mindspore.schema.FeatureMap;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  * Defining the client base class.
@@ -85,7 +87,7 @@ public abstract class Client {
      * @param inferCallback callback used for infer model.
      * @return infer result.
      */
-    public abstract List<Integer> getInferResult(List<Callback> inferCallback);
+    public abstract List<Object> getInferResult(List<Callback> inferCallback);
 
     /**
      * Init lite session and inputs buffer.
@@ -94,23 +96,37 @@ public abstract class Client {
      * @param config session run config.
      * @return execute status.
      */
-    public Status initSessionAndInputs(String modelPath, MSConfig config) {
+    public Status initSessionAndInputs(String modelPath, MSConfig config, int[][] inputShapes) {
         if (modelPath == null) {
             logger.severe(Common.addTag("session init failed"));
-            return Status.NULLPTR;
+            return Status.FAILED;
         }
-        Optional<LiteSession> optTrainSession = initSession(modelPath, config);
+        Optional<LiteSession> optTrainSession = initSession(modelPath, config, inputShapes != null);
         if (!optTrainSession.isPresent()) {
             logger.severe(Common.addTag("session init failed"));
-            return Status.NULLPTR;
+            return Status.FAILED;
         }
         trainSession = optTrainSession.get();
         inputsBuffer.clear();
-        List<MSTensor> inputs = trainSession.getInputs();
-        for (MSTensor input : inputs) {
-            ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
-            inputBuffer.order(ByteOrder.nativeOrder());
-            inputsBuffer.add(inputBuffer);
+        if (inputShapes == null) {
+            List<MSTensor> inputs = trainSession.getInputs();
+            for (MSTensor input : inputs) {
+                ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
+                inputBuffer.order(ByteOrder.nativeOrder());
+                inputsBuffer.add(inputBuffer);
+            }
+        } else {
+            boolean isSuccess = trainSession.resize(trainSession.getInputs(), inputShapes);
+            if (!isSuccess) {
+                logger.severe(Common.addTag("session resize failed"));
+                return Status.FAILED;
+            }
+            for (int[] shapes : inputShapes) {
+                int size = IntStream.of(shapes).reduce((a, b) -> a * b).getAsInt() * Integer.BYTES;
+                ByteBuffer inputBuffer = ByteBuffer.allocateDirect(size);
+                inputBuffer.order(ByteOrder.nativeOrder());
+                inputsBuffer.add(inputBuffer);
+            }
         }
         return Status.SUCCESS;
     }
@@ -182,7 +198,7 @@ public abstract class Client {
      *
      * @return infer status.
      */
-    public List<Integer> inferModel() {
+    public List<Object> inferModel() {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
             logger.severe(Common.addTag("train session switch eval mode failed"));
@@ -246,17 +262,44 @@ public abstract class Client {
         return Status.SUCCESS;
     }
 
-    private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig) {
+    private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
         if (modelPath == null) {
             logger.severe(Common.addTag("modelPath cannot be empty"));
             return Optional.empty();
         }
-        LiteSession trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
-        if (trainSession == null) {
-            logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
-            return Optional.empty();
+        // only lite session support dynamic shape
+        if (isDynamicInferModel) {
+            Model model = new Model();
+            boolean isSuccess = model.loadModel(modelPath);
+            if (!isSuccess) {
+                logger.severe(Common.addTag("load model failed:" + modelPath));
+                return Optional.empty();
+            }
+            trainSession = LiteSession.createSession(msConfig);
+            if (trainSession == null) {
+                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                msConfig.free();
+                model.free();
+                return Optional.empty();
+            }
+            msConfig.free();
+            isSuccess = trainSession.compileGraph(model);
+            if (!isSuccess) {
+                logger.severe(Common.addTag("compile graph failed:" + modelPath));
+                model.free();
+                trainSession.free();
+                return Optional.empty();
+            }
+            model.free();
+            return Optional.of(trainSession);
+        } else {
+            trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
+            if (trainSession == null) {
+                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                return Optional.empty();
+            }
+            return Optional.of(trainSession);
         }
-        return Optional.of(trainSession);
     }
 
     /**

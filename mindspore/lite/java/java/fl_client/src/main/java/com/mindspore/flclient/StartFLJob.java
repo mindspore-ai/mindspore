@@ -305,13 +305,6 @@ public class StartFLJob {
             retCode = ResponseCode.RequestError;
             return status;
         }
-        LOGGER.info(Common.addTag("[startFLJob] set <lr> for client: " + lr));
-        tag = client.setLearningRate(lr);
-        if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe(Common.addTag("[startFLJob] setLearningRate failed, return -1, please check"));
-            retCode = ResponseCode.RequestError;
-            return FLClientStatus.FAILED;
-        }
         LOGGER.info(Common.addTag("[startFLJob] set <batch size> for client: " + batchSize));
         client.setBatchSize(batchSize);
         tag = client.updateFeatures(flParameter.getTrainModelPath(), trainFeatureMaps);
@@ -350,13 +343,6 @@ public class StartFLJob {
         if (status == FLClientStatus.FAILED) {
             retCode = ResponseCode.RequestError;
             return status;
-        }
-        LOGGER.info(Common.addTag("[startFLJob] set <lr> for client: " + lr));
-        tag = client.setLearningRate(lr);
-        if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe(Common.addTag("[startFLJob] setLearningRate failed, return -1, please check"));
-            retCode = ResponseCode.RequestError;
-            return FLClientStatus.FAILED;
         }
         LOGGER.info(Common.addTag("[startFLJob] set <batch size> for client: " + batchSize));
         client.setBatchSize(batchSize);
@@ -452,6 +438,7 @@ public class StartFLJob {
                             "valid, " +
                             "will use the default value 0.1"));
                 }
+                localFLParameter.setLr(lr);
                 batchSize = flPlanConfig.miniBatch();
                 if (Common.checkFLName(flParameter.getFlName())) {
                     status = deprecatedParseFeatures(flJob);
