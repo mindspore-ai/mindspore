@@ -97,6 +97,7 @@ from .scatter_elements import _scatter_elements_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
 from .square import _square_aicpu
 from .lower_bound import _lower_bound_aicpu
+from .upper_bound import _upper_bound_aicpu
 from .grid_sampler_3d import _grid_sampler_3d_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
 from .cross import _cross_aicpu
