@@ -7681,7 +7681,7 @@ class Conv3D(PrimitiveWithInfer):
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
         dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
-                                      : math:`(dilation_d, dilation_h, dilation_w)`.
+                                      :math:`(dilation_d, dilation_h, dilation_w)`.
                                       Currently, dilation on depth only supports the case of 1.
                                       Specifies the dilation rate to use for dilated convolution.
                                       If set :math:`k > 1`, there will be :math:`k - 1` pixels skipped

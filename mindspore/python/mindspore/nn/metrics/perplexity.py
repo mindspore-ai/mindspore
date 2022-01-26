@@ -67,7 +67,7 @@ class Perplexity(Metric):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result: math:preds and :math:labels.
+        Updates the internal evaluation result: :math:`preds` and :math:`labels`.
 
         Args:
             inputs: Input `preds` and `labels`. `preds` and `labels` are a `Tensor`, list or numpy.ndarray.
