@@ -22,7 +22,7 @@
 __inline__ __device__ int CalDiagOffset(int d, int max_diag_len, const int inner_row, const int inner_col,
                                         const bool right_align_super_diagonal, const bool right_align_sub_diagonal) {
   const bool right_align = (d >= 0 && right_align_super_diagonal) || (d <= 0 && right_align_sub_diagonal);
-  const int diag_len = std::min(inner_row + std::min(0, d), inner_col - std::max(0, d));
+  const int diag_len = min(inner_row + min(0, d), inner_col - max(0, d));
   const int offset = (right_align) ? (max_diag_len - diag_len) : 0;
   return offset;
 }
@@ -41,13 +41,13 @@ __global__ void MatrixSetDiagKernel(const int outer_batch, const int inner_row, 
     int d = static_cast<int>(col - row);
     if (is_single_diag) {
       if (d == upper_index) {
-        output_addr[i] = diag_addr[batch * max_diag_len + col - std::max(upper_index, 0)];
+        output_addr[i] = diag_addr[batch * max_diag_len + col - max(upper_index, 0)];
       }
     } else {
       int diag_index = upper_index - d;
       int offset =
         CalDiagOffset(d, max_diag_len, inner_row, inner_col, right_align_super_diagonal, right_align_sub_diagonal);
-      int index_in_diag = col - std::max(d, 0) + offset;
+      int index_in_diag = col - max(d, 0) + offset;
       if (d >= lower_index && d <= upper_index) {
         output_addr[i] = diag_addr[batch * num_diags * max_diag_len + diag_index * max_diag_len + index_in_diag];
       }
