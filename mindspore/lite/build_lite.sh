@@ -382,10 +382,13 @@ build_lite_arm64_and_jni() {
         cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
         cp ./${pkg_name}/runtime/lib/libmindspore-lite*so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
-    minddata_so=${pkg_name}/runtime/lib/libminddata-lite.so
+    local minddata_so=${pkg_name}/runtime/lib/libminddata-lite.so
     if [ -e "${minddata_so}" ]; then
        cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
        cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
+    fi
+    local jpeg_turbo_dir=${pkg_name}/runtime/third_party/libjpeg-turbo/lib
+    if [ -e "$jpeg_turbo_dir" ]; then
        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/
        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/arm64-v8a/
     fi
@@ -441,6 +444,9 @@ build_lite_arm32_and_jni() {
     if [ -e "${minddata_so}" ]; then
        cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
        cp ./${pkg_name}/runtime/lib/libminddata-lite.so  ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
+    fi
+    local jpeg_turbo_dir=${pkg_name}/runtime/third_party/libjpeg-turbo/lib
+    if [ -e "$jpeg_turbo_dir" ]; then
        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/java/app/libs/armeabi-v7a/
        cp ./${pkg_name}/runtime/third_party/libjpeg-turbo/lib/*.so* ${LITE_JAVA_PATH}/native/libs/armeabi-v7a/
     fi
@@ -520,8 +526,10 @@ build_aar() {
     local minddata_so=${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/libminddata-lite.so
     if [ -e "${minddata_so}" ]; then
       cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar
+      sha256sum ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar > ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar.sha256
     else
       cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar
+      sha256sum ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar > ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar.sha256
     fi
 }
 
