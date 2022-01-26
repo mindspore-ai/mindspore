@@ -62,24 +62,26 @@ class EinsumGradGpuKernel : public GpuKernel {
       T *dst_ptr = GetDeviceAddress<T>(outputs, 0);
       CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
         cudaMemcpyAsync(dst_ptr, src_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "Mul's cudaMemcpyAsync failed!");
+        "For " + node_name_ + ", cudaMemcpyAsync failed.");
     }
     LaunchBackward(inputs, workspace, outputs, stream_ptr);
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
+    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    node_name_ = node_name;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num < INPUT_NUM_MIN) {
-      MS_LOG(ERROR) << "Input number should be no less than 2!";
+      MS_LOG(ERROR) << "For " << node_name_ << ", input number should be no less than 2, but got " << input_num;
       return false;
     }
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     type_id_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     for (size_t idx = 0; idx < input_num - 1; ++idx) {
       TypeId cur_type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, idx);
       if (cur_type_id != type_id_) {
-        MS_LOG(ERROR) << "input  types are not the same in " << node_name;
+        MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return false;
       }
       std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
@@ -87,7 +89,7 @@ class EinsumGradGpuKernel : public GpuKernel {
     }
     std::string equation = GetAttr<std::string>(kernel_node, "equation");
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
-    bool flag = func_helper_.Preprocess(equation, input_shapes_, &out_shape_, &single_op_, &res_op_);
+    bool flag = func_helper_.Preprocess(equation, node_name, input_shapes_, &out_shape_, &single_op_, &res_op_);
     if (!flag) {
       return false;
     }
@@ -247,7 +249,7 @@ class EinsumGradGpuKernel : public GpuKernel {
         size_t size = func_helper_.GetShapeSize(shape);
         CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
           cudaMemcpyAsync(mid_res, dst_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-          "Transpose's cudaMemcpyAsync failed!");
+          "For " + node_name_ + ", cudaMemcpyAsync failed.");
       }
       if (src_ptr == dout && dst_ptr == work0) {
         src_ptr = work0;
@@ -284,7 +286,7 @@ class EinsumGradGpuKernel : public GpuKernel {
         size_t size = func_helper_.GetShapeSize(back_shape);
         CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
           cudaMemcpyAsync(out_ptr, src_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-          "Transpose's cudaMemcpyAsync failed!");
+          "For " + node_name_ + ", cudaMemcpyAsync failed.");
       }
     }
   }
@@ -318,7 +320,7 @@ class EinsumGradGpuKernel : public GpuKernel {
         size_t size = func_helper_.GetShapeSize(back_shape);
         CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
           cudaMemcpyAsync(out_ptr, src_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-          "Transpose's cudaMemcpyAsync failed!");
+          "For " + node_name_ + ", cudaMemcpyAsync failed.");
       }
     }
   }
@@ -363,7 +365,7 @@ class EinsumGradGpuKernel : public GpuKernel {
         size_t size = func_helper_.GetShapeSize(shape_c);
         CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(middle_res_ptr, src_ptr, size, cudaMemcpyDeviceToDevice,
                                                           reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                          "Transpose's cudaMemcpyAsync failed!");
+                                          "For " + node_name_ + ", cudaMemcpyAsync failed.");
       }
       middle_res_ptr = GetDeviceAddress<T>(workspace, two_op_cnt);
       dst_ptr = middle_res_ptr;
@@ -375,6 +377,7 @@ class EinsumGradGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   EinsumHelper<T> func_helper_;
+  std::string node_name_;
   TypeId type_id_;
   size_t work_size_;
   size_t shape_size_;

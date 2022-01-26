@@ -78,7 +78,7 @@ class EinsumGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_,
       cudaMemcpyAsync(res_ptr, src_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync input_shape failed");
+      "For " + node_name_ + ", cudaMemcpyAsync failed.");
 
     size_t count = 0;
     for (size_t idx = 1; idx < single_op_.size(); ++idx) {
@@ -117,23 +117,24 @@ class EinsumGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_,
       cudaMemcpyAsync(out_ptr, res_ptr, size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync input_shape failed");
+      "For " + node_name_ + ", cudaMemcpyAsync failed.");
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
+    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    node_name_ = node_name;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num < 1) {
-      MS_LOG(ERROR) << "Input number can not be less than 1!";
+      MS_LOG(ERROR) << "For " << node_name << ", input number can not be less than 1, but got " << input_num;
       return false;
     }
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     type_id_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     for (size_t idx = 0; idx < input_num; ++idx) {
       TypeId cur_type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, idx);
       if (cur_type_id != type_id_) {
-        MS_LOG(ERROR) << "input  types are not the same in " << node_name;
+        MS_LOG(ERROR) << "For " << node_name << ", input types should be the same, but it does not.";
         return false;
       }
       std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
@@ -141,7 +142,7 @@ class EinsumGpuKernel : public GpuKernel {
     }
     std::string equation = GetAttr<std::string>(kernel_node, "equation");
     single_op_ = std::vector<std::vector<OpStruct>>(input_shapes_.size());
-    bool flag = func_helper_.Preprocess(equation, input_shapes_, &out_shape_, &single_op_, &res_op_);
+    bool flag = func_helper_.Preprocess(equation, node_name, input_shapes_, &out_shape_, &single_op_, &res_op_);
     if (!flag) {
       return false;
     }
@@ -210,6 +211,7 @@ class EinsumGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   EinsumHelper<T> func_helper_;
+  std::string node_name_;
   TypeId type_id_;
   std::vector<std::vector<size_t>> input_shapes_;
   std::vector<size_t> out_shape_;
