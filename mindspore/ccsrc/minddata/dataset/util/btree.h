@@ -226,7 +226,7 @@ class BPlusTree {
 
     void LockNode(BaseNode *p, LockMode locktype) { paths_.emplace_back(p, locktype); }
 
-    void UnlockMyParents(BaseNode *me) {
+    void UnlockMyParents(const BaseNode *me) {
       path p = paths_.front();
       while (p.node_ != me) {
         if (p.locked_) {
