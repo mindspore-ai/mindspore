@@ -934,7 +934,8 @@ class SideEffectFinder {
       return {EffectInfo::kDetected, true, false, false};
     }
 
-    MS_LOG(WARNING) << "Side effect undetectable: " << cnode->DebugString(2);
+    // For other cnodes, we assume that they have no side effects.
+    MS_LOG(DEBUG) << "Assume no side effect for: " << cnode->DebugString();
     return {EffectInfo::kDetected, false, false, false};
   }
 
