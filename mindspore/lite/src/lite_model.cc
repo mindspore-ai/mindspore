@@ -233,8 +233,8 @@ int LiteModel::NodeVerify() const {
       MS_LOG(ERROR) << "Index of node->output_indices_ is beyond size.";
       return RET_ERROR;
     }
-    if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [&](const uint32_t &idx) {
-          return this->all_tensors_[idx]->nodeType() == NodeType_ValueNode &&
+    if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [&, this](const uint32_t &idx) {
+          return this->all_tensors_[idx]->nodeType() == static_cast<int>(NodeType_ValueNode) &&
                  this->all_tensors_[idx]->data() != nullptr;
         })) {
       MS_LOG(ERROR) << "node output tensor node type is ValueNode, node name: " << node->name_;
