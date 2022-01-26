@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ void Node::AddInput(const NodePtr &new_input) {
 void Node::SetInput(size_t i, const NodePtr &new_input) {
   MS_EXCEPTION_IF_NULL(new_input);
   if (i >= inputs_.size()) {
-    MS_LOG(EXCEPTION) << "The index " << i << " is out of the inputs range " << inputs_.size();
+    MS_LOG(EXCEPTION) << "The index " << i << " is out of the inputs range [0, " << inputs_.size() << ")";
   }
   auto &old_input = inputs_[i];
   old_input->RemoveUser(this, i);

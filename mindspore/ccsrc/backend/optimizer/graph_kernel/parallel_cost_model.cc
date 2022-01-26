@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
   AnfNodePtrList nodes = {node};
   DumpOption dump_option;
   if (!AnfToJsonDesc(nodes, dump_option, &json_desc)) {
-    MS_LOG(EXCEPTION) << "Collect json desc failed.";
+    MS_LOG(EXCEPTION) << "Collect json desc for node [" << node->fullname_with_scope() << "] failed";
   }
 
   auto json_desc_str = json_desc.dump();
@@ -65,7 +65,7 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
 
   py::tuple ret_tuple = py::cast<py::tuple>(ret);
   if (!py::isinstance<py::tuple>(ret_tuple) || ret_tuple.size() != 4) {
-    MS_LOG(EXCEPTION) << "Parallel cost model should return a tuple with two elements!";
+    MS_LOG(EXCEPTION) << "Parallel cost model should return a tuple with 4 elements!";
   }
 
   std::vector<DimInfoPtr> dim_infos;
@@ -81,7 +81,7 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
 
 FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type, const py::object &type_info) const {
   if (!py::isinstance<py::str>(fusion_type)) {
-    MS_LOG(EXCEPTION) << "Fusion type for parallel is invalid!";
+    MS_LOG(EXCEPTION) << "Fusion type for parallel should be of type str!";
   }
 
   std::string fusion_type_name = py::cast<std::string>(fusion_type);
@@ -91,7 +91,7 @@ FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type
     fusion_info = std::make_shared<BlockFusionInfo>();
   } else if (fusion_type_name == "block_pipeline_fusion") {
     if (!py::isinstance<py::list>(type_info)) {
-      MS_LOG(EXCEPTION) << "Fusion type info for block pipe fusion type is invalid!";
+      MS_LOG(EXCEPTION) << "Fusion type info for block pipe fusion type should be of type list!";
     }
     std::vector<std::vector<int>> pipeline_ids;
     py::list pipeline_ids_list = py::cast<py::list>(type_info);
@@ -113,7 +113,8 @@ FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type
 
 ParallelCostModelPtr ParellelCostModelWarehouse::GetParallelCostModel(const std::string &target) const {
   if (target != kGPUDevice && target != kAscendDevice) {
-    MS_LOG(EXCEPTION) << "Parallel cost model do not support " << target << " now.";
+    MS_LOG(EXCEPTION) << "Parallel cost model supports " << kGPUDevice << " and " << kAscendDevice << ", not "
+                      << target;
   }
   return cost_model_;
 }

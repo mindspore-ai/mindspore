@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc) {
   kernel::AkgKernelJsonDecoder akg_kernel_json_decoder;
   auto fg = akg_kernel_json_decoder.DecodeFusedNodes(json_desc);
   if (fg == nullptr) {
-    MS_LOG(ERROR) << "Akg decode json to graph failed.";
+    MS_LOG(ERROR) << "Akg decode json to graph failed. json is: " << json_desc;
     return nullptr;
   }
   return fg;
@@ -331,9 +331,9 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
   const auto &attrs = prim->attrs();
-  auto iter = attrs.find("axis");
+  auto iter = attrs.find(kAttrAxis);
   if (iter == attrs.end()) {
-    MS_LOG(EXCEPTION) << "Origin node have no attributes!";
+    MS_LOG(EXCEPTION) << "Can not find attribute " << kAttrAxis << " in node " << node->fullname_with_scope();
   }
 
   std::vector<int64_t> axis;
@@ -345,13 +345,14 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
       if (value->isa<Int64Imm>()) {
         axis.push_back(GetValue<int64_t>(value));
       } else {
-        MS_LOG(EXCEPTION) << "Reduce axis type should be int64!";
+        MS_LOG(EXCEPTION) << "Element in attribute axis should be of type int64 in node "
+                          << node->fullname_with_scope();
       }
     }
   } else if (v->isa<Int64Imm>()) {
     axis.push_back(GetValue<int64_t>(v));
   } else {
-    MS_LOG(EXCEPTION) << "Reduce axis should be a list or tuple!";
+    MS_LOG(EXCEPTION) << "Attribute axis should be a list or tuple in node " << node->fullname_with_scope();
   }
 
   return axis;

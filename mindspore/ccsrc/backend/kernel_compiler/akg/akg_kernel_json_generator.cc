@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ using kernel::OpImplyType;
 using kernel::OpInfo;
 using kernel::OpIOInfo;
 namespace {
+constexpr auto kAttrParallelDimInfoSize = 2;
+
 std::vector<int64_t> GetDynInputSizes(const AnfNodePtr &anf_node) {
   std::vector<int64_t> dyn_input_sizes;
   auto primitive = GetCNodePrimitive(anf_node);
@@ -46,8 +48,9 @@ std::vector<int64_t> GetDynInputSizes(const AnfNodePtr &anf_node) {
 
 std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  if (index >= AnfUtils::GetInputTensorNum(anf_node)) {
-    MS_EXCEPTION(ArgumentError) << "Index is out of the size of anf_node inputs. Node info : ["
+  auto inputs_num = AnfUtils::GetInputTensorNum(anf_node);
+  if (index >= inputs_num) {
+    MS_EXCEPTION(ArgumentError) << "Input index " << index << " is out of range [0, " << inputs_num << ") in node ["
                                 << anf_node->DebugString() << "]";
   }
   auto cnode = anf_node->cast<CNodePtr>();
@@ -234,8 +237,8 @@ bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, siz
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (input_idx + 1 >= cnode->size()) {
-    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
-                                << cnode->inputs().size() << "][" << cnode->DebugString() << "]";
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+                                << ") in node [" << cnode->DebugString() << "]";
   }
 
   auto input_node = cnode->input(input_idx + 1);
@@ -284,7 +287,10 @@ bool AkgKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, siz
   } else if (type_id == kBool->type_id()) {
     (*node_json)["value"] = static_cast<bool *>(data)[0];
   } else {
-    MS_LOG(EXCEPTION) << "Unknown value type of tensor[" << cnode->DebugString() << "]";
+    MS_LOG(EXCEPTION) << "Fail to parse the input value of [" << cnode->DebugString() << "], the input index is "
+                      << input_idx << ", because the value type: " << TypeIdToString(type_id, true)
+                      << " is not in supported list: [float64, float32, float16, uint64, uint32, uint16, uint8, int64, "
+                         "int32, int16, int8, bool].";
   }
   return true;
 }
@@ -447,8 +453,8 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
       if (find_item != op_info_shape_name.end()) {
         if (!dyn_input_sizes.empty()) {
           if (find_item->second >= dyn_input_sizes.size() - 1) {
-            MS_LOG(EXCEPTION) << "dyn_input_sizes list index:" << find_item->second
-                              << " is out of range:" << dyn_input_sizes.size() - 1 << ".";
+            MS_LOG(EXCEPTION) << "dyn_input_sizes list index " << find_item->second << " is out of range [0, "
+                              << dyn_input_sizes.size() - 1 << ") in node [" << anf_node->fullname_with_scope() << "]";
             return false;
           }
           size_t tensor_idx = LongToSize(std::accumulate(&dyn_input_sizes[0], &dyn_input_sizes[find_item->second], 0));
@@ -481,8 +487,8 @@ size_t AkgKernelJsonGenerator::GetInputTensorIdxInc(const AnfNodePtr &anf_node, 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_EXCEPTION(ArgumentError) << "input_idx [" << input_idx << "] is out of index of inputs of ["
-                                << cnode->inputs().size() - 1 << "][" << cnode->DebugString() << "]";
+    MS_EXCEPTION(ArgumentError) << "Input index " << input_idx << " is out of range [0, " << cnode->inputs().size()
+                                << ") in node [" << cnode->DebugString() << "]";
   }
 
   auto input_node = cnode->input(input_idx + 1);
@@ -511,14 +517,16 @@ std::string AkgKernelJsonGenerator::GetTensorName(const nlohmann::json &node_jso
   if (tag == kJsonKeyOutputDesc) {
     first_index = tag_desc;
   } else if (!tag_desc.is_array() || tag_desc.size() <= position.first) {
-    MS_LOG(ERROR) << "Node [" << tag_desc.dump() << "] has no enough value [" << position.first << "].";
+    MS_LOG(ERROR) << "Access index is out of range: "
+                  << " trying to access index " << position.first << " of node: " << tag_desc.dump();
     return "";
   } else {
     first_index = tag_desc[position.first];
   }
 
   if (!first_index.is_array() || first_index.size() <= position.second) {
-    MS_LOG(ERROR) << "Node [" << first_index.dump() << "] has no enough value [" << position.second << "].";
+    MS_LOG(ERROR) << "Access index is out of range: "
+                  << " trying to access index " << position.second << " of node: " << first_index.dump();
     return "";
   }
   auto const &second_index = first_index[position.second];
@@ -543,14 +551,16 @@ void AkgKernelJsonGenerator::SetTensorName(const std::string &tag, const std::st
   if (tag == kJsonKeyOutputDesc) {
     first_index = tag_desc;
   } else if (!tag_desc->is_array() || tag_desc->size() <= position.first) {
-    MS_LOG(ERROR) << "Node [" << tag_desc->dump() << "] has no enough value [" << position.first << "].";
+    MS_LOG(ERROR) << "Access index is out of range: "
+                  << " trying to access index " << position.first << " of node: " << tag_desc->dump();
     return;
   } else {
     first_index = &((*tag_desc)[position.first]);
   }
 
   if (!first_index->is_array() || first_index->size() <= position.second) {
-    MS_LOG(ERROR) << "Node [" << first_index->dump() << "] has no enough value [" << position.second << "].";
+    MS_LOG(ERROR) << "Access index is out of range: "
+                  << " trying to access index " << position.second << " of node: " << first_index->dump();
     return;
   }
   nlohmann::json *second_index = &((*first_index)[position.second]);
@@ -661,7 +671,7 @@ size_t AkgKernelJsonGenerator::GetTensorSize(const nlohmann::json &node_json) co
 bool AkgKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
                                        std::vector<size_t> *output_size) const {
   if (input_size == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "input size or output size is nullptr";
+    MS_LOG(ERROR) << "input size or output size is nullptr when parsing IO size in json: " << node_json;
     return false;
   }
   input_size->clear();
@@ -704,7 +714,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   }
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
-    MS_LOG(ERROR) << "Cal mem size failed.";
+    MS_LOG(ERROR) << "Fail to get input and output size of json: " << *kernel_json;
     return false;
   }
 
@@ -745,8 +755,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
   if (anf_nodes.empty()) {
-    MS_LOG(ERROR) << "Invalid input size, anf_nodes [" << anf_nodes.size() << "], input_list [" << input_list.size()
-                  << "].";
+    MS_LOG(ERROR) << "anf_nodes list is empty";
     return false;
   }
   MS_LOG(DEBUG) << "Fusion nodes: [" << output_list.size() << "], input_list: [" << anf_nodes.size()
@@ -806,7 +815,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   GenStitchJson(anf_nodes, &node_json_map, kernel_json);
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
-    MS_LOG(ERROR) << "Cal mem size failed.";
+    MS_LOG(ERROR) << "Fail to get input and output size of json: " << *kernel_json;
     return false;
   }
 
@@ -907,8 +916,11 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
       // Get dim info.
       if (prim->HasAttr(kAttrParallelDimInfo)) {
         auto info = GetValue<std::vector<size_t>>(prim->GetAttr(kAttrParallelDimInfo));
-        if (info.size() != 2) {
-          MS_LOG(EXCEPTION) << "Parallel dim info is invalid!";
+        auto info_size = info.size();
+        if (info_size != kAttrParallelDimInfoSize) {
+          MS_LOG(EXCEPTION) << "The size of attr " << kAttrParallelDimInfo << " in node ["
+                            << tcnode->fullname_with_scope() << "] should be " << kAttrParallelDimInfoSize
+                            << ", but got " << info_size;
         }
         auto tensor_name =
           GetTensorName(node_json_map.at(tmp_output), kJsonKeyOutputDesc, std::make_pair(0, tmp_output_index));
@@ -1003,7 +1015,8 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
   }
   auto out_cnode = fg->output()->cast<CNodePtr>();
   if (out_cnode == nullptr) {
-    MS_LOG(ERROR) << "Wrong graph generated for Kernel [" << c_node->fullname_with_scope() << "]";
+    MS_LOG(ERROR) << "Wrong graph generated for kernel [" << c_node->fullname_with_scope()
+                  << "], output cnode is a null pointer";
     return false;
   }
   // check all inputs in the cnodes: if it is a valuenode, replace it by a parameter

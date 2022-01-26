@@ -22,6 +22,7 @@
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
+#include "utils/runtime_error_codes.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,17 +36,22 @@ constexpr uint32_t DEFAULT_BLOCK_DIM = 1;
 /**
  * @brief infotable contain func_stub\blockdim\kernel file buffer
  */
-AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {}
+AkgKernelMod::AkgKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {
+  if (kernel_pack != nullptr) {
+    auto kernel_json_info = kernel_pack->kernel_json_info();
+    kernel_name_ = kernel_json_info.kernel_name;
+  }
+}
 
 bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                           const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
-    MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
+    MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
 
   if (kernel_pack_ == nullptr) {
-    MS_LOG(ERROR) << "kernel pack should not be nullptr.";
+    MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
   if (stream_ == nullptr) {
@@ -54,7 +60,7 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
   if (func_stub == 0) {
-    MS_LOG(ERROR) << "GenFuncStub failed.";
+    MS_LOG(ERROR) << "GenFuncStub failed. Kernel name: " << kernel_name_;
     return false;
   }
 
@@ -71,9 +77,11 @@ bool AkgKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
 
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto stream = static_cast<rtStream_t *>(stream_);
-  if (RT_ERROR_NONE != rtKernelLaunch(reinterpret_cast<void *>(func_stub), block_dim, runtime_args.data(),
-                                      SizeToUint(sizeof(void *) * runtime_args.size()), l2ctrl, stream)) {
-    MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
+  auto ret = rtKernelLaunch(reinterpret_cast<void *>(func_stub), block_dim, runtime_args.data(),
+                            SizeToUint(sizeof(void *) * runtime_args.size()), l2ctrl, stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call runtime rtKernelLaunch error. Kernel name: " << kernel_name_
+                  << ". Error message: " << GetErrorMsg(static_cast<uint32_t>(ret));
     return false;
   }
 
@@ -84,7 +92,7 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (kernel_pack_ == nullptr) {
-    MS_LOG(EXCEPTION) << "kernel pack should not be nullptr.";
+    MS_LOG(EXCEPTION) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
   }
 
   std::vector<uint8_t> args;
@@ -110,7 +118,7 @@ std::vector<TaskInfoPtr> AkgKernelMod::GenTask(const std::vector<AddressPtr> &in
   uint32_t block_dim = DEFAULT_BLOCK_DIM;  // default blockdim equal to 1.
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim);
   if (func_stub == 0) {
-    MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+    MS_LOG(ERROR) << "GenFuncStub failed. Kernel name: " << kernel_name_;
   }
 
   std::string stub_func = KernelManager::GetStubFuncName(kernel_pack_);

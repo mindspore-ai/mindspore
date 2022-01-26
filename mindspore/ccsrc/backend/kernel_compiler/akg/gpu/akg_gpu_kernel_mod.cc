@@ -74,28 +74,40 @@ CUresult AkgGpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool
 
   CUresult result = cuModuleLoadDataEx(&module, kernel_pack->GetKernel()->contents, 1, options, values);
   if (result != CUDA_SUCCESS) {
-    MS_LOG(ERROR) << "cuModuleLoadData failed.";
+    const char *msg = nullptr;
+    cuGetErrorName(result, &msg);
+    MS_LOG(ERROR) << "cuModuleLoadDataEx failed. Kernel name: << " << fn << ". Error message: " << msg;
     return result;
   }
   result = cuModuleGetFunction(func, module, fn.c_str());
   if (result != CUDA_SUCCESS) {
-    MS_LOG(ERROR) << "cuModuleGetFunction failed.";
+    const char *msg = nullptr;
+    cuGetErrorName(result, &msg);
+    MS_LOG(ERROR) << "cuModuleGetFunction failed. Kernel name: << " << fn << ". Error message: " << msg;
     return result;
   }
   infotable_[fn] = std::make_shared<GpuKernelMeta>(*func, module, *thread_info);
   return result;
 }
 
-AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {}
+AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {
+  if (kernel_pack != nullptr) {
+    auto js = kernel_pack->GetJson();
+    if (js != nullptr) {
+      auto parsed_js = nlohmann::json::parse(js->contents, js->contents + js->len);
+      kernel_name_ = parsed_js["kernelName"];
+    }
+  }
+}
 
 bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
-    MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
+    MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
   if (kernel_pack_ == nullptr) {
-    MS_LOG(ERROR) << "kernel pack should not be nullptr.";
+    MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
   vector<uint32_t> thread_info;
@@ -104,7 +116,7 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
-    MS_LOG(ERROR) << "Get function failed, error: " << msg;
+    MS_LOG(ERROR) << "Get function " << kernel_name_ << " failed. Error message: " << msg;
     return false;
   }
   std::vector<void *> runtimeargs;
@@ -122,7 +134,7 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
-    MS_LOG(ERROR) << "Launch kernel failed, error: " << msg;
+    MS_LOG(ERROR) << "Launch kernel failed. Kernel name: " << kernel_name_ << ". cuLaunchKernel error message: " << msg;
     return false;
   }
   return true;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -508,7 +508,8 @@ std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodes
   // Get unused nodes by offset index, the result will contain the node with start index.
   int node_limit = static_cast<int>(nodes.size());
   if (start >= node_limit) {
-    MS_LOG(EXCEPTION) << "Index offset is exceed the limit of given nodes.";
+    MS_LOG(EXCEPTION) << "Index offset should be less than the limit of given nodes " << node_limit << ", but got "
+                      << start;
   }
   AnfNodePtrList target_nodes = {nodes[IntToSize(start)]};
   std::vector<int> valid_indices;
@@ -521,10 +522,12 @@ std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodes
   size_t limit = unused.size();
   for (auto offset : offsets) {
     if (offset >= limit) {
-      MS_LOG(EXCEPTION) << "Index offset is exceed the limit of unused nodes.";
+      MS_LOG(EXCEPTION) << "Index offset should be less than the limit of unused nodes " << limit << ", but got "
+                        << offset;
     }
     if (SizeToInt(unused[offset]) >= node_limit) {
-      MS_LOG(EXCEPTION) << "Index offset is exceed the limit of nodes.";
+      MS_LOG(EXCEPTION) << "Index offset should be less than the limit of nodes " << node_limit << ", but got "
+                        << unused[offset];
     }
     valid_indices.push_back(unused[offset]);
     target_nodes.push_back(nodes[unused[offset]]);
@@ -592,7 +595,8 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
         GetAvaliableNodesByOffset(SizeToInt(i), tc, sorted_candidates_used, candidates, std::set<int>());
       auto [dim_infos, benefit, fusion_info] = cost_model_ptr_->CalFuseInfo(other_candidates);
       if (benefit <= 0) {
-        MS_LOG(EXCEPTION) << "Internal error in candidate search!";
+        MS_LOG(EXCEPTION) << "Internal error in candidate search! benefit should be greater than 0, but got "
+                          << benefit;
       }
       max_benefit = benefit;
       best_parallel_info = ParallelInfo(other_candidates, dim_infos, fusion_info);
@@ -665,7 +669,8 @@ void ParallelOpFusion::SearchFuseNodesInParallelGroup(const std::vector<AnfNodeP
   };
   auto update_tails = [&tails](const std::vector<bool> &used) {
     if (used.size() != tails.size()) {
-      MS_LOG(EXCEPTION) << "Judged nodes size is not equal to left ones!";
+      MS_LOG(EXCEPTION) << "Judged nodes size is different from left ones size: " << used.size() << " vs "
+                        << tails.size();
     }
     for (size_t id = 0; id < used.size(); ++id) {
       if (used[id]) {

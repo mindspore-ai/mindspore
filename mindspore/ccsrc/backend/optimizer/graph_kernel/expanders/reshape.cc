@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class ExpandDims : public OpDesc {
     for (auto x : axis) {
       int64_t rank = static_cast<int64_t>(new_shape.size());
       if (x > rank || x < -rank - 1) {
-        MS_LOG(EXCEPTION) << "ExpandDims axis " << x << " is out of range of size " << new_shape.size();
+        MS_LOG(EXCEPTION) << "ExpandDims axis " << x << " is out of range of [" << (-rank - 1) << ", " << rank << "]";
       }
       if (x >= 0) {
         (void)new_shape.insert(new_shape.begin() + x, 1LL);

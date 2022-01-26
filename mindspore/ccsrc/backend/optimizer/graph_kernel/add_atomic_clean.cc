@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ namespace {
 auto constexpr NUMBER_COND_FOR_FILTER_INPLACE = 2;
 std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = false) {
   if (!IsPrimitiveCNode(node, prim::kPrimReduceSum)) {
-    MS_LOG(EXCEPTION) << "Only process for reduce sum!";
+    MS_LOG(EXCEPTION) << "Expect ReduceSum node, but got " << AnfAlgo::GetCNodeName(node);
   }
 
   auto input = node->cast<CNodePtr>()->input(kFirstDataInputIndex);
@@ -443,7 +443,8 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const AtomicAddInf
   std::set<TypeId> data_support = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
 
   if (!std::any_of(data_support.cbegin(), data_support.cend(), [&dst_type](TypeId type) { return dst_type == type; })) {
-    MS_LOG(EXCEPTION) << "Atomic add not support data type " << dst_type;
+    MS_LOG(EXCEPTION) << "For AtomicAdd, the data type: " << TypeIdToString(dst_type, true)
+                      << " is not in supported list: [float16, float32, float64].";
   }
 
   // Create zero value which will be broadcast to target shape.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ class PatternTree {
 std::string CutStr(const string &s, size_t start_pos = 0, size_t len = std::string::npos) {
   std::string new_str = "";
   if (start_pos >= s.length()) {
-    MS_LOG(EXCEPTION) << "Cut is illegal.";
+    MS_LOG(EXCEPTION) << "Start index " << start_pos << " is out of range [0, " << s.length() << ") in string: " << s;
   }
   for (size_t i = 0; i < len; i++) {
     if (start_pos + i >= s.length()) break;
