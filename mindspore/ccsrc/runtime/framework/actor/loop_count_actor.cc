@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include "runtime/framework/actor/control_flow/entrance_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
-#include "backend/kernel_compiler/environ_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -76,9 +75,6 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (auto &entrance_aid : entrance_aids_) {
     ActorDispatcher::Send(entrance_aid, &EntranceActor::ClearDataOnStepEnd, from_aid, context);
   }
-
-  // Clear the global data which are generated in the kernel running.
-  kernel::EnvironMgr::GetInstance().Clear();
 
   // The LoopCountActor exits.
   if (current_count_ == loop_count_) {
