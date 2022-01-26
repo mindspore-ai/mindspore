@@ -2315,3 +2315,99 @@ TEST_F(MindDataTestExecute, TestSpectralCentroidWithWrongArg) {
   Status rc = transform({input_tensor}, &input_tensor);
   EXPECT_FALSE(rc.IsOk());
 }
+
+/// Feature: Execute Construct Demo1
+/// Description: demonstrate how to construct a Execute
+/// Expectation: Construct Execute object and run
+TEST_F(MindDataTestExecute, TestConstructorDemo1) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo1.";
+  // Read images
+  mindspore::MSTensor image = ReadFileToTensor("data/dataset/apple.jpg");
+  mindspore::MSTensor aug_image;
+
+  // Pass Transformation object
+  auto decode = vision::Decode();
+  auto resize = vision::Resize({66, 77});
+  auto transform = Execute({decode, resize});
+
+  Status rc = transform(image, &aug_image);
+  EXPECT_EQ(rc, Status::OK());
+
+  EXPECT_EQ(aug_image.Shape()[0], 66);
+  EXPECT_EQ(aug_image.Shape()[1], 77);
+}
+
+/// Feature: Execute Construct Demo2
+/// Description: demonstrate how to construct a Execute
+/// Expectation: Construct Execute object and run
+TEST_F(MindDataTestExecute, TestConstructorDemo2) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo2.";
+  // Read images
+  mindspore::MSTensor image = ReadFileToTensor("data/dataset/apple.jpg");
+  mindspore::MSTensor aug_image;
+
+  // Pass address of Transformation object
+  auto decode = vision::Decode();
+  auto resize = vision::Resize({66, 77});
+  std::vector<TensorTransform *> ops = {&decode};
+  bool use_resize = true;
+  if (use_resize) {
+    ops.push_back(&resize);
+  }
+
+  auto transform = Execute(ops);
+  Status rc = transform(image, &aug_image);
+  EXPECT_EQ(rc, Status::OK());
+
+  EXPECT_EQ(aug_image.Shape()[0], 66);
+  EXPECT_EQ(aug_image.Shape()[1], 77);
+}
+
+/// Feature: Execute Construct Demo3
+/// Description: demonstrate how to construct a Execute
+/// Expectation: Construct Execute object and run
+TEST_F(MindDataTestExecute, TestConstructorDemo3) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo3.";
+  // Read images
+  mindspore::MSTensor image = ReadFileToTensor("data/dataset/apple.jpg");
+  std::vector<mindspore::MSTensor> images = {image};
+  std::vector<mindspore::MSTensor> aug_images;
+
+  // Pass smart pointers of Transformation object
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize({66, 77}));
+  std::vector<std::shared_ptr<TensorTransform>> ops = {decode, resize};
+
+  auto transform = Execute(ops);
+  Status rc = transform(images, &aug_images);
+  EXPECT_EQ(rc, Status::OK());
+
+  EXPECT_EQ(aug_images[0].Shape()[0], 66);
+  EXPECT_EQ(aug_images[0].Shape()[1], 77);
+}
+
+/// Feature: Execute Construct Demo4
+/// Description: demonstrate how to construct a Execute
+/// Expectation: Construct Execute object and run
+TEST_F(MindDataTestExecute, TestConstructorDemo4) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo4.";
+  // Read images
+  mindspore::MSTensor image = ReadFileToTensor("data/dataset/apple.jpg");
+  std::vector<mindspore::MSTensor> images = {image};
+  std::vector<mindspore::MSTensor> aug_images;
+
+  // Pass raw pointers of Transformation object
+  auto decode = new vision::Decode();
+  auto resize = new vision::Resize({66, 77});
+  std::vector<TensorTransform *> ops = {decode, resize};
+
+  auto transform = Execute(ops);
+  Status rc = transform(images, &aug_images);
+  EXPECT_EQ(rc, Status::OK());
+
+  EXPECT_EQ(aug_images[0].Shape()[0], 66);
+  EXPECT_EQ(aug_images[0].Shape()[1], 77);
+
+  delete decode;
+  delete resize;
+}

@@ -100,10 +100,10 @@ Execute::Execute(const std::reference_wrapper<TensorTransform> &op, MapTargetDev
 // Execute function for the example case: auto decode(new vision::Decode());
 Execute::Execute(TensorTransform *op, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the transforms_ and other context
-  std::shared_ptr<TensorTransform> smart_ptr_op(op);
-  transforms_.emplace_back(smart_ptr_op);
+  ops_.emplace_back(op->Parse());
 
   info_ = std::make_shared<ExtraInfo>();
+  info_->init_with_shared_ptr_ = false;
   device_type_ = device_type;
   (void)InitResource(device_type, device_id);
 }
@@ -147,12 +147,12 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> &ops
 // Execute function for the example vector case: auto decode(new vision::Decode());
 Execute::Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice device_type, uint32_t device_id) {
   // Initialize the transforms_ and other context
-  for (auto &op : ops) {
-    std::shared_ptr<TensorTransform> smart_ptr_op(op);
-    transforms_.emplace_back(smart_ptr_op);
-  }
+  (void)std::transform(
+    ops.begin(), ops.end(), std::back_inserter(ops_),
+    [](TensorTransform *operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
 
   info_ = std::make_shared<ExtraInfo>();
+  info_->init_with_shared_ptr_ = false;
   device_type_ = device_type;
   (void)InitResource(device_type, device_id);
 }
