@@ -29,6 +29,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMS_VERSION_MAJOR=${MS_VERSION_MAJOR} -DMS_
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMS_VERSION_MAJOR=${MS_VERSION_MAJOR} -DMS_VERSION_MINOR=${MS_VERSION_MINOR} \
   -DMS_VERSION_REVISION=${MS_VERSION_REVISION}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_SKIP_BUILD_RPATH on)
 
 #set for cross-compiling toolchain
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
@@ -89,7 +90,7 @@ else()
 endif()
 
 if(SUPPORT_TRAIN)
-    set(LITE_TRAIN_SO_NAME mindspore-lite-train minddata-lite)
+    set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
         ${NEW_NATIVE_DIR}/train_config.cpp
