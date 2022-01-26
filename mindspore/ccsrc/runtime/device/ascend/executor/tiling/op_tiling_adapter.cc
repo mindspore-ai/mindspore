@@ -45,6 +45,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
     {"SparseGatherV2", "Gather"},
     {"Pad", "PadD"},
+    {"Split", "SplitD"},
     {"Concat", "ConcatD"},
     {"Softmax", "SoftmaxV2"},
     {"DropoutDoMask", "DropOutDoMask"},

@@ -52,7 +52,8 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"SeLU", "Selu"},
                                                           {"TransposeNOD", "Transpose"},
                                                           {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
-                                                          {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"}};
+                                                          {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
+                                                          {"Split", "SplitD"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 using FAttrsPass = void (*)(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
