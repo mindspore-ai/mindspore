@@ -372,8 +372,7 @@ class DebugServices {
   void ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list);
 
   void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                  const std::string &dump_key, AsyncFilePool *const result_list,
-                                  const std::string &file_format);
+                                  const std::string &dump_key, AsyncFilePool *const result_list);
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
@@ -382,9 +381,8 @@ class DebugServices {
   void ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                               const std::string &specific_dump_dir, AsyncFilePool *const result_list);
 
-  void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                          const std::string &specific_dump_dir, DirMap *dir_to_files_map,
-                          AsyncFilePool *const result_list);
+  void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
+                          DirMap *dir_to_files_map, AsyncFilePool *const result_list);
 
   void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                               const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,

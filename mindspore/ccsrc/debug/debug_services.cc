@@ -43,6 +43,7 @@ namespace mindspore {
 #endif
 
 static constexpr const char *constant_prefix = "Default--data-";
+static constexpr const char *kNpyExt = ".npy";
 
 namespace {
 #ifdef __APPLE__
@@ -823,7 +824,6 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
  * converted npy file name into AsyncFilePool. It's for Ascend async dump only.
  */
 void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFilePool *const result_list) {
-  std::string file_format = "npy";
   for (auto const &d : dir_to_files_map) {
     std::vector<std::string> files_to_convert_in_dir;
     std::vector<std::string> files_after_convert_in_dir;
@@ -853,7 +853,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFil
           MS_LOG(EXCEPTION) << "Failed to convert async dump data: " << e.what();
         }
       }
-      ProcessConvertToHostFormat(files_after_convert_in_dir, dump_key, result_list, file_format);
+      ProcessConvertToHostFormat(files_after_convert_in_dir, dump_key, result_list);
     }
   }
 }
@@ -866,8 +866,7 @@ void DebugServices::ConvertToHostFormat(const DirMap &dir_to_files_map, AsyncFil
  * append into AsyncFilePool. It's for Ascend async dump only.
  */
 void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
-                                               const std::string &dump_key, AsyncFilePool *const result_list,
-                                               const std::string &file_format) {
+                                               const std::string &dump_key, AsyncFilePool *const result_list) {
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
@@ -892,7 +891,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
         if (last_slash_pos != std::string::npos) {
           file_n = file_to_find.substr(last_slash_pos + 1);
         }
-        if (candidate.find(file_n) != std::string::npos && candidate.rfind(file_format) != std::string::npos) {
+        if (candidate.find(file_n) != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
           // we found a converted file for this op
           std::string found_file = dump_key + "/" + candidate;
           result_list->insert(found_file);
@@ -935,7 +934,6 @@ std::string GetNodeNameWithoutScope(const std::string &dump_style_name) {
 void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                                        std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                        std::vector<unsigned int> root_graph_id, AsyncFilePool *const result_list) {
-  std::string file_format = "npy";
   DirMap dir_to_files_map;
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
@@ -962,7 +960,7 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
       MS_LOG(INFO) << "Directory does not exist in ConvertReadTensors.";
       return;
     }
-    ProcessConvertList(prefix_dump_file_name, file_format, specific_dump_dir, &dir_to_files_map, result_list);
+    ProcessConvertList(prefix_dump_file_name, specific_dump_dir, &dir_to_files_map, result_list);
     (void)closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
@@ -970,7 +968,6 @@ void DebugServices::ConvertReadTensors(std::vector<std::string> backend_name, st
 
 void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                                            const std::string &specific_dump_dir, AsyncFilePool *const result_list) {
-  std::string file_format = "npy";
   DirMap dir_to_files_map;
   for (const auto &node : proto_dump) {
     std::string dump_name = std::get<1>(node);
@@ -982,15 +979,14 @@ void DebugServices::ConvertWatchPointNodes(const std::vector<std::tuple<std::str
       MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ConvertWatchPointNodes.";
       return;
     }
-    ProcessConvertList(dump_name, file_format, specific_dump_dir, &dir_to_files_map, result_list);
+    ProcessConvertList(dump_name, specific_dump_dir, &dir_to_files_map, result_list);
     (void)closedir(d);
   }
   ConvertToHostFormat(dir_to_files_map, result_list);
 }
 
-void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
-                                       const std::string &specific_dump_dir, DirMap *dir_to_files_map,
-                                       AsyncFilePool *const result_list) {
+void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
+                                       DirMap *dir_to_files_map, AsyncFilePool *const result_list) {
   MS_EXCEPTION_IF_NULL(dir_to_files_map);
   DIR *d = opendir(specific_dump_dir.c_str());
   struct dirent *dir = nullptr;
@@ -1014,7 +1010,7 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
         file_name.find(prefix_dump_file_name + ".", type_pos + 1) == std::string::npos) {
       continue;
     }
-    if (file_name.rfind(file_format) == std::string::npos) {
+    if (file_name.rfind(kNpyExt) == std::string::npos) {
       std::size_t second_dot = file_name.find(".", file_name.find(prefix_dump_file_name + ".", type_pos + 1));
       file_name_w_o_perfix.replace(type_pos + 1, second_dot - type_pos - 1, prefix_dump_file_name);
       // if file matches prefix and is in device format add to candidate files to convert.
@@ -1932,7 +1928,7 @@ void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, st
                        << ".";
           task_stream_hit.push_back(std::make_pair(task_id, stream_id));
         } else {
-          // regular bin file
+          // regular bin file or npy file
           bool success_parse = GetAttrsFromFilename(file_name, &node_name, &task_id, &stream_id);
           if (success_parse) {
             task_stream_to_opname[std::make_pair(task_id, stream_id)] = node_name;
@@ -1959,10 +1955,13 @@ void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, st
  * Target device group: Ascend.
  * Runtime category: Old runtime, MindRT.
  * Description: Checks whether for the given node the operator overflow happened or not by checking the overflow
- * directory.
+ * directory. This function is for async mode only.
  */
 bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int device_id, unsigned int root_graph_id,
                                     unsigned int iteration) {
+  if (is_sync_mode_) {
+    return false;
+  }
   std::string overflow_bin_path = "";
 #ifdef ONLINE_DBG_MODE
   overflow_bin_path = GetOnlineOpOverflowDir();
@@ -2056,12 +2055,27 @@ bool DebugServices::GetTaskIdStreamId(std::string file_name, std::string overflo
 
 bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
                                          uint64_t *stream_id) {
-  // get the node_name, task_id, and stream_id from dump filename
-  // node_type.node_name.task_id.stream_id.{etcetera}
+  // get the node_name, task_id, and stream_id from dump filename in the following two formats:
+  // 1. bin file: node_type.node_name.task_id.stream_id.timestamp
+  // 2. npy file: node_type.node_name.task_id.stream_id.timestamp.output_input.slot.format.npy
+  // Please note that node_name might contain dot (i.e. Parameter). So to search for the location of second dot, we need
+  // to search the file name from right to left.
   size_t first_dot = file_name.find(".");
-  size_t second_dot = file_name.find(".", first_dot + 1);
-  size_t third_dot = file_name.find(".", second_dot + 1);
-  size_t fourth_dot = file_name.find(".", third_dot + 1);
+  size_t fourth_dot;
+  if (file_name.rfind(kNpyExt) != std::string::npos) {
+    // npy format file (converted file or A+M dump file)
+    size_t pos = file_name.rfind(".");
+    const int kFourthFromRight = 4;
+    for (int cnt = 0; cnt < kFourthFromRight; cnt++) {
+      pos = file_name.rfind(".", pos - 1);
+    }
+    fourth_dot = pos;
+  } else {
+    // bin format file
+    fourth_dot = file_name.rfind(".");
+  }
+  size_t third_dot = file_name.rfind(".", fourth_dot - 1);
+  size_t second_dot = file_name.rfind(".", third_dot - 1);
 
   // check if dots were found
   if (first_dot == std::string::npos || second_dot == std::string::npos || third_dot == std::string::npos ||
