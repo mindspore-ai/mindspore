@@ -18,7 +18,6 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
-#include <type_traits>
 namespace mindspore {
 namespace kernel {
 using Eigen::ColMajor;
@@ -97,7 +96,7 @@ inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b
 
 template <typename T>
 bool SolveTriangularCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<AddressPtr> & /* workspace */,
                                             const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
