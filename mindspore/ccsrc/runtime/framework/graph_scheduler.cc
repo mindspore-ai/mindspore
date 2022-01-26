@@ -411,6 +411,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
     std::condition_variable thread_blocker;
     const int64_t kTimeToWait = 2;
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
+    // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
+    MsException::Instance().CheckException();
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 
