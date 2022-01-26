@@ -19,4 +19,5 @@ mindspore.ops.Erf
 
     **异常：**
 
+    - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
