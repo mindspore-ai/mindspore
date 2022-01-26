@@ -95,7 +95,8 @@ AnfNodePtr TransformCallGraph(const FuncGraphPtr &trans_fg, const CNodePtr &cnod
     }
   }
   auto new_node = fg->NewCNode(inputs);
-  new_node->set_abstract(cnode->abstract());
+  // Because the current pass involves the operation of changing the graph,
+  // so the abstract of this new_node cannot be set here, otherwise the Renormalize() will not be called.
   return new_node;
 }
 
@@ -140,7 +141,8 @@ AnfNodePtr TransformSwitchCall(const AnfNodePtr &switch_node, const CNodePtr &cn
     }
   }
   auto new_node = fg->NewCNode(inputs);
-  new_node->set_abstract(cnode->abstract());
+  // Because the current pass involves the operation of changing the graph,
+  // so the abstract of this new_node cannot be set here, otherwise the Renormalize() will not be called.
   return new_node;
 }
 }  // namespace opt
