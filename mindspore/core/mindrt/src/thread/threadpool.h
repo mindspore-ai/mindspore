@@ -36,6 +36,7 @@
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
 constexpr int kMaxCount = 30000;
+constexpr int kDefaultKernelSpinCount = 3000;
 constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
