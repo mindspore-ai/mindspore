@@ -620,6 +620,7 @@ enum Dim : size_t {
   kDim3,
   kDim4,
   kDim5,
+  kDim6,
 };
 
 // format

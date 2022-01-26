@@ -281,6 +281,7 @@ def test_batch_lu(shape, data_type):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
@@ -302,6 +303,7 @@ def test_lu_factor(n: int, data_type):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
@@ -314,23 +316,21 @@ def test_lu_solve(n: int, data_type):
     """
     a = create_full_rank_matrix((n, n), data_type)
     b = onp.random.random((n, 1)).astype(data_type)
-    s_lu, s_piv = osp.linalg.lu_factor(a)
-
-    tensor_a = Tensor(a)
-    tensor_b = Tensor(b)
-
-    m_lu, m_piv = msp.linalg.lu_factor(tensor_a)
-
-    lu_factor_x = (s_lu, s_piv)
-    msp_lu_factor = (m_lu, m_piv)
-
-    osp_x = osp.linalg.lu_solve(lu_factor_x, b)
-    msp_x = msp.linalg.lu_solve(msp_lu_factor, tensor_b)
-    real_b = mnp.dot(tensor_a, msp_x)
-    expected_b = onp.dot(a, osp_x)
     rtol = 1.e-3
     atol = 1.e-3
-    assert onp.allclose(real_b.asnumpy(), expected_b, rtol=rtol, atol=atol)
+    if data_type == onp.float64:
+        rtol = 1.e-5
+        atol = 1.e-8
+
+    s_lu, s_piv = osp.linalg.lu_factor(a)
+    m_lu, m_piv = msp.linalg.lu_factor(Tensor(a))
+    assert onp.allclose(m_lu.asnumpy(), s_lu, rtol=rtol, atol=atol)
+    assert onp.allclose(m_piv.asnumpy(), s_piv, rtol=rtol, atol=atol)
+
+    osp_lu_factor = (s_lu, s_piv)
+    msp_lu_factor = (m_lu, m_piv)
+    osp_x = osp.linalg.lu_solve(osp_lu_factor, b)
+    msp_x = msp.linalg.lu_solve(msp_lu_factor, Tensor(b))
     assert onp.allclose(msp_x.asnumpy(), osp_x, rtol=rtol, atol=atol)
 
 
