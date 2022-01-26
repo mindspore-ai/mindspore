@@ -35,7 +35,7 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
   explicit TensorOperation(bool random) : random_op_(random) {}
 
   /// \brief Destructor
-  ~TensorOperation() = default;
+  virtual ~TensorOperation() = default;
 
   /// \brief Pure virtual function to convert a TensorOperation class into a runtime TensorOp object.
   /// \return shared pointer to the newly created TensorOp.
