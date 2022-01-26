@@ -16,9 +16,6 @@
 #include "backend/kernel_compiler/gpu/data/dataset_profiling.h"
 
 #include <fstream>
-#include <memory>
-#include <string>
-#include <utility>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"
