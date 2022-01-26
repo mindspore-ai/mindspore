@@ -123,11 +123,7 @@ void KernelRuntime::GetCommunicationInputInfo(const AnfNodePtr &node, size_t *to
     if (AnfAlgo::OutputAddrExist(input_node, input_node_with_index.second)) {
       address = AnfAlgo::GetMutableOutputAddr(input_node, input_node_with_index.second);
     } else {
-      if (input_node->isa<CNode>()) {
-        address = PreAssignCNodeMemory(input_node, input_node_with_index.second);
-      } else {
-        MS_LOG(EXCEPTION) << "Communication node inputs only support CNode";
-      }
+      address = PreAssignCNodeMemory(input_node, input_node_with_index.second);
     }
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
@@ -790,28 +786,15 @@ bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
 
 DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const {
   MS_EXCEPTION_IF_NULL(anf_node);
-  if (!anf_node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anf_node should be a cnode";
-  }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (opt::IsNopNode(cnode)) {
-    const size_t kNopNodeInputSize = 2;
-    if (cnode->size() != kNopNodeInputSize) {
-      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " has invalid input size: " << cnode->size();
-    }
+  if (opt::IsNopNode(anf_node)) {
     auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
     return PreAssignCNodeMemory(input_node_with_index.first, input_node_with_index.second);
   }
-  auto kernel_mod = AnfAlgo::GetKernelMod(anf_node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto output_sizes = kernel_mod->GetOutputSizeList();
-  if (output_sizes.size() <= index) {
-    MS_LOG(EXCEPTION) << "Previous node output size " << output_sizes.size() << " <= node index " << index;
-  }
+
+  auto output_size = AnfAlgo::GetOutputTensorMemSize(anf_node, index);
   std::string output_format = AnfAlgo::GetOutputFormat(anf_node, index);
   auto output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, index);
-  auto address = CreateDeviceAddress(nullptr, output_sizes[index], output_format, output_type, {anf_node, index});
+  auto address = CreateDeviceAddress(nullptr, output_size, output_format, output_type, {anf_node, index});
   AnfAlgo::SetOutputAddr(address, index, anf_node.get());
   return address;
 }
@@ -833,11 +816,9 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
       return;
     }
     DeviceAddressPtr address = nullptr;
-    if (input_node->isa<CNode>()) {
-      address = PreAssignCNodeMemory(input_node, input_node_with_index.second);
-    } else {
-      MS_LOG(EXCEPTION) << "Communication node inputs only support CNode";
-    }
+
+    address = PreAssignCNodeMemory(input_node, input_node_with_index.second);
+
     MS_EXCEPTION_IF_NULL(address);
     auto mem_size = MemoryManager::GetCommonAlignSize(address->size());
     total_size += mem_size;
