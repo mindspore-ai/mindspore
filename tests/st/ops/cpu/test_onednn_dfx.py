@@ -14,6 +14,7 @@
 # ============================================================================
 import os
 import re
+import platform
 from collections import defaultdict
 import pytest
 import mindspore.context as context
@@ -31,6 +32,9 @@ def test_onednn_dfx_log():
     Description: Use 'Python -O -m pytest -s xxx.py' to enable __debug__
     Expectation: begin_cnt == end_cnt
     """
+    if platform.system().lower() != 'linux':
+        return
+
     os.environ['GLOG_v'] = '0'
     log_name = './onednn_dfx.log'
     # need cd to current dir
