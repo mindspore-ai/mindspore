@@ -16,6 +16,11 @@
 #ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
 namespace mindspore::lite {
+namespace {
+constexpr size_t kMemAliginSize = 64;
+
+size_t RoundMemSize(size_t size) { return (size + kMemAliginSize - 1) & (~(kMemAliginSize - 1)); }
+}  // namespace
 PackWeightManager *PackWeightManager::GetInstance() {
   static PackWeightManager instance;
   return &instance;
@@ -81,11 +86,16 @@ std::pair<PackStatus, void *> PackWeightManager::FindPackedTensor(ModelConstWeig
     return std::make_pair(PACKED, tensor->data());
   } else if (weight->origin_data_index.find(tensor->data()) != weight->origin_data_index.end()) {
     auto origin_index = weight->origin_data_index[tensor->data()];
-    void *data = malloc(size);
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "malloc failed.";
+    void *data = nullptr;
+#ifdef _WIN32
+    data = _aligned_malloc(allocate_size, kMemAlginSize);
+#else
+    auto ret = posix_memalign(&data, kMemAliginSize, size);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "posix_memalign failed.";
       return std::make_pair(MALLOC, nullptr);
     }
+#endif
     weight->packed_data.insert(data);
     packed_weights.insert(std::make_pair(origin_index, data));
     return std::make_pair(NOTPACK, packed_weights.at(origin_index));
@@ -95,10 +105,10 @@ std::pair<PackStatus, void *> PackWeightManager::FindPackedTensor(ModelConstWeig
 
 std::pair<PackStatus, void *> PackWeightManager::GetPackedTensor(const Tensor *tensor, const size_t size) {
   MS_CHECK_TRUE_RET(tensor != nullptr, std::make_pair(MALLOC, nullptr));
-  std::pair<PackStatus, void *> packed_tensor_pair;
+  auto round_size = RoundMemSize(size);
   for (auto &item : path_model_weight_) {
     auto &model_weight = item.second;
-    packed_tensor_pair = FindPackedTensor(model_weight, tensor, size);
+    auto packed_tensor_pair = FindPackedTensor(model_weight, tensor, round_size);
     if (packed_tensor_pair.second != nullptr) {
       return packed_tensor_pair;
     }
@@ -120,13 +130,19 @@ void PackWeightManager::DeleteSavedModelPtr(LiteModel *delete_model) {
 }
 
 void PackWeightManager::FreePackedWeight(ModelConstWeight *weight) {
-  auto &packed_tensors = weight->packed_weight;
-  for (auto &packed_tensor : packed_tensors) {
-    if (packed_tensor.second != nullptr) {
-      free(packed_tensor.second);
-      packed_tensor.second = nullptr;
+  for (auto &&packed_data : weight->packed_data) {
+    auto data = const_cast<void *>(packed_data);
+    if (data != nullptr) {
+#ifdef _WIN32
+      _aligned_free(data);
+#else
+      free(data);
+#endif
+      data = nullptr;
     }
   }
+  weight->packed_weight.clear();
+  weight->packed_data.clear();
   if (weight != nullptr) {
     delete weight;
     weight = nullptr;

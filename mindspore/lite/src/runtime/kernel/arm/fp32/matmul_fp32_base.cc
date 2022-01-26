@@ -69,13 +69,14 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
       a_pack_ptr_ = reinterpret_cast<float *>(workspace());
     } else {
 #ifdef SERVER_INFERENCE
-      auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
-        in_tensors()[0], static_cast<size_t>(matrix_a_pack_size_) * sizeof(float));
-      a_pack_ptr_ = reinterpret_cast<float *>(a_packed.second);
-      a_is_packed_ = a_packed.first;
-      if (a_pack_ptr_ == nullptr && a_is_packed_ == lite::MALLOC) {
+      if (!params_->a_const_) {
         a_pack_ptr_ = reinterpret_cast<float *>(
           ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_pack_size_) * sizeof(float)));
+      } else {
+        auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+          in_tensors()[0], static_cast<size_t>(matrix_a_pack_size_) * sizeof(float));
+        a_pack_ptr_ = reinterpret_cast<float *>(a_packed.second);
+        a_is_packed_ = a_packed.first;
       }
 #else
       a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
@@ -97,11 +98,12 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
     b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
 #ifdef SERVER_INFERENCE
-    auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
-      in_tensors()[1], static_cast<size_t>(matrix_b_pack_size_) * sizeof(float));
-    b_pack_ptr_ = reinterpret_cast<float *>(b_packed.second);
-    b_is_packed_ = b_packed.first;
-    if (b_pack_ptr_ == nullptr && b_is_packed_ == lite::MALLOC) {
+    if (params_->b_const_) {
+      auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+        in_tensors()[1], static_cast<size_t>(matrix_b_pack_size_) * sizeof(float));
+      b_pack_ptr_ = reinterpret_cast<float *>(b_packed.second);
+      b_is_packed_ = b_packed.first;
+    } else {
       b_pack_ptr_ = reinterpret_cast<float *>(
         ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
     }

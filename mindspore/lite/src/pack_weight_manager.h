@@ -34,7 +34,7 @@ struct ModelConstWeight {
   OriginWeight origin_weight;
   std::vector<const Model *> lite_models;
   std::map<const void *, size_t> origin_data_index;
-  std::set<const void *> packed_data;
+  std::set<void *> packed_data;
 };
 
 enum PackStatus : int8_t { NOTPACK = 1, PACKED = 2, MALLOC = 3 };
