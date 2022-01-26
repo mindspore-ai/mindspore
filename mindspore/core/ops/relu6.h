@@ -36,7 +36,7 @@ class MS_CORE_API ReLU6 : public PrimitiveC {
   ~ReLU6() = default;
   MS_DECLARE_PARENT(ReLU6, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

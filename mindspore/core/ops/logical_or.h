@@ -37,7 +37,7 @@ class MS_CORE_API LogicalOr : public PrimitiveC {
   ~LogicalOr() = default;
   MS_DECLARE_PARENT(LogicalOr, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalOr for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "ops/glu.h"
-#include <algorithm>
 #include "ir/dtype/tensor_type.h"
 
 namespace mindspore {

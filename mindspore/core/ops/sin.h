@@ -34,7 +34,7 @@ class MS_CORE_API Sin : public PrimitiveC {
   ~Sin() = default;
   MS_DECLARE_PARENT(Sin, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);

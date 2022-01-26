@@ -34,7 +34,7 @@ class MS_CORE_API IsFinite : public PrimitiveC {
   ~IsFinite() = default;
   MS_DECLARE_PARENT(IsFinite, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IsFinite for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -38,7 +38,7 @@ class MS_CORE_API Sub : public PrimitiveC {
   ~Sub() = default;
   MS_DECLARE_PARENT(Sub, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

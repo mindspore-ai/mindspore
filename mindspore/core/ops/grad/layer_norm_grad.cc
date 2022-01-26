@@ -31,6 +31,7 @@ AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto x_backprob = input_args[kInputIndex0]->Broaden();
   auto gamma_backprob = input_args[kInputIndex4]->Broaden();
   auto beta_backprob = input_args[kInputIndex4]->Broaden();
+
   auto shapes = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
     x_backprob->BuildShape(), gamma_backprob->BuildShape(), beta_backprob->BuildShape()});
   auto types = std::make_shared<Tuple>(

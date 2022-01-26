@@ -34,7 +34,7 @@ class MS_CORE_API Tan : public PrimitiveC {
   ~Tan() = default;
   MS_DECLARE_PARENT(Tan, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);

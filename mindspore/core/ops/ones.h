@@ -36,7 +36,7 @@ class Ones : public PrimitiveC {
   ~Ones() = default;
   MS_DECLARE_PARENT(Ones, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Ones for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

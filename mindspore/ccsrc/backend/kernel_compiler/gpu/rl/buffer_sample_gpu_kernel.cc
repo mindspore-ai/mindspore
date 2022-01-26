@@ -15,10 +15,7 @@
  */
 #include "backend/kernel_compiler/gpu/rl/buffer_sample_gpu_kernel.h"
 
-#include <memory>
 #include <string>
-#include <vector>
-#include <algorithm>
 #include <limits>
 #include <chrono>
 

@@ -28,7 +28,7 @@ class MS_CORE_API DivGrad : public PrimitiveC {
   DivGrad() : PrimitiveC(kNameDivGrad) {}
   ~DivGrad() = default;
   MS_DECLARE_PARENT(DivGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

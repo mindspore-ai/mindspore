@@ -35,7 +35,7 @@ class MS_CORE_API GeLU : public PrimitiveC {
   ~GeLU() = default;
   MS_DECLARE_PARENT(GeLU, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GeLU for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 }  // namespace ops

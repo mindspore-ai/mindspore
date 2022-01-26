@@ -35,7 +35,7 @@ class MS_CORE_API Neg : public PrimitiveC {
   ~Neg() = default;
   MS_DECLARE_PARENT(Neg, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Neg for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

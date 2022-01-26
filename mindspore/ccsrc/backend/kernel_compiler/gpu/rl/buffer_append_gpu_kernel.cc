@@ -16,8 +16,6 @@
 #include "backend/kernel_compiler/gpu/rl/buffer_append_gpu_kernel.h"
 
 #include <memory>
-#include <string>
-#include <vector>
 #include <algorithm>
 
 #include "backend/kernel_compiler/common_utils.h"

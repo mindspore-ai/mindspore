@@ -34,7 +34,7 @@ class MS_CORE_API SigmoidCrossEntropyWithLogitsGrad : public PrimitiveC {
   }
   ~SigmoidCrossEntropyWithLogitsGrad() = default;
   MS_DECLARE_PARENT(SigmoidCrossEntropyWithLogitsGrad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,

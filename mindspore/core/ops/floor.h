@@ -38,7 +38,7 @@ class MS_CORE_API Floor : public PrimitiveC {
   ~Floor() = default;
   MS_DECLARE_PARENT(Floor, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Floor for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);

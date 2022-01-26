@@ -35,7 +35,7 @@ class MS_CORE_API SparseToDense : public PrimitiveC {
   ~SparseToDense() = default;
   MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);

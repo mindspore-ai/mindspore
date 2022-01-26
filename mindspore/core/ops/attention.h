@@ -39,7 +39,7 @@ class MS_CORE_API Attention : public PrimitiveC {
   ~Attention() override = default;
   MS_DECLARE_PARENT(Attention, PrimitiveC);
   /// \brief Initialize Attention op.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

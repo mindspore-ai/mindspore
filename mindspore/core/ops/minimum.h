@@ -37,7 +37,7 @@ class MS_CORE_API Minimum : public PrimitiveC {
   ~Minimum() = default;
   MS_DECLARE_PARENT(Minimum, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Minimum for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr MinimumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

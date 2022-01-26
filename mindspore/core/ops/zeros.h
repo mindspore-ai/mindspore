@@ -36,7 +36,7 @@ class MS_CORE_API Zeros : public PrimitiveC {
   ~Zeros() = default;
   MS_DECLARE_PARENT(Zeros, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

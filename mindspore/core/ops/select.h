@@ -41,7 +41,7 @@ class MS_CORE_API Select : public PrimitiveC {
   ~Select() = default;
   MS_DECLARE_PARENT(Select, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

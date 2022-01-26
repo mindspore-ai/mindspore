@@ -35,7 +35,7 @@ class MS_CORE_API Fill : public PrimitiveC {
   ~Fill() = default;
   MS_DECLARE_PARENT(Fill, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Fill for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

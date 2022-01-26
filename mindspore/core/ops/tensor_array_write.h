@@ -36,7 +36,7 @@ class MS_CORE_API TensorArrayWrite : public PrimitiveC {
   ~TensorArrayWrite() = default;
   MS_DECLARE_PARENT(TensorArrayWrite, PrimitiveC);
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

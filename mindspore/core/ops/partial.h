@@ -35,7 +35,7 @@ class MS_CORE_API Partial : public PrimitiveC {
   MS_DECLARE_PARENT(Partial, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

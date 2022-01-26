@@ -37,7 +37,7 @@ class MS_CORE_API Rsqrt : public PrimitiveC {
   ~Rsqrt() = default;
   MS_DECLARE_PARENT(Rsqrt, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);

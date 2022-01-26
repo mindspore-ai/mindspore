@@ -37,7 +37,7 @@ class MS_CORE_API Greater : public PrimitiveC {
   ~Greater() = default;
   MS_DECLARE_PARENT(Greater, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Greater for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);

@@ -35,7 +35,7 @@ class MS_CORE_API Abs : public PrimitiveC {
   ~Abs() = default;
   MS_DECLARE_PARENT(Abs, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Abs for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

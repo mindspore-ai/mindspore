@@ -35,7 +35,7 @@ class MS_CORE_API Transpose : public PrimitiveC {
   ~Transpose() = default;
   MS_DECLARE_PARENT(Transpose, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);

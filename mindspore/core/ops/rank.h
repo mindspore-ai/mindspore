@@ -36,7 +36,7 @@ class MS_CORE_API Rank : public PrimitiveC {
   ~Rank() = default;
   MS_DECLARE_PARENT(Rank, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Rank for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);

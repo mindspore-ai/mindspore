@@ -35,7 +35,7 @@ class MS_CORE_API RaggedRange : public PrimitiveC {
   ~RaggedRange() = default;
   MS_DECLARE_PARENT(RaggedRange, PrimitiveC);
   /// \brief Method to init the op.
-  void Init() {}
+  void Init() const {}
 };
 
 }  // namespace ops

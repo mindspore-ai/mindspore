@@ -37,7 +37,7 @@ class MS_CORE_API Exp : public PrimitiveC {
   ~Exp() = default;
   MS_DECLARE_PARENT(Exp, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Exp for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr ExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

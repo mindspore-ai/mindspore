@@ -15,8 +15,6 @@
  */
 
 #include "ops/custom.h"
-#include <memory>
-#include <map>
 
 namespace mindspore {
 namespace ops {

@@ -32,7 +32,7 @@ class MS_CORE_API ReduceSumSquare : public Reduce {
   ReduceSumSquare() : Reduce(kNameReduceSumSquare) { InitIOName({"input_x", "axis"}, {"y"}); }
   ~ReduceSumSquare() = default;
   MS_DECLARE_PARENT(ReduceSumSquare, Reduce);
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

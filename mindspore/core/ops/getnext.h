@@ -38,7 +38,7 @@ class MS_CORE_API GetNext : public PrimitiveC {
   ~GetNext() = default;
   MS_DECLARE_PARENT(GetNext, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GetNext for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);

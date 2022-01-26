@@ -39,7 +39,7 @@ class MS_CORE_API ReLUV2 : public PrimitiveC {
   ~ReLUV2() = default;
   MS_DECLARE_PARENT(ReLUV2, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);

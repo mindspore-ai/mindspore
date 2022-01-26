@@ -34,7 +34,7 @@ class MS_CORE_API FloorDiv : public PrimitiveC {
   ~FloorDiv() = default;
   MS_DECLARE_PARENT(FloorDiv, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorDiv for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr FloorDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);

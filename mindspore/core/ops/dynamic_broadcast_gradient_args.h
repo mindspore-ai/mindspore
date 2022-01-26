@@ -28,7 +28,7 @@ class MS_CORE_API DynamicBroadcastGradientArgs : public PrimitiveC {
   DynamicBroadcastGradientArgs() : PrimitiveC(prim::kPrimDynamicBroadcastGradientArgs->name()) {}
   ~DynamicBroadcastGradientArgs() = default;
   MS_DECLARE_PARENT(DynamicBroadcastGradientArgs, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args);

@@ -33,7 +33,7 @@ class MS_CORE_API FloorMod : public PrimitiveC {
   ~FloorMod() = default;
   MS_DECLARE_PARENT(FloorMod, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorMod for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

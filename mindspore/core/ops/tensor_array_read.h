@@ -34,7 +34,7 @@ class MS_CORE_API TensorArrayRead : public PrimitiveC {
   ~TensorArrayRead() = default;
   MS_DECLARE_PARENT(TensorArrayRead, PrimitiveC);
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

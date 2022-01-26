@@ -36,7 +36,7 @@ class MS_CORE_API LessEqual : public PrimitiveC {
   ~LessEqual() = default;
   MS_DECLARE_PARENT(LessEqual, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LessEqual for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr LessEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

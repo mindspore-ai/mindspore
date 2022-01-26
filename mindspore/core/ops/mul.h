@@ -37,7 +37,7 @@ class MS_CORE_API Mul : public PrimitiveC {
   ~Mul() = default;
   MS_DECLARE_PARENT(Mul, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mul for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);

@@ -40,7 +40,7 @@ class MS_CORE_API UnsortedSegmentSum : public PrimitiveC {
   ~UnsortedSegmentSum() = default;
   MS_DECLARE_PARENT(UnsortedSegmentSum, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -39,7 +39,7 @@ class MS_CORE_API FftImag : public PrimitiveC {
   MS_DECLARE_PARENT(FftImag, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr FftImagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);

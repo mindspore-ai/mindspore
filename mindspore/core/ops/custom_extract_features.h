@@ -30,7 +30,7 @@ class MS_CORE_API CustomExtractFeatures : public PrimitiveC {
   CustomExtractFeatures() : PrimitiveC(kNameCustomExtractFeatures) {}
   ~CustomExtractFeatures() = default;
   MS_DECLARE_PARENT(CustomExtractFeatures, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args);

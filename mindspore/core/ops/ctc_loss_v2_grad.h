@@ -36,7 +36,7 @@ class MS_CORE_API CTCLossV2Grad : public PrimitiveC {
   }
   ~CTCLossV2Grad() = default;
   MS_DECLARE_PARENT(CTCLossV2Grad, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr CTCLossV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

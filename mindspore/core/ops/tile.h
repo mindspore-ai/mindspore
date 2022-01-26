@@ -38,7 +38,7 @@ class MS_CORE_API Tile : public PrimitiveC {
   ~Tile() = default;
   MS_DECLARE_PARENT(Tile, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);

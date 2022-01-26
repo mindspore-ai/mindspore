@@ -37,7 +37,7 @@ class MS_CORE_API Asin : public PrimitiveC {
   ~Asin() = default;
   MS_DECLARE_PARENT(Asin, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Asin for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

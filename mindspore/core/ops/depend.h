@@ -38,7 +38,7 @@ class MS_CORE_API Depend : public PrimitiveC {
   MS_DECLARE_PARENT(Depend, PrimitiveC);
 
   /// \brief Method to init the op's attributes.
-  void Init() {}
+  void Init() const {}
 };
 AbstractBasePtr DependInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);

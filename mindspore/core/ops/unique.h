@@ -34,7 +34,7 @@ class MS_CORE_API Unique : public PrimitiveC {
   ~Unique() = default;
   MS_DECLARE_PARENT(Unique, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

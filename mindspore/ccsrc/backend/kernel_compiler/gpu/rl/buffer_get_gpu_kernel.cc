@@ -17,8 +17,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
-#include <algorithm>
 
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/rl/rl_buffer_impl.cuh"

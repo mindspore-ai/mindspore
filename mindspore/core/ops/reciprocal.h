@@ -35,7 +35,7 @@ class MS_CORE_API Reciprocal : public PrimitiveC {
   ~Reciprocal() = default;
   MS_DECLARE_PARENT(Reciprocal, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Reciprocal for the inputs.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

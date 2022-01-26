@@ -36,7 +36,7 @@ class MS_CORE_API Round : public PrimitiveC {
   ~Round() = default;
   MS_DECLARE_PARENT(Round, PrimitiveC);
   /// \brief Init.
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -32,7 +32,7 @@ class LayerNormXBackpropV2 : public PrimitiveC {
   LayerNormXBackpropV2() : PrimitiveC(prim::kPrimLayerNormXBackpropV2->name()) {}
   ~LayerNormXBackpropV2() = default;
   MS_DECLARE_PARENT(LayerNormXBackpropV2, PrimitiveC);
-  void Init() {}
+  void Init() const {}
 };
 
 AbstractBasePtr LayerNormXBackpropV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
