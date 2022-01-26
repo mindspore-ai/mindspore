@@ -42,20 +42,19 @@ GpuQueue::GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &c
 
 GpuQueue::~GpuQueue() { buffer_ = nullptr; }
 
-BlockQueueStatus_T GpuQueue::Push(const std::vector<DataItemGpu> &data) {
-  int offset = 0;
+BlockQueueStatus_T GpuQueue::Push(std::vector<DataItemGpu> data) {
+  void *addr = reinterpret_cast<uint8_t *>(buffer_) + tail_ * len_;
   for (size_t i = 0; i < data.size(); i++) {
-    auto item = data[i];
-    if (item.data_ptr_ == nullptr || item.data_len_ != shape_[i]) {
-      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_;
+    auto &item = data[i];
+    if (item.data_ptr_ == nullptr || item.data_len_ > shape_[i]) {
+      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_
+                    << ", exceeds the max len: " << shape_[i];
       return ERROR_INPUT;
     }
-
-    void *addr = reinterpret_cast<unsigned char *>(buffer_) + tail_ * len_ + offset;
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr_, item.data_len_, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
-
-    offset += item.data_len_;
+    item.device_addr_ = addr;
+    addr = reinterpret_cast<uint8_t *>(addr) + item.data_len_;
   }
 
   node_info_[tail_].event_.reset(new cudaEvent_t());
@@ -67,15 +66,13 @@ BlockQueueStatus_T GpuQueue::Push(const std::vector<DataItemGpu> &data) {
   return SUCCESS;
 }
 
-BlockQueueStatus_T GpuQueue::Front(void **addr, size_t *len) const {
+BlockQueueStatus_T GpuQueue::Front(std::vector<DataItemGpu> *data) const {
   CHECK_CUDA_RET_WITH_ERROR(cudaEventSynchronize(*(node_info_[head_].event_)), "Cuda Event Syn Failed");
   CHECK_CUDA_RET_WITH_ERROR(cudaEventDestroy(*(node_info_[head_].event_)), "Cuda Destroy Event Failed");
-  *addr = (unsigned char *)buffer_ + head_ * len_;
-  *len = len_;
-
-  for (auto item : node_info_[head_].data_) {
+  for (auto &item : node_info_[head_].data_) {
     host_release_(item.data_ptr_, item.worker_id_);
   }
+  *data = node_info_[head_].data_;
   return SUCCESS;
 }
 
@@ -124,14 +121,14 @@ BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataItemGpu> &data, uns
   return SUCCESS;
 }
 
-BlockQueueStatus_T BlockingQueue::Front(void **addr, size_t *len) {
+BlockQueueStatus_T BlockingQueue::Front(std::vector<DataItemGpu> *data) {
   std::unique_lock<std::mutex> locker(mutex_);
   bool timeout = not_empty_cond_.wait_for(locker, std::chrono::seconds(30), [this] { return !queue_->IsEmpty(); });
   if (!timeout) {
     return TIMEOUT;
   }
 
-  return queue_->Front(addr, len);
+  return queue_->Front(data);
 }
 
 BlockQueueStatus_T BlockingQueue::Pop() {

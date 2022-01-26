@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/gpu/data/dataset_iterator_kernel.h"
-
 #include <cuda_runtime_api.h>
 #include <memory>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "utils/convert_utils.h"
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "backend/kernel_compiler/common_utils.h"
+
 #ifndef ENABLE_SECURITY
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif
@@ -36,7 +37,7 @@ namespace kernel {
 using mindspore::device::GpuBufferMgr;
 
 DatasetIteratorKernelMod::DatasetIteratorKernelMod()
-    : handle_(GpuBufferMgr::INVALID_HANDLE), total_bytes_(0), profiling_enable_(false), profiling_op_(nullptr) {}
+    : handle_(GpuBufferMgr::INVALID_HANDLE), profiling_enable_(false), profiling_op_(nullptr) {}
 
 DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { GpuBufferMgr::GetInstance().Close(handle_); }
 
@@ -46,17 +47,16 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
   std::vector<std::vector<int>> shapes;
-  std::vector<TypePtr> types;
-  GetShapeAndType(kernel_node, &shapes, &types);
-  for (auto item : types) {
+  std::vector<TypePtr> type_ptrs;
+  GetShapeAndType(kernel_node, &shapes, &type_ptrs);
+  for (auto item : type_ptrs) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  std::transform(type_ptrs.begin(), type_ptrs.end(), std::back_inserter(types_),
+                 [](const TypePtr &value) { return value->type_id(); });
+
   for (size_t i = 0; i < shapes.size(); i++) {
-    int unit = UnitSizeInBytes(types[i]->type_id());
-    int nums = ElementNums(shapes[i]);
-    int bytes = unit * nums;
-    output_size_list_.push_back(bytes);
-    total_bytes_ += bytes;
+    output_size_list_.push_back(0);  // output_size could be dynamic when shapes is dynamic, just give fake value here.
   }
 
 #ifndef ENABLE_SECURITY
@@ -74,7 +74,7 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
 
 void DatasetIteratorKernelMod::InitSizeLists() { return; }
 
-bool DatasetIteratorKernelMod::ReadDevice(void **addr, size_t *len) {
+bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataItemGpu> *data) {
   uint64_t start_time_stamp = 0;
   uint32_t queue_size = 0;
 #ifndef ENABLE_SECURITY
@@ -90,7 +90,7 @@ bool DatasetIteratorKernelMod::ReadDevice(void **addr, size_t *len) {
       queue_size = GpuBufferMgr::GetInstance().Size(handle_);
     }
 #endif
-    auto ret = GpuBufferMgr::GetInstance().Front(handle_, addr, len);
+    auto ret = GpuBufferMgr::GetInstance().Front(handle_, data);
     if (ret == device::SUCCESS) {
 #ifndef ENABLE_SECURITY
       if (profiling_enable_) {
@@ -134,30 +134,34 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
     }
   }
 
-  void *addr = nullptr;
-  size_t len = 0;
-  if (!ReadDevice(&addr, &len)) {
-    return false;
-  }
-  if (total_bytes_ != len) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', dataset front error, read: " << len
-                  << " Bytes, expect: " << total_bytes_ << " Bytes.";
+  if (!ReadDevice(&output_data_)) {
     return false;
   }
 
-  for (size_t i = 0; i < output_size_list_.size(); i++) {
+  for (size_t i = 0; i < output_data_.size(); i++) {
     void *output_addr = GetDeviceAddress<void>(outputs, i);
+    auto device_addr = output_data_[i].device_addr_;
+    auto data_len = output_data_[i].data_len_;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_addr, addr, output_size_list_[i], cudaMemcpyDeviceToDevice,
+                               cudaMemcpyAsync(output_addr, device_addr, data_len, cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream)),
                                "Cuda Memcpy Failed");
-    addr = reinterpret_cast<unsigned char *>(addr) + output_size_list_[i];
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream)),
                              "cudaStreamSynchronize failed");
   (void)GpuBufferMgr::GetInstance().Pop(handle_);
   return true;
+}
+
+void DatasetIteratorKernelMod::PostExecute() {
+  std::vector<std::vector<size_t>> shapes;
+  for (const auto &item : output_data_) {
+    std::vector<size_t> shape;
+    std::transform(item.shapes_.begin(), item.shapes_.end(), std::back_inserter(shape), LongToSize);
+    shapes.push_back(shape);
+  }
+  AnfAlgo::SetOutputInferTypeAndShape(types_, shapes, kernel_node_.lock().get());
 }
 }  // namespace kernel
 }  // namespace mindspore

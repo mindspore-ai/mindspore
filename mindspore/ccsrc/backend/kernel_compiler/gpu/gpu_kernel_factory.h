@@ -79,7 +79,7 @@ class GpuKernelRegister {
 // because the variable created by the macro will also contain a space. So, we solve this
 // problem by writing uchar when calling these macros, and expanding uchar after the
 // variable has been created.
-#define uchar unsigned char
+using uchar = unsigned char;
 
 #define UNIQUE_KERNEL_NAME(kernel) KERNEL_NAME(g_##kernel##_gpu_kernel_reg, __COUNTER__)
 #define KERNEL_NAME(kernel, cnt) MERGE(kernel, cnt)

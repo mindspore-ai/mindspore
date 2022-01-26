@@ -552,6 +552,7 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
       for (auto &i : current_row) {
         device::DataItemGpu data_item;
         data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
+        data_item.shapes_ = i->shape().AsVector();
         data_item.data_ptr_ = nullptr;
         data_item.worker_id_ = worker_id;
         items.push_back(data_item);

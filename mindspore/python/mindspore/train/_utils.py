@@ -63,6 +63,8 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
 
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
+    if exec_dataset.dynamic_setting[0]:
+        _, dataset_shapes = exec_dataset.dynamic_min_max_shapes()
     send_epoch_end = bool(dataset_size == -1)
     exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
 

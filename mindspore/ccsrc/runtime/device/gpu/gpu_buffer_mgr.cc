@@ -114,12 +114,12 @@ BlockQueueStatus_T GpuBufferMgr::Push(unsigned int handle, const std::vector<Dat
   return iter->second->Push(data, timeout_in_sec);
 }
 
-BlockQueueStatus_T GpuBufferMgr::Front(unsigned int handle, void **addr, size_t *len) {
+BlockQueueStatus_T GpuBufferMgr::Front(unsigned int handle, std::vector<DataItemGpu> *data) {
   auto iter = handle_queue_map_.find(handle);
   if (iter == handle_queue_map_.end()) {
     return HANDLE_NOT_EXIST;
   }
-  return iter->second->Front(addr, len);
+  return iter->second->Front(data);
 }
 
 BlockQueueStatus_T GpuBufferMgr::Pop(unsigned int handle) {

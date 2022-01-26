@@ -30,6 +30,7 @@ class MindData:
         self._output_shapes = output_shapes
         self._input_indexs = input_indexs
         self._iter_num = 0
+        self.dynamic_setting = [False, None]
 
     def get_dataset_size(self):
         return self._size
