@@ -86,19 +86,19 @@ int LayerNormRun(const void *cdata, int task_id, float, float) {
 }
 
 int LayerNormCPUKernel::Run() {
-  src_data_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  src_data_ = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(src_data_);
-  gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+  gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
   CHECK_NULL_RETURN(gamma_data_);
-  beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data());
+  beta_data_ = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
   CHECK_NULL_RETURN(beta_data_);
-  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(dst_data_);
 
   if (out_tensors_.size() == 3) {
-    mean_data_ = reinterpret_cast<float *>(out_tensors_.at(1)->data());
+    mean_data_ = reinterpret_cast<float *>(out_tensors_.at(SECOND_INPUT)->data());
     CHECK_NULL_RETURN(mean_data_);
-    var_data_ = reinterpret_cast<float *>(out_tensors_.at(2)->data());
+    var_data_ = reinterpret_cast<float *>(out_tensors_.at(THIRD_INPUT)->data());
     CHECK_NULL_RETURN(var_data_);
   } else if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "LayerNorm should have 1 or 3 output tensors";

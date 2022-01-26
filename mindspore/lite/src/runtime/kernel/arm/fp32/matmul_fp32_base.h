@@ -51,7 +51,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
- public:
 #ifdef ENABLE_ARM64
   int ParallelRunByRow(int task_id) const;
 #endif

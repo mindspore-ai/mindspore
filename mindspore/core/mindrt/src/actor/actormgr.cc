@@ -243,19 +243,15 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
     // actor
     mailbox->SetNotifyHook(std::move(hook));
     actor->Spawn(actor, std::move(mailbox));
-
   } else {
     auto mailbox = std::unique_ptr<MailBox>(new (std::nothrow) BlockingMailBox());
     actor->Spawn(actor, std::move(mailbox));
     ActorMgr::GetActorMgrRef()->SetActorReady(actor);
   }
-
   (void)this->actors.emplace(actor->GetAID().Name(), actor);
   actorsMutex.unlock();
-
   // long time
   actor->Init();
-
   return actor->GetAID();
 }
 
