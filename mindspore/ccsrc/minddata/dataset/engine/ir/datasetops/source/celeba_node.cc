@@ -97,7 +97,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::string line;
   Path folder_path(dataset_dir_);
 
-  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
+  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
     RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" +
@@ -137,7 +137,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
       }
     }
     if (!partition_file.is_open()) {
-      auto realpath_eval = FileUtils::GetRealPath((folder_path / "list_eval_partition.txt").ToString().data());
+      auto realpath_eval = FileUtils::GetRealPath((folder_path / "list_eval_partition.txt").ToString().c_str());
       if (!realpath_eval.has_value()) {
         MS_LOG(ERROR) << "Invalid file, get real path failed, path="
                       << (folder_path / "list_eval_partition.txt").ToString();

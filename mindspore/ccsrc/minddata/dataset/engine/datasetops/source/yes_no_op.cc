@@ -47,7 +47,7 @@ YesNoOp::YesNoOp(const std::string &file_dir, int32_t num_workers, int32_t queue
       data_schema_(std::move(data_schema)) {}
 
 Status YesNoOp::PrepareData() {
-  auto realpath = FileUtils::GetRealPath(dataset_dir_.data());
+  auto realpath = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << dataset_dir_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + dataset_dir_ + " does not exist.");

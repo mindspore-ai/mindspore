@@ -36,7 +36,7 @@ LJSpeechOp::LJSpeechOp(const std::string &file_dir, int32_t num_workers, int32_t
       data_schema_(std::move(data_schema)) {}
 
 Status LJSpeechOp::PrepareData() {
-  auto real_path = FileUtils::GetRealPath(folder_path_.data());
+  auto real_path = FileUtils::GetRealPath(folder_path_.c_str());
   if (!real_path.has_value()) {
     RETURN_STATUS_UNEXPECTED("Invalid file path, LJSpeech Dataset folder: " + folder_path_ + " does not exist.");
   }
@@ -116,7 +116,7 @@ void LJSpeechOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status LJSpeechOp::CountTotalRows(const std::string &dir, int64_t *count) {
-  auto real_path = FileUtils::GetRealPath(dir.data());
+  auto real_path = FileUtils::GetRealPath(dir.c_str());
   if (!real_path.has_value()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + dir + " does not exist.");
   }

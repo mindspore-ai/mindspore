@@ -469,7 +469,7 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
   csv_parser.SetStartOffset(start_offset);
   csv_parser.SetEndOffset(end_offset);
 
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
@@ -612,7 +612,7 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
     return 0;
   }
 
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, csv file: " << file << " does not exist.";
     return 0;
@@ -716,7 +716,7 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
   if (column_name_list_.empty()) {
     // Actually we only deal with the first file, because the column name set in other files must remain the same
     if (!check_flag_) {
-      auto realpath = FileUtils::GetRealPath(csv_file_name.data());
+      auto realpath = FileUtils::GetRealPath(csv_file_name.c_str());
       if (!realpath.has_value()) {
         std::string err_msg = "Invalid file path, csv file: " + csv_file_name + " does not exist.";
         MS_LOG(ERROR) << err_msg;
@@ -774,7 +774,7 @@ bool CsvOp::ColumnNameValidate() {
   std::string match_file;
 
   for (auto &csv_file : csv_files_list_) {
-    auto realpath = FileUtils::GetRealPath(csv_file.data());
+    auto realpath = FileUtils::GetRealPath(csv_file.c_str());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Invalid file path, csv file: " << csv_file << " does not exist.";
       return false;

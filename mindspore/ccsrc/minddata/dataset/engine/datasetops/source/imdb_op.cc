@@ -48,7 +48,7 @@ Status IMDBOp::PrepareData() {
   }
   std::vector<std::string> label_list = {"pos", "neg"};
   // get abs path for folder_path_
-  auto realpath = FileUtils::GetRealPath(folder_path_.data());
+  auto realpath = FileUtils::GetRealPath(folder_path_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, imdb dataset dir: " << folder_path_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, imdb dataset dir: " + folder_path_ + " does not exist.");
@@ -142,7 +142,7 @@ Status IMDBOp::GetDataByUsage(const std::string &folder, const std::string &labe
 Status IMDBOp::CountRows(const std::string &path, const std::string &usage, int64_t *num_rows) {
   RETURN_UNEXPECTED_IF_NULL(num_rows);
   // get abs path for folder_path_
-  auto abs_path = FileUtils::GetRealPath(path.data());
+  auto abs_path = FileUtils::GetRealPath(path.c_str());
   if (!abs_path.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, imdb dataset dir: " << path << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, imdb dataset dir: " + path + " does not exist.");

@@ -253,7 +253,7 @@ Status Places365Op::GetPlaces365DataTensor(uint32_t index, std::shared_ptr<Tenso
 }
 
 Status Places365Op::PrepareData() {
-  auto real_folder_path = FileUtils::GetRealPath(root_.data());
+  auto real_folder_path = FileUtils::GetRealPath(root_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Invalid file path, " + root_ + " does not exist.");
 
   RETURN_IF_NOT_OK(LoadCategories((Path(real_folder_path.value()) / Path(kCategoriesMeta)).ToString()));

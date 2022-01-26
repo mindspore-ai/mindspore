@@ -158,7 +158,7 @@ Status DIV2KOp::GetDIV2KLRDirRealName(const std::string &hr_dir_key, const std::
 Status DIV2KOp::GetDIV2KDataByUsage() {
   const std::string kExtension = ".png";
 
-  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!real_dataset_dir.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, div2k dataset dir: " << dataset_dir_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, div2k dataset dir: " + dataset_dir_ + " does not exist.");

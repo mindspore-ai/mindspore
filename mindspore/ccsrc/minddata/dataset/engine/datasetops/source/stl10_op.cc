@@ -93,7 +93,7 @@ void STL10Op::Print(std::ostream &out, bool show_all) const {
 }
 
 Status STL10Op::WalkAllFiles() {
-  auto real_dataset_dir = FileUtils::GetRealPath(folder_path_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(folder_path_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(),
                                "Invalid file, get real path failed, path: " + folder_path_);
   Path root_dir(real_dataset_dir.value());

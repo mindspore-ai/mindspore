@@ -57,7 +57,7 @@ WIDERFaceOp::WIDERFaceOp(const std::string &folder_path, const std::string &usag
       data_schema_(std::move(data_schema)) {}
 
 Status WIDERFaceOp::PrepareData() {
-  auto realpath = FileUtils::GetRealPath(folder_path_.data());
+  auto realpath = FileUtils::GetRealPath(folder_path_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, WIDERFace dataset dir: " << folder_path_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, WIDERFace dataset dir: " + folder_path_ + " does not exist.");

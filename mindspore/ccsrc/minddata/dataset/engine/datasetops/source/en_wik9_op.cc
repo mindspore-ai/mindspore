@@ -52,7 +52,7 @@ void EnWik9Op::Print(std::ostream &out, bool show_all) const {
 }
 
 Status EnWik9Op::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
@@ -93,7 +93,7 @@ Status EnWik9Op::LoadFile(const std::string &file, int64_t start_offset, int64_t
 }
 
 int64_t EnWik9Op::CountTotalRows(const std::string &file) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file, " << file << " does not exist.";
     return 0;

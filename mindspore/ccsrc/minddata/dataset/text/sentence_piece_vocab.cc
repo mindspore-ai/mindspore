@@ -91,7 +91,7 @@ Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *
   if (vocab == nullptr) {
     RETURN_STATUS_UNEXPECTED("SentencePieceVocab::SaveModel: input vocab can not be null");
   }
-  auto realpath = FileUtils::GetRealPath(path.data());
+  auto realpath = FileUtils::GetRealPath(path.c_str());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }

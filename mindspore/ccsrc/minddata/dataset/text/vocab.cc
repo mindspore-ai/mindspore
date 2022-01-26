@@ -168,7 +168,7 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
     RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFileCpp: input vocab can not be null");
   }
   // Validate parameters
-  auto realpath = FileUtils::GetRealPath(path.data());
+  auto realpath = FileUtils::GetRealPath(path.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + path);
 
   CHECK_FAIL_RETURN_UNEXPECTED(
@@ -241,7 +241,7 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
 
-  auto realpath = FileUtils::GetRealPath(path.data());
+  auto realpath = FileUtils::GetRealPath(path.c_str());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
   }

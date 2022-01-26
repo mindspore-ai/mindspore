@@ -123,7 +123,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
     numa_id_t numa_node = static_cast<numa_id_t>(strtol(node_dir.data() + strlen(kNodeName), nullptr, kDecimal));
     Path f = p / kCpuList;
 
-    auto realpath = FileUtils::GetRealPath(f.ToString().data());
+    auto realpath = FileUtils::GetRealPath(f.ToString().c_str());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << f.ToString();
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + f.ToString());

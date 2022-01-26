@@ -113,7 +113,7 @@ Status UDPOSOp::Load(const std::vector<std::string> &word, const std::vector<std
 }
 
 Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " + DatasetName() + " dataset dir: " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " dataset dir: " + file + " does not exist.");

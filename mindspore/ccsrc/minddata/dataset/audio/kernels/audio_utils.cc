@@ -986,7 +986,7 @@ Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, 
 Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *waveform_vec, int32_t *sample_rate) {
   RETURN_UNEXPECTED_IF_NULL(waveform_vec);
   RETURN_UNEXPECTED_IF_NULL(sample_rate);
-  auto wav_realpath = FileUtils::GetRealPath(wav_file_dir.data());
+  auto wav_realpath = FileUtils::GetRealPath(wav_file_dir.c_str());
   if (!wav_realpath.has_value()) {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR("Invalid file path, get real path failed: " + wav_file_dir);
   }

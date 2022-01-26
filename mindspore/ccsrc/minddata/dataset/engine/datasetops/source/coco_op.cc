@@ -78,7 +78,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   RETURN_UNEXPECTED_IF_NULL(trow);
   std::string image_id = image_ids_[row_id];
   std::shared_ptr<Tensor> image;
-  auto real_path = FileUtils::GetRealPath(image_folder_path_.data());
+  auto real_path = FileUtils::GetRealPath(image_folder_path_.c_str());
   if (!real_path.has_value()) {
     RETURN_STATUS_UNEXPECTED("Invalid file path, COCO dataset image folder: " + image_folder_path_ +
                              " does not exist.");
@@ -313,7 +313,7 @@ Status CocoOp::SearchNodeInJson(const nlohmann::json &input_tree, std::string no
 Status CocoOp::PrepareData() {
   nlohmann::json js;
   try {
-    auto realpath = FileUtils::GetRealPath(annotation_path_.data());
+    auto realpath = FileUtils::GetRealPath(annotation_path_.c_str());
     if (!realpath.has_value()) {
       std::string err_msg = "Invalid file path, Coco Dataset annotation file: " + annotation_path_ + " does not exist.";
       LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

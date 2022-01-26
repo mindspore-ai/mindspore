@@ -447,7 +447,7 @@ std::string IWSLTOp::GenerateIWSLT2017XMLFileName(Path dir, const std::string &s
 Status IWSLTOp::GetFiles() {
   std::vector<std::string> src_path_list;
   std::vector<std::string> target_path_list;
-  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(), "Get real path failed: " + dataset_dir_);
   Path root_dir(real_dataset_dir.value());
 

@@ -123,7 +123,7 @@ int64_t USPSOp::CountRows(const std::string &data_file) {
 }
 
 Status USPSOp::GetFiles() {
-  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_dataset_dir.has_value(),
                                "Invalid file path, USPS dataset dir: " + dataset_dir_ + " does not exist.");
   Path root_dir(real_dataset_dir.value());

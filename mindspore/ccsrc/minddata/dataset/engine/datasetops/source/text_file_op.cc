@@ -78,7 +78,7 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 }
 
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file + " does not exist.");
@@ -168,7 +168,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 }
 
 int64_t TextFileOp::CountTotalRows(const std::string &file) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file, " << file << " does not exist.";
     return 0;

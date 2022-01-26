@@ -87,7 +87,7 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
 }
 
 Status SentencePieceTokenizerOp::GetModelRealPath(const std::string &model_path, const std::string &filename) {
-  auto realpath = FileUtils::GetRealPath(model_path.data());
+  auto realpath = FileUtils::GetRealPath(model_path.c_str());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED(
       "SentencePieceTokenizer: Sentence piece model path is not existed or permission denied. Model path: " +

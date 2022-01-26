@@ -52,7 +52,7 @@ void SemeionOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status SemeionOp::PrepareData() {
-  auto real_path = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_path = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!real_path.has_value()) {
     RETURN_STATUS_UNEXPECTED("Invalid file path, Semeion Dataset folder: " + dataset_dir_ + " does not exist.");
   }

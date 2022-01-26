@@ -277,7 +277,7 @@ Status GTZANOp::ReadAudio(const std::string &audio_dir, std::shared_ptr<Tensor> 
 }
 
 Status GTZANOp::PrepareData() {
-  auto realpath = FileUtils::GetRealPath(folder_path_.data());
+  auto realpath = FileUtils::GetRealPath(folder_path_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, GTZAN Dataset dir: " << folder_path_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, GTZAN Dataset dir: " + folder_path_ + " does not exist.");

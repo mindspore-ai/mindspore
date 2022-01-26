@@ -60,7 +60,7 @@ Status ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load
 }
 
 Status ShardHeader::CheckFileStatus(const std::string &path) {
-  auto realpath = FileUtils::GetRealPath(path.data());
+  auto realpath = FileUtils::GetRealPath(path.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + path);
@@ -92,7 +92,7 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   RETURN_UNEXPECTED_IF_NULL(header_ptr);
   RETURN_IF_NOT_OK(CheckFileStatus(path));
 
-  auto realpath = FileUtils::GetRealPath(path.data());
+  auto realpath = FileUtils::GetRealPath(path.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + path);
@@ -630,7 +630,7 @@ Status ShardHeader::GetStatisticByID(int64_t statistic_id, std::shared_ptr<Stati
 }
 
 Status ShardHeader::PagesToFile(const std::string dump_file_name) {
-  auto realpath = FileUtils::GetRealPath(dump_file_name.data());
+  auto realpath = FileUtils::GetRealPath(dump_file_name.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(),
                                "[Internal ERROR] Failed to get the realpath of Pages file, path: " + dump_file_name);
   // write header content to file, dump whatever is in the file before
@@ -649,7 +649,7 @@ Status ShardHeader::FileToPages(const std::string dump_file_name) {
   for (auto &v : pages_) {  // clean pages
     v.clear();
   }
-  auto realpath = FileUtils::GetRealPath(dump_file_name.data());
+  auto realpath = FileUtils::GetRealPath(dump_file_name.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(),
                                "[Internal ERROR] Failed to get the realpath of Pages file, path: " + dump_file_name);
   // attempt to open the file contains the page in json

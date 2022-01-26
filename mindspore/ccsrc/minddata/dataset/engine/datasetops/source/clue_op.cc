@@ -82,7 +82,7 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
 }
 
 Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     std::string err_msg = "Invalid file path, " + file + " does not exist.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -230,7 +230,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
 }
 
 int64_t CountTotalRowsPerFile(const std::string &file) {
-  auto realpath = FileUtils::GetRealPath(file.data());
+  auto realpath = FileUtils::GetRealPath(file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file, " << file << " does not exist.";
     return 0;
