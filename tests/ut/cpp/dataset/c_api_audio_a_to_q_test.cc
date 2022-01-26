@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2243,5 +2243,101 @@ TEST_F(MindDataTestPipeline, TestMelScaleWrongArgs) {
   ds = ds->Map({mel_scale_op});
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: PhaseVocoder
+/// Description: test PhaseVocoder in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestPhaseVocoderPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaseVocoderPipeline.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+
+  int freq = 1025;
+  int hop_length = 512;
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, freq, 30, 2}));
+
+  std::vector<float> phase_advance;
+  float tpnum = 0;
+  float step = (1.0 * M_PI * hop_length / (freq - 1));
+  for (int i = 0; i < freq; i++) {
+    phase_advance.push_back(tpnum);
+    tpnum += step;
+  }
+
+  std::shared_ptr<Dataset> ds = RandomData(5, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Tensor> phase_advance_tensor;
+  Tensor::CreateFromVector(phase_advance, TensorShape({1025, 1}), &phase_advance_tensor);
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(phase_advance_tensor));
+
+  float rate = 1.3;
+  auto PhaseVocoder = audio::PhaseVocoder(rate, input_ms);
+
+  ds = ds->Map({PhaseVocoder});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 1025, 24, 2};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 4);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 5);
+
+  iter->Stop();
+}
+
+/// Feature: PhaseVocoder
+/// Description: test PhaseVocoder with wrong input
+/// Expectation: Throw exception as expected.
+TEST_F(MindDataTestPipeline, TestPhaseVocoderWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaseVocoderWrongArgs.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+
+  int freq = 1025;
+  int hop_length = 512;
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, freq, 30, 2}));
+
+  std::vector<float> phase_advance;
+  float tpnum = 0;
+  float step = (1.0 * M_PI * hop_length / (freq - 1));
+  for (int i = 0; i < freq; i++) {
+    phase_advance.push_back(tpnum);
+    tpnum += step;
+  }
+
+  std::shared_ptr<Tensor> phase_advance_tensor;
+  Tensor::CreateFromVector(phase_advance, TensorShape({1025, 1}), &phase_advance_tensor);
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(phase_advance_tensor));
+
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  float rate = -2.0;
+  auto PhaseVocoder = audio::PhaseVocoder(rate, input_ms);
+
+  ds = ds->Map({PhaseVocoder});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }

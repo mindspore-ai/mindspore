@@ -31,6 +31,7 @@ add_library(audio-ir-kernels OBJECT
         mu_law_decoding_ir.cc
         mu_law_encoding_ir.cc
         overdrive_ir.cc
+        phase_vocoder_ir.cc
         phaser_ir.cc
         riaa_biquad_ir.cc
         sliding_window_cmn_ir.cc

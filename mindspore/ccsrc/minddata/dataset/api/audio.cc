@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
+#include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
@@ -581,6 +582,26 @@ Phaser::Phaser(int32_t sample_rate, float gain_in, float gain_out, float delay_m
 std::shared_ptr<TensorOperation> Phaser::Parse() {
   return std::make_shared<PhaserOperation>(data_->sample_rate_, data_->gain_in_, data_->gain_out_, data_->delay_ms_,
                                            data_->decay_, data_->mod_speed_, data_->sinusoidal_);
+}
+
+// PhaseVocoder Transofrm Operation.
+struct PhaseVocoder::Data {
+  Data(float rate, const MSTensor &phase_advance) : rate_(rate), phase_advance_(phase_advance) {}
+  float rate_;
+  MSTensor phase_advance_;
+};
+
+PhaseVocoder::PhaseVocoder(float rate, const MSTensor &phase_advance)
+    : data_(std::make_shared<Data>(rate, phase_advance)) {}
+
+std::shared_ptr<TensorOperation> PhaseVocoder::Parse() {
+  std::shared_ptr<Tensor> phase_advance;
+  Status rc = Tensor::CreateFromMSTensor(data_->phase_advance_, &phase_advance);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Error creating phase_vocoder constant tensor." << rc;
+    return nullptr;
+  }
+  return std::make_shared<PhaseVocoderOperation>(data_->rate_, phase_advance);
 }
 
 // RiaaBiquad Transform Operation.

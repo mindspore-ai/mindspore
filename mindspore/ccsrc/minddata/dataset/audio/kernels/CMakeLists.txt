@@ -32,6 +32,7 @@ add_library(audio-kernels OBJECT
         mu_law_decoding_op.cc
         mu_law_encoding_op.cc
         overdrive_op.cc
+        phase_vocoder_op.cc
         phaser_op.cc
         riaa_biquad_op.cc
         sliding_window_cmn_op.cc
