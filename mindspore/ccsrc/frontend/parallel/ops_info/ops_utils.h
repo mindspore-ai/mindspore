@@ -421,6 +421,9 @@ constexpr char DSD_MATMUL[] = "DSDMatmul";
 constexpr char RESIZE_BILINEAR[] = "ResizeBilinear";
 constexpr char RESIZE_NEAREST_NEIGHBOR[] = "ResizeNearestNeighbor";
 constexpr char CUMSUM[] = "CumSum";
+constexpr char BOUNDING_BOX_ENCODE[] = "BoundingBoxEncode";
+constexpr char IOU[] = "IOU";
+constexpr char RANDOM_CHOICE_WITH_MASK[] = "RandomChoiceWithMask";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

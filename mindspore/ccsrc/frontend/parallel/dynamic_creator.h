@@ -210,6 +210,9 @@ REGISTER(UniformRealInfo);
 REGISTER(ResizeBilinearInfo);
 REGISTER(ResizeNearestNeighborInfo);
 REGISTER(CumSumInfo);
+REGISTER(BoundingBoxEncodeInfo);
+REGISTER(IOUInfo);
+REGISTER(RandomChoiceWithMaskInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

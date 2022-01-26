@@ -62,5 +62,8 @@
 #include "frontend/parallel/ops_info/dsd_matmul_info.h"
 #include "frontend/parallel/ops_info/uniform_real_info.h"
 #include "frontend/parallel/ops_info/resizebilinear_info.h"
+#include "frontend/parallel/ops_info/bounding_box_encode_info.h"
+#include "frontend/parallel/ops_info/iou_info.h"
+#include "frontend/parallel/ops_info/random_choice_with_mask_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_
