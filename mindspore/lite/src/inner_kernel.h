@@ -167,7 +167,7 @@ class InnerKernel : public Kernel {
 
   virtual bool IsTrainable() const { return this->trainable_; }
 
-  TypeId registry_data_type(void) { return registry_data_type_; }
+  TypeId registry_data_type(void) const { return registry_data_type_; }
 
   void set_registry_data_type(TypeId data_type) { registry_data_type_ = data_type; }
 
