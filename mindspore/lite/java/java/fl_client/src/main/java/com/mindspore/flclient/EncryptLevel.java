@@ -24,5 +24,6 @@ package com.mindspore.flclient;
 public enum EncryptLevel {
     PW_ENCRYPT,
     DP_ENCRYPT,
+    SIGNDS,
     NOT_ENCRYPT
 }

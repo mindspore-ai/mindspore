@@ -79,6 +79,11 @@ public class FLLiteClient {
     private String nextRequestTime;
     private Client client;
     private Map<String, float[]> oldFeatureMap;
+    private float signK = 0.01f;
+    private float signEps = 100;
+    private float signThrRatio = 0.6f;
+    private float signGlobalLr = 1f;
+    private int signDimOut = 0;
 
     /**
      * Defining a constructor of teh class FLLiteClient.
@@ -124,11 +129,11 @@ public class FLLiteClient {
         }
         switch (localFLParameter.getEncryptLevel()) {
             case PW_ENCRYPT:
-                minSecretNum = cipherPublicParams.t();
-                int primeLength = cipherPublicParams.primeLength();
+                minSecretNum = cipherPublicParams.pwParams().t();
+                int primeLength = cipherPublicParams.pwParams().primeLength();
                 prime = new byte[primeLength];
                 for (int i = 0; i < primeLength; i++) {
-                    prime[i] = (byte) cipherPublicParams.prime(i);
+                    prime[i] = (byte) cipherPublicParams.pwParams().prime(i);
                 }
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <minSecretNum> from server: " + minSecretNum));
                 if (minSecretNum <= 0) {
@@ -138,13 +143,25 @@ public class FLLiteClient {
                 }
                 break;
             case DP_ENCRYPT:
-                dpEps = cipherPublicParams.dpEps();
-                dpDelta = cipherPublicParams.dpDelta();
-                dpNormClipFactor = cipherPublicParams.dpNormClip();
+                dpEps = cipherPublicParams.dpParams().dpEps();
+                dpDelta = cipherPublicParams.dpParams().dpDelta();
+                dpNormClipFactor = cipherPublicParams.dpParams().dpNormClip();
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpEps> from server: " + dpEps));
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpDelta> from server: " + dpDelta));
                 LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <dpNormClipFactor> from server: " +
                         dpNormClipFactor));
+                break;
+            case SIGNDS:
+                signK = cipherPublicParams.dsParams().signK();
+                signEps = cipherPublicParams.dsParams().signEps();
+                signThrRatio = cipherPublicParams.dsParams().signThrRatio();
+                signGlobalLr = cipherPublicParams.dsParams().signGlobalLr();
+                signDimOut = cipherPublicParams.dsParams().signDimOut();
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <signK> from server: " + signK));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <signEps> from server: " + signEps));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <signThrRatio> from server: " + signThrRatio));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <signGlobalLr> from server: " + signGlobalLr));
+                LOGGER.info(Common.addTag("[startFLJob] GlobalParameters <SignDimOut> from server: " + signDimOut));
                 break;
             default:
                 LOGGER.info(Common.addTag("[startFLJob] NOT_ENCRYPT, do not set parameter for Encrypt"));
@@ -418,7 +435,7 @@ public class FLLiteClient {
             }
             LOGGER.info(Common.addTag("[getModel] get response from server ok!"));
         } catch (IOException e) {
-            failed("[getModel] un sloved error code: catch IOException: " + e.getMessage(), ResponseCode.RequestError);
+            failed("[getModel] unsolved error code: catch IOException: " + e.getMessage(), ResponseCode.RequestError);
         }
         return status;
     }
@@ -511,11 +528,23 @@ public class FLLiteClient {
                 curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt, oldFeatureMap);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
-                    LOGGER.info(Common.addTag("---Differential privacy init failed---"));
+                    LOGGER.severe(Common.addTag("---Differential privacy init failed---"));
                     retCode = ResponseCode.RequestError;
                     return FLClientStatus.FAILED;
                 }
                 LOGGER.info(Common.addTag("[Encrypt] set parameters for DP_ENCRYPT!"));
+                return FLClientStatus.SUCCESS;
+            case SIGNDS:
+                // get the feature map before train
+                oldFeatureMap = getFeatureMap();
+                curStatus = secureProtocol.setDSParameter(signK, signEps, signThrRatio, signGlobalLr, signDimOut, oldFeatureMap);
+                retCode = ResponseCode.SUCCEED;
+                if (curStatus != FLClientStatus.SUCCESS) {
+                    LOGGER.severe(Common.addTag("---SignDS init failed---"));
+                    retCode = ResponseCode.RequestError;
+                    return FLClientStatus.FAILED;
+                }
+                LOGGER.info(Common.addTag("[Encrypt] set parameters for SignDS!"));
                 return FLClientStatus.SUCCESS;
             case NOT_ENCRYPT:
                 retCode = ResponseCode.SUCCEED;

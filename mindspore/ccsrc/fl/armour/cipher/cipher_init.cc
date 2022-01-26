@@ -55,11 +55,21 @@ bool CipherInit::Init(const CipherPublicPara &param, size_t time_out_mutex, size
   publicparam_.dp_delta = param.dp_delta;
   publicparam_.dp_norm_clip = param.dp_norm_clip;
   publicparam_.encrypt_type = param.encrypt_type;
+  publicparam_.sign_k = param.sign_k;
+  publicparam_.sign_eps = param.sign_eps;
+  publicparam_.sign_thr_ratio = param.sign_thr_ratio;
+  publicparam_.sign_global_lr = param.sign_global_lr;
+  publicparam_.sign_dim_out = param.sign_dim_out;
 
   if (param.encrypt_type == mindspore::ps::kDPEncryptType) {
-    MS_LOG(INFO) << "DP parameters init, dp_eps: " << param.dp_eps;
-    MS_LOG(INFO) << "DP parameters init, dp_delta: " << param.dp_delta;
-    MS_LOG(INFO) << "DP parameters init, dp_norm_clip: " << param.dp_norm_clip;
+    MS_LOG(INFO) << "DP parameters init, dp_eps: " << param.dp_eps << ", dp_delta: " << param.dp_delta
+                 << ", dp_norm_clip: " << param.dp_norm_clip;
+  }
+
+  if (param.encrypt_type == mindspore::ps::kDSEncryptType) {
+    MS_LOG(INFO) << "Sign parameters init, sign_k: " << param.sign_k << ", sign_eps: " << param.sign_eps
+                 << ", sign_thr_ratio: " << param.sign_thr_ratio << ", sign_global_lr: " << param.sign_global_lr
+                 << ", sign_dim_out: " << param.sign_dim_out;
   }
 
   if (param.encrypt_type == mindspore::ps::kPWEncryptType) {

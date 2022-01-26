@@ -1067,11 +1067,18 @@ def set_fl_context(**kwargs):
         dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
             suggested to be 0.5~2. Default: 1.0.
         encrypt_type (string): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
-            'PW_ENCRYPT' or 'STABLE_PW_ENCRYPT'. If 'DP_ENCRYPT', differential privacy schema would be applied
+            'PW_ENCRYPT', 'STABLE_PW_ENCRYPT' or 'SIGNDS'. If 'DP_ENCRYPT', differential privacy schema would be applied
             for clients and the privacy protection effect would be determined by dp_eps, dp_delta and dp_norm_clip
             as described above. If 'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients'
             model from stealing in cross-device scenario. If 'STABLE_PW_ENCRYPT', pairwise secure aggregation would
-            be applied to protect clients' model from stealing in cross-silo scenario. Default: 'NOT_ENCRYPT'.
+            be applied to protect clients' model from stealing in cross-silo scenario. If 'SIGNDS', SignDS schema would
+            be applied for clients. Default: 'NOT_ENCRYPT'.
+        sign_k (float): SignDS: Top-k ratio, namely the number of top-k dimensions divided by the total number of
+            dimensions. Default: 0.01.
+        sign_eps (float): SignDS: Privacy budget. Default: 100.
+        sign_thr_ratio (float): SignDS: Threshold of the expected topk dimension. Default: 0.6.
+        sign_global_lr (float): SignDS: The constant value assigned to the selected dimension. Default: 1.
+        sign_dim_out (int): SignDS: Number of output dimensions. Default: 0.
         config_file_path (string): Configuration file path used by recovery. Default: ''.
         scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
         enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
