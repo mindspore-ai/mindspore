@@ -95,6 +95,16 @@ def get_bprop_tensor_scatter_min(self):
     return bprop
 
 
+@bprop_getters.register(P.Coalesce)
+def get_bprop_coalesce(self):
+    """Grad definition for `Coalesce` operation."""
+
+    def bprop(x_indices, x_values, x_shape, out, dout):
+        return dout
+
+    return bprop
+
+
 @bprop_getters.register(P.SplitV)
 def get_bprop_split_v(self):
     """Generate bprop for SplitV"""
