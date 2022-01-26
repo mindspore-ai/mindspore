@@ -49,6 +49,7 @@ enum OpMergeMode {
   OP_MERGE_MAXPOOL_WITH_ARGMAX = 5,  // indicate `MindSpore MaxPoolWithArgmax(x)[0]` --> `ONNX MaxPool`
   OP_MERGE_LAYER_NORM = 6,           // indicate `MindSpore LayerNorm(x)[0]` --> `ONNX MeanVarianceNormalization`
   OP_MERGE_CONV2D_TRANSPOSE = 7,     // indicate `MindSpore ConvTranspose + BiasAdd` --> `ONNX ConvTranspose`
+  OP_MERGE_CONCAT = 8,               // indicate `MindSpore MakeTuple + Concat` --> `ONNX Concat`
 };
 
 struct OpMergedInfo {
@@ -999,7 +1000,6 @@ OPERATOR_ONNX_CONVERT_DEFINE(Sqrt, Sqrt, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Equal, Equal, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Floor, Floor, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(ACos, Acos, OpNameInfo())
-
 OPERATOR_ONNX_CONVERT_DEFINE(GatherNd, GatherND,
                              OpNameInfo().CastInput(1, onnx::TensorProto_DataType_INT32,
                                                     onnx::TensorProto_DataType_INT64))
@@ -1203,6 +1203,8 @@ class OnnxExporter {
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePtr &node,
                        std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportMergeConcatMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                  std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeBatchNorm(const FuncGraphPtr &func_graph, const CNodePtr &node,
                             std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportMergeMaxPoolWithArgmax(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -1436,6 +1438,7 @@ void OnnxExporter::MatchAndMarkCNode(const FuncGraphPtr &func_graph, const CNode
     {prim::kPrimTupleGetItem, prim::kPrimBatchNorm, OP_MERGE_BATCH_NORM},
     {prim::kPrimTupleGetItem, prim::kPrimMaxPoolWithArgmax, OP_MERGE_MAXPOOL_WITH_ARGMAX},
     {prim::kPrimTupleGetItem, prim::kPrimLayerNorm, OP_MERGE_LAYER_NORM},
+    {prim::kPrimTupleGetItem, prim::kPrimConcat, OP_MERGE_CONCAT},
   };
 
   auto rule = std::find_if(first_input_merge_rules.begin(), first_input_merge_rules.end(), [&cnode](const auto &rule) {
@@ -1524,6 +1527,9 @@ void OnnxExporter::ExportNodes(const FuncGraphPtr &func_graph, std::map<AnfNodeP
         break;
       case OP_MERGE_CONV2D_TRANSPOSE:
         ExportMergeConv2DTranspose(func_graph, cnode, node_map_ptr, graph_proto);
+        break;
+      case OP_MERGE_CONCAT:
+        ExportMergeConcatMakeTuple(func_graph, cnode, node_map_ptr, graph_proto);
         break;
       default:
         ExportCNode(func_graph, cnode, node_map_ptr, graph_proto);
@@ -3418,6 +3424,18 @@ void OnnxExporter::ExportMergeGemm(const FuncGraphPtr &func_graph, const CNodePt
   PrimitivePtr prim_matmul = dyn_cast<Primitive>((dyn_cast<ValueNode>(matmul_node->input(kZeroNum)))->value());
   std::vector<AnfNodePtr> inputs{input_x, input_y, input_b};
   (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_matmul, inputs, graph_proto);
+}
+
+void OnnxExporter::ExportMergeConcatMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                              std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                              onnx::GraphProto *const graph_proto) {
+  auto make_tuple_node = dyn_cast<CNode>(node->input(kOneNum));
+  auto input_x1 = make_tuple_node->input(kOneNum);  // make_tuple input x1
+  auto input_x2 = make_tuple_node->input(kTwoNum);  // make_tuple input x2
+
+  PrimitivePtr prim_concat = dyn_cast<Primitive>((dyn_cast<ValueNode>(node->input(kZeroNum)))->value());
+  std::vector<AnfNodePtr> inputs{input_x1, input_x2};
+  (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim_concat, inputs, graph_proto);
 }
 
 void OnnxExporter::ExportMergeBatchNorm(const FuncGraphPtr &func_graph, const CNodePtr &node,
