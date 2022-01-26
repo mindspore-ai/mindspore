@@ -197,7 +197,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       - semi_auto_parallel：半自动并行模式。
       - auto_parallel：自动并行模式。
 
-    - **auto_parallel_search_mode** (str) - 表示有两种策略搜索模式，分别是recursive_programming和dynamic_programming。默认值：dynamic_programming。
+    - **search_mode** (str) - 表示有两种策略搜索模式，分别是recursive_programming和dynamic_programming。默认值：dynamic_programming。
 
       - recursive_programming：表示双递归搜索模式。
       - dynamic_programming：表示动态规划搜索模式。
@@ -211,6 +211,13 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     - **all_reduce_fusion_config** (list) - 通过参数索引设置 AllReduce 融合策略。仅支持ReduceOp.SUM和HCCL_WORLD_GROUP/NCCL_WORLD_GROUP。没有默认值。如果不设置，则关闭算子融合。
     - **pipeline_stages** (int) - 设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。目前，这只能在启动semi_auto_parallel模式的情况下使用。默认值：1。
     - **grad_accumulation_step** (int) - 在自动和半自动并行模式下设置梯度的累积step。其值应为正整数。默认值：1。
+    - **parallel_optimizer_config** (dict) - 用于开启优化器并行后的行为配置。仅在enable_parallel_optimizer=True的时候生效。目前，它支持关键字如下的关键字：
+
+      - gradient_accumulation_shard：设置累积梯度变量是否在数据并行维度上进行切分。开启后，将进一步减小模型的显存占用，但是会在反向计算梯度时引入额外的通信算子（ReduceScatter）。此配置仅在流水线并行训练和梯度累积模式下生效。默认值：True。
+
+    - **comm_fusion** (dict) - 用于设置通信算子的融合配置。可以同一类型的通信算子按梯度张量的大小或者顺序分块传输。输入格式为{"通信类型": {"mode":str, "config": None int 或者 list}},每种通信算子的融合配置有两个键："mode"和"config"。支持以下通信类型的融合类型和配置：
+
+      - allreduce: 进行allreduce算子的通信融合。"mode"包含："auto"、"size"和"index"。在"auto"模式下，allreduce融合的是梯度变量的大小，默认值阈值为"64"MB，"config"对应的值为None。在"size"模式下，需要用户在config的字典中指定梯度大小阈值，这个值必须大于"0"MB。在"mode"为"index"时，它与"all_reduce_fusion_config"相同，用户需要给"config"传入一个列表，里面每个值表示梯度的索引。
 
     **异常：**
 
