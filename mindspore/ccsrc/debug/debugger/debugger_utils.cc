@@ -69,8 +69,8 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
  * Runtime category: MindRT.
  * Description: Get kernel inputs from launch_info and load the inputs from device to host.
  */
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
-                uint32_t root_graph_id) {
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
+                const DeviceContext *device_context) {
   // get inputs
   auto kernel_inputs = launch_info->inputs_;
   auto input_size = AnfAlgo::GetInputTensorNum(cnode);
@@ -83,17 +83,17 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     if (type == kMetaTypeNone) {
       continue;
     }
-#ifdef ENABLE_GPU
+
     auto format = kOpFormat_DEFAULT;
-    auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
+    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type);
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret = gpu_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true, root_graph_id);
+    auto ret =
+      device_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
     }
-#endif
   }
 }
 
@@ -104,7 +104,7 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
  * Description: Get kernel outputs from launch_info and load the inputs from device to host.
  */
 void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
-                 uint32_t root_graph_id) {
+                 uint32_t root_graph_id, const DeviceContext *device_context) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
@@ -119,17 +119,16 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
     if (type == kMetaTypeNone) {
       continue;
     }
-#ifdef ENABLE_GPU
+
     auto format = kOpFormat_DEFAULT;
-    auto gpu_addr = std::make_unique<device::gpu::GPUDeviceAddress>(addr->addr, addr->size, format, type);
+    auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type);
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
-    auto ret = gpu_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
+    auto ret = device_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
     }
-#endif
   }
 }
 
@@ -167,21 +166,23 @@ bool CheckReadData(const CNodePtr &cnode) {
  * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
  * PostExecuteNode function on the given node.
  */
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order) {
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+                     const DeviceContext *device_context) {
   auto debugger = Debugger::GetInstance();
   if (!debugger) {
     return;
   }
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  bool dump_enabled = debugger->DumpDataEnabledIteration();
+  bool dump_enabled = dump_json_parser.DumpEnabledForIter();
+  MS_LOG(DEBUG) << "dump_enabled: " << dump_enabled;
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto root_graph_id = kernel_graph->root_graph_id();
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
-    LoadInputs(cnode, launch_info, exec_order, root_graph_id);
+    LoadInputs(cnode, launch_info, exec_order, root_graph_id, device_context);
   }
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
-    LoadOutputs(cnode, launch_info, exec_order, root_graph_id);
+    LoadOutputs(cnode, launch_info, exec_order, root_graph_id, device_context);
   }
   // Dump kernel
   if (dump_enabled) {
@@ -196,37 +197,6 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
   // check if the node is last kernel
   bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
   debugger->PostExecuteNode(cnode, last_kernel);
-}
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend.
- * Runtime category: MindRT.
- * Description: Load outputs of the given node and dump them if dump is enabled for Ascend kernel-by-kernel dump.
- */
-void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order) {
-  auto debugger = Debugger::GetInstance();
-  if (!debugger) {
-    return;
-  }
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  bool dump_enabled = dump_json_parser.DumpEnabledForIter();
-  MS_LOG(DEBUG) << "dump_enabled: " << dump_enabled;
-  auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(cnode->func_graph());
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto root_graph_id = kernel_graph->root_graph_id();
-
-  debugger->LoadNodeOutputs(cnode, exec_order, root_graph_id);
-  // Dump kernel
-  if (dump_enabled) {
-    MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto graph_id = kernel_graph->graph_id();
-    debugger->DumpSingleNode(cnode, graph_id);
-    // Clear Dumped data when online debugger is not enabled
-    if (!debugger->debugger_enabled()) {
-      debugger->ClearCurrentData();
-    }
-  }
 }
 
 /*
