@@ -42,7 +42,6 @@ class MindIRControlFlowAdjust {
   int ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> all_func_graphs);
   int MoveCallInputsToPartialFusionInputs(const std::set<FuncGraphPtr> &all_func_graphs);
 
- private:
   FmkType fmk_type_ = FmkType::kFmkTypeMs;
   int status_ = RET_OK;
 };

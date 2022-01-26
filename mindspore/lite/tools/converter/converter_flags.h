@@ -59,7 +59,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitConfigFile();
 
-  int InitInTensorShape();
+  int InitInTensorShape() const;
 
   int InitGraphInputFormat();
 
@@ -67,7 +67,6 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int Init(int argc, const char **argv);
 
- public:
   std::string modelFile;
   std::string outputFile;
   std::string fmkIn;

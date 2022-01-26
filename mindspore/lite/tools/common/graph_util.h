@@ -44,7 +44,7 @@ enum InsertPlace { kBefore, kAfter };
 
 using NodeIter = std::vector<std::unique_ptr<schema::CNodeT>>::iterator;
 
-using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT>(schema::CNodeT *)>;
+using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT>(const schema::CNodeT &)>;
 
 OpDefCopyer GetSimpleOpCopyer();
 

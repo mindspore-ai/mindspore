@@ -39,22 +39,21 @@ class FusionPass : public GraphPass {
 
  protected:
   virtual STATUS DoFusion(schema::MetaGraphT *graph, const std::string &patternName,
-                          std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) = 0;
+                          const std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) = 0;
 
-  STATUS MatchPatterns(const schema::MetaGraphT *graph);
+  STATUS MatchPatterns(const schema::MetaGraphT &graph);
 
-  STATUS MatchOnePattern(const schema::MetaGraphT *graph, FusionPattern *pattern);
+  STATUS MatchOnePattern(const schema::MetaGraphT &graph, FusionPattern *pattern);
 
-  bool MatchTree(const schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
-                 std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
+  bool MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
+                 std::vector<size_t> *sinkIdes, std::vector<size_t> *pathSinkIdes);
 
-  bool CheckMatchParams(const schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
-                        std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
-  static bool CheckMatch(const schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp);
+  bool CheckMatchParams(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
+                        const std::vector<size_t> &sinkIdes, const std::vector<size_t> &pathSinkIdes);
+  static bool CheckMatch(const schema::MetaGraphT &graph, const std::shared_ptr<PatternOp> &patternOp);
 
   STATUS Fuse(schema::MetaGraphT *graph);
 
- protected:
   std::vector<FusionPattern *> patterns{};
   std::map<std::string, std::vector<std::shared_ptr<PatternOp>>> matchedPaths{};
   // {name of pattern, vector<{name of pattern node, path}>}
