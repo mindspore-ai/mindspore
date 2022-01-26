@@ -37,6 +37,8 @@ mindspore.nn.SmoothL1Loss
     **异常：**
 
     - **TypeError** - `beta` 不是float。
+    - **TypeError** - `logits` 或 `labels` 不是Tensor。
     - **TypeError** - `logits` 或 `labels` 的数据类型既不是float16，也不是float32。
+    - **TypeError** - `logits` 的数据类型与 `labels` 不同。
     - **ValueError** - `beta` 小于或等于0。
     - **ValueError** - `logits` 的shape与 `labels` 不同。
