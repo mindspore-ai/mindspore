@@ -46,7 +46,7 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include `train`, `test` and `all` (default=None, all samples).
+        usage (str, optional): Acceptable usages include 'train', 'test' and 'all' (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
@@ -134,13 +134,13 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the Amazon Review Polarity dataset
             or the Amazon Review Full dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` (default= `all`).
-            For Polarity dataset, `train` will read from 3,600,000 train samples,
-            `test` will read from 400,000 test samples,
-            `all` will read from all 4,000,000 samples.
-            For Full dataset, `train` will read from 3,000,000 train samples,
-            `test` will read from 650,000 test samples,
-            `all` will read from all 3,650,000 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' (default= 'all').
+            For Polarity dataset, 'train' will read from 3,600,000 train samples,
+            'test' will read from 400,000 test samples,
+            'all' will read from all 4,000,000 samples.
+            For Full dataset, 'train' will read from 3,000,000 train samples,
+            'test' will read from 650,000 test samples,
+            'all' will read from all 3,650,000 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to be read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -221,14 +221,14 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
 class CLUEDataset(SourceDataset, TextBaseDataset):
     """
     A source dataset that reads and parses CLUE datasets.
-    Supported CLUE classification tasks: `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
+    Supported CLUE classification tasks: 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
             a pattern of files. The list will be sorted in a lexicographical order.
-        task (str, optional): The kind of task, one of `AFQMC`, `TNEWS`, `IFLYTEK`, `CMNLI`, `WSC` and `CSL`.
+        task (str, optional): The kind of task, one of 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' and 'CSL'.
             (default=AFQMC).
-        usage (str, optional): Specify the `train`, `test` or `eval` part of dataset (default="train").
+        usage (str, optional): Specify the 'train', 'test' or 'eval' part of dataset (default='train').
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -250,63 +250,147 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
-    Note:
-        The generated dataset with different task setting has different output columns:
+    The generated dataset with different task setting has different output columns:
 
-        - task = :py:obj:`AFQMC`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-        - task = :py:obj:`TNEWS`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
-                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`, \
-                :py:obj:`[keywords, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[keywords, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
-                :py:obj:`[label_desc, dtype=string]`, :py:obj:`[sentence, dtype=string]`,\
-                :py:obj:`[keywords, dtype=string]`.
-
-        - task = :py:obj:`IFLYTEK`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[label, dtype=string]`, \
-                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[sentence, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[label, dtype=string]`, \
-                :py:obj:`[label_des, dtype=string]`, :py:obj:`[sentence, dtype=string]`.
-
-        - task = :py:obj:`CMNLI`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[sentence1, dtype=string]`, :py:obj:`[sentence2, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[sentence1, dtype=string]`, \
-                :py:obj:`[sentence2, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-        - task = :py:obj:`WSC`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
-                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
-                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, \
-                :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
-                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
-                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, :py:obj:`[text, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[span1_index, dtype=uint32]`, \
-                :py:obj:`[span2_index, dtype=uint32]`, :py:obj:`[span1_text, dtype=string]`, \
-                :py:obj:`[span2_text, dtype=string]`, :py:obj:`[idx, dtype=uint32]`, \
-                :py:obj:`[text, dtype=string]`, :py:obj:`[label, dtype=string]`.
-
-        - task = :py:obj:`CSL`
-            - usage = :py:obj:`train`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
-            - usage = :py:obj:`test`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`.
-            - usage = :py:obj:`eval`, output columns: :py:obj:`[id, dtype=uint32]`, \
-                :py:obj:`[abst, dtype=string]`, :py:obj:`[keyword, dtype=string]`, :py:obj:`[label, dtype=string]`.
+    +-------------------------+------------------------------+-----------------------------+
+    | `task`                  |   `usage`                    |   Output column             |
+    +=========================+==============================+=============================+
+    | AFQMC                   |   train                      |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
+    | TNEWS                   |   train                      |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [label, dtype=uint32]     |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    +-------------------------+------------------------------+-----------------------------+
+    | IFLYTEK                 |   train                      |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    +-------------------------+------------------------------+-----------------------------+
+    | CMNLI                   |   train                      |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
+    | WSC                     |   train                      |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         |                              |                             |
+    |                         |                              |  [label, dtype=string]      |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         |                              |                             |
+    |                         |                              |  [label, dtype=string]      |
+    +-------------------------+------------------------------+-----------------------------+
+    | CSL                     |   train                      |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
@@ -379,9 +463,9 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`,  or `all`. `train` will read from
-            8936 train samples, `test` will read from 2,012 test samples,
-            `all` will read from all 1,0948 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test',  or 'all'. 'train' will read from
+            8936 train samples, 'test' will read from 2,012 test samples,
+            'all' will read from all 1,0948 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -437,10 +521,10 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
-            `train` will read from 560,000 train samples,
-            `test` will read from 70,000 test samples,
-            `all` will read from all 630,000 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'.
+            'train' will read from 560,000 train samples,
+            'test' will read from 70,000 test samples,
+            'all' will read from all 630,000 samples (default=None, all samples).
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, will include all text).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -608,7 +692,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'
             (default=None, will read all samples).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all samples).
@@ -749,16 +833,16 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
+        usage (str, optional): Acceptable usages include 'train', 'valid', 'test' and 'all' (default=None, all samples).
         language_pair (sequence, optional): Sequence containing source and target language, supported values are
-            (`en`, `fr`), ("en", "de"), ("en", "cs"), ("en", "ar"), ("fr", "en"), ("de", "en"), ("cs", "en"),
-            ("ar", "en") (default=("de", "en")).
+            ('en', 'fr'), ('en', 'de'), ('en', 'cs'), ('en', 'ar'), ('fr', 'en'), ('de', 'en'), ('cs', 'en'),
+            ('ar', 'en') (default=('de', 'en')).
         valid_set (str, optional): A string to identify validation set, when usage is valid or all, the validation set
-            of valid_set type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013"
-            and "tst2014" (default="tst2013").
+            of valid_set type will be read, supported values are 'dev2010', 'tst2010', 'tst2011', 'tst2012', 'tst2013'
+            and 'tst2014' (default='tst2013').
         test_set (str, optional): A string to identify test set, when usage is test or all, the test set of test_set
-            type will be read, supported values are "dev2010", "tst2010", "tst2011", "tst2012", "tst2013" and "tst2014"
-            (default="tst2014").
+            type will be read, supported values are 'dev2010', 'tst2010', 'tst2011', 'tst2012', 'tst2013' and 'tst2014'
+            (default='tst2014').
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -875,11 +959,11 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include "train", "valid", "test" and "all" (default=None, all samples).
-        language_pair (list, optional): List containing src and tgt language, supported values are ("en", "nl"),
-            ("en", "de"), ("en", "it"), ("en", "ro"), ("nl", "en"), ("nl", "de"), ("nl", "it"), ("nl", "ro"),
-            ("de", "en"), ("de", "nl"), ("de", "it"), ("de", "ro"), ("it", "en"), ("it", "nl"), ("it", "de"),
-            ("it", "ro"), (`ro`, `en`), (`ro`, `nl`), (`ro`, `de`), (`ro`, `it`) (default=(`de`, `en`)).
+        usage (str, optional): Acceptable usages include 'train', 'valid', 'test' and 'all' (default=None, all samples).
+        language_pair (list, optional): List containing src and tgt language, supported values are ('en', 'nl'),
+            ('en', 'de'), ('en', 'it'), ('en', 'ro'), ('nl', 'en'), ('nl', 'de'), ('nl', 'it'), ('nl', 'ro'),
+            ('de', 'en'), ('de', 'nl'), ('de', 'it'), ('de', 'ro'), ('it', 'en'), ('it', 'nl'), ('it', 'de'),
+            ('it', 'ro'), ('ro', 'en'), ('ro', 'nl'), ('ro', 'de'), ('ro', 'it') (default=('de', 'en')).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -971,7 +1055,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
       Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include `train`, `test, `valid` or `all` (default=`all`).
+        usage (str, optional): Acceptable usages include 'train', 'test, 'valid' or 'all' (default='all').
         language_pair (str, optional): Acceptable language_pair include ['en', 'de'], ['de', 'en']
             (default=['en', 'de']).
         num_samples (int, optional): The number of images to be included in the dataset
@@ -998,7 +1082,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If usage is not "train", "test", "valid" or "all".
+        RuntimeError: If usage is not 'train', 'test', 'valid' or 'all'.
         RuntimeError: If the length of language_pair is not equal to 2.
         RuntimeError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -1070,7 +1154,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all`.
+        usage (str, optional): Acceptable usages include 'train', 'test', 'valid' and 'all'.
             'train' will read from 42,068 train samples of string type,
             'test' will read from 3,370 test samples of string type,
             'valid' will read from 3,761 test samples of string type,
@@ -1162,9 +1246,9 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` .
-            `train` will read from 450,000 train samples, `test` will read from 60,000 test samples,
-            `all` will read from all 510,000 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' .
+            'train' will read from 450,000 train samples, 'test' will read from 60,000 test samples,
+            'all' will read from all 510,000 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, read all samples).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -1303,9 +1387,9 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train` will read from
-            12,543 train samples, `test` will read from 2,077 test samples, `valid` will read from 2,002 test samples,
-            `all` will read from all 16,622 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test', 'valid' or 'all'. 'train' will read from
+            12,543 train samples, 'test' will read from 2,077 test samples, 'valid' will read from 2,002 test samples,
+            'all' will read from all 16,622 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).
@@ -1359,7 +1443,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Acceptable usages include `train`, `test`, 'valid' and `all` (default=None, all samples).
+        usage (str, optional): Acceptable usages include 'train', 'test', 'valid' and 'all' (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads the full dataset).
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
@@ -1440,8 +1524,8 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`. `train` will read
-            from 1,400,000 train samples, `test` will read from 60,000 test samples, `all` will read from
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'. 'train' will read
+            from 1,400,000 train samples, 'test' will read from 60,000 test samples, 'all' will read from
             all 1,460,000 samples (default=None, all samples).
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, will include all text).
@@ -1533,11 +1617,11 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`.
-            For Polarity, `train` will read from 560,000 train samples, `test` will read from 38,000 test samples,
-            `all` will read from all 598,000 samples.
-            For Full, `train` will read from 650,000 train samples, `test` will read from 50,000 test samples,
-            `all` will read from all 700,000 samples (default=None, all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'.
+            For Polarity, 'train' will read from 560,000 train samples, 'test' will read from 38,000 test samples,
+            'all' will read from all 598,000 samples.
+            For Full, 'train' will read from 650,000 train samples, 'test' will read from 50,000 test samples,
+            'all' will read from all 700,000 samples (default=None, all samples).
         num_samples (int, optional): Number of samples (rows) to read (default=None, reads all samples).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=Shuffle.GLOBAL).

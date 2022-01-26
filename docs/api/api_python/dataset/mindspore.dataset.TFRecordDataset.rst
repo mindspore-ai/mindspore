@@ -31,8 +31,8 @@ mindspore.dataset.TFRecordDataset
 
     **异常：**
 
-    - **RuntimeError** - `dataset_files` 参数所指向的文件无效或不存在。
-    - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **ValueError** - `dataset_files` 参数所指向的文件无效或不存在。
+    - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。

@@ -25,44 +25,157 @@ mindspore.dataset.CLUEDataset
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
     - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_ 。默认值：None，不使用缓存。
 
-    根据给定的 `task` 参数配置，数据集会生成不同的输出列：
+    根据给定的 `task` 参数 和 `usage` 配置，数据集会生成不同的输出列：
 
-    - `task` = 'AFQMC'
-        - usage = 'train'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
-        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[sentence1, dtype=string]` , `[sentence2, dtype=string]` .
-        - usage = 'eval'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
-
-    - `task` = 'TNEWS'
-        - usage = 'train'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
-        - usage = 'test'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
-        - usage = 'eval'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` , `[keywords, dtype=string]` .
-
-    - `task` = 'IFLYTEK'
-        - usage = 'train'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` .
-        - usage = 'test'，输出列: `[id, dtype=string]` , `[sentence, dtype=string]` .
-        - usage = 'eval'，输出列: `[label, dtype=string]` , `[label_des, dtype=string]` , `[sentence, dtype=string]` .
-
-    - `task` = 'CMNLI'
-        - usage = 'train'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
-        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[sentence1, dtype=string]` , `[sentence2, dtype=string]` .
-        - usage = 'eval'，输出列: `[sentence1, dtype=string]` , `[sentence2, dtype=string]` , `[label, dtype=string]` .
-
-    - `task` = 'WSC'
-        - usage = 'train'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` , `[label, dtype=string]` .
-        - usage = 'test'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` .
-        - usage = 'eval'，输出列: `[span1_index, dtype=uint8]` , `[span2_index, dtype=uint8]` , `[span1_text, dtype=string]` , `[span2_text, dtype=string]` , `[idx, dtype=uint8]` , `[text, dtype=string]` , `[label, dtype=string]` .
-
-    - `task` = 'CSL'
-        - usage = 'train'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` , `[label, dtype=string]` .
-        - usage = 'test'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` .
-        - usage = 'eval'，输出列: `[id, dtype=uint8]` , `[abst, dtype=string]` , `[keyword, dtype=string]` , `[label, dtype=string]` .
+    +-------------------------+------------------------------+-----------------------------+
+    | `task`                  |   `usage`                    |   输出列                    |
+    +=========================+==============================+=============================+
+    | AFQMC                   |   train                      |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
+    | TNEWS                   |   train                      |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [label, dtype=uint32]     |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         |                              |                             |
+    |                         |                              |   [keywords, dtype=string]  |
+    +-------------------------+------------------------------+-----------------------------+
+    | IFLYTEK                 |   train                      |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [label, dtype=string]     |
+    |                         |                              |                             |
+    |                         |                              |   [label_des, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence, dtype=string]  |
+    +-------------------------+------------------------------+-----------------------------+
+    | CMNLI                   |   train                      |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [sentence1, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [sentence2, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
+    | WSC                     |   train                      |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         |                              |                             |
+    |                         |                              |  [label, dtype=string]      |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |  [span1_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span2_index, dtype=uint32]|
+    |                         |                              |                             |
+    |                         |                              |  [span1_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [span2_text, dtype=string] |
+    |                         |                              |                             |
+    |                         |                              |  [idx, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |  [text, dtype=string]       |
+    |                         |                              |                             |
+    |                         |                              |  [label, dtype=string]      |
+    +-------------------------+------------------------------+-----------------------------+
+    | CSL                     |   train                      |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    |                         +------------------------------+-----------------------------+
+    |                         |   test                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         +------------------------------+-----------------------------+
+    |                         |   eval                       |   [id, dtype=uint32]        |
+    |                         |                              |                             |
+    |                         |                              |   [abst, dtype=string]      |
+    |                         |                              |                             |
+    |                         |                              |   [keyword, dtype=string]   |
+    |                         |                              |                             |
+    |                         |                              |   [label, dtype=string]     |
+    +-------------------------+------------------------------+-----------------------------+
 
     **异常：**
 
-    - **RuntimeError** - `dataset_files` 参数所指向的文件无效或不存在。
-    - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **ValueError** - `dataset_files` 参数所指向的文件无效或不存在。
+    - **ValueError** - `task` 参数不为 'AFQMC'、'TNEWS'、'IFLYTEK'、'CMNLI'、'WSC' 或 'CSL'。
+    - **ValueError** - `usage` 参数不为 'train'、'test' 或 'eval'。
+    - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError:** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     **关于CLUE数据集：**
 

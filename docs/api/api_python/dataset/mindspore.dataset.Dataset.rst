@@ -12,8 +12,8 @@
 
     **异常：**
 
-    - **TypeError：** `apply_func` 的类型不是函数。
-    - **TypeError：** `apply_func` 未返回Dataset对象。
+    - **TypeError：** - `apply_func` 的类型不是函数。
+    - **TypeError：** - `apply_func` 未返回Dataset对象。
 
 .. py:method:: batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False, max_rowsize=16)
 
@@ -46,6 +46,7 @@
     - **pad_info** (dict, 可选) - 对给定数据列进行填充。通过传入dict来指定列信息与填充信息，例如 `pad_info={"col1":([224,224],0)}` ，
       则将列名为"col1"的数据列扩充到shape为[224,224]的Tensor，缺失的值使用0填充。默认值：None，不填充。
     - **python_multiprocessing** (bool, 可选) - 启动Python多进程模式并行执行 `per_batch_map` 。如果 `per_batch_map` 的计算量很大，此选项可能会很有用。默认值：False，不启用多进程。
+    - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的最大空间，仅当 `python_multiprocessing` 为True时，该选项有效。默认值：16，单位为MB。
 
     **返回：**
 

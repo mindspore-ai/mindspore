@@ -24,7 +24,7 @@
     **异常：**
 
     - **RuntimeError** - `dataset_files` 路径下不包含任何数据文件。
-    - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
     - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。

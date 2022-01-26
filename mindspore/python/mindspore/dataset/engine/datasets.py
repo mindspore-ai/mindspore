@@ -857,13 +857,10 @@ class Dataset:
         """
         Filter dataset by prediction.
 
-        Note:
-             If input_columns not provided or provided with empty, all columns will be used.
-
         Args:
             predicate (callable): Python callable which returns a boolean value. If False then filter the element.
-            input_columns (Union[str, list[str]], optional): List of names of the input columns, when
-                default=None, the predicate will be applied on all columns in the dataset.
+            input_columns (Union[str, list[str]], optional): List of names of the input columns. If not provided
+                or provided with None, the predicate will be applied on all columns in the dataset (default=None).
             num_parallel_workers (int, optional): Number of workers to process the dataset
                 in parallel (default=None).
 

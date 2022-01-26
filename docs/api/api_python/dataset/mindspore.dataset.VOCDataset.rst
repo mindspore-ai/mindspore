@@ -33,7 +33,6 @@ mindspore.dataset.VOCDataset
     **异常：**
 
     - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
-    - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 读取的xml文件格式异常或无效。
     - **RuntimeError** - 读取的xml文件缺失 `object` 属性。
     - **RuntimeError** - 读取的xml文件缺失 `bndbox` 属性。
@@ -41,6 +40,7 @@ mindspore.dataset.VOCDataset
     - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
+    - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **ValueError** - 指定的任务不为'Segmentation'或'Detection'。
     - **ValueError** - 指定任务为'Segmentation'时， `class_indexing` 参数不为None。
     - **ValueError** - 与 `usage` 参数相关的txt文件不存在。

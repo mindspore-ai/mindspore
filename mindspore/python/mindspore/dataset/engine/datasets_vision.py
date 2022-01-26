@@ -122,9 +122,9 @@ class Caltech101Dataset(GeneratorDataset):
         dataset_dir (str): Path to the root directory that contains the dataset. This root directory contains two
             subdirectories, one is called 101_ObjectCategories, which stores images,
             and the other is called Annotations, which stores annotations.
-        target_type (str, optional): Target of the image. If target_type is "category", return category represents
-            the target class. If target_type is "annotation", return annotation.
-            If target_type is "all", return category and annotation (default=None, means "category").
+        target_type (str, optional): Target of the image. If target_type is 'category', return category represents
+            the target class. If target_type is 'annotation', return annotation.
+            If target_type is 'all', return category and annotation (default=None, means 'category').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data (default=1).
@@ -413,8 +413,8 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         num_parallel_workers (int, optional): Number of workers to read the data (default=None, will use value set in
             the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        usage (str, optional): Specify the `train`, `valid`, `test` part or `all` parts of dataset
-            (default= `all`, will read all samples).
+        usage (str, optional): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
+            (default= 'all', will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
@@ -430,7 +430,8 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If usage is not 'train', 'valid', 'test' or 'all'.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -574,8 +575,8 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 50,000
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples
             (default=None, all samples).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
@@ -595,7 +596,8 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If usage is not 'train', 'test' or 'all'.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -704,8 +706,8 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 50,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 60,000 samples
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 50,000
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 60,000 samples
             (default=None, all samples).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
@@ -725,7 +727,8 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If usage is not 'train', 'test' or 'all'.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -829,10 +832,10 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str): Acceptable usages include `train`, `test`, `val` or `all` if quality_mode is `fine`
-            otherwise `train`, `train_extra`, `val` or `all` (default= `train`).
-        quality_mode (str): Acceptable quality_modes include `fine` or `coarse` (default= `fine`).
-        task (str): Acceptable tasks include `instance`, `semantic`, `polygon` or `color` (default= `instance`).
+        usage (str): Acceptable usages include 'train', 'test', 'val' or 'all' if quality_mode is 'fine'
+            otherwise 'train', 'train_extra', 'val' or 'all' (default= 'train').
+        quality_mode (str): Acceptable quality_modes include 'fine' or 'coarse' (default= 'fine').
+        task (str): Acceptable tasks include 'instance', 'semantic', 'polygon' or 'color' (default= 'instance').
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -995,23 +998,11 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     CocoDataset supports five kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation,
     Panoptic Segmentation and Captioning of 2017 Train/Val/Test dataset.
 
-    The generated dataset with different task setting has different output columns:
-
-    - task = :py:obj:`Detection`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
-        :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`.
-    - task = :py:obj:`Stuff`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[segmentation,dtype=float32]`, \
-        :py:obj:`[iscrowd,dtype=uint32]`.
-    - task = :py:obj:`Keypoint`, output columns: :py:obj:`[image, dtype=uint8]`, \
-        :py:obj:`[keypoints, dtype=float32]`, :py:obj:`[num_keypoints, dtype=uint32]`.
-    - task = :py:obj:`Panoptic`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[bbox, dtype=float32]`, \
-        :py:obj:`[category_id, dtype=uint32]`, :py:obj:`[iscrowd, dtype=uint32]`, :py:obj:`[area, dtype=uint32]`.
-    - task = :py:obj:`Captioning`, output columns: :py:obj:`[image, dtype=uint8]`, :py:obj:`[captions, dtype=string]`.
-
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         annotation_file (str): Path to the annotation JSON file.
         task (str, optional): Set the task type for reading COCO data. Supported task types:
-            `Detection`, `Stuff`, `Panoptic`, `Keypoint` and `Captioning` (default=`Detection`).
+            'Detection', 'Stuff', 'Panoptic', 'Keypoint' and 'Captioning' (default='Detection').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -1031,15 +1022,51 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
             output at the end :py:obj:`[_meta-filename, dtype=string]` (default=False).
 
+    The generated dataset with different task setting has different output columns:
+
+    +-------------------------+----------------------------------------------+
+    | `task`                  |   Output column                              |
+    +=========================+==============================================+
+    | Detection               |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [bbox, dtype=float32]                      |
+    |                         |                                              |
+    |                         |   [category_id, dtype=uint32]                |
+    |                         |                                              |
+    |                         |   [iscrowd, dtype=uint32]                    |
+    +-------------------------+----------------------------------------------+
+    | Stuff                   |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [segmentation, dtype=float32]              |
+    |                         |                                              |
+    |                         |   [iscrowd, dtype=uint32]                    |
+    +-------------------------+----------------------------------------------+
+    | Keypoint                |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [keypoints, dtype=float32]                 |
+    |                         |                                              |
+    |                         |   [num_keypoints, dtype=uint32]              |
+    +-------------------------+----------------------------------------------+
+    | Panoptic                |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [bbox, dtype=float32]                      |
+    |                         |                                              |
+    |                         |   [category_id, dtype=uint32]                |
+    |                         |                                              |
+    |                         |   [iscrowd, dtype=uint32]                    |
+    |                         |                                              |
+    |                         |   [area, dtype=uint32]                       |
+    +-------------------------+----------------------------------------------+
+
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         RuntimeError: If parse JSON file failed.
-        ValueError: If task is not in [`Detection`, `Stuff`, `Panoptic`, `Keypoint`, `Captioning`].
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If task is not in ['Detection', 'Stuff', 'Panoptic', 'Keypoint', 'Captioning'].
         ValueError: If annotation_file is not exist.
         ValueError: If dataset_dir is not exist.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
@@ -1215,13 +1242,13 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str): Acceptable usages include `train`, `valid` or `all` (default= `train`).
-        downgrade (str): Acceptable downgrades include `bicubic`, `unknown`, `mild`, `difficult` or
-            `wild` (default= `bicubic`).
+        usage (str): Acceptable usages include 'train', 'valid' or 'all' (default= 'train').
+        downgrade (str): Acceptable downgrades include 'bicubic', 'unknown', 'mild', 'difficult' or
+            'wild' (default= 'bicubic').
         scale (int): Acceptable scales include 2, 3, 4 or 8 (default=2).
-            When `downgrade` is `bicubic`, scale can be 2, 3, 4, 8.
-            When `downgrade` is `unknown`, scale can only be 2, 3, 4.
-            When `downgrade` is `mild`, `difficult` or `wild`, scale can only be 4.
+            When `downgrade` is 'bicubic', scale can be 2, 3, 4, 8.
+            When `downgrade` is 'unknown', scale can only be 2, 3, 4.
+            When `downgrade` is 'mild', 'difficult' or 'wild', scale can only be 4.
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -1250,8 +1277,8 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
         ValueError: If usage is invalid.
         ValueError: If downgrade is invalid.
         ValueError: If scale is invalid.
-        ValueError: If scale equal to 8 and downgrade not equal to `bicubic`.
-        ValueError: If downgrade in [`mild`, `difficult`, `wild`] and scale not equal to 4.
+        ValueError: If scale equal to 8 and downgrade not equal to 'bicubic'.
+        ValueError: If downgrade in ['mild', 'difficult', 'wild'] and scale not equal to 4.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Note:
@@ -1402,9 +1429,9 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        name (str): Name of splits for this dataset, can be "byclass", "bymerge", "balanced", "letters", "digits"
-            or "mnist".
-        usage (str, optional): Usage of this dataset, can be "train", "test" or "all".
+        name (str): Name of splits for this dataset, can be 'byclass', 'bymerge', 'balanced', 'letters', 'digits'
+            or 'mnist'.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'.
             (default=None, will read all samples).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -1623,8 +1650,8 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`. `train` will read from 60,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 70,000 samples.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'. 'train' will read from 60,000
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 70,000 samples.
             (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -2176,7 +2203,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -2280,8 +2307,8 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 60,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 70,000 samples.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 60,000
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 70,000 samples.
             (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -2401,7 +2428,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_file (str): File to be read.
-        usage (str, optional): Acceptable usages include `train`, `eval` and `inference` (default= `train`).
+        usage (str, optional): Acceptable usages include 'train', 'eval' and 'inference' (default= 'train').
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -2424,7 +2451,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_files are not valid or do not exist.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -2520,8 +2547,8 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all` . `train` will read from 60,000
-            train samples, `test` will read from 10,000 test samples, `all` will read from all 70,000 samples.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all' . 'train' will read from 60,000
+            train samples, 'test' will read from 10,000 test samples, 'all' will read from all 70,000 samples.
             (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -2645,11 +2672,11 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         name (str): Name of the dataset to load,
             should be one of 'notredame', 'yosemite', 'liberty', 'notredame_harris',
             'yosemite_harris' or 'liberty_harris'.
-        usage (str, optional): Usage of the dataset, can be `train` or `test` (Default=None, will be set to 'train').
-            When usage is `train`, number of samples for each `name` is
+        usage (str, optional): Usage of the dataset, can be 'train' or 'test' (Default=None, will be set to 'train').
+            When usage is 'train', number of samples for each `name` is
             {'notredame': 468159, 'yosemite': 633587, 'liberty': 450092, 'liberty_harris': 379587,
             'yosemite_harris': 450912, 'notredame_harris': 325295}.
-            When usage is `test`, will read 100,000 samples for testing.
+            When usage is 'test', will read 100,000 samples for testing.
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -2794,7 +2821,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train-standard`, `train-challenge` or `val`
+        usage (str, optional): Usage of this dataset, can be 'train-standard', 'train-challenge' or 'val'
             (default=None, will be set to 'train-standard').
         small (bool, optional): Use 256 * 256 images (True) or high resolution images (False) (default=False).
         decode (bool, optional): Decode the images after reading (default=True).
@@ -2936,8 +2963,8 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`, `test10k`, `test50k`, `nist`
-            or `all` (default=None, will read all samples).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test', 'test10k', 'test50k', 'nist'
+            or 'all' (default=None, will read all samples).
         compat (bool, optional): Whether the label for each example is class number (compat=True) or the full QMNIST
             information (compat=False) (default=True).
         num_samples (int, optional): The number of images to be included in the dataset
@@ -3158,13 +3185,13 @@ class SBDataset(GeneratorDataset):
 
     The generated dataset has two columns: :py:obj:`[image, task]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is `Boundaries` otherwise
+    The tensor of column :py:obj:`task` contains 20 images of the uint8 type if `task` is 'Boundaries' otherwise
     contains 1 image of the uint8 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Acceptable tasks include `Boundaries` or `Segmentation` (default= `Boundaries`).
-        usage (str, optional): Acceptable usages include `train`, `val`, `train_noval` and `all` (default= `all`).
+        task (str, optional): Acceptable tasks include 'Boundaries' or 'Segmentation' (default= 'Boundaries').
+        usage (str, optional): Acceptable usages include 'train', 'val', 'train_noval' and 'all' (default= 'all').
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -3188,8 +3215,8 @@ class SBDataset(GeneratorDataset):
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If dataset_dir is not exist.
-        ValueError: If task is not in [`Boundaries`, `Segmentation`].
-        ValueError: If usage is not in [`train`, `val`, `train_noval`, `all`].
+        ValueError: If task is not in ['Boundaries', 'Segmentation'].
+        ValueError: If usage is not in ['train', 'val', 'train_noval', 'all'].
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Note:
@@ -3528,11 +3555,11 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "test",
-            "unlabeled", "train+unlabeled" or "all" . "train" will read from 5,000
-            train samples, "test" will read from 8,000 test samples,
-            "unlabeled" will read from all 100,000 samples, and "train+unlabeled"
-            will read from 105000 samples, "all" will read all the samples
+        usage (str, optional): Usage of this dataset, can be 'train', 'test',
+            'unlabeled', 'train+unlabeled' or 'all' . 'train' will read from 5,000
+            train samples, 'test' will read from 8,000 test samples,
+            'unlabeled' will read from all 100,000 samples, and 'train+unlabeled'
+            will read from 105000 samples, 'all' will read all the samples
             (default=None, all samples).
         num_samples (int, optional): The number of images to be included in the dataset.
             (default=None, all images).
@@ -3812,8 +3839,8 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be "train", "test" or "all". "train" will read from 7,291
-            train samples, "test" will read from 2,007 test samples, "all" will read from all 9,298 samples.
+        usage (str, optional): Usage of this dataset, can be 'train', 'test' or 'all'. 'train' will read from 7,291
+            train samples, 'test' will read from 2,007 test samples, 'all' will read from all 9,298 samples.
             (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
@@ -3912,14 +3939,14 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        task (str, optional): Set the task type of reading voc data, now only support `Segmentation` or `Detection`
-            (default= `Segmentation`).
-        usage (str, optional): Set the task type of ImageSets(default= `train`). If task is `Segmentation`, image and
-            annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
+        task (str, optional): Set the task type of reading voc data, now only support 'Segmentation' or 'Detection'
+            (default= 'Segmentation').
+        usage (str, optional): Set the task type of ImageSets(default= 'train'). If task is 'Segmentation', image and
+            annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is 'Detection', image and
             annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage are not set, image and
             annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
-            `Detection` task (default=None, the folder names will be sorted alphabetically and each
+            'Detection' task (default=None, the folder names will be sorted alphabetically and each
             class will be given a unique index starting from 0).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
@@ -3942,7 +3969,6 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If xml of Annotations is an invalid format.
         RuntimeError: If xml of Annotations loss attribution of `object`.
         RuntimeError: If xml of Annotations loss attribution of `bndbox`.
@@ -3950,6 +3976,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         ValueError: If task is not equal 'Segmentation' or 'Detection'.
         ValueError: If task equal 'Segmentation' but class_indexing is not None.
         ValueError: If txt related to mode is not exist.
@@ -4120,9 +4147,9 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`. `train` will read
-            from 12,880 samples, `test` will read from 16,097 samples, `valid` will read from 3,226 test samples
-            and `all` will read all `train` and `valid` samples (default=None, will be set to `all`).
+        usage (str, optional): Usage of this dataset, can be 'train', 'test', 'valid' or 'all'. 'train' will read
+            from 12,880 samples, 'test' will read from 16,097 samples, 'valid' will read from 3,226 test samples
+            and 'all' will read all 'train' and 'valid' samples (default=None, will be set to 'all').
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will read all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -4147,7 +4174,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
-        ValueError: If usage is not in [`train`, `test`, `valid`, `all`].
+        ValueError: If usage is not in ['train', 'test', 'valid', 'all'].
         ValueError: If annotation_file is not exist.
         ValueError: If dataset_dir is not exist.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
