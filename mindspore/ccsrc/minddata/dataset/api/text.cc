@@ -169,7 +169,7 @@ Status JiebaTokenizer::AddDictChar(const std::vector<char> &file_path) {
 Status JiebaTokenizer::ParserFile(const std::string &file_path,
                                   std::vector<std::pair<std::string, int64_t>> *const user_dict) {
   RETURN_UNEXPECTED_IF_NULL(user_dict);
-  auto realpath = FileUtils::GetRealPath(file_path.data());
+  auto realpath = FileUtils::GetRealPath(file_path.c_str());
   if (!realpath.has_value()) {
     std::string err_msg = "Get real path failed, path: " + file_path;
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);

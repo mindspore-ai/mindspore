@@ -83,7 +83,7 @@ Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_pt
     prefix_path = ".";
   }
 
-  auto realpath = FileUtils::GetRealPath(prefix_path.value().data());
+  auto realpath = FileUtils::GetRealPath(prefix_path.value().c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(), "Invalid file, failed to get the parent dir of mindrecord file. Please check file: " + path);
 

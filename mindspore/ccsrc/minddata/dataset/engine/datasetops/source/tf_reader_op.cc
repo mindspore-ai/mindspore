@@ -42,7 +42,7 @@ namespace dataset {
 const int64_t kTFRecordFileLimit = 0x140000000;
 
 bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
-  auto realpath = FileUtils::GetRealPath(filename.data());
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << filename << " does not exist.";
     return false;
@@ -265,7 +265,7 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
 
 // Reads a tf_file file and loads the data into multiple TensorRows.
 Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath = FileUtils::GetRealPath(filename.data());
+  auto realpath = FileUtils::GetRealPath(filename.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << filename << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + filename + " does not exist.");
@@ -553,7 +553,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
 }
 
 Status TFReaderOp::CreateSchema(const std::string tf_file, std::vector<std::string> columns_to_load) {
-  auto realpath = FileUtils::GetRealPath(tf_file.data());
+  auto realpath = FileUtils::GetRealPath(tf_file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << tf_file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + tf_file + " does not exist.");
@@ -691,7 +691,7 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end) {
   int64_t rows_read = 0;
   for (int i = begin; i < end; i++) {
-    auto realpath = FileUtils::GetRealPath(filenames[i].data());
+    auto realpath = FileUtils::GetRealPath(filenames[i].c_str());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Invalid file path, " << filenames[i] << " does not exist.";
       continue;

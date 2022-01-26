@@ -119,7 +119,7 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 // {"source": "/path/to/image1.jpg", "usage":"train", annotation": ...}
 // {"source": "/path/to/image2.jpg", "usage":"eval", "annotation": ...}
 Status ManifestOp::PrepareData() {
-  auto realpath = FileUtils::GetRealPath(file_.data());
+  auto realpath = FileUtils::GetRealPath(file_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_ + " does not exist.");
@@ -194,7 +194,7 @@ Status ManifestOp::PrepareData() {
 
 // Only support JPEG/PNG/GIF/BMP
 Status ManifestOp::CheckImageType(const std::string &file_name, bool *valid) {
-  auto realpath = FileUtils::GetRealPath(file_name.data());
+  auto realpath = FileUtils::GetRealPath(file_name.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file_name << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_name + " does not exist.");

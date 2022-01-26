@@ -54,7 +54,7 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
       dir = ".";
     }
 
-    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    auto realpath = FileUtils::GetRealPath(dir.value().c_str());
     CHECK_FAIL_RETURN_UNEXPECTED(
       realpath.has_value(),
       "Invalid dir, failed to get the realpath of mindrecord file dir. Please check path: " + dir.value());
@@ -77,7 +77,7 @@ Status ShardWriter::OpenDataFiles(bool append, bool overwrite) {
       dir = ".";
     }
 
-    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    auto realpath = FileUtils::GetRealPath(dir.value().c_str());
     CHECK_FAIL_RETURN_UNEXPECTED(
       realpath.has_value(), "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
 
@@ -518,7 +518,7 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
   // Open files
   file_streams_.clear();
   for (const auto &file : file_paths_) {
-    auto realpath = FileUtils::GetRealPath(file.data());
+    auto realpath = FileUtils::GetRealPath(file.c_str());
     if (!realpath.has_value()) {
       close(fd);
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get real path, path: " + file);

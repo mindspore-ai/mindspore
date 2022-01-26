@@ -116,7 +116,7 @@ Status VOCOp::ParseImageIds() {
     image_sets_file = folder_path_ + std::string(kImageSetsMain) + usage_ + std::string(kImageSetsExtension);
   }
 
-  auto realpath = FileUtils::GetRealPath(image_sets_file.data());
+  auto realpath = FileUtils::GetRealPath(image_sets_file.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << image_sets_file << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + image_sets_file + " does not exist.");

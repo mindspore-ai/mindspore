@@ -169,7 +169,7 @@ Status ShardIndexGenerator::CheckDatabase(const std::string &shard_address, sqli
     dir = ".";
   }
 
-  auto realpath = FileUtils::GetRealPath(dir.value().data());
+  auto realpath = FileUtils::GetRealPath(dir.value().c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + shard_address);
@@ -504,7 +504,7 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
   // Add index data to database
   std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
 
-  auto realpath = FileUtils::GetRealPath(shard_address.data());
+  auto realpath = FileUtils::GetRealPath(shard_address.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file path: " + shard_address);

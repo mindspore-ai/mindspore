@@ -63,7 +63,7 @@ Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &fil
     if (!dir.has_value()) {
       dir = ".";
     }
-    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    auto realpath = FileUtils::GetRealPath(dir.value().c_str());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_name;
       RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file_name);

@@ -50,7 +50,7 @@ Status SpeechCommandsOp::PrepareData() {
   // Get file lists according to usage.
   // When usage == "train", need to get all filenames then subtract files of usage: "test" and "valid".
   std::set<std::string> selected_files;
-  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!real_dataset_dir.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + dataset_dir_);
@@ -191,7 +191,7 @@ Status SpeechCommandsOp::GetFileInfo(const std::string &file_path, std::string *
 Status SpeechCommandsOp::CountTotalRows(int64_t *num_rows) {
   RETURN_UNEXPECTED_IF_NULL(num_rows);
   if (all_wave_files.size() == 0) {
-    auto real_path = FileUtils::GetRealPath(dataset_dir_.data());
+    auto real_path = FileUtils::GetRealPath(dataset_dir_.c_str());
     if (!real_path.has_value()) {
       MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
       RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + dataset_dir_);

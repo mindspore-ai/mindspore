@@ -139,7 +139,7 @@ Status LibriTTSOp::ReadAudio(const std::string &audio_dir, std::shared_ptr<Tenso
 }
 
 Status LibriTTSOp::PrepareData() {
-  auto realpath = FileUtils::GetRealPath(dataset_dir_.data());
+  auto realpath = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, LibriTTS dataset dir: " << dataset_dir_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, LibriTTS dataset dir: " + dataset_dir_ + " does not exist.");

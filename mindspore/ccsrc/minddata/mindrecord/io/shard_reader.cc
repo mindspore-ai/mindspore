@@ -197,7 +197,7 @@ Status ShardReader::Open() {
       dir = ".";
     }
 
-    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    auto realpath = FileUtils::GetRealPath(dir.value().c_str());
     CHECK_FAIL_RETURN_UNEXPECTED(
       realpath.has_value(), "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
 
@@ -230,7 +230,7 @@ Status ShardReader::Open(int n_consumer) {
         dir = ".";
       }
 
-      auto realpath = FileUtils::GetRealPath(dir.value().data());
+      auto realpath = FileUtils::GetRealPath(dir.value().c_str());
       CHECK_FAIL_RETURN_UNEXPECTED(
         realpath.has_value(),
         "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
@@ -438,7 +438,7 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
   MS_LOG(INFO) << "Succeed to get " << labels.size() << " records from shard " << std::to_string(shard_id) << " index.";
 
   std::string file_name = file_paths_[shard_id];
-  auto realpath = FileUtils::GetRealPath(file_name.data());
+  auto realpath = FileUtils::GetRealPath(file_name.c_str());
   if (!realpath.has_value()) {
     sqlite3_free(errmsg);
     sqlite3_close(db);
@@ -763,7 +763,7 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
                                             std::shared_ptr<std::vector<json>> *labels_ptr) {
   RETURN_UNEXPECTED_IF_NULL(labels_ptr);
   std::string file_name = file_paths_[shard_id];
-  auto realpath = FileUtils::GetRealPath(file_name.data());
+  auto realpath = FileUtils::GetRealPath(file_name.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(
     realpath.has_value(),
     "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file_name);

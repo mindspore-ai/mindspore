@@ -142,7 +142,7 @@ Status QMnistOp::WalkAllFiles() {
   const std::string test_prefix = "qmnist-test";
   const std::string nist_prefix = "xnist";
 
-  auto real_folder_path = FileUtils::GetRealPath(folder_path_.data());
+  auto real_folder_path = FileUtils::GetRealPath(folder_path_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(),
                                "Invalid QMnist folder, " + folder_path_ + " does not exist or permission denied!");
   Path root_dir(real_folder_path.value());

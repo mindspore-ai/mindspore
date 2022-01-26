@@ -57,7 +57,7 @@ Status EMnistOp::WalkAllFiles() {
   const std::string lbl_ext = "-labels-idx1-ubyte";
   const std::string train_prefix = "-train";
   const std::string test_prefix = "-test";
-  auto realpath = FileUtils::GetRealPath(folder_path_.data());
+  auto realpath = FileUtils::GetRealPath(folder_path_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Invalid file path, " + folder_path_ + " does not exist.");
   Path dir(realpath.value());
   auto dir_it = Path::DirIterator::OpenDirectory(&dir);

@@ -337,7 +337,7 @@ Status PhotoTourOp::GetPhotoTourDataTensor(uint32_t index, std::shared_ptr<Tenso
 Status PhotoTourOp::PrepareData() {
   chosen_dataset_folder_path_ = (Path(dataset_dir_) / Path(name_)).ToString();
   train_ = kTrain.at(usage_);
-  auto real_folder_path = FileUtils::GetRealPath(chosen_dataset_folder_path_.data());
+  auto real_folder_path = FileUtils::GetRealPath(chosen_dataset_folder_path_.c_str());
   CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), chosen_dataset_folder_path_ + " does not exist.");
 
   std::vector<cv::String> file_names;

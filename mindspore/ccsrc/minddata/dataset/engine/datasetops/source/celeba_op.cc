@@ -58,7 +58,7 @@ Status CelebAOp::ParseAttrFile() {
   TaskManager::FindMe()->Post();
   Path folder_path(folder_path_);
 
-  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
+  auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().c_str());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << (folder_path / "list_attr_celeba.txt").ToString() << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + (folder_path / "list_attr_celeba.txt").ToString() +

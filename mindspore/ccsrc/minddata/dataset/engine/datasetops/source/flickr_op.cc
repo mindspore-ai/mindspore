@@ -75,7 +75,7 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status FlickrOp::PrepareData() {
-  auto real_file_path = FileUtils::GetRealPath(file_path_.data());
+  auto real_file_path = FileUtils::GetRealPath(file_path_.c_str());
   if (!real_file_path.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << file_path_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + file_path_ + " does not exist.");
@@ -147,7 +147,7 @@ Status FlickrOp::PrepareData() {
 // Optimization: Could take in a tensor
 // This function does not return status because we want to just skip bad input, not crash
 Status FlickrOp::CheckImageType(const std::string &file_name, bool *valid) {
-  auto real_file_name = FileUtils::GetRealPath(file_name.data());
+  auto real_file_name = FileUtils::GetRealPath(file_name.c_str());
   if (!real_file_name.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, flickr dataset file: " << file_name << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, flickr dataset file: " + file_name + " does not exist.");

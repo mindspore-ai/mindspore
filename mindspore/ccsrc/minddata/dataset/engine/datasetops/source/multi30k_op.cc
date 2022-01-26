@@ -68,7 +68,7 @@ Status Multi30kOp::LoadTensor(const std::string &line, TensorRow *out_row, size_
 }
 
 Status Multi30kOp::LoadFile(const std::string &file_en, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
-  auto realpath_en = FileUtils::GetRealPath(file_en.data());
+  auto realpath_en = FileUtils::GetRealPath(file_en.c_str());
   if (!realpath_en.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << DatasetName() + " Dataset file: " << file_en << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " Dataset file: " + file_en + " does not exist.");
@@ -84,7 +84,7 @@ Status Multi30kOp::LoadFile(const std::string &file_en, int64_t start_offset, in
   Path BaseName(basename);
   Path path_de = parent_path / BaseName;
   std::string file_de = path_de.ToString();
-  auto realpath_de = FileUtils::GetRealPath(file_de.data());
+  auto realpath_de = FileUtils::GetRealPath(file_de.c_str());
   if (!realpath_de.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, " << DatasetName() + " Dataset file: " << file_de << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, " + DatasetName() + " Dataset file: " + file_de + " does not exist.");

@@ -107,7 +107,7 @@ void CityscapesOp::Print(std::ostream &out, bool show_all) const {
 }
 
 Status CityscapesOp::PrepareData() {
-  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
+  auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.c_str());
   if (!real_dataset_dir.has_value()) {
     MS_LOG(ERROR) << "Invalid file path, Cityscapes Dataset dir: " << dataset_dir_ << " does not exist.";
     RETURN_STATUS_UNEXPECTED("Invalid file path, Cityscapes Dataset dir: " + dataset_dir_ + " does not exist.");
