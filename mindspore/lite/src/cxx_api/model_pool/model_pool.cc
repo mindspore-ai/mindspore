@@ -53,58 +53,48 @@ ModelPool *ModelPool::GetInstance() {
   return &instance;
 }
 
-Status ModelPool::InitContext(const std::shared_ptr<mindspore::Context> &context,
-                              std::map<std::string, std::map<std::string, std::string>> *all_config_info) {
-  if (all_config_info->size() != 1) {
-    MS_LOG(ERROR) << "all_config_info size should be 1";
-    return kLiteError;
-  }
-  for (auto &item : *all_config_info) {
-    auto config = item.second;
-    auto num_thread = atoi(config["num_thread"].c_str());
-    auto bind_mode = atoi(config["bind_mode"].c_str());
-    context->SetThreadNum(num_thread);
-    context->SetThreadAffinity(bind_mode);
-  }
-  context->SetEnableParallel(false);
-  auto &device_list = context->MutableDeviceInfo();
-  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
-  device_info->SetEnableFP16(false);
-  device_list.push_back(device_info);
-  return kSuccess;
-}
-
-ModelPoolContex ModelPool::CreateModelContext(const std::string &config_path) {
-  std::map<std::string, std::map<std::string, std::string>> all_config_info;
-  auto ret = lite::GetAllSectionInfoFromConfigFile(config_path, &all_config_info);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile failed.";
-    return {};
-  }
+std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto model_context = std::make_shared<mindspore::Context>();
   if (model_context == nullptr) {
-    MS_LOG(ERROR) << "model context is nullptr.";
-    return {};
+    MS_LOG(ERROR) << "New context failed in ModelPool.";
+    return nullptr;
   }
-  auto status = InitContext(model_context, &all_config_info);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "InitMSContext failed.";
-    return {};
+  if (runner_config != nullptr) {
+    model_context = runner_config->model_ctx;
+    num_models_ = runner_config->num_model;
+    auto device_list = model_context->MutableDeviceInfo();
+    if (device_list.size() != 1) {
+      MS_LOG(ERROR) << "model pool only support device num 1.";
+      return nullptr;
+    }
+    auto device = device_list.front();
+    if (device->GetDeviceType() != kCPU) {
+      MS_LOG(ERROR) << "model pool only support cpu type.";
+      return nullptr;
+    }
+    auto cpu_context = device->Cast<CPUDeviceInfo>();
+    auto enable_fp16 = cpu_context->GetEnableFP16();
+    if (enable_fp16) {
+      MS_LOG(ERROR) << "model pool not support enable fp16.";
+      return nullptr;
+    }
+  } else {
+    MS_LOG(DEBUG) << "use default config.";
+    model_context->SetThreadNum(1);
+    model_context->SetEnableParallel(false);
+    model_context->SetThreadAffinity(lite::NO_BIND);
+    auto &device_list = model_context->MutableDeviceInfo();
+    auto device_info = std::shared_ptr<CPUDeviceInfo>();
+    device_info->SetEnableFP16(false);
+    device_list.push_back(device_info);
   }
-  auto device_list = model_context->MutableDeviceInfo();
-  if (device_list.size() != 1) {
-    MS_LOG(ERROR) << "model pool only support device num 1.";
-    return {};
-  }
-  auto device = device_list.front();
-  if (device->GetDeviceType() != kCPU) {
-    MS_LOG(ERROR) << "model pool only support cpu type.";
-    return {};
-  }
-  auto cpu_context = device->Cast<CPUDeviceInfo>();
-  auto enable_fp16 = cpu_context->GetEnableFP16();
-  if (enable_fp16) {
-    MS_LOG(ERROR) << "model pool not support enable fp16.";
+  return model_context;
+}
+
+ModelPoolContex ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto model_context = InitContext(runner_config);
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "context is nullptr.";
     return {};
   }
   ModelPoolContex model_pool_context;
@@ -147,9 +137,9 @@ std::vector<MSTensor> ModelPool::GetInputs() {
   return model_inputs_;
 }
 
-Status ModelPool::Init(const std::string &model_path, const std::string &config_path, const Key &dec_key,
-                       const std::string &dec_mode) {
-  auto model_pool_context = CreateModelContext(config_path);
+Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
+                       const Key &dec_key, const std::string &dec_mode) {
+  auto model_pool_context = CreateModelContext(runner_config);
   for (size_t i = 0; i < num_models_; i++) {
     auto model_thread = std::make_shared<ModelThread>();
     auto status = model_thread->Init(model_path, model_pool_context[i], dec_key, dec_mode);

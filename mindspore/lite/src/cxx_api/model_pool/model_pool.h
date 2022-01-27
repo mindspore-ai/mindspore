@@ -26,13 +26,19 @@
 #include "src/cxx_api/model_pool/model_thread.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
+struct RunnerConfig {
+  RunnerConfig(std::shared_ptr<Context> &ctx, int num) : model_ctx(ctx), num_model(num) {}
+  std::shared_ptr<Context> model_ctx = nullptr;
+  int num_model = 10;
+};
+
 class ModelPool {
  public:
   static ModelPool *GetInstance();
   ~ModelPool();
 
-  Status Init(const std::string &model_path, const std::string &config_path, const Key &dec_key = {},
-              const std::string &dec_mode = kDecModeAesGcm);
+  Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr,
+              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
 
   std::vector<MSTensor> GetInputs();
 
@@ -41,15 +47,13 @@ class ModelPool {
 
  private:
   ModelPool() = default;
-  Status InitContext(const std::shared_ptr<mindspore::Context> &context,
-                     std::map<std::string, std::map<std::string, std::string>> *all_config_info);
-  void Run(std::shared_ptr<ModelThread> model);
   void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
-  ModelPoolContex CreateModelContext(const std::string &config_path);
+  ModelPoolContex CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
 
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;
-  size_t num_models_ = 5;
+  size_t num_models_ = 10;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
