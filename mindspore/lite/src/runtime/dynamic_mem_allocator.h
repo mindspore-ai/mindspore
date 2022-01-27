@@ -19,13 +19,15 @@
 
 #include <mutex>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include "include/api/allocator.h"
+#include "src/runtime/dynamic_mem_manager.h"
 
 namespace mindspore {
 class DynamicMemAllocator : public Allocator {
  public:
-  DynamicMemAllocator() = default;
+  explicit DynamicMemAllocator(int node_id);
   virtual ~DynamicMemAllocator() = default;
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
@@ -33,6 +35,9 @@ class DynamicMemAllocator : public Allocator {
   int SetRefCount(void *ptr, int ref_count) override;
   int IncRefCount(void *ptr, int ref_count) override;
   int DecRefCount(void *ptr, int ref_count) override;
+
+ private:
+  std::shared_ptr<MemOperator> mem_oper_;
 };
 }  // namespace mindspore
 

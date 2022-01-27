@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace lite {
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+
 enum NCHW_SHAPE { NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
 enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };
 enum HWCK_SHAPE { HWCK_H = 0, HWCK_W = 1, HWCK_C = 2, HWCK_K = 3 };
@@ -57,6 +59,11 @@ static const char *const kMSCacheModelPath = "cache_model_path";
 static const char *const kMSCacheVocabSize = "vocab_size";
 static const char *const kMSCacheDeviceSize = "device_cache_size";
 static const char *const kMSCacheSerializePath = "serialize_path";
+// config
+#ifdef SERVER_INFERENCE
+static const char *const kConfigServerInference = "server_inference";
+static const char *const kConfigNUMANodeId = "numa_node_id";
+#endif
 }  // namespace lite
 }  // namespace mindspore
 

@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef MSLITE_ENABLE_SERVER_INFERENCE
-#include "src/runtime/dynamic_mem_allocator.h"
-#else
 #include "src/runtime/inner_allocator.h"
-#endif
 
 namespace mindspore {
-std::shared_ptr<Allocator> Allocator::Create() {
-#ifdef MSLITE_ENABLE_SERVER_INFERENCE
-  return std::make_shared<DynamicMemAllocator>();
-#else
-  return std::make_shared<DefaultAllocator>();
-#endif
-}
+std::shared_ptr<Allocator> Allocator::Create() { return std::make_shared<DefaultAllocator>(); }
 }  // namespace mindspore

@@ -131,6 +131,7 @@ set(LITE_SRC
         ${LITE_SRC}
         ${SRC_DIR}/runtime/dynamic_mem_allocator.cc
         ${SRC_DIR}/runtime/dynamic_mem_manager.cc
+        ${SRC_DIR}/runtime/numa_adapter.cc
         )
 endif()
 

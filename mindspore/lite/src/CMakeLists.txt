@@ -136,6 +136,7 @@ set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 endif()
