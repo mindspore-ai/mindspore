@@ -35,8 +35,10 @@ int CustomNormalizeInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (GetElementNum(input) < 1) {
     return NNACL_ERR;
   }
+  if (input->data_type_ != kNumberTypeUInt32 && input->data_type_ != kObjectTypeString) {
+    return NNACL_ERR;
+  }
   int string_num = *((const int32_t *)(input->data_));  // also look custom_extract_features
-
   output->shape_size_ = 1;
   output->shape_[0] = (string_num == 0 ? 1 : string_num);
   return NNACL_OK;

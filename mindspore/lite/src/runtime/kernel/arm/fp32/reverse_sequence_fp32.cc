@@ -74,7 +74,7 @@ int ReverseSequenceCPUKernel::ReSize() {
     para->output_shape_[i] = output->DimensionSize(i);
   }
   MS_CHECK_TRUE_RET(para->batch_axis_ < para->ndim_ && para->seq_axis_ < para->ndim_, RET_ERROR);
-
+  MS_CHECK_TRUE_RET(para->input_shape0_[para->batch_axis_] <= in_tensors_.at(SECOND_INPUT)->ElementsNum(), RET_ERROR);
   int less_axis = MSMIN(para->batch_axis_, para->seq_axis_);
   int greater_axis = MSMAX(para->batch_axis_, para->seq_axis_);
 
