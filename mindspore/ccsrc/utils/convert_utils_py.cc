@@ -652,6 +652,7 @@ ShapeVector ConvertToShapeVector(const ValuePtr &shape_ptr, const VectorRef &val
       if (tensorptr->DataDim() != 0) {
         MS_LOG(EXCEPTION) << "Element in COOTensor's shape must be scalar!";
       }
+      tensorptr->data_sync(false);
       shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
     }
   }

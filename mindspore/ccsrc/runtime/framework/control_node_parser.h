@@ -60,7 +60,11 @@ constexpr size_t kCsrTensorIndPtrIndex = 0;
 constexpr size_t kCsrTensorIndicesIndex = 1;
 constexpr size_t kCsrTensorValuesIndex = 2;
 constexpr size_t kCsrTensorDenseShapeIndex = 3;
+constexpr size_t kCooTensorIndicesIndex = 0;
+constexpr size_t kCooTensorValuesIndex = 1;
+constexpr size_t kCooTensorDenseShapeIndex = 2;
 constexpr size_t kMakeCSRTensorInputStartPos = 1;
+constexpr size_t kMakeTensorInputStartPos = 1;
 constexpr size_t kMakeCSRTensorInputNum = 4;
 
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
@@ -97,6 +101,7 @@ using KernelGraphGroupInfoPtr = std::shared_ptr<KernelGraphGroupInfo>;
 
 // Check whether the node is a csr node.
 bool IsCsrNode(const AnfNodePtr &node);
+bool IsCooNode(const AnfNodePtr &node);
 // Get the front node corresponding to the backend node, if the front node is not a parameter node, return the
 // corresponding cnode.
 KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraph *const graph);

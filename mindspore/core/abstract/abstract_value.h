@@ -1545,6 +1545,7 @@ class MS_CORE_API AbstractCOOTensor final : public AbstractUndetermined {
   AbstractTensorPtr values_;
   AbstractTuplePtr dense_shape_;
 };
+using AbstractCOOTensorPtr = std::shared_ptr<AbstractCOOTensor>;
 
 // CSRTensor
 class MS_CORE_API AbstractCSRTensor : public AbstractUndetermined {

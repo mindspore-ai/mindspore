@@ -995,6 +995,16 @@ BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr
     return outputs;
   }
 
+  if (abstract->isa<abstract::AbstractCOOTensor>()) {
+    auto coo_tensor_abstract = abstract->cast<abstract::AbstractCOOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor_abstract);
+    outputs.emplace_back(ConstructOutputByAbstract(coo_tensor_abstract->indices(), output_tensors, output_position));
+    outputs.emplace_back(ConstructOutputByAbstract(coo_tensor_abstract->values(), output_tensors, output_position));
+    outputs.emplace_back(
+      ConstructOutputByAbstract(coo_tensor_abstract->dense_shape(), output_tensors, output_position));
+    return outputs;
+  }
+
   if (!abstract->isa<abstract::AbstractTuple>()) {
     (*output_position)++;
     return output_tensors[(*output_position) - 1];

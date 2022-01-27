@@ -413,6 +413,15 @@ size_t AnfRuntimeAlgorithm::GetOutputNumByAbstract(const AbstractBasePtr &node_a
     return result;
   }
 
+  if (node_abstract->isa<abstract::AbstractCOOTensor>()) {
+    auto coo_tensor_abstract = node_abstract->cast<abstract::AbstractCOOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_tensor_abstract);
+    result += GetOutputNumByAbstract(coo_tensor_abstract->dense_shape());
+    result += GetOutputNumByAbstract(coo_tensor_abstract->indices());
+    result += GetOutputNumByAbstract(coo_tensor_abstract->values());
+    return result;
+  }
+
   if (!node_abstract->isa<abstract::AbstractTuple>()) {
     return 1;
   }

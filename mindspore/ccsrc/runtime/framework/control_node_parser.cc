@@ -438,7 +438,8 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
   std::vector<KernelWithIndex> results;
   // 2. MakeTuple.
   if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple) ||
-      AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeCSRTensor)) {
+      AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeCSRTensor) ||
+      AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeCOOTensor)) {
     const auto &cnode = real_node->cast<CNodePtr>();
     const auto &inputs = cnode->inputs();
     for (size_t i = kMakeTupleInputStartPos; i < inputs.size(); ++i) {
@@ -449,10 +450,10 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
   }
 
   // 3. kPrimMakeCSRTensor.
-  if (IsCsrNode(real_node)) {
+  if (IsCsrNode(real_node) || IsCooNode(real_node)) {
     const auto &cnode = real_node->cast<CNodePtr>();
     const auto &inputs = cnode->inputs();
-    if (inputs.size() <= kMakeCSRTensorInputStartPos) {
+    if (inputs.size() <= kMakeTensorInputStartPos) {
       MS_LOG(EXCEPTION) << "Invalid make csr tensor node:" << cnode->DebugString();
     }
 
@@ -461,19 +462,19 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(prim_node);
     const auto &prim_value = prim_node->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(prim_value);
-    const auto &src_node = inputs[kMakeCSRTensorInputStartPos];
+    const auto &src_node = inputs[kMakeTensorInputStartPos];
     MS_EXCEPTION_IF_NULL(src_node);
-
     const auto iter = sparse_attr_map.find(prim_value->name());
     // Csr node from the make csr tensor node.
-    if (AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCSRTensor)) {
-      const auto &make_csr_tensor_cnode = src_node->cast<CNodePtr>();
-      const auto &csr_tensor_inputs = make_csr_tensor_cnode->inputs();
-      if (csr_tensor_inputs.size() <= kMakeCSRTensorInputNum) {
+    if (AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCSRTensor) ||
+        AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCOOTensor)) {
+      const auto &make_tensor_cnode = src_node->cast<CNodePtr>();
+      const auto &make_tensor_inputs = make_tensor_cnode->inputs();
+      if (make_tensor_inputs.size() <= kMakeCSRTensorInputNum) {
         MS_LOG(EXCEPTION) << "Invalid make csr tensor node:" << cnode->DebugString();
       }
       const auto &sub_results =
-        FetchInputNodeByNode(csr_tensor_inputs[LongToSize(iter->second) + kMakeCSRTensorInputStartPos]);
+        FetchInputNodeByNode(make_tensor_inputs[LongToSize(iter->second) + kMakeTensorInputStartPos]);
       (void)results.insert(results.end(), sub_results.begin(), sub_results.end());
     } else {
       // Csr node from parameter or call node.
@@ -632,6 +633,16 @@ bool IsCsrNode(const AnfNodePtr &node) {
          AnfAlgo::CheckPrimitiveType(node, prim::kPrimCSRTensorGetDenseShape);
 }
 
+bool IsCooNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  return AnfAlgo::CheckPrimitiveType(node, prim::kPrimCOOTensorGetIndices) ||
+         AnfAlgo::CheckPrimitiveType(node, prim::kPrimCOOTensorGetValues) ||
+         AnfAlgo::CheckPrimitiveType(node, prim::kPrimCOOTensorGetDenseShape);
+}
+
 KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &front_node = graph->GetFrontAnfByBackendAnf(backend_node);
@@ -704,6 +715,20 @@ abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, 
       return csr_abs->values();
     } else if (index >= kCsrTensorDenseShapeIndex) {
       return FetchAbstractByIndex(csr_abs->dense_shape(), index - kCsrTensorDenseShapeIndex);
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
+    }
+  }
+
+  if (abstract->isa<abstract::AbstractCOOTensor>()) {
+    auto coo_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_abs);
+    if (index == kCooTensorIndicesIndex) {
+      return coo_abs->indices();
+    } else if (index == kCooTensorValuesIndex) {
+      return coo_abs->values();
+    } else if (index >= kCooTensorDenseShapeIndex) {
+      return FetchAbstractByIndex(coo_abs->dense_shape(), index - kCooTensorDenseShapeIndex);
     } else {
       MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
     }
@@ -1830,6 +1855,53 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
   }
 }
 
+void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const FrontToBackendKernelWithContext &outputs,
+                                  DeviceContext *const device_context,
+                                  std::map<KernelWithIndex, const DeviceContext *> *const inputs,
+                                  bool *const need_stack) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(need_stack);
+
+  const auto &real_parameters = graph->input_nodes();
+  for (const auto &parameter : real_parameters) {
+    auto front_node_with_index = GetFrontNodeByKernelGraph(parameter, graph.get());
+    MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+    // If input come from the output of kernel graph belong the same group, it should not be collected in
+    // the group inputs.
+    if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
+        outputs.find(front_node_with_index) != outputs.end() || front_node_with_index.first->isa<ValueNode>()) {
+      continue;
+    }
+    if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
+      (*need_stack) = true;
+    }
+    (*inputs)[front_node_with_index] = device_context;
+  }
+}
+
+void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *const device_context,
+                                   FrontToBackendKernelWithContext *const outputs) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(outputs);
+
+  for (const auto &backend_to_front : graph->graph_output_map()) {
+    if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
+        AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
+        backend_to_front.second.first->isa<ValueNode>()) {
+      continue;
+    }
+    MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
+                  << " add front output node:" << backend_to_front.second.first->DebugString()
+                  << " index:" << backend_to_front.second.second
+                  << " backend node:" << backend_to_front.first.first->DebugString()
+                  << " index:" << backend_to_front.first.second;
+    (*outputs)[backend_to_front.second] = {backend_to_front.first, device_context};
+  }
+}
+
 void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts) {
   for (const auto &func_graph_to_kernel_graph_groups : func_graph_to_kernel_graph_groups_) {
     for (const auto &kernel_graph_group : func_graph_to_kernel_graph_groups.second) {
@@ -1851,45 +1923,12 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
         (void)kernel_graph_group_info->graphs_.emplace(kernel_graph);
 
         // Collect inputs in group.
-        const auto &real_parameters = kernel_graph->input_nodes();
-        for (const auto &parameter : real_parameters) {
-          auto front_node_with_index = GetFrontNodeByKernelGraph(parameter, kernel_graph.get());
-          MS_EXCEPTION_IF_NULL(front_node_with_index.first);
-          // If input come from the output of kernel graph belong the same group, it should not be collected in
-          // the group inputs.
-          if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
-              kernel_graph_group_info->front_output_nodes_.find(front_node_with_index) !=
-                kernel_graph_group_info->front_output_nodes_.end() ||
-              front_node_with_index.first->isa<ValueNode>()) {
-            continue;
-          }
-          if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
-            kernel_graph_group_info->need_stack_ = true;
-          }
-
-          if (AnfAlgo::CheckPrimitiveType(front_node_with_index.first, prim::kPrimTupleGetItem)) {
-            MS_LOG(WARNING) << "Input node:" << front_node_with_index.first->DebugString()
-                            << " for graph:" << kernel_graph->ToString() << " is a tuple get item";
-            front_node_with_index = FetchRealNodeByGetItem(front_node_with_index);
-          }
-          kernel_graph_group_info->front_input_nodes_[front_node_with_index] = iter->second;
-        }
+        CollectEffectiveInputByGraph(kernel_graph, kernel_graph_group_info->front_output_nodes_, iter->second,
+                                     &(kernel_graph_group_info->front_input_nodes_),
+                                     &(kernel_graph_group_info->need_stack_));
 
         // Collect outputs in group.
-        for (const auto &backend_to_front : kernel_graph->graph_output_map()) {
-          if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
-              AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
-              backend_to_front.second.first->isa<ValueNode>()) {
-            continue;
-          }
-          MS_LOG(DEBUG) << "Kernel graph:" << kernel_graph->ToString()
-                        << " add front output node:" << backend_to_front.second.first->DebugString()
-                        << " index:" << backend_to_front.second.second
-                        << " backend node:" << backend_to_front.first.first->DebugString()
-                        << " index:" << backend_to_front.first.second;
-          kernel_graph_group_info->front_output_nodes_[backend_to_front.second] = {backend_to_front.first,
-                                                                                   iter->second};
-        }
+        CollectEffectiveOutputByGraph(kernel_graph, iter->second, &(kernel_graph_group_info->front_output_nodes_));
 
         kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
         if (kernel_graph_group_info->need_stack_) {
