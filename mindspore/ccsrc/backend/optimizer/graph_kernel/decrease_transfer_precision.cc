@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ bool IsPreNodeReduce(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple
   if (is_tuple_out) {
     auto tuple_output = gk_graph->output()->cast<CNodePtr>();
     if (AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
-      MS_EXCEPTION(UnknownError) << "\nThe return op is not a MakeTuple node\n";
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(tuple_output);
     }
     auto input_node = tuple_output->input(index + 1);
     if (AnfAlgo::GetCNodeName(input_node) == prim::kPrimReduceSum->name()) {
@@ -119,11 +119,11 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
             continue;
           }
           // mutate father
-          (void)Process_Father(func_graph, tuple_node, true, LongToSize(tuple_index));
+          (void)ProcessFather(func_graph, tuple_node, true, LongToSize(tuple_index));
           in_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat16, GetShape(in_node)));
           // mutate sons
           for (auto each_out : users_map[in_node]) {
-            (void)Process_Son(func_graph, each_out.first, IntToSize(each_out.second));
+            (void)ProcessSon(func_graph, each_out.first, IntToSize(each_out.second));
           }
         }
         if (IsCandidateNode(in_node)) {
@@ -132,9 +132,9 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
             continue;
           }
           // mutate father
-          (void)Process_Father(func_graph, in_node, false, 0);
+          (void)ProcessFather(func_graph, in_node, false, 0);
           // mutate sons
-          (void)Process_Son(func_graph, cnode, index);
+          (void)ProcessSon(func_graph, cnode, index);
         }
       }
     }
@@ -142,8 +142,8 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
-bool DecreaseTransferPrecision::Process_Father(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out,
-                                               size_t index) {
+bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out,
+                                              size_t index) {
   auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();
@@ -201,7 +201,7 @@ bool DecreaseTransferPrecision::Process_Father(const FuncGraphPtr &, const AnfNo
     // cast for graph kernel with make tuple output
     auto tuple_output = gk_graph->output()->cast<CNodePtr>();
     if (AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
-      MS_EXCEPTION(UnknownError) << "\nThe return op is not a MakeTuple node\n";
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(tuple_output);
     }
     auto input_node = tuple_output->input(index + 1);
     auto cnode = func_add_cast_fp16(input_node);
@@ -233,7 +233,7 @@ bool DecreaseTransferPrecision::Process_Father(const FuncGraphPtr &, const AnfNo
   }
 }
 
-bool DecreaseTransferPrecision::Process_Son(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) {
+bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) {
   auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();

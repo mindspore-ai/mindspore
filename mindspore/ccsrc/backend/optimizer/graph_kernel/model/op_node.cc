@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,12 @@
 #include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::inner {
+namespace {
+constexpr size_t kFirstDataIndex = 0;
+constexpr size_t kSecondDataIndex = 1;
+constexpr size_t kThirdDataIndex = 2;
+}  // namespace
+
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   bool is_int64 = true;
   auto get_int_value = [&is_int64](const ValuePtr &value) -> int64_t {
@@ -56,19 +62,19 @@ void PrimOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
   TypeId tid = inputs[0]->type;
   for (size_t i = 1; i < inputs.size(); i++) {
     if (inputs[i]->type != tid) {
-      MS_LOG(EXCEPTION) << "Incompatible dtype between input " << 0 << "and" << i;
+      MS_LOG(EXCEPTION) << "Incompatible dtype between input " << 0 << " and input " << i;
     }
   }
 }
 
-// check all formats are compatible, only DefaultForant is compatible with others
+// check all formats are compatible, only DefaultFormat is compatible with others
 void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   DFormat res = inputs[0]->format;
   size_t i = 0;
   for (size_t j = 1; j < inputs.size(); j++) {
     if (inputs[j]->format != res) {
       if (inputs[j]->format != kOpFormat_DEFAULT && res != kOpFormat_DEFAULT) {
-        MS_LOG(EXCEPTION) << "Incompatible format between input " << i << "and" << (j + 1);
+        MS_LOG(EXCEPTION) << "Incompatible format between input " << i << " and input " << (j + 1);
       }
       if (res == kOpFormat_DEFAULT) {
         res = inputs[j]->format;
@@ -286,7 +292,11 @@ DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
       })) {
     return BroadcastShape(inputs, true);
   }
-  MS_LOG(EXCEPTION) << "Unsupported format.";
+  std::string inputs_format;
+  for (const auto &input : inputs) {
+    static_cast<void>(inputs_format.append(" ").append(input->format));
+  }
+  MS_LOG(EXCEPTION) << "Unsupported inputs format: " << inputs_format;
 }
 
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -320,11 +330,14 @@ TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 void SelectOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
-  if (inputs[0]->type != TypeId::kNumberTypeBool) {
-    MS_LOG(EXCEPTION) << "Select's input[0] should be bool type";
+  if (inputs[kFirstDataIndex]->type != TypeId::kNumberTypeBool) {
+    MS_LOG(EXCEPTION) << "Select's input[0] should be bool type, but got "
+                      << TypeIdToString(inputs[kFirstDataIndex]->type, true);
   }
-  if (inputs[1]->type != inputs[2]->type) {
-    MS_LOG(EXCEPTION) << "Select's input[1] and input[2]'s type doesn't match";
+  if (inputs[kSecondDataIndex]->type != inputs[kThirdDataIndex]->type) {
+    MS_LOG(EXCEPTION) << "Select's input[1] and input[2]'s type doesn't match: "
+                      << TypeIdToString(inputs[kSecondDataIndex]->type, true) << " vs "
+                      << TypeIdToString(inputs[kThirdDataIndex]->type, true);
   }
 }
 
@@ -351,7 +364,7 @@ DShape BroadcastToOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs)
   return GetListInt(attrs.find("shape")->second);
 }
 
-// check rudece axis in range [-size,size)
+// check reduce axis in range [-size,size)
 void ReduceOp::Check(const NodePtrList &inputs, const DAttrs &attrs) {
   PrimOp::Check(inputs, attrs);
   CHECK_ATTR(attrs, "axis");
@@ -359,8 +372,8 @@ void ReduceOp::Check(const NodePtrList &inputs, const DAttrs &attrs) {
   int64_t size = static_cast<int64_t>(inputs[0]->shape.size());
   auto it = std::find_if(axis.begin(), axis.end(), [&size](const int64_t &i) { return (i >= size || i < (-size)); });
   if (it != axis.end()) {
-    MS_LOG(EXCEPTION) << "reduce_axis should be in range [" << (-size) << "," << size << ")"
-                      << ",but got " << (*it);
+    MS_LOG(EXCEPTION) << "Reduce axis should be in range [" << (-size) << "," << size << ")"
+                      << ", but got " << (*it);
   }
 }
 
@@ -551,10 +564,11 @@ DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 
 void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
   if (inputs[0]->type != TypeId::kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "Complex's input[0] should be float32";
+    MS_LOG(EXCEPTION) << "Complex's input[0] should be float32, but got " << TypeIdToString(inputs[0]->type, true);
   }
   if (inputs[0]->type != inputs[1]->type) {
-    MS_LOG(EXCEPTION) << "Complex's input[0] and inputs[1]'s type mismatch";
+    MS_LOG(EXCEPTION) << "Complex's input[0] and inputs[1]'s type mismatch: " << TypeIdToString(inputs[0]->type, true)
+                      << " vs " << TypeIdToString(inputs[1]->type, true);
   }
 }
 

@@ -42,7 +42,9 @@ class AkgGpuKernelManager {
     for (auto iter = infotable_.begin(); iter != infotable_.end(); ++iter) {
       CUresult ret = cuModuleUnload(iter->second->module_);
       if (ret != CUDA_SUCCESS && ret != CUDA_ERROR_DEINITIALIZED) {
-        MS_LOG(ERROR) << "Unload GPU Module failed.";
+        const char *msg = nullptr;
+        cuGetErrorName(ret, &msg);
+        MS_LOG(ERROR) << "Unload GPU Module failed. cuModuleUnload error message: " << msg;
       }
     }
   }

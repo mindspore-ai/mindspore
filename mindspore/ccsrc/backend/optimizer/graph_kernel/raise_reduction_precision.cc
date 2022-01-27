@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,8 @@ void RaiseReductionPrecision::ReplaceNode(const AnfNodePtr &reduce_node, const A
     if (IsPrimitiveCNode(user_node, prim::kPrimCast) &&
         AnfAlgo::GetOutputDeviceDataType(user_node, 0) == kNumberTypeFloat32) {
       if (!(mng->Replace(user_node, reduce_node))) {
-        MS_LOG(ERROR) << "Something happened error, when replacing nodes.";
+        MS_LOG(ERROR) << "Fail to replace node[" << user_node->fullname_with_scope() << "] with node["
+                      << reduce_node->fullname_with_scope() << "]";
       }
     } else {
       if (user_node->isa<CNode>()) {

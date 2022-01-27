@@ -228,7 +228,7 @@ AnfNodePtrList AutoRecompute::Filter(const AnfNodePtr &source_node, const AnfNod
     auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(source_node);
     auto out = sub_graph->output();
     if (!IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
-      MS_LOG(EXCEPTION) << "Filte input tensor error";
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(out);
     }
 
     // Find subgraph's input according to edge node.

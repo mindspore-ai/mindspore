@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ class DecreaseTransferPrecision : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph);
 
  private:
-  bool Process_Father(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_tuple_out = false,
-                      size_t index = 0);
-  bool Process_Son(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t index);
+  bool ProcessFather(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_tuple_out = false,
+                     size_t index = 0);
+  bool ProcessSon(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t index);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_DECREASE_TRANSFER_PRECISION_H_

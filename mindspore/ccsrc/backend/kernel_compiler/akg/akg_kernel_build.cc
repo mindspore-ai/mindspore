@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
       if (buf.shm_nattch == 0) {
         ret = shmctl(id, IPC_RMID, nullptr);
         if (ret < 0) {
-          MS_LOG(EXCEPTION) << "Realse shared_mem failed, error msg:" << GetErrorInfo();
+          MS_LOG(EXCEPTION) << "Release shared_mem failed, error msg:" << GetErrorInfo();
         }
       }
     }
@@ -236,11 +236,11 @@ int32_t AkgKernelPool::Release() const {
       return -1;
     }
 
-    // Realse shared_memroy
+    // Release shared memory
     if (is_creator_ || need_delete_by_last) {
       ret = shmctl(shm_id_, IPC_RMID, nullptr);
       if (ret < 0) {
-        MS_LOG(ERROR) << "Realse shared_mem failed, error msg:" << GetErrorInfo();
+        MS_LOG(ERROR) << "Release shared_mem failed, error msg:" << GetErrorInfo();
         return -1;
       }
     }
@@ -266,7 +266,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
 
     auto hash_id = std::hash<std::string>()(kernel_name);
     if (self_kernel_ids_.count(hash_id) != 0) {
-      MS_LOG(ERROR) << "Duplicated hash_id in list.";
+      MS_LOG(ERROR) << "Duplicated kernel found in the kernel compiling list. kernel_name[" << kernel_name << "]";
       return -1;
     }
 
@@ -443,11 +443,11 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
     auto kernel_name = json_generator.kernel_name();
     auto cached_kernel_pack = AkgSearchCache(kernel_name);
     if (cached_kernel_pack == nullptr) {
-      MS_LOG(ERROR) << "Use cached kernel failed, kernel_name[" << kernel_name << "], fullname_with_scope["
+      MS_LOG(ERROR) << "Kernel is not found in cache, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
       return false;
     }
-    MS_LOG(DEBUG) << "Use just compiled kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
+    MS_LOG(DEBUG) << "Use the cached kernel found in cache, kernel_name[" << kernel_name << "], fullname_with_scope["
                   << anf_node->fullname_with_scope() << "].";
     AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
   }

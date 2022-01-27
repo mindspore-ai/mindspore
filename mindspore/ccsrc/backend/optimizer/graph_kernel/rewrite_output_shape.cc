@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ void RewriteOutputShape::Process(const AnfNodePtr &node, size_t index, const Abs
   if (node->abstract()->isa<abstract::AbstractTuple>()) {
     auto node_abstracts = node->abstract()->cast<abstract::AbstractTuplePtr>()->elements();
     if (index >= node_abstracts.size()) {
-      MS_LOG(EXCEPTION) << "Index " << index << " is out of the range of node_abstracts " << node_abstracts.size()
-                        << ". node: " << node->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "Index " << index << " is out of the range of node_abstracts [0, " << node_abstracts.size()
+                        << ") in node " << node->fullname_with_scope();
     }
     node_abstracts[index] = abstract;
     node->set_abstract(std::make_shared<abstract::AbstractTuple>(node_abstracts));

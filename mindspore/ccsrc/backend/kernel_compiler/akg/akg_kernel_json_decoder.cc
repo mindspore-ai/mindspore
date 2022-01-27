@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,8 @@ class CNodeDecoder {
       std::vector<std::string> value = attr_json[kJsonKeyValue];
       return MakeValue(value);
     } else {
-      MS_LOG(ERROR) << "Unknown type of attr: " << type << ", json: \n" << attr_json;
+      MS_LOG(ERROR) << "Fail to parse attr " << attr_json[kJsonKeyName] << " in json, because its type: " << type
+                    << " is not in supported list: [str, int, bool, float, listInt, listStr]. json is: " << attr_json;
       return nullptr;
     }
   }
@@ -157,7 +158,7 @@ class CNodeDecoder {
   bool DecodeOutputDesc(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph) {
     std::vector<nlohmann::json> output_descs = cnode_json[kJsonKeyOutputDesc];
     if (output_descs.empty()) {
-      MS_LOG(ERROR) << "No outputs found.";
+      MS_LOG(ERROR) << "No outputs found in json: " << cnode_json << ", " << kJsonKeyOutputDesc << " is empty.";
       return false;
     } else if (output_descs.size() == 1) {
       // single output.
@@ -249,7 +250,9 @@ class CNodeDecoder {
       case kNumberTypeInt32:
         return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt32);
       default:
-        MS_LOG(ERROR) << "Unknown type: " << scalar_json[kJsonKeyDataType];
+        MS_LOG(ERROR) << "Fail to parse scalar " << scalar_json[kJsonKeyValue]
+                      << " in json, because its type: " << scalar_json[kJsonKeyDataType]
+                      << " is not in supported list: [float16, float32, int32]. json is: " << scalar_json;
         break;
     }
     return nullptr;
@@ -340,14 +343,15 @@ AnfNodePtr AkgKernelJsonDecoder::DecodeOutput(const std::vector<nlohmann::json> 
 }
 
 FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel_json) {
-  MS_LOG(DEBUG) << "start decode, " << kernel_json;
+  MS_LOG(DEBUG) << "Start decoding json: " << kernel_json;
   nodes_map_.clear();
   auto graph = std::make_shared<FuncGraph>();
 
   // decode parameters.
   std::vector<nlohmann::json> input_descs = kernel_json[kJsonKeyInputDesc];
   if (input_descs.empty()) {
-    MS_LOG(ERROR) << "Error decode parameter, no inputs for graph.";
+    MS_LOG(ERROR) << "Error decoding parameter: no inputs for graph. Because " << kJsonKeyInputDesc
+                  << " is empty in json: " << kernel_json;
     return nullptr;
   }
   for (size_t i = 0; i < input_descs.size(); ++i) {
@@ -355,29 +359,31 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel
     auto parameter = DecodeParameter(input_desc[0], graph);
     MS_EXCEPTION_IF_NULL(parameter);
   }
-  MS_LOG(DEBUG) << "decode parameters success.";
+  MS_LOG(DEBUG) << "Decode parameters successfully.";
 
   // decode cnodes in graph.
   std::vector<nlohmann::json> op_node_descs = kernel_json[kJsonKeyOpDesc];
   if (op_node_descs.empty()) {
-    MS_LOG(ERROR) << "Error decode cnodes, no cnodes for graph.";
+    MS_LOG(ERROR) << "Error decoding cnodes: no cnodes for graph. Because " << kJsonKeyOpDesc
+                  << " is empty in json: " << kernel_json;
     return nullptr;
   }
   for (const auto &op_desc : op_node_descs) {
     auto op_node = DecodeCNode(op_desc, graph, kernel_json[kJsonKeyProcess]);
     MS_EXCEPTION_IF_NULL(op_node);
   }
-  MS_LOG(DEBUG) << "decode cnodes success.";
+  MS_LOG(DEBUG) << "Decode cnodes successfully.";
 
   // decode outputs of graph.
   std::vector<nlohmann::json> output_descs = kernel_json[kJsonKeyOutputDesc];
   if (output_descs.empty()) {
-    MS_LOG(ERROR) << "Error decode outputs, no outputs for graph.";
+    MS_LOG(ERROR) << "Error decoding outputs: no outputs for graph. Because " << kJsonKeyOutputDesc
+                  << " is empty in json: " << kernel_json;
     return nullptr;
   }
   auto output = DecodeOutput(output_descs, graph);
   MS_EXCEPTION_IF_NULL(output);
-  MS_LOG(DEBUG) << "decode success, " << kernel_json;
+  MS_LOG(DEBUG) << "Decode json successfully, json: " << kernel_json;
   return graph;
 }
 

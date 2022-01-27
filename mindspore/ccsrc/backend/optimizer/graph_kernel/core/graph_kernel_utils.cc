@@ -162,7 +162,7 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
   // Create CNodes.
   for (const auto &op_node : lite_graph->GetOrderedNodes()) {
     if (op_node->NodeType() != inner::NType::Primitive) {
-      MS_LOG(EXCEPTION) << "Node " << op_node->debug_name() << "should be a Primitive node";
+      MS_LOG(EXCEPTION) << "Node " << op_node->debug_name() << " should be a Primitive node";
     }
     auto op = std::static_pointer_cast<inner::PrimOp>(op_node);
     AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
@@ -174,7 +174,7 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
           return iter->second;
         } else {
           if (inp->NodeType() != inner::NType::Value) {
-            MS_LOG(EXCEPTION) << "Node " << inp->debug_name() << "should be a Value node";
+            MS_LOG(EXCEPTION) << "Node " << inp->debug_name() << " should be a Value node";
           }
           auto inp_value = inp->As<inner::ConstTensorNode>()->data();
           auto value_node = NewValueNode(inp_value);

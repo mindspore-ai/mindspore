@@ -57,13 +57,13 @@ ShapeVector CallbackImpl::GetOutputInferShape(const AnfNodePtr &node, size_t i) 
     if (i == 0) {
       return base_shape->cast<abstract::ShapePtr>()->shape();
     }
-    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << i;
+    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << " is a single output node but got index [" << i << "]";
   } else if (base_shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     if (i >= tuple_shape->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << i << "is larger than output number " << tuple_shape->size()
-                        << " node:" << node->DebugString();
+      MS_LOG(EXCEPTION) << "Output index " << i << " is larger than output number " << tuple_shape->size()
+                        << " in node " << node->DebugString();
     }
     auto b_shp = (*tuple_shape)[i];
     if (b_shp->isa<abstract::Shape>()) {
@@ -73,7 +73,7 @@ ShapeVector CallbackImpl::GetOutputInferShape(const AnfNodePtr &node, size_t i) 
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << i
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
-                        << "node :" << node->DebugString();
+                        << " node :" << node->DebugString();
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return ShapeVector();
@@ -99,7 +99,8 @@ TypeId CallbackImpl::GetOutputInferType(const AnfNodePtr &node, size_t i) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (i >= tuple_ptr->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << i << " must be less than output number " << tuple_ptr->size();
+      MS_LOG(EXCEPTION) << "Output index " << i << " must be less than output number " << tuple_ptr->size()
+                        << " in node " << node->DebugString();
     }
     type_ptr = (*tuple_ptr)[i];
     MS_EXCEPTION_IF_NULL(type_ptr);

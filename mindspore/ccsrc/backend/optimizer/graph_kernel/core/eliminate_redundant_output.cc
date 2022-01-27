@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,8 @@ bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr 
     auto &getitem = user.first;
     auto idx = GetIndex(getitem);
     if (idx >= output_num) {
-      MS_LOG(EXCEPTION) << "Index of GetItem is out of range of MakeTuple. getitem node: " << getitem->DebugString();
+      MS_LOG(EXCEPTION) << "Index of GetItem is " << idx << ", which is out of range of MakeTuple [0, " << output_num
+                        << "). GetItem node: " << getitem->DebugString();
     }
     if (merge_repeated_getitem && (*getitem_list)[idx] != nullptr) {
       (void)mng->Replace(getitem, (*getitem_list)[idx]);
@@ -212,7 +213,8 @@ void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_
   MS_EXCEPTION_IF_NULL(getitem);
   auto index = GetIndex(getitem);
   if (offset > index) {
-    MS_LOG(EXCEPTION) << "The offset is greater than the original index of GetItem: " << getitem->DebugString();
+    MS_LOG(EXCEPTION) << "The offset is greater than the original index of GetItem: " << getitem->DebugString() << ". "
+                      << offset << " vs " << index;
   }
   index -= offset;
   SetIndex(getitem, index);

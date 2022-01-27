@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ enum CastType { CAST_UP, CAST_DOWN, CAST_OTHER };
 CastType GetCastType(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
-    MS_LOG(EXCEPTION) << "Only process for Cast!";
+    MS_LOG(EXCEPTION) << "Expect Cast node, but got " << AnfAlgo::GetCNodeName(node);
   }
   TypeId input_type = AnfAlgo::GetInputDeviceDataType(node, 0);
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
