@@ -44,7 +44,6 @@ class NonMaxSuppressionCPUKernel : public InnerKernel {
   int Run_Selecte(bool simple_out, int box_num, int batch_num, int class_num, const float *scores_data,
                   const float *box_data);
 
- private:
   int center_point_box_ = 0;
   float iou_threshold_ = 0;
   float score_threshold_ = 0;
@@ -84,7 +83,6 @@ class NMSBox {
     return score_ < box.score_ || (std::abs(score_ - box.score_) < FLT_EPSILON && index_ > box.index_);
   }
 
- public:
   const float get_score() const { return score_; }
   const int get_index() const { return index_; }
   const float get_y1() const { return y1_; }

@@ -54,7 +54,7 @@ class LstmCPUKernel : public InnerKernel {
   void RecordPreState(float *cell_state_minus1, int step);
   const float *weight_loop_;
   const float *bias_loop_;
-  float *gate_loop_;
+  float *gate_loop_ = nullptr;
   int input_thread_count_ = 0;
   int input_thread_stride_ = 0;
 
