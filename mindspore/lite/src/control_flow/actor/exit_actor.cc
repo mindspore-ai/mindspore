@@ -45,6 +45,7 @@ void LiteExitOpActor::InitInputData() {
   for (size_t i = 1; i < inputs_data_.size(); ++i) {
     auto dst_tensor = kernel_->out_tensors()[i - 1];
     auto src_tensor = inputs_data_[i];
+    dst_tensor->set_data_type(src_tensor->data_type());
     if (src_tensor->allocator() == nullptr || src_tensor->IsGraphInput()) {
       SetTensorData(dst_tensor, src_tensor);
     } else {
