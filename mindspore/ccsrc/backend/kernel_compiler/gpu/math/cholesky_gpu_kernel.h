@@ -60,9 +60,17 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
-    clean_ = static_cast<bool>(GetAttr<bool>(kernel_node, kClean));
-    split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
+
+    // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
+    if (AnfAlgo::HasNodeAttr(kClean, kernel_node)) {
+      clean_ = static_cast<bool>(GetAttr<bool>(kernel_node, kClean));
+    }
+    if (AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
+      lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
+    }
+    if (AnfAlgo::HasNodeAttr(kSplitDim, kernel_node)) {
+      split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
+    }
     // cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
     // so we reverse lower to upper, to fake transpose col_major input to row_major.
     if (lower_) {
@@ -272,8 +280,8 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   cusolverDnHandle_t handle_{nullptr};
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   std::vector<pointer> h_array_;
-  bool lower_{false};
-  bool clean_{false};
+  bool lower_{true};
+  bool clean_{true};
 };
 }  // namespace kernel
 }  // namespace mindspore

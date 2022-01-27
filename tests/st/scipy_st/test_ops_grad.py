@@ -41,7 +41,8 @@ def test_cholesky_grad(shape, data_type):
         def __init__(self):
             super(CholeskyNet, self).__init__()
             self.mean = ops.ReduceMean()
-            self.cholesky = Cholesky(lower=True, clean=True)
+            # args clean not supports grad right now, just default to clean.
+            self.cholesky = Cholesky(clean=True)
 
         def construct(self, a):
             c = self.cholesky(a)

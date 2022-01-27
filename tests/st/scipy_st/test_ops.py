@@ -31,9 +31,8 @@ np.random.seed(0)
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [3, 5, 7])
-@pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('dtype', [np.float64])
-def test_cholesky(n: int, lower: bool, dtype: Generic):
+def test_cholesky(n: int, dtype: Generic):
     """
     Feature: ALL TO ALL
     Description:  test cases for cholesky [N,N]
@@ -42,8 +41,8 @@ def test_cholesky(n: int, lower: bool, dtype: Generic):
     context.set_context(mode=context.GRAPH_MODE)
     a = create_sym_pos_matrix((n, n), dtype)
     tensor_a = Tensor(a)
-    expect = scp.linalg.cholesky(a, lower=lower)
-    cholesky_net = Cholesky(lower=lower, clean=True)
+    expect = scp.linalg.cholesky(a, lower=True)
+    cholesky_net = Cholesky(clean=True)
     output = cholesky_net(tensor_a)
     assert np.allclose(expect, output.asnumpy())
 
