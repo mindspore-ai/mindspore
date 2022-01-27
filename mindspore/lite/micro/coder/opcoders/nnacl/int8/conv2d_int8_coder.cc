@@ -145,8 +145,7 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
   std::string packed_weight_str = "(int8_t **)&" + allocator_->GetRuntimeAddr(packed_weight_);
   std::string bias_data_str = "(int32_t **)&" + allocator_->GetRuntimeAddr(bias_data_);
 
-  nnacl::NNaclInt8Serializer code;
-
+  nnacl::NNaclInt8Serializer code, w_init_size_code;
   if (filter_peroc_) {
     filter_zp_str = allocator_->GetRuntimeAddr(filter_zp_ptr_);
   } else {
@@ -157,15 +156,22 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
   if (target_ == kARM64) {
     code.CodeFunctionWithCheck("ConvInit", filter_tensor_, bias_tensor_, filter_zp_str, kernel_h, kernel_w,
                                input_channel, output_channel, input_zp, filter_peroc_, "GetSupportOptFlag()",
-                               packed_weight_str, bias_data_str);
+                               packed_weight_str, bias_data_str, context->weight_name(),
+                               ("&" + context->weight_offset_name()), context->weight_size_name());
+    w_init_size_code << context->weight_size_name() << " += ";
+    w_init_size_code.CodeFunction("ConvPackWeightSize", input_channel, output_channel, kernel_h * kernel_w,
+                                  "GetSupportOptFlag()");
   } else {
     code.CodeFunctionWithCheck("ConvInit", filter_tensor_, bias_tensor_, filter_zp_str, kernel_h, kernel_w,
                                input_channel, output_channel, input_zp, filter_peroc_, support_optimize_,
-                               packed_weight_str, bias_data_str);
+                               packed_weight_str, bias_data_str, context->weight_name(),
+                               ("&" + context->weight_offset_name()), context->weight_size_name());
+    w_init_size_code << context->weight_size_name() << " += ";
+    w_init_size_code.CodeFunction("ConvPackWeightSize", input_channel, output_channel, kernel_h * kernel_w,
+                                  support_optimize_);
   }
-
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(code.str());
-
   return RET_OK;
 }
 

@@ -23,6 +23,7 @@
 
 int Conv1x1Init(int8_t *src_weight, int32_t *src_bias, int32_t *filter_zps, int32_t input_channel,
                 int32_t output_channel, int32_t input_zp, bool support_optimize, bool filter_peroc,
-                int8_t **packed_weight, int32_t **bias_data);
+                int8_t **packed_weight, int32_t **bias_data, uint8_t *buf, size_t *offset, size_t buf_size);
+size_t Conv1x1PackWeightSize(int32_t input_channel, int32_t output_channel, bool support_optimize);
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_INIT_INT8_H_

@@ -18,9 +18,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 int ConvInit(int8_t *origin_weight, const int32_t *ori_bias, const int32_t *filter_quant_zps, int kernel_h,
              int kernel_w, int input_channel, int output_channel, int32_t input_zp, bool filter_peroc,
-             bool support_optimize, int8_t **packed_weight, int32_t **bias_data);
+             bool support_optimize, int8_t **packed_weight, int32_t **bias_data, uint8_t *buf, size_t *offset,
+             size_t buf_size);
+size_t ConvPackWeightSize(int input_channel, int output_channel, int kernel_plane, bool support_optimize);
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV_INIT_H_

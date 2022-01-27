@@ -52,6 +52,10 @@ int MatMulBaseInt8Coder::InitTmpBuffer() {
       reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, weight_bias_sums_size_, kWorkspace));
   }
   MS_CHECK_PTR(weight_bias_sums_);
+  if (param_->b_const_) {
+    *reinterpret_cast<int32_t *>(pack_b_ptr_) = b_pack_ptr_size_;
+    *reinterpret_cast<int32_t *>(weight_bias_sums_) = weight_bias_sums_size_;
+  }
   return RET_OK;
 }
 
@@ -154,6 +158,7 @@ int MatMulBaseInt8Coder::InitBias() {
     bias_ptr_size_ = static_cast<size_t>(max_bias_data_elements * sizeof(int));
     bias_ptr_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, kOnlineSize, kOnlinePackWeight));
     MS_CHECK_PTR(bias_ptr_);
+    *bias_ptr_ = bias_ptr_size_;
   }
   return RET_OK;
 }
@@ -192,18 +197,20 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
             "matmul_int8_wrapper.c",
           });
   std::string value_str_end = ";\n";
-  NNaclInt8Serializer init_code;
-  NNaclInt8Serializer code;
+  NNaclInt8Serializer init_code, code, w_init_size_code;
+  size_t w_buf_size = 0;
   if (bias_ptr_) {
-    init_code.CodeMallocExpression(bias_ptr_, bias_ptr_size_);
-    init_code.CodeFunction("memset", bias_ptr_, 0, bias_ptr_size_);
+    init_code.CodeBufferOffsetExpression(bias_ptr_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), bias_ptr_size_);
     init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_tensor_->Size());
+    w_buf_size += bias_ptr_size_;
   }
   if (param_->b_const_) {
-    init_code.CodeMallocExpression(weight_bias_sums_, weight_bias_sums_size_);
-    init_code.CodeFunction("memset", weight_bias_sums_, 0, weight_bias_sums_size_);
-    init_code.CodeMallocExpression(pack_b_ptr_, b_pack_ptr_size_);
-    init_code.CodeFunction("memset", pack_b_ptr_, 0, b_pack_ptr_size_);
+    init_code.CodeBufferOffsetExpression(weight_bias_sums_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), weight_bias_sums_size_);
+    init_code.CodeBufferOffsetExpression(pack_b_ptr_, context->weight_name(), context->weight_offset_name(),
+                                         context->weight_size_name(), b_pack_ptr_size_);
+    w_buf_size += weight_bias_sums_size_ + b_pack_ptr_size_;
     init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
     init_code.CodeFunction("InitInt8MatrixB", filter_tensor_, weight_bias_sums_, pack_b_ptr_, param_->batch,
                            param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
@@ -214,6 +221,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
                       param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_, "init_filter_zp",
                       bias_ptr_, param_->b_transpose_, filter_per_channel_);
   }
+  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
   std::string a_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string c_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);
   std::string pack_b_ptr_str = allocator_->GetRuntimeAddr(pack_b_ptr_);
@@ -235,14 +243,11 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
     }
     std::string batch_b_ptr_str = pack_b_ptr_str + "+" + std::to_string(i * param_->col_align_ * param_->deep_16_);
     std::string batch_c_ptr_str = c_ptr_str + "+" + std::to_string(i * param_->row_ * param_->col_);
-
     int stride = thread_stride_ * col_tile_;
     int cur_stride = kDefaultTaskId * stride;
     int res_stride = param_->col_ - cur_stride;
     int cur_oc = MSMIN(stride, res_stride);
-    if (cur_oc <= 0) {
-      return RET_OK;
-    }
+    if (cur_oc <= 0) return RET_OK;
     code.CodeStruct("matmul_quant_parameter", quant_, weight_quant_num_);
     std::string cur_left = "int32_t *cur_left = matmul_quant_parameter.left_shift_";
     std::string cur_right = "int32_t *cur_right = matmul_quant_parameter.right_shift_";
@@ -270,6 +275,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   MS_LOG(DEBUG) << "FullConnectionInt8Coder has been called";
   context->AppendInitCode(init_code.str());
   context->AppendCode(code.str());
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro::nnacl

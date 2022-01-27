@@ -52,6 +52,11 @@ class CoderContext {
   }
   std::vector<std::string> after_inference_code_blocks() const { return after_inference_code_blocks_; }
 
+  void set_weight_buffer_size_code_blocks(const std::vector<std::string> &weight_buffer_size_code_blocks) {
+    weight_buffer_size_code_blocks_ = weight_buffer_size_code_blocks;
+  }
+  std::vector<std::string> weight_buffer_size_code_blocks() const { return weight_buffer_size_code_blocks_; }
+
   void set_tensor_map(const std::map<Tensor *, std::string> &tensor_map) {
     tensors_map_.insert(tensor_map.begin(), tensor_map.end());
   }
@@ -72,10 +77,14 @@ class CoderContext {
   std::string output_name() { return output_name_; }
   std::string buffer_name() { return buffer_name_; }
   std::string weight_name() { return weight_name_; }
+  std::string weight_offset_name() { return pack_weight_offset_name_; }
+  std::string weight_size_name() { return pack_weight_size_name_; }
 
   void AppendCode(const std::string &codeBlock);
 
   void AppendInitCode(const std::string &codeBlock);
+
+  void AppendInitWeightSizeCode(const std::string &codeBlock);
 
   std::set<std::string> c_files() const { return c_files_; }
   void set_c_files(const std::set<std::string> &files) { c_files_.insert(files.begin(), files.end()); }
@@ -103,6 +112,10 @@ class CoderContext {
   std::string buffer_name_;
   // model's weight tensors' address.
   std::string weight_name_;
+  // model's pack weight tensor offset name
+  std::string pack_weight_offset_name_;
+  // model's pack weight tensor size name
+  std::string pack_weight_size_name_;
   // code blocks store the tensor will be packed runtime
   std::vector<std::string> initialContent_;
   // operator C Lang files list, depended by the net.c. it will be add to CMakeLists.txt
@@ -118,6 +131,7 @@ class CoderContext {
   std::vector<std::string> train_blocks_;
   std::vector<std::string> inference_blocks_;
   std::vector<std::string> after_inference_code_blocks_;
+  std::vector<std::string> weight_buffer_size_code_blocks_;
 };
 
 }  // namespace mindspore::lite::micro

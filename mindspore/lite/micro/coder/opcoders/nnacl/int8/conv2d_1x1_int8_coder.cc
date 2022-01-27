@@ -155,6 +155,7 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
   MS_CHECK_TRUE(input_channel > 0, "input_channel should be positive");
   MS_CHECK_TRUE(output_channel > 0, "output_channel should be positive");
   nnacl::NNaclInt8Serializer code;
+  nnacl::NNaclInt8Serializer w_init_size_code;
 
   packed_weight_ = static_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(packed_weight_);
@@ -175,13 +176,19 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
   if (target_ == kARM64) {
     code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_, bias_tensor_, filter_zp_str, input_channel,
                                output_channel, input_zp, "GetSupportOptFlag()", filter_peroc_, packed_weight_str,
-                               bias_data_str);
+                               bias_data_str, context->weight_name(), ("&" + context->weight_offset_name()),
+                               context->weight_size_name());
+    w_init_size_code << context->weight_size_name() << " += ";
+    w_init_size_code.CodeFunction("Conv1x1PackWeightSize", input_channel, output_channel, "GetSupportOptFlag()");
   } else {
     code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_, bias_tensor_, filter_zp_str, input_channel,
                                output_channel, input_zp, support_optimize_, filter_peroc_, packed_weight_str,
-                               bias_data_str);
+                               bias_data_str, context->weight_name(), ("&" + context->weight_offset_name()),
+                               context->weight_size_name());
+    w_init_size_code << context->weight_size_name() << " += ";
+    w_init_size_code.CodeFunction("Conv1x1PackWeightSize", input_channel, output_channel, support_optimize_);
   }
-
+  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(code.str());
   return RET_OK;
 }
