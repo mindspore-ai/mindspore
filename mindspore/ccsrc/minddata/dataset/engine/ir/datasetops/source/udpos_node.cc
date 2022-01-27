@@ -175,20 +175,27 @@ Status UDPOSNode::MakeSimpleProducer() {
 
 std::vector<std::string> UDPOSNode::WalkAllFiles(const std::string &usage, const std::string &dataset_dir) {
   std::vector<std::string> udpos_files_list;
-  const std::string train_prefix = "en-ud-tag.v2.train.txt";
-  const std::string test_prefix = "en-ud-tag.v2.test.txt";
-  const std::string valid_prefix = "en-ud-tag.v2.dev.txt";
+  Path train_prefix("en-ud-tag.v2.train.txt");
+  Path test_prefix("en-ud-tag.v2.test.txt");
+  Path valid_prefix("en-ud-tag.v2.dev.txt");
+  Path dir(dataset_dir);
 
   if (usage == "train") {
-    udpos_files_list.push_back(dataset_dir + train_prefix);
+    Path temp_path = dir / train_prefix;
+    udpos_files_list.push_back(temp_path.ToString());
   } else if (usage == "test") {
-    udpos_files_list.push_back(dataset_dir + test_prefix);
+    Path temp_path = dir / test_prefix;
+    udpos_files_list.push_back(temp_path.ToString());
   } else if (usage == "valid") {
-    udpos_files_list.push_back(dataset_dir + valid_prefix);
+    Path temp_path = dir / valid_prefix;
+    udpos_files_list.push_back(temp_path.ToString());
   } else {
-    udpos_files_list.push_back(dataset_dir + train_prefix);
-    udpos_files_list.push_back(dataset_dir + test_prefix);
-    udpos_files_list.push_back(dataset_dir + valid_prefix);
+    Path temp_path = dir / train_prefix;
+    udpos_files_list.push_back(temp_path.ToString());
+    Path temp_path1 = dir / test_prefix;
+    udpos_files_list.push_back(temp_path1.ToString());
+    Path temp_path2 = dir / valid_prefix;
+    udpos_files_list.push_back(temp_path2.ToString());
   }
   return udpos_files_list;
 }
