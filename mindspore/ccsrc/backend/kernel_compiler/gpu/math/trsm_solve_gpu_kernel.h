@@ -128,18 +128,19 @@ class TrsmGpuKernelMod : public NativeGpuKernelMod {
     }
 
     if (A_shape[kDim0] != A_shape[kDim1]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input should be square matrix, but got ["
-                        << A_shape[kDim0] << " X " << A_shape[kDim1] << "]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the shape of input matrix A should be square matrix like [N X N], but got ["
+                        << A_shape[kDim0] << " X " << A_shape[kDim1] << "].";
     }
     m_ = A_shape[kDim0];
 
     if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 1 or 2, but got "
-                        << b_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', b should be 1D or 2D,  but got [" << b_shape.size()
+                        << "] dimensions.";
     }
     if (b_shape[kDim0] != m_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input should be [" << m_ << "], but got ["
-                        << b_shape[kDim0] << "]";
+                        << b_shape[kDim0] << "].";
     }
     if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
       n_ = 1;
@@ -156,8 +157,10 @@ class TrsmGpuKernelMod : public NativeGpuKernelMod {
       trans_ = CUBLAS_OP_T;
     } else if (trans == "T") {
       trans_ = CUBLAS_OP_N;
+    } else if (trans == "C") {
+      trans_ = CUBLAS_OP_N;
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', trans should be in [N, T], but got [" << trans << "]";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', trans should be in [N, T, C], but got [" << trans << "].";
     }
 
     bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");

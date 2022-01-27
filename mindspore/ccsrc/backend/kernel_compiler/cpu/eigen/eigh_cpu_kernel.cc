@@ -34,11 +34,11 @@ void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (A_shape.size() != kShape2dDims) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions";
+    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions.";
   }
   if (A_shape[kDim0] != A_shape[kDim1]) {
     MS_LOG(EXCEPTION) << "Wrong array shape, A should be a squre matrix like [N X N], but got shape [" << A_shape[kDim0]
-                      << " X " << A_shape[kDim1] << "]";
+                      << " X " << A_shape[kDim1] << "].";
   }
   m_ = A_shape[kDim0];
 }

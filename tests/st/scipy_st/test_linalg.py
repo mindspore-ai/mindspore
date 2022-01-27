@@ -23,7 +23,7 @@ import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context, Tensor
 import mindspore.numpy as mnp
-from mindspore.scipy.linalg import det
+from mindspore.scipy.linalg import det, solve_triangular
 from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix, \
     create_random_rank_matrix
 
@@ -48,6 +48,41 @@ def test_block_diag(args):
 
     scipy_res = osp.linalg.block_diag(*args)
     match_array(ms_res.asnumpy(), scipy_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [10, 20, 52])
+@pytest.mark.parametrize('trans', ["N", "T", "C"])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
+@pytest.mark.parametrize('lower', [False, True])
+@pytest.mark.parametrize('unit_diagonal', [False, True])
+def test_solve_triangular(n: int, dtype, lower: bool, unit_diagonal: bool, trans: str):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: the result match scipy solve_triangular result
+    """
+    onp.random.seed(0)
+    if dtype in (onp.int32, onp.int64):
+        a = (onp.random.randint(low=-1024, high=1024, size=(n, n)) + onp.eye(n)).astype(dtype)
+        b = onp.random.randint(low=-1024, high=1024, size=(n,)).astype(dtype)
+    else:
+        a = (onp.random.random((n, n)) + onp.eye(n)).astype(dtype)
+        b = onp.random.random(n).astype(dtype)
+
+    output = solve_triangular(Tensor(a), Tensor(b), trans, lower, unit_diagonal).asnumpy()
+    expect = osp.linalg.solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
+
+    rtol = 1.e-5
+    atol = 1.e-8
+    if dtype == onp.float32:
+        rtol = 1.e-3
+        atol = 1.e-3
+
+    assert onp.allclose(expect, output, rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0
@@ -155,8 +190,7 @@ def test_cholesky_solver(n: int, lower: bool, data_type):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
 @pytest.mark.parametrize('data_type',
-                         [(onp.int8, "f"), (onp.int16, "f"), (onp.int32, "f"), (onp.int64, "d"), (onp.float32, "f"),
-                          (onp.float64, "d")])
+                         [(onp.int32, "f"), (onp.int64, "d"), (onp.float32, "f"), (onp.float64, "d")])
 def test_eigh(n: int, data_type):
     """
     Feature: ALL TO ALL

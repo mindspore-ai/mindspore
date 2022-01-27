@@ -99,7 +99,7 @@ class SolveTriangular(PrimitiveWithInfer):
 
     def infer_dtype(self, A_dtype, b_dtype):
         validator.check_scalar_or_tensor_types_same({"A_dtype": A_dtype, "b_dtype": b_dtype},
-                                                    [mstype.float32, mstype.float64], self.name, True)
+                                                    [mstype.float32, mstype.float64], self.name)
         return A_dtype
 
 
@@ -234,8 +234,8 @@ class EighNet(nn.Cell):
         self.eigh = Eigh(bv, lower)
 
     def construct(self, A):
-        if F.dtype(A) in (mstype.int8, mstype.int16, mstype.int32, mstype.int64):
-            A = F.cast(A, mstype.float32)
+        if F.dtype(A) in (mstype.int32, mstype.int64):
+            A = F.cast(A, mstype.float64)
         r = self.eigh(A)
         if self.bv:
             return (r[0], r[1])

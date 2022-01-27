@@ -318,7 +318,7 @@ def test_eigh_net_gpu(n: int):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [10, 20])
-@pytest.mark.parametrize('trans', ["N", "T"])
+@pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [False])
@@ -342,7 +342,7 @@ def test_solve_triangular_2d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [10, 20])
-@pytest.mark.parametrize('trans', ["N", "T"])
+@pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [False, True])
@@ -366,7 +366,7 @@ def test_solve_triangular_1d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(4, 5), (10, 20)])
-@pytest.mark.parametrize('trans', ["N", "T"])
+@pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [False, True])
