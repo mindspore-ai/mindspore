@@ -675,7 +675,7 @@ class DynamicShape(Primitive):
         self.add_prim_attr('is_dynamic_shape', True)
 
 
-class Squeeze(PrimitiveWithInfer):
+class Squeeze(Primitive):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
 
