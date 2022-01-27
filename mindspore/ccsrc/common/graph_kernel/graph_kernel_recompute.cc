@@ -17,6 +17,7 @@
 #include "common/graph_kernel/graph_kernel_recompute.h"
 
 #include <algorithm>
+#include <deque>
 #include <functional>
 #include <limits>
 #include <map>
@@ -200,7 +201,9 @@ void ElimRedundantInputsAndGraphParameters(const FuncGraphPtr &func_graph, AnfNo
 std::vector<Candidate> AutoRecompute::Run(const FuncGraphPtr &func_graph) {
   lifetime_threshold_ = GraphKernelFlags::GetInstance().recompute_increment_threshold;
   local_peak_threshold_ = GraphKernelFlags::GetInstance().recompute_peak_threshold;
-  FindCandidates(func_graph);
+  if (!IsThresholdDefaultValue()) {
+    FindCandidates(func_graph);
+  }
   return candidates_;
 }
 
@@ -420,11 +423,6 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
 
-  // Do nothing when threshold is default value.
-  if (IsThresholdDefaultValue()) {
-    return;
-  }
-
   auto topo_nodes = TopoSort(func_graph->get_return());
   // Topo indice is use to early stop in predecessor check.
   for (size_t i = 0; i < topo_nodes.size(); ++i) {
@@ -469,6 +467,13 @@ AutoRecompute::NodeRecomputeCandidates AutoRecompute::FindNodeRecomputeCandidate
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(mng);
   NodeRecomputeCandidates node_candidates;
+  auto graph_node = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+  MS_EXCEPTION_IF_NULL(graph_node);
+  auto nodes = graph_node->nodes();
+  if (std::any_of(nodes.cbegin(), nodes.cend(),
+                  [](const AnfNodePtr n) { return IsPrimitiveCNode(n, prim::kPrimReduceSum); })) {
+    return node_candidates;
+  }
   for (auto [gt, gt_in_pos_vec, edge_life_time_type] : target_graphs) {
     MemorySize threshold = SelectThreshold(edge_life_time_type);
     for (auto gt_in_pos : gt_in_pos_vec) {
@@ -505,7 +510,6 @@ AutoRecompute::NodeRecomputeCandidates AutoRecompute::FindNodeRecomputeCandidate
       }
     }
   }
-
   return node_candidates;
 }
 
@@ -534,6 +538,89 @@ void AutoRecompute::RecomputeCandidatesLog(const std::vector<Candidate> &candida
       MS_LOG(INFO) << "    └─[Edge]─> " << edge->fullname_with_scope();
     }
   }
+}
+
+std::vector<Candidate> CSRRecompute::Run(const FuncGraphPtr &func_graph) {
+  FindCandidates(func_graph);
+  return candidates_;
+}
+
+bool CSRRecompute::CheckPrimitiveInput(AnfNodePtr base, PrimitivePtr prim_type) {
+  std::deque<AnfNodePtr> q{base};
+  std::set<AnfNodePtr> visited;
+  while (!q.empty()) {
+    auto node = q.front();
+    q.pop_front();
+    if (visited.count(node) > 0) continue;
+    visited.insert(node);
+    if (IsPrimitiveCNode(node, prim_type)) {
+      return true;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) continue;
+    auto inputs = cnode->inputs();
+    q.insert(q.begin(), inputs.begin(), inputs.end());
+  }
+  return false;
+}
+
+AutoRecompute::NodeRecomputeCandidates CSRRecompute::FindNodeRecomputeCandidates(const AnfNodePtr &node,
+                                                                                 const OutPosLinkList &target_graphs,
+                                                                                 const FuncGraphManagerPtr &mng) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(mng);
+  NodeRecomputeCandidates node_candidates;
+  auto graph_node = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+  MS_EXCEPTION_IF_NULL(graph_node);
+  auto nodes = graph_node->nodes();
+  // subgraphs outputting UnsortedSegmentSum or CSRReduceSum along with other ops
+  // (likely the result of Gather), or containing CSRDiv without outputting
+  // UnsortedSegmentSum or CSRReduceSum, are selected as candidates for recompute.
+  auto TargetTail = [](const AnfNodePtr n) {
+    return IsPrimitiveCNode(n, prim::kPrimUnsortedSegmentSum) || IsPrimitiveCNode(n, prim::kPrimCSRReduceSum);
+  };
+  auto TargetHead = [](const AnfNodePtr n) { return IsPrimitiveCNode(n, prim::kPrimCSRDiv); };
+  auto return_node = graph_node->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  auto return_cnode = return_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(return_cnode);
+  auto return_inputs = return_cnode->inputs();
+  auto return_tup = return_inputs[1]->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(return_tup);
+  auto tuple_inputs = return_tup->inputs();
+  std::set<size_t> candidate_idx;
+  if (std::any_of(tuple_inputs.cbegin(), tuple_inputs.cend(), TargetTail)) {
+    for (size_t i = 1; i < tuple_inputs.size(); ++i) {
+      if (!TargetTail(tuple_inputs[i])) {
+        candidate_idx.insert(i - 1);
+      }
+    }
+  } else if (std::any_of(tuple_inputs.cbegin(), tuple_inputs.cend(), TargetHead)) {
+    for (size_t i = 1; i < tuple_inputs.size(); ++i) {
+      if (CheckPrimitiveInput(tuple_inputs[i], prim::kPrimCSRDiv)) {
+        candidate_idx.insert(i - 1);
+      }
+    }
+  }
+  if (candidate_idx.empty()) return node_candidates;
+  for (size_t i = 0; i < target_graphs.size(); ++i) {
+    AnfNodePtr gt;
+    std::vector<int> gt_in_pos_vec;
+    std::tie(gt, gt_in_pos_vec, std::ignore) = target_graphs[i];
+    for (auto gt_in_pos : gt_in_pos_vec) {
+      auto gt_cnode = gt->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(gt_cnode);
+      auto edge = gt_cnode->input(IntToSize(gt_in_pos));
+      if (!IsPrimitiveCNode(edge, prim::kPrimTupleGetItem)) continue;
+      auto edge_cnode = edge->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(edge_cnode);
+      auto tuple_idx = common::AnfAlgo::GetTupleGetItemOutIndex(edge_cnode);
+      if (candidate_idx.count(tuple_idx) > 0) {
+        node_candidates[node][gt].second.push_back(edge);
+      }
+    }
+  }
+  return node_candidates;
 }
 
 std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const CNodePtr &source_graph,
@@ -675,11 +762,14 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
   }
 }
 
-bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
+bool GraphKernelRecompute::DoRun(const FuncGraphPtr &func_graph, bool use_csr) {
   int repeat_times = 2;
   while ((repeat_times--) != 0) {
-    AutoRecompute recompute;
-    candidates_ = recompute.Run(func_graph);
+    if (use_csr) {
+      candidates_ = CSRRecompute().Run(func_graph);
+    } else {
+      candidates_ = AutoRecompute().Run(func_graph);
+    }
     if (candidates_.empty()) {
       return false;
     }
@@ -704,5 +794,13 @@ bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
     mng->KeepRoots({func_graph});
   }
   return true;
+}
+
+bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
+  bool status = DoRun(func_graph);
+  if (GraphKernelFlags::GetInstance().enable_csr_fusion) {
+    status |= DoRun(func_graph, true);
+  }
+  return status;
 }
 }  // namespace mindspore::graphkernel

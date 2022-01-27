@@ -25,15 +25,6 @@
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::graphkernel {
-class UssChecker : public AtomicAddChecker {
- public:
-  explicit UssChecker(const PrimitivePtr &target) { target_type_ = target; }
-  virtual ~UssChecker() = default;
-
- protected:
-  bool CanActivateAtomicAdd(const AnfNodePtr &anf_node) override { return FindCandidate(anf_node); }
-};
-
 bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -45,7 +36,7 @@ bool UssAtomicAdd::Run(const FuncGraphPtr &func_graph) {
 
   bool has_change = false;
   std::shared_ptr<AtomicAddChecker> checker =
-    std::make_shared<UssChecker>(std::make_shared<Primitive>("UnsortedSegmentSum"));
+    std::make_shared<TargetAtomicAddChecker>(std::make_shared<Primitive>("UnsortedSegmentSum"));
   if (checker == nullptr) {
     return has_change;
   }

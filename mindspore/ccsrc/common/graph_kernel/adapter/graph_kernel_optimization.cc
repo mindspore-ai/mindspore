@@ -45,6 +45,7 @@
 #include "common/graph_kernel/axis_normalizer.h"
 #include "common/graph_kernel/decrease_compute_precision.h"
 #include "common/graph_kernel/decrease_transfer_precision.h"
+#include "common/graph_kernel/csr_atomic_add.h"
 #include "common/graph_kernel/tsa_atomic_add_to_first_tensor.h"
 #include "common/graph_kernel/uss_atomic_add.h"
 #include "backend/common/pass/getitem_tuple.h"
@@ -169,7 +170,8 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
 
   auto &flags = GraphKernelFlags::GetInstance();
   // Auto recompute according to local memory burst.
-  auto recompute_lv = GetPassLevelByFlag(flags.recompute_increment_threshold > 0 || flags.recompute_peak_threshold > 0);
+  auto recompute_lv = GetPassLevelByFlag(flags.recompute_increment_threshold > 0 ||
+                                         flags.recompute_peak_threshold > 0 || flags.enable_csr_fusion);
   pm->Add(std::make_shared<GraphKernelRecompute>(), recompute_lv);
 
   // Enable atomic add
@@ -191,6 +193,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   // Enable tsa and uss
   pm->Add(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1, is_gpu);
   pm->Add(std::make_shared<UssAtomicAdd>(), OptLevel_1, is_gpu);
+  pm->Add(std::make_shared<CsrAtomicAdd>(), OptLevel_1, is_gpu);
 
   // Replace Assign with InplaceAssign, and replace original output with overridden parameters
   pm->Add(std::make_shared<OptimizeAssign>(), OptLevel_2);

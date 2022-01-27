@@ -45,6 +45,14 @@ class AtomicAddChecker {
   PrimitivePtr target_type_{prim::kPrimReduceSum};
 };
 
+class TargetAtomicAddChecker : public AtomicAddChecker {
+ public:
+  explicit TargetAtomicAddChecker(const PrimitivePtr &target = prim::kPrimReduceSum) { target_type_ = target; }
+
+ protected:
+  bool CanActivateAtomicAdd(const AnfNodePtr &anf_node) override { return FindCandidate(anf_node); }
+};
+
 class AtomicAddCheckerGPU : public AtomicAddChecker {
  public:
   AtomicAddCheckerGPU() = default;

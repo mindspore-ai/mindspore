@@ -632,7 +632,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
   }
 
   // A calculated heavy node can cover more lighter nodes' cost, so sort them first.
-  std::map<size_t, int> cal_amounts;
+  std::map<size_t, int64_t> cal_amounts;
   for (auto id : indices) {
     cal_amounts[id] = cost_model_ptr_->GetNodeCalAmount(cs[id]);
   }

@@ -28,7 +28,7 @@ std::string CommonDimInfo::ToString() {
   return buffer.str();
 }
 
-int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
+int64_t ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
   nlohmann::json json_desc;
   AnfNodePtrList nodes = {node};
   DumpOption dump_option;
@@ -38,7 +38,7 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
 
   auto json_desc_str = json_desc.dump();
   auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelGetNodeCalAmount, json_desc_str);
-  auto bottleneck = py::cast<int>(ret);
+  auto bottleneck = py::cast<int64_t>(ret);
   if (bottleneck == -1) {
     MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelGetNodeCalAmount << "] return invalid result. input json:\n"
                       << json_desc_str;
