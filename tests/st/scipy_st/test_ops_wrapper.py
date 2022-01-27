@@ -17,7 +17,7 @@ import pytest
 import numpy as onp
 import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
-from tests.st.scipy_st.utils import match_matrix
+from tests.st.scipy_st.utils import match_matrix, match_array
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
 ALIGNMENT_LIST = ["RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT"]
@@ -328,6 +328,7 @@ def test_matrix_set_diag(data_type):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('band_inputs',
                          [([], 1, 1), ([], 1, 2), ([], 1, 7), ([], 2, 1), ([], 2, 2), ([], 2, 7), ([], 7, 1),
@@ -335,12 +336,13 @@ def test_matrix_set_diag(data_type):
                           ([2], 2, 7), ([2], 7, 1), ([2], 7, 2), ([2], 7, 7), ([1, 3, 2], 1, 1), ([1, 3, 2], 1, 2),
                           ([1, 3, 2], 1, 7), ([1, 3, 2], 2, 1), ([1, 3, 2], 2, 2), ([1, 3, 2], 2, 7), ([1, 3, 2], 7, 1),
                           ([1, 3, 2], 7, 2), ([1, 3, 2], 7, 7)])
-def test_matrix_band_part_net_cpu(band_inputs):
+def test_matrix_band_part_net(band_inputs):
     """
     Feature: ALL TO ALL
     Description: test general matrix cases for matrix_band_diag in graph mode
     Expectation: the result match expected_diag_band_matrix.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     batch_shape, rows, cols = band_inputs
     for dtype in [onp.int32, onp.float64]:
         mat = onp.ones(batch_shape + [rows, cols]).astype(dtype)
@@ -353,5 +355,21 @@ def test_matrix_band_part_net_cpu(band_inputs):
                     band_np = onp.tril(band_np, upper)
                 if batch_shape:
                     band_np = onp.tile(band_np, batch_shape + [1, 1])
-                band = msp.ops_wrapper.matrix_band_part(Tensor(band_np), lower, upper)
-                match_matrix(band, Tensor(band_np))
+                band = ops_wrapper.matrix_band_part(Tensor(band_np), lower, upper)
+                match_array(band.asnumpy(), band_np)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    batch_shape, rows, cols = band_inputs
+    for dtype in [onp.int32, onp.float64]:
+        mat = onp.ones(batch_shape + [rows, cols]).astype(dtype)
+        for lower in -1, 0, 1, rows - 1:
+            for upper in -1, 0, 1, cols - 1:
+                band_np = mat
+                if lower >= 0:
+                    band_np = onp.triu(band_np, -lower)
+                if upper >= 0:
+                    band_np = onp.tril(band_np, upper)
+                if batch_shape:
+                    band_np = onp.tile(band_np, batch_shape + [1, 1])
+                band = ops_wrapper.matrix_band_part(Tensor(band_np), lower, upper)
+                match_array(band.asnumpy(), band_np)

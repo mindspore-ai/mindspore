@@ -61,7 +61,7 @@ bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
   int64_t max_diag_len =
     std::min(m_ + std::min(u, static_cast<int64_t>(0)), n_ + std::min(-l, static_cast<int64_t>(0)));
   MS_LOG(DEBUG) << "Num_diags:" << num_diags << ",max_diag_len:" << max_diag_len;
-  int64_t dest_inner_matrix_len = num_diags * max_diag_len;
+  int64_t dest_inner_matrix_size = num_diags * max_diag_len;
   out_shapes_ = shapes_;
   // Set dynamic shape and dtype
   if (!node_wpt_.expired()) {
@@ -75,31 +75,33 @@ bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
     auto dtype = AnfAlgo::GetOutputDeviceDataType(node_, 0);
     AnfAlgo::SetOutputInferTypeAndShape({dtype}, {out_shapes_}, node_.get());
   }
-  ParallelLaunch(out_range_size_ * (u - l + 1) * max_diag_len, [=](size_t t) {
-    const int64_t i = t / dest_inner_matrix_len;
-    const int64_t j = u - (t % dest_inner_matrix_len) / max_diag_len;
-    const int64_t k = (t % dest_inner_matrix_len) % max_diag_len;
-    int64_t current_diag_len = j >= 0 ? std::min(n_ - j, m_) : std::min(m_ + j, n_);
-    int64_t current_pad_len = max_diag_len - current_diag_len;
-    // Pad left by default
-    bool pad_left = (alignment_.first == MatrixDiag::Alignment::RIGHT && j > 0) ||
-                    (alignment_.second == MatrixDiag::Alignment::RIGHT && j < 0);
-    // Set none-padding values, l means current diag col index
-    // this line is for k loop, for (int64_t k = 0; k < max_diag_len; k++) {
-    // Source pos, k offset, only effective when pad left
-    int64_t k_offset = (pad_left && k >= current_pad_len) ? k - current_pad_len : k;
-    // Calculate source offset row/col offset
-    size_t row_index = j >= 0 ? j + k_offset : k_offset;
-    size_t col_index = j >= 0 ? k_offset : k_offset - j;
-    size_t source_offset = i * m_ * n_ + col_index * n_ + row_index;
-    // If current pos need pad, then the value is pad value
-    bool current_pad_flag = (pad_left && k < current_pad_len) || (!pad_left && k >= current_diag_len);
-    T current_pad_value = current_pad_flag ? *padding_value : *(in_value + source_offset);
-    int64_t j_index = u - j;
-    size_t dest_offset = dest_inner_matrix_len * i + j_index * max_diag_len + k;
-    *(out_value + dest_offset) = current_pad_value;
-    // for k loop, }
-  });
+  for (int64_t i = 0; i < out_range_size_; i++) {
+    // The j_index means current dest row index
+    for (int64_t j = u; j >= l; j--) {
+      int64_t current_diag_len = j >= 0 ? std::min(n_ - j, m_) : std::min(m_ + j, n_);
+      int64_t current_pad_len = max_diag_len - current_diag_len;
+      // Pad left by default
+      bool pad_left = (alignment_.first == MatrixDiag::Alignment::RIGHT && j > 0) ||
+                      (alignment_.second == MatrixDiag::Alignment::RIGHT && j < 0);
+      // Set none-padding values, l means current diag col index
+      for (int64_t k = 0; k < max_diag_len; k++) {
+        // Source pos, k offset, only effective when pad left
+        int64_t k_offset = (pad_left && k >= current_pad_len) ? k - current_pad_len : k;
+        // Calculate source offset row/col offset
+        size_t row_index = j >= 0 ? j + k_offset : k_offset;
+        size_t col_index = j >= 0 ? k_offset : k_offset - j;
+        size_t source_offset = i * m_ * n_ + col_index * n_ + row_index;
+        // If current pos need pad, then the value is pad value
+        bool current_pad_flag = (pad_left && k < current_pad_len) || (!pad_left && k >= current_diag_len);
+        T current_pad_value = current_pad_flag ? *padding_value : *(in_value + source_offset);
+        int64_t j_index = u - j;
+        size_t dest_offset = dest_inner_matrix_size * i + j_index * max_diag_len + k;
+        MS_LOG(DEBUG) << "the diag j:" << j << ",k:" << k << ",k_offset:" << k_offset << ",row:" << row_index
+                      << ",col:" << col_index << ",j_index:" << j_index << ",current_pad_value:" << current_pad_value;
+        *(out_value + dest_offset) = current_pad_value;
+      }
+    }
+  }
   return true;
 }
 }  // namespace kernel

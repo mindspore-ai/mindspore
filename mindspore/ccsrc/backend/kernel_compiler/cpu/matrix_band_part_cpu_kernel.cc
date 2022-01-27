@@ -51,17 +51,15 @@ bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
     memcpy_s(out_value, matrix_size_ * sizeof(T), in_value, matrix_size_ * sizeof(T));
     return true;
   }
-
-  size_t diag_len = std::min(m_, l + n_);
-  ParallelLaunch(out_range_size_ * diag_len, [=](size_t t) {
-    const size_t i = t / diag_len;
-    const size_t j = t % diag_len;
-    const size_t s = j < l ? 0 : j - l;
-    // When i = n - u, end is n -1, because end pos is start from 0
-    const size_t e = j >= n_ - u ? n_ - 1 : j + u;
-    const size_t offset = i * m_ * n_ + j * n_;
-    (void)memcpy_s(out_value + offset + s, matrix_size_ * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
-  });
+  for (size_t i = 0; i < out_range_size_; i++) {
+    for (size_t j = 0; j < std::min(m_, l + n_); j++) {
+      const size_t s = j < l ? 0 : j - l;
+      // When i = n - u, end is n -1, because end pos is start from 0
+      const size_t e = j >= n_ - u ? n_ - 1 : j + u;
+      const size_t offset = i * m_ * n_ + j * n_;
+      memcpy_s(out_value + offset + s, matrix_size_ * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
+    }
+  }
   return true;
 }
 }  // namespace kernel
