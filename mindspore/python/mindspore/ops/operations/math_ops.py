@@ -3213,7 +3213,7 @@ class Floor(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class FloorMod(_MathBinaryOp):
+class FloorMod(Primitive):
     r"""
     Computes the remainder of division element-wise. It's a flooring divide.
     E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
@@ -3262,6 +3262,13 @@ class FloorMod(_MathBinaryOp):
         >>> print(output)
         [2 1 2]
     """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize FloorMod."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
 class Ceil(PrimitiveWithInfer):
