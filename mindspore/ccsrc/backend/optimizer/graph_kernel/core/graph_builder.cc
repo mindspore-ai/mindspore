@@ -19,7 +19,6 @@
 #include <memory>
 #include <tuple>
 #include <set>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -27,6 +26,7 @@
 #include "ir/func_graph.h"
 #include "utils/utils.h"
 #include "utils/anf_utils.h"
+#include "utils/ordered_set.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 
@@ -104,7 +104,7 @@ void EliminateMakeTuple(const FuncGraphPtr &fg) {
 
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *const inputs_ptr) {
   auto cnodes = fg->GetOrderedCnodes();
-  std::set<AnfNodePtr> value_nodes;
+  mindspore::OrderedSet<AnfNodePtr> value_nodes;
   for (const auto &cnode : cnodes) {
     auto &inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {

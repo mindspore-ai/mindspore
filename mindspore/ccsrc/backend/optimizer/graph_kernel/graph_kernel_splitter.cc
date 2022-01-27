@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/context/graph_kernel_flags.h"
+#include "backend/optimizer/graph_kernel/split_model/split_model_factory.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -895,9 +896,96 @@ class CostModelSplitSchemer : public SplitSchemer {
   std::vector<int> need_inline_;
 };
 
+class CppCostModelSplitSchemer : public SplitSchemer {
+ public:
+  explicit CppCostModelSplitSchemer(const std::string &processor) : processor_(processor) {}
+  ~CppCostModelSplitSchemer() = default;
+  bool Split(const FuncGraphPtr &func_graph) override {
+    func_graph_ = func_graph;
+    Init();
+    if (!SplitByCostModel()) {
+      return false;
+    }
+    GroupReturnNode();
+    return true;
+  }
+  bool NeedInline(size_t group_id) const override { return need_inline_[group_id] == 1; }
+
+ protected:
+  void Init() {
+    split_plan_.clear();
+    need_inline_.clear();
+    node_group_.clear();
+  }
+
+  bool SplitByCostModel() {
+    mindspore::HashMap<inner::NodePtr, AnfNodePtr> op_node_map;
+    auto lg = GkUtils::AnfGraph2LiteGraph(func_graph_, &op_node_map);
+    MS_LOG(DEBUG) << "Litegraph: " << lg->ToString();
+    // use the original node index to sort the split_plan's nodes.
+    mindspore::HashMap<AnfNodePtr, size_t> node_idx_map;
+    for (size_t i = 0; i < lg->ops().size(); ++i) {
+      node_idx_map[op_node_map[lg->ops()[i]]] = i;
+    }
+    auto model = inner::SplitModelFactory::CreateSplitModel(processor_);
+    MS_EXCEPTION_IF_NULL(model);
+    model->Run(lg);
+    auto &areas = model->areas();
+    for (auto &area : areas) {
+      AnfNodePtrList nodes;
+      for (auto &op : area->ops()) {
+        (void)nodes.emplace_back(op_node_map[op]);
+        node_group_[nodes.back()] = split_plan_.size();
+      }
+      std::sort(nodes.begin(), nodes.end(), [&node_idx_map](const AnfNodePtr &a, const AnfNodePtr &b) {
+        return node_idx_map[a] < node_idx_map[b];
+      });
+      (void)split_plan_.emplace_back(std::move(nodes));
+      need_inline_.push_back((area->mode() == inner::AreaMode::BASIC ? 1 : 0));
+    }
+    return split_plan_.size() > 1 || (split_plan_.size() == 1 && NeedInline(0));
+  }
+
+  // group the return node and last MakeTuple node (if exists).
+  void GroupReturnNode() {
+    auto ret_node = func_graph_->get_return();
+    MS_EXCEPTION_IF_NULL(ret_node);
+    auto output = func_graph_->output();
+    MS_EXCEPTION_IF_NULL(output);
+    // set the make_tuple node to a new group.
+    if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+      auto group_id = split_plan_.size();
+      (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
+      need_inline_.push_back(1);
+      node_group_[output] = group_id;
+      node_group_[ret_node] = group_id;
+    } else {
+      auto group_id = node_group_[output];
+      node_group_[ret_node] = group_id;
+      (void)split_plan_[group_id].emplace_back(ret_node);
+    }
+  }
+
+  mindspore::HashMap<AnfNodePtr, size_t> node_group_;
+  FuncGraphPtr func_graph_{nullptr};
+  std::string processor_;
+  std::vector<int> need_inline_;
+};
+
 bool TrySplit(const CNodePtr &sub_root_cnode) {
   MS_LOG(DEBUG) << "Split process node: " << sub_root_cnode->fullname_with_scope();
-  auto splitter = Splitter::MakeSplitter(sub_root_cnode, std::make_shared<CostModelSplitSchemer>());
+  std::shared_ptr<SplitSchemer> schm = nullptr;
+  auto processor = Callback::Instance()->GetTargetFromContext();
+  // default use c++ split model for CPU target.
+  if (processor != kCPUDevice || common::GetEnv("MS_DEV_GRAPH_KERNEL_PY_SPLIT_MODEL") == "on") {
+    MS_LOG(DEBUG) << "use py split model";
+    schm = std::make_shared<CostModelSplitSchemer>();
+  } else {
+    MS_LOG(DEBUG) << "use c++ split model";
+    schm = std::make_shared<CppCostModelSplitSchemer>(processor);
+  }
+  MS_EXCEPTION_IF_NULL(schm);
+  auto splitter = Splitter::MakeSplitter(sub_root_cnode, schm);
   MS_EXCEPTION_IF_NULL(splitter);
   bool result = splitter->Split();
   MS_LOG(DEBUG) << "Split node completed, result: " << result;

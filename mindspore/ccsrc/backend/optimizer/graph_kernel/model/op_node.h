@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,13 @@ namespace mindspore::graphkernel::inner {
 
 class PrimOp : public Node {
  public:
-  enum ComputeType {
-    RESHAPE,
-    ELEMWISE,
-    BROADCAST,
-    REDUCE,
-    OPAQUE,
+  enum class ComputeType : int {
+    VIRTUAL = 0,
+    RESHAPE = 1,
+    ELEMWISE = 2,
+    BROADCAST = 3,
+    REDUCE = 4,
+    OPAQUE = 5,
   };
 
   PrimOp(const std::string &op, ComputeType compute)
@@ -70,7 +71,7 @@ using PrimOpPtr = std::shared_ptr<PrimOp>;
 
 class ReshapeOp : public PrimOp {
  public:
-  explicit ReshapeOp(const std::string &op) : PrimOp(op, RESHAPE) {}
+  explicit ReshapeOp(const std::string &op) : PrimOp(op, ComputeType::RESHAPE) {}
   ~ReshapeOp() = default;
 
  protected:
@@ -83,19 +84,23 @@ class ReshapeOp : public PrimOp {
 
 class ElemwiseOp : public PrimOp {
  public:
-  explicit ElemwiseOp(const std::string &op) : PrimOp(op, ELEMWISE) {}
+  explicit ElemwiseOp(const std::string &op) : PrimOp(op, ComputeType::ELEMWISE) {}
   ~ElemwiseOp() = default;
-
-  NodeBase Infer(const NodePtrList &inputs, const DAttrs &attrs) override;
 
  protected:
   DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
-class BroadcastToOp : public PrimOp {
+class BroadcastOp : public PrimOp {
  public:
-  explicit BroadcastToOp(const std::string &op) : PrimOp(op, BROADCAST) {}
+  explicit BroadcastOp(const std::string &op) : PrimOp(op, ComputeType::BROADCAST) {}
+  ~BroadcastOp() = default;
+};
+
+class BroadcastToOp : public BroadcastOp {
+ public:
+  explicit BroadcastToOp(const std::string &op) : BroadcastOp(op) {}
   ~BroadcastToOp() = default;
 
  protected:
@@ -104,7 +109,7 @@ class BroadcastToOp : public PrimOp {
 
 class ReduceOp : public PrimOp {
  public:
-  explicit ReduceOp(const std::string &op) : PrimOp(op, REDUCE) {}
+  explicit ReduceOp(const std::string &op) : PrimOp(op, ComputeType::REDUCE) {}
   ~ReduceOp() = default;
 
  protected:
@@ -115,8 +120,14 @@ class ReduceOp : public PrimOp {
 
 class OpaqueOp : public PrimOp {
  public:
-  explicit OpaqueOp(const std::string &op) : PrimOp(op, OPAQUE) {}
+  explicit OpaqueOp(const std::string &op) : PrimOp(op, ComputeType::OPAQUE) {}
   ~OpaqueOp() = default;
+};
+
+class VirtualOp : public PrimOp {
+ public:
+  explicit VirtualOp(const std::string &op) : PrimOp(op, ComputeType::VIRTUAL) {}
+  ~VirtualOp() = default;
 };
 
 class CastOp : public ElemwiseOp {
@@ -126,17 +137,6 @@ class CastOp : public ElemwiseOp {
 
  protected:
   TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
-};
-
-class InplaceAssignOp : public ElemwiseOp {
- public:
-  explicit InplaceAssignOp(const std::string &op) : ElemwiseOp("InplaceAssign") {}
-  ~InplaceAssignOp() = default;
-
- protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override { return inputs[2]->shape; }
-  TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override { return inputs[2]->type; }
-  DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override { return inputs[2]->format; }
 };
 
 class SelectOp : public ElemwiseOp {

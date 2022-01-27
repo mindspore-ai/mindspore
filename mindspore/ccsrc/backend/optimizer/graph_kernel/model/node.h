@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ using NodePtrList = std::vector<NodePtr>;
 class Node : public NodeBase, public std::enable_shared_from_this<Node> {
  public:
   explicit Node(const NodeBase &baseinfo) : NodeBase(baseinfo) {}
-  virtual ~Node() { SetInputs({}); }  // remove this node from the previous nodes' user.
+  virtual ~Node() { ClearInputs(); }  // remove this node from the previous nodes' user.
 
   virtual NType NodeType() { return NType::Base; }
   virtual std::string ToString() const;
@@ -62,6 +62,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   void AddInput(const NodePtr &new_input);
   void SetInput(size_t i, const NodePtr &new_input);
   void SetInputs(const NodePtrList &inputs);
+  void ClearInputs();
   void ReplaceWith(const NodePtr &other_node);
   void SetAttrs(const DAttrs &attrs) { attrs_ = attrs; }
   void SetAttr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }

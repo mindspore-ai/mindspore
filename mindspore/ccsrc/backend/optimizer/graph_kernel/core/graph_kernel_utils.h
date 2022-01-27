@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "utils/hash_map.h"
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
 namespace mindspore::graphkernel {
@@ -82,9 +83,17 @@ class GkUtils {
                                const std::vector<inner::NodeBase> &out_info_list);
 
   /**
-   * @brief Change lite graph to anf graph.
+   * @brief Transform  LiteGraph to FuncGraph.
    */
   static FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph);
+
+  /**
+   * @brief Transform FuncGraph to LiteGraph
+   * @param[in] func_graph the anf FuncGraph
+   * @param[out] op_node_map store the relationship of inner node and anf node.
+   */
+  static inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
+                                                HashMap<inner::NodePtr, AnfNodePtr> *op_node_map = nullptr);
 
   /**
    * @brief Get manager of func graph. If there is no manager, a new one will be created.

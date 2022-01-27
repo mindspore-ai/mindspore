@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,22 +292,6 @@ DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   auto it = std::find_if(inputs.begin(), inputs.end(), [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT; });
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
-}
-
-NodeBase ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
-  auto nodebase = PrimOp::Infer(inputs, attrs);
-  // change the compute_type to BROADCAST if the result shape is greater than the input shapes.
-  auto IsBroadcast = [this](const NodePtrList &inputs) -> bool {
-    for (auto &ref : inputs) {
-      if (ref->shape.size() != this->shape.size()) return true;
-      for (size_t i = 0; i < this->shape.size(); ++i) {
-        if (ref->shape[i] != this->shape[i]) return true;
-      }
-    }
-    return false;
-  };
-  compute_type_ = IsBroadcast(inputs) ? BROADCAST : ELEMWISE;
-  return nodebase;
 }
 
 TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {

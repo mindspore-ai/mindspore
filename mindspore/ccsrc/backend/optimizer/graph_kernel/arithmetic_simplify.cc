@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -636,7 +636,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfAlgo::IsGraphKernel(node)) {
       auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      inner::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
+      inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;
       while (find_pattern) {

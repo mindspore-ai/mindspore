@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,7 +320,7 @@ class Mutator {
       (void)visited_.erase(node);
       node->ReplaceWith(node->input(0));
       // clear inputs, so that the node will not be the basenode again.
-      node->SetInputs({});
+      node->ClearInputs();
     }
     trans_ops_.clear();
   }
@@ -441,7 +441,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   for (auto node : todos) {
     if (!AnfAlgo::IsGraphKernel(node)) continue;
     auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    auto litegraph = AnfGraph2LiteGraph(sub_func_graph);
+    auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
     if (Process(litegraph)) {
       changed = true;
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(litegraph);
