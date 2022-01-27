@@ -64,6 +64,7 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
   for (size_t i = 0; i < input_list.size(); ++i) {
     auto const &input = input_list[i];
     MS_EXCEPTION_IF_NULL(input);
+    MS_EXCEPTION_IF_NULL(input->func_graph());
     auto mng = input->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(mng);
     const NodeUsersMap &users = mng->node_users();
@@ -1011,7 +1012,7 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
   auto &inputs = out_cnode->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
     const auto &tnode = inputs[i];
-    auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
+    auto tensor = GetValueNode(tnode);
     if (tensor) {
       (void)value_nodes.insert(tnode);
     }
