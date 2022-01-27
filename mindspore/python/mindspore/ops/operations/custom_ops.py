@@ -347,14 +347,30 @@ class Custom(ops.PrimitiveWithInfer):
     def get_bprop(self):
         return self.bprop
 
+    def _check_julia_func(self):
+        """Check the validity of julia func"""
+        if not isinstance(self.func, str):
+            raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
+        if self.func.count(':') != 2:
+            raise Exception("func format in julia custom op should be file:module:func.")
+        file, module, func = self.func.split(':')
+        with open(file, 'r') as f:
+            jl = f.read()
+            if 'module ' + module not in jl:
+                raise Exception("module: " + module + " not found!!!")
+            if 'function ' + func not in jl:
+                raise Exception("function: " + func + " not found!!!")
+
     def _check_func(self):
         """Check the validity of func_type and type of func"""
         if self.func_type not in self.supported_func_type:
             raise ValueError("func_type should be one of {}, but got {}"
                              .format(self.supported_func_type, self.func_type))
-        if self.func_type == "aot" or self.func_type == "julia":
+        if self.func_type == "aot":
             if not isinstance(self.func, str):
                 raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
+        elif self.func_type == "julia":
+            self._check_julia_func()
         else:
             if not callable(self.func):
                 raise TypeError("{} func should be of type function, but got {}"

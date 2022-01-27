@@ -32,7 +32,7 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto pos1 = exec_info.find(":");
   auto pos2 = exec_info.rfind(":");
   if (pos1 == std::string::npos || pos2 == std::string::npos || pos1 == pos2) {
-    MS_LOG(EXCEPTION) << "Wrong execute info:" << exec_info << ", it should be file:module:func";
+    MS_LOG(EXCEPTION) << "Wrong execute info: " << exec_info << ", it should be file:module:func";
   }
   auto path = exec_info.substr(0, pos1);
   auto real_path = FileUtils::GetRealPath(path.c_str());
@@ -102,16 +102,15 @@ bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     if (init) {
       ret = julia->Run(file_path_, module_name_, func_name_, nparam, params, ndims_, shapes_, type_pointer_list_);
     } else {
-      MS_LOG(EXCEPTION) << "Julia kernel" << file_path_ << ":" << module_name_ << ":" << func_name_ << "init fail.";
+      MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_ << "] init fail.";
     }
     if (ret) {
-      MS_LOG(EXCEPTION) << "Julia kernel" << file_path_ << ":" << module_name_ << ":" << func_name_
-                        << "had a julia inner error.";
+      MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_
+                        << "] had a julia runtime error.";
     }
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "CustomJULIA operator failed when running julia func: " << file_path_ << ":" << module_name_
-                      << ":" << func_name_ << "! "
-                      << "Error message is " << e.what();
+                      << ":" << func_name_ << "! ";
   }
   return true;
 }
