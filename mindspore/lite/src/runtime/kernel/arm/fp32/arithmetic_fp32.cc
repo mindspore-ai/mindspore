@@ -50,25 +50,131 @@ int ArithmeticCPUKernel::Prepare() {
   }
   return ReSize();
 }
-
+bool ArithmeticCPUKernel::IsScalarClac() {
+  if (param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) {
+    return true;
+  }
+  return false;
+}
 int ArithmeticCPUKernel::ReSize() {
   CalcMultiplesAndStrides(param_);
-  if (param_->broadcasting_) {
-    outside_ = 1;
-    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0 && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
-      if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
-        break_pos_ = i;
-        break;
-      }
-      outside_ *= param_->out_shape_[i];
+  scalar_ = IsScalarClac();
+  int ret = RET_OK;
+  if (!scalar_) {
+    ret = ConstTensorBroadCast();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "failed to init const tensor";
+      return ret;
     }
   }
-  data_type_len_ = lite::DataTypeSize(in_tensors_.at(0)->data_type());
-  int ret = RET_OK;
-  if (!IsScalarClac() && !IsBatchScalarCalc() && !IsBiasCalc()) {
-    ret = ConstTensorBroadCast();
+  if (!scalar_ && param_->broadcasting_) {
+    ret = InitIndexOffsetInfo();
   }
+  data_type_len_ = lite::DataTypeSize(in_tensors_.at(0)->data_type());
+
   return ret;
+}
+
+bool ArithmeticCPUKernel::IsBatchScalarCalc() {  // 1 32 240 240,  2 32 1 1
+  int last_batch_axis0 = ARITHMETIC_SUPPORT_DIMS_NUM + 1;
+  int last_batch_axis1 = ARITHMETIC_SUPPORT_DIMS_NUM + 1;
+  if (param_->in_shape0_[param_->ndim_ - 1] == 1) {
+    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0 && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
+      if (param_->in_shape0_[i] != 1) {
+        last_batch_axis0 = i;
+        break;
+      }
+    }
+  }
+  if (param_->in_shape1_[param_->ndim_ - 1] == 1) {
+    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0 && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
+      if (param_->in_shape1_[i] != 1) {
+        last_batch_axis1 = i;
+        break;
+      }
+    }
+  }
+  int min_axis = MSMIN(last_batch_axis0, last_batch_axis1);
+  if (min_axis < static_cast<int>(param_->ndim_) - 1) {
+    last_batch_axis_ = min_axis;
+    if (last_batch_axis0 < last_batch_axis1) {
+      param_->in_elements_num0_ = 1;
+    } else {
+      param_->in_elements_num1_ = 1;
+    }
+    return true;
+  }
+  return false;
+}
+
+int ArithmeticCPUKernel::InitIndexOffsetInfo() {
+  split_by_batch_ = true;
+  for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0 && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
+    if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
+      break_pos_ = i;
+      break;
+    }
+  }
+
+  std::vector<int> a_shape;
+  std::vector<int> b_shape;
+  std::vector<int> c_shape = out_tensors_[0]->shape();
+  size_t dim = c_shape.size();
+  for (size_t i = 0; i < dim; ++i) {
+    a_shape.push_back(param_->in_shape0_[i]);
+    b_shape.push_back(param_->in_shape1_[i]);
+  }
+  batch_scalar_ = IsBatchScalarCalc();
+
+  a_stride_size_ = 1;
+  b_stride_size_ = 1;
+  c_stride_size_ = 1;
+  int last_batch_axis = batch_scalar_ ? last_batch_axis_ : break_pos_;
+  for (int i = static_cast<int>(param_->ndim_) - 1; i > last_batch_axis && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
+    a_stride_size_ *= a_shape[i];
+    b_stride_size_ *= b_shape[i];
+    c_stride_size_ *= c_shape[i];
+  }
+
+  out_batch_ = 1;
+  int batch_size[ARITHMETIC_SUPPORT_DIMS_NUM] = {};
+  int a_batch_size[ARITHMETIC_SUPPORT_DIMS_NUM] = {};
+  int b_batch_size[ARITHMETIC_SUPPORT_DIMS_NUM] = {};
+  for (int i = last_batch_axis; i >= 0; --i) {
+    out_batch_ *= c_shape[i];
+    if (i == last_batch_axis) {
+      batch_size[i] = c_shape[i];
+      a_batch_size[i] = a_shape[i];
+      b_batch_size[i] = b_shape[i];
+    } else {
+      batch_size[i] = batch_size[i + 1] * c_shape[i];
+      a_batch_size[i] = a_batch_size[i + 1] * a_shape[i];
+      b_batch_size[i] = b_batch_size[i + 1] * b_shape[i];
+    }
+  }
+
+  a_offset_.resize(out_batch_, 0);
+  b_offset_.resize(out_batch_, 0);
+  for (int i = 0; i < out_batch_; ++i) {
+    int delta = i;
+    int a_offset = 0;
+    int b_offset = 0;
+    for (int j = 0; j <= last_batch_axis; ++j) {
+      if (j > 0) {
+        delta = delta % batch_size[j];
+      }
+      if (j < last_batch_axis) {
+        a_offset += (delta / batch_size[j + 1] * a_shape[j] / MSMAX(a_shape[j], b_shape[j])) * a_batch_size[j + 1];
+        b_offset += (delta / batch_size[j + 1] * b_shape[j] / MSMAX(a_shape[j], b_shape[j])) * b_batch_size[j + 1];
+      } else {
+        a_offset += (delta * a_shape[j] / MSMAX(a_shape[j], b_shape[j]));
+        b_offset += (delta * b_shape[j] / MSMAX(a_shape[j], b_shape[j]));
+      }
+    }
+    a_offset_[i] = a_offset;
+    b_offset_[i] = b_offset;
+  }
+  return RET_OK;
 }
 
 int ArithmeticCPUKernel::CheckDataType() {
@@ -83,47 +189,6 @@ int ArithmeticCPUKernel::CheckDataType() {
     data_type_len_ = lite::DataTypeSize(in_tensors_.at(0)->data_type());
   }
   return RET_OK;
-}
-
-bool ArithmeticCPUKernel::IsScalarClac() {  // 2 32 240 240, 1 1 1 1
-  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && (arithmetic_opt_run_ != nullptr)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool ArithmeticCPUKernel::IsBatchScalarCalc() {  // 2 32 240 240,  2 32 1 1
-  if (arithmetic_opt_run_ == nullptr) {
-    return false;
-  }
-  size_t break_axis = 0;
-  for (size_t i = 0; i < param_->ndim_; i++) {
-    if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
-      break_axis = i;
-      break;
-    }
-  }
-  if (break_axis < param_->ndim_) {
-    for (size_t i = break_axis; i < param_->ndim_; i++) {
-      if (param_->in_shape1_[i] != 1) {
-        return false;
-      }
-    }
-  }
-  break_pos_ = break_axis;
-  return true;
-}
-
-bool ArithmeticCPUKernel::IsBiasCalc() const {  // 2 240 240 32,    1 1 1 32
-  int last_shape0 = param_->in_shape0_[param_->ndim_ - 1];
-  int last_shape1 = param_->in_shape1_[param_->ndim_ - 1];
-  if (param_->in_elements_num0_ > param_->in_elements_num1_) {
-    return param_->in_elements_num1_ == last_shape1 && last_shape0 == last_shape1;
-  } else if (param_->in_elements_num0_ < param_->in_elements_num1_) {
-    return param_->in_elements_num0_ == last_shape0 && last_shape0 == last_shape1;
-  }
-  return false;
 }
 
 int ArithmeticCPUKernel::ConstTensorBroadCast() {
@@ -168,13 +233,11 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
     }
   }
   // broadcast input and get new break_pos_
-  outside_ = 1;
   for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0; --i) {
     if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
       break_pos_ = i;
       break;
     }
-    outside_ *= param_->out_shape_[i];
   }
   if (param_->in_elements_num0_ == param_->out_elements_num_ &&
       param_->in_elements_num1_ == param_->out_elements_num_) {
@@ -205,50 +268,51 @@ void ArithmeticCPUKernel::FreeConstTileBuff() {
 void ArithmeticCPUKernel::InitRunFunction(int primitive_type) {
   ARITHMETIC_FUNC_INFO_FP32 fun_table[] = {
     {PrimitiveType_MulFusion, schema::ActivationType_RELU, ElementMulRelu, ElementMulReluInt, nullptr,
-     ElementOptMulRelu, ElementOptMulReluInt},
+     ElementOptMulRelu, ElementOptMulReluInt, nullptr},
     {PrimitiveType_MulFusion, schema::ActivationType_RELU6, ElementMulRelu6, ElementMulRelu6Int, nullptr,
-     ElementOptMulRelu6, ElementOptMulRelu6Int},
+     ElementOptMulRelu6, ElementOptMulRelu6Int, nullptr},
     {PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION, ElementMul, ElementMulInt, nullptr, ElementOptMul,
-     ElementOptMulInt},
-    {PrimitiveType_AddFusion, schema::ActivationType_RELU, ElementAddRelu, nullptr, nullptr, ElementOptAddRelu,
+     ElementOptMulInt, nullptr},
+    {PrimitiveType_AddFusion, schema::ActivationType_RELU, ElementAddRelu, nullptr, nullptr, ElementOptAddRelu, nullptr,
      nullptr},
     {PrimitiveType_AddFusion, schema::ActivationType_RELU6, ElementAddRelu6, nullptr, nullptr, ElementOptAddRelu6,
-     nullptr},
+     nullptr, nullptr},
     {PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION, ElementAdd, ElementAddInt, nullptr, ElementOptAdd,
-     ElementOptAddInt},
-    {PrimitiveType_SubFusion, schema::ActivationType_RELU, ElementSubRelu, nullptr, nullptr, ElementOptSubRelu,
+     ElementOptAddInt, nullptr},
+    {PrimitiveType_SubFusion, schema::ActivationType_RELU, ElementSubRelu, nullptr, nullptr, ElementOptSubRelu, nullptr,
      nullptr},
     {PrimitiveType_SubFusion, schema::ActivationType_RELU6, ElementSubRelu6, nullptr, nullptr, ElementOptSubRelu6,
-     nullptr},
+     nullptr, nullptr},
     {PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION, ElementSub, ElementSubInt, nullptr, ElementOptSub,
-     ElementOptSubInt},
-    {PrimitiveType_DivFusion, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu,
+     ElementOptSubInt, nullptr},
+    {PrimitiveType_DivFusion, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu, nullptr,
      nullptr},
     {PrimitiveType_DivFusion, schema::ActivationType_RELU6, ElementDivRelu6, nullptr, nullptr, ElementOptDivRelu6,
-     nullptr},
+     nullptr, nullptr},
     {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, ElementDiv, nullptr, nullptr, ElementOptDiv,
-     ElementOptDivInt},
-    {PrimitiveType_RealDiv, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu, nullptr},
+     ElementOptDivInt, nullptr},
+    {PrimitiveType_RealDiv, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu, nullptr,
+     nullptr},
     {PrimitiveType_RealDiv, schema::ActivationType_RELU6, ElementDivRelu6, nullptr, nullptr, ElementOptDivRelu6,
-     nullptr},
+     nullptr, nullptr},
     {PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION, ElementDiv, nullptr, nullptr, ElementOptDiv,
-     ElementOptDivInt},
+     ElementOptDivInt, nullptr},
     {PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION, ElementLogicalAnd, ElementLogicalAndInt,
-     ElementLogicalAndBool, nullptr, nullptr},
+     ElementLogicalAndBool, ElementOptLogicalAnd, ElementOptLogicalAndInt, ElementOptLogicalAndBool},
     {PrimitiveType_LogicalOr, schema::ActivationType_NO_ACTIVATION, ElementLogicalOr, nullptr, ElementLogicalOrBool,
-     nullptr, nullptr},
-    {PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION, ElementMaximum, ElementMaximumInt, nullptr, nullptr,
-     nullptr},
-    {PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION, ElementMinimum, ElementMinimumInt, nullptr, nullptr,
-     nullptr},
+     nullptr, nullptr, ElementOptLogicalOrBool},
+    {PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION, ElementMaximum, ElementMaximumInt, nullptr,
+     ElementOptMaximum, ElementOptMaximumInt, nullptr},
+    {PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION, ElementMinimum, ElementMinimumInt, nullptr,
+     ElementOptMinimum, ElementOptMinimumInt, nullptr},
     {PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION, ElementFloorMod, ElementFloorModInt, nullptr,
-     nullptr, nullptr},
+     ElementOptFloorMod, ElementOptFloorModInt, nullptr},
     {PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION, ElementFloorDiv, ElementFloorDivInt, nullptr,
-     nullptr, nullptr},
+     ElementOptFloorDiv, ElementOptFloorDivInt, nullptr},
     {PrimitiveType_Mod, schema::ActivationType_NO_ACTIVATION, ElementMod, ElementModInt, nullptr, ElementOptMod,
-     ElementOptModInt},
+     ElementOptModInt, nullptr},
     {PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION, ElementSquaredDifference, nullptr, nullptr,
-     nullptr, nullptr}};
+     ElementOptSquaredDifference, nullptr, nullptr}};
 
   size_t length = sizeof(fun_table) / sizeof(ARITHMETIC_FUNC_INFO_FP32);
   for (size_t i = 0; i < length; i++) {
@@ -258,6 +322,7 @@ void ArithmeticCPUKernel::InitRunFunction(int primitive_type) {
       arithmetic_run_bool_ = fun_table[i].bool_func_;
       arithmetic_opt_run_ = fun_table[i].opt_func_;
       arithmetic_opt_run_int_ = fun_table[i].opt_int_func_;
+      arithmetic_opt_run_bool_ = fun_table[i].opt_bool_func_;
       return;
     }
   }
@@ -276,9 +341,15 @@ int ArithmeticCPUKernel::Execute(const void *input0, const void *input1, void *o
                             reinterpret_cast<float *>(output), size);
     }
   } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
-    CHECK_NULL_RETURN(arithmetic_run_bool_);
-    ret = arithmetic_run_bool_(reinterpret_cast<const bool *>(input0), reinterpret_cast<const bool *>(input1),
-                               reinterpret_cast<bool *>(output), size);
+    if (is_opt) {
+      CHECK_NULL_RETURN(arithmetic_opt_run_bool_);
+      ret = arithmetic_opt_run_bool_(reinterpret_cast<const bool *>(input0), reinterpret_cast<const bool *>(input1),
+                                     reinterpret_cast<bool *>(output), size, param_);
+    } else {
+      CHECK_NULL_RETURN(arithmetic_run_bool_);
+      ret = arithmetic_run_bool_(reinterpret_cast<const bool *>(input0), reinterpret_cast<const bool *>(input1),
+                                 reinterpret_cast<bool *>(output), size);
+    }
   } else {
     if (is_opt) {
       CHECK_NULL_RETURN(arithmetic_opt_run_int_);
@@ -293,102 +364,35 @@ int ArithmeticCPUKernel::Execute(const void *input0, const void *input1, void *o
   return ret;
 }
 
-int ArithmeticCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
-                                      int out_thread_stride) {
-  if (dim > break_pos_) {
-    int offset = out_thread_stride * data_type_len_;
-    return Execute(static_cast<uint8_t *>(input0) + offset, static_cast<uint8_t *>(input1) + offset,
-                   static_cast<uint8_t *>(output) + offset, out_count, false);
-  }
-  int offset_size[] = {param_->in_strides0_[dim] * data_type_len_, param_->in_strides1_[dim] * data_type_len_,
-                       param_->out_strides_[dim] * data_type_len_};
-  for (int i = 0; i < param_->out_shape_[dim]; ++i) {
-    int pos0_ = param_->in_shape0_[dim] == 1 ? 0 : i;
-    int pos1_ = param_->in_shape1_[dim] == 1 ? 0 : i;
-    int ret = BroadcastRun(static_cast<uint8_t *>(input0) + pos0_ * offset_size[0],
-                           static_cast<uint8_t *>(input1) + pos1_ * offset_size[1],
-                           static_cast<uint8_t *>(output) + i * offset_size[2], dim + 1, out_count, out_thread_stride);
+int ArithmeticCPUKernel::CalcArithmeticByBatch(int task_id) {
+  int batch_per_thread = UP_DIV(out_batch_, op_parameter_->thread_num_);
+  int start_batch = batch_per_thread * task_id;
+  int end_batch = MSMIN(start_batch + batch_per_thread, out_batch_);
+  int ret = RET_ERROR;
+  for (int i = start_batch; i < end_batch; i++) {
+    batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_) + a_offset_[i] * a_stride_size_ * data_type_len_;
+    batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_) + b_offset_[i] * b_stride_size_ * data_type_len_;
+    batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_) + i * c_stride_size_ * data_type_len_;
+    if (batch_scalar_) {
+      ret = Execute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, true);
+    } else {
+      ret = Execute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, false);
+    }
     if (ret != RET_OK) {
-      return ret;
-    }
-  }
-  return RET_OK;
-}
-
-int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
-  if (break_pos_ < 1) {
-    return RET_ERROR;
-  }
-  if (break_pos_ > ARITHMETIC_SUPPORT_DIMS_NUM || param_->out_strides_[break_pos_ - 1] == 0) {
-    MS_LOG(ERROR) << "param_->out_strides_[break_pos_ - 1] is 0 or break_pos_ is > 10";
-    return RET_ERROR;
-  }
-  int batch = param_->out_elements_num_ / param_->out_strides_[break_pos_ - 1];
-  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
-
-  int start_batch = batch_per_thread * task_id;
-  int end_batch = MSMIN(start_batch + batch_per_thread, batch);
-  int batch_size = end_batch - start_batch;
-
-  int stride0 = param_->in_strides0_[break_pos_ - 1] * data_type_len_;
-  int stride1 = param_->in_strides1_[break_pos_ - 1] * data_type_len_;
-  int out_stride = param_->out_strides_[break_pos_ - 1] * data_type_len_;
-
-  int offset0 = stride0 * start_batch;
-  int offset1 = stride1 * start_batch;
-  int out_offset = out_stride * start_batch;
-
-  int ret = RET_OK;
-  for (int i = 0; i < batch_size; i++) {
-    ret = Execute(static_cast<uint8_t *>(input0_ptr_) + offset0, static_cast<uint8_t *>(input1_ptr_) + offset1,
-                  static_cast<uint8_t *>(output_ptr_) + out_offset, param_->out_strides_[break_pos_ - 1], true);
-    offset0 += stride0;
-    offset1 += stride1;
-    out_offset += out_stride;
-  }
-  return ret;
-}
-
-int ArithmeticCPUKernel::BiasCalc(int task_id) {
-  if (param_->ndim_ > ARITHMETIC_SUPPORT_DIMS_NUM || param_->out_shape_[param_->ndim_ - 1] == 0) {
-    MS_LOG(ERROR) << "BiasCalc param is error!";
-    return RET_ERROR;
-  }
-  int last_shape = param_->out_shape_[param_->ndim_ - 1];
-  int batch = param_->out_elements_num_ / last_shape;
-  int batch_per_thread = UP_DIV(batch, op_parameter_->thread_num_);
-
-  int start_batch = batch_per_thread * task_id;
-  int end_batch = MSMIN(start_batch + batch_per_thread, batch);
-  int batch_size = end_batch - start_batch;
-
-  int stride = last_shape * data_type_len_;
-  int offset = stride * start_batch;
-  int ret = RET_OK;
-  if (param_->in_elements_num0_ > param_->in_elements_num1_) {
-    for (int i = 0; i < batch_size; i++) {
-      ret = Execute(static_cast<uint8_t *>(input0_ptr_) + offset, static_cast<uint8_t *>(input1_ptr_),
-                    static_cast<uint8_t *>(output_ptr_) + offset, last_shape, false);
-      if (ret != RET_OK) {
-        return ret;
-      }
-      offset += stride;
-    }
-  } else {
-    for (int i = 0; i < batch_size; i++) {
-      ret = Execute(static_cast<uint8_t *>(input0_ptr_), static_cast<uint8_t *>(input1_ptr_) + offset,
-                    static_cast<uint8_t *>(output_ptr_) + offset, last_shape, false);
-      if (ret != RET_OK) {
-        return ret;
-      }
-      offset += stride;
+      MS_LOG(ERROR) << "failed to calculate.";
+      return RET_ERROR;
     }
   }
   return ret;
 }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {
-  auto element_num = out_tensors_[0]->ElementsNum();
+  if (split_by_batch_) {
+    return CalcArithmeticByBatch(task_id);
+  }
+
+  int64_t element_num = out_tensors_[0]->ElementsNum();
+  auto ret = RET_ERROR;
   int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
@@ -396,36 +400,16 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   }
   CHECK_LESS_RETURN(ARITHMETIC_SUPPORT_DIMS_NUM, param_->ndim_);
   int offset = stride * task_id * data_type_len_;
-  /* run opt function, one of input is scalar */
-  if (IsScalarClac()) {  // 2 32 240 240, 1 1 1 1
+  if (scalar_) {
     if (param_->in_elements_num0_ == 1) {
-      return Execute(input0_ptr_, static_cast<uint8_t *>(input1_ptr_) + offset,
-                     static_cast<uint8_t *>(output_ptr_) + offset, count, true);
-    } else if (param_->in_elements_num1_ == 1) {
-      return Execute(static_cast<uint8_t *>(input0_ptr_) + offset, input1_ptr_,
-                     static_cast<uint8_t *>(output_ptr_) + offset, count, true);
+      ret = Execute(batch_a_ptr_, batch_b_ptr_ + offset, batch_c_ptr_ + offset, count, true);
+    } else {
+      ret = Execute(batch_a_ptr_ + offset, batch_b_ptr_, batch_c_ptr_ + offset, count, true);
     }
+  } else {
+    ret = Execute(batch_a_ptr_ + offset, batch_b_ptr_ + offset, batch_c_ptr_ + offset, count, false);
   }
-  /* run opt function, every batch one of input is scalar */
-  if (IsBatchScalarCalc()) {  // 2 32 240 240,  2 32 1 1
-    return BatchScalarCalc(task_id);
-  }
-  /* each batch is eltwise calculation */
-  if (IsBiasCalc()) {  // 2 240 240 32,    1 1 1 32
-    return BiasCalc(task_id);
-  }
-  /* need broadcast in runtime */
-  if (param_->broadcasting_) {
-    stride = UP_DIV(outside_, op_parameter_->thread_num_);
-    int out_count = MSMIN(stride, outside_ - stride * task_id);
-    if (out_count <= 0) {
-      return RET_OK;
-    }
-    return BroadcastRun(input0_ptr_, input1_ptr_, output_ptr_, 0, out_count, stride * task_id);
-  }
-  /* all elements eltwise calculation */
-  return Execute(static_cast<uint8_t *>(input0_ptr_) + offset, static_cast<uint8_t *>(input1_ptr_) + offset,
-                 static_cast<uint8_t *>(output_ptr_) + offset, count, false);
+  return ret;
 }
 
 int ArithmeticsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
@@ -442,6 +426,7 @@ int ArithmeticCPUKernel::Run() {
     MS_LOG(ERROR) << "ArithmeticCPUKernel check dataType failed, kernel name: " << this->name();
     return RET_ERROR;
   }
+
   if (!input0_broadcast_) {
     input0_ptr_ = in_tensors_[0]->data();
     CHECK_NULL_RETURN(input0_ptr_);
@@ -452,7 +437,16 @@ int ArithmeticCPUKernel::Run() {
   }
   output_ptr_ = out_tensors_[0]->data();
   CHECK_NULL_RETURN(output_ptr_);
-  return ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
+  batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_);
+  batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_);
+  batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_);
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "arithmetic failed";
+    return RET_ERROR;
+  }
+
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)

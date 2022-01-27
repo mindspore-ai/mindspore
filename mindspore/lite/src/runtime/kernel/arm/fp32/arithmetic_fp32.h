@@ -49,6 +49,8 @@ class ArithmeticCPUKernel : public InnerKernel {
   typedef int (*ArithmeticOptIntRun)(const int *input0, const int *input1, int *output, const int element_size,
                                      const ArithmeticParameter *param);
   typedef int (*ArithmeticBoolRun)(const bool *input0, const bool *input1, bool *output, const int element_size);
+  typedef int (*ArithmeticOptBoolRun)(const bool *input0, const bool *input1, bool *output, const int element_size,
+                                      const ArithmeticParameter *param);
 
   typedef struct {
     int primitive_type_;
@@ -58,6 +60,7 @@ class ArithmeticCPUKernel : public InnerKernel {
     ArithmeticBoolRun bool_func_;
     ArithmeticOptRun opt_func_;
     ArithmeticOptIntRun opt_int_func_;
+    ArithmeticOptBoolRun opt_bool_func_;
   } ARITHMETIC_FUNC_INFO_FP32;
 
  public:
@@ -72,7 +75,6 @@ class ArithmeticCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   virtual int DoArithmetic(int task_id);
-  virtual int BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count, int out_thread_stride);
 
  protected:
   virtual void InitRunFunction(int primitive_type);
@@ -83,17 +85,31 @@ class ArithmeticCPUKernel : public InnerKernel {
   virtual int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt);
   virtual bool IsBatchScalarCalc();
   virtual bool IsScalarClac();
+  virtual int CalcArithmeticByBatch(int task_id);
   bool input0_broadcast_ = false;
   bool input1_broadcast_ = false;
   void *input0_ptr_ = nullptr;
   void *input1_ptr_ = nullptr;
   void *output_ptr_ = nullptr;
+  uint8_t *batch_a_ptr_ = nullptr;
+  uint8_t *batch_b_ptr_ = nullptr;
+  uint8_t *batch_c_ptr_ = nullptr;
   int break_pos_ = 0;
-  int outside_ = 0;
   ArithmeticParameter *param_ = nullptr;
   int data_type_len_ = sizeof(float);
+  int out_batch_ = 1;
+  int a_stride_size_ = 1;
+  int b_stride_size_ = 1;
+  int c_stride_size_ = 1;
+  int last_batch_axis_ = 0;
+  bool scalar_ = false;
+  bool batch_scalar_ = false;
+  bool split_by_batch_ = false;
+  std::vector<int> a_offset_;
+  std::vector<int> b_offset_;
 
  private:
+  int InitIndexOffsetInfo();
   int BatchScalarCalc(int task_id);
   int BiasCalc(int task_id);
   void FreeConstTileBuff();
@@ -103,6 +119,7 @@ class ArithmeticCPUKernel : public InnerKernel {
   ArithmeticIntRun arithmetic_run_int_ = nullptr;
   ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
   ArithmeticBoolRun arithmetic_run_bool_ = nullptr;
+  ArithmeticOptBoolRun arithmetic_opt_run_bool_ = nullptr;
 };
 int ArithmeticsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
