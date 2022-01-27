@@ -116,6 +116,12 @@ def get_parser():
       - client_num
         Specifies the number of clients. The value must be the same as that of 'start_fl_job_cnt' when the server is
         started. This parameter is not required in actual scenarios.
+      - input_shape
+        string type, this parameter is used to set the real input shape of the model, where the value corresponding to
+        the batch size in the inputs shape should be consistent with the parameter 'batch_size'. When the model contains
+        only one input, use a comma ',' to connect the dimensions of each dimension, such as "32,64,96"; when the model
+        contains multiple inputs, use a semicolon ';' to connect the shapes corresponding to different inputs, such as
+        "32,64,96;12,24,26". Notice, this parameter is only required when the inference model supports dynamic inputs.
     """
 
     parser = argparse.ArgumentParser(description="Run SyncFLJob.java case")
@@ -150,6 +156,7 @@ def get_parser():
     parser.add_argument("--name_regex", type=str, default=",")
     parser.add_argument("--server_mode", type=str, default="FEDERATED_LEARNING")
     parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--input_shape", type=str, default="null")
 
     parser.add_argument("--client_num", type=int, default=0)
     return parser
@@ -188,6 +195,7 @@ infer_weight_name = args.infer_weight_name
 name_regex = args.name_regex
 server_mode = args.server_mode
 batch_size = args.batch_size
+input_shape = args.input_shape
 
 client_num = args.client_num
 
@@ -274,6 +282,7 @@ for i in range(client_num):
     cmd_client += name_regex + " "
     cmd_client += server_mode + " "
     cmd_client += str(batch_size) + " "
+    cmd_client += input_shape + " "
     cmd_client += " > client" + ".log 2>&1 &"
     print(cmd_client)
     subprocess.call(['bash', '-c', cmd_client])

@@ -28,6 +28,7 @@ import mindspore.schema.FeatureMap;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,6 @@ public abstract class Client {
      * dataset map.
      */
     public Map<RunType, DataSet> dataSets = new HashMap<>();
-
-    private boolean isDynamicInferModel = false;
 
     private final List<ByteBuffer> inputsBuffer = new ArrayList<>();
 
@@ -88,7 +87,7 @@ public abstract class Client {
      * @param inferCallback callback used for infer model.
      * @return infer result.
      */
-    public abstract List<Integer> getInferResult(List<Callback> inferCallback);
+    public abstract List<Object> getInferResult(List<Callback> inferCallback);
 
     /**
      * Init lite session and inputs buffer.
@@ -97,26 +96,37 @@ public abstract class Client {
      * @param config session run config.
      * @return execute status.
      */
-    public Status initSessionAndInputs(String modelPath, MSConfig config) {
+    public Status initSessionAndInputs(String modelPath, MSConfig config, int[][] inputShapes) {
         if (modelPath == null) {
             logger.severe(Common.addTag("session init failed"));
-            return Status.NULLPTR;
+            return Status.FAILED;
         }
-        if (isDynamicInferModel) {
-            logger.info(Common.addTag(modelPath + " is dynamic input"));
-        }
-        Optional<LiteSession> optTrainSession = initSession(modelPath, config);
+        Optional<LiteSession> optTrainSession = initSession(modelPath, config, inputShapes != null);
         if (!optTrainSession.isPresent()) {
             logger.severe(Common.addTag("session init failed"));
-            return Status.NULLPTR;
+            return Status.FAILED;
         }
         trainSession = optTrainSession.get();
         inputsBuffer.clear();
-        List<MSTensor> inputs = trainSession.getInputs();
-        for (MSTensor input : inputs) {
-            ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
-            inputBuffer.order(ByteOrder.nativeOrder());
-            inputsBuffer.add(inputBuffer);
+        if (inputShapes == null) {
+            List<MSTensor> inputs = trainSession.getInputs();
+            for (MSTensor input : inputs) {
+                ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
+                inputBuffer.order(ByteOrder.nativeOrder());
+                inputsBuffer.add(inputBuffer);
+            }
+        } else {
+            boolean isSuccess = trainSession.resize(trainSession.getInputs(), inputShapes);
+            if (!isSuccess) {
+                logger.severe(Common.addTag("session resize failed"));
+                return Status.FAILED;
+            }
+            for (int[] shapes : inputShapes) {
+                int size = IntStream.of(shapes).reduce((a, b) -> a * b).getAsInt() * Integer.BYTES;
+                ByteBuffer inputBuffer = ByteBuffer.allocateDirect(size);
+                inputBuffer.order(ByteOrder.nativeOrder());
+                inputsBuffer.add(inputBuffer);
+            }
         }
         return Status.SUCCESS;
     }
@@ -188,7 +198,7 @@ public abstract class Client {
      *
      * @return infer status.
      */
-    public List<Integer> inferModel() {
+    public List<Object> inferModel() {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
             logger.severe(Common.addTag("train session switch eval mode failed"));
@@ -252,7 +262,7 @@ public abstract class Client {
         return Status.SUCCESS;
     }
 
-    private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig) {
+    private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
         if (modelPath == null) {
             logger.severe(Common.addTag("modelPath cannot be empty"));
             return Optional.empty();
@@ -378,16 +388,5 @@ public abstract class Client {
         for (DataSet dataset : dataSets.values()) {
             dataset.batchSize = batchSize;
         }
-    }
-
-    /**
-     * Resize client input shape dims.
-     *
-     * @param dims new input shapes.
-     * @return resize status.
-     */
-    public boolean resize(int[][] dims) {
-        isDynamicInferModel = true;
-        return trainSession.resize(trainSession.getInputs(), dims);
     }
 }
