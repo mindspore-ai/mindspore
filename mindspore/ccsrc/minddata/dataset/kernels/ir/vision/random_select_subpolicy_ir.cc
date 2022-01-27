@@ -111,7 +111,6 @@ Status RandomSelectSubpolicyOperation::from_json(nlohmann::json op_params,
       RETURN_IF_NOT_OK(ValidateParamInJson(item_pair, "tensor_op", kRandomSelectSubpolicyOperation));
       std::vector<std::shared_ptr<TensorOperation>> operations;
       std::pair<std::shared_ptr<TensorOperation>, double> policy_pair;
-      std::shared_ptr<TensorOperation> operation;
       nlohmann::json tensor_op_json;
       double prob = item_pair["prob"];
       tensor_op_json.push_back(item_pair["tensor_op"]);
