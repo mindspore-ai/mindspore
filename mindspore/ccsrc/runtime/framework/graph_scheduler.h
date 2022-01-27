@@ -151,7 +151,7 @@ class GraphScheduler {
   void LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph);
 
   // The gather of linking the global control arrows, it will call following functions:
-  void LinkGlobalControlArrow(ActorSet *const actor_set, const std::vector<CNodePtr> &communication_nodes,
+  void LinkGlobalControlArrow(ActorSet *const actor_set, const GroupNameToCommuNodes &communication_node_groups,
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);

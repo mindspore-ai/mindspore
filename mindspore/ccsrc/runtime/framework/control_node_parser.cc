@@ -1859,7 +1859,8 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
           // the group inputs.
           if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
               kernel_graph_group_info->front_output_nodes_.find(front_node_with_index) !=
-                kernel_graph_group_info->front_output_nodes_.end()) {
+                kernel_graph_group_info->front_output_nodes_.end() ||
+              front_node_with_index.first->isa<ValueNode>()) {
             continue;
           }
           if (AnfAlgo::IsCallNode(front_node_with_index.first)) {
@@ -1877,7 +1878,8 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
         // Collect outputs in group.
         for (const auto &backend_to_front : kernel_graph->graph_output_map()) {
           if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first) ||
-              AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial)) {
+              AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
+              backend_to_front.second.first->isa<ValueNode>()) {
             continue;
           }
           MS_LOG(DEBUG) << "Kernel graph:" << kernel_graph->ToString()
