@@ -233,7 +233,7 @@ int LiteModel::NodeVerify() const {
       MS_LOG(ERROR) << "Index of node->output_indices_ is beyond size.";
       return RET_ERROR;
     }
-    if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [&](const uint32_t &idx) {
+    if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(), [&, this](const uint32_t &idx) {
           return this->all_tensors_[idx]->nodeType() == NodeType_ValueNode &&
                  this->all_tensors_[idx]->data() != nullptr;
         })) {
@@ -312,7 +312,7 @@ int LiteModel::SubGraphVerify() const {
 }
 
 int LiteModel::SubGraphInOutVerify(const Model::SubGraph *graph) const {
-  auto from_node = [&](uint32_t cur_idx) -> bool {
+  auto from_node = [&, this](uint32_t cur_idx) -> bool {
     for (auto node_idx : graph->node_indices_) {
       auto node = this->all_nodes_.at(node_idx);
       if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(),
