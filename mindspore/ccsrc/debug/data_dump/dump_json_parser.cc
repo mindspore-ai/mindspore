@@ -766,6 +766,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
                        << " Input:" << GetKernelNodeName(input);
           update_kernels.try_emplace(GetKernelNodeName(input), 0);
+          cell_dump_kernels_.push_back(GetKernelNodeName(input));
         }
       }
     }
