@@ -195,7 +195,8 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
 
 int DebugInfoManager::SetQuantStaticInfo(OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
                                          const mindspore::lite::Tensor &tensor) {
-  auto preferred_dim = mindspore::lite::WeightDecoder::GetPreferredDim(op_parameter, tensor_index, tensor.shape());
+  auto preferred_dim =
+    mindspore::lite::WeightDecoder::GetPreferredDim(op_parameter, tensor_index, tensor.shape(), Version());
   float *quant_data;
   if (tensor.data_type() == kNumberTypeInt8) {
     quant_data = mindspore::lite::WeightDecoder::DequantData<int8_t, float>(&tensor, preferred_dim);

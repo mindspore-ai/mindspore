@@ -353,8 +353,8 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     size_t pid = id - static_cast<size_t>(offset);
     mindspore::lite::Tensor *tensor = tensors.at(pid);
     schema::Tensor *scTensor = model->all_tensors_.at(pid);
-    auto preferred_dim =
-      WeightDecoder::GetPreferredDim(index.second.op_parameter, index.second.input_index, tensor->shape());
+    auto preferred_dim = WeightDecoder::GetPreferredDim(index.second.op_parameter, index.second.input_index,
+                                                        tensor->shape(), model->version_);
     auto tensorT = CreateTensor(tensor, scTensor, preferred_dim);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in tensor creation";
