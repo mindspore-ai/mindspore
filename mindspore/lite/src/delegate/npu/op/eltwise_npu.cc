@@ -33,17 +33,25 @@ int EltwiseNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
     return RET_ERROR;
   }
   eltwise_->set_attr_mode(ConverterToNPUEltwiseMode(eltwise_prim->mode()));
-  int size = in_tensors.size();
-  eltwise_->create_dynamic_input_x(size);
-  eltwise_->set_attr_N(size);
+  auto input_num = in_tensors.size();
+  eltwise_->create_dynamic_input_x(input_num);
+  eltwise_->set_attr_N(input_num);
   return RET_OK;
 }
 
 int EltwiseNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors,
-                               const std::vector<ge::Operator *> &npu_inputs) {
+                               const std::vector<ge::Operator *> &npu_inputs,
+                               const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+  for (auto pair : index2_multi_out_index) {
+    auto in_op = pair.second.first;
+    MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
+    eltwise_->SetInput(pair.first, *in_op, pair.second.second);
+  }
   for (int i = 0; i < npu_inputs.size(); ++i) {
-    eltwise_->set_dynamic_input_x(i + 1, *npu_inputs[i]);
+    if (index2_multi_out_index.find(i) == index2_multi_out_index.end()) {
+      eltwise_->SetInput(i, *npu_inputs[i], 0);
+    }
   }
   return RET_OK;
 }

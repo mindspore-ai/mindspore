@@ -20,13 +20,18 @@
 namespace mindspore {
 int ReshapeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() != 2) {
-    MS_LOG(WARNING) << "Npu op should have 2 input tensors.";
+  if (in_tensors.size() != kInputSize1) {
+    MS_LOG(WARNING) << "NPU op should have 2 input tensors.";
     return RET_NOT_SUPPORT;
   }
   auto shape_tensor = in_tensors.at(1);
   if (shape_tensor.Data() == nullptr) {
-    MS_LOG(WARNING) << "Npu reshape op only supports const shape.";
+    MS_LOG(WARNING) << "NPU Reshape op only supports const shape.";
+    return RET_NOT_SUPPORT;
+  }
+  if (shape_tensor.Shape().size() > 1 || shape_tensor.ElementNum() > NPU_SHAPE_SIZE) {
+    MS_LOG(WARNING) << "For NPU Reshape op, the shape tensor should be a one-dimension tensor and its element number "
+                       "should be less than 4.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
@@ -39,14 +44,6 @@ int ReshapeNPUOp::Init(const schema::Primitive *primitive, const std::vector<min
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int ReshapeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                               const std::vector<mindspore::MSTensor> &out_tensors,
-                               const std::vector<ge::Operator *> &npu_inputs) {
-  reshape_->set_input_x(*npu_inputs[0]);
-  reshape_->set_input_shape(*npu_inputs[1]);
   return RET_OK;
 }
 

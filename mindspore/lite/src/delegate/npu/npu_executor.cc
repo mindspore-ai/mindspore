@@ -16,6 +16,7 @@
 
 #include "src/delegate/npu/npu_executor.h"
 #include <unordered_map>
+#include <set>
 #include "include/errorcode.h"
 #include "src/delegate/npu/npu_manager.h"
 #include "src/common/log_adapter.h"
@@ -73,7 +74,8 @@ bool IsSameShapeTensor(mindspore::MSTensor tensor, const std::shared_ptr<hiai::A
 }
 
 int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
-                     const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<NPUOp *> &in_ops) {
+                     const std::vector<mindspore::MSTensor> &valid_out_tensors,
+                     const std::vector<mindspore::MSTensor> &all_out_tensors, const std::vector<NPUOp *> &out_ops) {
   hiai::AiContext context;
   for (size_t i = 0; i < npu_input_tensors_.size(); ++i) {
     MS_CHECK_TRUE_RET(i < input_relationship_.size() && input_relationship_.at(i) < in_tensors.size(), RET_ERROR);
@@ -97,19 +99,32 @@ int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
     return RET_ERROR;
   }
 
-  if (npu_output_tensors_.size() != out_tensors.size()) {
-    MS_LOG(ERROR) << "The output count is not euqal to ms tensor.";
+  // if the multi-output op is the graph out op, all of its output tensor will be treat as graph output for om model.
+  std::set<schema::PrimitiveType> multi_output_list = {schema::PrimitiveType_Split};
+  bool has_multi_output_op = false;
+  for (auto out_op : out_ops) {
+    if (std::find(multi_output_list.begin(), multi_output_list.end(), out_op->type()) != multi_output_list.end()) {
+      has_multi_output_op = true;
+      break;
+    }
+  }
+
+  if (npu_output_tensors_.size() != all_out_tensors.size() ||
+      (!has_multi_output_op && npu_output_tensors_.size() != valid_out_tensors.size())) {
+    MS_LOG(ERROR) << "The output count (" << npu_output_tensors_.size() << ") is not equal to ms tensor ("
+                  << all_out_tensors.size() << ").";
     return RET_ERROR;
   }
   for (size_t i = 0; i < npu_output_tensors_.size(); ++i) {
-    mindspore::MSTensor out_tensor = out_tensors[i];
-    auto data = out_tensor.MutableData();
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << out_tensors[i].Name() << " data is nullptr";
-      return RET_ERROR;
+    mindspore::MSTensor out_tensor = all_out_tensors[i];
+    if (std::find(valid_out_tensors.begin(), valid_out_tensors.end(), out_tensor) != valid_out_tensors.end()) {
+      auto data = out_tensor.MutableData();
+      if (data == nullptr) {
+        MS_LOG(ERROR) << "For " << model_name_ << ", the output tensor " << out_tensor.Name() << " data is nullptr";
+        return RET_ERROR;
+      }
+      memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
     }
-
-    memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
   }
   return RET_OK;
 }

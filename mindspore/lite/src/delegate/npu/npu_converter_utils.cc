@@ -15,7 +15,7 @@
  */
 
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "src/common/log_adapter.h"
+#include "src/delegate/npu/op/npu_op.h"
 namespace mindspore {
 #define C4NUM 4
 #define C8NUM 8
@@ -55,7 +55,7 @@ void Float16ToFloat32(const float16_t *__restrict input, float *__restrict outpu
 #endif
 
 ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape, bool is_expand_4d) {
-  vector<int64_t> shapes;
+  std::vector<int64_t> shapes;
   shapes.reserve(src_shape.size());
   for (int i = 0; i < src_shape.size(); i++) {
     shapes.push_back(src_shape[i]);
@@ -64,8 +64,7 @@ ge::Shape ConverterToNPUShape(const std::vector<int64_t> &src_shape, bool is_exp
     if (shapes.size() == 1) {
       return ge::Shape({1, shapes[0], 1, 1});
     } else {
-      const int dimension4 = 4;
-      for (int i = src_shape.size(); i < dimension4; i++) {
+      for (int i = src_shape.size(); i < NPU_SHAPE_SIZE; i++) {
         shapes.push_back(1);
       }
     }
@@ -204,23 +203,23 @@ int TransFormAxis(int axis) {
 void AssistDataNHWC2NCHW(int *data, size_t unit_size) {
   MS_ASSERT(data != nullptr);
   for (size_t i = 0; i < unit_size; ++i) {
-    int c = data[3 * unit_size + i];
+    int org_c = data[NHWC_C * unit_size + i];
     // n h w c
     // n c h w
-    data[3 * unit_size + i] = data[2 * unit_size + i];
-    data[2 * unit_size + i] = data[unit_size + i];
-    data[unit_size + i] = c;
+    data[NCHW_W * unit_size + i] = data[NHWC_W * unit_size + i];
+    data[NCHW_H * unit_size + i] = data[NHWC_H * unit_size + i];
+    data[NCHW_C * unit_size + i] = org_c;
   }
 }
 
 int MaskDataNHWC2NCHW(int mask) {
-  int mask_vec[4];
-  for (int i = 0; i < 4; ++i) {
+  int mask_vec[NPU_SHAPE_SIZE];
+  for (int i = 0; i < NPU_SHAPE_SIZE; ++i) {
     mask_vec[i] = (uint32_t)(mask) & (1 << i);
   }
   AssistDataNHWC2NCHW(mask_vec, 1);
   int ret = 0;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < NPU_SHAPE_SIZE; ++i) {
     if (mask_vec[i]) {
       ret += 1 << i;
     }
