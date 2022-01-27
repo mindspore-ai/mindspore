@@ -83,6 +83,7 @@ file(GLOB DEBUG_STRIP_SYM
     ${MS_PACK_ROOT_DIR}/mindspore/*.so
     ${MS_PACK_ROOT_DIR}/mindspore/lib/*.so*
 )
+list(REMOVE_ITEM DEBUG_STRIP_SYM ${MS_PACK_ROOT_DIR}/mindspore/lib/libmindspore_aicpu_kernels.so)
 
 set(CMAKE_OBJCOPY $ENV{CROSS_COMPILE}objcopy)
 set(CMAKE_STRIP $ENV{CROSS_COMPILE}strip)
