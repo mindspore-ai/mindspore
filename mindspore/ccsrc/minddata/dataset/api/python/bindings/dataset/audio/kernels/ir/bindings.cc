@@ -45,6 +45,7 @@
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mask_along_axis_iid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
@@ -373,6 +374,17 @@ PYBIND_REGISTER(MagphaseOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(magphase->ValidateParams());
                         return magphase;
                       }));
+                }));
+
+PYBIND_REGISTER(MaskAlongAxisIIDOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::MaskAlongAxisIIDOperation, TensorOperation,
+                                   std::shared_ptr<audio::MaskAlongAxisIIDOperation>>(*m, "MaskAlongAxisIIDOperation")
+                    .def(py::init([](int32_t mask_param, float mask_value, int32_t axis) {
+                      auto mask_along_axis_iid =
+                        std::make_shared<audio::MaskAlongAxisIIDOperation>(mask_param, mask_value, axis);
+                      THROW_IF_ERROR(mask_along_axis_iid->ValidateParams());
+                      return mask_along_axis_iid;
+                    }));
                 }));
 
 PYBIND_REGISTER(MelScaleOperation, 1, ([](const py::module *m) {

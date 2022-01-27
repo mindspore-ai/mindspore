@@ -321,6 +321,22 @@ def check_lowpass_biquad(method):
     return new_method
 
 
+def check_mask_along_axis_iid(method):
+    """Wrapper method to check the parameters of MaskAlongAxisIID."""
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mask_param, mask_value, axis], _ = parse_user_args(method, *args, **kwargs)
+        type_check(mask_param, (int,), "mask_param")
+        check_non_negative_int32(mask_param, "mask_param")
+        type_check(mask_value, (int, float,), "mask_value")
+        check_float32(mask_value, "mask_value")
+        type_check(axis, (int,), "axis")
+        check_value(axis, [1, 2], "axis")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_mu_law_coding(method):
     """Wrapper method to check the parameters of MuLawDecoding and MuLawEncoding"""
 
