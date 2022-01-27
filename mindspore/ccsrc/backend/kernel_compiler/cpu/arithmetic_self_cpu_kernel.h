@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
 
-#include <memory>
-#include <vector>
 #include <complex>
+#include <memory>
 #include <set>
+#include <vector>
+
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
@@ -80,6 +81,10 @@ MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAt
 MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                  ArithmeticSelfCpuKernelMod);
+MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCpuKernelMod);

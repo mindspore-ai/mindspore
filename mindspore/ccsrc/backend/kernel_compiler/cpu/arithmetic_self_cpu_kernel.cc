@@ -16,10 +16,11 @@
 
 #include "backend/kernel_compiler/cpu/arithmetic_self_cpu_kernel.h"
 
+#include <algorithm>
 #include <cmath>
+#include <complex>
 #include <string>
 #include <thread>
-#include <algorithm>
 #include <unordered_map>
 
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -388,7 +389,9 @@ void ArithmeticSelfCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPt
   const size_t lens = outputs[0]->size / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelMod *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}, {prim::kPrimAcosh->name(), ComplexAcosh<T>}};
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
+                          {prim::kPrimAcosh->name(), ComplexAcosh<T>},
+                          {prim::kPrimNeg->name(), Neg<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelMod does not support " << kernel_name_;
