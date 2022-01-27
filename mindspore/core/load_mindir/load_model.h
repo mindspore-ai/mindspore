@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class MindIRLoader {
   void set_weights_value_map(const std::map<string, ValuePtr> &weights_value_map) {
     weights_value_map_ = weights_value_map;
   }
-  const LayoutMap &get_layout_map() { return layout_map_; }
+  const LayoutMap &layout_map() { return layout_map_; }
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const std::string &file_name);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> file_names);

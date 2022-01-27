@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,11 @@ bool StartServerAction(const ResourcePtr &res);
 bool DistributedSplitAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
-std::vector<ActionItem> VmPipeline();
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> MindIRPipeline();
-std::vector<ActionItem> BackendPipeline();
-std::vector<ActionItem> PServerPipeline();
-std::vector<ActionItem> ServerPipeline();
-std::vector<ActionItem> PSchedulerPipeline();
+std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource);
+std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource);
+std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
 abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_spec, bool clear = false);
 FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,

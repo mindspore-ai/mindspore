@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,35 +199,10 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
   return bprop_fg;
 }
 
-void ExportBpropToMindIR(const std::string &prim_name, const FuncGraphPtr &func_graph) {
-  std::string bprop_dir = GetBpropDir();
-  auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
-  std::optional<std::string> bprop_mindir_realpath =
-    Common::CreatePrefixPath(bprop_mindir_path + prim_name + kBpropMindIRSuffix, true);
-  if (!bprop_mindir_realpath.has_value()) {
-    MS_LOG(ERROR) << "Failed to get the realpath of bprop mindir: " << bprop_mindir_path << prim_name
-                  << kBpropMindIRSuffix;
-    return;
-  }
-  std::ofstream fout(bprop_mindir_realpath.value());
-  if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open cache file '" << bprop_mindir_realpath.value() << "' failed!" << ErrnoToString(errno);
-    return;
-  }
-  ModelProtoPtr fg_model = GetBinaryProto(func_graph);
-  if (fg_model == nullptr) {
-    MS_LOG(ERROR) << "Get binary proto for graph " << func_graph->ToString() << " failed.";
-    fout.close();
-    return;
-  }
-  if (!fg_model->SerializeToOstream(&fout)) {
-    MS_LOG(ERROR) << "Failed to cache the bprop of op \"" << prim_name << "\" to file \""
-                  << bprop_mindir_realpath.value() << "\".";
-    fout.close();
-    return;
-  }
-  fout.close();
-  ChangeFileMode(bprop_mindir_realpath.value(), S_IRUSR | S_IWUSR);
+bool ExportBpropToMindIR(const std::string &prim_name, const FuncGraphPtr &func_graph) {
+  static auto bprop_mindir_dir = GetBpropDir() + kBpropMindIRDir;
+  std::string bprop_mindir_path = bprop_mindir_dir + prim_name + kBpropMindIRSuffix;
+  return DumpBinaryProto(func_graph, bprop_mindir_path);
 }
 
 AnfNodePtr GetPythonOps(const FuncGraphPtr &fg, const AnfNodePtr &origin_node, const PrimitivePtr &prim) {
@@ -319,6 +294,7 @@ bool NeedExportBpropMindIR(const std::string &prim_name, const std::string &curr
 }  // namespace
 
 #ifndef _WIN32
+// For the bprop mindir generator.
 // Given a python primitive or string, export a mindir file from the bprop defined in python.
 void KPrim::ExportBpropMindir(const py::object &obj) {
   std::string prim_name;
@@ -353,7 +329,9 @@ void KPrim::ExportBpropMindir(const py::object &obj) {
   (void)parse::ResolveFuncGraph(func_graph, res);
 
   func_graph->set_bprop_hash(bprop_hash);
-  ExportBpropToMindIR(prim_name, func_graph);
+  if (!ExportBpropToMindIR(prim_name, func_graph)) {
+    MS_LOG(EXCEPTION) << "Failed to export the bprop mindir for " << prim_name;
+  }
 }
 #endif
 
@@ -412,7 +390,9 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
     std::string bprop_hash = GetBpropFileHash(fn);
     if (!bprop_hash.empty()) {
       func_graph->set_bprop_hash(bprop_hash);
-      ExportBpropToMindIR(prim->name(), func_graph);
+      if (!ExportBpropToMindIR(prim->name(), func_graph)) {
+        MS_LOG(WARNING) << "Failed to export the bprop mindir for " << prim->name();
+      }
     }
   }
 #endif

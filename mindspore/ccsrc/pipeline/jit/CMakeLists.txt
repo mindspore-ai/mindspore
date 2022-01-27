@@ -6,6 +6,7 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "validator.cc"
     "remove_value_node_dup.cc"
     "pipeline_split.cc"
+    "compile_cache_manager.cc"
     "parse/*.cc"
     "static_analysis/*.cc"
 )

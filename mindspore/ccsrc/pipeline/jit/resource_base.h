@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class ResourceBase {
 
   void SetResult(const std::string &key, const Any &value) { results_[key] = value; }
 
-  Any GetResult(const std::string &key) {
+  Any GetResult(const std::string &key) const {
     auto iter = results_.find(key);
     if (iter == results_.end()) {
       MS_LOG(EXCEPTION) << "this key is not in resource list:" << key;

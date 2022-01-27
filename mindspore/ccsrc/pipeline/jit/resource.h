@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "load_mindir/load_model.h"
+#include "pipeline/jit/compile_cache_manager.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -88,19 +89,13 @@ class Resource : public ResourceBase {
   bool vm_loop_flag() const { return vm_loop_flag_; }
   int64_t loop_size() const { return loop_size_; }
 
-  void set_layout_map(const LayoutMap &layout_map) { layout_map_ = layout_map; }
-  const LayoutMap &get_layout_map() const { return layout_map_; }
+  const LayoutMap &layout_map() const { return layout_map_; }
 
-  bool enable_compile_cache() { return enable_compile_cache_; }
-  void set_enable_compile_cache(bool enable_compile_cache) { enable_compile_cache_ = enable_compile_cache; }
-
-  size_t compile_cache_id() { return compile_cache_id_; }
-  void set_compile_cache_id(size_t compile_cache_id) { compile_cache_id_ = compile_cache_id; }
-
-  const std::string &compile_cache_dep_files_hash() { return compile_cache_dep_files_hash_; }
-  void set_compile_cache_dep_files_hash(const std::string &compile_cache_dep_files_hash) {
-    compile_cache_dep_files_hash_ = compile_cache_dep_files_hash;
-  }
+  // Get the cached func_graph and parameters layout map.
+  void GetCompileCacheResource(const py::list &compile_cache_dep_files, const py::dict &weights,
+                               const std::string &queue_name, size_t compile_cache_id);
+  void CacheFuncGraph() const;
+  bool EnableCompileCache() const { return compile_cache_manager_ != nullptr; }
 
   // Reclaim resource and clear the cache.
   // GraphExecutorPy::Compile() can be called multiple times, so cache
@@ -119,10 +114,8 @@ class Resource : public ResourceBase {
   bool is_load_{false};
   bool vm_loop_flag_{false};
   int64_t loop_size_{1};
-  bool enable_compile_cache_{false};
-  size_t compile_cache_id_{0};
-  std::string compile_cache_dep_files_hash_;
   LayoutMap layout_map_{};
+  CompileCacheManagerPtr compile_cache_manager_{nullptr};
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;

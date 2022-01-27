@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1351,21 +1351,25 @@ std::vector<ActionItem> GePipeline() {
   return actions;
 }
 
-std::vector<ActionItem> VmPipeline() {
-  auto actions = CommonPipeline();
+std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
+  std::vector<ActionItem> actions;
+  // If enable compilation cache and the cache is read successfully, only do the backend actions.
+  if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
+    actions = CommonPipeline();
 
-  // optimize
-  (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+    // optimize
+    (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
 
-  // Add opt-stage python pass stub
-  (void)actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
+    // Add opt-stage python pass stub
+    (void)actions.emplace_back(std::make_pair("py_opt", OptActionVmPyStub));
 
-  (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+    (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
 
-  // eliminate forward cnode for grad graph
-  (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
+    // eliminate forward cnode for grad graph
+    (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
 
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+    (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+  }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_worker()) {
@@ -1390,14 +1394,6 @@ std::vector<ActionItem> VmPipeline() {
   return actions;
 }
 
-std::vector<ActionItem> BackendPipeline() {
-  std::vector<ActionItem> actions;
-  // compile the ANF graph
-  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
-  // to execute the graph
-  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
-  return actions;
-}
 std::vector<ActionItem> MindIRPipeline() {
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
@@ -1415,8 +1411,12 @@ std::vector<ActionItem> MindIRPipeline() {
   (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
   return actions;
 }
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-std::vector<ActionItem> ServerPipeline() {
+std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) {
+  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
+    return {std::make_pair("server", StartServerAction)};
+  }
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
@@ -1424,7 +1424,10 @@ std::vector<ActionItem> ServerPipeline() {
   return actions;
 }
 
-std::vector<ActionItem> PServerPipeline() {
+std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource) {
+  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
+    return {std::make_pair("pserver", StartPSServerAction)};
+  }
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
@@ -1433,7 +1436,10 @@ std::vector<ActionItem> PServerPipeline() {
   return actions;
 }
 
-std::vector<ActionItem> PSchedulerPipeline() {
+std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource) {
+  if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
+    return {std::make_pair("scheduler", StartPSSchedulerAction)};
+  }
   auto actions = CommonPipeline();
   (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
   (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
