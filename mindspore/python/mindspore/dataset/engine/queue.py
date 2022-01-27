@@ -142,3 +142,12 @@ class _SharedQueue(multiprocessing.queues.Queue):
             else:
                 raise RuntimeError("SharedQueue, invalid entry in metadata.")
         return tuple(r)
+
+    def __del__(self):
+        shm_list_len = len(self.shm_list)
+        for idx in range(shm_list_len):
+            del self.shm_list[shm_list_len - idx - 1]
+        del self.shm_list
+
+        self.close()
+        self.join_thread()
