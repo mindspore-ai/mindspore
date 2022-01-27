@@ -239,6 +239,8 @@ class CheckAndConvertUtils {
                                          const std::string &prim_name);
   static TypePtr CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                       const std::set<TypePtr> &check_list, const std::string &prim_name);
+  static TypePtr CheckCSRTensorTypeValid(const std::string &type_name, const TypePtr &type,
+                                         const std::set<TypePtr> &check_list, const std::string &prim_name);
   static TypePtr CheckSubClass(const std::string &type_name, const TypePtr &type,
                                const std::set<TypePtr> &template_types, const std::string &prim_name);
   static TypePtr CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,

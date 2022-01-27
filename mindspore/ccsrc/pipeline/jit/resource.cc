@@ -39,9 +39,8 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__bool__", std::string("none_bool")}  // C.none_bool
                                        }},
                                       {kObjectTypeFunction,
-                                       {
-                                         {"__bool__", std::string("func_bool")}  // C.str_bool
-                                       }},
+                                       {{"__bool__", std::string("func_bool")},  // C.str_bool
+                                        {"__is_csr_func__", prim::kPrimIsCSRFunc}}},
                                       {kNumberTypeBool,
                                        {
                                          {"__and__", prim::kPrimBoolAnd},     // P.bool_and

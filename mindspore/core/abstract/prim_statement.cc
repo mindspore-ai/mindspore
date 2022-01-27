@@ -197,5 +197,21 @@ AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePt
   ValuePtr v = args_spec_list[0]->BuildValue();
   return std::make_shared<AbstractScalar>(!v->isa<AnyValue>());
 }
+
+AbstractBasePtr InferImplIsCSRFunc(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Statement: x.__is_csr_func__()
+  // Inputs: x
+  auto func = CheckArg<AbstractFunction>(primitive->name(), args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(func);
+  auto prim_func = dyn_cast<PrimitiveAbstractClosure>(func);
+  MS_EXCEPTION_IF_NULL(prim_func);
+  PrimitivePtr prim = prim_func->prim();
+  std::string name = prim->name();
+  if (name == "S-Prim-MakeCSRTensor") {
+    return std::make_shared<AbstractScalar>(1);
+  }
+  return std::make_shared<AbstractScalar>(0);
+}
 }  // namespace abstract
 }  // namespace mindspore

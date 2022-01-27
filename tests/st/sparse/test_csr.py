@@ -22,6 +22,7 @@ from mindspore import Tensor, CSRTensor, ms_function, nn, context
 from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
+from mindspore.ops import functional as F
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -364,3 +365,66 @@ def test_csrops_export_and_import_mindir():
     assert np.allclose(out[4].values.asnumpy(), outputs_after_load[4].values.asnumpy())
     assert out[3].shape == outputs_after_load[3].shape
     assert out[4].shape == outputs_after_load[4].shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_isinstance_csr_tensor():
+    """
+    Feature: Test isinstance.
+    Description: Test: isinstance(x, CSRTensor).
+    Expectation: Success.
+    """
+    indptr = Tensor([0, 1, 2])
+    indices = Tensor([0, 1])
+    values = Tensor([2, 1], dtype=mstype.float32)
+    shape = (2, 4)
+
+    def pynative_test_csr_tensor():
+        x = CSRTensor(indptr, indices, values, shape)
+        # Test input CSRTensor
+        is_tensor = isinstance(x, Tensor)
+        is_bool = isinstance(x, bool)
+        is_float = isinstance(x, float)
+        is_tuple = isinstance(x, (Tensor, CSRTensor, int, float))
+        is_csr_tensor = isinstance(x, CSRTensor)
+
+        # Test input Tensor
+        is_tensor_2 = isinstance(indptr, CSRTensor)
+        is_tuple_2 = isinstance(indptr, (Tensor, CSRTensor))
+        return is_tensor, is_bool, is_float, is_tuple, is_csr_tensor, is_tensor_2, is_tuple_2
+    graph_test_csr_tensor = ms_function(pynative_test_csr_tensor)
+
+    out1 = pynative_test_csr_tensor()
+    out2 = graph_test_csr_tensor()
+    assert out1 == (False, False, False, True, True, False, True)
+    assert out2 == (False, False, False, True, True, False, True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dtype_csr_tensor():
+    """
+    Feature: Test F.dtype with CSRTensor.
+    Description: Test: F.dtype(x).
+    Expectation: Success.
+    """
+    indptr = Tensor([0, 1, 2])
+    indices = Tensor([0, 1])
+    values = Tensor([2, 1], dtype=mstype.float32)
+    shape = (2, 4)
+
+    def pynative_test():
+        x = CSRTensor(indptr, indices, values, shape)
+        return F.dtype(x)
+    graph_test = ms_function(pynative_test)
+
+    out1 = pynative_test()
+    out2 = graph_test()
+    assert out1 in [mstype.float32]
+    assert out2 in [mstype.float32]

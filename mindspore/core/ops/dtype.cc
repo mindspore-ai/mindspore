@@ -32,10 +32,18 @@ ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("dtype infer", int64_t(input_args.size()), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  const std::set<TypePtr> valid_types = {kTensorType};
-  auto type =
-    CheckAndConvertUtils::CheckTensorTypeValid("infer type", input_args[0]->BuildType(), valid_types, op_name);
-  return type;
+  auto type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  if (type->isa<TensorType>()) {
+    const std::set<TypePtr> valid_types = {kTensorType};
+    return CheckAndConvertUtils::CheckTensorTypeValid("infer type", type, valid_types, op_name);
+  } else if (input_args[0]->BuildType()->isa<CSRTensorType>()) {
+    const std::set<TypePtr> valid_types = {kCSRTensorType};
+    return CheckAndConvertUtils::CheckCSRTensorTypeValid("infer type", type, valid_types, op_name);
+  }
+  MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input argument[infer type]"
+                          << "must be a Tensor or CSRTensor but got " << type->ToString() << ".";
+  return nullptr;
 }
 
 AbstractBasePtr DTypeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
