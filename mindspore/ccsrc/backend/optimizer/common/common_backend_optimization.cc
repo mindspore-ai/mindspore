@@ -41,6 +41,7 @@ namespace mindspore {
 namespace opt {
 void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_LOG(INFO) << "Status record: start common optimization. graph id: " << kernel_graph->graph_id();
+  PROF_START(backend_common_optimization);
   MS_EXCEPTION_IF_NULL(kernel_graph);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
@@ -68,6 +69,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  PROF_END(backend_common_optimization);
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_common_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";

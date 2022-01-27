@@ -451,6 +451,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Status record: start compile function graph: " << func_graph->ToString();
+  PROF_START(compile_func_graph);
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
   root_graph_ = root_graph.get();
@@ -489,6 +490,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
+  PROF_END(compile_func_graph);
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
   return actor_info;

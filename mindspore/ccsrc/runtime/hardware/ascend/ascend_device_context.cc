@@ -346,17 +346,12 @@ void AscendDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) co
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   MS_LOG(INFO) << "Status record: start create kernel.";
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
+  PROF_START(create_kernel);
   auto ret = device::ascend::KernelBuild(nodes);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Kernel build error.";
   }
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "CreateKernel finish run in " << cost << " us.";
+  PROF_END(create_kernel);
   MS_LOG(INFO) << "Status record: end create kernel.";
 }
 
@@ -385,6 +380,7 @@ void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_gr
 void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start preprocess before run graph. graph id: " << graph->graph_id();
+  PROF_START(preprocess_before_run_graph);
   if (graph->is_executing_sink()) {
     device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
     UpdateExecOrder(graph);
@@ -405,6 +401,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     GenKernelEvents(NOT_NULL(graph));
   }
 
+  PROF_END(preprocess_before_run_graph);
   MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << graph->graph_id();
 }
 
@@ -449,6 +446,7 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
 
 void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const {
   MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << root_graph->graph_id();
+  PROF_START(graph_memory_alloc);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->ClearGlobalIdleMem();
   memo_.clear();
@@ -460,6 +458,7 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   runtime_instance_->AssignDynamicMemory(*root_graph.get());
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());
 
+  PROF_END(graph_memory_alloc);
   MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << root_graph->graph_id()
                << ", Memory Statistics: " << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
   MS_LOG(INFO) << "The dynamic memory pool total size is: "
@@ -497,13 +496,15 @@ void AscendDeviceContext::AssignInputMemory(const NotNull<KernelGraphPtr> &graph
 }
 
 void AscendDeviceContext::LoadModel(const NotNull<KernelGraphPtr> &root_graph) const {
-  MS_LOG(INFO) << "Start LoadModel for graph " << root_graph->graph_id();
+  MS_LOG(INFO) << "Status record: start load model. graph id: " << root_graph->graph_id();
+  PROF_START(load_model);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   bool ret_ok = runtime_instance_->Load(*root_graph.get(), true);
   if (!ret_ok) {
     MS_LOG(EXCEPTION) << "Load task error!";
   }
-  MS_LOG(INFO) << "Finish!";
+  PROF_END(load_model);
+  MS_LOG(INFO) << "Status record: end load model. graph id: " << root_graph->graph_id();
 }
 
 bool AscendDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
@@ -587,6 +588,7 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
 
 bool AscendDeviceContext::LaunchGraph(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: start launch graph. graph id: " << graph->graph_id();
+  PROF_START(launch_graph);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
@@ -598,6 +600,7 @@ bool AscendDeviceContext::LaunchGraph(const KernelGraphPtr &graph) const {
     return ret;
   }
   ReportWarningMessage();
+  PROF_END(launch_graph);
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << graph->graph_id();
   return ret;
 }

@@ -311,6 +311,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
 
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_LOG(INFO) << "Status record: start ascend ir fusion pass. graph id: " << kernel_graph->graph_id();
+  PROF_START(ir_fusion);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
@@ -356,6 +357,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     DumpIR(file_name, kernel_graph);
   }
 #endif
+  PROF_END(ir_fusion);
   MS_LOG(INFO) << "Status record: end ascend ir fusion pass. graph id: " << kernel_graph->graph_id();
 }
 
@@ -432,6 +434,7 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
 void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_LOG(INFO) << "Status record: start ascend backend(data layer & mix precision ...) pass. graph id: "
                << kernel_graph->graph_id();
+  PROF_START(ascend_backend_optimization);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
@@ -490,6 +493,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     kernel_graph->DumpFuncGraph("hwopt_d_end");
   }
 #endif
+  PROF_END(ascend_backend_optimization);
   MS_LOG(INFO) << "Status record: end ascend backend(data layer & mix precision ...) pass. graph id: "
                << kernel_graph->graph_id();
 }

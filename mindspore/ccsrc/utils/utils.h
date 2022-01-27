@@ -784,10 +784,10 @@ static inline uint64_t GetCurrentUSec() {
 }
 
 #define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
-#define PROF_END(stage)                                                                         \
-  do {                                                                                          \
-    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();                                    \
-    MS_LOG(INFO) << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
+#define PROF_END(stage)                                                                                     \
+  do {                                                                                                      \
+    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();                                                \
+    MS_LOG(INFO) << "[PROF]" << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
   } while (0)
 
 #define PROF_MULTI_DEFINE(stage)     \
