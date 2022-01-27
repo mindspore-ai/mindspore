@@ -1036,6 +1036,23 @@ TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: MaskAlongAxisIID
+/// Description: test MaskAlongAxisIID
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestExecute, TestMaskAlongAxisIID) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMaskAlongAxisIID.";
+  // testing
+  std::shared_ptr<Tensor> input;
+  TensorShape s = TensorShape({1, 1, 4, 4});
+  ASSERT_OK(Tensor::CreateFromVector(std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f,
+                                                         2.0f, 1.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> mask_along_axisiid_op = std::make_shared<audio::MaskAlongAxisIID>(3, 9.0, 2);
+  mindspore::dataset::Execute transform({mask_along_axisiid_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}
+
 /// Feature: Overdrive
 /// Description: test invalid parameter of Overdrive
 /// Expectation: throw exception correctly

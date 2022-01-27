@@ -29,9 +29,10 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_highpass_biquad, \
-    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mel_scale, check_mu_law_coding, \
-    check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
-    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+    check_lfilter, check_lowpass_biquad, check_magphase, check_mask_along_axis_iid, check_masking, check_mel_scale, \
+    check_mu_law_coding, check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, \
+    check_sliding_window_cmn, check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, \
+    check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -947,6 +948,37 @@ class Magphase(AudioTensorOperation):
 
     def parse(self):
         return cde.MagphaseOperation(self.power)
+
+
+class MaskAlongAxisIID(AudioTensorOperation):
+    """
+    Apply a mask along `axis`. Mask will be applied from indices `[mask_start, mask_start + mask_width)`, where
+    `mask_width` is sampled from `uniform[0, mask_param]`, and `mask_start` from `uniform[0, max_length - mask_width]`,
+    `max_length` is the number of columns of the specified axis of the spectrogram.
+
+    Args:
+        mask_param (int): Number of columns to be masked, will be uniformly sampled from
+            [0, mask_param], must be non negative.
+        mask_value (float): Value to assign to the masked columns.
+        axis (int): Axis to apply masking on (1 for frequency and 2 for time).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform= np.random.random(1, 20, 20)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.MaskAlongAxisIID(5, 0.5, 2)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_mask_along_axis_iid
+    def __init__(self, mask_param, mask_value, axis):
+        self.mask_param = mask_param
+        self.mask_value = mask_value
+        self.axis = axis
+
+    def parse(self):
+        return cde.MaskAlongAxisIIDOperation(self.mask_param, self.mask_value, self.axis)
 
 
 DE_C_MEL_TYPE = {MelType.SLANEY: cde.MelType.DE_MEL_TYPE_SLANEY,

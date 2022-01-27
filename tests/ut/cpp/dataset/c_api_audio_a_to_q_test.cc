@@ -2341,3 +2341,107 @@ TEST_F(MindDataTestPipeline, TestPhaseVocoderWrongArgs) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: MaskAlongAxisIID
+/// Description: test MaskAlongAxisIID pipeline
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisIIDPipeline.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 200, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  int mask_param = 40;
+  float mask_value = 1.0;
+  int axis = 1;
+  auto MaskAlongAxisIID = audio::MaskAlongAxisIID(mask_param, mask_value, axis);
+
+  ds = ds->Map({MaskAlongAxisIID});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  // Now the parameter check for RandomNode would fail and we would end up with a nullptr iter.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 1, 200, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 4);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+/// Feature: MaskAlongAxisIID
+/// Description: test MaskAlongAxisIID wrong args
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDInvalidMaskParam) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisIIDInvalidMaskParam.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 20, 20}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  // The negative mask_param is invalid
+  int mask_param = -10;
+  float mask_value = 1.0;
+  int axis = 2;
+  auto MaskAlongAxisIID = audio::MaskAlongAxisIID(mask_param, mask_value, axis);
+
+  ds = ds->Map({MaskAlongAxisIID});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  // Now the parameter check for RandomNode would fail and we would end up with a nullptr iter.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: MaskAlongAxisIID
+/// Description: test MaskAlongAxisIID wrong axis
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestMaskAlongAxisInvaildAxis) {
+  MS_LOG(INFO) << "MindDataTestPipeline-TestMaskAlongAxisInvaildAxis.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 1, 20, 20}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  // The axis value is invilid
+  int mask_param = 10;
+  float mask_value = 1.0;
+  int axis = 0;
+  auto MaskAlongAxisIID = audio::MaskAlongAxisIID(mask_param, mask_value, axis);
+
+  ds = ds->Map({MaskAlongAxisIID});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  // Now the parameter check for RandomNode would fail and we would end up with a nullptr iter.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

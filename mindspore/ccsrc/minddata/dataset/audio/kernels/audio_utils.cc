@@ -562,6 +562,13 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
       std::to_string(input_shape[check_dim_ind]));
 
+  if (mask_width == 0) {
+    // unsqueeze input
+    (void)input->Reshape(input_shape);
+    *output = input;
+    return Status::OK();
+  }
+
   int32_t cell_size = input->type().SizeInBytes();
 
   if (axis == 1) {
@@ -578,7 +585,8 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
                                      "MaskAlongAxis: mask failed, memory copy error.");
       } else {
         // tensor float 64
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+        auto mask_val = static_cast<double>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
                                      "MaskAlongAxis: mask failed, memory copy error.");
       }
     }
@@ -595,7 +603,8 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
                                      "MaskAlongAxis: mask failed, memory copy error.");
       } else {
         // tensor float 64
-        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_value, cell_size) == 0,
+        auto mask_val = static_cast<double>(mask_value);
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size) == 0,
                                      "MaskAlongAxis: mask failed, memory copy error.");
       }
     }

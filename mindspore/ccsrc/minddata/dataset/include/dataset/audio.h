@@ -616,6 +616,30 @@ class MS_API Magphase final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief MaskAlongAxisIID TensorTransform.
+/// \note Apply a mask along axis.
+class MaskAlongAxisIID final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] mask_param Number of columns to be masked, will be uniformly sampled from [0, mask_param],
+  ///     must be non negative.
+  /// \param[in] mask_value Value to assign to the masked columns.
+  /// \param[in] axis Axis to apply masking on (1 for frequency and 2 for time).
+  MaskAlongAxisIID(int32_t mask_param, float mask_value, int32_t axis);
+
+  /// \brief Destructor.
+  ~MaskAlongAxisIID() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief MelScale TensorTransform.
 /// \notes Convert normal STFT to STFT at the Mel scale.
 class MS_API MelScale final : public TensorTransform {

@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mask_along_axis_iid_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
@@ -465,6 +466,22 @@ struct Magphase::Data {
 Magphase::Magphase(float power) : data_(std::make_shared<Data>(power)) {}
 
 std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<MagphaseOperation>(data_->power_); }
+
+// MaskAlongAxisIID Transform Operation.
+struct MaskAlongAxisIID::Data {
+  Data(int32_t mask_param, float mask_value, int32_t axis)
+      : mask_param_(mask_param), mask_value_(mask_value), axis_(axis) {}
+  int32_t mask_param_;
+  float mask_value_;
+  int32_t axis_;
+};
+
+MaskAlongAxisIID::MaskAlongAxisIID(int32_t mask_param, float mask_value, int32_t axis)
+    : data_(std::make_shared<Data>(mask_param, mask_value, axis)) {}
+
+std::shared_ptr<TensorOperation> MaskAlongAxisIID::Parse() {
+  return std::make_shared<MaskAlongAxisIIDOperation>(data_->mask_param_, data_->mask_value_, data_->axis_);
+}
 
 // MelScale Transform Operation.
 struct MelScale::Data {
