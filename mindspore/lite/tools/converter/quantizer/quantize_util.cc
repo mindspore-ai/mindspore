@@ -262,6 +262,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   auto status = fb_transform.Transform(flags);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
+    delete meta_graph;
     return sm;
   }
   meta_graph->version = Version();
@@ -274,11 +275,13 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer return null";
+    delete meta_graph;
     return sm;
   }
   auto model = lite::Model::Import(content, *size);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
+    delete meta_graph;
     return sm;
   }
   Context ctx;
