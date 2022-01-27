@@ -299,8 +299,8 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   new_list.emplace_back(item);
   MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-  if (enable_eliminate_unused_element) {
-    for (auto &weak_node : list->sequence_nodes()) {
+  if (enable_eliminate_unused_element && list->sequence_nodes() != nullptr) {
+    for (auto &weak_node : *list->sequence_nodes()) {
       auto node = weak_node.lock();
       if (node == nullptr) {
         MS_LOG(DEBUG) << "The node in sequence_nodes is free.";

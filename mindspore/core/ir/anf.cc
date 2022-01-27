@@ -647,10 +647,10 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, 
   if (sequence_abs == nullptr) {
     return;
   }
-  if (sequence_abs->sequence_nodes().empty()) {
+  if (sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
-  for (auto &node : sequence_abs->sequence_nodes()) {
+  for (auto &node : *sequence_abs->sequence_nodes()) {
     auto sequence_node = node.lock();
     if (sequence_node == nullptr) {
       MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
@@ -681,10 +681,10 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
   if (sequence_abs == nullptr) {
     return;
   }
-  if (sequence_abs->sequence_nodes().empty()) {
+  if (sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
-  for (auto &weak_node : sequence_abs->sequence_nodes()) {
+  for (auto &weak_node : *sequence_abs->sequence_nodes()) {
     auto sequence_node = weak_node.lock();
     if (sequence_node == nullptr) {
       MS_LOG(DEBUG) << "The node in sequence_nodes is free.";

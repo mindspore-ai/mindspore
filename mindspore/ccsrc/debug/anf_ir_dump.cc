@@ -62,13 +62,13 @@ void PrintKernelFormatAndType(std::ostringstream &buffer, const std::string &fmt
 }
 
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
-  if (sequence_abs == nullptr || sequence_abs->sequence_nodes().empty()) {
+  if (sequence_abs == nullptr || sequence_abs->sequence_nodes() == nullptr || sequence_abs->sequence_nodes()->empty()) {
     return;
   }
 
   buffer << ", sequence_nodes={";
-  for (size_t i = 0; i < sequence_abs->sequence_nodes().size(); ++i) {
-    auto node = sequence_abs->sequence_nodes()[i].lock();
+  for (size_t i = 0; i < sequence_abs->sequence_nodes()->size(); ++i) {
+    auto node = (*sequence_abs->sequence_nodes())[i].lock();
     if (node == nullptr) {
       MS_LOG(DEBUG) << "The node in sequence_nodes is free.";
       buffer << "node={<freed node>}";
@@ -80,7 +80,7 @@ void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::Abstrac
       }
       buffer << "}";
     }
-    if (i != sequence_abs->sequence_nodes().size() - 1) {
+    if (i != sequence_abs->sequence_nodes()->size() - 1) {
       buffer << ", ";
     }
   }

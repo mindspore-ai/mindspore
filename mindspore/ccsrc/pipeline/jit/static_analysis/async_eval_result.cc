@@ -108,6 +108,7 @@ void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_pt
                 << " The infer_thread_count: " << infer_thread_count_
                 << " schedule list size: " << schedule_list_.size();
 }
+
 void AnalysisSchedule::SetNextReady() {
   if (schedule_list_.empty()) {
     return;
@@ -260,6 +261,8 @@ void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const A
       abstract_list.push_back(previous_abs);
       abstract_list.push_back(current_abs);
       // Join two branches's result
+      MS_LOG(DEBUG) << "Join node: " << conf->node()->DebugString() << ", previous_abs: " << previous_abs->ToString()
+                    << ", and current_abs: " << current_abs->ToString();
       auto joined_result = AnalysisEngine::ProcessEvalResults(abstract_list, conf->node());
       async_eval_result->set_result(joined_result->abstract());
     } else {
