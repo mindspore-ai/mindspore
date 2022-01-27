@@ -31,6 +31,8 @@ class GatherV2CpuKernelMod : public NativeCpuKernelMod {
   GatherV2CpuKernelMod() = default;
   ~GatherV2CpuKernelMod() override = default;
 
+  void CheckParam(const CNodePtr &kernel_node);
+
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
