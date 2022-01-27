@@ -2012,6 +2012,16 @@ test_case_nn_ops = [
         'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
+    ('Coalesce', {
+        'block': P.Coalesce(),
+        'desc_inputs': [
+            Tensor(np.array([[0, 0], [1, 1]]).astype(np.int64)),
+            Tensor(np.array([1, 2]).astype(np.float32)),
+            Tensor(np.array([2, 2]).astype(np.int64))],
+        'desc_bprop': [
+            Tensor(np.array([[0], [1]]).astype(np.int64)),
+            Tensor(np.array([3]).astype(np.float32)),
+            Tensor(np.array([2, 2]).astype(np.int64))]}),
     ('TopK', {
         'block': P.TopK(),
         'desc_const': [5],
