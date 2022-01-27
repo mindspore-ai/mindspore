@@ -317,6 +317,19 @@ class Dataset:
         Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
         as a destructor for a processingPool object.
         """
+        # del all the SharedQueue when close the pool
+        if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
+            arg_q_list_len = len(self._arg_q_list)
+            for idx in range(arg_q_list_len):
+                del self._arg_q_list[arg_q_list_len - idx - 1]
+            del self._arg_q_list
+
+        if hasattr(self, '_res_q_list') and self._res_q_list is not None:
+            res_q_list_len = len(self._res_q_list)
+            for idx in range(res_q_list_len):
+                del self._res_q_list[res_q_list_len - idx - 1]
+            del self._res_q_list
+
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
         for child in self.children:
@@ -2405,12 +2418,12 @@ class BatchDataset(UnionBaseDataset):
         """
         Per iterator bootstrap callback.
         """
+        self._arg_q_list = []
+        self._res_q_list = []
         if self.python_multiprocessing:
             if self.per_batch_map is None:
                 logger.warning("per_batch_map is None so python_multiprocessing does not work.")
                 return
-            arg_q_list = []
-            res_q_list = []
 
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is not None:
@@ -2421,14 +2434,15 @@ class BatchDataset(UnionBaseDataset):
             if get_enable_shared_mem():
                 _check_shm_usage(num_parallel, 1, self.max_rowsize * self.batch_size, 2)
                 for _ in range(num_parallel):
-                    arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
-                    res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
+                    self._arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
+                    self._res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize * self.batch_size))
 
             # Construct pool with the callable list
             # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
             self.process_pool = multiprocessing.Pool(processes=num_parallel,
                                                      initializer=_pyfunc_worker_init,
-                                                     initargs=([self.per_batch_map], arg_q_list, res_q_list))
+                                                     initargs=([self.per_batch_map],
+                                                               self._arg_q_list, self._res_q_list))
 
             idx = 0
             global _OP_NAME, _OP_PROCESS, _LOCK
@@ -2442,7 +2456,8 @@ class BatchDataset(UnionBaseDataset):
                 _OP_PROCESS.update(process_id)
 
             # Wrap per_batch_map into _PythonCallable
-            self.per_batch_map = _PythonCallable(self.per_batch_map, idx, self.process_pool, arg_q_list, res_q_list)
+            self.per_batch_map = _PythonCallable(self.per_batch_map, idx, self.process_pool,
+                                                 self._arg_q_list, self._res_q_list)
             self.hook = _ExceptHookHandler()
 
             # batch will launch a watch dog thread to monitoring sub processes
@@ -2468,6 +2483,17 @@ class BatchDataset(UnionBaseDataset):
             self.eot.set()
 
     def __del__(self):
+        # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
+        arg_q_list_len = len(self._arg_q_list)
+        for idx in range(arg_q_list_len):
+            del self._arg_q_list[arg_q_list_len - idx - 1]
+        del self._arg_q_list
+
+        res_q_list_len = len(self._res_q_list)
+        for idx in range(res_q_list_len):
+            del self._res_q_list[res_q_list_len - idx - 1]
+        del self._res_q_list
+
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
         if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
@@ -2995,12 +3021,11 @@ class MapDataset(UnionBaseDataset):
         """
         Per iterator bootstrap callback.
         """
-
+        self._arg_q_list = []
+        self._res_q_list = []
         if self.python_multiprocessing:
             iter_specific_operations = []
             callable_list = []
-            arg_q_list = []
-            res_q_list = []
 
             # If user didn't specify num_parallel_workers, set it to default
             num_parallel = get_num_parallel_workers()
@@ -3010,8 +3035,8 @@ class MapDataset(UnionBaseDataset):
             if get_enable_shared_mem():
                 _check_shm_usage(num_parallel, 1, self.max_rowsize, 2)
                 for _ in range(num_parallel):
-                    arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
-                    res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
+                    self._arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
+                    self._res_q_list.append(_SharedQueue(1, max_rowsize=self.max_rowsize))
 
             # Pass #1, look for Python callables and build list
             for op in self.operations:
@@ -3024,7 +3049,7 @@ class MapDataset(UnionBaseDataset):
                 # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
                 self.process_pool = multiprocessing.Pool(processes=num_parallel,
                                                          initializer=_pyfunc_worker_init,
-                                                         initargs=(callable_list, arg_q_list, res_q_list))
+                                                         initargs=(callable_list, self._arg_q_list, self._res_q_list))
 
                 # Pass #2
                 idx = 0
@@ -3042,7 +3067,7 @@ class MapDataset(UnionBaseDataset):
                     if MapDataset.__operation_valid_for_multiprocessing(op):
                         # Wrap Python callable into _PythonCallable
                         iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool,
-                                                                        arg_q_list, res_q_list))
+                                                                        self._arg_q_list, self._res_q_list))
                         idx += 1
                     else:
                         # CPP ops remain the same
@@ -3076,6 +3101,17 @@ class MapDataset(UnionBaseDataset):
             self.eot.set()
 
     def __del__(self):
+        # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
+        arg_q_list_len = len(self._arg_q_list)
+        for idx in range(arg_q_list_len):
+            del self._arg_q_list[arg_q_list_len - idx - 1]
+        del self._arg_q_list
+
+        res_q_list_len = len(self._res_q_list)
+        for idx in range(res_q_list_len):
+            del self._res_q_list[res_q_list_len - idx - 1]
+        del self._res_q_list
+
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
             self.process_pool.join()
