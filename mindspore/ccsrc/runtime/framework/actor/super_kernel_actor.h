@@ -44,8 +44,6 @@ class SuperKernelActor : public DebugAwareActor {
   }
   ~SuperKernelActor() override = default;
 
-  void Init() override;
-
   size_t FetchInputNodePosition(const AnfNodePtr &intput_node);
 
   // The debug related operation interface.
@@ -54,6 +52,7 @@ class SuperKernelActor : public DebugAwareActor {
   const KernelGraphPtr &graph() const { return graph_; }
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
   // The input may come from the control actor, so need free the input memory by the dynamic ref count.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;

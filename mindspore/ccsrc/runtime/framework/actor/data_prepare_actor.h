@@ -49,8 +49,6 @@ class DataPrepareActor : public DebugAwareActor {
         host_tensor_queue_(host_tensor_queue) {}
   ~DataPrepareActor() override = default;
 
-  void Init() override;
-
   // The process entry of data prepare.
   void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, OpContext<DeviceTensor> *const context,
                    GraphExecutionStrategy real_strategy);
@@ -66,6 +64,9 @@ class DataPrepareActor : public DebugAwareActor {
   const std::map<std::pair<CNodePtr, DeviceContext *>, std::pair<bool, bool>> &continuous_memory_nodes() const {
     return continuous_memory_nodes_;
   }
+
+ protected:
+  void Init() override;
 
  private:
   friend class GraphScheduler;

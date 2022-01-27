@@ -46,11 +46,11 @@ class DataSourceActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid), buffer_capacity_(buffer_capacity) {}
   virtual ~DataSourceActor() = default;
 
-  void Init() override;
-
  protected:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+
+  void Init() override;
 
   void Run(OpContext<DeviceTensor> *const context) override { FetchData(context); }
 
@@ -79,8 +79,6 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   }
   ~DeviceQueueDataSourceActor() override = default;
 
-  void Init() override;
-
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
@@ -92,6 +90,7 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   const CNodePtr &data_kernel() const { return data_kernel_; }
 
  protected:
+  void Init() override;
   void FillDataBuffer() override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
@@ -110,8 +109,8 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 // The class represents that the data source is host queue.
 class HostQueueDataSourceActor : public DataSourceActor {
  public:
-  HostQueueDataSourceActor(std::string name, size_t buffer_capacity, const AID memory_manager_aid, const AID *debug_aid,
-                           const AID *recorder_aid, HostTensorQueuePtr host_queue)
+  HostQueueDataSourceActor(const std::string &name, size_t buffer_capacity, const AID &memory_manager_aid,
+                           const AID *debug_aid, const AID *recorder_aid, const HostTensorQueuePtr &host_queue)
       : DataSourceActor(name, KernelTransformType::kHostDataSourceActor, buffer_capacity, memory_manager_aid, debug_aid,
                         recorder_aid),
         host_queue_(host_queue) {}

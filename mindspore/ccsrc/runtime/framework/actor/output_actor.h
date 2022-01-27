@@ -54,8 +54,6 @@ class OutputActor : public AbstractActor {
   }
   ~OutputActor() override = default;
 
-  void Init() override;
-
   // The output actor collects loop count when receive the input control of loop count actor.
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
@@ -70,6 +68,9 @@ class OutputActor : public AbstractActor {
   size_t loop_count() const { return loop_count_; }
   size_t outputs_num() const { return outputs_num_; }
   std::vector<TensorPtr> &outputs() { return outputs_; }
+
+ protected:
+  void Init() override;
 
  private:
   friend class GraphScheduler;
