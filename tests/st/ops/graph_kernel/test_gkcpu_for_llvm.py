@@ -15,6 +15,7 @@
 
 import os
 import shutil
+import platform
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -36,18 +37,19 @@ class Net(Cell):
 
 
 def gktest_for_llvm():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU",
-                        enable_graph_kernel=True, graph_kernel_flags="--dump_as_text")
-    i0 = np.random.uniform(1, 2, [1, 1024]).astype(np.float32)
-    i1 = np.random.uniform(1, 2, [1024, 1024]).astype(np.float32)
-    net_obj = Net()
-    output = net_obj(Tensor(i0), Tensor(i1)).asnumpy().copy()
-    expect = (i0 + i1) * i1
-    if os.path.exists("./graph_kernel_dump"):
+    if platform.system() == "Linux":
+        context.set_context(mode=context.GRAPH_MODE, device_target="CPU",
+                            enable_graph_kernel=True, graph_kernel_flags="--dump_as_text")
+        i0 = np.random.uniform(1, 2, [1, 1024]).astype(np.float32)
+        i1 = np.random.uniform(1, 2, [1024, 1024]).astype(np.float32)
+        net_obj = Net()
+        output = net_obj(Tensor(i0), Tensor(i1)).asnumpy().copy()
+        expect = (i0 + i1) * i1
+        assert os.path.exists("./graph_kernel_dump")
         shutil.rmtree("./graph_kernel_dump")
         assert np.allclose(output, expect, rtol=1.e-4, atol=1.e-4, equal_nan=True)
     else:
-        assert False
+        pass
 
 
 @pytest.mark.level0
