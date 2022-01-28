@@ -203,12 +203,22 @@ class _Context:
         self.set_param(ms_ctx_param.save_graphs_path, _make_directory(save_graphs_path))
 
     def set_device_target(self, target):
+        """
+        The target device to run, support "Ascend", "GPU", and "CPU".
+
+        Args:
+            target (str): "Ascend", "GPU", and "CPU".
+        """
         valid_targets = ["CPU", "GPU", "Ascend", "Davinci"]
         if not target in valid_targets:
             raise ValueError(f"For 'context.set_context', the argument 'device_target' must be one of "
                              f"{valid_targets}, but got {target}.")
         if target == "Davinci":
             target = "Ascend"
+            logger.warning("The device 'Davinci' is deprecated and will be removed in the next version. "
+                           "For 'context.set_context', please set the argument 'device_target' "
+                           "to 'CPU', 'GPU' or 'Ascend',if you set it to 'Davinci', it will be automatically "
+                           "changed to 'Ascend'.")
         self.set_param(ms_ctx_param.device_target, target)
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
