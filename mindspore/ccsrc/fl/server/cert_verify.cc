@@ -90,7 +90,7 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
     MS_LOG(WARNING) << "cert end time is sooner than now time.";
     return false;
   }
-  MS_LOG(WARNING) << "verify cert time end.";
+  MS_LOG(DEBUG) << "verify cert time end.";
   return true;
 }
 
@@ -128,7 +128,7 @@ bool CertVerify::verifyPublicKey(const X509 *keyAttestationCertObj, const X509 *
   EVP_PKEY_free(equipCAPubKey);
   EVP_PKEY_free(rootFirstPubKey);
   EVP_PKEY_free(rootSecondPubKey);
-  MS_LOG(WARNING) << "verify Public Key end.";
+  MS_LOG(DEBUG) << "verify Public Key end.";
   return result;
 }
 
@@ -198,7 +198,7 @@ bool CertVerify::verifyCAChain(const std::string &keyAttestation, const std::str
   X509_free(keyAttestationCertObj);
   X509_free(equipCertObj);
   X509_free(equipCACertObj);
-  MS_LOG(WARNING) << "verifyCAChain end.";
+  MS_LOG(DEBUG) << "verifyCAChain end.";
   return result;
 }
 
@@ -275,7 +275,7 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
       result = false;
       break;
     }
-    MS_LOG(WARNING) << "Subject Type is CA.";
+    MS_LOG(DEBUG) << "Subject Type is CA.";
 
     lASN1UsageStr = reinterpret_cast<ASN1_BIT_STRING *>(X509_get_ext_d2i(cert, NID_key_usage, NULL, NULL));
     if (lASN1UsageStr == nullptr) {
@@ -293,7 +293,7 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
       result = false;
       break;
     }
-    MS_LOG(WARNING) << "Subject is Certificate Signature.";
+    MS_LOG(DEBUG) << "Subject is Certificate Signature.";
   } while (0);
   BASIC_CONSTRAINTS_free(bcons);
   ASN1_BIT_STRING_free(lASN1UsageStr);
@@ -346,7 +346,7 @@ bool CertVerify::verifyCRL(const std::string &equipCert, const std::string &equi
     }
 
     if (equipCrl == nullptr) {
-      MS_LOG(WARNING) << "equipCrl is nullptr. return true.";
+      MS_LOG(DEBUG) << "equipCrl is nullptr. return true.";
       result = true;
       break;
     }
@@ -362,7 +362,7 @@ bool CertVerify::verifyCRL(const std::string &equipCert, const std::string &equi
   EVP_PKEY_free(evp_pkey);
   X509_free(equipCertObj);
   X509_CRL_free(equipCrl);
-  MS_LOG(WARNING) << "verifyCRL end.";
+  MS_LOG(DEBUG) << "verifyCRL end.";
   return result;
 }
 
@@ -420,7 +420,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
   X509_free(keyAttestationCertObj);
   CRYPTO_cleanup_all_ex_data();
 
-  MS_LOG(WARNING) << "verifyRSAKey end.";
+  MS_LOG(DEBUG) << "verifyRSAKey end.";
   return result;
 }
 
@@ -465,7 +465,7 @@ bool CertVerify::verifyEquipCertAndFlID(const std::string &flID, const std::stri
   sha256Hash(equipCert, hash, SHA256_DIGEST_LENGTH);
   std::string equipCertSha256 = toHexString(hash, SHA256_DIGEST_LENGTH);
   if (flID == equipCertSha256) {
-    MS_LOG(WARNING) << "verifyEquipCertAndFlID success.";
+    MS_LOG(DEBUG) << "verifyEquipCertAndFlID success.";
     return true;
   } else {
     MS_LOG(WARNING) << "verifyEquipCertAndFlID failed.";
@@ -482,13 +482,13 @@ bool CertVerify::verifyTimeStamp(const std::string &flID, const std::string &tim
     return false;
   }
   int64_t now = tv.tv_sec * base + tv.tv_usec / base;
-  MS_LOG(WARNING) << "flID: " << flID.c_str() << ",now time: " << now << ",requestTime: " << requestTime;
+  MS_LOG(DEBUG) << "flID: " << flID.c_str() << ",now time: " << now << ",requestTime: " << requestTime;
 
   int64_t diff = now - requestTime;
   if (abs(diff) > replayAttackTimeDiff) {
     return false;
   }
-  MS_LOG(WARNING) << "verifyTimeStamp success.";
+  MS_LOG(DEBUG) << "verifyTimeStamp success.";
   return true;
 }
 
@@ -559,7 +559,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
   X509_free(keyAttestationCertObj);
   CRYPTO_cleanup_all_ex_data();
 
-  MS_LOG(WARNING) << "verifyRSAKey end.";
+  MS_LOG(DEBUG) << "verifyRSAKey end.";
   return result;
 }
 

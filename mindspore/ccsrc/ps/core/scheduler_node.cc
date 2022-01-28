@@ -516,8 +516,8 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
                       << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending metadata to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " send metadata to workers and servers!";
 }
 
 void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
@@ -590,8 +590,8 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
     return;
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " send event resp to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {

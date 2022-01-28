@@ -184,7 +184,7 @@ bool ClientListKernel::Launch(const uint8_t *req_data, size_t len,
       GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
-    MS_LOG(INFO) << "verify signature passed!";
+    MS_LOG(DEBUG) << "verify signature passed!";
   }
 
   size_t iter_client = IntToSize(get_clients_req->iteration());

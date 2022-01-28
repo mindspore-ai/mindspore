@@ -67,6 +67,8 @@ class UpdateModelKernel : public RoundKernel {
 
   // The time window of one iteration.
   size_t iteration_time_window_{0};
+
+  std::unique_ptr<std::thread> last_count_thread_;
 };
 }  // namespace kernel
 }  // namespace server
