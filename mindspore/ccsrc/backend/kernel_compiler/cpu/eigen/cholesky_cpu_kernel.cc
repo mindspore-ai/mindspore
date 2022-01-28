@@ -34,7 +34,7 @@ constexpr size_t kColIndex = 1;
 template <typename T>
 void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
-    MS_LOG_EXCEPTION << kernel_name_ << "shape is invalid.";
+    MS_LOG_EXCEPTION << kernel_name_ << " input shape is invalid.";
   }
   if (shape.size() == kDefaultShape) {
     *row = shape.front();
@@ -62,8 +62,13 @@ void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
-  lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-  clean_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
+  // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
+  if (AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
+    clean_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
+  }
+  if (AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
+    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+  }
 }
 
 template <typename T>

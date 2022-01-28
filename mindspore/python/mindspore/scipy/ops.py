@@ -106,35 +106,20 @@ class SolveTriangular(PrimitiveWithInfer):
 class Cholesky(PrimitiveWithInfer):
     """
     Inner API Cholesky Compute the Cholesky decomposition of a matrix.
+    clean is a special args for mindspore.scipy to indicate whether clean useless triangular matrix data.
     """
 
     @prim_attr_register
-    def __init__(self, lower=False, clean=True, split_dim=0):
+    def __init__(self, clean=True):
         super().__init__("Cholesky")
         self.init_prim_io_names(inputs=['a'], outputs=['l'])
-        self.lower = validator.check_value_type("lower", lower, [bool], self.name)
         self.clean = validator.check_value_type("clean", clean, [bool], self.name)
-        self.lower = lower
-        self.add_prim_attr('lower', self.lower)
         self.clean = clean
         self.add_prim_attr('clean', self.clean)
-        self.split_dim = split_dim
-        self.add_prim_attr('split_dim', self.split_dim)
 
     def __infer__(self, a):
         a_shape = a['shape']
-        if self.split_dim != 0:
-            height = [0]
-            width = a_shape[1]
-            if height <= self.split_dim:
-                out_shape = [1, height, width]
-            else:
-                batch = height // self.split_dim
-                if height != batch * self.split_dim:
-                    batch += 1
-                out_shape = [batch, self.split_dim, self.split_dim]
-        else:
-            out_shape = a_shape
+        out_shape = a_shape
         output = {
             'shape': tuple(out_shape),
             'dtype': a['dtype'],

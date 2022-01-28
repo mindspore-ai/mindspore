@@ -16,6 +16,7 @@
 from .. import numpy as mnp
 from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
 from .ops_wrapper import matrix_set_diag
+from .utils_const import _raise_value_error
 from .. import dtype as mstype
 from ..ops import operations as P
 from ..ops import functional as F
@@ -53,17 +54,21 @@ def get_bprop_cholesky(self):
     """Grad definition for `Cholesky` operation."""
     inverse = P.MatrixInverse()
     matmul = P.MatMul()
+    clean = self.clean
+    if not clean:
+        _raise_value_error(
+            "primitive Cholesky not support attribute clean to be false, right now. please set it to be true.")
 
     def bprop(a, out, dout):
         l = out
         l_inverse = inverse(l)
         dout_middle = matmul(_adjoint(l), dout)
-        middle_diag = 0.5 * mnp.diag(dout_middle)
+        middle_diag = 0.5 * dout_middle.diagonal(0, -2, -1)
         dout_middle = matrix_set_diag(dout_middle, middle_diag)
         dout_middle = _matrix_band_part(dout_middle, -1, 0)
         grad_a = matmul(matmul(_adjoint(l_inverse), dout_middle), l_inverse)
-        grad_a = mnp.tril(grad_a + _adjoint(grad_a))
-        middle_diag = 0.5 * mnp.diag(grad_a)
+        grad_a = _matrix_band_part(grad_a + _adjoint(grad_a), -1, 0)
+        middle_diag = 0.5 * grad_a.diagonal(0, -2, -1)
         grad_a = matrix_set_diag(grad_a, middle_diag)
         return (grad_a,)
 

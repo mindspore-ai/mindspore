@@ -300,8 +300,10 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must have 2 dimensions.")
     if a_shape[-1] != a_shape[-2]:
         _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be a square matrix.")
-    cholesky_net = Cholesky(lower=lower, clean=False)
+    cholesky_net = Cholesky(clean=False)
     c = cholesky_net(a)
+    if not lower:
+        c = c.T
     return c, lower
 
 
@@ -360,9 +362,10 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
     if a_shape[-1] != a_shape[-2]:
         _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be a square matrix.")
-
-    cholesky_net = Cholesky(lower=lower, clean=True)
+    cholesky_net = Cholesky(clean=True)
     c = cholesky_net(a)
+    if not lower:
+        c = c.T
     return c
 
 

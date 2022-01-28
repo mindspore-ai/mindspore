@@ -35,7 +35,7 @@ class CholeskyCpuKernelMod : public NativeCpuKernelMod {
  private:
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
   bool lower_{true};
-  bool clean_{false};
+  bool clean_{true};
   size_t input_row_{1};
   size_t input_col_{1};
   size_t output_row_{1};
