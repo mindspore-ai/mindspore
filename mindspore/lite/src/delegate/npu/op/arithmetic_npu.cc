@@ -206,7 +206,7 @@ int ArithmeticNPUOp::SetNPUInputs(
   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
   auto ret = SetNPUInputs(in_tensors, out_tensors, npu_inputs);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticNPUOp SetNPUInputs failed";
+    MS_LOG(ERROR) << "ArithmeticNPhUOp SetNPUInputs failed";
     return RET_ERROR;
   }
   if (index2_multi_out_index.empty()) {

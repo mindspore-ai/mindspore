@@ -31,18 +31,9 @@ int ConcatNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     return RET_ERROR;
   }
   axis_ = concat_prim->axis();
-  return RET_OK;
-}
-
-int ConcatNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                              const std::vector<mindspore::MSTensor> &out_tensors,
-                              const std::vector<ge::Operator *> &npu_inputs) {
-  concat_->set_attr_concat_dim(axis_);
-  concat_->set_attr_N(npu_inputs.size());
-  concat_->create_dynamic_input_x(npu_inputs.size());
-  for (int i = 0; i < npu_inputs.size(); ++i) {
-    concat_->set_dynamic_input_x(i + 1, *npu_inputs[i]);
-  }
+  auto input_num = in_tensors.size();
+  concat_->set_attr_N(input_num);
+  concat_->create_dynamic_input_x(input_num);
   return RET_OK;
 }
 
@@ -51,8 +42,6 @@ int ConcatNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
                               const std::vector<ge::Operator *> &npu_inputs,
                               const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
   concat_->set_attr_concat_dim(axis_);
-  concat_->set_attr_N(npu_inputs.size());
-  concat_->create_dynamic_input_x(npu_inputs.size());
   for (auto pair : index2_multi_out_index) {
     auto in_op = pair.second.first;
     MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);

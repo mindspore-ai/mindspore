@@ -55,9 +55,6 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     MS_LOG(ERROR) << "New matmul npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
-  if (in_tensors.size() == MATMUL_INPUT_SIZE) {
-    has_bias_ = true;
-  }
   auto matmul_prim = primitive->value_as_MatMulFusion();
   if (matmul_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -66,6 +63,15 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
   matmul_->set_attr_transpose_x1(matmul_prim->transpose_a());
   matmul_->set_attr_transpose_x2(matmul_prim->transpose_b());
   act_type_ = matmul_prim->activation_type();
+
+  if (in_tensors.size() == MATMUL_INPUT_SIZE) {
+    has_bias_ = true;
+    add_op_ = new (std::nothrow) hiai::op::Add(name_ + "_add");
+    if (add_op_ == nullptr) {
+      MS_LOG(ERROR) << "new add op failed.";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -75,11 +81,6 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
   matmul_->set_input_x1(*npu_inputs[0]);
   matmul_->set_input_x2(*npu_inputs[1]);
   if (has_bias_) {
-    add_op_ = new (std::nothrow) hiai::op::Add(name_ + "_add");
-    if (add_op_ == nullptr) {
-      MS_LOG(ERROR) << "new add op failed.";
-      return RET_ERROR;
-    }
     add_op_->set_input_x1(*matmul_);
     auto bias_shape = in_tensors[BIAS_INDEX].Shape();
     auto bias_tensor = ConverterToNPUTensor(in_tensors[BIAS_INDEX]);
@@ -104,7 +105,7 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
   }
   if (act_type_ != schema::ActivationType_NO_ACTIVATION) {
     int ret = RET_ERROR;
-    if (has_bias_ == true) {
+    if (has_bias_) {
       ret = SetActivation(add_op_);
     } else {
       ret = SetActivation(matmul_);

@@ -52,12 +52,12 @@
 #include "src/delegate/npu/op/transpose_npu.h"
 #include "src/delegate/npu/op/unsqueeze_npu.h"
 #include "src/delegate/npu/op/abs_npu.h"
+#include "src/delegate/npu/op/flatten_npu.h"
 #include "src/delegate/npu/npu_graph.h"
 #include "src/delegate/delegate_utils.h"
 #include "src/delegate/npu/pass/npu_transform_pass.h"
 #include "src/delegate/npu/pass/npu_insert_transform_pass.h"
 #include "src/delegate/npu/pass/npu_fusion_pass.h"
-#include "src/delegate/npu/pass/npu_infer_format_pass.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -97,13 +97,6 @@ Status NPUDelegate::AddPasses() {
     return mindspore::kLiteNullptr;
   }
   pass_manager_->AddPass(fusion_pass);
-
-  auto infer_format_pass = new (std::nothrow) NPUInferFormatPass();
-  if (infer_format_pass == nullptr) {
-    MS_LOG(ERROR) << "New NPUInferFormatPass failed.";
-    return mindspore::kLiteNullptr;
-  }
-  pass_manager_->AddPass(infer_format_pass);
   return mindspore::kSuccess;
 }
 

@@ -493,6 +493,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
     auto make_tuple_cnode = func_graph->NewCNode(make_tuple_inputs);
     MSLITE_CHECK_PTR(make_tuple_cnode);
     make_tuple_cnode->set_fullname_with_scope("return_tuple");
+
     auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new Return failed";
