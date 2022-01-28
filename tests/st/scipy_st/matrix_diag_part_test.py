@@ -14,8 +14,8 @@
 # ============================================================================
 """st for scipy.ops_wrapper."""
 import pytest
+import mindspore.scipy as msp
 from mindspore import context, Tensor
-from mindspore.scipy.ops import MatrixDiagPartNet
 from tests.st.scipy_st.utils import match_matrix
 
 aligndict = {0: "LEFT_RIGHT", 1: "LEFT_LEFT", 2: "RIGHT_LEFT", 3: "RIGHT_RIGHT"}
@@ -199,6 +199,8 @@ def test_matrix_diag_part_net_cpu():
         a, kadict = value
         for key1, b in kadict.items():
             k0, k1, align_ = key1
-            msp_matrixdiagpart = MatrixDiagPartNet(align=aligndict[align_])
-            r_b = msp_matrixdiagpart(Tensor(a), Tensor([k0, k1]), Tensor(PAD_VALUE))
+            if k0 == k1:
+                r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), k0, PAD_VALUE, align=aligndict[align_])
+            else:
+                r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), (k0, k1), PAD_VALUE, align=aligndict[align_])
             match_matrix(Tensor(b), Tensor(r_b))
