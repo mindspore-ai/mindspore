@@ -23,11 +23,15 @@ namespace mindspore::kernel {
 int TanhInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
+  const auto &input1_params = input->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input1_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
 
-  tanh_quant_.in_scale_ = input->quant_params().front().scale;
-  tanh_quant_.in_zp_ = input->quant_params().front().zeroPoint;
-  tanh_quant_.out_scale_ = output->quant_params().front().scale;
-  tanh_quant_.out_zp_ = output->quant_params().front().zeroPoint;
+  tanh_quant_.in_scale_ = static_cast<float>(input1_params.front().scale);
+  tanh_quant_.in_zp_ = input1_params.front().zeroPoint;
+  tanh_quant_.out_scale_ = static_cast<float>(output_params.front().scale);
+  tanh_quant_.out_zp_ = output_params.front().zeroPoint;
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -56,7 +60,7 @@ int TanhInt8CPUKernel::DoActivation(int task_id) const {
   return RET_OK;
 }
 
-int TanhInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int TanhInt8Run(void *cdata, int task_id, float, float) {
   auto activation_kernel = reinterpret_cast<TanhInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

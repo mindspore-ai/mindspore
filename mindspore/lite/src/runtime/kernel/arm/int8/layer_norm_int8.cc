@@ -43,24 +43,20 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   lite::Tensor *output = out_tensors_.at(0);
   CHECK_NULL_RETURN(output);
 
+  const auto &input_params = input->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
   quant_param_ = reinterpret_cast<LayerNormQuantArg *>(malloc(sizeof(LayerNormQuantArg)));
   if (quant_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc LayerNormQuantArg for LayerNorm int8 op failed!";
     return RET_ERROR;
   }
-  if (input->quant_params().size() < 1) {
-    MS_LOG(ERROR) << "Get LayerNorm int8 op input tensor quant params error.";
-    return RET_ERROR;
-  }
-  quant_param_->in_zp_ = input->quant_params().front().zeroPoint;
-  quant_param_->in_scale_ = input->quant_params().front().scale;
+  quant_param_->in_zp_ = input_params.front().zeroPoint;
+  quant_param_->in_scale_ = input_params.front().scale;
 
-  if (output->quant_params().size() < 1) {
-    MS_LOG(ERROR) << "Get LayerNorm int8 op output tensor quant params error.";
-    return RET_ERROR;
-  }
-  quant_param_->out_zp_ = output->quant_params().front().zeroPoint;
-  quant_param_->out_scale_ = output->quant_params().front().scale;
+  quant_param_->out_zp_ = output_params.front().zeroPoint;
+  quant_param_->out_scale_ = output_params.front().scale;
 
   lite::Tensor *gamma_tensor = in_tensors_.at(1);
   CHECK_NULL_RETURN(gamma_tensor);
@@ -143,7 +139,7 @@ int LayerNormInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int LayerNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int LayerNormInt8Run(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<LayerNormInt8CPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
   auto ret = kernel->DoExecute(task_id);

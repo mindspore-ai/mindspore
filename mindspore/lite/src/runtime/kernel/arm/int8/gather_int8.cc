@@ -122,7 +122,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   }
 }
 
-int GatherInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int GatherInt8Run(void *cdata, int task_id, float, float) {
   auto gather_kernel = reinterpret_cast<GatherInt8CPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
   if (error_code != RET_OK) {

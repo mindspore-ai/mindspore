@@ -38,6 +38,7 @@ int Unsqueezeint8CPUKernel::Prepare() {
   param_->quant_arg.in_quant_args_.zp_ = quant_params.front().zeroPoint;
 
   auto out_quant_args = input_tensor->quant_params();
+  MS_CHECK_TRUE_RET(!quant_params.empty(), RET_ERROR);
   param_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg.out_quant_args_.zp_ = out_quant_args.front().zeroPoint;
   param_->thread_count_ = thread_count_;
@@ -75,7 +76,7 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
   return RET_OK;
 }
 
-int UnsqueezeIn8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int UnsqueezeIn8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<Unsqueezeint8CPUKernel *>(cdata);
   auto ret = g_kernel->DoUnsqueeze(task_id);

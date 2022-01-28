@@ -53,9 +53,9 @@ int SaturatingRoundingMultiplyByPOT(int32_t x, int exponent);
 
 int32_t Rescale(int x, int kIntegerBitsSrc, int kIntegerBitsDst);
 
-int CountLeadingSignBits(int32_t x);
+uint32_t CountLeadingSignBits(int32_t x);
 
-int32_t ComputerReciprocal(int32_t x, int x_digits, int *recip_shift);
+int32_t ComputerReciprocal(int32_t x, uint32_t x_digits, int *recip_shift);
 
 int exp_on_negative_values(int a, const int tIntegerBits);
 

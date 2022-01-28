@@ -100,15 +100,15 @@ int32_t MaskIfZero(int32_t a) { return MaskIfNonZero(!a); }
 
 int32_t MaskIfLessThan(int32_t a, int32_t b) { return MaskIfNonZero((a < b)); }
 
-int CountLeadingZeroBits(uint32_t x) {
-#if defined(__GUNC__)
-  return x ? __builtin_clz(x) : 8 * sizeof(uint32_t);
-#else
+uint32_t CountLeadingZeroBits(uint32_t x) {
   if (x == 0) {
-    return 8 * sizeof(uint32_t);
+    return 8 * sizeof(uint32_t) - 1;
   }
-  const int32_t leading_positive = (uint32_t)(1) << (8 * sizeof(uint32_t) - 1);
-  int leading_zeros = 0;
+#if defined(__GUNC__)
+  return __builtin_clz(x);
+#else
+  const uint32_t leading_positive = (uint32_t)(1) << (8 * sizeof(uint32_t) - 1);
+  uint32_t leading_zeros = 0;
   while (x < leading_positive) {
     x <<= 1;
     leading_zeros++;
@@ -117,9 +117,12 @@ int CountLeadingZeroBits(uint32_t x) {
 #endif
 }
 
-int CountLeadingSignBits(int32_t x) {
+uint32_t CountLeadingSignBits(int32_t x) {
+  if (x == 0) {
+    return 8 * sizeof(int32_t) - 1;
+  }
 #if defined(__GUNC__) && !defined(__clang__)
-  return x ? __builtin_clrsb(x) : 8 * sizeof(int32_t);
+  return __builtin_clrsb(x);
 #else
   return x >= 0 ? CountLeadingZeroBits((uint32_t)x) - 1 : x != INT32_MIN ? CountLeadingZeroBits(2 * (uint32_t)(-x)) : 0;
 #endif
@@ -163,8 +166,8 @@ int32_t reciprocal_on_interval_between_0_1(int32_t a) {
   return Rescale(x, 2 - 1, 0);
 }
 
-int32_t ComputerReciprocal(int32_t x, int x_digits, int *recip_shift) {
-  int leading_zreos_plus_one = CountLeadingZeroBits((uint32_t)x);
+int32_t ComputerReciprocal(int32_t x, uint32_t x_digits, int *recip_shift) {
+  uint32_t leading_zreos_plus_one = CountLeadingZeroBits((uint32_t)x);
   *recip_shift = x_digits - leading_zreos_plus_one;
   const int32_t shifted_minus_one = (int32_t)(((uint32_t)x << leading_zreos_plus_one) - ((uint32_t)(1) << 31));
   const int32_t shifted_scaled = reciprocal_on_interval_between_0_1(shifted_minus_one);
@@ -229,8 +232,11 @@ void GetSqrtQuantMultiplierExp(int32_t input, int reverse_shift, int32_t *multip
     input /= 4;
     ++*shift;
   }
-  int max_left_shift_bits = CountLeadingSignBits(input);
-  int left_shift_bit_pairs = max_left_shift_bits / 2 - 1;
+  uint32_t max_left_shift_bits = CountLeadingSignBits(input);
+  if (max_left_shift_bits < 2) {
+    return;
+  }
+  uint32_t left_shift_bit_pairs = max_left_shift_bits / 2 - 1;
   *shift -= left_shift_bit_pairs;
   input <<= 2 * left_shift_bit_pairs;
   int32_t fixedpoint_f3_input = input >> 1;  // sign: 1 bit, integer: 3 bit, fractional: 28 bit

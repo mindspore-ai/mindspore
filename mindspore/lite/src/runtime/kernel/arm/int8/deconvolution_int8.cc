@@ -152,13 +152,13 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     MS_LOG(ERROR) << "deconv int8 malloc bias_data_ error!";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, size);
+  (void)memset(bias_data_, 0, size);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     CHECK_NULL_RETURN(bias_tensor);
     auto ori_bias = bias_tensor->data();
     CHECK_NULL_RETURN(ori_bias);
-    memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
+    (void)memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
   }
 
   size_t weight_col_size = UP_ROUND(weight_tensor->Channel(), C4NUM) * weight_tensor->Height() * weight_tensor->Width();
@@ -170,7 +170,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     MS_LOG(ERROR) << "deconv int8 malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, 0, pack_weight_size * sizeof(int8_t));
+  (void)memset(weight_ptr_, 0, pack_weight_size * sizeof(int8_t));
   DeConvWeightTransInt8(reinterpret_cast<int8_t *>(weight_tensor->data()), weight_ptr_, weight_tensor->Batch(),
                         weight_tensor->Channel(), weight_tensor->Height() * weight_tensor->Width(), support_optimize_);
 
@@ -179,7 +179,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     MS_LOG(ERROR) << "deconv int8 malloc weight_sum_ error!";
     return RET_ERROR;
   }
-  memset(weight_sum_, 0, weight_col_size * sizeof(int32_t));
+  (void)memset(weight_sum_, 0, weight_col_size * sizeof(int32_t));
   DeConvPackWeightSum(weight_ptr_, weight_sum_, conv_param_->conv_quant_arg_.input_quant_args_[0].zp_,
                       conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, weight_tensor->Batch(), weight_col_size,
                       support_optimize_);
@@ -194,7 +194,8 @@ int DeConvInt8CPUKernel::InitData() {
   if (input_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
-  memset(input_ptr_, static_cast<int8_t>(conv_param_->conv_quant_arg_.input_quant_args_[0].zp_), size * sizeof(int8_t));
+  (void)memset(input_ptr_, static_cast<int8_t>(conv_param_->conv_quant_arg_.input_quant_args_[0].zp_),
+               size * sizeof(int8_t));
 
   return RET_OK;
 }
@@ -237,7 +238,7 @@ void DeConvInt8CPUKernel::FreeRunBuf() {
   return;
 }
 
-int DeConvInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int DeConvInt8Run(void *cdata, int task_id, float, float) {
   auto deconv = reinterpret_cast<DeConvInt8CPUKernel *>(cdata);
   auto error_code = deconv->DoDeconv(task_id);
   if (error_code != RET_OK) {
@@ -263,15 +264,25 @@ int DeConvInt8CPUKernel::DoDeconv(int task_id) {
   int kernel_plane = conv_param_->kernel_w_ * conv_param_->kernel_h_;
   int output_plane = conv_param_->output_h_ * conv_param_->output_w_;
 
-  DeConvInt8(input_ptr_, weight_ptr_ + task_id * thread_stride_ * C4NUM * kernel_plane * conv_param_->input_channel_,
-             tmp_buffer_ + task_id * thread_stride_ * C4NUM * input_plane * kernel_plane, weight_sum_, input_sum_,
-             UP_ROUND(matmul_param_->row_, C4NUM), cur_oc * C4NUM * kernel_plane,
-             UP_ROUND(matmul_param_->deep_, C16NUM), conv_param_, matmul_func_);
+  auto error_code =
+    DeConvInt8(input_ptr_, weight_ptr_ + task_id * thread_stride_ * C4NUM * kernel_plane * conv_param_->input_channel_,
+               tmp_buffer_ + task_id * thread_stride_ * C4NUM * input_plane * kernel_plane, weight_sum_, input_sum_,
+               UP_ROUND(matmul_param_->row_, C4NUM), cur_oc * C4NUM * kernel_plane,
+               UP_ROUND(matmul_param_->deep_, C16NUM), conv_param_, matmul_func_);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "DeConvInt8 failed, error code: " << error_code;
+    return error_code;
+  }
 
-  DeConvPostInt8(tmp_buffer_ + task_id * thread_stride_ * C4NUM * input_plane * kernel_plane,
-                 reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C4NUM,
-                 tmp_output_ + task_id * thread_stride_ * C4NUM * output_plane,
-                 output_ptr_ + task_id * thread_stride_ * C4NUM, cur_oc_res, conv_param_, support_optimize_);
+  error_code =
+    DeConvPostInt8(tmp_buffer_ + task_id * thread_stride_ * C4NUM * input_plane * kernel_plane,
+                   reinterpret_cast<int32_t *>(bias_data_) + task_id * thread_stride_ * C4NUM,
+                   tmp_output_ + task_id * thread_stride_ * C4NUM * output_plane,
+                   output_ptr_ + task_id * thread_stride_ * C4NUM, cur_oc_res, conv_param_, support_optimize_);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "DeConvPostInt8 failed, error code: " << error_code;
+    return error_code;
+  }
   return RET_OK;
 }
 

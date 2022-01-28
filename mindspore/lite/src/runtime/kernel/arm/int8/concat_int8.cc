@@ -136,7 +136,7 @@ int ConcatInt8CPUKernel::Run() {
   return ret;
 }
 
-int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ConcatInt8Run(void *cdata, int task_id, float, float) {
   auto concat = reinterpret_cast<ConcatInt8CPUKernel *>(cdata);
   concat->DoExecute(task_id);
   return lite::RET_OK;

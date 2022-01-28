@@ -31,7 +31,7 @@ constexpr int kSize1 = 1;
 constexpr int kSize2 = 2;
 }  // namespace
 
-int MatmulDynamicInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int MatmulDynamicInt8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulDynamicInt8CPUKernel *>(cdata);
   auto ret = op->RunImpl(task_id);

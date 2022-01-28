@@ -37,10 +37,12 @@ int SliceInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(param_);
 
   auto in_quant_args = input->quant_params();
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
+  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
   param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
@@ -70,7 +72,7 @@ int SliceInt8CPUKernel::DoSlice(int task_id) {
   return ret;
 }
 
-int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int SliceInt8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto slice_kernel = reinterpret_cast<SliceInt8CPUKernel *>(cdata);
   auto ret = slice_kernel->DoSlice(task_id);
