@@ -540,6 +540,10 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis) {
+  if (mask_width == 0) {
+    *output = input;
+    return Status::OK();
+  }
   if (axis != 2 && axis != 1) {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
       "MaskAlongAxis: invalid parameter, 'axis' can only be 1 for Frequency Masking or 2 for Time Masking.");
@@ -561,13 +565,6 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     "than the length of the masked dimension, but got: 'mask_start' " +
       std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
       std::to_string(input_shape[check_dim_ind]));
-
-  if (mask_width == 0) {
-    // unsqueeze input
-    (void)input->Reshape(input_shape);
-    *output = input;
-    return Status::OK();
-  }
 
   int32_t cell_size = input->type().SizeInBytes();
 

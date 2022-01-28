@@ -172,6 +172,7 @@ constexpr char kLFilterOp[] = "LFilterOp";
 constexpr char kLowpassBiquadOp[] = "LowpassBiquadOp";
 constexpr char kMagphaseOp[] = "MagphaseOp";
 constexpr char kMaskAlongAxisIIDOp[] = "MaskAlongAxisIIDOp";
+constexpr char kMaskAlongAxisOp[] = "MaskAlongAxisOp";
 constexpr char kMelScaleOp[] = "MelScaleOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";

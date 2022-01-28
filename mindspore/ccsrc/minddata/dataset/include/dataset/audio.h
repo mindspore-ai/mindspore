@@ -616,6 +616,30 @@ class MS_API Magphase final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief MaskAlongAxis TensorTransform.
+/// \note Tensor operation to mask the input tensor along axis.
+class MaskAlongAxis final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] mask_start Starting position of the mask, which must be non negative.
+  /// \param[in] mask_width The width of the mask, which must be positive.
+  /// \param[in] mask_value Value to assign to the masked columns.
+  /// \param[in] axis Axis to apply masking on (1 for frequency and 2 for time).
+  MaskAlongAxis(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis);
+
+  /// \brief Destructor.
+  ~MaskAlongAxis() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief MaskAlongAxisIID TensorTransform.
 /// \note Apply a mask along axis.
 class MaskAlongAxisIID final : public TensorTransform {
