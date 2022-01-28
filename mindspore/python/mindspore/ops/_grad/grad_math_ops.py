@@ -30,6 +30,7 @@ from ..composite.multitype_ops import _constexpr_utils as const_utils
 from ..operations._inner_ops import DynamicStitch, DynamicBroadcastGradientArgs, DynamicBroadcastTo
 from ...common import Tensor
 from .._utils.utils import is_shape_unknown
+from ...common import dtype as mstype
 
 shape_op = P.Shape()
 dyn_shape_op = P.DynamicShape()
@@ -74,7 +75,14 @@ def binop_grad_common(x, y, dx, dy):
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
             if shape_op(dx):
-                dx = reduce_sum(dx, rx[0])
+                dx_origin_dtype = dx.dtype
+                # Currently, for Ascend and GPU, the reduce_sum's input does not support int16, int32 and int64.
+                if dx_origin_dtype in (mstype.int16, mstype.int32, mstype.int64):
+                    dx = F.cast(dx, mstype.float32)
+                    dx = reduce_sum(dx, rx[0])
+                    dx = F.cast(dx, dx_origin_dtype)
+                else:
+                    dx = reduce_sum(dx, rx[0])
             reduce_dx = reshape(dx, shape_of_x)
         if rx[1]:
             # if dy is scalar whose shape is (), do not need reduce

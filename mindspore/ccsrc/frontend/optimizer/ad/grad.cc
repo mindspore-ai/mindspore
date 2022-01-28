@@ -66,6 +66,22 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
 #endif
   return opt_fg;
 }
+
+FuncGraphPtr StopGradSpecialOpOptPass(const pipeline::ResourceBasePtr &resource, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(resource);
+
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig stop_gradient_special_op_opt_ = opt::OptPassConfig({irpass.stop_gradient_special_op_});
+  opt::OptPassGroupMap map({{"stop_gradient_special_op_opt_", stop_gradient_special_op_opt_}});
+
+  auto stop_gradient_special_op = opt::Optimizer::MakeOptimizer("stop_gradient_special_op", resource, map);
+
+  FuncGraphPtr opt_fg = nullptr;
+  WITH(MsProfile::GetProfile()->Step("stop_gradient_before_grad"))[&stop_gradient_special_op, func_graph, &opt_fg]() {
+    opt_fg = stop_gradient_special_op->step(func_graph, true);
+  };
+  return opt_fg;
+}
 }  // namespace
 
 FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimzer, bool is_top) {
@@ -87,6 +103,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
       lift_fv_before_grad = true;
       grad_fg = LiftFv(resources, func_graph);
     } else {
+      grad_fg = StopGradSpecialOpOptPass(resources, func_graph);
       lift_fv_before_grad = false;
     }
   } else {

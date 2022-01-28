@@ -258,6 +258,9 @@ MS_REG_GPU_KERNEL_ONE(
   Add, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(
+  Add, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernelMod, int)
+MS_REG_GPU_KERNEL_ONE(
   Minimum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernelMod, int)
 MS_REG_GPU_KERNEL_ONE(

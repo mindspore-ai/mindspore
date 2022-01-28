@@ -108,6 +108,8 @@ TypeId GetValueType(const CNodePtr &cnode) {
   }
   if (IsAbstractEnvType(value_abstract)) {
     return kObjectTypeEnvType;
+  } else if (value_abstract->isa<abstract::AbstractMonad>()) {
+    return kObjectTypeMonad;
   } else {
     return kObjectTypeTensorType;
   }
@@ -138,6 +140,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   static AbstractBasePtr tensor_abs = std::make_shared<abstract::AbstractTensor>(scalar_abs);
   static std::string attr_name = "value_type";
   const int kPrimitiveOffset = 0;
+  const int kEnvironTypeOffset = 1;
   const int kSymbolicKeyOffset = 2;
   auto mng = resource->manager();
   const auto &all_nodes = mng->all_nodes();
@@ -151,6 +154,14 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     // Prim
     AnfNodePtr transformed_prim_node;
     const auto &type_id = GetValueType(cnode);
+    if (type_id == kObjectTypeMonad) {
+      if (IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
+        txn.Replace(cnode, cnode->input(kEnvironTypeOffset));
+        continue;
+      } else {
+        MS_LOG(EXCEPTION) << "Should be eliminated, but node: " << cnode->DebugString();
+      }
+    }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(kPrimitiveOffset));
     MS_EXCEPTION_IF_NULL(prim);
     const auto &old_attr = prim->GetAttr(attr_name);
