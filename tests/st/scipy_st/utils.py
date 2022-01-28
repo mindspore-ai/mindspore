@@ -138,3 +138,9 @@ def gradient_check(x, net, epsilon=1e-3):
     denominator = onp.linalg.norm(x_grad) + onp.linalg.norm(x_grad_approx)
     difference = numerator / denominator
     return difference
+
+
+def match_runtime_exception(err, expected_str):
+    err_str = str(err.value)
+    err_str = err_str[err_str.find("]") + 2:]
+    return err_str == expected_str

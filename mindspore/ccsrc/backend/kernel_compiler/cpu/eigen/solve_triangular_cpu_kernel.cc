@@ -38,29 +38,37 @@ constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 template <typename T>
 void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
   if (A_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', A should be 2D, but got [" << A_shape.size() << "] dimensions.";
   }
   if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be a squre matrix, but got [" << A_shape[kDim0] << " X "
-                      << A_shape[kDim1] << "].";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the shape of input matrix A should be square matrix like [N X N], but got ["
+                      << A_shape[kDim0] << " X " << A_shape[kDim1] << "].";
   }
-  m_ = A_shape[kDim0];
+  m_ = SizeToInt(A_shape[kDim0]);
 
   if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, b should be 1D or 2D, but got [" << b_shape.size() << "] dimensions.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', b should be 1D or 2D,  but got [" << b_shape.size()
+                      << "] dimensions.";
   }
   if (SizeToInt(b_shape[kDim0]) != m_) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, b should match the shape of A, excepted [" << m_ << "] but got ["
-                      << b_shape[kDim0] << "].";
+    if (b_shape.size() == kAVectorxDimNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be [" << m_ << "], but got ["
+                        << b_shape[kDim0] << "].";
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be [" << m_ << " X "
+                        << b_shape[kDim1] << "], but got [" << b_shape[kDim0] << " X " << b_shape[kDim1] << "].";
+    }
   }
   if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
     n_ = 1;
   } else {
-    n_ = b_shape[kDim1];
+    n_ = SizeToInt(b_shape[kDim1]);
   }
   lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
