@@ -21,3 +21,30 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
     - **TypeError** - bijector不是Bijector类。
     - **TypeError** - distribution不是Distribution类。
+
+    .. py:method:: bijector
+        :property:
+
+        返回概率映射函数。
+
+        **返回：**
+
+        Bijector, 概率映射函数。
+
+    .. py:method:: distribution
+        :property:
+
+        返回变化前的概率分布。
+
+        **返回：**
+
+        Distribution, 变化前的概率分布。
+
+    .. py:method:: is_linear_transformation
+        :property:
+
+        返回概率映射函数是否为线性映射。
+
+        **返回：**
+
+        Bool, 概率映射函数为线性映射则返回True，否则返回False。

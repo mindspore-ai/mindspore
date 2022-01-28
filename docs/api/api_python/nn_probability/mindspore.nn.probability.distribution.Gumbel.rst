@@ -13,8 +13,8 @@ mindspore.nn.probability.distribution.Gumbel
 
     **参数：**
 
-    - **loc** (int, float, list, numpy.ndarray, Tensor) - Gumbel分布的位置。
-    - **scale** (int, float, list, numpy.ndarray, Tensor) - Gumbel分布的尺度。
+    - **loc** (int, float, list, numpy.ndarray, Tensor) - Gumbel分布的位置。默认值：None。
+    - **scale** (int, float, list, numpy.ndarray, Tensor) - Gumbel分布的尺度。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：0。
     - **dtype** (mindspore.dtype) - 分布类型。默认值：mindspore.float32。
     - **name** (str) - 分布的名称。默认值：'Gumbel'。

@@ -487,7 +487,7 @@ class Distribution(Cell):
         Args:
             value (Tensor): value to be evaluated.
             *args (list): the list of positional arguments forwarded to subclasses.
-            **kwargs (dict: the dictionary of keyword arguments forwarded to subclasses.
+            **kwargs (dict): the dictionary of keyword arguments forwarded to subclasses.
 
         Note:
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
