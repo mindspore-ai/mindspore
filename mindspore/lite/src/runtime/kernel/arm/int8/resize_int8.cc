@@ -303,7 +303,7 @@ int ResizeInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ResizeInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ResizeInt8Impl(void *cdata, int task_id, float, float) {
   auto resize = reinterpret_cast<ResizeInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -356,14 +356,13 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       bool same_zp = quant_in_->zp_ == quant_out_->zp_;
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
       bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
+      auto out_shape = out_tensors_[0]->shape();
       if (same_zp && same_scale) {
-        ret =
-          ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                          align_corners, task_id, op_parameter_->thread_num_);
+        ret = ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_shape.data(),
+                                              align_corners, task_id, op_parameter_->thread_num_);
       } else {
-        ret = ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                        align_corners, multiplier_, quant_in_, quant_out_, task_id,
-                                        op_parameter_->thread_num_);
+        ret = ResizeNearestNeighborInt8(input_data, output_data, input_shape.data(), out_shape.data(), align_corners,
+                                        multiplier_, quant_in_, quant_out_, task_id, op_parameter_->thread_num_);
       }
       break;
     }

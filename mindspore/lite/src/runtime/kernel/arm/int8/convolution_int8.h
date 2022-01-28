@@ -31,9 +31,9 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
   ~ConvolutionInt8CPUKernel() override {
     FreeQuantParam();
-    if (packed_weight_ != nullptr) {
-      free(packed_weight_);
-      packed_weight_ = nullptr;
+    if (packed_weight_sub_ != nullptr) {
+      free(packed_weight_sub_);
+      packed_weight_sub_ = nullptr;
     }
     if (input_sum_ != nullptr) {
       free(input_sum_);
@@ -73,7 +73,7 @@ class ConvolutionInt8CPUKernel : public ConvolutionBaseCPUKernel {
     }
   }
   bool support_optimize_ = true;
-  int8_t *packed_weight_ = nullptr;
+  int8_t *packed_weight_sub_ = nullptr;
   int8_t *packed_input_ = nullptr;
   int8_t *matmul_packed_input_ = nullptr;
   int32_t *filter_zp_ptr_ = nullptr; /* per-oc */

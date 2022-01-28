@@ -46,12 +46,19 @@ int DivInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Malloc DivQuantArg for Div int8 op failed!";
     return RET_ERROR;
   }
-  quant_args_->in0_args_.scale_ = input0->quant_params().front().scale;
-  quant_args_->in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
-  quant_args_->in1_args_.scale_ = input1->quant_params().front().scale;
-  quant_args_->in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
-  quant_args_->out_args_.scale_ = output->quant_params().front().scale;
-  quant_args_->out_args_.zp_ = output->quant_params().front().zeroPoint;
+  const auto &input0_params = input0->quant_params();
+  const auto &input1_params = input1->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input0_params.empty(), RET_ERROR, "Input 0 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!input1_params.empty(), RET_ERROR, "Input 1 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
+
+  quant_args_->in0_args_.scale_ = static_cast<float>(input0_params.front().scale);
+  quant_args_->in0_args_.zp_ = -input0_params.front().zeroPoint;
+  quant_args_->in1_args_.scale_ = static_cast<float>(input1_params.front().scale);
+  quant_args_->in1_args_.zp_ = -input1_params.front().zeroPoint;
+  quant_args_->out_args_.scale_ = static_cast<float>(output_params.front().scale);
+  quant_args_->out_args_.zp_ = output_params.front().zeroPoint;
 
   const double real_multiplier =
     quant_args_->in0_args_.scale_ / (quant_args_->in1_args_.scale_ * quant_args_->out_args_.scale_);
@@ -104,7 +111,7 @@ int DivInt8CPUKernel::DoExecute(int task_id) {
   return ret;
 }
 
-int DivInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int DivInt8Run(void *cdata, int task_id, float, float) {
   auto div_kernel = reinterpret_cast<DivInt8CPUKernel *>(cdata);
   auto ret = div_kernel->DoExecute(task_id);
   if (ret != RET_OK) {
@@ -123,8 +130,7 @@ int DivInt8CPUKernel::DivScalarDoExecute(int task_id) {
   int stride = UP_DIV(element_num, op_parameter_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
 
-  auto ret = RET_OK;
-  ret =
+  auto ret =
     DivScalarInt8(input0_data_ + task_id * stride, input1_data_, output_data_ + task_id * stride, count, quant_args_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Divint8 function error error_code[" << ret << "]";
@@ -132,7 +138,7 @@ int DivInt8CPUKernel::DivScalarDoExecute(int task_id) {
   return ret;
 }
 
-int DivScalarInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int DivScalarInt8Run(void *cdata, int task_id, float, float) {
   auto div_kernel = reinterpret_cast<DivInt8CPUKernel *>(cdata);
   auto ret = div_kernel->DivScalarDoExecute(task_id);
   if (ret != RET_OK) {

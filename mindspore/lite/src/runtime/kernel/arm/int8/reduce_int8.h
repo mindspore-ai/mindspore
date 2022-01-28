@@ -63,7 +63,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   void GetQuantArgs(size_t i);
 
   ReduceParameter *param_ = nullptr;
-  ReduceQuantArg quant_arg_;
+  ReduceQuantArg quant_arg_ = {};
   int8_t *nchw_in_data_ = nullptr;
   int32_t bias_ = 0;
   bool is_last_axis_ = true;

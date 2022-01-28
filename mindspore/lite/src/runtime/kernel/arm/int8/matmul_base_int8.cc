@@ -22,7 +22,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int MatmulBaseInt8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
   auto ret = op->RunImpl(task_id);
@@ -34,7 +34,7 @@ int MatmulBaseInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 #if defined(ENABLE_ARM64) && !defined(SUPPORT_NNIE) && (!defined(MACHINE_LINUX_ARM64))
-int Arm64SdotPreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int Arm64SdotPreRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
   auto ret = op->Arm64SdotPre(task_id);
@@ -45,7 +45,7 @@ int Arm64SdotPreRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
   return RET_OK;
 }
 
-int Arm64SdotRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int Arm64SdotRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto op = reinterpret_cast<MatmulBaseInt8CPUKernel *>(cdata);
   auto ret = op->Arm64SdotImpl(task_id);
@@ -197,7 +197,7 @@ int MatmulBaseInt8CPUKernel::MallocQuantParam() {
     MS_LOG(ERROR) << "Malloc MatmulQuantParameter for Matmul int8 op failed!";
     return RET_ERROR;
   }
-  memset(quant_param_, 0, sizeof(MatmulQuantParameter));
+  (void)memset(quant_param_, 0, sizeof(MatmulQuantParameter));
   quant_param_->filter_scale_ = reinterpret_cast<float *>(malloc(init_size * sizeof(float)));
   if (quant_param_->filter_scale_ == nullptr) {
     return RET_ERROR;
@@ -389,10 +389,10 @@ int MatmulBaseInt8CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
-  memset(pack_b_ptr_, 0, param_->batch * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
-  memset(input_sums_, 0, param_->row_align_ * sizeof(int));
-  memset(weight_bias_sums_, 0, param_->batch * param_->col_align_ * sizeof(int));
+  (void)memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
+  (void)memset(pack_b_ptr_, 0, param_->batch * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
+  (void)memset(input_sums_, 0, param_->row_align_ * sizeof(int));
+  (void)memset(weight_bias_sums_, 0, param_->batch * param_->col_align_ * sizeof(int));
 
   return RET_OK;
 }
@@ -406,7 +406,7 @@ int MatmulBaseInt8CPUKernel::InitBias() {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
     }
-    memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(int));
+    (void)memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(int));
   } else {
     bias_ptr_ = nullptr;
   }

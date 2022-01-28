@@ -27,9 +27,9 @@ DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
     delete sliding_;
     sliding_ = nullptr;
   }
-  if (packed_weight_ != nullptr) {
-    delete packed_weight_;
-    packed_weight_ = nullptr;
+  if (packed_weight_sub_ != nullptr) {
+    delete packed_weight_sub_;
+    packed_weight_sub_ = nullptr;
   }
   FreeQuantParam();
 }
@@ -41,33 +41,37 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   CHECK_NULL_RETURN(weight_tensor);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->data());
   CHECK_NULL_RETURN(origin_weight);
-  if (origin_weight == nullptr) {
-    MS_LOG(ERROR) << "origin_weight nullptr";
+  int32_t channel = 0;
+  int32_t height = 0;
+  int32_t width = 0;
+  if (CheckAndGetWeightParam(&channel, &height, &width) != RET_OK) {
+    MS_LOG(ERROR) << "check weight shape info of weight tensor failed!";
     return RET_ERROR;
   }
-  int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
-  int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();
-  packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
-  if (packed_weight_ == nullptr) {
+  int32_t OC4 = UP_DIV(channel, C4NUM);
+  int64_t pack_weight_size = C4NUM * OC4 * height * width;
+  packed_weight_sub_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
+  if (packed_weight_sub_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackDeconvDepthwiseInt8Weight(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
-                                weight_tensor->Batch(), &(conv_param_->conv_quant_arg_));
+  PackDeconvDepthwiseInt8Weight(origin_weight, packed_weight_sub_, height * width, channel,
+                                &(conv_param_->conv_quant_arg_));
 
   bias_data_ = reinterpret_cast<int32_t *>(malloc(C4NUM * OC4 * sizeof(int32_t)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
+  (void)memset(bias_data_, 0, C4NUM * OC4 * sizeof(int32_t));
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     CHECK_NULL_RETURN(bias_tensor);
     auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->data());
     CHECK_NULL_RETURN(ori_bias);
-    MS_CHECK_GT(bias_tensor->ElementsNum(), 0, RET_ERROR);
-    memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
+    auto bias_element_num = bias_tensor->ElementsNum();
+    MS_CHECK_GT(bias_element_num, 0, RET_ERROR);
+    (void)memcpy(bias_data_, ori_bias, static_cast<size_t>(bias_element_num) * sizeof(int32_t));
   }
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);
   return RET_OK;
@@ -161,21 +165,29 @@ int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(sliding_);
 
-  InitSlideParam();
-  ConvolutionBaseCPUKernel::Prepare();
+  auto error_code = InitSlideParam();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "InitSlideParam failed.";
+    return error_code;
+  }
+  error_code = ConvolutionBaseCPUKernel::Prepare();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "deconv int8 convolution base init failed.";
+    return error_code;
+  }
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
+int DeconvolutionDepthwiseInt8CPUKernel::DoExecute(int task_id) {
   auto buffer = output_buffer_ + conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * task_id;
-  DeconvDwInt8(packed_output_, buffer, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
+  DeconvDwInt8(packed_output_, buffer, packed_input_, packed_weight_sub_, reinterpret_cast<int32_t *>(bias_data_),
                conv_param_, sliding_, task_id);
   return RET_OK;
 }
 
-int DeconvDwInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int DeconvDwInt8Run(void *cdata, int task_id, float, float) {
   auto deconv_dw_int8 = reinterpret_cast<DeconvolutionDepthwiseInt8CPUKernel *>(cdata);
-  auto ret = deconv_dw_int8->Execute(task_id);
+  auto ret = deconv_dw_int8->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvolutionDepthwiseInt8Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -201,7 +213,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
     return ret;
   }
 
-  CHECK_NULL_RETURN(packed_weight_);
+  CHECK_NULL_RETURN(packed_weight_sub_);
   CHECK_NULL_RETURN(bias_data_);
 
   auto input_tensor = in_tensors_.at(kInputIndex);

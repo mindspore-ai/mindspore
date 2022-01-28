@@ -42,7 +42,7 @@ class SqueezeInt8CPUKernel : public InnerKernel {
   SqueezeQuantArg *quant_squeeze_param_{nullptr};
 };
 
-int SqueezeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int SqueezeInt8Run(void *cdata, int task_id, float, float);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SQUEEZE_INT8_H_

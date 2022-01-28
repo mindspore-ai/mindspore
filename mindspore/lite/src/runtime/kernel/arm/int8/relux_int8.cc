@@ -31,11 +31,15 @@ int ReluXInt8CPUKernel::Prepare() {
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
+  const auto &input_params = input->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
 
-  quant_arg_.input_arg.scale_ = input->quant_params().front().scale;
-  quant_arg_.input_arg.zp_ = input->quant_params().front().zeroPoint;
-  quant_arg_.output_arg.scale_ = output->quant_params().front().scale;
-  quant_arg_.output_arg.zp_ = output->quant_params().front().zeroPoint;
+  quant_arg_.input_arg.scale_ = static_cast<float>(input_params.front().scale);
+  quant_arg_.input_arg.zp_ = input_params.front().zeroPoint;
+  quant_arg_.output_arg.scale_ = static_cast<float>(output_params.front().scale);
+  quant_arg_.output_arg.zp_ = output_params.front().zeroPoint;
 
   const double multiplier = quant_arg_.input_arg.scale_ / quant_arg_.output_arg.scale_;
   QuantizeRoundParameterWithDoublePrecision(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.left_shift_,
@@ -60,7 +64,7 @@ int ReluXInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int ReluXInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ReluXInt8Run(void *cdata, int task_id, float, float) {
   auto activation_kernel = reinterpret_cast<ReluXInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

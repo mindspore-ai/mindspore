@@ -74,7 +74,7 @@ int ArithmeticSelfInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ArithmeticSelfInt8Runs(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ArithmeticSelfInt8Runs(void *cdata, int task_id, float, float) {
   auto g_kernel = reinterpret_cast<ArithmeticSelfInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoArithmeticSelf(task_id);
   if (ret != RET_OK) {

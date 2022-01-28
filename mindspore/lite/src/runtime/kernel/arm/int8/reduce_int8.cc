@@ -371,7 +371,7 @@ void ReduceInt8CPUKernel::FreeTmpBuffer() {
 
 int ReduceInt8CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
-int ReduceInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ReduceInt8Impl(void *cdata, int task_id, float, float) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
   CHECK_NULL_RETURN(reduce);
   auto error_code = reduce->CallReduceUnit(task_id);
@@ -382,7 +382,7 @@ int ReduceInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return RET_OK;
 }
 
-int ReduceMeanPatternInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ReduceMeanPatternInt8Impl(void *cdata, int task_id, float, float) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
   auto error_code = reduce->Reduce4DExecute(task_id);
   if (error_code != RET_OK) {

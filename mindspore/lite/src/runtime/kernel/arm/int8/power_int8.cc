@@ -37,12 +37,12 @@ int PowerInt8CPUKernel::Prepare() {
 
   auto in_quant_args = input->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
-  param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
+  param_->quant_arg_.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
   CHECK_LESS_RETURN(out_quant_args.size(), 1);
-  param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
+  param_->quant_arg_.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
   param_->quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
@@ -74,7 +74,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   return ret;
 }
 
-int PowerInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int PowerInt8Run(void *cdata, int task_id, float, float) {
   auto power_kernel = reinterpret_cast<PowerInt8CPUKernel *>(cdata);
   auto ret = power_kernel->DoPower(task_id);
   if (ret != RET_OK) {
