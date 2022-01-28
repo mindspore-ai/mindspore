@@ -65,6 +65,17 @@ PYBIND_REGISTER(CaseFoldOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
+PYBIND_REGISTER(FilterWikipediaXMLOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<text::FilterWikipediaXMLOperation, TensorOperation,
+                                   std::shared_ptr<text::FilterWikipediaXMLOperation>>(*m,
+                                                                                       "FilterWikipediaXMLOperation")
+                    .def(py::init([]() {
+                      auto filter_wikipedia_xml = std::make_shared<text::FilterWikipediaXMLOperation>();
+                      THROW_IF_ERROR(filter_wikipedia_xml->ValidateParams());
+                      return filter_wikipedia_xml;
+                    }));
+                }));
+
 PYBIND_REGISTER(
   NormalizeUTF8Operation, 1, ([](const py::module *m) {
     (void)py::class_<text::NormalizeUTF8Operation, TensorOperation, std::shared_ptr<text::NormalizeUTF8Operation>>(

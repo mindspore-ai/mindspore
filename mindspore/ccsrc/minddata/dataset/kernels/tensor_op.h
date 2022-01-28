@@ -125,6 +125,7 @@ constexpr char kVerticalFlipOp[] = "VerticalFlipOp";
 constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";
 constexpr char kBertTokenizerOp[] = "BertTokenizerOp";
 constexpr char kCaseFoldOp[] = "CaseFoldOp";
+constexpr char kFilterWikipediaXMLOp[] = "FilterWikipediaXMLOp";
 constexpr char kJiebaTokenizerOp[] = "JiebaTokenizerOp";
 constexpr char kLookupOp[] = "LookupOp";
 constexpr char kNgramOp[] = "NgramOp";

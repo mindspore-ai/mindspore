@@ -105,6 +105,11 @@ std::shared_ptr<TensorOperation> BertTokenizer::Parse() {
 CaseFold::CaseFold() = default;
 
 std::shared_ptr<TensorOperation> CaseFold::Parse() { return std::make_shared<CaseFoldOperation>(); }
+
+// FilterWikipediaXML
+FilterWikipediaXML::FilterWikipediaXML() {}
+
+std::shared_ptr<TensorOperation> FilterWikipediaXML::Parse() { return std::make_shared<FilterWikipediaXMLOperation>(); }
 #endif
 
 // JiebaTokenizer
