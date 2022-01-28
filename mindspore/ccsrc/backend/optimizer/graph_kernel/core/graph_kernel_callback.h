@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,13 @@ class Callback {
    * @param node the AnfNodePtr
    */
   virtual void SetEmptyKernelInfo(const AnfNodePtr &node) = 0;
+
+  /**
+   * @brief Reset KernelInfo on different platforms.
+   *
+   * @param node the AnfNodePtr
+   */
+  virtual void ResetKernelInfo(const AnfNodePtr &node) = 0;
 
  private:
   friend class CallbackImplRegister;

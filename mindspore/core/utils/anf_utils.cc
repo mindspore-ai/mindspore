@@ -318,6 +318,23 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
   return res;
 }
 
+void AnfUtils::SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString() << trace::DumpSourceLines(node);
+  }
+  // single op cnode.
+  auto primitive = GetCNodePrimitive(node);
+  if (primitive != nullptr) {
+    primitive->set_attr(key, value);
+    return;
+  }
+  // graph kernel cnode.
+  auto fg = GetCNodeFuncGraph(node);
+  MS_EXCEPTION_IF_NULL(fg);
+  fg->set_attr(key, value);
+}
+
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<ValueNode>()) {

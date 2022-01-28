@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -38,12 +37,26 @@ class SplitNodesDecoder {
                                const std::map<std::string, AnfNodePtr> &address_node_map, AnfNodePtrList *res_graphs);
 };
 
+class SplitSchemer {
+ public:
+  SplitSchemer() = default;
+  virtual ~SplitSchemer() = default;
+  virtual bool Split(const FuncGraphPtr &func_graph) = 0;
+  virtual bool NeedInline(size_t group_id) const { return false; }
+  const std::vector<AnfNodePtrList> &split_plan() const { return split_plan_; }
+
+ protected:
+  std::vector<AnfNodePtrList> split_plan_;
+};
+
 class GraphKernelSplitter : public opt::Pass {
  public:
   GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
   ~GraphKernelSplitter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+  bool TrySplit(const CNodePtr &sub_root_cnode);
+  virtual std::shared_ptr<SplitSchemer> GetSplitSchema(const std::string &processor);
 };
 using GraphKernelSplitterPtr = std::shared_ptr<GraphKernelSplitter>;
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_SPLITTER_H_

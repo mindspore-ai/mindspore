@@ -24,6 +24,7 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_cluster.h"
 #include "backend/optimizer/graph_kernel/core/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/core/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/core/update_state_formatter.h"
@@ -54,6 +55,9 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   pm->AddPass(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
+
+  // Split kernel according to costmodel
+  pm->AddPass(std::make_shared<GraphKernelSplitter>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.

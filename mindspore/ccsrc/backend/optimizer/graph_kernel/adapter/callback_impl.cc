@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,12 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/adapter/fake_abstract_shape.h"
+#if ENABLE_D
+#include "runtime/device/ascend/kernel_select_ascend.h"
+#elif ENABLE_GPU
+#include "runtime/device/gpu/kernel_info_setter.h"
+#endif
+#include "runtime/device/cpu/kernel_select_cpu.h"
 
 namespace mindspore::graphkernel {
 // register the callback object
@@ -201,5 +207,28 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
 
 void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
   node->set_kernel_info(std::make_shared<device::KernelInfo>());
+}
+
+void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+#if ENABLE_D
+  if (GetTargetFromContext() == kCPUDevice) {
+    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+    device::cpu::SetKernelInfo(cnode);
+  } else {
+    device::ascend::SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
+  }
+#elif ENABLE_GPU
+  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+  if (GetTargetFromContext() == kCPUDevice) {
+    device::cpu::SetKernelInfo(cnode);
+  } else {
+    device::gpu::SetKernelInfo(cnode);
+  }
+#elif ENABLE_CPU
+  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+  device::cpu::SetKernelInfo(cnode);
+#endif
 }
 }  // namespace mindspore::graphkernel

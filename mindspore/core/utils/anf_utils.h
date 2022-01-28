@@ -61,6 +61,8 @@ class AnfUtils {
   static size_t GetInputTensorNum(const AnfNodePtr &node);
   // get the num of output real_kernel(which can be build and run in device)
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
+  // set attr of anf node
+  static void SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
   // get the node's real kernel recursively
   static std::pair<AnfNodePtr, size_t> VisitKernel(const AnfNodePtr &anf_node, size_t index);
   // check whether the node is a GraphKernel node.
