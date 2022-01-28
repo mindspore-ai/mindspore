@@ -35,7 +35,6 @@ void Scheduler::Run() {
   if (!scheduler_node_->Stop()) {
     MS_LOG(WARNING) << "Scheduler stop failed.";
   }
-  exit(1);
 }
 }  // namespace ps
 }  // namespace mindspore

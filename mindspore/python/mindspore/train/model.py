@@ -610,7 +610,7 @@ class Model:
                 outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
-                if _is_role_pserver():
+                if _is_role_pserver() or _is_role_sched():
                     os._exit(0)
 
             dataset_helper.continue_send()
@@ -674,7 +674,7 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.step_end(run_context)
-                if _is_role_pserver():
+                if _is_role_pserver() or _is_role_sched():
                     os._exit(0)
                 should_stop = should_stop or run_context.get_stop_requested()
                 if should_stop:
