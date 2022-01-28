@@ -32,14 +32,21 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
     return RET_ERROR;
   }
 
+  axis_ = static_cast<int>(split_prim->axis());
+  auto split_dim = in_tensors.at(0).Shape().at(axis_);
   auto sizes_split = split_prim->size_splits();
-  std::vector<int> sizes_split_vec;
-  if (sizes_split != nullptr) {
-    sizes_split_vec = std::vector<int>(sizes_split->begin(), sizes_split->end());
-  } else {
-    return RET_ERROR;
-  }
   int size = split_prim->output_num();
+  std::vector<int> sizes_split_vec;
+  CHECK_NULL_RETURN(sizes_split);
+  for (int i = 0; i < size; ++i) {
+    auto cur_size = sizes_split->Get(i);
+    if (i == size - 1 && cur_size == -1) {
+      sizes_split_vec.emplace_back(split_dim);
+      break;
+    }
+    split_dim -= cur_size;
+    sizes_split_vec.emplace_back(cur_size);
+  }
   ge::TensorDesc size_splits_tensor_desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr size_splits_tensor = std::make_shared<hiai::Tensor>(size_splits_tensor_desc);
   size_splits_tensor->SetData(reinterpret_cast<uint8_t *>(sizes_split_vec.data()), size * sizeof(int));
@@ -50,8 +57,6 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
   }
   size_splits_->set_attr_value(size_splits_tensor);
   split_->set_input_size_splits(*size_splits_);
-
-  axis_ = static_cast<int>(split_prim->axis());
   split_->set_attr_num_split(size);
   split_->create_dynamic_output_y(size);
   return RET_OK;

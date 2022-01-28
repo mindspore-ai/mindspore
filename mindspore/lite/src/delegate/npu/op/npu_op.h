@@ -133,7 +133,8 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore:
     return nullptr;
   }
 
-  std::set<schema::PrimitiveType> int32_lists = {schema::PrimitiveType_Cast, schema::PrimitiveType_StridedSlice};
+  std::set<schema::PrimitiveType> int32_lists = {schema::PrimitiveType_Cast, schema::PrimitiveType_StridedSlice,
+                                                 schema::PrimitiveType_Reshape, schema::PrimitiveType_ReduceFusion};
   auto support_int32 = in_tensors[0].DataType() == DataType::kNumberTypeInt32 &&
                        find(int32_lists.begin(), int32_lists.end(), primitive->value_type()) != int32_lists.end();
   if (in_tensors[0].DataType() != DataType::kNumberTypeFloat32 &&

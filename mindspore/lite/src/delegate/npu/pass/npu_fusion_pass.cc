@@ -22,10 +22,6 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace {
-constexpr int kNumDims = 4;
-}  // namespace
-
 namespace mindspore {
 bool CheckFusion(NPUOp *cur_op, const std::vector<mindspore::MSTensor> &graph_outputs) {
   if (cur_op->in_ops().empty() || cur_op->out_ops().empty()) {
@@ -77,32 +73,32 @@ void NPUFusionPass::RemoveAndFreeOp(NPUOp *cur_op) {
 }
 
 int NPUFusionPass::UpdatePreOps(NPUOp *cur_op) {
+  auto cur_in_ops = cur_op->in_ops();
   for (auto in_op : cur_op->in_ops()) {
     // graph in op
     if (in_op->in_ops().empty()) {
-      continue;
-    }
-    auto pre_op = in_op->in_ops()[0];
+      cur_in_ops.erase(find(cur_in_ops.begin(), cur_in_ops.end(), in_op));
+    } else {
+      auto pre_op = in_op->in_ops()[0];
+      auto pre_out_ops = pre_op->out_ops();
+      for (size_t i = 0; i < pre_out_ops.size(); i++) {
+        if (pre_out_ops[i] == in_op) {
+          pre_out_ops[i] = cur_op;
+          break;
+        }
+      }
+      pre_op->set_out_ops(pre_out_ops);
 
-    auto pre_out_ops = pre_op->out_ops();
-    for (size_t i = 0; i < pre_out_ops.size(); i++) {
-      if (pre_out_ops[i] == in_op) {
-        pre_out_ops[i] = cur_op;
-        break;
+      for (size_t i = 0; i < cur_in_ops.size(); i++) {
+        if (cur_in_ops[i] == in_op) {
+          cur_in_ops[i] = pre_op;
+          break;
+        }
       }
     }
-    pre_op->set_out_ops(pre_out_ops);
-
-    auto cur_in_ops = cur_op->in_ops();
-    for (size_t i = 0; i < cur_in_ops.size(); i++) {
-      if (cur_in_ops[i] == in_op) {
-        cur_in_ops[i] = pre_op;
-        break;
-      }
-    }
-    cur_op->set_in_ops(cur_in_ops);
     RemoveAndFreeOp(in_op);
   }
+  cur_op->set_in_ops(cur_in_ops);
   return RET_OK;
 }
 
@@ -139,19 +135,26 @@ int NPUFusionPass::UpdatePostOps(NPUOp *cur_op) {
 int UpdatePreTensors(NPUOp *cur_op) {
   auto tensors_vec = NPUPassUtils::GetNonConstInputs(cur_op);
   for (auto in_op : cur_op->in_ops()) {
-    if (in_op->inputs().empty() || in_op->outputs().empty() || in_op->in_ops().empty()) {
-      MS_LOG(ERROR) << "in_tensors/out_tensors/in_ops is empty.";
+    if (in_op->inputs().empty() || in_op->outputs().empty()) {
+      MS_LOG(ERROR) << "in_tensors or out_tensors of input op is empty.";
       return RET_ERROR;
     }
     mindspore::MSTensor cur_tensor;
     auto in_tensor = in_op->inputs()[0];
     auto out_tensor = in_op->outputs()[0];
-    auto pre_op = in_op->in_ops()[0];
-    for (size_t i = 0; i < pre_op->outputs().size(); i++) {
-      if (pre_op->outputs()[i] == in_tensor) {
-        cur_tensor = pre_op->outputs()[i];
+    if (!in_op->in_ops().empty()) {
+      auto pre_op = in_op->in_ops()[0];
+      for (size_t i = 0; i < pre_op->outputs().size(); i++) {
+        if (pre_op->outputs()[i] == in_tensor) {
+          cur_tensor = pre_op->outputs()[i];
+          break;
+        }
       }
+    } else {
+      // graph input
+      cur_tensor = in_tensor;
     }
+
     for (size_t i = 0; i < tensors_vec.size(); i++) {
       if (tensors_vec[i] == out_tensor) {
         tensors_vec[i] = cur_tensor;
@@ -173,56 +176,47 @@ int UpdatePreTensors(NPUOp *cur_op) {
   return RET_OK;
 }
 
-bool NodeWithNhwc2nchw2nhwcOutput(NPUOp *cur_op) {
-  auto out_ops = cur_op->out_ops();
-  if (out_ops.empty()) {
-    return false;
-  }
-  bool all_out_ops_transpose = std::all_of(out_ops.begin(), out_ops.end(), [](NPUOp *op) {
-    return op->type() == schema::PrimitiveType_Transpose && op->out_ops().size() == 1 &&
-           op->out_ops()[0]->type() == schema::PrimitiveType_Transpose && op->out_ops()[0]->out_ops().empty();
-  });
-  return all_out_ops_transpose;
-}
-
 int UpdatePostTensors(NPUOp *cur_op) {
-  auto tensor = cur_op->outputs()[0];
-
-  // in case: node->nh2nc->nc2nh(graph output) --->>> node->nc2nh, node out_tensor should be put to nc2nh out tensors
-  auto out_ops = cur_op->out_ops();
-  if (NodeWithNhwc2nchw2nhwcOutput(cur_op)) {
-    std::vector<MSTensor> outputs;
-    for (auto i = 0; i < out_ops.size(); ++i) {
-      auto ori_out_tensor = cur_op->outputs()[i];
-      auto nc_tensor = out_ops[i]->outputs()[0];
-      outputs.push_back(nc_tensor);
-      auto post_post_op = out_ops[i]->out_ops()[0];
-      post_post_op->set_inputs({nc_tensor});
-      post_post_op->set_outputs({ori_out_tensor});
-    }
-    cur_op->set_outputs(outputs);
-    return RET_OK;
-  }
-
-  auto nhwc_shape = tensor.Shape();
-  if (nhwc_shape.size() < kNumDims) {
-    MS_LOG(ERROR) << "nhwc_shape < " << kNumDims;
-    return RET_ERROR;
-  }
-  tensor.SetShape({nhwc_shape[NHWC_N], nhwc_shape[NHWC_C], nhwc_shape[NHWC_H], nhwc_shape[NHWC_W]});
+  mindspore::MSTensor new_post_input;
   for (auto out_op : cur_op->out_ops()) {
+    auto in_tensor = out_op->inputs()[0];
     auto out_tensor = out_op->outputs()[0];
-    if (out_op->out_ops().empty()) {
-      cur_op->set_outputs({out_op->outputs()[0]});
+    auto nhwc_shape = in_tensor.Shape();
+    if (in_tensor.format() == Format::NHWC) {
+      MS_CHECK_TRUE_MSG(nhwc_shape.size() == NPU_SHAPE_SIZE, RET_ERROR, "Invalid transpose dim size!");
+      in_tensor.SetShape({nhwc_shape[NHWC_N], nhwc_shape[NHWC_C], nhwc_shape[NHWC_H], nhwc_shape[NHWC_W]});
+      in_tensor.SetFormat(Format::NCHW);
     }
-    for (auto post_op : out_op->out_ops()) {
-      auto tensors_vec = post_op->inputs();
-      for (int i = 0; i < tensors_vec.size(); i++) {
-        if (tensors_vec[i] == out_tensor) {
-          tensors_vec[i] = tensor;
+    // out_op is a graph output op
+    if (out_op->out_ops().empty()) {
+      auto out_tensors_vec = cur_op->outputs();
+      for (size_t i = 0; i < out_tensors_vec.size(); i++) {
+        if (out_tensors_vec[i] == in_tensor) {
+          out_tensors_vec[i] = out_op->outputs()[0];
         }
       }
-      post_op->set_inputs(tensors_vec);
+      cur_op->set_outputs(out_tensors_vec);
+      // exist other out_ops using the same tensor as the current out_op, note that the other out_op has likely been
+      // updated, which mean it may be not a Transpose op anymore.
+      for (auto other_out_op : cur_op->out_ops()) {
+        auto other_in_tensors_vec = other_out_op->inputs();
+        for (size_t i = 0; i < other_in_tensors_vec.size(); i++) {
+          if (other_in_tensors_vec[i] == in_tensor) {
+            other_in_tensors_vec[i] = out_op->outputs()[0];
+          }
+        }
+        other_out_op->set_inputs(other_in_tensors_vec);
+      }
+    }
+    // out_op is not a graph out op
+    for (auto post_op : out_op->out_ops()) {
+      auto in_tensors_vec = post_op->inputs();
+      for (size_t i = 0; i < in_tensors_vec.size(); i++) {
+        if (in_tensors_vec[i] == out_tensor) {
+          in_tensors_vec[i] = in_tensor;
+        }
+      }
+      post_op->set_inputs(in_tensors_vec);
     }
   }
   return RET_OK;

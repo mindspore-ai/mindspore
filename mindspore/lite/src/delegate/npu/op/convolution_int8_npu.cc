@@ -93,27 +93,6 @@ int ConvolutionInt8NPUOp::Init(const schema::Primitive *primitive, const std::ve
   return RET_OK;
 }
 
-int ConvolutionInt8NPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                                       const std::vector<mindspore::MSTensor> &out_tensors,
-                                       const std::vector<ge::Operator *> &npu_inputs) {
-  auto ret = InitWeightConst(in_tensors);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set weight and bias for convolution op " << name_ << " failed when running npu";
-    return RET_ERROR;
-  }
-  conv_->set_input_filter(*weight_);
-  if (in_tensors.size() == CONV_INPUT_SIZE) {
-    ret = InitBiasConst(in_tensors);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Set bias for convolution op " << name_ << " failed when running npu";
-      return RET_ERROR;
-    }
-    conv_->set_input_bias(*bias_);
-  }
-  conv_->set_input_x(*npu_inputs[0]);
-  return RET_OK;
-}
-
 int ConvolutionInt8NPUOp::SetNPUInputs(
   const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
   const std::vector<ge::Operator *> &npu_inputs,

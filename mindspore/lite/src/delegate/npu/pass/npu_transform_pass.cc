@@ -37,10 +37,6 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
     MS_LOG(ERROR) << "NPU Transform pass does not find in op with 4d output";
     return RET_ERROR;
   }
-  if (op->inputs().front().format() == Format::NCHW) {
-    // input format is already NCHW, no need to insert transpose.
-    return RET_OK;
-  }
   if (is_input_op || nchw_nodes.find((*it)->type()) == nchw_nodes.end()) {
     NPUOp *pre_op = nullptr;
     if (!is_input_op) {
@@ -57,6 +53,7 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
       MS_LOG(ERROR) << "New nchw tensor failed when inserting pre nhwc2nchw op.";
       return RET_ERROR;
     }
+    tensor->SetFormat(Format::NCHW);
     std::vector<mindspore::MSTensor> pre_trans_outputs = {*tensor};
     all_tensors_->push_back(tensor);
 
@@ -83,11 +80,10 @@ int NPUTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops)
   return RET_OK;
 }
 
-int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops,
-                                      std::vector<mindspore::MSTensor> graph_outputs) {
+int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops) {
   bool is_output_op = false;
   if (op->out_ops().empty() ||
-      find(graph_outputs.begin(), graph_outputs.end(), op->outputs()[0]) != graph_outputs.end()) {
+      find(subgraph_->outputs().begin(), subgraph_->outputs().end(), op->outputs()[0]) != subgraph_->outputs().end()) {
     is_output_op = true;
   }
   // Get the post op that need insert trans op.
@@ -116,6 +112,7 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
     MS_LOG(ERROR) << "New nchw tensor failed when inserting post nchw2nhwc op.";
     return RET_ERROR;
   }
+  nc2nh_tensor->SetFormat(Format::NCHW);
   all_tensors_->push_back(nc2nh_tensor);
 
   if (is_output_op) {
@@ -145,6 +142,7 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
       MS_LOG(ERROR) << "New nhwc tensor failed when inserting post nchw2nhwc op.";
       return RET_ERROR;
     }
+    out_tensor->SetFormat(Format::NHWC);
     all_tensors_->push_back(out_tensor);
     nc2nh_outputs.push_back(*out_tensor);
 
@@ -173,9 +171,9 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
 }
 
 int NPUTransformPass::Run(NPUGraph *subgraph) {
-  all_ops_ = subgraph->GetOps();
-  all_tensors_ = subgraph->GetInsertTensors();
-  auto graph_outputs = subgraph->outputs();
+  subgraph_ = subgraph;
+  all_ops_ = subgraph_->GetOps();
+  all_tensors_ = subgraph_->GetInsertTensors();
   for (size_t i = 0; i < all_ops_->size();) {
     auto op = (*all_ops_)[i];
     if (nchw_nodes.find(op->type()) == nchw_nodes.end()) {
@@ -204,7 +202,7 @@ int NPUTransformPass::Run(NPUGraph *subgraph) {
     // insert post_ops after op in vector
     // modify loop index add post_ops.size() to the next op in the origin vector
     std::vector<NPUOp *> post_ops;
-    ret = InsertPostNodes(op, &post_ops, graph_outputs);
+    ret = InsertPostNodes(op, &post_ops);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert nchw2nhwc op after op " << op->name() << " failed.";
       return RET_ERROR;

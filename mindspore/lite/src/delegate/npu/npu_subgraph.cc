@@ -37,6 +37,7 @@ NPUSubGraph::~NPUSubGraph() {
   subgraph_input_ops_.clear();
   subgraph_output_ops_.clear();
   out_tensor_sorted_.clear();
+  all_tensors_from_out_ops_.clear();
   for (auto op : op_buffer_) {
     delete op;
   }
@@ -61,11 +62,11 @@ void NPUSubGraph::set_input(mindspore::MSTensor in_tensor, int index) {
 }
 
 void NPUSubGraph::set_output(mindspore::MSTensor out_tensor, int index) {
-  MS_ASSERT(index < out_tensor_sorted_.size());
+  MS_ASSERT(index < outputs_.size());
   auto origin_tensor = outputs_[index];
-  for (size_t i = 0; i < out_tensor_sorted_.size(); i++) {
-    if (out_tensor_sorted_[i] == origin_tensor) {
-      out_tensor_sorted_[i] = out_tensor;
+  for (size_t i = 0; i < all_tensors_from_out_ops_.size(); i++) {
+    if (all_tensors_from_out_ops_[i] == origin_tensor) {
+      all_tensors_from_out_ops_[i] = out_tensor;
     }
   }
   outputs_[index] = out_tensor;
@@ -146,7 +147,7 @@ std::shared_ptr<domi::ModelBufferData> NPUSubGraph::BuildIRModel() {
   return om_model_buff;
 }
 
-int NPUSubGraph::Execute() { return executor_->Run(inputs(), out_tensor_sorted_, in_ops_); }
+int NPUSubGraph::Execute() { return executor_->Run(inputs(), outputs(), all_tensors_from_out_ops_, out_ops_); }
 
 int NPUSubGraph::BuildNPUInputOp() {
   int count = 0;
@@ -242,12 +243,9 @@ int NPUSubGraph::BuildNPUOutputOp() {
     MS_LOG(ERROR) << "Get NPU operators failed.";
     return RET_ERROR;
   }
-  out_tensor_sorted_.resize(outputs().size());
-  int i = 0;
   for (auto node : out_ops_) {
     for (const auto &tensor : node->outputs()) {
-      if (std::find(outputs().begin(), outputs().end(), tensor) != outputs().end())
-        this->out_tensor_sorted_[i++] = tensor;
+      all_tensors_from_out_ops_.emplace_back(tensor);
     }
   }
   if (subgraph_output_ops_.empty()) {
