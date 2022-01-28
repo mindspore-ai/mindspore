@@ -245,6 +245,11 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     AnfAlgo::CopyNodeAttr(kAttrHiddenSize, node, trans_data);
     AnfAlgo::CopyNodeAttr(kAttrInputSize, node, trans_data);
   }
+  if (spec_format == kOpFormat_FRAC_Z && orig_node->isa<CNode>() &&
+      AnfAlgo::HasNodeAttr(kAttrFracZGroup, orig_node->cast<CNodePtr>())) {
+    AnfAlgo::CopyNodeAttr(kAttrGroups, orig_node, trans_data);
+    AnfAlgo::CopyNodeAttr(kAttrFracZGroup, orig_node, trans_data);
+  }
   // refresh the transdata's format to ori format & dst format
   RefreshKernelBuildInfo(input_format, dst_format, trans_data, padding_axis);
   if (!is_insert_input) {
