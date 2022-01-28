@@ -188,7 +188,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     q.put({'acc': acc, 'cost': time_cost})
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
