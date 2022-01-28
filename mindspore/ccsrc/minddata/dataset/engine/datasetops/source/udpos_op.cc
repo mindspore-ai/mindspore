@@ -157,6 +157,13 @@ Status UDPOSOp::LoadFile(const std::string &file, int64_t start_offset, int64_t 
       continue;
     } else if (!line.empty() && rows_total >= start_offset) {
       std::vector<std::string> column = Split(line, '\t');
+      size_t right_column_size = 3;
+      if (column.size() < right_column_size) {
+        MS_LOG(ERROR)
+          << "Invalid file content, each line should contain three columns, representing word, universal and stanford.";
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid file content, each line should contain three columns, representing word, universal and stanford.");
+      }
       size_t word_line = 0, universal_line = 1, stanford_line = 2;
       word_column.push_back(column[word_line]);
       universal_column.push_back(column[universal_line]);
