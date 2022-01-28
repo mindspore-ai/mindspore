@@ -25,6 +25,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+constexpr uint32_t kRetryCountOfWaitWeightAggregation = 30;
 void UpdateModelKernel::InitKernel(size_t threshold_count) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
@@ -48,7 +49,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   MS_LOG(DEBUG) << "Launching UpdateModelKernel kernel.";
   if (inputs.size() != 1 || outputs.size() != 1) {
     std::string reason = "inputs or outputs size is invalid.";
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, reason.c_str(), reason.size());
     return true;
   }
@@ -57,7 +58,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, reason.c_str(), reason.size());
     return true;
   }
@@ -66,7 +67,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   if (!verifier.VerifyBuffer<schema::RequestUpdateModel>()) {
     std::string reason = "The schema of RequestUpdateModel is invalid.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
@@ -81,7 +82,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   if (update_model_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestUpdateModel.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
@@ -92,7 +93,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     if (verify_result == sigVerifyResult::FAILED) {
       std::string reason = "verify signature failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
-      MS_LOG(ERROR) << reason;
+      MS_LOG(WARNING) << reason;
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
@@ -100,7 +101,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     if (verify_result == sigVerifyResult::TIMEOUT) {
       std::string reason = "verify signature timestamp failed.";
       BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, "");
-      MS_LOG(ERROR) << reason;
+      MS_LOG(WARNING) << reason;
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
@@ -110,7 +111,7 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
   PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
   result_code = VerifyUpdateModel(update_model_req, fbb, device_metas);
   if (result_code != ResultCode::kSuccess) {
-    MS_LOG(ERROR) << "Updating model failed.";
+    MS_LOG(WARNING) << "Updating model failed.";
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
@@ -123,8 +124,8 @@ bool UpdateModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
 
   result_code = UpdateModel(update_model_req, fbb, device_metas);
   if (result_code != ResultCode::kSuccess) {
-    MS_LOG(ERROR) << "Updating model failed.";
-    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    MS_LOG(WARNING) << "Updating model failed.";
+    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
 
@@ -146,16 +147,21 @@ bool UpdateModelKernel::Reset() {
 
 void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
   if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kUpdateModel) {
-    while (!executor_->IsAllWeightAggregationDone()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-    }
+    last_count_thread_ = std::make_unique<std::thread>([this]() {
+      uint32_t retryCount = 0;
+      while (!executor_->IsAllWeightAggregationDone() && retryCount <= kRetryCountOfWaitWeightAggregation) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        retryCount += 1;
+      }
 
-    size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
-    MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
-                 << total_data_size;
-    if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
-      FinishIteration();
-    }
+      size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
+      MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
+                   << total_data_size;
+      if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
+        FinishIteration();
+      }
+    });
+    last_count_thread_->detach();
   }
 }
 
@@ -187,14 +193,14 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
 
   FLIdToDeviceMeta fl_id_to_meta = device_metas.device_metas();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
-  MS_LOG(INFO) << "UpdateModel for fl id " << update_model_fl_id;
+  MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
   if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
     if (fl_id_to_meta.fl_id_to_meta().count(update_model_fl_id) == 0) {
       std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
       BuildUpdateModelRsp(
         fbb, schema::ResponseCode_OutOfTime, reason,
         std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-      MS_LOG(ERROR) << reason;
+      MS_LOG(WARNING) << reason;
       return ResultCode::kSuccessAndReturn;
     }
   } else {
@@ -209,7 +215,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
       BuildUpdateModelRsp(
         fbb, schema::ResponseCode_OutOfTime, reason,
         std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-      MS_LOG(ERROR) << reason;
+      MS_LOG(WARNING) << reason;
       return ResultCode::kSuccessAndReturn;
     }
   }
@@ -228,7 +234,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   if (feature_map.empty()) {
     std::string reason = "Feature map is empty.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return ResultCode::kSuccessAndReturn;
   }
 
@@ -240,7 +246,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
       BuildUpdateModelRsp(
         fbb, schema::ResponseCode_OutOfTime, reason,
         std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-      MS_LOG(ERROR) << reason;
+      MS_LOG(WARNING) << reason;
       return ResultCode::kFail;
     }
   }
@@ -255,7 +261,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return update_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
 
@@ -292,7 +298,7 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     return count_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
   return ResultCode::kSuccess;
@@ -310,7 +316,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
   auto fbs_signature = update_model_req->signature();
   std::vector<unsigned char> signature;
   if (fbs_signature == nullptr) {
-    MS_LOG(ERROR) << "signature in client_list_sign_req is nullptr";
+    MS_LOG(WARNING) << "signature in client_list_sign_req is nullptr";
     return sigVerifyResult::FAILED;
   }
   signature.assign(fbs_signature->begin(), fbs_signature->end());
@@ -323,7 +329,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
     (void)key_attestations.emplace(std::pair<std::string, std::string>(iter->first, iter->second));
   }
   if (key_attestations.find(fl_id) == key_attestations.end()) {
-    MS_LOG(ERROR) << "can not find key attestation for fl_id: " << fl_id;
+    MS_LOG(WARNING) << "can not find key attestation for fl_id: " << fl_id;
     return sigVerifyResult::TIMEOUT;
   }
 
@@ -346,7 +352,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
 void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                             const std::string &reason, const std::string &next_req_time) {
   if (fbb == nullptr) {
-    MS_LOG(ERROR) << "Input fbb is nullptr.";
+    MS_LOG(WARNING) << "Input fbb is nullptr.";
     return;
   }
   auto fbs_reason = fbb->CreateString(reason);

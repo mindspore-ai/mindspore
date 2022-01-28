@@ -339,7 +339,7 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -378,7 +378,7 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -404,7 +404,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(WARNING) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 

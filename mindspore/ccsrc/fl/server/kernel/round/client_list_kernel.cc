@@ -186,7 +186,7 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
       GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
-    MS_LOG(INFO) << "verify signature passed!";
+    MS_LOG(DEBUG) << "verify signature passed!";
   }
 
   size_t iter_client = IntToSize(get_clients_req->iteration());

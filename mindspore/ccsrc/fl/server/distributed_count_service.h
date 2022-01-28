@@ -31,6 +31,7 @@ namespace fl {
 namespace server {
 constexpr uint32_t kDefaultCountingServerRank = 0;
 constexpr auto kModuleDistributedCountService = "DistributedCountService";
+constexpr uint32_t kPrintThresholdCount = 50;
 // The callbacks for the first count and last count event.
 typedef struct {
   MessageCallback first_count_handler;
@@ -128,6 +129,9 @@ class DistributedCountService {
 
   // Because the count is increased/queried conccurently, we must ensure the operations are threadsafe.
   std::unordered_map<std::string, std::mutex> mutex_;
+
+  // if round kernel reach threshold
+  std::unordered_map<std::string, bool> is_reach_threshold_;
 };
 }  // namespace server
 }  // namespace fl

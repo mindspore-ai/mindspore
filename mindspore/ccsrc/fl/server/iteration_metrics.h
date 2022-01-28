@@ -45,7 +45,7 @@ const std::map<InstanceState, std::string> kInstanceStateName = {
   {InstanceState::kRunning, "running"}, {InstanceState::kDisable, "disable"}, {InstanceState::kFinish, "finish"}};
 
 const std::map<IterationResult, std::string> kIterationResultName = {{IterationResult::kSuccess, "success"},
-                                                                     {IterationResult::kTimeout, "timeout"}};
+                                                                     {IterationResult::kFail, "fail"}};
 
 class IterationMetrics {
  public:

@@ -37,7 +37,7 @@ event_base *TcpClient::event_base_ = nullptr;
 std::mutex TcpClient::event_base_mutex_;
 bool TcpClient::is_started_ = false;
 
-TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *const config)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port)
     : event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),

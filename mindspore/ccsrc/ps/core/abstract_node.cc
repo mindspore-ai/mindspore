@@ -181,15 +181,12 @@ void AbstractNode::BroadcastEvent(const uint32_t &event) {
     auto client = GetOrCreateTcpClient(rank_id, role);
     if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, event_resp_message.SerializeAsString().data(),
                          event_resp_message.ByteSizeLong())) {
-      MS_LOG(ERROR) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
-                    << " timeout!";
-    } else {
-      MS_LOG(INFO) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
-                   << " successful!";
+      MS_LOG(WARNING) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
+                      << " timeout!";
     }
   }
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is send event to server/worker!";
+               << " the node id:" << node_info_.node_id_ << " send event to server/worker!";
 }
 
 void AbstractNode::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
@@ -989,7 +986,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
           MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a collective_send_data message response!";
           break;
         case NodeCommand::SEND_EVENT:
-          MS_LOG(INFO) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
+          MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
           break;
         default:
           MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";

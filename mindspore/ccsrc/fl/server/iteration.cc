@@ -407,7 +407,7 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::Messa
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
   std::unique_lock<std::mutex> lock(pinned_mtx_);
   if (pinned_iter_num_ == iteration_num) {
-    MS_LOG(WARNING) << "MoveToNextIteration is not reentrant. Ignore this call.";
+    MS_LOG(DEBUG) << "MoveToNextIteration is not reentrant. Ignore this call.";
     return true;
   }
   pinned_iter_num_ = iteration_num;
@@ -587,7 +587,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
     size_t latest_iter_num = iter_to_model.rbegin()->first;
     const auto &model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
     ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
-    iteration_result_ = IterationResult::kTimeout;
+    iteration_result_ = IterationResult::kFail;
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
 
@@ -601,6 +601,22 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
   for (const auto &round : rounds_) {
     MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->KernelSummarize();
+  }
+
+  for (const auto &round : rounds_) {
+    if (round->name() == "startFLJob") {
+      round_client_num_map_[kStartFLJobTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kStartFLJobAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kStartFLJobRejectClientNum] += round->kernel_reject_client_num();
+    } else if (round->name() == "updateModel") {
+      round_client_num_map_[kUpdateModelTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kUpdateModelAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kUpdateModelRejectClientNum] += round->kernel_reject_client_num();
+    } else if (round->name() == "getModel") {
+      round_client_num_map_[kGetModelTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kGetModelAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kGetModelRejectClientNum] += round->kernel_reject_client_num();
+    }
   }
 }
 
@@ -702,6 +718,7 @@ void Iteration::EndLastIter() {
     }
   }
   for (const auto &round : rounds_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->InitkernelClientVisitedNum();
   }
   round_client_num_map_.clear();

@@ -67,8 +67,7 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
 void SchedulerNode::RunRecovery() {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   // create tcp client to myself in case of event dispatch failed when Send reconnect msg to server failed
-  client_to_scheduler_ =
-    std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port);
+  client_to_scheduler_ = std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port);
   MS_EXCEPTION_IF_NULL(client_to_scheduler_);
   client_to_scheduler_->Init();
   client_thread_ = std::make_unique<std::thread>([this]() {
@@ -516,8 +515,8 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
                       << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending metadata to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " is sending metadata to workers and servers!";
 }
 
 void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
@@ -590,8 +589,8 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
     return;
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " is sending event resp to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {

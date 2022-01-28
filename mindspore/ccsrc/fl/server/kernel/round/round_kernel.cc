@@ -81,7 +81,7 @@ void RoundKernel::FinishIteration() const {
 
 void RoundKernel::Release(const AddressPtr &addr_ptr) {
   if (addr_ptr == nullptr) {
-    MS_LOG(ERROR) << "Data to be released is empty.";
+    MS_LOG(WARNING) << "Data to be released is empty.";
     return;
   }
   std::unique_lock<std::mutex> lock(release_mtx_);
@@ -99,18 +99,18 @@ void RoundKernel::set_finish_iteration_cb(const FinishIterCb &finish_iteration_c
 
 void RoundKernel::GenerateOutput(const std::vector<AddressPtr> &outputs, const void *data, size_t len) {
   if (data == nullptr) {
-    MS_LOG(ERROR) << "The data is nullptr.";
+    MS_LOG(WARNING) << "The data is nullptr.";
     return;
   }
 
   if (outputs.empty()) {
-    MS_LOG(ERROR) << "Generating output failed. Outputs size is empty.";
+    MS_LOG(WARNING) << "Generating output failed. Outputs size is empty.";
     return;
   }
 
   std::unique_ptr<unsigned char[]> output_data = std::make_unique<unsigned char[]>(len);
   if (output_data == nullptr) {
-    MS_LOG(ERROR) << "Output data is nullptr.";
+    MS_LOG(WARNING) << "Output data is nullptr.";
     return;
   }
 
