@@ -56,7 +56,10 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
                  [](const TypePtr &value) { return value->type_id(); });
 
   for (size_t i = 0; i < shapes.size(); i++) {
-    output_size_list_.push_back(0);  // output_size could be dynamic when shapes is dynamic, just give fake value here.
+    int unit = UnitSizeInBytes(type_ptrs[i]->type_id());
+    int nums = ElementNums(shapes[i]);
+    int bytes = unit * nums;
+    output_size_list_.push_back(bytes);
   }
 
 #ifndef ENABLE_SECURITY
