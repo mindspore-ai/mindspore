@@ -53,16 +53,20 @@ void Node::SetInput(size_t i, const NodePtr &new_input) {
 }
 
 void Node::SetInputs(const NodePtrList &inputs) {
+  ClearInputs();
+  inputs_.reserve(inputs.size());
+  for (const auto &inp : inputs) {
+    AddInput(inp);
+  }
+}
+
+void Node::ClearInputs() {
   if (!inputs_.empty()) {
     // remove the original inputs
     for (size_t i = 0; i < inputs_.size(); i++) {
       inputs_[i]->RemoveUser(this, i);
     }
     inputs_.clear();
-  }
-  inputs_.reserve(inputs.size());
-  for (const auto &inp : inputs) {
-    AddInput(inp);
   }
 }
 

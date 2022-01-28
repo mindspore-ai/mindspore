@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,8 +114,5 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
 }
 
 AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
-
-// functions to graphkernel model
-inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

@@ -304,22 +304,6 @@ DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) 
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
 }
 
-NodeBase ElemwiseOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
-  auto nodebase = PrimOp::Infer(inputs, attrs);
-  // change the compute_type to BROADCAST if the result shape is greater than the input shapes.
-  auto IsBroadcast = [this](const NodePtrList &inputs) -> bool {
-    for (auto &ref : inputs) {
-      if (ref->shape.size() != this->shape.size()) return true;
-      for (size_t i = 0; i < this->shape.size(); ++i) {
-        if (ref->shape[i] != this->shape[i]) return true;
-      }
-    }
-    return false;
-  };
-  compute_type_ = IsBroadcast(inputs) ? BROADCAST : ELEMWISE;
-  return nodebase;
-}
-
 TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "dst_type");
   auto dst_type = attrs.find("dst_type")->second;

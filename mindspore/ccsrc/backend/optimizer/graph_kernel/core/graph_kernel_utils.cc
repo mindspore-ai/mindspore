@@ -210,6 +210,62 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
   return func_graph;
 }
 
+inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
+                                                HashMap<inner::NodePtr, AnfNodePtr> *op_node_map) {
+  inner::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
+  std::map<AnfNodePtr, inner::NodePtr> node_map;
+  auto todos = TopoSort(func_graph->output());
+  const auto &params = func_graph->parameters();
+  auto cb = Callback::Instance();
+  auto ExtractBuildInfo = [&cb](const AnfNodePtr &node) {
+    auto shape = cb->GetOutputShape(node, 0);
+    auto type = cb->GetOutputType(node, 0);
+    auto format = cb->GetOutputFormat(node, 0);
+    return inner::NodeBase({shape, type, format});
+  };
+  // set inputs
+  for (auto &p : params) {
+    node_map[p] = gb.Parameter(ExtractBuildInfo(p));
+  }
+  // set ops
+  for (auto node : todos) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) continue;
+    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) break;
+    auto prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    inner::NodePtrList inputs;
+    (void)std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
+                         [&node_map, &gb](const AnfNodePtr &no) {
+                           auto iter = node_map.find(no);
+                           if (iter != node_map.end()) {
+                             return iter->second;
+                           } else {
+                             auto tensor = GetValueNode<tensor::TensorPtr>(no);
+                             MS_EXCEPTION_IF_NULL(tensor);
+                             return gb.Value(tensor);
+                           }
+                         });
+    auto op = gb.Op(AnfUtils::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
+    node_map[node] = op;
+    if (op_node_map != nullptr) {
+      (*op_node_map)[op] = node;
+    }
+  }
+  // set outputs
+  auto output_node = func_graph->output();
+  if (IsPrimitiveCNode(output_node, prim::kPrimMakeTuple)) {
+    inner::NodePtrList outputs;
+    auto mt = output_node->cast<CNodePtr>();
+    (void)std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
+                         [&node_map](const AnfNodePtr &no) { return node_map[no]; });
+    gb.SetOutputs(std::move(outputs));
+  } else {
+    gb.SetOutputs({node_map[output_node]});
+  }
+  return gb.Get();
+}
+
 FuncGraphManagerPtr GkUtils::GetFuncGraphManager(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();

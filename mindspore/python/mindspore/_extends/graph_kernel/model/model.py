@@ -191,8 +191,6 @@ class PrimLib:
         'LogicalNot': Prim(ELEMWISE),
         'LogicalAnd': Prim(ELEMWISE),
         'LogicalOr': Prim(ELEMWISE),
-        'Square': Prim(ELEMWISE),
-        'AddN': Prim(ELEMWISE),
         'Select': Prim(ELEMWISE, 8),
         'ReduceSum': Prim(REDUCE),
         'ReduceMax': Prim(REDUCE),
@@ -208,12 +206,7 @@ class PrimLib:
         'Tanh': Prim(ELEMWISE),
         'Asinh': Prim(ELEMWISE),
         'Acosh': Prim(ELEMWISE),
-        'InplaceAssign': Prim(ELEMWISE),
-        '@ReduceInit': Prim(ELEMWISE),
         'Reshape': Prim(RESHAPE),
-        'Squeeze': Prim(RESHAPE),
-        'Flatten': Prim(RESHAPE),
-        'FlattenGrad': Prim(RESHAPE),
         'Transpose': Prim(OPAQUE),
         'CumSum': Prim(OPAQUE),
         'Tile': Prim(BROADCAST),
@@ -236,7 +229,6 @@ class PrimLib:
         'GatherNd': Prim(OPAQUE),
         'UnsortedSegmentSum': Prim(OPAQUE),
         'StandardNormal': Prim(OPAQUE),
-        'UserDefined': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
