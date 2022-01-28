@@ -891,7 +891,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
         if (last_slash_pos != std::string::npos) {
           file_n = file_to_find.substr(last_slash_pos + 1);
         }
-        if (candidate.find(file_n) != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
+        if (candidate.find(file_n + ".") != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
           // we found a converted file for this op
           std::string found_file = dump_key + "/" + candidate;
           result_list->insert(found_file);
@@ -1044,8 +1044,8 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
       if (delim != std::string::npos) {
         file_name_to_check = file_name.substr(delim + 1);
       }
-      std::size_t found = file_name_to_check.find(dump_name);
-      std::size_t found_out = file_name_to_check.find(output_str);
+      std::size_t found = file_name_to_check.find("." + dump_name + ".");
+      std::size_t found_out = file_name_to_check.find(output_str, found + dump_name.length());
       std::size_t found_dot_start = file_name_to_check.find(".", found_out);
       std::size_t found_dot_end = file_name_to_check.find(".", found_dot_start);
 
@@ -1518,8 +1518,8 @@ void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, 
       file_name_to_check = file_path.substr(delim + 1);
     }
     if (file_path.find(specific_dump_dir) != std::string::npos &&
-        file_name_to_check.find(prefix_dump_to_check) != std::string::npos &&
-        file_name_to_check.find(slot_string_to_check) != std::string::npos) {
+        file_name_to_check.find("." + prefix_dump_to_check + ".") != std::string::npos &&
+        file_name_to_check.find(slot_string_to_check + ".") != std::string::npos) {
       matched_paths.push_back(file_path);
       found = true;
     }
@@ -1663,7 +1663,7 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
           if (stripped_file_name.empty() || stripped_file_name.length() <= dump_name.length()) {
             continue;
           }
-          std::size_t found = stripped_file_name.rfind(dump_name, 0);
+          std::size_t found = stripped_file_name.rfind(dump_name + ".", 0);
           if (found == 0) {
             size_t slot = std::stoul(stripped_file_name.substr(dump_name.length() + 1));
             std::vector<int64_t> shape;
