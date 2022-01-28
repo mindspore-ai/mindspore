@@ -528,7 +528,14 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Set whether this Tensor is updated by the device.
   void SetIsUpdateByDevice() { updated_by_device_ = true; }
 
+  /// \brief Set lazy callback function to this Tensor
+  ///
+  /// \param[in] lazy_callback The callback from backend when lazy build is enabled
+  void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
+
  private:
+  void ExecuteLazyTask() const;
+
   bool init_flag_{false};
   TensorDataPtr data_{nullptr};
   std::string id_{""};
@@ -546,6 +553,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   std::string padding_type_{""};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
+  std::function<void(void)> lazy_callback_{nullptr};
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;

@@ -20,7 +20,6 @@
 #include <functional>
 #include <utility>
 #include <algorithm>
-
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"
@@ -497,7 +496,8 @@ Tensor::Tensor(const Tensor &tensor)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
-      device_event_(tensor.device_event_) {}
+      device_event_(tensor.device_event_),
+      lazy_callback_(tensor.lazy_callback_) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -513,7 +513,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
-      device_event_(tensor.device_event_) {}
+      device_event_(tensor.device_event_),
+      lazy_callback_(tensor.lazy_callback_) {}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
@@ -571,9 +572,17 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_->equals(*tensor.data_)));
 }
 
+void Tensor::ExecuteLazyTask() const {
+  if (lazy_callback_ != nullptr) {
+    lazy_callback_();
+  }
+}
+
 // assign value to this tensor
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
+    lazy_callback_ = tensor.lazy_callback_;
+    ExecuteLazyTask();
     MetaTensor::operator=(tensor);
     device_sync_ = tensor.device_sync_;
     need_release_device_mem_ = tensor.need_release_device_mem_;
@@ -649,6 +658,8 @@ std::string Tensor::ToStringRepr() const {
 }
 
 void Tensor::data_sync(bool need_wait) const {
+  ExecuteLazyTask();
+
   if (need_wait) {
     Wait();
   }

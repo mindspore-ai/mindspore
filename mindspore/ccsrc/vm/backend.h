@@ -179,6 +179,8 @@ class MindRTBackend : public Backend {
   void RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                           const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
 
+  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
+
   // When compiling FuncGraph, it is divided according to the control nodes, and obtain the control nodes and several
   // node segments. Node segments will be compiled into kernelGraphs which are expressed as GraphId and bound to
   // the corresponding device_context.

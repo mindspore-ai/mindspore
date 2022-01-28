@@ -23,7 +23,6 @@ from ._register_for_tensor import tensor_operator_registry
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import CSRTensor as CSRTensor_
 from .._c_expression import COOTensor as COOTensor_
-from .._c_expression import PynativeExecutor_
 from .._checkparam import Validator as validator
 from .._checkparam import Rel
 
@@ -170,7 +169,6 @@ class Tensor(Tensor_):
         return new_obj
 
     def __repr__(self):
-        PynativeExecutor_.get_instance().execute_lazy_task()
         if self.init_finished:
             Tensor_.data_sync(self, False)
             return Tensor_.__repr__(self)
@@ -392,7 +390,6 @@ class Tensor(Tensor_):
         return Tensor(Tensor_.from_numpy(array))
 
     def assign_value(self, value):
-        PynativeExecutor_.get_instance().execute_lazy_task()
         self.assign_value_cpp(value)
         return self
 
@@ -486,7 +483,6 @@ class Tensor(Tensor_):
             [11.  2.]
         """
         self._init_check()
-        PynativeExecutor_.get_instance().execute_lazy_task()
         return Tensor_.asnumpy(self)
 
     def flush_from_cache(self):
