@@ -103,3 +103,4 @@ from .upper_bound import _upper_bound_aicpu
 from .grid_sampler_3d import _grid_sampler_3d_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
 from .cross import _cross_aicpu
+from .cummax import _cummax_aicpu
