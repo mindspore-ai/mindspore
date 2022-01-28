@@ -231,7 +231,9 @@ from .softmax import _softmax_tbe
 from .softmax_ds import _softmax_ds_tbe
 from .softsign import _softsign_tbe
 from .softplus import _softplus_tbe
+from .softplus_ds import _softplus_ds_tbe
 from .softplus_grad import _softplus_grad_tbe
+from .softplus_grad_ds import _softplus_grad_ds_tbe
 from .softmax_grad_ext import _softmax_grad_ext_tbe
 from .square import _square_tbe
 from .square_ds import _square_ds_tbe
