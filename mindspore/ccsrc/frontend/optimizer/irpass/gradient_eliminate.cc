@@ -58,39 +58,11 @@ bool IsSideEffectOp(const AnfNodePtr &node) {
   return effect_info.memory || effect_info.io;
 }
 
-void CheckSwitchWithSideEffect(const FuncGraphPtr &fg) {
-  AnfNodePtr switch_node = nullptr;
-  AnfNodePtr side_effect_node = nullptr;
-  auto all_graphs = fg->func_graphs_used_total();
-  all_graphs.add(fg);
-  for (auto &child_fg : all_graphs) {
-    for (const auto &node : child_fg->nodes()) {
-      if (switch_node == nullptr && IsPrimitiveCNode(node, prim::kPrimSwitch)) {
-        switch_node = node;
-      }
-      if (side_effect_node == nullptr && IsSideEffectOp(node)) {
-        side_effect_node = node;
-      }
-      if (switch_node != nullptr && side_effect_node != nullptr) {
-        MS_LOG(ERROR)
-          << "Control flow with side effect op[" << GetCNodeFuncName(side_effect_node->cast<CNodePtr>())
-          << "] in training situation is not supported and grads may be wrong. Please remove the control flow "
-             "statement or the side effect op.\n"
-          << " Side effect node:" << side_effect_node->DebugString();
-        return;
-      }
-    }
-  }
-}
-
 AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const OptimizerPtr &optimizer) {
   AnfNodePtr expanded_node = nullptr;
   if (IsValueNode<FuncGraph>(vnode)) {
     ScopeGuard scope_guard(vnode->scope());
     auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
-    // If a control flow network has side effect ops inside, which is not supported now, a error will be raised to
-    // alert wrong grads.
-    CheckSwitchWithSideEffect(func_graph);
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will expandJ now";
     auto newfg = ad::Grad(func_graph, optimizer);

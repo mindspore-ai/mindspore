@@ -563,11 +563,11 @@ bool AbstractSequence::PurifyElements() {
   }
   if (elements_use_flags_ptr == nullptr) {
     if (not_free_node == nullptr) {
-      MS_LOG(INFO) << "Check if all sequence nodes are released, or none elements use flags in them. nodes size: "
-                   << sequence_nodes_->size();
+      MS_LOG(ERROR) << "Check if all sequence nodes are released, or none elements use flags in them. nodes size: "
+                    << sequence_nodes_->size();
     } else {
-      MS_LOG(INFO) << "Check if none elements use flags in sequence ndoes. one of node: "
-                   << not_free_node->DebugString();
+      MS_LOG(ERROR) << "Check if none elements use flags in sequence ndoes. one of node: "
+                    << not_free_node->DebugString();
     }
     return false;
   }

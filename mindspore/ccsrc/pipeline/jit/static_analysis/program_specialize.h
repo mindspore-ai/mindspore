@@ -70,8 +70,6 @@ class ProgramSpecializer {
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
 
-  std::vector<AnfNodePtr> &sequence_nodes_replaced_list() { return sequence_nodes_replaced_list_; }
-
  private:
   std::shared_ptr<AnalysisEngine> engine_;
   mindspore::HashSet<AnfNodePtr> seen_;
@@ -81,8 +79,6 @@ class ProgramSpecializer {
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
-  // The list to hold the weak node ptr before purify abstract.
-  std::vector<AnfNodePtr> sequence_nodes_replaced_list_;
   // Map for unspecialized abstract function to specialized abstract;
   std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
     specialized_abs_map_;
@@ -109,7 +105,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   ClonerPtr cloner_;
   std::vector<AnfNodePtr> todo_;
   mindspore::HashSet<AnfNodePtr> marked_;
-  mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
+  mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> eval_cache_;
 
   void FirstPass();
   void SecondPass();
