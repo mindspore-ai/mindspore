@@ -27,3 +27,21 @@ mindspore.nn.probability.distribution.Normal
 
     - **ValueError** - `sd` 中元素小于0。
     - **TypeError** - `dtype` 不是float的子类。
+
+    .. py:method:: mean
+        :property:
+
+        返回分布位置。
+
+        **返回：**
+
+        Tensor, 分布的期望。
+
+    .. py:method:: sd
+        :property:
+
+        返回分布比例。
+
+        **返回：**
+
+        Tensor, 分布的标准差。
