@@ -227,6 +227,7 @@ class ControlNodeParser {
   // Get the control nodes and kernel graphs which need to add a stack actor for them.
   // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
   void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
+  bool IsCallNodeNeedStack(const AnfNodePtr &node);
   void ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
   // Parse the level of inputs and outputs of graphs and all control nodes.
   void ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes);

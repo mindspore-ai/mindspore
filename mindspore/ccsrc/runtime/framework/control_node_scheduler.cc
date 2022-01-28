@@ -218,9 +218,6 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       // The entrance actor has two parts of node members :
       // 1. The formal parameters of the subgraph are used to connect the actor's output arrows.
       for (const auto &parameter : func_graph->parameters()) {
-        if (HasAbstractMonad(parameter)) {
-          continue;
-        }
         const auto &abstract = parameter->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
         size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
