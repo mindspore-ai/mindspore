@@ -35,7 +35,7 @@ int TransposeInt8CPUKernel::Prepare() {
   return ReSize();
 }
 
-int TransposeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int TransposeInt8Run(void *cdata, int task_id, float, float) {
   auto transpose_int8 = reinterpret_cast<TransposeInt8CPUKernel *>(cdata);
   auto ret = transpose_int8->DoTranspose(task_id);
   if (ret != RET_OK) {

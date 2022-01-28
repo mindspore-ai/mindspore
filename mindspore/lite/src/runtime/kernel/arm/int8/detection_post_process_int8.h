@@ -41,7 +41,7 @@ class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKern
   int GetInputData() override;
 
   int8_t *data_int8_ = nullptr;
-  float *data_fp32_ = nullptr;
+  float *data_fp32_ = nullptr;  // temp data released in FreeAllocatedBuffer
   lite::LiteQuantParam quant_param_;
   int quant_size_ = 0;
   int thread_n_stride_ = 0;

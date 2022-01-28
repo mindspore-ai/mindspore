@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_LeakyRelu;
 
 namespace mindspore::kernel {
 namespace {
-int LeakyReluInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int LeakyReluInt8Run(void *cdata, int task_id, float, float) {
   if (cdata == nullptr) {
     MS_LOG(ERROR) << "input cdata is nullptr!";
     return RET_ERROR;
@@ -47,12 +47,14 @@ int LeakyReluInt8CPUKernel::Prepare() {
 
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
-  quant_prelu_parm_.quant_arg.in_args_.scale_ = in_quant_args.front().scale;
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  quant_prelu_parm_.quant_arg.in_args_.scale_ = static_cast<float>(in_quant_args.front().scale);
   quant_prelu_parm_.quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
-  quant_prelu_parm_.quant_arg.out_args_.scale_ = out_quant_args.front().scale;
+  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
+  quant_prelu_parm_.quant_arg.out_args_.scale_ = static_cast<float>(out_quant_args.front().scale);
   quant_prelu_parm_.quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
   quant_prelu_parm_.quant_arg.output_activation_max_ = std::numeric_limits<int8_t>::max();

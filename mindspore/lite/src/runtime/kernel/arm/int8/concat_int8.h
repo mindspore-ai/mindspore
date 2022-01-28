@@ -62,7 +62,7 @@ class ConcatInt8CPUKernel : public InnerKernel {
  private:
   int64_t before_axis_size = 0;
   int64_t count_unit_ = 0;
-  int8_t **input_data_ = nullptr;
+  int8_t **input_data_ = nullptr;  // freed in ~ConcatInt8CPUKernel
   int8_t *output_data_ = nullptr;
   ConcatParameter *concat_param_ = nullptr;
 };

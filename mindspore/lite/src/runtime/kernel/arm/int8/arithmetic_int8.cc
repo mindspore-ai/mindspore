@@ -40,7 +40,7 @@ using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
 namespace {
-int ArithmeticsInt8Launch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ArithmeticsInt8Launch(void *cdata, int task_id, float, float) {
   auto arithmetic_kernel = reinterpret_cast<ArithmeticInt8CPUKernel *>(cdata);
   auto error_code = arithmetic_kernel->DoArithmetic(task_id);
   if (error_code != RET_OK) {
@@ -152,11 +152,14 @@ int ArithmeticInt8CPUKernel::Run() {
     CHECK_NULL_RETURN(input_data1);
     MS_CHECK_GT(out_tensors_[0]->Size(), 0, RET_ERROR);
     tile_data0_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
+    if (tile_data0_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
     tile_data1_ = reinterpret_cast<int8_t *>(ms_context_->allocator->Malloc(out_tensors_[0]->Size()));
-    if (tile_data0_ == nullptr || tile_data1_ == nullptr) {
+    if (tile_data1_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";
       ms_context_->allocator->Free(tile_data0_);
-      ms_context_->allocator->Free(tile_data1_);
       return RET_ERROR;
     }
     TileDimensionsInt8(input_data0, input_data1, tile_data0_, tile_data1_, param);
@@ -165,6 +168,8 @@ int ArithmeticInt8CPUKernel::Run() {
   if (param->broadcasting_) {
     ms_context_->allocator->Free(tile_data0_);
     ms_context_->allocator->Free(tile_data1_);
+    tile_data0_ = nullptr;
+    tile_data1_ = nullptr;
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Arithmetic launch function fail! ret: " << ret;

@@ -28,14 +28,14 @@ int GroupConvolutionInt8CPUKernel::Separate(int task_id) {
   auto src_ptr = sub_in_src_ + begin_plane * ori_in_channel_;
   auto dst_ptr = sub_in_dst_ + begin_plane * sub_in_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_in_channel_ * sizeof(int8_t));
+    (void)memcpy(dst_ptr, src_ptr, sub_in_channel_ * sizeof(int8_t));
     src_ptr += ori_in_channel_;
     dst_ptr += sub_in_channel_;
   }
   return RET_OK;
 }
 
-int SeparateInputInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int SeparateInputInt8Run(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<GroupConvolutionInt8CPUKernel *>(cdata);
   auto ret = kernel->Separate(task_id);
   if (ret != RET_OK) {
@@ -66,14 +66,14 @@ int GroupConvolutionInt8CPUKernel::Concat(int task_id) {
   auto src_ptr = sub_out_src_ + begin_plane * sub_out_channel_;
   auto dst_ptr = sub_out_dst_ + begin_plane * ori_out_channel_;
   for (int i = begin_plane; i < end_plane; ++i) {
-    memcpy(dst_ptr, src_ptr, sub_out_channel_ * sizeof(int8_t));
+    (void)memcpy(dst_ptr, src_ptr, sub_out_channel_ * sizeof(int8_t));
     src_ptr += sub_out_channel_;
     dst_ptr += ori_out_channel_;
   }
   return RET_OK;
 }
 
-int ConcatOutputInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ConcatOutputInt8Run(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<GroupConvolutionInt8CPUKernel *>(cdata);
   auto ret = kernel->Concat(task_id);
   if (ret != RET_OK) {
@@ -112,7 +112,7 @@ int GroupConvolutionInt8CPUKernel::Prepare() {
       return lite::RET_ERROR;
     }
     group_conv_creator_->CopyQuantParam(&new_inputs);
-    group_convs_.emplace_back(
+    (void)group_convs_.emplace_back(
       CpuConvInt8KernelSelect(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_param), ctx_));
   }
   return GroupConvolutionBaseCPUKernel::Prepare();

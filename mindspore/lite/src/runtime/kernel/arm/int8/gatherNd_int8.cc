@@ -51,6 +51,9 @@ int GatherNdInt8CPUKernel::ReSize() {
   }
   auto in_quant_args = in_tensors_.at(0)->quant_params();
   auto out_quant_args = out_tensors_.at(0)->quant_params();
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
+
   param_.alpha_ = in_quant_args.front().scale / out_quant_args.front().scale;
   param_.zp_in_ = in_quant_args.front().zeroPoint;
   param_.zp_out_ = out_quant_args.front().zeroPoint;
@@ -139,7 +142,7 @@ int GatherNdInt8CPUKernel::DoGatherNd(int task_id) {
   return RET_OK;
 }
 
-int GatherNdInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int GatherNdInt8Run(void *cdata, int task_id, float, float) {
   auto g_kernel = reinterpret_cast<GatherNdInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoGatherNd(task_id);
   if (ret != RET_OK) {

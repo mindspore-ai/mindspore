@@ -52,16 +52,20 @@ int QuantizedAddCPUKernel::Prepare() {
   CHECK_NULL_RETURN(input0);
   CHECK_NULL_RETURN(input1);
   CHECK_NULL_RETURN(output);
-  MS_CHECK_TRUE_RET(!input0->quant_params().empty(), RET_ERROR);
-  MS_CHECK_TRUE_RET(!input1->quant_params().empty(), RET_ERROR);
-  MS_CHECK_TRUE_RET(!output->quant_params().empty(), RET_ERROR);
-  para_->in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
-  para_->in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
-  para_->out_zp_ = output->quant_params().front().zeroPoint;
+  const auto &input0_params = input0->quant_params();
+  const auto &input1_params = input1->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input0_params.empty(), RET_ERROR, "Input 0 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!input1_params.empty(), RET_ERROR, "Input 1 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
 
-  const double in0_scale = input0->quant_params().front().scale;
-  const double in1_scale = input1->quant_params().front().scale;
-  const double out_scale = output->quant_params().front().scale;
+  para_->in0_args_.zp_ = input0_params.front().zeroPoint * -1;
+  para_->in1_args_.zp_ = input1_params.front().zeroPoint * -1;
+  para_->out_zp_ = output_params.front().zeroPoint;
+
+  const double in0_scale = input0_params.front().scale;
+  const double in1_scale = input1_params.front().scale;
+  const double out_scale = output_params.front().scale;
 
   para_->left_shift_ = kBaseShift;
   const double twice_max_input_scale = 2 * std::max(in0_scale, in1_scale);
@@ -165,7 +169,7 @@ int QuantizedAddCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int AddInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int AddInt8Run(void *cdata, int task_id, float, float) {
   auto add = reinterpret_cast<QuantizedAddCPUKernel *>(cdata);
   auto ret = add->DoExecute(task_id);
   return ret;

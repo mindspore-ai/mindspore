@@ -41,7 +41,7 @@ class SplitBaseCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int Split(int task_id);
+  virtual int Split(int task_id);
   static int CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param);
 
  protected:

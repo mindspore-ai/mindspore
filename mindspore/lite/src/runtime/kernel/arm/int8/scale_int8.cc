@@ -280,7 +280,7 @@ int ScaleInt8CPUKernel::Scale(int task_id) const {
   return RET_OK;
 }
 
-int ScaleRunInt8(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ScaleRunInt8(void *cdata, int task_id, float, float) {
   auto scale = reinterpret_cast<ScaleInt8CPUKernel *>(cdata);
   auto ret = scale->Scale(task_id);
   if (ret != RET_OK) {

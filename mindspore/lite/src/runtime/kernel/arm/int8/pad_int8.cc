@@ -139,7 +139,7 @@ int PadInt8CPUKernel::RunImpl(int task_id) {
                        op_parameter_->thread_num_);
 }
 
-int PadInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int PadInt8Impl(void *cdata, int task_id, float, float) {
   auto resize = reinterpret_cast<PadInt8CPUKernel *>(cdata);
   auto error_code = resize->RunImpl(task_id);
   if (error_code != RET_OK) {
@@ -213,7 +213,7 @@ int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   return RET_OK;
 }
 
-int MirrorPadImplInt8(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int MirrorPadImplInt8(void *cdata, int task_id, float, float) {
   auto padKernel = reinterpret_cast<PadInt8CPUKernel *>(cdata);
   int error_code = padKernel->RunMirrorPadImpl(task_id);
   if (error_code != NNACL_OK) {

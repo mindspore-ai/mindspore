@@ -455,4 +455,40 @@ bool ConvolutionBaseCPUKernel::CheckInputsValid() const {
   MS_CHECK_TRUE_RET(input_tensor->data() != nullptr, false);
   return input_tensor->data_type() == weight_tensor->data_type();
 }
+
+int ConvolutionBaseCPUKernel::CheckAndGetWeightParam(int32_t *batch, int32_t *height, int32_t *width) const {
+  CHECK_NULL_RETURN(batch);
+  CHECK_NULL_RETURN(height);
+  CHECK_NULL_RETURN(width);
+  if (kWeightIndex >= in_tensors_.size()) {
+    MS_LOG(ERROR) << "Input tensor size " << in_tensors_.size() << " invalid, expected weight index: " << kWeightIndex;
+    return RET_ERROR;
+  }
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
+  auto _batch = weight_tensor->Batch();
+  if (_batch <= 0) {
+    MS_LOG(ERROR) << "get batch from weight_tensor failed, batch: " << _batch;
+    return RET_ERROR;
+  }
+  *batch = _batch;
+  auto _height = weight_tensor->Height();
+  if (_height <= 0) {
+    MS_LOG(ERROR) << "get height from weight_tensor failed, height: " << _height;
+    return RET_ERROR;
+  }
+  *height = _height;
+  auto _width = weight_tensor->Width();
+  if (_width <= 0) {
+    MS_LOG(ERROR) << "get width from weight_tensor failed, width: " << _width;
+    return RET_ERROR;
+  }
+  *width = _width;
+  if (INT32_MAX / _batch < _height || INT32_MAX / (_batch * _height) < _width) {
+    MS_LOG(ERROR) << "Element number of tensor should be smaller than INT32_MAX, batch: " << _batch
+                  << ", height: " << _height << ", width: " << _width;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::kernel
