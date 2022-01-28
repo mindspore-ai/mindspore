@@ -40,8 +40,6 @@ class CopyActor : public MemoryAwareActor {
       : MemoryAwareActor(name, KernelTransformType::kCopyActor, nullptr, memory_manager_aid), output_(nullptr) {}
   ~CopyActor() override = default;
 
-  void Init() override;
-
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
@@ -51,6 +49,7 @@ class CopyActor : public MemoryAwareActor {
   const DeviceTensorPtr &output() const { return output_; }
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                         const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;

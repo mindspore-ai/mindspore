@@ -16,8 +16,6 @@
 
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include <memory>
-#include <vector>
-#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"

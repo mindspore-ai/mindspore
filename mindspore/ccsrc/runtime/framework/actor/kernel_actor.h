@@ -60,8 +60,6 @@ class KernelActor : public DebugAwareActor {
   }
   ~KernelActor() override = default;
 
-  void Init() override;
-
   // The kernel actor run when receive the input control and input tensors, used in step mode.
   void RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
                                    const std::vector<TensorPtr> *input_tensors);
@@ -82,6 +80,7 @@ class KernelActor : public DebugAwareActor {
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
