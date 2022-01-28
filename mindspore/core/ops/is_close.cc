@@ -31,11 +31,6 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
   const int MAX = 0x3fffffff;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int input_num = 2;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto input_rank = SizeToLong(input_shape.size());
@@ -58,27 +53,31 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
                              << other_size;
   return BroadCastInferShape(op_name, input_args);
 }
-TypePtr IsCloseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  const int input_num = 2;
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+
+TypePtr IsCloseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32};
   std::map<std::string, TypePtr> types;
   types.emplace("input", input_args[0]->BuildType());
   types.emplace("other", input_args[1]->BuildType());
   CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, op_name);
   CheckAndConvertUtils::CheckTensorTypeValid("other", input_args[1]->BuildType(), valid_types, op_name);
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
 AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  (void)IsCloseInferType(primitive, input_args);
-  return abstract::MakeAbstract(IsCloseInferShape(primitive, input_args), kBool);
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infertype = IsCloseInferType(primitive, input_args);
+  auto infershape = IsCloseInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(IsClose, prim::kPrimIsClose, IsCloseInfer, nullptr, true);
 }  // namespace ops
