@@ -65,7 +65,7 @@ class MemScheduler {
 
   void SetTotalStep(size_t step) {
     total_step_ = step;
-    step_events_.resize(total_step_);
+    step_keys_.resize(total_step_);
   }
 
   void Reset() { current_step_ = 0; }
@@ -91,14 +91,32 @@ class MemScheduler {
 
   void OptMemUsage(float mem_used_factor = 1.0f);
 
-  bool MockOneStep();
+  bool Mock();
 
   void AdjustFirstEventIndex();
+
+  void *MallocDevice(size_t mem_size, void *stream);
+
+  void SwapOutAndFreeDevice(const void *key, void *device_ptr, size_t mem_size, void *stream);
+
+  size_t GetMemSize(const void *key);
+
+  void *GetOrMallocHostPtr(const void *key, size_t mem_size);
+
+  void GetHostPtr(const void *key, void **host_ptr, bool *from_init);
+
+  bool PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream);
+
+  bool PreComputeMalloc(const std::shared_ptr<MemEvent> &event, void *stream);
+
+  bool PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void *stream);
+
+  bool PreComputeGet(const std::shared_ptr<MemEvent> &event, void *stream);
 
   std::map<const void *, MemPriority> mem_priority_;
   std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> mem_events_;
   std::set<const void *> manual_offload_keys_;
-  std::vector<std::vector<std::shared_ptr<MemEvent>>> step_events_;
+  std::vector<std::set<const void *>> step_keys_;
   std::map<const void *, void *> mem_result_;
   std::map<const void *, void *> init_host_ptr_;
   std::map<const void *, void *> swap_host_ptr_;
@@ -108,7 +126,6 @@ class MemScheduler {
   size_t current_step_{0};
   bool need_record_event_{true};
   bool optimized_{false};
-  float mem_used_factor_{1.0};
   double compute_start_time_{0};
   std::vector<double> compute_time_;
   bool record_compute_time_{false};

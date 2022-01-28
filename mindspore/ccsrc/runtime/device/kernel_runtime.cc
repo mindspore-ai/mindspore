@@ -1660,17 +1660,9 @@ void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
 
 bool KernelRuntime::LaunchKernels(const session::KernelGraph &graph) {
   UseMemSchedulerIfNeeded(graph);
-  while (!LaunchKernelMod(graph)) {
-    if (!UseMemScheduler()) {
-      MS_LOG(ERROR) << "LaunchKernelMod failed!";
-      return false;
-    }
-    auto mem_scheduler = mem_scheduler_manager_.GetMemScheduler(graph.graph_id());
-    MS_EXCEPTION_IF_NULL(mem_scheduler);
-    if (!mem_scheduler->Optimize()) {
-      MS_LOG(ERROR) << "LaunchKernelMod failed!";
-      return false;
-    }
+  if (!LaunchKernelMod(graph)) {
+    MS_LOG(ERROR) << "LaunchKernelMod failed!";
+    return false;
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
