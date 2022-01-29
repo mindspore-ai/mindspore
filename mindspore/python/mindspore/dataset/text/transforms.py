@@ -758,6 +758,22 @@ if platform.system().lower() != 'windows':
             return cde.CaseFoldOperation()
 
 
+    class FilterWikipediaXML(TextTensorOperation):
+        """
+        Filter Wikipedia XML dumps to "clean" text consisting only of lowercase letters (a-z, converted from A-Z),
+        and spaces (never consecutive).
+
+        Note:
+            FilterWikipediaXML is not supported on Windows platform yet.
+
+        Examples:
+            >>> replace_op = text.FilterWikipediaXML()
+            >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
+        """
+        def parse(self):
+            return cde.FilterWikipediaXMLOperation()
+
+
     class NormalizeUTF8(TextTensorOperation):
         """
         Apply normalize operation on UTF-8 string tensor.

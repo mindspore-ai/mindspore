@@ -254,6 +254,24 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(image.Shape()[1], 15);
 }
 
+/// Feature: FilterWikipediaXMLEager
+/// Description: Test FilterWikipediaXML's Eager mode
+/// Expectation: Run successfully
+TEST_F(MindDataTestExecute, TestFilterWikipediaXMLEager) {
+  // Test FilterWikipediaXML's Eager mode
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFilterWikipediaXMLEager.";
+  std::vector<std::string> origin = {"中国","Wcdma","Pang","Yuchao"};
+  TensorShape input_shape({2, 2});
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateFromVector(origin, input_shape, &de_tensor);
+  std::shared_ptr<TensorTransform> filter = std::make_shared<text::FilterWikipediaXML>();
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::dataset::Execute Transform({filter});
+  Status s = Transform(input, &input);
+
+  ASSERT_TRUE(s.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestFrequencyMasking) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFrequencyMasking.";
   std::shared_ptr<Tensor> input_tensor_;

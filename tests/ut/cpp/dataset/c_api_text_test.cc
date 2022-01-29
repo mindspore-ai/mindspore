@@ -769,6 +769,55 @@ TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
   iter->Stop();
 }
 
+/// Feature: FilterWikipediaXML
+/// Description: test FilterWikipediaXML in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestFilterWikipediaXMLSuccess) {
+  // Testing the parameter of FilterWikipediaXML interface .
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterWikipediaXMLSuccess.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/2.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create filter_wikipedia_xml operation on ds
+  std::shared_ptr<TensorTransform> filter_wikipedia_xml = std::make_shared<text::FilterWikipediaXML>();
+  EXPECT_NE(filter_wikipedia_xml, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({filter_wikipedia_xml}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<std::string> expected = {"welcome to beijing","",""};
+
+  uint64_t i = 0;
+
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> de_expected_tensor;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_tensor));
+    mindspore::MSTensor ms_expected_tensor =
+    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_tensor);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
   // Testing the parameter of JiebaTokenizer interface when the mode is JiebaMode::kMp and the with_offsets is false.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerSuccess.";

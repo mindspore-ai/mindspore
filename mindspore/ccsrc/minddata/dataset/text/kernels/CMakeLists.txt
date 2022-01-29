@@ -5,6 +5,7 @@ if(NOT (CMAKE_SYSTEM_NAME MATCHES "Windows"))
                 basic_tokenizer_op.cc
                 bert_tokenizer_op.cc
                 case_fold_op.cc
+                filter_wikipedia_xml_op.cc
                 normalize_utf8_op.cc
                 regex_replace_op.cc
                 regex_tokenizer_op.cc

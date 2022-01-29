@@ -173,6 +173,21 @@ class MS_API CaseFold final : public TensorTransform {
   /// \return Shared pointer to the TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
+
+/// \brief Filter wikipedia xml lines.
+class FilterWikipediaXML final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  FilterWikipediaXML();
+
+  /// \brief Destructor
+  ~FilterWikipediaXML() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to the TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
 #endif
 
 /// \brief Tokenize a Chinese string into words based on the dictionary.

@@ -21,6 +21,7 @@
 #include "minddata/dataset/text/kernels/basic_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/bert_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/case_fold_op.h"
+#include "minddata/dataset/text/kernels/filter_wikipedia_xml_op.h"
 #endif
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
@@ -135,6 +136,16 @@ Status CaseFoldOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> CaseFoldOperation::Build() {
   std::shared_ptr<CaseFoldOp> tensor_op = std::make_shared<CaseFoldOp>();
+  return tensor_op;
+}
+
+// FilterWikipediaXMLOperation
+FilterWikipediaXMLOperation::FilterWikipediaXMLOperation() {}
+
+Status FilterWikipediaXMLOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> FilterWikipediaXMLOperation::Build() {
+  std::shared_ptr<FilterWikipediaXMLOp> tensor_op = std::make_shared<FilterWikipediaXMLOp>();
   return tensor_op;
 }
 #endif

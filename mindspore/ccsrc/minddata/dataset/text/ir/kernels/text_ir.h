@@ -37,6 +37,7 @@ namespace text {
 constexpr char kBasicTokenizerOperation[] = "BasicTokenizer";
 constexpr char kBertTokenizerOperation[] = "BertTokenizer";
 constexpr char kCaseFoldOperation[] = "CaseFold";
+constexpr char kFilterWikipediaXMLOperation[] = "FilterWikipediaXML";
 constexpr char kJiebaTokenizerOperation[] = "JiebaTokenizer";
 constexpr char kLookupOperation[] = "Lookup";
 constexpr char kNgramOperation[] = "Ngram";
@@ -115,6 +116,19 @@ class CaseFoldOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kCaseFoldOperation; }
+};
+
+class FilterWikipediaXMLOperation : public TensorOperation {
+ public:
+  FilterWikipediaXMLOperation();
+
+  ~FilterWikipediaXMLOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kFilterWikipediaXMLOperation; }
 };
 #endif
 
