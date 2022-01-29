@@ -146,7 +146,6 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   const auto &all_nodes = mng->all_nodes();
   auto txn = mng->Transact();
   for (const auto &node : all_nodes) {
-    TransformNodeAbstractIfEnvType(node, tensor_abs);
     if (!IsPrimitiveCNode(node, prim::kPrimEnvironSet) && !IsPrimitiveCNode(node, prim::kPrimEnvironGet)) {
       continue;
     }
@@ -181,7 +180,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     } else {
       prim->set_attr(attr_name, MakeValue(static_cast<int>(type_id)));
     }
-    // Abstract of Environ & Value will be set by previous TransformNodeAbstract function.
+    // Abstract of Environ & Value will be set by later TransformNodeAbstract function.
     // Key
     if (!IsValueNode<SymbolicKeyInstance>(cnode->input(kSymbolicKeyOffset))) {
       MS_LOG(EXCEPTION) << "should be SymbolicKey, but: " << cnode->input(kSymbolicKeyOffset)->ToString();
@@ -189,8 +188,13 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     const auto &transformed_key_node = GetTransformedKeyNode(cnode->input(kSymbolicKeyOffset), &symbolic_key_map);
     txn.SetEdge(node, kSymbolicKeyOffset, transformed_key_node);
   }
-
   txn.Commit();
+
+  // Previous loop is depending on the AbstractType, so use another loop to modify the AbstractType.
+  const auto &new_all_nodes = mng->all_nodes();
+  for (const auto &node : new_all_nodes) {
+    TransformNodeAbstractIfEnvType(node, tensor_abs);
+  }
   return true;
 }
 }  // namespace opt
