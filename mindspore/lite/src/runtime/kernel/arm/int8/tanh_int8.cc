@@ -28,9 +28,9 @@ int TanhInt8CPUKernel::Prepare() {
   MS_CHECK_TRUE_MSG(!input1_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
   MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
 
-  tanh_quant_.in_scale_ = static_cast<float>(input1_params.front().scale);
+  tanh_quant_.in_scale_ = input1_params.front().scale;
   tanh_quant_.in_zp_ = input1_params.front().zeroPoint;
-  tanh_quant_.out_scale_ = static_cast<float>(output_params.front().scale);
+  tanh_quant_.out_scale_ = output_params.front().scale;
   tanh_quant_.out_zp_ = output_params.front().zeroPoint;
 
   if (!InferShapeDone()) {
