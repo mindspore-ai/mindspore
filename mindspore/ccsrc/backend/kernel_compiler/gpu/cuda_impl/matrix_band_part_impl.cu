@@ -41,8 +41,8 @@ __global__ void MatrixBandPartKernel(const size_t size, const T *input_matrix_ad
 template <typename T>
 void MatrixBandPart(const size_t size, const T *input_matrix_addr, const size_t m, const size_t n, const int64_t l,
                     const int64_t u, T *output_addr, cudaStream_t cuda_stream) {
-  MatrixBandPartKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_matrix_addr, m, n, l, u,
-                                                                          output_addr, cuda_stream);
+  MatrixBandPartKernel<<<GET_BLOCKS(size), GET_THREADS_MAXSIZE(size), 0, cuda_stream>>>(size, input_matrix_addr, m, n,
+                                                                                        l, u, output_addr, cuda_stream);
 }
 
 template void MatrixBandPart<int32_t>(const size_t size, const int32_t *input_matrix_addr, const size_t m,

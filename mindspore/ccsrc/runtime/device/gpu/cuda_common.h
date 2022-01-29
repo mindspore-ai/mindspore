@@ -30,6 +30,7 @@ namespace gpu {
 class CudaCommon {
  public:
   inline int threads_num() const { return threads_per_block_; }
+  inline int threads_num(int size) const { return std::min(size, threads_per_block_); }
   inline int major_sm() const { return major_sm_; }
   inline float cuda_cap() const { return static_cast<float>(major_sm_ * 10 + minor_sm_) / 10.0; }
   inline int blocks_num(const int total_threads) const {
@@ -68,6 +69,7 @@ class CudaCommon {
 };
 #define GET_BLOCKS(total_threads) mindspore::device::gpu::CudaCommon::GetInstance().blocks_num(total_threads)
 #define GET_THREADS mindspore::device::gpu::CudaCommon::GetInstance().threads_num()
+#define GET_THREADS_MAXSIZE(size) mindspore::device::gpu::CudaCommon::GetInstance().threads_num(size)
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
 #define GET_CUDA_CAP mindspore::device::gpu::CudaCommon::GetInstance().cuda_cap()
 #define SHARED_MEM_PER_BLOCK mindspore::device::gpu::CudaCommon::GetInstance().share_memory_size()
