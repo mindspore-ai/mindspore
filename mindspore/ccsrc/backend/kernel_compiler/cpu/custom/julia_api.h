@@ -104,7 +104,7 @@ class JuliaAPI {
       // open julia shared library
       handle_ = dlopen(kLibJulia, RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
-        MS_LOG(EXCEPTION) << "Julia lib Open Error: " << dlerror();
+        MS_LOG(EXCEPTION) << dlerror();
         return false;
       }
 #else
@@ -164,6 +164,11 @@ class JuliaAPI {
     jl_init__threading_ = nullptr;
     jl_apply_array_type_ = nullptr;
     jl_ptr_to_array_ = nullptr;
+    jl_typeof_str_ = nullptr;
+    jl_stderr_obj_ = nullptr;
+    jl_current_exception_ = nullptr;
+    jl_ver_major_ = nullptr;
+    jl_ver_minor_ = nullptr;
   }
   ~JuliaAPI() {
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -215,6 +220,14 @@ class JuliaAPI {
   bool InitJuliaFunc() {
     bool suc = true;
 #if !defined(_WIN32) && !defined(_WIN64)
+    GET_HOOK(jl_ver_major, int, void);
+    GET_HOOK(jl_ver_minor, int, void);
+    if (!suc) return false;
+    constexpr int SupportedMinor = 6;
+    if (JlVerMajor() < 1 || (JlVerMajor() == 1 && JlVerMinor() < SupportedMinor)) {
+      MS_LOG(WARNING) << "we only support julia version >= 1.6 now and have tested in version 1.6";
+      return false;
+    }
     GET_HOOK(jl_eval_string, jl_value_t *, const char *);
     GET_HOOK(jl_get_global, jl_value_t *, jl_module_t *, jl_sym_t *);
     GET_HOOK(jl_symbol, jl_sym_t *, const char *);
@@ -224,6 +237,9 @@ class JuliaAPI {
     GET_HOOK(jl_init__threading, void, void);
     GET_HOOK(jl_apply_array_type, jl_value_t *, jl_value_t *, size_t);
     GET_HOOK(jl_ptr_to_array, jl_array_t *, jl_value_t *, void *, jl_value_t *, int);
+    GET_HOOK(jl_typeof_str, const char *, jl_value_t *);
+    GET_HOOK(jl_stderr_obj, jl_value_t *, void);
+    GET_HOOK(jl_current_exception, jl_value_t *, void);
 #else
     suc = false;
 #endif
@@ -246,6 +262,18 @@ class JuliaAPI {
     // call the julia function
     JlCall(jfunc, &args[0], nparam_);
     if (JlExceptionOccurred()) {
+      MS_LOG(EXCEPTION) << JlTypeOfStr(JlExceptionOccurred());
+      auto errs = JlStdErrObj();
+      if (errs) {
+        JlEvalString("using Main.Base");
+        auto base = reinterpret_cast<jl_module_t *>(JlEvalString("Main.Base"));
+        auto show = JlGetFunction(base, "show");
+        if (show) {
+          std::vector<jl_value_t *> err_args{errs, JlCurrentException()};
+          constexpr int arg_num = 2;
+          JlCall(show, &err_args[0], arg_num);
+        }
+      }
       return -1;
     }
     JlAtexitHook(0);
@@ -271,6 +299,16 @@ class JuliaAPI {
   jl_array_t *JlPtrToArray(jl_value_t *atype, void *data, jl_value_t *dims, int own_buffer) {
     return jl_ptr_to_array_(atype, data, dims, own_buffer);
   }
+
+  const char *JlTypeOfStr(jl_value_t *v) { return jl_typeof_str_(v); }
+
+  jl_value_t *JlStdErrObj() { return jl_stderr_obj_(); }
+
+  jl_value_t *JlCurrentException() { return jl_current_exception_(); }
+
+  int JlVerMajor() { return jl_ver_major_(); }
+
+  int JlVerMinor() { return jl_ver_minor_(); }
 
   jl_function_t *JlGetFunction(jl_module_t *m, const std::string &name) {
     return reinterpret_cast<jl_function_t *>(JlGetGlobal(m, JlSymbol(name)));
@@ -343,6 +381,11 @@ class JuliaAPI {
   void (*jl_init__threading_)(void);
   jl_value_t *(*jl_apply_array_type_)(jl_value_t *, size_t);
   jl_array_t *(*jl_ptr_to_array_)(jl_value_t *, void *, jl_value_t *, int);
+  const char *(*jl_typeof_str_)(jl_value_t *);
+  jl_value_t *(*jl_stderr_obj_)(void);
+  jl_value_t *(*jl_current_exception_)(void);
+  int (*jl_ver_major_)(void);
+  int (*jl_ver_minor_)(void);
 };
 }  // namespace kernel
 }  // namespace mindspore
