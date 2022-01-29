@@ -42,19 +42,37 @@ AbstractBasePtr InferImplTensorArrayStack(const AnalysisEnginePtr &, const Primi
   if (attr_dtype == nullptr) {
     MS_LOG(EXCEPTION) << "No attribute [dtype] in " << op_name;
   }
+  auto attr_is_dynamic = primitive->GetAttr("is_dynamic_shape");
+  if (attr_is_dynamic == nullptr) {
+    MS_LOG(EXCEPTION) << "No attribute [is_dynamic_shape] in " << op_name;
+  }
+  auto attr_size = primitive->GetAttr("size");
+  if (attr_size == nullptr) {
+    MS_LOG(EXCEPTION) << "No attribute [size] in " << op_name;
+  }
+  auto is_dynamic = GetValue<bool>(attr_is_dynamic);
+  auto size = GetValue<int64_t>(attr_size);
   auto ele_shape = GetValue<std::vector<int64_t>>(attr_shape);
   auto type = GetValue<TypePtr>(attr_dtype);
   primitive->set_attr("max_element", MakeValue(kMaxElement));
-  auto max_shape_ = ele_shape;
-  auto min_shape_ = ele_shape;
-  auto out_shape_ = ele_shape;
-  (void)max_shape_.insert(max_shape_.begin(), kMaxElement);
-  (void)min_shape_.insert(min_shape_.begin(), 1);
-  (void)out_shape_.insert(out_shape_.begin(), -1);
-  ShapeVector out_shape = out_shape_;
-  ShapeVector min_shape = min_shape_;
-  ShapeVector max_shape = max_shape_;
-  auto output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
+  std::shared_ptr<mindspore::abstract::AbstractTensor> output;
+  if (is_dynamic) {
+    auto max_shape_ = ele_shape;
+    auto min_shape_ = ele_shape;
+    auto out_shape_ = ele_shape;
+    (void)max_shape_.insert(max_shape_.begin(), kMaxElement);
+    (void)min_shape_.insert(min_shape_.begin(), 1);
+    (void)out_shape_.insert(out_shape_.begin(), -1);
+    ShapeVector out_shape = out_shape_;
+    ShapeVector min_shape = min_shape_;
+    ShapeVector max_shape = max_shape_;
+    output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
+  } else {
+    auto out_shape_ = ele_shape;
+    (void)out_shape_.insert(out_shape_.begin(), size);
+    ShapeVector out_shape = out_shape_;
+    output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape));
+  }
   return output;
 }
 }  // namespace abstract

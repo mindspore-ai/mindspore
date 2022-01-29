@@ -57,9 +57,7 @@ bool TensorArrayReadKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
                                              reinterpret_cast<cudaStream_t>(stream)),
                              "Get index to host failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                                             reinterpret_cast<cudaStream_t>(stream)),
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
                              "Get handle to host failed");
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle);
   MS_ERROR_IF_NULL(tensors_);

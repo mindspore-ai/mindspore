@@ -21,9 +21,9 @@ import mindspore.nn as nn
 from mindspore import Tensor
 
 class TensorArrayNet(nn.Cell):
-    def __init__(self, dtype, element_shape):
+    def __init__(self, dtype, element_shape, is_dynamic_shape=True, size=0):
         super(TensorArrayNet, self).__init__()
-        self.ta = nn.TensorArray(dtype, element_shape)
+        self.ta = nn.TensorArray(dtype, element_shape, is_dynamic_shape, size)
 
     def construct(self, index, value):
         self.ta.write(index, value)
@@ -92,3 +92,22 @@ def test_tensorarray():
     assert np.allclose(v.asnumpy(), expect_s[1])
     assert np.allclose(s.asnumpy(), expect_s)
     ta.close()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_static_tensorarray():
+    """
+    Feature: TensorArray cpu TEST.
+    Description: Test the static tensorarray.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    index = Tensor(0, mindspore.int64)
+    value = Tensor(5, mindspore.int64)
+    ta = TensorArrayNet(dtype=mindspore.int64, element_shape=(), is_dynamic_shape=False, size=12)
+    v, s = ta(index, value)
+    expect_v = 5
+    expect_s = [5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    assert np.allclose(s.asnumpy(), expect_s)
+    assert np.allclose(v.asnumpy(), expect_v)

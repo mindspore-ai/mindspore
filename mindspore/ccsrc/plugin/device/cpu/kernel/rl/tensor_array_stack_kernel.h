@@ -45,6 +45,7 @@ class TensorArrayStackCpuKernelMod : public NativeCpuKernelMod {
   size_t ele_size_;
   std::vector<size_t> shapes_;
   TypePtr type_;
+  bool is_dynamic_;
 };
 
 MS_REG_CPU_KERNEL(TensorArrayStack, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),

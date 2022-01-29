@@ -250,12 +250,13 @@ class TensorArrayStack(Primitive):
         [1 2]
     """
     @prim_attr_register
-    def __init__(self, dtype, element_shape):
+    def __init__(self, dtype, element_shape, dynamic_size, size):
         """Initialize TensorArrayStack"""
         self.init_prim_io_names(inputs=[''], outputs=['output'])
         self.add_prim_attr('dtype', dtype)
         self.add_prim_attr('element_shape', element_shape)
-        self.add_prim_attr('is_dynamic_shape', True)
+        self.add_prim_attr('is_dynamic_shape', dynamic_size)
+        self.add_prim_attr('size', size)
         self.add_prim_attr('side_effect_mem', True)
 
 

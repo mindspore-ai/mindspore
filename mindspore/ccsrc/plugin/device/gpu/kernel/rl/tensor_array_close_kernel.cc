@@ -42,9 +42,7 @@ bool TensorArrayCloseKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                                             reinterpret_cast<cudaStream_t>(stream)),
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
                              "Get handle to host failed");
   GPUTensorArrayPtr tensors_ =
     std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle));

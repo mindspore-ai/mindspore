@@ -66,7 +66,7 @@ class TensorArray(Cell):
         self.tensor_array_read = ta.TensorArrayRead(dtype, element_shape)
         self.tensor_array_close = ta.TensorArrayClose()
         self.tensor_array_clear = ta.TensorArrayClear()
-        self.tensor_array_stack = ta.TensorArrayStack(dtype, element_shape)
+        self.tensor_array_stack = ta.TensorArrayStack(dtype, element_shape, dynamic_size, size)
         self.tensor_array_size = ta.TensorArraySize()
 
     def write(self, index, value):

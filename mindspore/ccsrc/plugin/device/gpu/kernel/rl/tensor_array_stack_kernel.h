@@ -46,6 +46,7 @@ class TensorArrayStackKernelMod : public NativeGpuKernelMod {
   void *stream_ptr_;
   std::vector<size_t> shapes_;
   TypePtr type_;
+  bool is_dynamic_;
 };
 
 MS_REG_GPU_KERNEL(TensorArrayStack, TensorArrayStackKernelMod)
