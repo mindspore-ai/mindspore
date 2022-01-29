@@ -923,7 +923,8 @@ static void RemovePrimalUpdateStates(const FuncGraphManagerPtr &manager, const C
   }
 }
 
-static bool CopyMonadArguments(const CNodePtr &primal_user, const CNodePtr &j_user) {
+static bool CopyMonadArguments(const CNodePtr &primal_user, const CNodePtr &j_user,
+                               const FuncGraphManagerPtr &manager) {
   auto &primal_inputs = primal_user->inputs();
   auto &j_user_inputs = j_user->inputs();
   bool has_monad = false;
@@ -931,7 +932,7 @@ static bool CopyMonadArguments(const CNodePtr &primal_user, const CNodePtr &j_us
     auto &input = primal_inputs.at(i);
     if (HasAbstractMonad(input)) {
       // Copy monad input from primal to j_user.
-      j_user->set_input(i, input);
+      manager->SetEdge(j_user, i, input);
       has_monad = true;
     } else if (input != j_user_inputs.at(i)) {
       // Skip if there are different non-monad inputs.
@@ -971,7 +972,7 @@ void DFunctor::EliminatePrimalGraph() {
       // If both inputs are same except monads, we copy primal monad args to k graph
       // so that they can be combined in CSE (common subexpression elimination) pass.
       // Only do this when the size of j_users is 1 in order to keep the execution order.
-      const bool has_monad = CopyMonadArguments(primal_user, j_users[0]);
+      const bool has_monad = CopyMonadArguments(primal_user, j_users[0], manager);
       // Remove the UpdateState nodes after primal_user if need.
       if (has_monad) {
         RemovePrimalUpdateStates(manager, primal_user);
