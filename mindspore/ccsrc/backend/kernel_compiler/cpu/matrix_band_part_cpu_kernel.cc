@@ -51,15 +51,20 @@ bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
     memcpy_s(out_value, matrix_size_ * sizeof(T), in_value, matrix_size_ * sizeof(T));
     return true;
   }
-  for (size_t i = 0; i < out_range_size_; i++) {
-    for (size_t j = 0; j < std::min(m_, l + n_); j++) {
-      const size_t s = j < l ? 0 : j - l;
-      // When i = n - u, end is n -1, because end pos is start from 0
-      const size_t e = j >= n_ - u ? n_ - 1 : j + u;
-      const size_t offset = i * m_ * n_ + j * n_;
-      memcpy_s(out_value + offset + s, matrix_size_ * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
-    }
-  }
+  size_t diag_len = std::min(m_, l + n_);
+  CPUKernelUtils::ParallelFor(
+    [matrix_size = matrix_size_, m = m_, n = n_, diag_len, l, u, in_value, out_value](size_t spos, size_t epos) {
+      for (size_t t = spos; t < epos; t++) {
+        const size_t i = t / diag_len;
+        const size_t j = t % diag_len;
+        const size_t s = j < l ? 0 : j - l;
+        // When i = n - u, end is n -1, because end pos is start from 0
+        const size_t e = j >= n - u ? n - 1 : j + u;
+        const size_t offset = i * m * n + j * n;
+        (void)memcpy_s(out_value + offset + s, matrix_size * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
+      }
+    },
+    out_range_size_ * diag_len);
   return true;
 }
 }  // namespace kernel
