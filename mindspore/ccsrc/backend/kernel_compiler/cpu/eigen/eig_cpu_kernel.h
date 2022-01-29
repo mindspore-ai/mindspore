@@ -43,11 +43,23 @@ class EigCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t m_{1};
-  bool compute_eigen_vectors{false};
-  TypeId dtype_{kNumberTypeFloat32};
+  void InitMatrixInfo(const std::vector<size_t> &shape);
+  bool compute_v_{true};
+  size_t row_size_{1};
+  size_t col_size_{1};
+  size_t batch_size_{1};
 };
 
+// If compute_v is false.
+MS_REG_CPU_KERNEL_T_S(Eig, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+                      EigCpuKernelMod, float, float_complex);
+MS_REG_CPU_KERNEL_T_S(Eig, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+                      EigCpuKernelMod, double, double_complex);
+MS_REG_CPU_KERNEL_T_S(Eig, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                      EigCpuKernelMod, float_complex, float_complex);
+MS_REG_CPU_KERNEL_T_S(Eig, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                      EigCpuKernelMod, double_complex, double_complex);
+// If compute_v is true.
 MS_REG_CPU_KERNEL_T_S(
   Eig,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
@@ -58,7 +70,6 @@ MS_REG_CPU_KERNEL_T_S(Eig,
                         .AddOutputAttr(kNumberTypeComplex128)
                         .AddOutputAttr(kNumberTypeComplex128),
                       EigCpuKernelMod, double, double_complex);
-
 MS_REG_CPU_KERNEL_T_S(Eig,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeComplex64)

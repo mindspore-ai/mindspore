@@ -17,11 +17,11 @@ from typing import Generic
 import pytest
 import numpy as np
 import scipy as scp
-from scipy.linalg import solve_triangular
+from scipy.linalg import solve_triangular, eig, eigvals
 
 from mindspore import Tensor, context
-from mindspore.scipy.ops import EighNet, EigNet, Cholesky, SolveTriangular
-from tests.st.scipy_st.utils import create_sym_pos_matrix
+from mindspore.scipy.ops import EighNet, Eig, Cholesky, SolveTriangular
+from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
 np.random.seed(0)
 
@@ -50,64 +50,61 @@ def test_cholesky(n: int, dtype: Generic):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('n', [4, 6, 9, 10])
-def test_eig_net(n: int):
+@pytest.mark.parametrize('shape', [(6, 6), (10, 10)])
+@pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
+                                                   (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
+def test_eig(shape, data_type, rtol, atol):
     """
     Feature: ALL To ALL
-    Description: test cases for eigen decomposition test cases for Ax= lambda * x /( A- lambda * E)X=0
-    Expectation: the result match to numpy
+    Description: test cases for Eig operator
+    Expectation: the result match eigenvalue definition and scipy eig
     """
     context.set_context(mode=context.GRAPH_MODE)
-    # test for real scalar float 32
-    rtol = 1e-3
-    atol = 1e-4
-    msp_eig = EigNet(True)
-    a = np.array(np.random.rand(n, n), dtype=np.float32)
-    tensor_a = Tensor(np.array(a).astype(np.float32))
-    msp_w, msp_v = msp_eig(tensor_a)
-    assert np.allclose(a @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
+    a = create_random_rank_matrix(shape, data_type)
+    tensor_a = Tensor(a)
 
-    # test case for real scalar double 64
-    a = np.array(np.random.rand(n, n), dtype=np.float64)
-    rtol = 1e-5
-    atol = 1e-8
-    msp_eig = EigNet(True)
-    msp_w, msp_v = msp_eig(Tensor(np.array(a).astype(np.float64)))
+    # Check Eig with eigenvalue definition
+    msp_w, msp_v = Eig(True)(tensor_a)
+    w, v = msp_w.asnumpy(), msp_v.asnumpy()
+    assert np.allclose(a @ v - v @ np.diag(w), np.zeros_like(a), rtol, atol)
 
-    # Compare with scipy
-    assert np.allclose(a @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
+    # Check Eig with scipy eig
+    mw, mv = w, v
+    sw, sv = eig(a)
+    compare_eigen_decomposition((mw, mv), (sw, sv), True, rtol, atol)
 
-    # test case for complex64
-    rtol = 1e-3
-    atol = 1e-4
-    a = np.array(np.random.rand(n, n), dtype=np.complex64)
-    for i in range(0, n):
-        for j in range(0, n):
-            if i == j:
-                a[i][j] = complex(np.random.rand(1, 1), 0)
-            else:
-                a[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eig = EigNet(True)
-    msp_w, msp_v = msp_eig(Tensor(np.array(a).astype(np.complex64)))
-    assert np.allclose(a @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
+    # Eig only calculate eigenvalues when compute_v is False
+    mw = Eig(False)(tensor_a)
+    mw = mw.asnumpy()
+    sw = eigvals(a)
+    compare_eigen_decomposition((mw,), (sw,), False, rtol, atol)
 
-    # test for complex128
-    rtol = 1e-5
-    atol = 1e-8
-    a = np.array(np.random.rand(n, n), dtype=np.complex128)
-    for i in range(0, n):
-        for j in range(0, n):
-            if i == j:
-                a[i][j] = complex(np.random.rand(1, 1), 0)
-            else:
-                a[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
-    msp_eig = EigNet(True)
-    msp_w, msp_v = msp_eig(Tensor(np.array(a).astype(np.complex128)))
-    # Compare with scipy, scipy passed
-    assert np.allclose(a @ msp_v.asnumpy() - msp_v.asnumpy() @ np.diag(msp_w.asnumpy()), np.zeros((n, n)), rtol, atol)
-    msp_eig = EigNet(False)
-    msp_w0 = msp_eig(Tensor(np.array(a).astype(np.complex128)))
-    assert np.allclose(msp_w0.asnumpy() - msp_w.asnumpy(), np.zeros((n, n)), rtol, atol)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(2, 4, 4)])
+@pytest.mark.parametrize('data_type, rtol, atol', [(np.float32, 1e-3, 1e-4), (np.float64, 1e-5, 1e-8),
+                                                   (np.complex64, 1e-3, 1e-4), (np.complex128, 1e-5, 1e-8)])
+def test_batch_eig(shape, data_type, rtol, atol):
+    """
+    Feature: ALL To ALL
+    Description: test batch cases for Eig operator
+    Expectation: the result match eigenvalue definition
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    a = create_random_rank_matrix(shape, data_type)
+    tensor_a = Tensor(a)
+
+    # Check Eig with eigenvalue definition
+    msp_w, msp_v = Eig(True)(tensor_a)
+    w, v = msp_w.asnumpy(), msp_v.asnumpy()
+    batch_enum = np.empty(shape=shape[:-2])
+    for batch_index, _ in np.ndenumerate(batch_enum):
+        batch_a = a[batch_index]
+        batch_w = w[batch_index]
+        batch_v = v[batch_index]
+        assert np.allclose(batch_a @ batch_v - batch_v @ np.diag(batch_w), np.zeros_like(batch_a), rtol, atol)
 
 
 @pytest.mark.level0

@@ -24,62 +24,71 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
-constexpr size_t kOutputsNum = 2;
+constexpr size_t kOutputsNumNV = 1;
+constexpr size_t kOutputsNumV = 2;
 }  // namespace
 
 template <typename T, typename C>
+void EigCpuKernelMod<T, C>::InitMatrixInfo(const std::vector<size_t> &shape) {
+  if (shape.size() < kShape2dDims) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', the rank of parameter 'a' must be at least 2, but got "
+                     << shape.size() << " dimensions.";
+  }
+  row_size_ = shape[shape.size() - kDim1];
+  col_size_ = shape[shape.size() - kDim2];
+  if (row_size_ != col_size_) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_
+                     << "', the shape of parameter 'a' must be a square matrix, but got last two dimensions is "
+                     << row_size_ << " and " << col_size_;
+  }
+  batch_size_ = 1;
+  for (auto i : shape) {
+    batch_size_ *= i;
+  }
+  batch_size_ /= (row_size_ * col_size_);
+}
+
+template <typename T, typename C>
 void EigCpuKernelMod<T, C>::InitKernel(const CNodePtr &kernel_node) {
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  compute_eigen_vectors = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
-  auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (A_shape.size() != kShape2dDims || A_shape[0] != A_shape[1]) {
-    MS_LOG(EXCEPTION) << "wrong array shape, A should be a  matrix, but got [" << A_shape[0] << " X " << A_shape[1]
-                      << "]";
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  // If compute_v_ is true, then: w, v = Eig(a)
+  // If compute_v_ is false, then: w = Eig(a)
+  if (AnfAlgo::HasNodeAttr(COMPUTE_V, kernel_node)) {
+    compute_v_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, COMPUTE_V);
   }
-  m_ = A_shape[0];
-}
-
-template <typename T, typename C>
-void SolveGenericRealScalaMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output,
-                                 Map<MatrixSquare<C>> *outputv, bool compute_eigen_vectors) {
-  Eigen::EigenSolver<MatrixSquare<T>> solver(A);
-  output->noalias() = solver.eigenvalues();
-  if (compute_eigen_vectors) {
-    outputv->noalias() = solver.eigenvectors();
-  }
-}
-
-template <typename T, typename C>
-void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<C>> *output, Map<MatrixSquare<C>> *outputv,
-                        bool compute_eigen_vectors) {
-  Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(A);
-  output->noalias() = solver.eigenvalues();
-  if (compute_eigen_vectors) {
-    outputv->noalias() = solver.eigenvectors();
-  }
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
+  size_t output_num = AnfAlgo ::GetOutputTensorNum(kernel_node);
+  auto expect_output_num = compute_v_ ? kOutputsNumV : kOutputsNumNV;
+  CHECK_KERNEL_OUTPUTS_NUM(output_num, expect_output_num, kernel_name_);
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  InitMatrixInfo(input_shape);
 }
 
 template <typename T, typename C>
 bool EigCpuKernelMod<T, C>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output_w_addr = reinterpret_cast<C *>(outputs[0]->addr);
+  auto output_v_addr = compute_v_ ? reinterpret_cast<C *>(outputs[1]->addr) : nullptr;
 
-  auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  // is the Matrix a symmetric matrix(0, all, general matxi, -1 lower triangle, 1 upper triangle)
-  auto output_addr = reinterpret_cast<C *>(outputs[0]->addr);
-  auto output_v_addr = reinterpret_cast<C *>(outputs[1]->addr);
-  Map<MatrixSquare<T>> A(A_addr, m_, m_);
-  Map<MatrixSquare<C>> output(output_addr, m_, 1);
-  Map<MatrixSquare<C>> outputv(output_v_addr, m_, m_);
-  // Real scalar eigen solver
-  if constexpr (std::is_same_v<T, float>) {
-    SolveGenericRealScalaMatrix(A, &output, &outputv, compute_eigen_vectors);
-  } else if constexpr (std::is_same_v<T, double>) {
-    SolveGenericRealScalaMatrix(A, &output, &outputv, compute_eigen_vectors);
-  } else {
-    // complex eigen solver
-    SolveComplexMatrix(A, &output, &outputv, compute_eigen_vectors);
+  for (size_t batch = 0; batch < batch_size_; ++batch) {
+    T *a_addr = input_addr + batch * row_size_ * col_size_;
+    C *w_addr = output_w_addr + batch * row_size_;
+    Map<MatrixSquare<T>> a(a_addr, row_size_, col_size_);
+    Map<MatrixSquare<C>> w(w_addr, row_size_, 1);
+    auto eigen_option = compute_v_ ? Eigen::ComputeEigenvectors : Eigen::EigenvaluesOnly;
+    Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(a, eigen_option);
+    w = solver.eigenvalues();
+    if (compute_v_) {
+      C *v_addr = output_v_addr + batch * row_size_ * col_size_;
+      Map<MatrixSquare<C>> v(v_addr, row_size_, col_size_);
+      v = solver.eigenvectors();
+    }
+    if (solver.info() != Eigen::Success) {
+      MS_LOG_WARNING << "For '" << kernel_name_
+                     << "', the computation was not successful. Eigen::ComplexEigenSolver returns 'NoConvergence'.";
+    }
   }
   return true;
 }

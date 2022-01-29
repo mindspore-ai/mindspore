@@ -230,49 +230,43 @@ class EighNet(nn.Cell):
 class Eig(PrimitiveWithInfer):
     """
     Eig decomposition,(generic matrix)
-    Ax = lambda * x
+    a * v = w * v
     """
 
     @prim_attr_register
-    def __init__(self, compute_eigenvectors=True):
+    def __init__(self, compute_v=True):
         super().__init__(name="Eig")
-        self.init_prim_io_names(inputs=['A'], outputs=['output', 'output_v'])
-        self.compute_eigenvectors = validator.check_value_type(
-            "compute_eigenvectors", compute_eigenvectors, [bool], self.name)
+        self.init_prim_io_names(inputs=['a'], outputs=['w', 'v'])
+        self.compute_v = validator.check_value_type("compute_v", compute_v, [bool], self.name)
+        self.add_prim_attr('compute_v', self.compute_v)
+        self.io_table = {
+            mstype.tensor_type(mstype.float32): mstype.complex64,
+            mstype.tensor_type(mstype.complex64): mstype.complex64,
+            mstype.tensor_type(mstype.float64): mstype.complex128,
+            mstype.tensor_type(mstype.complex128): mstype.complex128
+        }
 
-    def __infer__(self, A):
-        shape = {}
-        if A['dtype'] == mstype.tensor_type(mstype.float32) or A['dtype'] == mstype.tensor_type(mstype.complex64):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (mstype.complex64, mstype.complex64),
+    def __infer__(self, a):
+        a_dtype = a["dtype"]
+        a_shape = tuple(a["shape"])
+        validator.check_tensor_dtype_valid("a", a_dtype,
+                                           [mstype.float32, mstype.float64, mstype.complex64, mstype.complex128],
+                                           self.name)
+
+        output = None
+        if self.compute_v:
+            output = {
+                'shape': (a_shape[:-1], a_shape),
+                'dtype': (self.io_table.get(a_dtype), self.io_table.get(a_dtype)),
                 'value': None
             }
-        elif A['dtype'] == mstype.tensor_type(mstype.float64) or A['dtype'] == mstype.tensor_type(mstype.complex128):
-            shape = {
-                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-                'dtype': (mstype.complex128, mstype.complex128),
+        else:
+            output = {
+                'shape': a_shape[:-1],
+                'dtype': self.io_table.get(a_dtype),
                 'value': None
             }
-        return shape
-
-
-class EigNet(nn.Cell):
-    """
-    EigenValue /eigenvector solver for generic matrix
-    Ax = lambda * x
-    """
-
-    def __init__(self, bv=True):
-        super(EigNet, self).__init__()
-        self.bv = bv
-        self.eig = Eig(bv)
-
-    def construct(self, A):
-        r = self.eig(A)
-        if self.bv:
-            return (r[0], r[1])
-        return r[0]
+        return output
 
 
 class LU(PrimitiveWithInfer):
