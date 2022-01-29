@@ -588,6 +588,10 @@ public class FLLiteClient {
                 LOGGER.info(Common.addTag("[Encrypt] haven't mask model"));
                 retCode = ResponseCode.SUCCEED;
                 return FLClientStatus.SUCCESS;
+            case SIGNDS:
+                LOGGER.info(Common.addTag("[Encrypt] SIGNDS do not need unmasking"));
+                retCode = ResponseCode.SUCCEED;
+                return FLClientStatus.SUCCESS;
             default:
                 LOGGER.severe(Common.addTag("[Encrypt] The encrypt level is error, not encrypt by default"));
                 retCode = ResponseCode.SUCCEED;
