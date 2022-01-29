@@ -1055,12 +1055,18 @@ class BNTrainingReduce(Primitive):
 
     @deprecated("1.5", "ops.BatchNorm", False)
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, data_format="NCHW"):
         """Initialize BNTrainingReduce."""
         self.init_prim_io_names(inputs=['x'], outputs=['sum', 'square_sum'])
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'data_format' is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
+        self.add_prim_attr('data_format', self.format)
 
 
-class BNTrainingUpdate(PrimitiveWithInfer):
+class BNTrainingUpdate(Primitive):
     """
     The BNTrainingUpdate interface is deprecated, please use the :class:`mindspore.ops.BatchNorm` instead.
 
@@ -1070,7 +1076,7 @@ class BNTrainingUpdate(PrimitiveWithInfer):
 
     @deprecated("1.5", "ops.BatchNorm", False)
     @prim_attr_register
-    def __init__(self, isRef=True, epsilon=1e-5, factor=0.1):
+    def __init__(self, isRef=True, epsilon=1e-5, factor=0.1, data_format="NCHW"):
         """Initialize BNTrainingUpdate."""
         self.init_prim_io_names(inputs=['x', 'sum', 'square_sum', 'scale', 'b', 'mean', 'variance'],
                                 outputs=['y', 'running_mean', 'running_variance', 'save_mean', 'save_inv_variance'])
@@ -1079,30 +1085,12 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         validator.check_value_type("factor", factor, [float], self.name)
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', 'BNTrainingUpdate')
         self.factor = validator.check_float_range(factor, 0, 1, Rel.INC_BOTH, 'factor', 'BNTrainingUpdate')
-
-    def infer_shape(self, x, sum, square_sum, scale, b, mean, variance):
-        validator.check_equal_int(len(x), 4, "x rank", self.name)
-        validator.check_equal_int(len(sum), 1, "sum rank", self.name)
-        validator.check_equal_int(len(square_sum), 1, "square_sum rank", self.name)
-        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
-        validator.check_equal_int(len(b), 1, "b rank", self.name)
-        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
-        validator.check_equal_int(len(variance), 1, "variance rank", self.name)
-        validator.check("sum shape", sum[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        validator.check("square_sum shape", square_sum, "sum", sum, Rel.EQ, self.name)
-        validator.check("scale shape", scale[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        validator.check("offset shape", b[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        validator.check("mean shape", mean[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        validator.check("variance shape", variance[0], "x_shape[1]", x[1], Rel.EQ, self.name)
-        return x, variance, variance, variance, variance
-
-    def infer_dtype(self, x, sum, square_sum, scale, b, mean, variance):
-        tuple(map(partial(validator.check_tensor_dtype_valid,
-                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
-                  ("x", "sum", "square_sum", "scale", "b", "mean", "variance"),
-                  (x, sum, square_sum, scale, b, mean, variance)))
-        return x, variance, variance, variance, variance
-
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'data_format' is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
+        self.add_prim_attr('data_format', self.format)
 
 class BatchNorm(PrimitiveWithInfer):
     r"""

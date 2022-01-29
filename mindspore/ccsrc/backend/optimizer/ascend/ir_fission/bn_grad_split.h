@@ -32,10 +32,10 @@ class BnGradSplit : public PatternProcessPass {
 
  protected:
   void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
-                                 std::vector<AnfNodePtr> *bn_update_grad_outputs) const;
+                                 std::vector<AnfNodePtr> *bn_update_grad_outputs, bool is_dynamic) const;
   void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
                                  const std::vector<AnfNodePtr> &bn_update_grad_outputs,
-                                 std::vector<AnfNodePtr> *bn_reduce_grad_outputs) const;
+                                 std::vector<AnfNodePtr> *bn_reduce_grad_outputs, bool is_dynamic) const;
 
  private:
   CNodePtr BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;

@@ -73,7 +73,7 @@ class AiCoreDynamicKernel : public DynamicKernel {
   std::vector<DeviceAddressPtr> workspace_addr_;
   std::shared_ptr<nlohmann::json> compile_info_json_;
   std::string op_compile_info_;
-  uint32_t tiling_key_{0};
+  uint64_t tiling_key_{0};
   const std::string origin_key_{""};
   AddressPtrList kernel_inputs_;
   AddressPtrList kernel_outputs_;

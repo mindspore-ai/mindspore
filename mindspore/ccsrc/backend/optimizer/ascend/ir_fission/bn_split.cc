@@ -37,7 +37,8 @@ constexpr int64_t kFusionNumThreshold = 2;
 }  // namespace
 
 bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
-                                              std::vector<AnfNodePtr> *bn_training_reduce_outputs) const {
+                                              std::vector<AnfNodePtr> *bn_training_reduce_outputs,
+                                              bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (AnfAlgo::GetInputTensorNum(bn_cnode) != kBnInputTensorNum) {
@@ -52,16 +53,14 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   bn_training_reduce->set_kernel_info(kernel_info);
-  std::vector<size_t> bn_shape_i0 = AnfAlgo::GetPrevNodeOutputInferShape(bn_cnode, 0);
-  if (bn_shape_i0.size() < kShape2dDims) {
-    MS_LOG(INFO) << "The BatchNorm's first input's shape dims less than " << kShape2dDims;
-    return false;
-  }
-  std::vector<size_t> bn_training_reduce_shape = {bn_shape_i0[kDim1]};
-  auto types = {kNumberTypeFloat32, kNumberTypeFloat32};
-  auto shapes = {bn_training_reduce_shape, bn_training_reduce_shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_training_reduce.get());
+  auto types = {AnfAlgo::GetOutputInferDataType(bn_cnode, 1), AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
+  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_cnode, 1), AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
+  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
   bn_training_reduce->set_scope(bn_cnode->scope());
+  if (is_dynamic) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_training_reduce);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
+  }
   AnfAlgo::CopyNodeAttrs(bn_cnode, bn_training_reduce);
 
   CreateMultipleOutputsOfAnfNode(graph, bn_training_reduce, kBNTrainingReduceOutputNum, bn_training_reduce_outputs);
@@ -69,7 +68,8 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
 }
 
 AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
-                                                    const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const {
+                                                    const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
+                                                    bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
   CheckCNodeInputSize(bn_cnode, kBnInputTensorNum);
@@ -95,7 +95,13 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   bn_training_update->set_scope(bn_cnode->scope());
   auto factor = AnfAlgo::GetNodeAttr<float>(bn_cnode, kAttrMomentum);
   AnfAlgo::SetNodeAttr(kAttrFactor, MakeValue<float>(factor), bn_training_update);
+  if (is_dynamic) {
+    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_training_update);
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_update);
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
+  }
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update);
+  AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
   AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
   return bn_training_update;
 }
@@ -106,13 +112,14 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
   if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
     MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
   // Create BNTrainingReduce node and get outputs of BNTrainingReduce
   std::vector<AnfNodePtr> bn_training_reduce_outputs;
-  if (!CreateOutputsOfBNTrainingReduce(func_graph, cnode, &bn_training_reduce_outputs)) {
+  if (!CreateOutputsOfBNTrainingReduce(func_graph, cnode, &bn_training_reduce_outputs, is_dynamic)) {
     MS_LOG(WARNING) << "Create BNTrainingReduce fail, quit split";
     return nullptr;
   }
@@ -121,7 +128,7 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
   }
 
   // Create BNTrainingUpdate node
-  return CreateOutputsOfBNTrainingUpdate(func_graph, cnode, bn_training_reduce_outputs);
+  return CreateOutputsOfBNTrainingUpdate(func_graph, cnode, bn_training_reduce_outputs, is_dynamic);
 }
 
 AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
@@ -130,13 +137,14 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
   if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
     MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
   // Create BNTrainingReduce node and get outputs of BNTrainingReduce
   std::vector<AnfNodePtr> bn_training_reduce_outputs;
-  if (!CreateOutputsOfBNTrainingReduce(func_graph, cnode, &bn_training_reduce_outputs)) {
+  if (!CreateOutputsOfBNTrainingReduce(func_graph, cnode, &bn_training_reduce_outputs, is_dynamic)) {
     MS_LOG(WARNING) << "Create BNTrainingReduce fail, quit split";
     return nullptr;
   }
@@ -151,7 +159,7 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
   }
 
   // Create BNTrainingUpdate node
-  return CreateOutputsOfBNTrainingUpdate(func_graph, cnode, allreduce_mul_outputs);
+  return CreateOutputsOfBNTrainingUpdate(func_graph, cnode, allreduce_mul_outputs, is_dynamic);
 }
 
 AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const CNodePtr &sync_bn_cnode) {
