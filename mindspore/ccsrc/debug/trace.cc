@@ -137,7 +137,7 @@ class AnalyzeFailExporter : public AnfExporter {
   bool ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack);
 
  protected:
-  void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+  void OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
 
  protected:
@@ -290,19 +290,19 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
   }
 }
 
-void AnalyzeFailExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+void AnalyzeFailExporter::OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
                                       int *idx, std::map<AnfNodePtr, int> *const apply_map) {
-  OutputCNodeText(ofs, cnode, func_graph, idx, apply_map);
+  OutputCNodeText(oss, cnode, func_graph, idx, apply_map);
   // Process function graph call
   std::string op_comment;
   ProcessFuncGraphCall(cnode, &op_comment);
   if (!op_comment.empty()) {
     auto &inputs = cnode->inputs();
-    ofs << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
+    oss << "    #" << GetAnfNodeText(func_graph, inputs[0], *apply_map) << ".prototype = " << op_comment;
   }
   // Output comment
-  OutputStatementComment(ofs, cnode);
-  ofs << "\n";
+  OutputStatementComment(oss, cnode);
+  oss << "\n";
 }
 
 bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const TraceCNodeEvalStack &node_config_stack) {
@@ -346,8 +346,9 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     (void)printed_func_graphs.emplace(fg);
 
     current_context_ = node_config->context();  // Set current context.
-    ExportOneFuncGraph(ofs, fg, tagged_func_graphs[fg]);
-    ofs << "\n\n";
+    std::ostringstream buffer;
+    ExportOneFuncGraph(buffer, fg, tagged_func_graphs[fg]);
+    ofs << buffer.str() << "\n\n";
   }
 
   ofs << "#===============================================================================\n";

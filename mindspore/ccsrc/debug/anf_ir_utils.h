@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <memory>
 #include <algorithm>
@@ -74,6 +75,7 @@ class AnfExporter {
   virtual ~AnfExporter() {}
 
   void ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
+  void ExportFuncGraph(const FuncGraphPtr &func_graph, std::ostringstream &graph_stream);
 
  protected:
   virtual std::string GetNodeType(const AnfNodePtr &nd);
@@ -91,21 +93,27 @@ class AnfExporter {
   std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
   std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                              const std::map<AnfNodePtr, int> &apply_map);
-  void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters, ParamIndexMap *param_map);
+  void OutputParameters(std::ostringstream &oss, const std::vector<AnfNodePtr> &parameters, ParamIndexMap *param_map);
 
-  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
-  void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  void OutputStatementComment(std::ostringstream &oss, const CNodePtr &node);
 
-  void OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+  void OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph);
+
+  void OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                        std::map<AnfNodePtr, int> *const apply_map);
-  virtual void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
+
+  virtual void OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                            std::map<AnfNodePtr, int> *const apply_map);
-  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph, const TaggedNodeMap &tagged_cnodes_map);
+
+  void ExportOneFuncGraph(std::ostringstream &oss, const FuncGraphPtr &func_graph,
+                          const TaggedNodeMap &tagged_cnodes_map);
 
   OrderedMap<FuncGraphPtr, ParamIndexMap> exported;
 
  private:
   void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
+                    const TaggedNodeMap &tagged_cnodes_map);
+  void OutputCNodes(std::ostringstream &oss, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
                     const TaggedNodeMap &tagged_cnodes_map);
 
   int param_index;
