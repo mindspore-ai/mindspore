@@ -36,7 +36,7 @@ class ParameterEliminator {
  public:
   ParameterEliminator() = default;
   virtual ~ParameterEliminator() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &) {
     const auto &manager = func_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     bool changes = false;

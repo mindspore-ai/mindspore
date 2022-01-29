@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include <iterator>
 #include <vector>
 #include <string>
+#include <algorithm>
+
 #include "ir/meta_func_graph.h"
 #include "ir/param_info.h"
 #include "ir/primitive.h"
@@ -78,7 +80,7 @@ void DrawNodes(const std::vector<AnfNodePtr> &nodes, OrderedMap<FuncGraphPtr, st
         (*sub_graphs)[sub_graph] = gsub;
       }
       if (!nd->isa<Parameter>()) {
-        gsub->Node(nd);
+        gsub->Node(nd, 0);
       }
     }
   }
@@ -137,7 +139,7 @@ void DrawEdges(const std::vector<AnfNodePtr> &nodes, const std::shared_ptr<BaseD
         }
         dup_idx++;
       } else {
-        digraph->Edge(t, nd, SizeToInt(i) - offset);
+        digraph->Edge(t, nd, SizeToInt(i) - offset, 0);
       }
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "utils/hash_set.h"
 
 namespace mindspore {
-enum LocDumpMode { kOff = 0, kTopStack = 1, kWholeStack = 2, kInValid = 3 };
+enum LocDumpMode : int { kOff = 0, kTopStack = 1, kWholeStack = 2, kInValid = 3 };
 auto constexpr kDumpConfigLineLevel0 = "LINE_LEVEL0";
 auto constexpr kDumpConfigLineLevel1 = "LINE_LEVEL1";
 auto constexpr kDumpConfigLineLevel2 = "LINE_LEVEL2";
