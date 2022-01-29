@@ -113,7 +113,6 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->data());
     CHECK_NULL_RETURN(ori_bias);
-    MS_CHECK_GT(output_channel, 0, RET_ERROR);
     (void)memcpy(bias_data_, ori_bias, static_cast<size_t>(output_channel) * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
