@@ -361,6 +361,10 @@ bool LiteModel::ModelVerify() const {
       return false;
     }
   }
+  if (sub_graphs_.size() == 1 && sub_graphs_[0]->output_indices_.size() != output_indices_.size()) {
+    MS_LOG(ERROR) << "should be equal";
+    return false;
+  }
 
   if (std::any_of(output_indices_.begin(), output_indices_.end(),
                   [&all_tensors_size](const uint32_t &idx) { return idx >= all_tensors_size; })) {

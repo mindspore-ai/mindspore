@@ -71,7 +71,7 @@ int HandleAxesInputNotExist(const TensorC *const *inputs, struct StridedSliceTra
     return NNACL_ERR;
   }
   transfer_buffer->ndim_ = GetElementNum(begin_tensor);
-  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); ++i) {
+  for (int i = 0; i < transfer_buffer->ndim_; ++i) {
     ShapePush(transfer_buffer->begins_, &transfer_buffer->begins_size_, begin_data[i]);
     ShapePush(transfer_buffer->ends_, &transfer_buffer->ends_size_, end_data[i]);
     ShapePush(transfer_buffer->strides_, &transfer_buffer->strides_size_, stride_data[i]);
@@ -238,7 +238,7 @@ int ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSlicePa
 }
 
 void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
-  for (int i = 0; i < (size_t)(transfer_buffer->ndim_); i++) {
+  for (int i = 0; i < transfer_buffer->ndim_; i++) {
     if (transfer_buffer->begins_mask_[i]) {
       transfer_buffer->begins_[i] = 0;
     }
@@ -248,7 +248,7 @@ void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
 int ApplyEndMask(StridedSliceTransferBuffer *transfer_buffer, const int *in_shape, size_t in_shape_size) {
   for (int i = 0; i < transfer_buffer->ndim_; i++) {
     if (transfer_buffer->ends_mask_[i]) {
-      if (i >= in_shape_size) {
+      if ((size_t)i >= in_shape_size) {
         return NNACL_ERR;
       }
       transfer_buffer->ends_[i] = in_shape[i];

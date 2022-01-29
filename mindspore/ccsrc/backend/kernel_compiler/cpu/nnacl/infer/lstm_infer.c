@@ -108,7 +108,7 @@ int LstmInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
 
   if (outputs_size > DIMENSION_4D) {
     int intermediate_states_shape[MAX_SHAPE_SIZE];
-    size_t intermediate_states_shape_size = 1;
+    const size_t intermediate_states_shape_size = 1;
     int batch_size = input->shape_[SECOND_INPUT];
     int seq_len = input->shape_[FIRST_INPUT];
     intermediate_states_shape[FIRST_INPUT] = no_of_recorde_values * batch_size * hidden_size * seq_len * dir_multiplier;

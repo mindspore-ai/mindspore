@@ -58,7 +58,7 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   int in_shape[MAX_SHAPE_SIZE] = {0};
   size_t in_shape_size = 0;
   ShapeSet(in_shape, &in_shape_size, input->shape_, input->shape_size_);
-  if ((size_t)(in_shape_size) < axis + 1) {
+  if ((int)(in_shape_size) < axis + 1) {
     return NNACL_ERR;
   }
   int out_shape[MAX_SHAPE_SIZE] = {0};

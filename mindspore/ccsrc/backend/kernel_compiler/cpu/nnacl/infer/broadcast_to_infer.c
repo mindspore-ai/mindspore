@@ -41,7 +41,7 @@ int GetShapeByType(const TensorC *shape_tensor, int shape_size, int *dst_shape) 
     case kNumberTypeInt64: {
       int64_t *data = (int64_t *)(shape_tensor->data_);
       for (int i = 0; i < shape_size; i++) {
-        dst_shape[i] = data[i];
+        dst_shape[i] = (int)data[i];
       }
     } break;
     case kNumberTypeFloat: {
@@ -53,7 +53,7 @@ int GetShapeByType(const TensorC *shape_tensor, int shape_size, int *dst_shape) 
     case kNumberTypeUInt32: {
       uint32_t *data = (uint32_t *)(shape_tensor->data_);
       for (int i = 0; i < shape_size; i++) {
-        dst_shape[i] = data[i];
+        dst_shape[i] = (int)data[i];
       }
     } break;
     default: {
@@ -69,7 +69,7 @@ void MakeUpInputShapes(const int input_shape0_size, const int input_shape1_size,
     *ndim = input_shape1_size;
     int fill_dim_num = input_shape1_size - input_shape0_size;
     int j = 0;
-    for (size_t i = 0; i < input_shape1_size; i++) {
+    for (int i = 0; i < input_shape1_size; i++) {
       if (i < fill_dim_num) {
         in_shape0[i] = 1;
       } else {
@@ -81,7 +81,7 @@ void MakeUpInputShapes(const int input_shape0_size, const int input_shape1_size,
     *ndim = input_shape0_size;
     int fill_dim_num = input_shape0_size - input_shape1_size;
     int j = 0;
-    for (size_t i = 0; i < input_shape0_size; i++) {
+    for (int i = 0; i < input_shape0_size; i++) {
       if (i < fill_dim_num) {
         in_shape1[i] = 1;
       } else {
@@ -90,7 +90,7 @@ void MakeUpInputShapes(const int input_shape0_size, const int input_shape1_size,
       in_shape0[i] = input_shape0[i];
     }
   } else {
-    for (size_t i = 0; i < input_shape0_size; i++) {
+    for (int i = 0; i < input_shape0_size; i++) {
       in_shape1[i] = input_shape1[i];
       in_shape0[i] = input_shape0[i];
     }
@@ -160,7 +160,7 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   bool has_broad_cast = false;
   if (inputs_size == 1) {
     BroadcastToParameter *param = (BroadcastToParameter *)parameter;
-    dst_shape_size = param->shape_size_;
+    dst_shape_size = (int)param->shape_size_;
     if (dst_shape_size > MAX_SHAPE_SIZE) {
       return NNACL_PARAM_INVALID;
     }
@@ -180,7 +180,7 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     if (ret != NNACL_OK) {
       return ret;
     }
-    for (size_t i = 0; i < dst_shape_size; ++i) {
+    for (int i = 0; i < dst_shape_size; ++i) {
       if (dst_shape[i] == -1) {
         dst_shape[i] = inputs[0]->shape_[i];
       }
@@ -192,7 +192,7 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     }
   }
 
-  SetShapeArray(outputs[0], output_shape, ndim);
+  SetShapeArray(outputs[0], output_shape, (size_t)ndim);
   return NNACL_OK;
 }
 
