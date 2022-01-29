@@ -180,7 +180,7 @@ int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_input
       continue;
     }
     lite::DataInfo data_info;
-    if (lite::FetchDataFromCNode(cnode, i, fmk_type, &data_info) != lite::RET_OK) {
+    if (lite::FetchDataFromCNode(cnode, i, &data_info) != lite::RET_OK) {
       MS_LOG(ERROR) << "parse cnode failed.";
       return lite::RET_ERROR;
     }
