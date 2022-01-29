@@ -90,6 +90,7 @@ models_caffe_fp16_config=${basepath}/../config/models_caffe_fp16.cfg
 models_tflite_fp16_config=${basepath}/../config/models_tflite_fp16.cfg
 models_tf_fp16_config=${basepath}/../config/models_tf_fp16.cfg
 models_mindspore_config=${basepath}/../config/models_mindspore.cfg
+models_mindspore_fp16_config=${basepath}/../config/models_mindspore_fp16.cfg
 models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
@@ -115,15 +116,16 @@ elif [[ $backend == "arm64_onnx" ]]; then
   fp16_cfg_file_list=("$models_onnx_fp16_config")
 elif [[ $backend == "arm64_mindir" ]]; then
   fp32_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
-                      "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" "$models_weightquant_9bit_config")
-  fp16_cfg_file_list=("$models_process_only_fp16_config")
+                      "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" "$models_weightquant_9bit_config"\
+                      "$models_mindspore_config")
+  fp16_cfg_file_list=("$models_process_only_fp16_config" "$models_mindspore_fp16_config")
 else
   fp32_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                        "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
                        "$models_tflite_awaretraining_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                        "$models_weightquant_9bit_config")
   fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" \
-                      "$models_process_only_fp16_config")
+                      "$models_process_only_fp16_config" "$models_mindspore_fp16_config")
 fi
 
 ms_models_path=${basepath}/ms_models
