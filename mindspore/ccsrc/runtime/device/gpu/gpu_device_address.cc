@@ -134,6 +134,36 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
   return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream);
 }
 
+bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
+  MS_EXCEPTION_IF_NULL(src_device_addr);
+  auto src_gpu_device = dynamic_cast<const GPUDeviceAddress *>(src_device_addr);
+  MS_EXCEPTION_IF_NULL(src_gpu_device);
+  auto src_size = src_gpu_device->GetSize();
+  auto src_ptr = src_gpu_device->GetMutablePtr();
+
+  // The input or output may be empty.
+  if ((src_size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << src_size << ", dst device size: " << size_;
+    return true;
+  }
+
+  if (src_size != size_) {
+    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
+                  << ", dst device size: " << size_;
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(src_ptr);
+  MS_EXCEPTION_IF_NULL(ptr_);
+
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!GPUDeviceManager::GetInstance().CopyDeviceMemToDeviceAsync(ptr_, src_ptr, size_, stream)) {
+    MS_LOG(ERROR) << "CopyDeviceMemToDeviceAsync failed";
+    return false;
+  }
+  return GPUDeviceManager::GetInstance().SyncStream(stream);
+}
+
 void GPUDeviceAddress::ClearDeviceMemory() {
   if (ptr_ == nullptr) {
     return;

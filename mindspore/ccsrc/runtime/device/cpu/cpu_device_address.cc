@@ -142,6 +142,39 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
   }
   return true;
 }
+
+bool CPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) const {
+  MS_EXCEPTION_IF_NULL(src_device_addr);
+  auto src_cpu_device = dynamic_cast<const CPUDeviceAddress *>(src_device_addr);
+  MS_EXCEPTION_IF_NULL(src_cpu_device);
+  auto src_size = src_cpu_device->GetSize();
+  auto src_ptr = src_cpu_device->GetMutablePtr();
+
+  // The input or output may be empty.
+  if ((src_size == 0) || (size_ == 0)) {
+    MS_LOG(INFO) << "No need sync, src device size: " << src_size << ", dst device size: " << size_;
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(src_ptr);
+  MS_EXCEPTION_IF_NULL(ptr_);
+  if (src_size != size_) {
+    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
+                  << ", dst device size: " << size_;
+    return false;
+  }
+
+  auto ret = memcpy_s(ptr_, size_, src_ptr, src_size);
+  // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
+  if (ret == ERANGE) {
+    ConvertSameType(ptr_, src_ptr, size_, type_id_);
+    return true;
+  } else if (ret != EOK) {
+    MS_LOG(ERROR) << "Failed to copy tensor!";
+    return false;
+  } else {
+    return true;
+  }
+}
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

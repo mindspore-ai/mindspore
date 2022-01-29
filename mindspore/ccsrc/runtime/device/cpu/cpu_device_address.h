@@ -43,6 +43,8 @@ class CPUDeviceAddress : public DeviceAddress {
   bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
                         const std::string &format = "DefaultFormat") const override;
+  bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const override;
+
   bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                      TypeId host_type, bool trans_flag) const override;
   void ClearDeviceMemory() override;
