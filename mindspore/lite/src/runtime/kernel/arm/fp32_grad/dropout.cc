@@ -80,7 +80,7 @@ int DropoutCPUKernel::Execute(int task_id) {
       std::bernoulli_distribution distribution(param->ratio_);
 
       for (int i = start; i < end; i++) {
-        mask[i] = distribution(generator);
+        mask[i] = static_cast<float>(distribution(generator));
         output_ptr[i] = input_ptr[i] * mask[i] * scale_;
       }
     }

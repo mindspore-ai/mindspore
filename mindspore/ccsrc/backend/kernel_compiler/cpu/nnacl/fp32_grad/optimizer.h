@@ -19,20 +19,20 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct ApplyMomentumParameter {
+typedef struct {
   OpParameter op_parameter_;
   bool use_nesterov_;
   float grad_scale_;
 } ApplyMomentumParameter;
 
-typedef struct SgdParameter {
+typedef struct {
   OpParameter op_parameter_;
   float dampening_;
   bool use_nesterov_;
   float weight_decay_;
 } SgdParameter;
 
-typedef struct AdamParameter {
+typedef struct {
   OpParameter op_parameter_;
   bool use_nesterov_;
 } AdamParameter;

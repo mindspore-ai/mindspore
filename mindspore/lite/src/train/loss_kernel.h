@@ -25,7 +25,7 @@ class LossKernel : public InnerKernel {
   LossKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
-  ~LossKernel() = default;
+  ~LossKernel() override = default;
 };
 
 }  // namespace mindspore::kernel

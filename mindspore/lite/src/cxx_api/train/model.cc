@@ -58,7 +58,7 @@ Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vecto
     return status;
   }
 
-  auto ret = loop->Train(epochs, ds.get(), cbs);
+  auto ret = loop->Train(epochs, ds.get(), cbs, nullptr);
 
   clearVectorOfPointers(&adapter_metrics);
   clearVectorOfPointers(&adapter_cbs);
@@ -98,7 +98,7 @@ Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCa
     return status;
   }
 
-  auto ret = loop->Eval(ds.get(), cbs);
+  auto ret = loop->Eval(ds.get(), cbs, nullptr, INT_MAX);
 
   clearVectorOfPointers(&adapter_metrics);
   clearVectorOfPointers(&adapter_cbs);

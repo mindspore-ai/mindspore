@@ -61,26 +61,21 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
   NNACL_CHECK_ZERO_RETURN_ERR(conv_param->group_);
-  do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
-                    (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
-                    (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
-                    (conv_param->stride_w_ == 1) && (conv_param->group_ == 1)
-                  ? false
-                  : true;
+  do_img2col_ = !((conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
+                  (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
+                  (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
+                  (conv_param->stride_w_ == 1) && (conv_param->group_ == 1));
   do_dw_ = (conv_param->output_channel_ == conv_param->group_) &&
-               (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
-               (conv_param->dilation_w_ == 1)
-             ? true
-             : false;
+           (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
+           (conv_param->dilation_w_ == 1);
 
   ws_size_ = chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
-  ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param->group_;
+  ws_size_ = do_dw_ ? ws_size_ : ws_size_ / static_cast<size_t>(conv_param->group_);
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = op_parameter_->thread_num_;
+  auto thread_num = static_cast<size_t>(op_parameter_->thread_num_);
   mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
-  set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float));
-
+  set_workspace_size((ws_size_ + mat_alloc_ + static_cast<size_t>(k * n)) * thread_num * sizeof(float));
   return RET_OK;
 }
 
@@ -97,27 +92,24 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
 
-  int nweights = out_dw->ElementsNum();
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int k_h = conv_param->kernel_h_;
   int k_w = conv_param->kernel_w_;
-  int batch = conv_param->output_batch_;
   int out_ch = conv_param->output_channel_;
   int groups = conv_param->group_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
 
-  int m = out_h * out_w;
+  int m = conv_param->output_h_ * conv_param->output_w_;
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
   int thread_num = op_parameter_->thread_num_;
-  float *workspace_temp = reinterpret_cast<float *>(workspace());
-  float *mat_workspace = workspace_temp + ws_size_ * thread_num + task_id * (mat_alloc_ + k * n);
+  auto *workspace_temp = reinterpret_cast<float *>(workspace());
+  float *mat_workspace =
+    workspace_temp + static_cast<int>(ws_size_) * thread_num + task_id * (static_cast<int>(mat_alloc_) + k * n);
   float *mat_tmp = mat_workspace + mat_alloc_;
-  int stride = UP_DIV(batch, thread_num);
-  int count = MSMIN(stride, batch - stride * task_id);
+  int stride = UP_DIV(conv_param->output_batch_, thread_num);
+  int count = MSMIN(stride, conv_param->output_batch_ - stride * task_id);
   count = (count < 0) ? 0 : count;
   int start = stride * task_id;
   int end = start + count;
@@ -140,7 +132,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
     end = start + count;
 
     const int kernel_spatial = k_h * k_w;
-    for (int i = 0; i < batch; ++i) {
+    for (int i = 0; i < conv_param->output_batch_; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
         real_chunk = MSMIN(m - ci, chunk_);
         mat_b = workspace_temp + task_id * ws_size_;
@@ -148,7 +140,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
         RollingIm2ColPackDwUnitFp32(im, conv_param, mat_b, real_chunk, ci);
         for (int j = start; j < end; ++j) {
           mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-          mat_c = dw_addr + j * nweights / groups;
+          mat_c = dw_addr + j * out_dw->ElementsNum() / groups;
           GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b + (j * kernel_spatial), n * groups, 1, mat_c, n,
                      mat_workspace);
         }
@@ -161,8 +153,8 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
         for (int j = 0; j < groups; ++j) {
           real_chunk = MSMIN(m - ci, chunk_);
           mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-          mat_b = workspace_temp + task_id * ws_size_;
-          mat_c = dw_addr + j * nweights / groups;
+          mat_b = workspace_temp + task_id * static_cast<int>(ws_size_);
+          mat_c = dw_addr + j * out_dw->ElementsNum() / groups;
           im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
           RollingIm2ColPackUnitFp32(im, conv_param, mat_b, real_chunk, ci);
           GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b, n, 0, mat_tmp, n, mat_workspace);
@@ -172,17 +164,16 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
       }
     }
   } else {
-    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_h_);
-    NNACL_CHECK_ZERO_RETURN_ERR(out_w * conv_param->stride_w_);
+    NNACL_CHECK_ZERO_RETURN_ERR(conv_param->output_w_);
     mat_c = dw_addr;
-    const size_t in_plane_size = in_ch * in_h * in_w;
+    auto in_plane_size = in_ch * in_h * in_w;
     for (int i = start; i < end; ++i) {
       for (int ci = 0; ci < m; ci += chunk_) {
         real_chunk = MSMIN(m - ci, chunk_);
         mat_a = dy_addr + i * m * k + ci * out_ch;
         im = x_addr + i * in_plane_size;
-        int input_h = ci / out_w * conv_param->stride_h_;
-        int input_w = ci % out_w * conv_param->stride_w_;
+        int input_h = ci / conv_param->output_w_ * conv_param->stride_h_;
+        int input_w = ci % conv_param->output_w_ * conv_param->stride_w_;
         int offset = (input_h * in_w + input_w) * in_ch;
         GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, im + offset, n, 0, mat_tmp, n, mat_workspace);
         std::unique_lock<std::mutex> merge_lock(lock_);

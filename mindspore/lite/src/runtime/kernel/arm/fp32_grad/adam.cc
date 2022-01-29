@@ -99,7 +99,6 @@ int AdamCPUKernel::Execute(int task_id) {
 }
 
 int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
   CHECK_NULL_RETURN(adam_kernel);
   auto error_code = RET_OK;

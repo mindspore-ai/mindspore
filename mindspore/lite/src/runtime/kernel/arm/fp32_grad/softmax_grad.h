@@ -37,7 +37,7 @@ class SoftmaxGradCPUKernel : public InnerKernel {
 
  private:
   SoftmaxParameter *param;
-  size_t inner_size_;
+  size_t inner_size_ = 0;
 };
 
 }  // namespace mindspore::kernel

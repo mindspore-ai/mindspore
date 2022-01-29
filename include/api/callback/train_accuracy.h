@@ -24,8 +24,6 @@
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/accuracy.h"
 
-using GraphPoint = std::pair<int, float>;
-
 namespace mindspore {
 
 class TrainAccuracy: public TrainCallBack {

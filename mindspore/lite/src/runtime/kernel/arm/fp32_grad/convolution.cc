@@ -54,22 +54,18 @@ int ConvolutionTrainCPUKernel::ReSize() {
   const int n = conv_param_->output_channel_ * conv_param_->group_;
   const int k = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ / conv_param_->group_;
 
-  do_img2col_ = (conv_param_->kernel_h_ == 1) && (conv_param_->kernel_w_ == 1) && (conv_param_->pad_d_ == 0) &&
-                    (conv_param_->pad_u_ == 0) && (conv_param_->pad_l_ == 0) && (conv_param_->pad_r_ == 0) &&
-                    (conv_param_->dilation_h_ == 1) && (conv_param_->dilation_w_ == 1) &&
-                    (conv_param_->stride_h_ == 1) && (conv_param_->stride_w_ == 1) && (conv_param_->group_ == 1)
-                  ? false
-                  : true;
+  do_img2col_ = !((conv_param_->kernel_h_ == 1) && (conv_param_->kernel_w_ == 1) && (conv_param_->pad_d_ == 0) &&
+                  (conv_param_->pad_u_ == 0) && (conv_param_->pad_l_ == 0) && (conv_param_->pad_r_ == 0) &&
+                  (conv_param_->dilation_h_ == 1) && (conv_param_->dilation_w_ == 1) && (conv_param_->stride_h_ == 1) &&
+                  (conv_param_->stride_w_ == 1) && (conv_param_->group_ == 1));
   do_dw_ = (conv_param_->output_channel_ == conv_param_->group_) &&
-               (conv_param_->input_channel_ == conv_param_->output_channel_) && (conv_param_->dilation_h_ == 1) &&
-               (conv_param_->dilation_w_ == 1)
-             ? true
-             : false;
+           (conv_param_->input_channel_ == conv_param_->output_channel_) && (conv_param_->dilation_h_ == 1) &&
+           (conv_param_->dilation_w_ == 1);
 
   ws_size_ = chunk_ * conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_;
   ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param_->group_;
   int mat_alloc = MatSizeTotal(chunk_, n, k, 0);
-  set_workspace_size((ws_size_ + mat_alloc) * sizeof(float));
+  set_workspace_size(static_cast<size_t>(ws_size_ + mat_alloc) * sizeof(float));
 
   return RET_OK;
 }
@@ -139,7 +135,7 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
     }
   } else {
     mat_b = w_addr;
-    const size_t in_plane_size = in_ch * in_h * in_w;
+    const int in_plane_size = in_ch * in_h * in_w;
     for (int i = 0; i < batch; ++i) {
       im = x_addr + i * in_plane_size;
       for (int ci = 0; ci < m; ci += chunk_) {

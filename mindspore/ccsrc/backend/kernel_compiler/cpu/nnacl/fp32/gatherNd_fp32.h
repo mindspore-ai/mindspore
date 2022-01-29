@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct GatherNdParameter {
+typedef struct {
   // Primitive parameter
   OpParameter op_parameter_;
 } GatherNdParameter;

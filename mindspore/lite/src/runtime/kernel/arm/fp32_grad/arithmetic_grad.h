@@ -39,8 +39,12 @@ class ArithmeticGradCPUKernel : public InnerKernel {
  public:
   explicit ArithmeticGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), tile_data0(NULL), tile_data1(NULL), tile_data2(NULL) {
-    switch (type()) {
+      : InnerKernel(parameter, inputs, outputs, ctx),
+        arithmetic_grad_(nullptr),
+        tile_data0(nullptr),
+        tile_data1(nullptr),
+        tile_data2(nullptr) {
+    switch (parameter->type_) {
       case PrimitiveType_MulGrad:
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMul;  // this will be adjusted in InferShape
         break;

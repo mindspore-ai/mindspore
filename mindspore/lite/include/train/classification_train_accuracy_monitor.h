@@ -24,8 +24,6 @@
 #include "include/train/train_loop.h"
 #include "include/train/accuracy_metrics.h"
 
-using GraphPoint = std::pair<int, float>;
-
 namespace mindspore {
 namespace lite {
 

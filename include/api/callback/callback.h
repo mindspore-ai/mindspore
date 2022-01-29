@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <utility>
 #include "include/api/data_type.h"
 #include "include/api/dual_abi_helper.h"
 
@@ -27,6 +28,8 @@ namespace mindspore {
 class Model;
 class ModelImpl;
 class CallbackImpl;
+
+using GraphPoint = std::pair<int, float>;
 
 struct TrainCallBackData {
   TrainCallBackData(bool train_mode, int epoch, int step, Model *model): train_mode_(train_mode), epoch_(epoch),

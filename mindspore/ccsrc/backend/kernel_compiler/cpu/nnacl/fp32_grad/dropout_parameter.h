@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct DropoutParameter {
+typedef struct {
   OpParameter op_parameter_;
   float ratio_;
 } DropoutParameter;

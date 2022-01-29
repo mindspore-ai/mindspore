@@ -30,7 +30,7 @@ constexpr static int kOutputIdx = 0;
 
 int SmoothL1LossCPUKernel::ReSize() { return RET_OK; }
 
-int SmoothL1LossCPUKernel::Execute(int task_id) {
+int SmoothL1LossCPUKernel::Execute(size_t task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
   CHECK_NULL_RETURN(smooth_l1_loss_param);
   auto predict = reinterpret_cast<float *>(in_tensors_.at(kPredictIdx)->MutableData());
@@ -42,7 +42,7 @@ int SmoothL1LossCPUKernel::Execute(int task_id) {
   const size_t length = in_tensors_.at(kPredictIdx)->ElementsNum();
 
   size_t stride = UP_DIV(length, thread_count_);
-  int count = MSMIN(stride, length - stride * task_id);
+  size_t count = MSMIN(stride, length - stride * task_id);
 
   size_t start = stride * task_id;
   size_t end = start + count;

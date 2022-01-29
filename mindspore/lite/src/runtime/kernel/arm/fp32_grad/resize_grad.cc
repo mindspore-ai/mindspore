@@ -73,13 +73,13 @@ int ResizeGradCPUKernel::Execute(int task_id) {
   CHECK_NULL_RETURN(param);
   auto batch_size = in_tensors_.at(0)->Batch();
   auto channel = in_tensors_.at(0)->Channel();
-  int error_code = NNACL_OK;
+  int error_code;
   if (param->method == static_cast<int>(schema::ResizeMethod_NEAREST)) {
     error_code = ResizeNearestNeighborGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   } else {
     error_code = ResizeBiLinearGrad(in_addr, out_addr, batch_size, channel, in_tensors_.at(0)->format(), param);
   }
-  if (error_code != NNACL_OK) {
+  if (error_code != static_cast<int>(NNACL_OK)) {
     MS_LOG(ERROR) << "Resize fp32 grad failed.";
     return error_code;
   }
