@@ -455,10 +455,3 @@ def test_floor_mod():
     expect7 = np.mod(x7_np, y7_np).astype(np.int64)
     assert np.all(output7.asnumpy() == expect7)
     assert output6.shape == expect6.shape
-
-
-test_sub()
-test_div()
-test_floor_div()
-test_mod()
-test_floor_mod()
