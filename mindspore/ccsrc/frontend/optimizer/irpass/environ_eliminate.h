@@ -340,7 +340,7 @@ class IncorporateEnvironGet : public AnfVisitor {
   ~IncorporateEnvironGet() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }
@@ -397,7 +397,7 @@ class IncorporateEnvironGetSwitch : public AnfVisitor {
   ~IncorporateEnvironGetSwitch() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }
@@ -462,7 +462,7 @@ class IncorporateEnvironGetSwitchLayer : public AnfVisitor {
   ~IncorporateEnvironGetSwitchLayer() override = default;
 
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }

@@ -30,7 +30,7 @@ class EliminateDeadNodePass {
       return false;
     }
 
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     MS_LOG(INFO) << "Closure enable:" << enable_closure;
     if (!enable_closure) {
       return false;

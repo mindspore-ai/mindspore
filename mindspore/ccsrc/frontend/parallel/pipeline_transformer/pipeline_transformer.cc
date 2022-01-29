@@ -657,9 +657,14 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
     tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
   } else {
     auto care_node = FindPipelineCareNode(node);
-    op_info_pair = GetOpInfo(care_node);
-    tensor_info = op_info_pair.first->outputs_tensor_info().at(IntToSize(op_info_pair.second));
-    is_param = false;
+    if (care_node->isa<Parameter>()) {
+      op_info_pair = GetParameterPair(care_node);
+      tensor_info = op_info_pair.first->inputs_tensor_info().at(IntToSize(op_info_pair.second));
+    } else {
+      op_info_pair = GetOpInfo(care_node);
+      tensor_info = op_info_pair.first->outputs_tensor_info().at(IntToSize(op_info_pair.second));
+      is_param = false;
+    }
   }
   auto tensor_layout = tensor_info.tensor_layout();
   Shape slice_shape = tensor_info.slice_shape();
