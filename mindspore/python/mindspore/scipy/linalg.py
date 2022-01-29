@@ -13,19 +13,19 @@
 # limitations under the License.
 # ============================================================================
 """Linear algebra submodule"""
-from .. import numpy as mnp
-from .. import ops
-from .ops import SolveTriangular
-from .ops import CholeskySolver
 from .ops import Cholesky
+from .ops import CholeskySolve
+from .ops import EighNet
 from .ops import LU
 from .ops import LUSolver
-from .ops import EighNet
-from ..ops import operations as P
-from ..ops import functional as F
-from ..common import dtype as mstype
-from .utils import float_types, valid_data_types
+from .ops import SolveTriangular
+from .utils import _nd_transpose, float_types, valid_data_types
 from .utils_const import _raise_value_error, _raise_type_error, _type_check
+from .. import numpy as mnp
+from .. import ops
+from ..common import dtype as mstype
+from ..ops import functional as F
+from ..ops import operations as P
 
 __all__ = ['block_diag', 'solve_triangular', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
 
@@ -296,14 +296,14 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     if a_type not in float_types:
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
-    if len(a_shape) != 2:
-        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must have 2 dimensions.")
+    if a.ndim < 2:
+        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be greater or equal to 2 dimensions.")
     if a_shape[-1] != a_shape[-2]:
         _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be a square matrix.")
     cholesky_net = Cholesky(clean=False)
     c = cholesky_net(a)
     if not lower:
-        c = c.T
+        c = _nd_transpose(c)
     return c, lower
 
 
@@ -357,15 +357,15 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     if a_type not in float_types:
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
-    if len(a_shape) != 2:
-        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must have 2 dimensions.")
+    if a.ndim < 2:
+        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be greater or equal to dimensions.")
 
     if a_shape[-1] != a_shape[-2]:
         _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be a square matrix.")
     cholesky_net = Cholesky(clean=True)
     c = cholesky_net(a)
     if not lower:
-        c = c.T
+        c = _nd_transpose(c)
     return c
 
 
@@ -410,8 +410,8 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         _raise_type_error("mindspore.scipy.linalg.cholesky only support int32, int64, float32, float64.")
     if c_type not in float_types:
         c = F.cast(c, mstype.float64)
-    cholesky_solver_net = CholeskySolver(lower=lower)
-    x = cholesky_solver_net(c, b)
+    cholesky_solve_net = CholeskySolve(lower=lower)
+    x = cholesky_solve_net(c, b)
     return x
 
 

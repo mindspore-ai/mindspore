@@ -128,7 +128,7 @@ class Cholesky(PrimitiveWithInfer):
         return output
 
 
-class CholeskySolver(PrimitiveWithInfer):
+class CholeskySolve(PrimitiveWithInfer):
     """Solve the linear equations A x = b, given the Cholesky factorization of A.
 
     Parameters
@@ -152,12 +152,12 @@ class CholeskySolver(PrimitiveWithInfer):
     Examples:
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
-        >>> from mindspore.scipy.ops import CholeskySolver
+        >>> from mindspore.scipy.ops import CholeskySolve
         >>> from mindspore.scipy.linalg import cho_factor
         >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]], dtype=onp.float32))
         >>> b = Tensor(onp.array([1.0, 1.0, 1.0, 1.0], dtype=onp.float32))
         >>> c, lower = cho_factor(A)
-        >>> cholesky_solver = CholeskySolver(lower=lower)
+        >>> cholesky_solver = CholeskySolve(lower=lower)
         >>> x = cholesky_solver(c, b)
         >>> print(x)
         [-0.01749266  0.11953348  0.01166185  0.15743434]
@@ -165,7 +165,7 @@ class CholeskySolver(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, lower=False):
-        super().__init__(name="CholeskySolver")
+        super().__init__(name="CholeskySolve")
         self.lower = validator.check_value_type("lower", lower, [bool], self.name)
         self.init_prim_io_names(inputs=['A', 'b'], outputs=['y'])
 

@@ -25,26 +25,44 @@ constexpr size_t kInputAIndex = 0;
 constexpr size_t kInputBIndex = 1;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
-constexpr size_t kDefaultShape = 1;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
 
 template <typename T>
-void CholeskySolverCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
+void CholeskySolveCpuKernelMod<T>::InitRightMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
-    MS_LOG_EXCEPTION << kernel_name_ << "shape is invalid.";
+    MS_LOG_EXCEPTION << kernel_name_ << " input shape is empty which is invalid.";
   }
-  if (shape.size() == kDefaultShape) {
-    *row = shape.front();
-  } else {
-    *row = shape.at(shape.size() - kRowIndex);
-    *col = shape.at(shape.size() - kColIndex);
+  constexpr size_t min_dim = 1;
+  if (shape.size() <= min_dim) {
+    MS_LOG_EXCEPTION << kernel_name_ << " input shape dim is " << shape.size() << " which is invalid.";
+  }
+  *row = shape.at(shape.size() - kRowIndex);
+  *col = shape.at(shape.size() - kColIndex);
+  outer_batch_ = min_dim;
+  for (int batch = 0; batch < static_cast<int>(shape.size() - kRowIndex); ++batch) {
+    outer_batch_ *= shape.at(batch);
   }
 }
 
 template <typename T>
-void CholeskySolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void CholeskySolveCpuKernelMod<T>::InitLeftMatrixInfo(const std::vector<size_t> &shape, const bool is_rank_equal,
+                                                      size_t *row, size_t *col) {
+  if (shape.empty()) {
+    MS_LOG_EXCEPTION << kernel_name_ << " input or output shape is empty which is invalid.";
+  }
+  if (is_rank_equal) {
+    *row = shape.at(shape.size() - kRowIndex);
+    *col = shape.at(shape.size() - kColIndex);
+  } else {
+    *row = shape.back();
+    *col = 1;
+  }
+}
+
+template <typename T>
+void CholeskySolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -53,42 +71,48 @@ void CholeskySolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
   auto input_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputAIndex);
-  InitMatrixInfo(input_a_shape, &input_a_row_, &input_a_col_);
+  InitRightMatrixInfo(input_a_shape, &input_a_row_, &input_a_col_);
   auto input_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputBIndex);
-  InitMatrixInfo(input_b_shape, &input_b_row_, &input_b_col_);
+  const bool is_right_equal_left = input_a_shape.size() == input_b_shape.size();
+  InitLeftMatrixInfo(input_b_shape, is_right_equal_left, &input_b_row_, &input_b_col_);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
-  InitMatrixInfo(output_shape, &output_row_, &output_col_);
-  lower_ = AnfAlgo ::GetNodeAttr<bool>(kernel_node, LOWER);
-  if (input_a_row_ != input_b_row_) {
-    MS_LOG_EXCEPTION << kernel_name_ << "llt solve input row is not equal to b row: " << input_a_row_ << " vs "
+  InitLeftMatrixInfo(output_shape, is_right_equal_left, &output_row_, &output_col_);
+  if (AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
+    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+  }
+  if (input_a_row_ != input_a_col_ || input_a_row_ != input_b_row_) {
+    MS_LOG_EXCEPTION << kernel_name_ << " llt solve input a row is not match to b row: " << input_a_row_ << " vs "
                      << input_b_row_;
   }
 }
 
 template <typename T>
-bool CholeskySolverCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
-  T *input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
-  Map<Matrix<T, RowMajor>> input(input_value, input_a_row_, input_a_col_);
-
-  T *input_b_value = reinterpret_cast<T *>(inputs[kInputBIndex]->addr);
-  Map<Matrix<T, RowMajor>> input_b(input_b_value, input_b_row_, input_b_col_);
-
-  T *output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
-  Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
-
-  if (lower_) {
-    output.noalias() = input.template triangularView<Lower>().solve(input_b);
-    input.adjoint().template triangularView<Upper>().solveInPlace(output);
-  } else {
-    output.noalias() = input.adjoint().template triangularView<Lower>().solve(input_b);
-    input.template triangularView<Upper>().solveInPlace(output);
+bool CholeskySolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                          const std::vector<AddressPtr> &outputs) {
+  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputAIndex]->addr);
+  T *batch_input_b_value = reinterpret_cast<T *>(inputs[kInputBIndex]->addr);
+  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
+  for (size_t batch = 0; batch < outer_batch_; ++batch) {
+    T *input_value = batch_input_value + batch * input_a_row_ * input_a_col_;
+    Map<Matrix<T, RowMajor>> input(input_value, input_a_row_, input_a_col_);
+    T *input_b_value = batch_input_b_value + batch * input_b_row_ * input_b_row_;
+    Map<Matrix<T, RowMajor>> input_b(input_b_value, input_b_row_, input_b_col_);
+    T *output_value = batch_output_value + batch * output_row_ * output_col_;
+    Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
+    if (lower_) {
+      output.noalias() = input.template triangularView<Lower>().solve(input_b);
+      input.adjoint().template triangularView<Upper>().solveInPlace(output);
+    } else {
+      output.noalias() = input.adjoint().template triangularView<Lower>().solve(input_b);
+      input.template triangularView<Upper>().solveInPlace(output);
+    }
+    if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
+      continue;
+    } else {
+      MS_LOG_EXCEPTION << kernel_name_ << " cholesky solve failed, please check input info.";
+    }
   }
-
-  if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
-    return true;
-  }
-  MS_LOG_EXCEPTION << kernel_name_ << " output cholesky solve shape invalid.";
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
