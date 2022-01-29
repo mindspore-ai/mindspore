@@ -104,8 +104,8 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   // dynamic shape nodes is not supported yet.
   // the "skip" is used by inplace node.
   // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
-  const std::vector<std::string> exclude_bool_attrs = {kAttrInputIsDynamicShape, kAttrOutputIsDynamicShape,
-                                                       kAttrIsDynamicShape, "skip", kAttrIsInternalOutputNopNode};
+  const std::vector<std::string> exclude_bool_attrs = {kAttrInputIsDynamicShape, kAttrOutputIsDynamicShape, "skip",
+                                                       kAttrIsInternalOutputNopNode};
   if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
         return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
       })) {

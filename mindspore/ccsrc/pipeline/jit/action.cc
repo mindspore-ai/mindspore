@@ -88,7 +88,7 @@ bool IsDynamicShapeGraph(FuncGraphPtr func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
-                     [](const AnfNodePtr &node) { return AnfAlgo::IsNodeDynamicShape(node); });
+                     [](const AnfNodePtr &node) { return AnfAlgo::IsDynamicShape(node); });
 }
 
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.

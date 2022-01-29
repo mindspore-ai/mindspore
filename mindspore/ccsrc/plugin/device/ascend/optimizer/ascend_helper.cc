@@ -330,7 +330,6 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), trans_node);
   }
   if (is_dynamic_shape) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), trans_node);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), trans_node);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), trans_node);
   }
@@ -373,7 +372,6 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
     cast->set_kernel_info(kernel_info);
   }
   if (origin_shape->IsDynamic()) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cast);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
   }

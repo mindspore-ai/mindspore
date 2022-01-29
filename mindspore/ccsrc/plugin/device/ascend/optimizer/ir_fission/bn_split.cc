@@ -58,7 +58,6 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
   bn_training_reduce->set_scope(bn_cnode->scope());
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_training_reduce);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
   }
   AnfAlgo::CopyNodeAttrs(bn_cnode, bn_training_reduce);
@@ -96,7 +95,6 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   auto factor = AnfAlgo::GetNodeAttr<float>(bn_cnode, kAttrMomentum);
   AnfAlgo::SetNodeAttr(kAttrFactor, MakeValue<float>(factor), bn_training_update);
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_training_update);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_update);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
   }

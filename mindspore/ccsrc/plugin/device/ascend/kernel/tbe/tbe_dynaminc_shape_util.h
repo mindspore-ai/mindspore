@@ -34,7 +34,6 @@ class TbeDynamicShapeUtil {
   ~TbeDynamicShapeUtil() = default;
   static bool IsDynamicShapeNode(const CNodePtr &cnode);
   static bool IsDynamicShapeNode(const AnfNodePtr &anf_node);
-  static void SetDynamicShapeAttr(const CNodePtr &cnode);
   static bool GetDynamicShapeAttr(const CNodePtr &cnode);
   static bool GetDynamicShapeAttr(const AnfNodePtr &anf_node);
   static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, const AnfNodePtr &anf_node);

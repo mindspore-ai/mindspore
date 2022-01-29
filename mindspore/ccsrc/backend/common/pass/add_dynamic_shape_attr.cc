@@ -26,9 +26,8 @@ const AnfNodePtr AddDynamicShapeAttr::Process(const FuncGraphPtr &func_graph, co
                                               const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsNodeDynamicShape(node)) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), node);
-    MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << node->fullname_with_scope();
+  if (AnfAlgo::IsDynamicShape(node)) {
+    MS_LOG(DEBUG) << "Set Dynamic Shape Attr to Node:" << node->fullname_with_scope();
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
     kernel_graph->SetGraphDynamicAttr(true);

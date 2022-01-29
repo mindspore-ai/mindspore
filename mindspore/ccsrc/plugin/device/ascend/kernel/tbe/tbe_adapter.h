@@ -119,7 +119,7 @@ class TbeAdapter {
   template <typename T>
   static bool DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node, std::vector<T> const &inputs_list,
                                    std::vector<T> *inputs_json) {
-    if (!AnfAlgo::IsNodeDynamicShape(anf_node) && !AnfAlgo::IsDynamicShape(anf_node)) {
+    if (!AnfAlgo::IsDynamicShape(anf_node)) {
       return false;
     }
     auto op_name = AnfAlgo::GetCNodeName(anf_node);

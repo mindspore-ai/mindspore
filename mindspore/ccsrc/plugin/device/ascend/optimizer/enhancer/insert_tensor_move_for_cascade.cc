@@ -82,8 +82,8 @@ AnfNodePtr InsertTensorMoveForCascade::InsertTensorMove(const FuncGraphPtr &grap
       if (tensor_move == nullptr) {
         MS_LOG(EXCEPTION) << "Create tensor_move op failed." << trace::DumpSourceLines(hccl_node);
       }
-      if (AnfAlgo::IsNodeDynamicShape(input)) {
-        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), tensor_move);
+      if (AnfAlgo::IsDynamicShape(input)) {
+        MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
       auto kernel_info = std::make_shared<device::KernelInfo>();
       tensor_move->set_kernel_info(kernel_info);

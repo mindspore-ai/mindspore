@@ -105,7 +105,6 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
   elements.push_back(last_padding_value);
   ValueTuplePtr paddings = std::make_shared<ValueTuple>(elements);
   AnfAlgo::SetNodeAttr(kAttrPaddings, paddings, pad);
-  AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), pad);
   AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), pad);
   AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), pad);
   return pad;
@@ -130,7 +129,6 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
   auto shape = AnfAlgo::GetOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = pad_dim_size;
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape}, gather_v2.get());
-  AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), gather_v2);
   AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), gather_v2);
   auto input_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrInputNames);
   AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), gather_v2);
