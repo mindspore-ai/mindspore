@@ -38,7 +38,8 @@ static int64_t char_to_index(char cur_char) {
   return static_cast<int64_t>(cur_char - 'A' + BIG_C_BEGIN);
 }
 
-static void seg_left_equation(const std::string &left_equation, const std::vector<std::vector<int64_t>> &input_shapes,
+static void seg_left_equation(const std::string &left_equation, const std::string &prim_name,
+                              const std::vector<std::vector<int64_t>> &input_shapes,
                               std::vector<std::vector<int64_t>> *left_elements, std::vector<int64_t> *element_count) {
   size_t cur_element = 0;
   auto found_ell = false;
@@ -49,12 +50,14 @@ static void seg_left_equation(const std::string &left_equation, const std::vecto
       (*element_count)[char_to_index(label)] += 1;
     } else if (label == '.') {
       if (found_ell) {
-        MS_EXCEPTION(ValueError) << "The \'.\' has been found again in " << cur_element
-                                 << " operand, for which an operand object can contain only one ellipsis!";
+        MS_EXCEPTION(ValueError)
+          << "For " << prim_name
+          << ", each operand can contain contain only one ellipsis, but it has been found again.";
       }
       if (idx + ELL_LEN - 1 >= left_equation.length() || left_equation[idx + 1] != label ||
           left_equation[idx + ELL_LEN - 1] != label) {
-        MS_EXCEPTION(ValueError) << "An ellipsis can consist only three \'.\'";
+        MS_EXCEPTION(ValueError) << "For " << prim_name
+                                 << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
       }
       idx += (ELL_LEN - 1);
       found_ell = true;
@@ -62,25 +65,38 @@ static void seg_left_equation(const std::string &left_equation, const std::vecto
     } else if (label == ',') {
       if ((found_ell && (*left_elements)[cur_element].size() > input_shapes[cur_element].size() + 1) ||
           (!found_ell && (*left_elements)[cur_element].size() != input_shapes[cur_element].size())) {
-        MS_EXCEPTION(ValueError) << "The number of subscript in " << cur_element
-                                 << " operand of eqaution does not match inputs[" << cur_element << "].dim()!";
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", The number of subscript in " << cur_element
+                                 << " operand in the eqaution should match inputs[" << cur_element
+                                 << "].dim(), but it does not.";
       }
       ++cur_element;
       if (cur_element >= input_shapes.size()) {
-        MS_EXCEPTION(ValueError) << "The number of inputs and equation's operand number does not match!";
+        MS_EXCEPTION(ValueError)
+          << "For " << prim_name
+          << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
       }
       found_ell = false;
     } else {
-      MS_EXCEPTION(ValueError) << "Operand " << cur_element
-                               << " in equation contains invalid subscript, which can only consist of [a-zA-z]!";
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", Operand " << cur_element
+                               << " in the equation contains invalid subscript, which can only consist of [a-zA-z].";
     }
   }
   if (cur_element != input_shapes.size() - 1) {
-    MS_EXCEPTION(ValueError) << "The number of inputs and equation's operand number does not match!";
+    MS_EXCEPTION(ValueError)
+      << "For " << prim_name
+      << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
+  }
+  for (size_t i = 0; i < (*left_elements).size(); ++i) {
+    auto it = std::find((*left_elements)[i].begin(), (*left_elements)[i].end(), ELL_VAL);
+    if ((*left_elements)[i].size() != input_shapes[i].size() && it == (*left_elements)[i].end()) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", The number of subscript in " << i
+                               << " operand in the eqaution should match inputs[" << i << "].dim(), but it does not.";
+    }
   }
 }
 
 static void seg_right_equation_with_arrow(const std::string &left_equation, const std::string &right_equation,
+                                          const std::string &prim_name,
                                           std::unordered_map<int64_t, std::vector<int64_t>> *element_shape_map,
                                           std::vector<int64_t> *out_shape) {
   bool found_ell = false;
@@ -91,16 +107,22 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
   std::vector<bool> exit_flag(LABEL_NUM, false);
   for (size_t idx = 0; idx < right_equation.length(); ++idx) {
     if (left_equation.find(right_equation[idx]) == std::string::npos) {
-      MS_EXCEPTION(ValueError) << "The label to the right of the arrow must have appeared on the left!";
+      MS_EXCEPTION(ValueError)
+        << "For " << prim_name
+        << ", The label to the right of arrow in the equation must have appeared on the left, but the "
+        << right_equation[idx] << " not.";
     }
 
     if (right_equation[idx] == '.') {
       if (found_ell) {
-        MS_EXCEPTION(ValueError) << "The \'.\' has been found again in right of arrow!";
+        MS_EXCEPTION(ValueError)
+          << "For " << prim_name
+          << ", each operand can contain contain only one ellipsis, but it has been found again.";
       }
       if ((idx + ELL_LEN - 1 >= right_equation.length()) ||
           (right_equation[idx + 1] != '.' || right_equation[idx + ELL_LEN - 1] != '.')) {
-        MS_EXCEPTION(ValueError) << "An ellipsis can consist only three \'.\'";
+        MS_EXCEPTION(ValueError) << "For " << prim_name
+                                 << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
       }
       idx += (ELL_LEN - 1);
       found_ell = true;
@@ -108,12 +130,16 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
     } else if (isalpha(right_equation[idx])) {
       auto val = char_to_index(right_equation[idx]);
       if (exit_flag[val]) {
-        MS_EXCEPTION(ValueError) << "output subsrcipt " << right_equation[idx] << " more than once in the output";
+        MS_EXCEPTION(ValueError)
+          << "For " << prim_name
+          << ", each character in the right of arrow in equation can only exist no more than once, but got"
+          << right_equation[idx] << " at least twice.";
       }
       exit_flag[val] = true;
       out_shape->insert(out_shape->end(), (*element_shape_map)[val].begin(), (*element_shape_map)[val].end());
     } else {
-      MS_EXCEPTION(ValueError) << "Invalid label in equation representing output (right of arrow)!";
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", Operand " << right_equation
+                               << " in the equation contains invalid subscript, which can only consist of [a-zA-z].";
     }
   }
 }
@@ -135,7 +161,7 @@ static void seg_right_equation_without_arrow(const std::string &left_equation,
   }
 }
 
-static void element_map_shape(const std::vector<std::vector<int64_t>> &left_elements,
+static void element_map_shape(const std::string &prim_name, const std::vector<std::vector<int64_t>> &left_elements,
                               const std::vector<std::vector<int64_t>> &input_shapes,
                               std::unordered_map<int64_t, std::vector<int64_t>> *element_shape_map) {
   for (size_t idx_input = 0; idx_input < input_shapes.size(); ++idx_input) {
@@ -145,7 +171,10 @@ static void element_map_shape(const std::vector<std::vector<int64_t>> &left_elem
       auto cur_element = left_elements[idx_input][idx_left];
       if (element_shape_map->find(cur_element) != element_shape_map->end()) {
         if ((*element_shape_map)[cur_element][0] != input_shapes[idx_input][idx_left]) {
-          MS_EXCEPTION(ValueError) << "The same label in equation can only represent the same dimension in inputs!";
+          MS_EXCEPTION(ValueError)
+            << "For " << prim_name
+            << ", the same label in equation can only represent the same dimension in inputs, but the "
+            << static_cast<char>(cur_element + 'a') << " in equation not.";
         }
       } else {
         (*element_shape_map)[cur_element] = {input_shapes[idx_input][idx_left]};
@@ -160,7 +189,10 @@ static void element_map_shape(const std::vector<std::vector<int64_t>> &left_elem
         auto cur_element = left_elements[idx_input][idx_element_right];
         if (element_shape_map->find(cur_element) != element_shape_map->end()) {
           if ((*element_shape_map)[cur_element][0] != input_shapes[idx_input][idx_shape_right]) {
-            MS_EXCEPTION(ValueError) << "The same label in equation can only represent the same dimension in inputs!";
+            MS_EXCEPTION(ValueError)
+              << "For " << prim_name
+              << ", the same label in equation can only represent the same dimension in inputs, but the "
+              << static_cast<char>(cur_element + 'a') << " in equation not.";
           }
         } else {
           (*element_shape_map)[cur_element] = {input_shapes[idx_input][idx_shape_right]};
@@ -172,7 +204,9 @@ static void element_map_shape(const std::vector<std::vector<int64_t>> &left_elem
                                     input_shapes[idx_input].begin() + idx_shape_right + 1);
       if (element_shape_map->find(ELL_VAL) != element_shape_map->end()) {
         if ((*element_shape_map)[ELL_VAL] != temp_vec) {
-          MS_EXCEPTION(ValueError) << "The same ellipsis in equation can only represent the same dimension in inputs!";
+          MS_EXCEPTION(ValueError)
+            << "For " << prim_name
+            << ", the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
         }
       } else {
         (*element_shape_map)[ELL_VAL] = temp_vec;
@@ -192,15 +226,26 @@ std::string Einsum::get_equation() const {
 }
 
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
   auto prim_name = primitive->name();
+  auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
+  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
+  if (equation.length() == 0) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the equation is required, but got none.";
+  }
+  const std::string seg_arrow = "->";
+  const auto seg_pos = equation.find(seg_arrow);
+  if (seg_pos == 0) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name
+                             << ", the equation should contain characters to the left of the arrow, but got none.";
+  }
+
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
 
   if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "The input of Einsum must be list or tuple of tensors.";
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", The input must be list or tuple of tensors.";
   }
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
@@ -208,33 +253,34 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   std::vector<std::vector<int64_t>> input_shapes;
   for (size_t idx = 0; idx < elements.size(); ++idx) {
     auto shape = elements[idx]->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->IsDimZero()) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the dim of inputs' shape can not be zero, but got input["
+                               << idx << "] shape: " << shape->ToString() << ".";
+    }
     auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
     for (auto &val : shape_vec) {
       if (val == 0) {
-        MS_EXCEPTION(ValueError) << "The dim in each shape can not be zero";
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape can not contain zero, but got input[" << idx
+                                 << "] shape: " << shape->ToString() << ".";
       }
     }
     input_shapes.emplace_back(shape_vec);
   }
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
-  if (equation.length() == 0) {
-    MS_EXCEPTION(ValueError) << "the equation can not be none";
-  }
-  const std::string seg_arrow = "->";
-  const auto seg_pos = equation.find(seg_arrow);
+
   const auto left_equation = equation.substr(0, seg_pos);
   std::vector<std::vector<int64_t>> left_elements(input_shapes.size());
   std::vector<int64_t> element_count(LABEL_NUM, 0);
   std::unordered_map<int64_t, std::vector<int64_t>> element_shape_map;
   std::vector<int64_t> out_shape;
-  seg_left_equation(left_equation, input_shapes, &left_elements, &element_count);
-  element_map_shape(left_elements, input_shapes, &element_shape_map);
+  seg_left_equation(left_equation, prim_name, input_shapes, &left_elements, &element_count);
+  element_map_shape(prim_name, left_elements, input_shapes, &element_shape_map);
 
   if (seg_pos == std::string::npos) {
     seg_right_equation_without_arrow(left_equation, &element_shape_map, element_count, &out_shape);
   } else {
     auto right_equation = equation.substr(seg_pos + 2, equation.length() - seg_pos - 2);
-    seg_right_equation_with_arrow(left_equation, right_equation, &element_shape_map, &out_shape);
+    seg_right_equation_with_arrow(left_equation, right_equation, prim_name, &element_shape_map, &out_shape);
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

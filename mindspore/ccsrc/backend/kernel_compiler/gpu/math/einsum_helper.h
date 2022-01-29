@@ -84,14 +84,15 @@ class EinsumHelper {
     shape_ptr_idx_start_ = workspace_ptr_.size() - SHAPE_WORKSPACE_NUM;
     data_type_ = cur_type;
   }
-  bool Preprocess(const std::string &orig_equatioin, const std::vector<std::vector<size_t>> &input_shapes,
-                  std::vector<size_t> *out_shape, std::vector<std::vector<OpStruct>> *single_op,
-                  std::vector<OpStruct> *res_op) {
+  bool Preprocess(const std::string &orig_equatioin, const std::string &node_name,
+                  const std::vector<std::vector<size_t>> &input_shapes, std::vector<size_t> *out_shape,
+                  std::vector<std::vector<OpStruct>> *single_op, std::vector<OpStruct> *res_op) {
     std::string equation = orig_equatioin;
+    node_name_ = node_name;
     equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
     left_elements_ = std::vector<std::vector<size_t>>(input_shapes.size());
     if (equation == "") {
-      MS_LOG(ERROR) << "euqation can not be null!";
+      MS_LOG(ERROR) << "For " << node_name_ << ", euqation is required, but got none.";
       return false;
     }
     bool flag = CalOutShape(equation, input_shapes, out_shape);
@@ -181,15 +182,15 @@ class EinsumHelper {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(lft_shape_ptr, &lft_shape[0], lft_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Mul's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Mul's cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(rht_shape_ptr, &rht_shape[0], rht_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Mul's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Mul's cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(out_shape_ptr, &out_shape[0], out_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Mul's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Mul's cudaMemcpyAsync failed.");
     CalMul<T>(need_broadcast, out_shape.size(), lft_shape_ptr, lft_num, rht_shape_ptr, rht_num, out_shape_ptr, out_num,
               lft_input, rht_input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
@@ -197,7 +198,7 @@ class EinsumHelper {
            const std::vector<size_t> &out_shape, void *stream_ptr) {
     cublasHandle_t handle = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(handle, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "cublasSetStream failed");
+                                "cublasSetStream failed in primitive[Einsum].");
     cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT;
     size_t b = out_shape[out_shape.size() - DIM_THREE];
     size_t m = out_shape[out_shape.size() - DIM_TWO];
@@ -224,7 +225,7 @@ class EinsumHelper {
         cublasGemmStridedBatchedEx(handle, transpose_x2_, transpose_x1_, SizeToInt(n), SizeToInt(m), SizeToInt(k),
                                    &alpha, input_b, cu_type, ldb, stride_b, input_a, cu_type, lda, stride_a, &beta,
                                    output, cu_type, n, stride_c, b, comp_type, algo),
-        "cublasGemmStridedBatchedEx failed");
+        "For " + node_name_ + ", cublasGemmStridedBatchedEx failed.");
     } else {
       T alpha = static_cast<T>(1.0f);
       T beta = static_cast<T>(0.0f);
@@ -232,7 +233,7 @@ class EinsumHelper {
         cublasGemmStridedBatchedEx(handle, transpose_x2_, transpose_x1_, SizeToInt(n), SizeToInt(m), SizeToInt(k),
                                    &alpha, input_b, cu_type, ldb, stride_b, input_a, cu_type, lda, stride_a, &beta,
                                    output, cu_type, n, stride_c, b, comp_type, algo),
-        "cublasGemmStridedBatchedEx failed");
+        "For " + node_name_ + ", cublasGemmStridedBatchedEx failed.");
     }
     handle = nullptr;
   }
@@ -242,7 +243,8 @@ class EinsumHelper {
     for (size_t idx = 0; idx < a_shape.size(); ++idx) {
       size *= a_shape[idx];
     }
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, sizeof(T) * 1), "Dot's cudaMemset failed!");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, sizeof(T) * 1),
+                                      "Dot's cudaMemset failed in primitive[Einsum].");
     CalDot<T>(size, input_a, input_b, output, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   void DotGrad(T *output, T *mid_res, T *input_b, T *input_a, const std::vector<size_t> &out_shape,
@@ -254,7 +256,7 @@ class EinsumHelper {
     T out_val;
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(&out_val, output, sizeof(T), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Diagonal's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Diagonal's cudaMemcpyAsync failed.");
     CalDotGrad<T>(size, out_val, mid_res, input_b, input_a, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   void Diagonal(T *input_ptr, T *output_ptr, const std::vector<size_t> &inp_shape,
@@ -271,7 +273,7 @@ class EinsumHelper {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(shape_ptr, &inp_shape[0], inp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Diagonal's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Diagonal's cudaMemcpyAsync failed.");
     CalDiagonal<T>(out_size, input_ptr, shape_ptr, inp_shape.size(), dim1, dim2, output_ptr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
   }
@@ -289,10 +291,10 @@ class EinsumHelper {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(d_shape_ptr, &dinp_shape[0], dinp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Diagonal's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Diagonal's cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemsetAsync(dinp_ptr, 0, dinp_size * sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Diagonal's cudaMemsetAsync failed!");
+      "For " + node_name_ + ", Diagonal's cudaMemsetAsync failed.");
 
     CalDiagonalGrad<T>(dout_size, dout_ptr, d_shape_ptr, dinp_shape.size(), dim1, dim2, dinp_ptr,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -300,7 +302,8 @@ class EinsumHelper {
   void CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
                                   cudnnDataType_t data_type) {
     if (shape.size() < DIM_THREE) {
-      MS_EXCEPTION(ValueError) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
+      MS_EXCEPTION(ValueError) << "For " << node_name_ << ", cudnnSetTensorNdDescriptor support 3 dim, but got "
+                               << shape.size() << "D.";
     }
     const int nbDims = shape.size();
     std::unique_ptr<int[]> dim = std::make_unique<int[]>(nbDims);
@@ -317,13 +320,10 @@ class EinsumHelper {
 
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensorNdDescriptor(descriptor, data_type, nbDims, dim.get(), stride.get()),
-      "cudnnSetTensorNdDescriptor failed");
+      "For " + node_name_ + ", cudnnSetTensorNdDescriptor failed.");
   }
   // expand Nd Shape to 4d (N in [0,4])
   void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
-    if (src.size() > DIM_FOUR) {
-      MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
-    }
     dst->push_back(src.size() < DIM_FOUR ? 1 : src[src.size() - DIM_FOUR]);
     dst->push_back(src.size() < DIM_THREE ? 1 : src[src.size() - DIM_THREE]);
     dst->push_back(src.size() < DIM_TWO ? 1 : src[src.size() - DIM_TWO]);
@@ -336,11 +336,11 @@ class EinsumHelper {
     cudnnTensorDescriptor_t inputA_descriptor;
     cudnnTensorDescriptor_t outputC_descriptor;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor),
-                                        "cudnnCreateReduceTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnCreateReduceTensorDescriptor failed.");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&inputA_descriptor),
-                                        "cudnnCreateTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnCreateTensorDescriptor failed.");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&outputC_descriptor),
-                                        "cudnnCreateTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnCreateTensorDescriptor failed.");
     std::vector<size_t> out_shape(inp_shape);
     bool copy_flag = true;
     for (auto &axis : operate_info) {
@@ -362,13 +362,13 @@ class EinsumHelper {
     if (copy_flag) {
       CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(output_ptr, input_ptr, copy_size, cudaMemcpyDeviceToDevice,
                                                         reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                        "ReduceSum's cudaMemcpyAsync failed!");
+                                        "For " + node_name_ + ", ReduceSum's cudaMemcpyAsync failed.");
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor),
-                                          "cudnnDestroyReduceTensorDescriptor failed.");
+                                          "For " + node_name_ + ", cudnnDestroyReduceTensorDescriptor failed.");
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(inputA_descriptor),
-                                          "cudnnDestroyTensorDescriptor failed.");
+                                          "For " + node_name_ + ", cudnnDestroyTensorDescriptor failed.");
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(outputC_descriptor),
-                                          "cudnnDestroyTensorDescriptor failed.");
+                                          "For " + node_name_ + ", cudnnDestroyTensorDescriptor failed.");
       return;
     }
     cudnnDataType_t data_type = kCudnnDtypeMap[TypeIdLabel(data_type_)];
@@ -378,7 +378,7 @@ class EinsumHelper {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(inputA_descriptor, CUDNN_TENSOR_NCHW, data_type, SizeToInt(inputA[0]),
                                    SizeToInt(inputA[1]), SizeToInt(inputA[DIM_TWO]), SizeToInt(inputA[DIM_THREE])),
-        "cudnnSetTensor4dDescriptor failed");
+        "For " + node_name_ + ", cudnnSetTensor4dDescriptor failed.");
     } else {
       CudnnSetTensorNdDescriptor(shrink_inp_shape, inputA_descriptor, data_type);
       for (auto dim : shrink_inp_shape) {
@@ -391,7 +391,7 @@ class EinsumHelper {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(outputC_descriptor, CUDNN_TENSOR_NCHW, data_type, SizeToInt(outputC[0]),
                                    SizeToInt(outputC[1]), SizeToInt(outputC[DIM_TWO]), SizeToInt(outputC[DIM_THREE])),
-        "cudnnSetTensor4dDescriptor failed");
+        "For " + node_name_ + ", cudnnSetTensor4dDescriptor failed.");
     } else {
       CudnnSetTensorNdDescriptor(shrink_out_shape, outputC_descriptor, data_type);
       for (auto dim : shrink_out_shape) {
@@ -403,14 +403,14 @@ class EinsumHelper {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor, CUDNN_REDUCE_TENSOR_ADD, comp_type,
                                      CUDNN_NOT_PROPAGATE_NAN, CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES),
-      "cudnnSetReduceTensorDescriptor failed");
+      "For " + node_name_ + ", cudnnSetReduceTensorDescriptor failed.");
     T alpha = static_cast<T>(1.0f);
     T beta = static_cast<T>(0.0f);
     if (data_type == CUDNN_DATA_DOUBLE) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnReduceTensor(cudnn_handle, reduce_tensor_descriptor, nullptr, 0, workspace_addr, copy_size, &alpha,
                           inputA_descriptor, input_ptr, &beta, outputC_descriptor, output_ptr),
-        "cudnnReduceTensor failed.");
+        "For " + node_name_ + ", cudnnReduceTensor failed.");
     } else {
       const float alphaf = static_cast<float>(alpha);
       const float betaf = static_cast<float>(beta);
@@ -420,14 +420,14 @@ class EinsumHelper {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnReduceTensor(cudnn_handle, reduce_tensor_descriptor, nullptr, 0, workspace_addr, copy_size, &alphaf,
                           inputA_descriptor, input_ptr, &betaf, outputC_descriptor, output_ptr),
-        "cudnnReduceTensor failed.");
+        "For " + node_name_ + ", cudnnReduceTensor failed.");
     }
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor),
-                                        "cudnnDestroyReduceTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnDestroyReduceTensorDescriptor failed.");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(inputA_descriptor),
-                                        "cudnnDestroyTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnDestroyTensorDescriptor failed.");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDestroyTensorDescriptor(outputC_descriptor),
-                                        "cudnnDestroyTensorDescriptor failed.");
+                                        "For " + node_name_ + ", cudnnDestroyTensorDescriptor failed.");
   }
   void ReduceSumCudaGrad(T *dout, T *d_input, const std::vector<size_t> &dinp_shape,
                          const std::vector<size_t> &operate_info, void *stream_ptr) {
@@ -445,11 +445,11 @@ class EinsumHelper {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(input_shape_ptr, &inp_shape[0], inp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync input_shape_ failed");
+      "For " + node_name_ + ", cudaMemcpyAsync input_shape failed.");
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(output_shape_ptr, &out_shape[0], out_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync output_shape_ failed");
+      "For " + node_name_ + ", cudaMemcpyAsync output_shape failed.");
     size_t inp_size = 1;
     size_t out_size = 1;
     for (auto &v : inp_shape) {
@@ -464,10 +464,6 @@ class EinsumHelper {
 
   void MulGrad(T *dout, T *mid_res, T *drht, T *dlft, const std::vector<size_t> &dlft_shape,
                const std::vector<size_t> &drht_shape, const std::vector<size_t> &dout_shape, void *stream_ptr) {
-    if (dlft_shape.size() != drht_shape.size() || dlft_shape.size() != dout_shape.size()) {
-      MS_LOG(ERROR) << "MulGrad Wrong, shape.size() is not same";
-      return;
-    }
     bool broadcast_flag = false;
     for (size_t idx = 0; idx < dlft_shape.size(); ++idx) {
       if (dlft_shape[idx] != drht_shape[idx]) {
@@ -504,7 +500,7 @@ class EinsumHelper {
       } else if (y_i == 1) {
         grad_y_reduce_idy.emplace_back(reduce_idx);
       } else {
-        MS_LOG(EXCEPTION) << "not compatible shape input for BroadcastGradientArgs";
+        MS_LOG(EXCEPTION) << "For " << node_name_ << ", not compatible shape input for BroadcastGradientArgs.";
       }
       if (same && x_i == 1) {
         grad_x_reduce_idx.emplace_back(reduce_idx);
@@ -540,11 +536,11 @@ class EinsumHelper {
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(d_shape_ptr, &inp_shape[0], inp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Transpose's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Transpose's cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
       cudaMemcpyAsync(d_info_ptr, &operate_info[0], operate_info.size() * sizeof(size_t), cudaMemcpyHostToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "Transpose's cudaMemcpyAsync failed!");
+      "For " + node_name_ + ", Transpose's cudaMemcpyAsync failed.");
     CalTranspose<T>(size, input_ptr, d_shape_ptr, d_info_ptr, inp_shape.size(), output_ptr,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
   }
@@ -558,13 +554,14 @@ class EinsumHelper {
         element_count_[char_to_index(label)] += 1;
       } else if (label == '.') {
         if (found_ell) {
-          MS_LOG(ERROR) << "The \'.\' has been found again in " << cur_element
-                        << " operand, for which an operand object can contain only one ellipsis!";
+          MS_LOG(ERROR) << "For " << node_name_
+                        << ", each operand can contain contain only one ellipsis, but it has been found again.";
           return false;
         }
         if ((idx + ELL_LEN - 1 >= left_equation.length()) || (left_equation[idx + 1] != '.') ||
             (left_equation[idx + ELL_LEN - 1] != '.')) {
-          MS_LOG(ERROR) << "An ellipsis can consist only three \'.\'";
+          MS_LOG(ERROR) << "For " << node_name_
+                        << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
           return false;
         }
         idx += (ELL_LEN - 1);
@@ -573,39 +570,45 @@ class EinsumHelper {
       } else if (label == ',') {
         if (found_ell) {
           if (left_elements_[cur_element].size() > input_shapes[cur_element].size() + 1) {
-            MS_LOG(ERROR) << "The number of subscript in " << cur_element
-                          << " operand of eqaution does not match inputs[" << cur_element << "].dim()!";
+            MS_LOG(ERROR) << "For " << node_name_ << ", The number of subscript in " << cur_element
+                          << " operand in the eqaution should match inputs[" << cur_element
+                          << "].dim(), but it does not.";
             return false;
           }
           ell_dim_ = ell_dim_ > (input_shapes[cur_element].size() - left_elements_[cur_element].size() + 1)
                        ? ell_dim_
                        : (input_shapes[cur_element].size() - left_elements_[cur_element].size() + 1);
         } else if (left_elements_[cur_element].size() != input_shapes[cur_element].size()) {
-          MS_LOG(ERROR) << "The number of subscript in " << cur_element << " operand of eqaution does not match inputs["
-                        << cur_element << "].dim()!";
+          MS_LOG(ERROR) << "For " << node_name_ << ", The number of subscript in " << cur_element
+                        << " operand in the eqaution should match inputs[" << cur_element
+                        << "].dim(), but it does not.";
           return false;
         }
         ++cur_element;
         if (cur_element >= input_shapes.size()) {
-          MS_LOG(ERROR) << "The number of inputs and equation's operand number does not match!";
+          MS_LOG(ERROR) << "For " << node_name_
+                        << ", the number of inputs should be equal to the number of inputs and equation's operand, but "
+                           "it does not.";
           return false;
         }
         found_ell = false;
       } else {
-        MS_LOG(ERROR) << "Operand " << cur_element
-                      << " in equation contains invalid subscript, which can only consist of [a-zA-z]!";
+        MS_LOG(ERROR) << "For " << node_name_ << ", Operand " << cur_element
+                      << " in the equation contains invalid subscript, which can only consist of [a-zA-z].";
         return false;
       }
     }
     if (cur_element != input_shapes.size() - 1) {
-      MS_LOG(ERROR) << "The number of inputs and equation's operand number does not match!";
+      MS_LOG(ERROR)
+        << "For " << node_name_
+        << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
       return false;
     }
     for (size_t i = 0; i < left_elements_.size(); ++i) {
       auto it = std::find(left_elements_[i].begin(), left_elements_[i].end(), ELL_VAL);
       if (left_elements_[i].size() != input_shapes[i].size() && it == left_elements_[i].end()) {
-        MS_LOG(ERROR) << "The number of subscript in " << i << " operand of eqaution does not match inputs[" << i
-                      << "].dim()!";
+        MS_LOG(ERROR) << "For " << node_name_ << ", The number of subscript in " << i
+                      << " operand in the eqaution should match inputs[" << i << "].dim(), but it does not.";
         return false;
       }
     }
@@ -625,17 +628,21 @@ class EinsumHelper {
     int64_t label_idx = 0;
     for (size_t idx = 0; idx < right_equation.length(); ++idx) {
       if (left_equation.find(right_equation[idx]) == std::string::npos) {
-        MS_LOG(ERROR) << "The label to the right of the arrow must have appeared on the left!";
+        MS_LOG(ERROR) << "For " << node_name_
+                      << ", The label to the right of arrow in the equation must have appeared on the left, but the "
+                      << right_equation[idx] << " not.";
         return false;
       }
       if (right_equation[idx] == '.') {
         if (found_ell) {
-          MS_LOG(ERROR) << "Invalid label in equation representing output (right of arrow)!";
+          MS_LOG(ERROR) << "For " << node_name_
+                        << ", each operand can contain contain only one ellipsis, but it has been found again.";
           return false;
         }
         if ((idx + ELL_LEN - 1 >= right_equation.length()) || (right_equation[idx + 1] != '.') ||
             (right_equation[idx + ELL_LEN - 1] != '.')) {
-          MS_EXCEPTION(ValueError) << "An ellipsis can consist only three \'.\'";
+          MS_LOG(ERROR) << "For " << node_name_
+                        << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
           return false;
         }
         found_ell = true;
@@ -648,7 +655,8 @@ class EinsumHelper {
         label_perm_idx_[label_idx] = static_cast<int64_t>(perm_idx_);
         ++perm_idx_;
       } else {
-        MS_LOG(ERROR) << "Invalid label in equation representing output (right of arrow)!";
+        MS_LOG(ERROR) << "For " << node_name_ << ", Operand " << right_equation
+                      << " in the equation contains invalid subscript, which can only consist of [a-zA-z].";
         return false;
       }
       out_shape->insert(out_shape->end(), element_shape_map_[label_idx].begin(), element_shape_map_[label_idx].end());
@@ -684,7 +692,9 @@ class EinsumHelper {
         auto cur_element = left_elements_[idx_input][idx_left];
         if (element_shape_map_.find(cur_element) != element_shape_map_.end()) {
           if (element_shape_map_[cur_element][0] != input_shapes[idx_input][idx_left]) {
-            MS_LOG(ERROR) << "The same label in equation can only represent the same dimension in inputs!";
+            MS_LOG(ERROR) << "For " << node_name_
+                          << ", the same label in equation can only represent the same dimension in inputs, but the "
+                          << static_cast<char>(cur_element + 'a') << " in equation not.";
             return false;
           }
         } else {
@@ -700,7 +710,9 @@ class EinsumHelper {
           auto cur_element = left_elements_[idx_input][idx_element_right];
           if (element_shape_map_.find(cur_element) != element_shape_map_.end()) {
             if (element_shape_map_[cur_element][0] != input_shapes[idx_input][idx_shape_right]) {
-              MS_LOG(ERROR) << "The same label in equation can only represent the same dimension in inputs!";
+              MS_LOG(ERROR) << "For " << node_name_
+                            << ", the same label in equation can only represent the same dimension in inputs, but the "
+                            << static_cast<char>(cur_element + 'a') << " in equation not.";
               return false;
             }
           } else {
@@ -717,7 +729,9 @@ class EinsumHelper {
             if (temp_vec.size() == 0 || element_shape_map_[ELL_VAL].size() == 0) {
               element_shape_map_[ELL_VAL] = temp_vec.size() == 0 ? element_shape_map_[ELL_VAL] : temp_vec;
             } else {
-              MS_LOG(ERROR) << "The same ellipsis in equation can only represent the same dimension in inputs!";
+              MS_LOG(ERROR)
+                << "For " << node_name_
+                << ", the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
               return false;
             }
           }
@@ -1008,6 +1022,7 @@ class EinsumHelper {
   size_t perm_idx_ = 0;
   size_t out_size_ = 0;
   std::string type_name_;
+  std::string node_name_;
   size_t shape_ptr_idx_start_ = 0;
   TypeId data_type_;
   cublasOperation_t transpose_x1_;
