@@ -339,13 +339,12 @@ class ForwardExecutor {
 
  private:
   GradExecutorPtr grad() const;
-  MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
+  MsBackendPolicy GetBackendPolicy(const OpExecInfoPtr &op_exec_info);
   py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
   void RunMixedPrecisionCastOp(const OpExecInfoPtr &op_exec_info, py::object *ret);
-  py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
-  py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
-  py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
-                                    PynativeStatusCode *status);
+  py::object RunOpInVM(const OpExecInfoPtr &op_exec_info);
+  py::object RunOpInMs(const OpExecInfoPtr &op_exec_info);
+  py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info);
   void SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i, const std::string &id);
   void GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info, abstract::AbstractBasePtrList *args_spec_list);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,

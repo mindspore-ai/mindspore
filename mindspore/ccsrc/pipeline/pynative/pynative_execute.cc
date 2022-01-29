@@ -61,10 +61,6 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "vm/transform.h"
 
-#ifdef ENABLE_D
-#include "pipeline/pynative/pynative_execute_ge.h"
-#endif
-
 using mindspore::tensor::TensorPy;
 
 namespace mindspore::pynative {
@@ -2003,88 +1999,53 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
 
 py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  auto backend_policy = InitEnv(op_exec_info);
-  PynativeStatusCode status = PYNATIVE_UNKNOWN_STATE;
+  auto backend_policy = GetBackendPolicy(op_exec_info);
   // returns a null py::tuple on error
-  py::object result = RunOpWithBackendPolicy(backend_policy, op_exec_info, &status);
-  if (status != PYNATIVE_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to run " << op_exec_info->op_name;
-  }
+  py::object result = RunOpWithBackendPolicy(backend_policy, op_exec_info);
   MS_LOG(DEBUG) << "RunOp end";
   return result;
 }
 
-MsBackendPolicy ForwardExecutor::InitEnv(const OpExecInfoPtr &op_exec_info) {
+MsBackendPolicy ForwardExecutor::GetBackendPolicy(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
   parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
-  MsBackendPolicy backend_policy = kMsBackendMsPrior;
+  MsBackendPolicy backend_policy = kMsBackendVmOnly;
 #ifdef ENABLE_D
   if (ms_context->backend_policy() == "ge") {
-    context::PynativeInitGe(ms_context);
-    backend_policy = kMsBackendGeOnly;
+    MS_LOG(EXCEPTION) << "In PyNative mode, not support ge backend!";
   }
-#else
   if (!context::IsTsdOpened(ms_context)) {
     if (!context::OpenTsd(ms_context)) {
       MS_LOG(EXCEPTION) << "Open tsd failed";
     }
   }
-  if (ms_context->backend_policy() == "ms") {
-    backend_policy = kMsBackendMsPrior;
-  } else {
-    backend_policy = kMsBackendVmOnly;
-  }
 #endif
-  if (kVmOperators.find(op_exec_info->op_name) != kVmOperators.end()) {
-    backend_policy = kMsBackendVmOnly;
-  }
   return backend_policy;
 }
 
-py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
-                                                   PynativeStatusCode *status) {
-  MS_EXCEPTION_IF_NULL(status);
+py::object ForwardExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info) {
   py::object result;
-  switch (backend_policy) {
-    case kMsBackendVmOnly: {
-      // use vm only
-      MS_LOG(DEBUG) << "RunOp use VM only backend";
-      result = RunOpInVM(op_exec_info, status);
-      break;
+  if (backend_policy == kMsBackendVmOnly) {
+#ifndef ENABLE_TEST
+    if (kVmOperators.find(op_exec_info->op_name) != kVmOperators.end()) {
+      result = RunOpInVM(op_exec_info);
+    } else {
+      result = RunOpInMs(op_exec_info);
     }
-    case kMsBackendGePrior: {
-#ifdef ENABLE_D
-      // use GE first, use vm when GE fails
-      MS_LOG(DEBUG) << "RunOp use GE first backend";
-      result = RunOpInGE(op_exec_info, status);
-      if (*status != PYNATIVE_SUCCESS) {
-        result = RunOpInVM(op_exec_info, status);
-      }
+#else
+    result = RunOpInVM(op_exec_info);
 #endif
-      break;
-    }
-    case kMsBackendMsPrior: {
-      // use Ms first,use others when ms failed
-      MS_LOG(DEBUG) << "RunOp use Ms first backend";
-      result = RunOpInMs(op_exec_info, status);
-      if (*status != PYNATIVE_SUCCESS) {
-        MS_LOG(ERROR) << "RunOp use Ms backend failed!!!";
-      }
-      break;
-    }
-    default:
-      MS_LOG(ERROR) << "No backend configured for run op";
   }
+
   return result;
 }
 
-py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
+py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info) {
   MS_LOG(DEBUG) << "RunOpInVM start";
-  MS_EXCEPTION_IF_NULL(status);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(op_exec_info->py_primitive);
 
@@ -2107,7 +2068,6 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, Pynativ
         result[i] = new_tensor;
       }
     }
-    *status = PYNATIVE_SUCCESS;
     MS_LOG(DEBUG) << "RunOpInVM end";
     return std::move(result);
   }
@@ -2117,12 +2077,10 @@ py::object ForwardExecutor::RunOpInVM(const OpExecInfoPtr &op_exec_info, Pynativ
   auto result = primitive->RunPyComputeFunction(op_inputs);
   MS_LOG(DEBUG) << "RunOpInVM end";
   if (py::isinstance<py::none>(result)) {
-    MS_LOG(ERROR) << "VM got the result none, please check whether it is failed to get func";
-    *status = PYNATIVE_OP_NOT_IMPLEMENTED_ERR;
+    MS_LOG(EXCEPTION) << "VM op " << op_exec_info->op_name << " run failed!";
     py::tuple err_ret(0);
     return std::move(err_ret);
   }
-  *status = PYNATIVE_SUCCESS;
   if (py::isinstance<py::tuple>(result)) {
     return result;
   }
@@ -2138,9 +2096,8 @@ void ForwardExecutor::CheckIfNeedSyncForHeterogeneous(const std::string &cur_tar
   last_target_ = cur_target;
 }
 
-py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
+py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  MS_EXCEPTION_IF_NULL(status);
   compile::SetMindRTEnable();
   MS_LOG(DEBUG) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
@@ -2207,7 +2164,6 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   }
   auto result = BaseRefToPyData(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
-  *status = PYNATIVE_SUCCESS;
   MS_LOG(DEBUG) << "End run op [" << op_exec_info->op_name << "] with backend policy ms";
   return result;
 }
