@@ -18,12 +18,12 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
-  CholeskySolver,
+  CholeskySolve,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   CholeskySolveGpuKernelMod, float)
 
 MS_REG_GPU_KERNEL_ONE(
-  CholeskySolver,
+  CholeskySolve,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   CholeskySolveGpuKernelMod, double)
 }  // namespace kernel

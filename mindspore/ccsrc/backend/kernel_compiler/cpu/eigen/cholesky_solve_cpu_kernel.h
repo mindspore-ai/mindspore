@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
@@ -23,18 +23,20 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CholeskySolverCpuKernelMod : public NativeCpuKernelMod {
+class CholeskySolveCpuKernelMod : public NativeCpuKernelMod {
  public:
-  CholeskySolverCpuKernelMod() = default;
-  ~CholeskySolverCpuKernelMod() override = default;
+  CholeskySolveCpuKernelMod() = default;
+  ~CholeskySolveCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
+  void InitLeftMatrixInfo(const std::vector<size_t> &shape, const bool is_rank_equal, size_t *row, size_t *col);
+  void InitRightMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
 
+  size_t outer_batch_{1};
   size_t input_a_row_{1};
   size_t input_a_col_{1};
   size_t input_b_row_{1};
@@ -46,13 +48,13 @@ class CholeskySolverCpuKernelMod : public NativeCpuKernelMod {
 };
 
 MS_REG_CPU_KERNEL_T(
-  CholeskySolver,
+  CholeskySolve,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  CholeskySolverCpuKernelMod, float)
+  CholeskySolveCpuKernelMod, float)
 MS_REG_CPU_KERNEL_T(
-  CholeskySolver,
+  CholeskySolve,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  CholeskySolverCpuKernelMod, double)
+  CholeskySolveCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_

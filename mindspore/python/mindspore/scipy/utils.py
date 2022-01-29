@@ -126,3 +126,12 @@ def _norm(x, ord_=None):
     else:
         res = mnp.sqrt(mnp.sum(x ** 2))
     return res
+
+
+def _nd_transpose(a):
+    dims = a.ndim
+    if dims < 2:
+        _raise_value_error("to do _nd_transpose for input a's ndim is not greater or equal to 2d, which is invalid.")
+    axes = ops.make_range(0, dims)
+    axes = axes[:-2] + (axes[-1],) + (axes[-2],)
+    return ops.transpose(a, axes)

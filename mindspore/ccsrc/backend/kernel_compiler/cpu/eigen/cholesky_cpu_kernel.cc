@@ -26,7 +26,6 @@ constexpr size_t kInputsNum = 1;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
-constexpr size_t kDefaultShape = 1;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 }  // namespace
@@ -34,18 +33,21 @@ constexpr size_t kColIndex = 1;
 template <typename T>
 void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col) {
   if (shape.empty()) {
-    MS_LOG_EXCEPTION << kernel_name_ << " input shape is invalid.";
+    MS_LOG_EXCEPTION << kernel_name_ << " input or output shape is empty which is invalid.";
   }
-  if (shape.size() == kDefaultShape) {
-    *row = shape.front();
-    *col = shape.front();
-  } else {
-    *row = shape.at(shape.size() - kRowIndex);
-    *col = shape.at(shape.size() - kColIndex);
+  constexpr size_t min_dim = 1;
+  if (shape.size() <= min_dim) {
+    MS_LOG_EXCEPTION << kernel_name_ << " input or output shape dim is " << shape.size() << " which is invalid.";
+  }
+  *row = shape.at(shape.size() - kRowIndex);
+  *col = shape.at(shape.size() - kColIndex);
+  outer_batch_ = min_dim;
+  for (int batch = 0; batch < static_cast<int>(shape.size() - kRowIndex); ++batch) {
+    outer_batch_ *= shape.at(batch);
   }
   if (*row != *col) {
-    MS_LOG_EXCEPTION << kernel_name_ << "input shape is invalid. "
-                     << "cholesky expects a square matrix. but input shape is:" << *row << ", " << *col;
+    MS_LOG_EXCEPTION << kernel_name_ << " input shape is invalid. "
+                     << "Cholesky expects a square matrix. but input or output shape is: " << *row << ", " << *col;
   }
 }
 
@@ -74,30 +76,35 @@ void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
-  T *input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
-  Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
-
-  T *output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
-  Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
+  T *batch_input_value = reinterpret_cast<T *>(inputs[kInputIndex]->addr);
+  T *batch_output_value = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
   Eigen::LLT<Matrix<T, RowMajor>> llt;
-  (void)llt.compute(input);
-  if (clean_) {
-    if (lower_) {
-      output = llt.matrixL();
+  for (size_t batch = 0; batch < outer_batch_; ++batch) {
+    T *input_value = batch_input_value + batch * input_row_ * input_col_;
+    T *output_value = batch_output_value + batch * output_row_ * output_col_;
+    Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
+    Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
+    (void)llt.compute(input);
+    if (clean_) {
+      if (lower_) {
+        output = llt.matrixL();
+      } else {
+        output = llt.matrixU();
+      }
     } else {
-      output = llt.matrixU();
+      if (lower_) {
+        output = llt.matrixLLT();
+      } else {
+        output = llt.matrixLLT().transpose();
+      }
     }
-  } else {
-    if (lower_) {
-      output = llt.matrixLLT();
+    if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
+      continue;
     } else {
-      output = llt.matrixLLT().transpose();
+      MS_LOG_EXCEPTION << kernel_name_ << " cholesky llt calculating failed.";
     }
   }
-  if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
-    return true;
-  }
-  MS_LOG_EXCEPTION << kernel_name_ << " output cholesky shape invalid.";
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
