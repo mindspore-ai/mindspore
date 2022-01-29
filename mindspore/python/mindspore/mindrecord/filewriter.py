@@ -16,6 +16,7 @@
 This module is to write data into mindrecord.
 """
 import os
+import platform
 import re
 import stat
 import numpy as np
@@ -70,6 +71,8 @@ class FileWriter:
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
+        if platform.system().lower() == "windows":
+            file_name = file_name.replace("\\", "/")
         check_filename(file_name)
         self._file_name = file_name
 
@@ -138,8 +141,10 @@ class FileWriter:
             >>> write_append.commit()
             MSRStatus.SUCCESS
         """
-
+        if platform.system().lower() == "windows":
+            file_name = file_name.replace("\\", "/")
         check_filename(file_name)
+
         # construct ShardHeader
         reader = ShardReader()
         reader.open(file_name, False)
@@ -152,9 +157,14 @@ class FileWriter:
 
     def init_append(self, file_name, header):
         self._append = True
-        self._file_name = file_name
+
+        if platform.system().lower() == "windows":
+            self._file_name = file_name.replace("\\", "/")
+        else:
+            self._file_name = file_name
+
         self._header = header
-        self._writer.open_for_append(file_name)
+        self._writer.open_for_append(self._file_name)
 
     def add_schema(self, content, desc=None):
         """

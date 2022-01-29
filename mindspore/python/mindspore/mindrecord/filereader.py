@@ -15,6 +15,8 @@
 """
 This module is to read data from MindRecord.
 """
+import platform
+
 from .shardreader import ShardReader
 from .shardheader import ShardHeader
 from .shardutils import populate_data
@@ -53,8 +55,18 @@ class FileReader:
                 raise ParamTypeError('columns', 'list')
         else:
             self._columns = None
+
         self._reader = ShardReader()
-        self._reader.open(file_name, num_consumer, columns, operator)
+        self._file_name = ""
+        if platform.system().lower() == "windows":
+            if isinstance(file_name, list):
+                self._file_name = [item.replace("\\", "/") for item in file_name]
+            else:
+                self._file_name = file_name.replace("\\", "/")
+        else:
+            self._file_name = file_name
+
+        self._reader.open(self._file_name, num_consumer, columns, operator)
         self._header = ShardHeader(self._reader.get_header())
         self._reader.launch()
 
