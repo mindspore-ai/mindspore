@@ -143,8 +143,8 @@ install(
 
 ## Public header files for mindapi
 install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/core/base
-        ${CMAKE_SOURCE_DIR}/mindspore/core/ir
+        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/core/mindapi/base
+        ${CMAKE_SOURCE_DIR}/mindspore/core/mindapi/ir
         DESTINATION ${INSTALL_BASE_DIR}/include/mindapi
         COMPONENT mindspore
 )
