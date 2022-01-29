@@ -324,6 +324,7 @@ Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &grou
 Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group);
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
+Operator CreateDivOp(float scale);
 Operator CreateMiniStepAllGatherOp(const std::string &group);
 void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 void AddCommOpMirrorFlag(const CNodePtr &comm_node, bool do_mirror);

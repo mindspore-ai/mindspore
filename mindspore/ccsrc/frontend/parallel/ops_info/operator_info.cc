@@ -319,6 +319,20 @@ Operator CreateVirtualDivOp(int64_t div_num) {
   return op;
 }
 
+Operator CreateDivOp(float scale) {
+  OperatorName operator_name = REAL_DIV;
+  OperatorAttrs operator_attrs;
+  OperatorParams operator_param;
+  size_t parameter_pos = 2;
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scale);
+  ValuePtr scale_value = MakeValue(tensor_ptr);
+  operator_param.push_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  return op;
+}
+
 static OperatorArgs CreateReduceCommunicationOpArgs(const std::string &reduce_op, const std::string &group) {
   ValuePtr attr0_value = MakeValue(reduce_op);
   ValuePtr attr1_value = MakeValue(group);

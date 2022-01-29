@@ -48,7 +48,6 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
-#include "mindspore/ccsrc/pybind_api/ir/primitive_py.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -61,9 +60,12 @@ namespace parallel {
 static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
+static const std::vector<std::pair<const std::string, int64_t>> REDUCE_SUM_MATCH_PATTERN = {
+  std::make_pair(MAKE_TUPLE, 1), std::make_pair(ADDN, 1), std::make_pair(SQRT, 1)};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
+const uint32_t MAX_BFS_DEPTH = 7;
 
 void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_mirror, bool accu_flag) {
   if (new_node_input.empty()) {
@@ -419,12 +421,6 @@ TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &
     tensorinfo_in = distribute_operator->outputs_tensor_info()[0];
   }
   return tensorinfo_in.tensor_layout();
-}
-
-std::string GetPrimName(const CNodePtr &node) {
-  auto prim = GetCNodePrimitive(node);
-  MS_EXCEPTION_IF_NULL(prim);
-  return prim->name();
 }
 
 OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
@@ -850,11 +846,11 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
     MS_LOG(EXCEPTION) << cnode->ToString() << " size( " << cnode->inputs().size() << " ) is not 3";
   }
 
-  if (!cnode->input(2)->isa<ValueNode>()) {
+  if (!cnode->input(TUPLE_GETITEM_INDEX_POS)->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The index of tuple getitem is not a value node";
   }
 
-  ValuePtr tuple_index_value = GetValueNode(cnode->input(2));
+  ValuePtr tuple_index_value = GetValueNode(cnode->input(TUPLE_GETITEM_INDEX_POS));
   MS_EXCEPTION_IF_NULL(tuple_index_value);
   if (!tuple_index_value->isa<Int64Imm>()) {
     MS_LOG(EXCEPTION) << "The index of tuple getitem is not int32";
@@ -889,6 +885,51 @@ void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node
       InsertNode(virtual_div_op[pos], node, index, node->input(index), func_graph, instance_name);
     }
     MS_LOG(INFO) << "insert div op for input index  " << index << "  of node";
+  }
+}
+
+void InsertRealDivOpToNodeInput(const CNodePtr &node, int64_t scale, const string &instance_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (scale == 0) {
+    MS_LOG(EXCEPTION) << "Find the scale value is 0, you should check the mirror operators's group size.";
+  }
+  size_t node_size = node->inputs().size();
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // instance the real div operator
+  Operator div_op = CreateDivOp(scale);
+
+  // Insert it as the input of the node
+  for (size_t index = 1; index < node_size; ++index) {
+    AnfNodePtr input = node->input(index);
+    MS_EXCEPTION_IF_NULL(input);
+    // if it is not a tensor, continue
+    if ((!input->isa<CNode>() && !input->isa<Parameter>()) || HasAbstractMonad(input)) {
+      continue;
+    }
+    InsertNode(div_op, node, index, node->input(index), func_graph, instance_name);
+  }
+}
+
+void InsertAllReduceToNodeInput(const CNodePtr &node, const std::string &group, const std::string &instance_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  size_t node_size = node->inputs().size();
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // instance the real div operator
+  CheckGlobalDeviceManager();
+  Operator allreduce_op = CreateAllReduceOp(REDUCE_OP_SUM, group);
+
+  // Insert it as the input of the node
+  for (size_t index = 1; index < node_size; ++index) {
+    AnfNodePtr input = node->input(index);
+    MS_EXCEPTION_IF_NULL(input);
+    // if it is not a tensor, continue
+    if ((!input->isa<CNode>() && !input->isa<Parameter>()) || HasAbstractMonad(input)) {
+      continue;
+    }
+
+    InsertNode(allreduce_op, node, index, node->input(index), func_graph, instance_name);
   }
 }
 
@@ -2192,7 +2233,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (StrategyFound(attrs)) {
       MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
     }
-    MS_ASSERT(cnode->inputs().size() == 3);
+    MS_ASSERT(cnode->inputs().size() == RESHAPE_INPUT_SIZE);
     auto prev_layout_ptr = FindPrevLayout(cnode->input(1));
     if (prev_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
@@ -3092,6 +3133,148 @@ static void PipelinePostProcess(const FuncGraphPtr &root, const std::vector<AnfN
   }
 }
 
+static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
+  auto cnode = res_node->cast<CNodePtr>();
+  auto graphs = res_node->func_graph();
+  MS_EXCEPTION_IF_NULL(graphs);
+  auto manager = graphs->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto node_user_map = manager->node_users();
+  if (!IsSomePrimitive(cnode, EXPAND_DIMS)) {
+    MS_LOG(ERROR) << "Expected the operator expand_dims, but found the " << GetPrimName(cnode)
+                  << "This may cause the calculation of the global norm incorrect";
+    return;
+  }
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  auto expand_dims_node = node_user_map.at(res_node).front().first;
+  auto sqrt_node = MatchPattern(expand_dims_node, node_user_map, REDUCE_SUM_MATCH_PATTERN);
+  if (!sqrt_node) return;
+  auto cur_stage_rank_list = g_device_manager->GetDeviceListInThisStage();
+  Group cur_stage_device_list = g_device_manager->CreateGroup(cur_stage_rank_list);
+  InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), cur_stage_device_list.name(), PARALLEL_GLOBALNORM);
+  MS_LOG(INFO) << "Insert the AllReduce for global norm value in stages succeed.";
+  if (pipeline_stages > 1) {
+    MS_LOG(INFO) << "Insert the AllReduce for global norm value between stages succeed.";
+    auto ranks_between_stages = g_device_manager->GetDeviceListBetweenStage();
+    Group group_between_stages = g_device_manager->CreateGroup(ranks_between_stages);
+    InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), group_between_stages.name(), PARALLEL_GLOBALNORM_BETWEEN);
+  }
+}
+
+AnfNodePtr FindPrimitiveWithAtrribute(const AnfNodePtr &node_ptr, const NodeUsersMap &node_users_map, uint32_t limits) {
+  std::queue<AnfNodePtr> visited;
+  AnfNodePtr queue_node = nullptr;
+  CNodePtr cnode = nullptr;
+  AnfNodePtr last_node = nullptr;
+  uint32_t depth = 0;
+  if (!node_ptr) {
+    return nullptr;
+  }
+  visited.push(node_ptr);
+  while (!visited.empty()) {
+    queue_node = visited.front();
+    visited.pop();
+    cnode = queue_node->cast<CNodePtr>();
+    // MAKE_TUPLE will not appear after the load in the forward graph
+    if (IsSomePrimitive(cnode, EXPAND_DIMS)) {
+      auto value = GetAttrsFromAnfNode(queue_node, GRAD_SCALE);
+      if (!value || !GetValue<bool>(value)) {
+        continue;
+      }
+      return queue_node;
+    }
+    if (!IsSomePrimitiveList(cnode, {ENVIRONGET, MUL, SQUARE, REDUCE_SUM, EXPAND_DIMS, DEPEND, CAST, REF_TO_EMBED})) {
+      continue;
+    }
+    auto node_set = node_users_map.at(queue_node);
+    for (auto &node_user : node_set) {
+      visited.push(node_user.first);
+    }
+    if (!last_node || last_node == queue_node) {
+      if (++depth == limits) {
+        break;
+      }
+      last_node = visited.back();
+    }
+  }
+  return nullptr;
+}
+
+static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, const AnfNodePtr &parameter,
+                                         uint32_t dev_num) {
+  AnfNodePtr expand_dims_node = nullptr;
+  AnfNodePtr prefix_node = nullptr;
+  auto params_user_set = node_user_map.at(parameter);
+  for (auto &param_pair : params_user_set) {
+    expand_dims_node = nullptr;
+    auto cnode = param_pair.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->in_forward_flag()) {
+      continue;
+    }
+    expand_dims_node = FindPrimitiveWithAtrribute(cnode, node_user_map, MAX_BFS_DEPTH);
+    if (!expand_dims_node) {
+      continue;
+    }
+    auto value = GetAttrsFromAnfNode(expand_dims_node, GRAD_SCALE);
+    if (!value || !GetValue<bool>(value)) {
+      continue;
+    }
+    InsertRealDivOpToNodeInput(expand_dims_node->cast<CNodePtr>(), dev_num, PARALLEL_GLOBALNORM_DIV);
+    MS_LOG(INFO) << "Insert the realdiv with " << dev_num << " for the parameter " << parameter->DebugString()
+                 << "succeed!";
+    // If already inserted allreduce, the pattern will not be matched and thus no allreduce will be inserted.
+    InsertAllReduceForNormValue(expand_dims_node);
+  }
+}
+
+static AnfNodePtr GetMirrorOp(const NodeUsersMap &node_user_map, const AnfNodePtr &parameter) {
+  auto params_user_set = node_user_map.at(parameter);
+  for (auto &param_pair : params_user_set) {
+    auto cnode = param_pair.first->cast<CNodePtr>();
+    std::vector<AnfNodePtr> candidate = {cnode};
+    if (!cnode->in_forward_flag()) {
+      continue;
+    }
+    if (IsInTrivialNodeList(cnode) || IsSomePrimitive(cnode, LOAD)) {
+      auto load_users = node_user_map.at(param_pair.first);
+      std::transform(load_users.begin(), load_users.end(), std::back_inserter(candidate),
+                     [](const auto &v) { return v.first; });
+    }
+    for (auto &node : candidate) {
+      auto local_cnode = node->cast<CNodePtr>();
+      if (!IsPrimitiveCNode(local_cnode, prim::kPrimMirror) &&
+          !IsPrimitiveCNode(local_cnode, prim::kPrimMirrorMicroStep) &&
+          !IsPrimitiveCNode(local_cnode, prim::kPrimMirrorMiniStep)) {
+        continue;
+      }
+      return node;
+    }
+  }
+  return nullptr;
+}
+
+static void HandlGlobalNormScale(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+                                 const FuncGraphManagerPtr &manager) {
+  auto parameters = root->parameters();
+  auto node_user_map = manager->node_users();
+  MS_LOG(INFO) << "Start to process the global norm";
+  for (auto &parameter : parameters) {
+    if (!ParameterRequireGrad(parameter)) continue;
+    auto mirror_node = GetMirrorOp(node_user_map, parameter);
+    if (!mirror_node) continue;
+    auto device_num_ptr = GetAttrsFromAnfNode(mirror_node, DEV_NUM);
+    if (!device_num_ptr) {
+      MS_LOG(ERROR) << "The mirror operator is excepted to have device number attribute, but found none. This "
+                       "will cause the global norm calculation with wrong precision.";
+      continue;
+    }
+    auto dev_num = device_num_ptr->cast<Int64ImmPtr>()->value();
+    if (dev_num == 0) continue;
+    InsertDivAndAllReduceForNorm(node_user_map, parameter, dev_num);
+  }
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3200,6 +3383,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   // handle full split parammeters in grad accumulation, do not contain optimizer-sharding's parameter
   HandleFullySplitParameters(root);
+
+  HandlGlobalNormScale(root, all_nodes, manager);
 
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 

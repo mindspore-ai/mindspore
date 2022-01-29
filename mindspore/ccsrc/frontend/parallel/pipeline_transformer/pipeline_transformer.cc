@@ -93,6 +93,7 @@ bool PipelineTransformer::NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_
     auto temp = input;
     while (IsPrimitiveCNode(temp, prim::kPrimLoad) || IsPrimitiveCNode(temp, prim::kPrimCast)) {
       auto input_cnode = temp->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_cnode);
       temp = input_cnode->input(1);
     }
     if (temp->isa<Parameter>()) {
@@ -177,13 +178,7 @@ void PipelineTransformer::LabelMicroBatch() {
 }
 
 void PipelineTransformer::CreateForwardGroup() {
-  std::vector<int64_t> rank_list;
-  auto rank_id = g_device_manager->global_rank();
-  auto stage_id = g_device_manager->stage_id();
-  auto stage_num = g_device_manager->stage_num();
-  for (int64_t i = 0; i < stage_num; ++i) {
-    rank_list.push_back(rank_id + per_stage_rank_num_ * (i - stage_id));
-  }
+  std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
   auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
   auto g = g_device_manager->CreateGroup(rank_list);
   auto g_back_name = g.name() + BACKWARD;

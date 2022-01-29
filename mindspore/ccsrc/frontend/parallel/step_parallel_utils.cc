@@ -58,6 +58,17 @@ bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   return (prim->name() == name);
 }
 
+bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_list) {
+  return std::any_of(check_list.begin(), check_list.end(),
+                     [cnode](const string &in) { return IsSomePrimitive(cnode, in); });
+}
+
+std::string GetPrimName(const CNodePtr &node) {
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  return prim->name();
+}
+
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info) {
   auto user_cnode = param_info.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(user_cnode);
@@ -106,11 +117,6 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
     }
   }
   return first_node;
-}
-
-bool IsInNodeList(const CNodePtr &cnode, const std::set<string> &check_list) {
-  return std::any_of(check_list.begin(), check_list.end(),
-                     [cnode](const string &in) { return IsSomePrimitive(cnode, in); });
 }
 
 bool IsParallelCareNode(const CNodePtr &cnode) {
@@ -394,9 +400,9 @@ AnfNodePtr GetChildCastNode(const AnfNodePtr &node_ptr, const NodeUsersMap &node
     visited.pop();
     cnode = queue_node->cast<CNodePtr>();
     // MAKE_TUPLE will not appear after the load in the forward graph
-    if (IsInNodeList(cnode, {MAKE_TUPLE})) {
+    if (IsSomePrimitive(cnode, MAKE_TUPLE)) {
       continue;
-    } else if (IsInAllGatherNodeList(cnode) || IsInNodeList(cnode, {LOAD, RESHAPE})) {
+    } else if (IsInAllGatherNodeList(cnode) || IsSomePrimitiveList(cnode, {LOAD, RESHAPE})) {
       auto node_set = node_users_map.at(queue_node);
       for (auto &node_user : node_set) {
         visited.push(node_user.first);
@@ -473,6 +479,7 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   type_node->set_abstract(compute_node_type->ToAbstract());
   auto new_node = node->func_graph()->NewCNode({NewValueNode(prim), pre_node, type_node});
   new_node->set_abstract(node->abstract());
+  new_node->set_in_forward_flag(true);
   return new_node;
 }
 
@@ -503,6 +510,45 @@ void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes) {
       (void)prim->AddAttr("recompute", MakeValue(false));
     }
   }
+}
+
+std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key) {
+  if (!node) return nullptr;
+  auto cnode = node->cast<CNodePtr>();
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim && prim->HasAttr(key)) {
+    return prim->GetAttr(key);
+  }
+  return nullptr;
+}
+
+AnfNodePtr MatchPattern(const AnfNodePtr &node, const NodeUsersMap &user_map,
+                        const std::vector<std::pair<const std::string, int64_t>> &match_pattern) {
+  AnfNodePtr start_node = node;
+  bool find = false;
+  for (uint32_t i = 0; i < match_pattern.size(); ++i) {
+    find = false;
+    if (!IsSomePrimitive(start_node->cast<CNodePtr>(), {match_pattern[i].first})) {
+      break;
+    } else if (i == match_pattern.size() - 1) {
+      find = true;
+      break;
+    }
+
+    auto next_node_users = user_map.at(start_node);
+    for (auto &next_node : next_node_users) {
+      if (i + 1 < match_pattern.size() &&
+          IsSomePrimitive(next_node.first->cast<CNodePtr>(), {match_pattern[i + 1].first}) &&
+          next_node.second == match_pattern[i + 1].second) {
+        start_node = next_node.first;
+        break;
+      }
+    }
+  }
+  if (!find) {
+    start_node = nullptr;
+  }
+  return start_node;
 }
 }  // namespace parallel
 }  // namespace mindspore
