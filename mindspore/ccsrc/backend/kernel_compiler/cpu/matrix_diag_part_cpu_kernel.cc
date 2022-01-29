@@ -74,35 +74,34 @@ bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
     auto dtype = AnfAlgo::GetOutputDeviceDataType(node_, 0);
     AnfAlgo::SetOutputInferTypeAndShape({dtype}, {out_shapes_}, node_.get());
   }
-  CPUKernelUtils::ParallelFor(
-    [m = m_, n = n_, max_diag_len, u, l, in_value, out_value, dest_inner_matrix_len, padding_value,
-     alignment = alignment_](size_t spos, size_t epos) {
-      for (size_t t = spos; t < epos; t++) {
-        const int64_t i = t / dest_inner_matrix_len;
-        const int64_t j = u - (t % dest_inner_matrix_len) / max_diag_len;
-        const int64_t k = (t % dest_inner_matrix_len) % max_diag_len;
-        int64_t current_diag_len = j >= 0 ? std::min(n - j, m) : std::min(m + j, n);
-        int64_t current_pad_len = max_diag_len - current_diag_len;
-        // Pad left by default
-        bool pad_left = (alignment.first == MatrixDiag::Alignment::RIGHT && j > 0) ||
-                        (alignment.second == MatrixDiag::Alignment::RIGHT && j < 0);
-        // Set none-padding values, l means current diag col index
-        // this line is for k loop, for (int64_t k = 0; k < max_diag_len; k++) {
-        // Source pos, k offset, only effective when pad left
-        int64_t k_offset = (pad_left && k >= current_pad_len) ? k - current_pad_len : k;
-        // Calculate source offset row/col offset
-        size_t row_index = j >= 0 ? j + k_offset : k_offset;
-        size_t col_index = j >= 0 ? k_offset : k_offset - j;
-        size_t source_offset = i * m * n + col_index * n + row_index;
-        // If current pos need pad, then the value is pad value
-        bool current_pad_flag = (pad_left && k < current_pad_len) || (!pad_left && k >= current_diag_len);
-        T current_pad_value = current_pad_flag ? *padding_value : *(in_value + source_offset);
-        int64_t j_index = u - j;
-        size_t dest_offset = dest_inner_matrix_len * i + j_index * max_diag_len + k;
-        *(out_value + dest_offset) = current_pad_value;
-      }
-    },
-    out_range_size_ * (u - l + 1) * max_diag_len);
+  auto func = [m = m_, n = n_, max_diag_len, u, l, in_value, out_value, dest_inner_matrix_len, padding_value,
+               alignment = alignment_](size_t spos, size_t epos) {
+    for (size_t t = spos; t < epos; t++) {
+      const int64_t i = t / dest_inner_matrix_len;
+      const int64_t j = u - (t % dest_inner_matrix_len) / max_diag_len;
+      const int64_t k = (t % dest_inner_matrix_len) % max_diag_len;
+      int64_t current_diag_len = j >= 0 ? std::min(n - j, m) : std::min(m + j, n);
+      int64_t current_pad_len = max_diag_len - current_diag_len;
+      // Pad left by default
+      bool pad_left = (alignment.first == MatrixDiag::Alignment::RIGHT && j > 0) ||
+                      (alignment.second == MatrixDiag::Alignment::RIGHT && j < 0);
+      // Set none-padding values, l means current diag col index
+      // this line is for k loop, for (int64_t k = 0; k < max_diag_len; k++) {
+      // Source pos, k offset, only effective when pad left
+      int64_t k_offset = (pad_left && k >= current_pad_len) ? k - current_pad_len : k;
+      // Calculate source offset row/col offset
+      size_t row_index = j >= 0 ? j + k_offset : k_offset;
+      size_t col_index = j >= 0 ? k_offset : k_offset - j;
+      size_t source_offset = i * m * n + col_index * n + row_index;
+      // If current pos need pad, then the value is pad value
+      bool current_pad_flag = (pad_left && k < current_pad_len) || (!pad_left && k >= current_diag_len);
+      T current_pad_value = current_pad_flag ? *padding_value : *(in_value + source_offset);
+      int64_t j_index = u - j;
+      size_t dest_offset = dest_inner_matrix_len * i + j_index * max_diag_len + k;
+      *(out_value + dest_offset) = current_pad_value;
+    }
+  };
+  ParallelLaunch(func, out_range_size_ * (u - l + 1) * max_diag_len);
   return true;
 }
 }  // namespace kernel

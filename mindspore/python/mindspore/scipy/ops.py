@@ -363,22 +363,12 @@ class MatrixBandPart(PrimitiveWithInfer):
         return shape
 
 
-class MatrixBandPartNet(nn.Cell):
-    """
-    MatrixBandPart
-    """
-
-    def __init__(self):
-        super(MatrixBandPartNet, self).__init__()
-        self.matrix_band_part = MatrixBandPart()
-
-    def construct(self, a, num_lower, num_upper):
-        return self.matrix_band_part(a, num_lower, num_upper)
-
-
 class MatrixDiagPart(PrimitiveWithInfer):
     """
-    MatrixDiagPart()
+    Returns:
+        batched diagonal part of a batched tensor, the part between, k[0] to k[1], the shape is dynamic
+    Raises:
+        k[1] should not less then k[0], or padding value dtype is not same with input tensor A.dtype
     """
 
     @prim_attr_register
@@ -386,23 +376,6 @@ class MatrixDiagPart(PrimitiveWithInfer):
         super().__init__(name="MatrixDiagPart")
         self.add_prim_attr('alignment', align)
         self.init_prim_io_names(inputs=['A', 'k', 'padding_value'], outputs=['output'])
-
-
-class MatrixDiagPartNet(nn.Cell):
-    """
-     Returns:
-          batched diagonal part of a batched tensor, the part between, k[0] to k[1], the shape is dynamic
-
-     Raises:
-       k[1] should not less then k[0]
-     """
-
-    def __init__(self, align="RIGHT_LEFT"):
-        super(MatrixDiagPartNet, self).__init__()
-        self.matrix_diag_part = MatrixDiagPart(align)
-
-    def construct(self, a, k, padding_value):
-        return self.matrix_diag_part(a, k, padding_value)
 
 
 # pylint: disable=C0413,W0611
