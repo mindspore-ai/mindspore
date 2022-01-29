@@ -58,14 +58,14 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     if (AnfAlgo::HasNodeAttr(kSplitDim, kernel_node)) {
       split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
     }
-    // cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
+    // Cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
     // so we reverse lower to upper, to fake transpose col_major input to row_major.
     if (lower_) {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
     } else {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
     }
-    // get CuSolver Dense matrix handler
+    // Get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
@@ -83,7 +83,7 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                  "cholesky bind cusolverDnSetStream failed");
+                                  "Cholesky bind cusolverDnSetStream failed");
     if (!use_split_matrix_) {
       return NoSplitLaunch(inputs, workspace, outputs, stream_ptr);
     }
@@ -182,14 +182,14 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
 
   bool NoSplitLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                      const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-    // here all addresses are malloc by cuda, so deal with them as device's address.
+    // Here all addresses are malloc by cuda, so deal with them as device's address.
     auto input1_addr = GetDeviceAddress<T>(inputs, kDim0);
     auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
 
     auto d_array_addr = GetDeviceAddress<pointer>(workspace, kDim0);
     auto d_info_array_addr = GetDeviceAddress<int>(workspace, kDim1);
 
-    // copy input data to output, cholesky inplace output in gpu backend.
+    // Copy input data to output, cholesky inplace output in gpu backend.
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(output_addr, input1_addr, outer_batch_ * m_ * lda_ * unit_size_,
                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -199,13 +199,13 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
       h_array_[i] = output_addr + i * lda_ * m_;
     }
 
-    // copy output's addr to d_array_addr
+    // Copy output's addr to d_array_addr
     CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
                               cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(pointer) * outer_batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
 
-    // solve to cholesky factorization according to cuSolver api, outputs have been written to input's matrix.
+    // Solve to cholesky factorization according to cuSolver api, outputs have been written to input's matrix.
     if constexpr (std::is_same_v<T, float>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT(
         kernel_node_, cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, outer_batch_),
