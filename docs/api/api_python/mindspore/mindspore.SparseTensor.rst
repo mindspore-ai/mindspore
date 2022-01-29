@@ -1,7 +1,7 @@
 mindspore.SparseTensor
 ======================
 
-.. py:class:: mindspore.SparseTensor(indices, values, shape)
+.. py:class:: mindspore.SparseTensor(indices=None, values=None, shape=None, coo_tensor=None)
 
     用来表示某一张量在给定索引上非零元素的集合。
 
