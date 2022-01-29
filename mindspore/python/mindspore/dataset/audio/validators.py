@@ -321,6 +321,25 @@ def check_lowpass_biquad(method):
     return new_method
 
 
+def check_mask_along_axis(method):
+    """Wrapper method to check the parameters of MaskAlongAxis."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mask_start, mask_width, mask_value, axis], _ = parse_user_args(method, *args, **kwargs)
+        type_check(mask_start, (int,), "mask_start")
+        type_check(mask_width, (int,), "mask_width")
+        type_check(mask_value, (int, float), "mask_value")
+        type_check(axis, (int,), "axis")
+        check_non_negative_int32(mask_start, "mask_start")
+        check_pos_int32(mask_width, "mask_width")
+        check_float32(mask_value, "mask_value")
+        check_value(axis, [1, 2], "axis")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_mask_along_axis_iid(method):
     """Wrapper method to check the parameters of MaskAlongAxisIID."""
     @wraps(method)
