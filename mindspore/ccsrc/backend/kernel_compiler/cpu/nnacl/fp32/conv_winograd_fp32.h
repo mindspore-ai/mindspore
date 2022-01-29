@@ -36,7 +36,7 @@ extern "C" {
 // fp32 convolution winograd
 void ConvWinogardFp32(const float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, const ConvParameter *conv_param,
-                      InputTransFunc in_func, OutputTransFunc out_func);
+                      TransFuncList trans_func);
 #ifdef __cplusplus
 }
 #endif

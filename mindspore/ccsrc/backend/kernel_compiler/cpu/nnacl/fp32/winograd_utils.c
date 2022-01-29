@@ -20,6 +20,19 @@
 #include "nnacl/base/conv_common_base.h"
 #include "nnacl/errorcode.h"
 
+#ifdef ENABLE_ARM64
+void transpose4(MS_FLOAT32X4 *s0, MS_FLOAT32X4 *s1, MS_FLOAT32X4 *s2, MS_FLOAT32X4 *s3) {
+  float64x2_t m0 = (float64x2_t)(vtrn1q_f32(*s0, *s1));
+  float64x2_t m1 = (float64x2_t)(vtrn2q_f32(*s0, *s1));
+  float64x2_t m2 = (float64x2_t)(vtrn1q_f32(*s2, *s3));
+  float64x2_t m3 = (float64x2_t)(vtrn2q_f32(*s2, *s3));
+  *s0 = (float32x4_t)(vtrn1q_f64(m0, m2));
+  *s2 = (float32x4_t)(vtrn2q_f64(m0, m2));
+  *s1 = (float32x4_t)(vtrn1q_f64(m1, m3));
+  *s3 = (float32x4_t)(vtrn2q_f64(m1, m3));
+}
+#endif
+
 #ifdef ENABLE_AVX
 static InputTransFunc InputTransFuncList[] = {
   NULL, NULL, NULL, NULL, InputTransform4x4AvxUnit, NULL, InputTransform6x6AvxUnit, NULL, InputTransform8x8AvxUnit};
@@ -54,6 +67,18 @@ static OutputTransFunc OutputTransFuncList[] = {
 #endif
 
 InputTransFunc GetInputTransFunc(int input_unit) { return InputTransFuncList[input_unit]; }
+
+#ifdef ENABLE_ARM64
+static InputTransStepFunc InputTransStepFuncList[] = {
+  NULL, NULL, NULL, NULL, InputTransform4x4Step, NULL, InputTransform6x6Step, NULL, InputTransform8x8Step};
+
+static InputTransPackFunc InputTransPackFuncList[] = {
+  NULL, NULL, NULL, NULL, InputTransform4x4Pack12, NULL, InputTransform6x6Pack12, NULL, InputTransform8x8Pack12};
+
+InputTransStepFunc GetInputTransStepFunc(int input_unit) { return InputTransStepFuncList[input_unit]; }
+
+InputTransPackFunc GetInputTransPackFunc(int input_unit) { return InputTransPackFuncList[input_unit]; }
+#endif
 
 void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
@@ -138,6 +163,136 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
 #endif
 }
 
+void InputTransform4x4Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step) {
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 4; ++l) {
+    const float *src_ptr = src_data + l * 4 * src_step;
+    float *dst_ptr = dst_data + l * dst_row_step;
+
+    MS_FLOAT32X4 s0 = MS_LDQ_F32(src_ptr + 0 * src_step);
+    MS_FLOAT32X4 s1 = MS_LDQ_F32(src_ptr + 1 * src_step);
+    MS_FLOAT32X4 s2 = MS_LDQ_F32(src_ptr + 2 * src_step);
+    MS_FLOAT32X4 s3 = MS_LDQ_F32(src_ptr + 3 * src_step);
+    MS_FLOAT32X4 m0 = MS_SUBQ_F32(s0, s2);
+    MS_FLOAT32X4 m1 = MS_ADDQ_F32(s1, s2);
+    MS_FLOAT32X4 m2 = MS_SUBQ_F32(s2, s1);
+    MS_FLOAT32X4 m3 = MS_SUBQ_F32(s3, s1);
+
+    MS_STQ_F32(dst_ptr + 0 * dst_step, m0);
+    MS_STQ_F32(dst_ptr + 1 * dst_step, m1);
+    MS_STQ_F32(dst_ptr + 2 * dst_step, m2);
+    MS_STQ_F32(dst_ptr + 3 * dst_step, m3);
+  }
+#else
+  float src[4];
+  float m[4];
+  for (int i = 0; i < C4NUM; ++i) {
+    for (int l = 0; l < 4; ++l) {
+      for (int w = 0; w < 4; ++w) {
+        int tmp_index = l * 4 + w;
+        src[w] = src_data[i + tmp_index * src_step];
+      }
+      m[0] = src[0] - src[2];
+      m[1] = src[1] + src[2];
+      m[2] = src[2] - src[1];
+      m[3] = src[3] - src[1];
+
+      float *dst = dst_data + l * dst_row_step;
+      for (int w = 0; w < 4; ++w) {
+        dst[i + w * dst_step] = m[w];
+      }
+    }
+  }
+#endif
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform4x4Pack12Channel(float *src_ptr, float *dst_ptr, int dst_step, int pack_tile, int src_point_stride) {
+  LOAD_LINE_DATA(0);
+  LOAD_LINE_DATA(1);
+  LOAD_LINE_DATA(2);
+  LOAD_LINE_DATA(3);
+
+  MS_FLOAT32X4 m0 = MS_SUBQ_F32(s00, s20);
+  MS_FLOAT32X4 m1 = MS_SUBQ_F32(s01, s21);
+  MS_FLOAT32X4 m2 = MS_SUBQ_F32(s02, s22);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(s10, s20);
+  m1 = MS_ADDQ_F32(s11, s21);
+  m2 = MS_ADDQ_F32(s12, s22);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_SUBQ_F32(s20, s10);
+  m1 = MS_SUBQ_F32(s21, s11);
+  m2 = MS_SUBQ_F32(s22, s12);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_SUBQ_F32(s30, s10);
+  m1 = MS_SUBQ_F32(s31, s11);
+  m2 = MS_SUBQ_F32(s32, s12);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 2 * pack_tile, m2);
+}
+#endif
+
+void InputTransform4x4Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 12;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 4; ++l) {
+    float *src_ptr = src_data + l * C4NUM * block_tile;
+    TRANSPOSE_12x4;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float *src_ptr = src_data + c * block_tile;
+    float *dst_ptr = dst_data + c * block_tile;
+    InputTransform4x4Pack12Channel(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+#else
+  for (int l = 0; l < 4; ++l) {
+    float *src = src_data + l * pack_tile * block_tile;
+    // 12 * 4 -> 4 * 12
+    float tmp_mat[pack_tile][block_tile];
+    for (int i = 0; i < block_tile; ++i) {
+      for (int j = 0; j < pack_tile; ++j) {
+        tmp_mat[j][i] = src[i * pack_tile + j];
+      }
+    }
+    memcpy(src, tmp_mat, pack_tile * block_tile * sizeof(float));
+  }
+
+  float src[4];
+  float m[4];
+  for (int c = 0; c < real_c; ++c) {
+    for (int i = 0; i < block_tile; ++i) {
+      int tmp_index = c * block_tile + i;
+      for (int w = 0; w < 4; ++w) {
+        src[w] = src_data[tmp_index + w * src_point_stride];
+      }
+
+      m[0] = src[0] - src[2];
+      m[1] = src[1] + src[2];
+      m[2] = src[2] - src[1];
+      m[3] = src[3] - src[1];
+
+      for (int w = 0; w < 4; ++w) {
+        dst_data[tmp_index + w * dst_step] = m[w];
+      }
+    }
+  }
+#endif
+}
+
 void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   if (real_c == 4) {
@@ -213,6 +368,169 @@ void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step,
       }
     }
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  }
+#endif
+}
+
+void InputTransform6x6Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step) {
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 6; ++l) {
+    const float *src_ptr = src_data + l * 6 * src_step;
+    float *dst_ptr = dst_data + l * dst_row_step;
+
+    MS_FLOAT32X4 s0 = MS_LDQ_F32(src_ptr + 0 * src_step);
+    MS_FLOAT32X4 s1 = MS_LDQ_F32(src_ptr + 1 * src_step);
+    MS_FLOAT32X4 s2 = MS_LDQ_F32(src_ptr + 2 * src_step);
+    MS_FLOAT32X4 s3 = MS_LDQ_F32(src_ptr + 3 * src_step);
+    MS_FLOAT32X4 s4 = MS_LDQ_F32(src_ptr + 4 * src_step);
+    MS_FLOAT32X4 s5 = MS_LDQ_F32(src_ptr + 5 * src_step);
+
+    MS_FLOAT32X4 tmp1 = MS_SUBQ_F32(s3, s1);
+    MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(s4, s2);
+    MS_FLOAT32X4 m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s0, 4), MS_MULQ_N_F32(s2, 5)), s4);
+    MS_FLOAT32X4 m1 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_ADDQ_F32(s1, s2), -4), MS_ADDQ_F32(s3, s4));
+    MS_FLOAT32X4 m2 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s1, s2), 4), MS_SUBQ_F32(s4, s3));
+    MS_FLOAT32X4 m3 = MS_ADDQ_F32(MS_MULQ_N_F32(tmp1, 2), tmp2);
+    MS_FLOAT32X4 m4 = MS_ADDQ_F32(MS_MULQ_N_F32(tmp1, -2), tmp2);
+    MS_FLOAT32X4 m5 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s1, 4), MS_MULQ_N_F32(s3, 5)), s5);
+
+    MS_STQ_F32(dst_ptr + 0 * dst_step, m0);
+    MS_STQ_F32(dst_ptr + 1 * dst_step, m1);
+    MS_STQ_F32(dst_ptr + 2 * dst_step, m2);
+    MS_STQ_F32(dst_ptr + 3 * dst_step, m3);
+    MS_STQ_F32(dst_ptr + 4 * dst_step, m4);
+    MS_STQ_F32(dst_ptr + 5 * dst_step, m5);
+  }
+#else
+  float src[6];
+  float m[6];
+  for (int i = 0; i < C4NUM; ++i) {
+    for (int l = 0; l < 6; ++l) {
+      for (int w = 0; w < 6; ++w) {
+        int tmp_index = l * 6 + w;
+        src[w] = src_data[i + tmp_index * src_step];
+      }
+      float tmp1 = src[3] - src[1];
+      float tmp2 = src[4] - src[2];
+      m[0] = 4 * src[0] - 5 * src[2] + src[4];
+      m[1] = -4 * (src[1] + src[2]) + (src[3] + src[4]);
+      m[2] = 4 * (src[1] - src[2]) + (src[4] - src[3]);
+      m[3] = 2 * tmp1 + tmp2;
+      m[4] = -2 * tmp1 + tmp2;
+      m[5] = 4 * src[1] - 5 * src[3] + src[5];
+
+      float *dst = dst_data + l * dst_row_step;
+      for (int w = 0; w < 6; ++w) {
+        dst[i + w * dst_step] = m[w];
+      }
+    }
+  }
+#endif
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform6x6Pack12Channel(float *src_ptr, float *dst_ptr, int dst_step, int pack_tile, int src_point_stride) {
+  LOAD_LINE_DATA(0);
+  LOAD_LINE_DATA(1);
+  LOAD_LINE_DATA(2);
+  LOAD_LINE_DATA(3);
+  LOAD_LINE_DATA(4);
+  LOAD_LINE_DATA(5);
+
+  MS_FLOAT32X4 m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s00, 4), MS_MULQ_N_F32(s20, 5)), s40);
+  MS_FLOAT32X4 m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s01, 4), MS_MULQ_N_F32(s21, 5)), s41);
+  MS_FLOAT32X4 m2 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s02, 4), MS_MULQ_N_F32(s22, 5)), s42);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_ADDQ_F32(s10, s20), -4), MS_ADDQ_F32(s30, s40));
+  m1 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_ADDQ_F32(s11, s21), -4), MS_ADDQ_F32(s31, s41));
+  m2 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_ADDQ_F32(s12, s22), -4), MS_ADDQ_F32(s32, s42));
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s10, s20), 4), MS_SUBQ_F32(s40, s30));
+  m1 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s11, s21), 4), MS_SUBQ_F32(s41, s31));
+  m2 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s12, s22), 4), MS_SUBQ_F32(s42, s32));
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s30, s10), 2), MS_SUBQ_F32(s40, s20));
+  m1 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s31, s11), 2), MS_SUBQ_F32(s41, s21));
+  m2 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s32, s12), 2), MS_SUBQ_F32(s42, s22));
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s30, s10), -2), MS_SUBQ_F32(s40, s20));
+  m1 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s31, s11), -2), MS_SUBQ_F32(s41, s21));
+  m2 = MS_ADDQ_F32(MS_MULQ_N_F32(MS_SUBQ_F32(s32, s12), -2), MS_SUBQ_F32(s42, s22));
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s10, 4), MS_MULQ_N_F32(s30, 5)), s50);
+  m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s11, 4), MS_MULQ_N_F32(s31, 5)), s51);
+  m2 = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s12, 4), MS_MULQ_N_F32(s32, 5)), s52);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 2 * pack_tile, m2);
+}
+#endif
+
+void InputTransform6x6Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 12;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 6; ++l) {
+    float *src_ptr = src_data + l * C4NUM * block_tile;
+    TRANSPOSE_12x4;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float *src_ptr = src_data + c * block_tile;
+    float *dst_ptr = dst_data + c * block_tile;
+    InputTransform6x6Pack12Channel(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+#else
+  for (int l = 0; l < 6; ++l) {
+    float *src = src_data + l * pack_tile * block_tile;
+    // 12 * 4 -> 4 * 12
+    float tmp_mat[pack_tile][block_tile];
+    for (int i = 0; i < block_tile; ++i) {
+      for (int j = 0; j < pack_tile; ++j) {
+        tmp_mat[j][i] = src[i * pack_tile + j];
+      }
+    }
+    memcpy(src, tmp_mat, pack_tile * block_tile * sizeof(float));
+  }
+
+  float src[6];
+  float m[6];
+  for (int c = 0; c < real_c; ++c) {
+    for (int i = 0; i < block_tile; ++i) {
+      int tmp_index = c * block_tile + i;
+      for (int w = 0; w < 6; ++w) {
+        src[w] = src_data[tmp_index + w * src_point_stride];
+      }
+
+      float tmp1 = src[3] - src[1];
+      float tmp2 = src[4] - src[2];
+      m[0] = 4 * src[0] - 5 * src[2] + src[4];
+      m[1] = -4 * (src[1] + src[2]) + (src[3] + src[4]);
+      m[2] = 4 * (src[1] - src[2]) + (src[4] - src[3]);
+      m[3] = 2 * tmp1 + tmp2;
+      m[4] = -2 * tmp1 + tmp2;
+      m[5] = 4 * src[1] - 5 * src[3] + src[5];
+
+      for (int w = 0; w < 6; ++w) {
+        dst_data[tmp_index + w * dst_step] = m[w];
+      }
+    }
   }
 #endif
 }
@@ -330,6 +648,232 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
       }
     }
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  }
+#endif
+}
+
+void InputTransform8x8Step(const float *src_data, float *dst_data, int src_step, int dst_step, int dst_row_step) {
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 8; ++l) {
+    const float *src_ptr = src_data + l * 8 * src_step;
+    float *dst_ptr = dst_data + l * dst_row_step;
+
+    MS_FLOAT32X4 s0 = MS_LDQ_F32(src_ptr + 0 * src_step);
+    MS_FLOAT32X4 s1 = MS_LDQ_F32(src_ptr + 1 * src_step);
+    MS_FLOAT32X4 s2 = MS_LDQ_F32(src_ptr + 2 * src_step);
+    MS_FLOAT32X4 s3 = MS_LDQ_F32(src_ptr + 3 * src_step);
+    MS_FLOAT32X4 s4 = MS_LDQ_F32(src_ptr + 4 * src_step);
+    MS_FLOAT32X4 s5 = MS_LDQ_F32(src_ptr + 5 * src_step);
+    MS_FLOAT32X4 s6 = MS_LDQ_F32(src_ptr + 6 * src_step);
+    MS_FLOAT32X4 s7 = MS_LDQ_F32(src_ptr + 7 * src_step);
+
+    MS_FLOAT32X4 m0 = MS_SUBQ_F32(
+      MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s0, 0.5625), MS_MULQ_N_F32(s2, 3.0625)), MS_MULQ_N_F32(s4, 3.5)), s6);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(MS_MULQ_N_F32(s1, 1.125), MS_MULQ_N_F32(s5, 0.5));
+    MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(MS_MULQ_N_F32(s2, 2.25), MS_MULQ_N_F32(s4, 3.25));
+    MS_FLOAT32X4 m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_N_F32(s3, 1.625)), s6);
+    MS_FLOAT32X4 m2 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_N_F32(s3, 1.625)), s6);
+    tmp1 = MS_ADDQ_F32(MS_MULQ_N_F32(s1, 0.5625), s5);
+    tmp2 = MS_SUBQ_F32(MS_MULQ_N_F32(s2, 0.5625), MS_MULQ_N_F32(s4, 2.5));
+    MS_FLOAT32X4 m3 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_N_F32(s3, 2.5)), s6);
+    MS_FLOAT32X4 m4 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_N_F32(s3, 2.5)), s6);
+    tmp1 = MS_ADDQ_F32(MS_MULQ_N_F32(s1, 0.375), MS_MULQ_N_F32(s5, 1.5));
+    tmp2 = MS_SUBQ_F32(MS_MULQ_N_F32(s2, 0.25), MS_MULQ_N_F32(s4, 1.25));
+    MS_FLOAT32X4 m5 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_N_F32(s3, 1.875)), s6);
+    MS_FLOAT32X4 m6 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_N_F32(s3, 1.875)), s6);
+    MS_FLOAT32X4 m7 = MS_ADDQ_F32(
+      MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_N_F32(s1, -0.5625), MS_MULQ_N_F32(s3, 3.0625)), MS_MULQ_N_F32(s5, 3.5)), s7);
+
+    MS_STQ_F32(dst_ptr + 0 * dst_step, m0);
+    MS_STQ_F32(dst_ptr + 1 * dst_step, m1);
+    MS_STQ_F32(dst_ptr + 2 * dst_step, m2);
+    MS_STQ_F32(dst_ptr + 3 * dst_step, m3);
+    MS_STQ_F32(dst_ptr + 4 * dst_step, m4);
+    MS_STQ_F32(dst_ptr + 5 * dst_step, m5);
+    MS_STQ_F32(dst_ptr + 6 * dst_step, m6);
+    MS_STQ_F32(dst_ptr + 7 * dst_step, m7);
+  }
+#else
+  float src[8];
+  float m[8];
+  for (int i = 0; i < C4NUM; ++i) {
+    for (int l = 0; l < 8; ++l) {
+      for (int w = 0; w < 8; ++w) {
+        int tmp_index = l * 8 + w;
+        src[w] = src_data[i + tmp_index * src_step];
+      }
+      m[0] = 0.5625f * src[0] - 3.0625f * src[2] + 3.5f * src[4] - src[6];
+      float tmp1 = 1.125f * src[1] + 0.5f * src[5];
+      float tmp2 = 2.25f * src[2] - 3.25f * src[4];
+      m[1] = tmp1 + tmp2 - 1.625f * src[3] + src[6];
+      m[2] = tmp2 - tmp1 + 1.625f * src[3] + src[6];
+      tmp1 = 0.5625f * src[1] + src[5];
+      tmp2 = 0.5625f * src[2] - 2.5f * src[4];
+      m[3] = tmp1 + tmp2 - 2.5f * src[3] + src[6];
+      m[4] = tmp2 - tmp1 + 2.5f * src[3] + src[6];
+      tmp1 = 0.375f * src[1] + 1.5f * src[5];
+      tmp2 = 0.25f * src[2] - 1.25f * src[4];
+      m[5] = tmp1 + tmp2 - 1.875f * src[3] + src[6];
+      m[6] = tmp2 - tmp1 + 1.875f * src[3] + src[6];
+      m[7] = -0.5625f * src[1] + 3.0625f * src[3] - 3.5f * src[5] + src[7];
+
+      float *dst = dst_data + l * dst_row_step;
+      for (int w = 0; w < 8; ++w) {
+        dst[i + w * dst_step] = m[w];
+      }
+    }
+  }
+#endif
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform8x8Pack12Channel(float *src_ptr, float *dst_ptr, int dst_step, int pack_tile, int src_point_stride) {
+  LOAD_LINE_DATA(0);
+  LOAD_LINE_DATA(1);
+  LOAD_LINE_DATA(2);
+  LOAD_LINE_DATA(3);
+  LOAD_LINE_DATA(4);
+  LOAD_LINE_DATA(5);
+  LOAD_LINE_DATA(6);
+  LOAD_LINE_DATA(7);
+
+  MS_FLOAT32X4 m0 = MS_SUBQ_F32(
+    MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s00, 0.5625), MS_MULQ_N_F32(s20, 3.0625)), MS_MULQ_N_F32(s40, 3.5)), s60);
+  MS_FLOAT32X4 m1 = MS_SUBQ_F32(
+    MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s01, 0.5625), MS_MULQ_N_F32(s21, 3.0625)), MS_MULQ_N_F32(s41, 3.5)), s61);
+  MS_FLOAT32X4 m2 = MS_SUBQ_F32(
+    MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_N_F32(s02, 0.5625), MS_MULQ_N_F32(s22, 3.0625)), MS_MULQ_N_F32(s42, 3.5)), s62);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 0 * dst_step + 2 * pack_tile, m2);
+
+  MS_FLOAT32X4 tmp10 = MS_ADDQ_F32(MS_MULQ_N_F32(s10, 1.125), MS_MULQ_N_F32(s50, 0.5));
+  MS_FLOAT32X4 tmp11 = MS_ADDQ_F32(MS_MULQ_N_F32(s11, 1.125), MS_MULQ_N_F32(s51, 0.5));
+  MS_FLOAT32X4 tmp12 = MS_ADDQ_F32(MS_MULQ_N_F32(s12, 1.125), MS_MULQ_N_F32(s52, 0.5));
+  MS_FLOAT32X4 tmp20 = MS_SUBQ_F32(MS_MULQ_N_F32(s20, 2.25), MS_MULQ_N_F32(s40, 3.25));
+  MS_FLOAT32X4 tmp21 = MS_SUBQ_F32(MS_MULQ_N_F32(s21, 2.25), MS_MULQ_N_F32(s41, 3.25));
+  MS_FLOAT32X4 tmp22 = MS_SUBQ_F32(MS_MULQ_N_F32(s22, 2.25), MS_MULQ_N_F32(s42, 3.25));
+  m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp10, tmp20), MS_MULQ_N_F32(s30, 1.625)), s60);
+  m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp11, tmp21), MS_MULQ_N_F32(s31, 1.625)), s61);
+  m2 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp12, tmp22), MS_MULQ_N_F32(s32, 1.625)), s62);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 1 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp20, tmp10), MS_MULQ_N_F32(s30, 1.625)), s60);
+  m1 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp21, tmp11), MS_MULQ_N_F32(s31, 1.625)), s61);
+  m2 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp22, tmp12), MS_MULQ_N_F32(s32, 1.625)), s62);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 2 * dst_step + 2 * pack_tile, m2);
+
+  tmp10 = MS_ADDQ_F32(MS_MULQ_N_F32(s10, 0.5625), s50);
+  tmp11 = MS_ADDQ_F32(MS_MULQ_N_F32(s11, 0.5625), s51);
+  tmp12 = MS_ADDQ_F32(MS_MULQ_N_F32(s12, 0.5625), s52);
+  tmp20 = MS_SUBQ_F32(MS_MULQ_N_F32(s20, 0.5625), MS_MULQ_N_F32(s40, 2.5));
+  tmp21 = MS_SUBQ_F32(MS_MULQ_N_F32(s21, 0.5625), MS_MULQ_N_F32(s41, 2.5));
+  tmp22 = MS_SUBQ_F32(MS_MULQ_N_F32(s22, 0.5625), MS_MULQ_N_F32(s42, 2.5));
+  m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp10, tmp20), MS_MULQ_N_F32(s30, 2.5)), s60);
+  m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp11, tmp21), MS_MULQ_N_F32(s31, 2.5)), s61);
+  m2 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp12, tmp22), MS_MULQ_N_F32(s32, 2.5)), s62);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 3 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp20, tmp10), MS_MULQ_N_F32(s30, 2.5)), s60);
+  m1 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp21, tmp11), MS_MULQ_N_F32(s31, 2.5)), s61);
+  m2 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp22, tmp12), MS_MULQ_N_F32(s32, 2.5)), s62);
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 4 * dst_step + 2 * pack_tile, m2);
+
+  tmp10 = MS_ADDQ_F32(MS_MULQ_N_F32(s10, 0.375), MS_MULQ_N_F32(s50, 1.5));
+  tmp11 = MS_ADDQ_F32(MS_MULQ_N_F32(s11, 0.375), MS_MULQ_N_F32(s51, 1.5));
+  tmp12 = MS_ADDQ_F32(MS_MULQ_N_F32(s12, 0.375), MS_MULQ_N_F32(s52, 1.5));
+  tmp20 = MS_SUBQ_F32(MS_MULQ_N_F32(s20, 0.25), MS_MULQ_N_F32(s40, 1.25));
+  tmp21 = MS_SUBQ_F32(MS_MULQ_N_F32(s21, 0.25), MS_MULQ_N_F32(s41, 1.25));
+  tmp22 = MS_SUBQ_F32(MS_MULQ_N_F32(s22, 0.25), MS_MULQ_N_F32(s42, 1.25));
+  m0 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp10, tmp20), MS_MULQ_N_F32(s30, 1.875)), s60);
+  m1 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp11, tmp21), MS_MULQ_N_F32(s31, 1.875)), s61);
+  m2 = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp12, tmp22), MS_MULQ_N_F32(s32, 1.875)), s62);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 5 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp20, tmp10), MS_MULQ_N_F32(s30, 1.875)), s60);
+  m1 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp21, tmp11), MS_MULQ_N_F32(s31, 1.875)), s61);
+  m2 = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp22, tmp12), MS_MULQ_N_F32(s32, 1.875)), s62);
+  MS_STQ_F32(dst_ptr + 6 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 6 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 6 * dst_step + 2 * pack_tile, m2);
+
+  m0 = MS_ADDQ_F32(
+    MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_N_F32(s10, -0.5625), MS_MULQ_N_F32(s30, 3.0625)), MS_MULQ_N_F32(s50, 3.5)), s70);
+  m1 = MS_ADDQ_F32(
+    MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_N_F32(s11, -0.5625), MS_MULQ_N_F32(s31, 3.0625)), MS_MULQ_N_F32(s51, 3.5)), s71);
+  m2 = MS_ADDQ_F32(
+    MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_N_F32(s12, -0.5625), MS_MULQ_N_F32(s32, 3.0625)), MS_MULQ_N_F32(s52, 3.5)), s72);
+  MS_STQ_F32(dst_ptr + 7 * dst_step + 0 * pack_tile, m0);
+  MS_STQ_F32(dst_ptr + 7 * dst_step + 1 * pack_tile, m1);
+  MS_STQ_F32(dst_ptr + 7 * dst_step + 2 * pack_tile, m2);
+}
+#endif
+
+void InputTransform8x8Pack12(float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 12;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+#ifdef ENABLE_ARM64
+  for (int l = 0; l < 8; ++l) {
+    float *src_ptr = src_data + l * C4NUM * block_tile;
+    TRANSPOSE_12x4;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float *src_ptr = src_data + c * block_tile;
+    float *dst_ptr = dst_data + c * block_tile;
+    InputTransform8x8Pack12Channel(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+#else
+  for (int l = 0; l < 8; ++l) {
+    float *src = src_data + l * pack_tile * block_tile;
+    // 12 * 4 -> 4 * 12
+    float tmp_mat[pack_tile][block_tile];
+    for (int i = 0; i < block_tile; ++i) {
+      for (int j = 0; j < pack_tile; ++j) {
+        tmp_mat[j][i] = src[i * pack_tile + j];
+      }
+    }
+    memcpy(src, tmp_mat, pack_tile * block_tile * sizeof(float));
+  }
+
+  float src[8];
+  float m[8];
+  for (int c = 0; c < real_c; ++c) {
+    for (int i = 0; i < block_tile; ++i) {
+      int tmp_index = c * block_tile + i;
+      for (int w = 0; w < 8; ++w) {
+        src[w] = src_data[tmp_index + w * src_point_stride];
+      }
+      m[0] = 0.5625f * src[0] - 3.0625f * src[2] + 3.5f * src[4] - src[6];
+      float tmp1 = 1.125f * src[1] + 0.5f * src[5];
+      float tmp2 = 2.25f * src[2] - 3.25f * src[4];
+      m[1] = tmp1 + tmp2 - 1.625f * src[3] + src[6];
+      m[2] = tmp2 - tmp1 + 1.625f * src[3] + src[6];
+      tmp1 = 0.5625f * src[1] + src[5];
+      tmp2 = 0.5625f * src[2] - 2.5f * src[4];
+      m[3] = tmp1 + tmp2 - 2.5f * src[3] + src[6];
+      m[4] = tmp2 - tmp1 + 2.5f * src[3] + src[6];
+      tmp1 = 0.375f * src[1] + 1.5f * src[5];
+      tmp2 = 0.25f * src[2] - 1.25f * src[4];
+      m[5] = tmp1 + tmp2 - 1.875f * src[3] + src[6];
+      m[6] = tmp2 - tmp1 + 1.875f * src[3] + src[6];
+      m[7] = -0.5625f * src[1] + 3.0625f * src[3] - 3.5f * src[5] + src[7];
+
+      for (int w = 0; w < 8; ++w) {
+        dst_data[tmp_index + w * dst_step] = m[w];
+      }
+    }
   }
 #endif
 }

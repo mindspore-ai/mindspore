@@ -49,7 +49,7 @@ void Conv1x1OutNc8hw8MultiThreadByWeightFp16(const float16_t *input, float16_t *
 // fp16 convolution winograd
 void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight, const float16_t *bias_data,
                       float16_t *output_data, TmpBufferAddressFp16 *buffer_list, int task_id,
-                      const ConvParameter *conv_param, InputTransFp16Func in_func, OutputTransFp16Func out_func);
+                      const ConvParameter *conv_param, TransFp16FuncList trans_func);
 
 #ifdef __cplusplus
 }

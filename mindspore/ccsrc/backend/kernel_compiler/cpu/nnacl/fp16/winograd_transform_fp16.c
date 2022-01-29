@@ -16,6 +16,77 @@
 
 #include "nnacl/fp16/winograd_transform_fp16.h"
 
+void PrepareTransInputFp16(const float16_t *src_data, float16_t *dst_data, int interval_x_s, int interval_x_e,
+                           int interval_y_s, int interval_y_e, int real_c, const ConvParameter *conv_param) {
+  int input_unit = conv_param->input_unit_;
+  int in_channel = conv_param->input_channel_;
+  int input_w = conv_param->input_w_;
+
+  // clear tmp buffer
+  if (interval_x_e - interval_x_s != input_unit || interval_y_e - interval_y_s != input_unit) {
+    memset(dst_data, 0, input_unit * input_unit * C8NUM * sizeof(float16_t));
+  }
+
+  // get real input block with padding
+  if (real_c == C8NUM) {
+    for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+      int src_y_offset = (interval * input_w + interval_x_s) * in_channel;
+      int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
+      for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+        int src_x_offset = src_y_offset + j * in_channel;
+        int dst_x_offset = dst_y_offset + j * C8NUM;
+        const float16_t *src_addr = src_data + src_x_offset;
+        float16_t *dst_addr = dst_data + dst_x_offset;
+#ifdef ENABLE_NEON
+        vst1q_f16(dst_addr, vld1q_f16(src_addr));
+#else
+        for (int k = 0; k < C8NUM; k++) {
+          dst_addr[k] = src_addr[k];
+        }
+#endif
+      }
+    }
+  } else if (real_c < 8 && real_c >= 4) {
+    for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+      int src_y_offset = (interval * input_w + interval_x_s) * in_channel;
+      int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
+      for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+        int src_x_offset = src_y_offset + j * in_channel;
+        int dst_x_offset = dst_y_offset + j * C8NUM;
+        const float16_t *src_addr = src_data + src_x_offset;
+        float16_t *dst_addr = dst_data + dst_x_offset;
+        int rc = real_c - 4;
+#ifdef ENABLE_NEON
+        vst1_f16(dst_addr, vld1_f16(src_addr));
+#else
+        for (int k = 0; k < C4NUM; k++) {
+          dst_addr[k] = src_addr[k];
+        }
+#endif
+        src_addr += 4;
+        dst_addr += 4;
+        for (int i = 0; i < rc; ++i) {
+          dst_addr[i] = src_addr[i];
+        }
+      }
+    }
+  } else {
+    for (int interval = interval_y_s; interval < interval_y_e; interval++) {
+      int src_y_offset = (interval * input_w + interval_x_s) * in_channel;
+      int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
+      for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
+        int src_x_offset = src_y_offset + j * in_channel;
+        int dst_x_offset = dst_y_offset + j * C8NUM;
+        const float16_t *src_addr = src_data + src_x_offset;
+        float16_t *dst_addr = dst_data + dst_x_offset;
+        for (int k = 0; k < real_c; k++) {
+          dst_addr[k] = src_addr[k];
+        }
+      }
+    }
+  }
+}
+
 // fp16 common winograd
 void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data, int cal_num,
                                 int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
@@ -49,77 +120,62 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
     int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
     int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic8; ic++) {
-      // clear tmp buffer
-      memset(tmp_data, 0, input_unit * input_unit * C8NUM * sizeof(float16_t));
-
       int real_c = in_channel - ic * C8NUM;
       real_c = real_c > C8NUM ? C8NUM : real_c;
-      int src_ic8_offset = src_plane_offset + ic * C8NUM;
-
-      // get real input block with padding
-      if (real_c == C8NUM) {
-        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-          int src_y_offset = src_ic8_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
-          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-            int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * C8NUM;
-            const float16_t *src_addr = input_data + src_x_offset;
-            float16_t *dst_addr = tmp_data + dst_x_offset;
-#ifdef ENABLE_NEON
-            vst1q_f16(dst_addr, vld1q_f16(src_addr));
-#else
-            for (int k = 0; k < C8NUM; k++) {
-              dst_addr[k] = src_addr[k];
-            }
-#endif
-          }
-        }
-      } else if (real_c < 8 && real_c >= 4) {
-        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-          int src_y_offset = src_ic8_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
-          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-            int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * C8NUM;
-            const float16_t *src_addr = input_data + src_x_offset;
-            float16_t *dst_addr = tmp_data + dst_x_offset;
-            int rc = real_c - 4;
-#ifdef ENABLE_NEON
-            vst1_f16(dst_addr, vld1_f16(src_addr));
-#else
-            for (int k = 0; k < C4NUM; k++) {
-              dst_addr[k] = src_addr[k];
-            }
-#endif
-            src_addr += 4;
-            dst_addr += 4;
-            for (int i = 0; i < rc; ++i) {
-              dst_addr[i] = src_addr[i];
-            }
-          }
-        }
-      } else {
-        for (int interval = interval_y_s; interval < interval_y_e; interval++) {
-          int src_y_offset = src_ic8_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * C8NUM + interval_x_s * C8NUM;
-          for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
-            int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * C8NUM;
-            const float16_t *src_addr = input_data + src_x_offset;
-            float16_t *dst_addr = tmp_data + dst_x_offset;
-            for (int k = 0; k < real_c; k++) {
-              dst_addr[k] = src_addr[k];
-            }
-          }
-        }
-      }
+      const float16_t *src_data = input_data + src_plane_offset + ic * C8NUM;
+      PrepareTransInputFp16(src_data, tmp_data, interval_x_s, interval_x_e, interval_y_s, interval_y_e, real_c,
+                            conv_param);
 
       // input transform
       int dst_ic8_offset = dst_plane_offset + ic * C8NUM;
       size_t dst_step = in_channel * tile_num;
       float16_t *trans_input_ptr = trans_input + dst_ic8_offset;
       func(tmp_data, trans_input_ptr, C8NUM, dst_step, real_c);
+    }
+    out_tile_index++;
+  }  // cal_tile_num loop
+}
+
+// Only support arm64
+void WinogradInputTransformOptStepFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data,
+                                       int cal_num, int out_tile_index, int out_w_block_num,
+                                       const ConvParameter *conv_param, InputTransStepFp16Func func) {
+  const int tile_num = 16;
+  int input_unit = conv_param->input_unit_;
+  int output_unit = conv_param->output_unit_;
+  int in_channel = conv_param->input_channel_;
+  int ic8 = UP_DIV(in_channel, C8NUM);
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
+  int input_h = conv_param->input_h_;
+  int input_w = conv_param->input_w_;
+  if (out_w_block_num == 0) {
+    return;
+  }
+  for (int c = 0; c < cal_num; c++) {  // actual tiled number
+    int src_x_s = (out_tile_index % out_w_block_num) * output_unit - pad_w;
+    int src_y_s = (out_tile_index / out_w_block_num) * output_unit - pad_h;
+    int interval_x_s = src_x_s > 0 ? 0 : -src_x_s;
+    int interval_y_s = src_y_s > 0 ? 0 : -src_y_s;
+    int src_x_e = src_x_s + input_unit;
+    int src_y_e = src_y_s + input_unit;
+    int interval_x_e = src_x_e < input_w ? input_unit : (input_w - src_x_s);
+    int interval_y_e = src_y_e < input_h ? input_unit : (input_h - src_y_s);
+
+    int src_plane_offset = in_channel * (src_y_s * input_w + src_x_s);
+    int dst_plane_offset = c * C8NUM;
+    for (int ic = 0; ic < ic8; ic++) {
+      int real_c = in_channel - ic * C8NUM;
+      real_c = real_c > C8NUM ? C8NUM : real_c;
+      const float16_t *src_data = input_data + src_plane_offset + ic * C8NUM;
+      PrepareTransInputFp16(src_data, tmp_data, interval_x_s, interval_x_e, interval_y_s, interval_y_e, real_c,
+                            conv_param);
+
+      // input transform
+      int dst_ic8_offset = dst_plane_offset + ic * tile_num * input_unit * input_unit * C8NUM;
+      size_t dst_step = input_unit * tile_num * C8NUM;
+      float16_t *trans_input_ptr = trans_input + dst_ic8_offset;
+      func(tmp_data, trans_input_ptr, C8NUM, dst_step, tile_num * C8NUM);
     }
     out_tile_index++;
   }  // cal_tile_num loop

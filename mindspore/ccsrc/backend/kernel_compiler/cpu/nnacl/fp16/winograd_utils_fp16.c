@@ -20,6 +20,38 @@
 #define MIN_UNIT_FP16 2
 #define MAX_UNIT_FP16 4
 
+#ifdef ENABLE_ARM64
+void transpose8(float16x8_t *s0, float16x8_t *s1, float16x8_t *s2, float16x8_t *s3, float16x8_t *s4, float16x8_t *s5,
+                float16x8_t *s6, float16x8_t *s7) {
+  float32x4_t m0 = (float32x4_t)(vtrn1q_f16(*s0, *s1));
+  float32x4_t m1 = (float32x4_t)(vtrn2q_f16(*s0, *s1));
+  float32x4_t m2 = (float32x4_t)(vtrn1q_f16(*s2, *s3));
+  float32x4_t m3 = (float32x4_t)(vtrn2q_f16(*s2, *s3));
+  float32x4_t m4 = (float32x4_t)(vtrn1q_f16(*s4, *s5));
+  float32x4_t m5 = (float32x4_t)(vtrn2q_f16(*s4, *s5));
+  float32x4_t m6 = (float32x4_t)(vtrn1q_f16(*s6, *s7));
+  float32x4_t m7 = (float32x4_t)(vtrn2q_f16(*s6, *s7));
+
+  float64x2_t t0 = (float64x2_t)(vtrn1q_f32(m0, m2));
+  float64x2_t t2 = (float64x2_t)(vtrn2q_f32(m0, m2));
+  float64x2_t t1 = (float64x2_t)(vtrn1q_f32(m1, m3));
+  float64x2_t t3 = (float64x2_t)(vtrn2q_f32(m1, m3));
+  float64x2_t t4 = (float64x2_t)(vtrn1q_f32(m4, m6));
+  float64x2_t t6 = (float64x2_t)(vtrn2q_f32(m4, m6));
+  float64x2_t t5 = (float64x2_t)(vtrn1q_f32(m5, m7));
+  float64x2_t t7 = (float64x2_t)(vtrn2q_f32(m5, m7));
+
+  *s0 = (float16x8_t)(vtrn1q_f64(t0, t4));
+  *s4 = (float16x8_t)(vtrn2q_f64(t0, t4));
+  *s1 = (float16x8_t)(vtrn1q_f64(t1, t5));
+  *s5 = (float16x8_t)(vtrn2q_f64(t1, t5));
+  *s2 = (float16x8_t)(vtrn1q_f64(t2, t6));
+  *s6 = (float16x8_t)(vtrn2q_f64(t2, t6));
+  *s3 = (float16x8_t)(vtrn1q_f64(t3, t7));
+  *s7 = (float16x8_t)(vtrn2q_f64(t3, t7));
+}
+#endif
+
 static InputTransFp16Func InputTransFp16FuncList[] = {
   NULL, NULL, NULL, NULL, InputTransform4x4UnitFp16, NULL, InputTransform6x6UnitFp16, NULL, InputTransform8x8UnitFp16};
 
@@ -80,6 +112,25 @@ static OutputTransFp16Func OutputTransFp16FuncRelu6List8[] = {NULL,
                                                               OutputTransform8x7Relu6UnitFp16};
 
 InputTransFp16Func GetInputTransFp16Func(int input_unit) { return InputTransFp16FuncList[input_unit]; }
+
+#ifdef ENABLE_ARM64
+static InputTransStepFp16Func InputTransStepFp16FuncList[] = {
+  NULL, NULL, NULL, NULL, InputTransform4x4StepFp16, NULL, InputTransform6x6StepFp16, NULL, InputTransform8x8StepFp16};
+
+static InputTransPackFp16Func InputTransPackFp16FuncList[] = {NULL,
+                                                              NULL,
+                                                              NULL,
+                                                              NULL,
+                                                              InputTransform4x4Pack16Fp16,
+                                                              NULL,
+                                                              InputTransform6x6Pack16Fp16,
+                                                              NULL,
+                                                              InputTransform8x8Pack16Fp16};
+
+InputTransStepFp16Func GetInputTransStepFp16Func(int input_unit) { return InputTransStepFp16FuncList[input_unit]; }
+
+InputTransPackFp16Func GetInputTransPackFp16Func(int input_unit) { return InputTransPackFp16FuncList[input_unit]; }
+#endif
 
 void InputTransform4x4UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
   int j = 0;
@@ -159,6 +210,74 @@ void InputTransform4x4UnitFp16(const float16_t *src_data, float16_t *dst_data, i
     }
   }
 }
+
+void InputTransform4x4StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step) {
+  for (int l = 0; l < 4; ++l) {
+    const float16_t *src_ptr = src_data + l * 4 * src_step;
+    float16_t *dst_ptr = dst_data + l * dst_row_step;
+
+    float16x8_t s0 = vld1q_f16(src_ptr + 0 * src_step);
+    float16x8_t s1 = vld1q_f16(src_ptr + 1 * src_step);
+    float16x8_t s2 = vld1q_f16(src_ptr + 2 * src_step);
+    float16x8_t s3 = vld1q_f16(src_ptr + 3 * src_step);
+    float16x8_t m0 = vsubq_f16(s0, s2);
+    float16x8_t m1 = vaddq_f16(s1, s2);
+    float16x8_t m2 = vsubq_f16(s2, s1);
+    float16x8_t m3 = vsubq_f16(s3, s1);
+
+    vst1q_f16(dst_ptr + 0 * dst_step, m0);
+    vst1q_f16(dst_ptr + 1 * dst_step, m1);
+    vst1q_f16(dst_ptr + 2 * dst_step, m2);
+    vst1q_f16(dst_ptr + 3 * dst_step, m3);
+  }
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform4x4Pack16ChannelFp16(float16_t *src_ptr, float16_t *dst_ptr, int dst_step, int pack_tile,
+                                        int src_point_stride) {
+  LOAD_LINE_DATA_FP16(0);
+  LOAD_LINE_DATA_FP16(1);
+  LOAD_LINE_DATA_FP16(2);
+  LOAD_LINE_DATA_FP16(3);
+
+  float16x8_t m0 = vsubq_f16(s00, s20);
+  float16x8_t m1 = vsubq_f16(s01, s21);
+  vst1q_f16(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(s10, s20);
+  m1 = vaddq_f16(s11, s21);
+  vst1q_f16(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vsubq_f16(s20, s10);
+  m1 = vsubq_f16(s21, s11);
+  vst1q_f16(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vsubq_f16(s30, s10);
+  m1 = vsubq_f16(s31, s11);
+  vst1q_f16(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+}
+
+void InputTransform4x4Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 16;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+  for (int l = 0; l < 4; ++l) {
+    float16_t *src_ptr = src_data + l * C8NUM * block_tile;
+    TRANSPOSE_16x8;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float16_t *src_ptr = src_data + c * block_tile;
+    float16_t *dst_ptr = dst_data + c * block_tile;
+    InputTransform4x4Pack16ChannelFp16(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+}
+#endif
 
 void InputTransform6x6UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
   int j = 0;
@@ -271,6 +390,95 @@ void InputTransform6x6UnitFp16(const float16_t *src_data, float16_t *dst_data, i
     }
   }
 }
+
+void InputTransform6x6StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step) {
+  for (int l = 0; l < 6; ++l) {
+    const float16_t *src_ptr = src_data + l * 6 * src_step;
+    float16_t *dst_ptr = dst_data + l * dst_row_step;
+
+    float16x8_t s0 = vld1q_f16(src_ptr + 0 * src_step);
+    float16x8_t s1 = vld1q_f16(src_ptr + 1 * src_step);
+    float16x8_t s2 = vld1q_f16(src_ptr + 2 * src_step);
+    float16x8_t s3 = vld1q_f16(src_ptr + 3 * src_step);
+    float16x8_t s4 = vld1q_f16(src_ptr + 4 * src_step);
+    float16x8_t s5 = vld1q_f16(src_ptr + 5 * src_step);
+
+    float16x8_t tmp1 = vsubq_f16(s3, s1);
+    float16x8_t tmp2 = vsubq_f16(s4, s2);
+    float16x8_t m0 = vaddq_f16(vsubq_f16(vmulq_n_f16(s0, 4), vmulq_n_f16(s2, 5)), s4);
+    float16x8_t m1 = vaddq_f16(vmulq_n_f16(vaddq_f16(s1, s2), -4), vaddq_f16(s3, s4));
+    float16x8_t m2 = vaddq_f16(vmulq_n_f16(vsubq_f16(s1, s2), 4), vsubq_f16(s4, s3));
+    float16x8_t m3 = vaddq_f16(vmulq_n_f16(tmp1, 2), tmp2);
+    float16x8_t m4 = vaddq_f16(vmulq_n_f16(tmp1, -2), tmp2);
+    float16x8_t m5 = vaddq_f16(vsubq_f16(vmulq_n_f16(s1, 4), vmulq_n_f16(s3, 5)), s5);
+
+    vst1q_f16(dst_ptr + 0 * dst_step, m0);
+    vst1q_f16(dst_ptr + 1 * dst_step, m1);
+    vst1q_f16(dst_ptr + 2 * dst_step, m2);
+    vst1q_f16(dst_ptr + 3 * dst_step, m3);
+    vst1q_f16(dst_ptr + 4 * dst_step, m4);
+    vst1q_f16(dst_ptr + 5 * dst_step, m5);
+  }
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform6x6Pack16ChannelFp16(float16_t *src_ptr, float16_t *dst_ptr, int dst_step, int pack_tile,
+                                        int src_point_stride) {
+  LOAD_LINE_DATA_FP16(0);
+  LOAD_LINE_DATA_FP16(1);
+  LOAD_LINE_DATA_FP16(2);
+  LOAD_LINE_DATA_FP16(3);
+  LOAD_LINE_DATA_FP16(4);
+  LOAD_LINE_DATA_FP16(5);
+
+  float16x8_t m0 = vaddq_f16(vsubq_f16(vmulq_n_f16(s00, 4), vmulq_n_f16(s20, 5)), s40);
+  float16x8_t m1 = vaddq_f16(vsubq_f16(vmulq_n_f16(s01, 4), vmulq_n_f16(s21, 5)), s41);
+  vst1q_f16(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vmulq_n_f16(vaddq_f16(s10, s20), -4), vaddq_f16(s30, s40));
+  m1 = vaddq_f16(vmulq_n_f16(vaddq_f16(s11, s21), -4), vaddq_f16(s31, s41));
+  vst1q_f16(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vmulq_n_f16(vsubq_f16(s10, s20), 4), vsubq_f16(s40, s30));
+  m1 = vaddq_f16(vmulq_n_f16(vsubq_f16(s11, s21), 4), vsubq_f16(s41, s31));
+  vst1q_f16(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vmulq_n_f16(vsubq_f16(s30, s10), 2), vsubq_f16(s40, s20));
+  m1 = vaddq_f16(vmulq_n_f16(vsubq_f16(s31, s11), 2), vsubq_f16(s41, s21));
+  vst1q_f16(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vmulq_n_f16(vsubq_f16(s30, s10), -2), vsubq_f16(s40, s20));
+  m1 = vaddq_f16(vmulq_n_f16(vsubq_f16(s31, s11), -2), vsubq_f16(s41, s21));
+  vst1q_f16(dst_ptr + 4 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 4 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vsubq_f16(vmulq_n_f16(s10, 4), vmulq_n_f16(s30, 5)), s50);
+  m1 = vaddq_f16(vsubq_f16(vmulq_n_f16(s11, 4), vmulq_n_f16(s31, 5)), s51);
+  vst1q_f16(dst_ptr + 5 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 5 * dst_step + 1 * pack_tile, m1);
+}
+
+void InputTransform6x6Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 16;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+  for (int l = 0; l < 6; ++l) {
+    float16_t *src_ptr = src_data + l * C8NUM * block_tile;
+    TRANSPOSE_16x8;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float16_t *src_ptr = src_data + c * block_tile;
+    float16_t *dst_ptr = dst_data + c * block_tile;
+    InputTransform6x6Pack16ChannelFp16(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+}
+#endif
 
 void InputTransform8x8UnitFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
   int j = 0;
@@ -428,6 +636,133 @@ void InputTransform8x8UnitFp16(const float16_t *src_data, float16_t *dst_data, i
     }
   }
 }
+
+void InputTransform8x8StepFp16(const float16_t *src_data, float16_t *dst_data, int src_step, int dst_step,
+                               int dst_row_step) {
+  for (int l = 0; l < 8; ++l) {
+    const float16_t *src_ptr = src_data + l * 8 * src_step;
+    float16_t *dst_ptr = dst_data + l * dst_row_step;
+
+    float16x8_t s0 = vld1q_f16(src_ptr + 0 * src_step);
+    float16x8_t s1 = vld1q_f16(src_ptr + 1 * src_step);
+    float16x8_t s2 = vld1q_f16(src_ptr + 2 * src_step);
+    float16x8_t s3 = vld1q_f16(src_ptr + 3 * src_step);
+    float16x8_t s4 = vld1q_f16(src_ptr + 4 * src_step);
+    float16x8_t s5 = vld1q_f16(src_ptr + 5 * src_step);
+    float16x8_t s6 = vld1q_f16(src_ptr + 6 * src_step);
+    float16x8_t s7 = vld1q_f16(src_ptr + 7 * src_step);
+
+    float16x8_t m0 =
+      vsubq_f16(vaddq_f16(vsubq_f16(vmulq_n_f16(s0, 0.5625), vmulq_n_f16(s2, 3.0625)), vmulq_n_f16(s4, 3.5)), s6);
+    float16x8_t tmp1 = vaddq_f16(vmulq_n_f16(s1, 1.125), vmulq_n_f16(s5, 0.5));
+    float16x8_t tmp2 = vsubq_f16(vmulq_n_f16(s2, 2.25), vmulq_n_f16(s4, 3.25));
+    float16x8_t m1 = vaddq_f16(vsubq_f16(vaddq_f16(tmp1, tmp2), vmulq_n_f16(s3, 1.625)), s6);
+    float16x8_t m2 = vaddq_f16(vaddq_f16(vsubq_f16(tmp2, tmp1), vmulq_n_f16(s3, 1.625)), s6);
+    tmp1 = vaddq_f16(vmulq_n_f16(s1, 0.5625), s5);
+    tmp2 = vsubq_f16(vmulq_n_f16(s2, 0.5625), vmulq_n_f16(s4, 2.5));
+    float16x8_t m3 = vaddq_f16(vsubq_f16(vaddq_f16(tmp1, tmp2), vmulq_n_f16(s3, 2.5)), s6);
+    float16x8_t m4 = vaddq_f16(vaddq_f16(vsubq_f16(tmp2, tmp1), vmulq_n_f16(s3, 2.5)), s6);
+    tmp1 = vaddq_f16(vmulq_n_f16(s1, 0.375), vmulq_n_f16(s5, 1.5));
+    tmp2 = vsubq_f16(vmulq_n_f16(s2, 0.25), vmulq_n_f16(s4, 1.25));
+    float16x8_t m5 = vaddq_f16(vsubq_f16(vaddq_f16(tmp1, tmp2), vmulq_n_f16(s3, 1.875)), s6);
+    float16x8_t m6 = vaddq_f16(vaddq_f16(vsubq_f16(tmp2, tmp1), vmulq_n_f16(s3, 1.875)), s6);
+    float16x8_t m7 =
+      vaddq_f16(vsubq_f16(vaddq_f16(vmulq_n_f16(s1, -0.5625), vmulq_n_f16(s3, 3.0625)), vmulq_n_f16(s5, 3.5)), s7);
+
+    vst1q_f16(dst_ptr + 0 * dst_step, m0);
+    vst1q_f16(dst_ptr + 1 * dst_step, m1);
+    vst1q_f16(dst_ptr + 2 * dst_step, m2);
+    vst1q_f16(dst_ptr + 3 * dst_step, m3);
+    vst1q_f16(dst_ptr + 4 * dst_step, m4);
+    vst1q_f16(dst_ptr + 5 * dst_step, m5);
+    vst1q_f16(dst_ptr + 6 * dst_step, m6);
+    vst1q_f16(dst_ptr + 7 * dst_step, m7);
+  }
+}
+
+#ifdef ENABLE_ARM64
+void InputTransform8x8Pack16ChannelFp16(float16_t *src_ptr, float16_t *dst_ptr, int dst_step, int pack_tile,
+                                        int src_point_stride) {
+  LOAD_LINE_DATA_FP16(0);
+  LOAD_LINE_DATA_FP16(1);
+  LOAD_LINE_DATA_FP16(2);
+  LOAD_LINE_DATA_FP16(3);
+  LOAD_LINE_DATA_FP16(4);
+  LOAD_LINE_DATA_FP16(5);
+  LOAD_LINE_DATA_FP16(6);
+  LOAD_LINE_DATA_FP16(7);
+
+  float16x8_t m0 =
+    vsubq_f16(vaddq_f16(vsubq_f16(vmulq_n_f16(s00, 0.5625), vmulq_n_f16(s20, 3.0625)), vmulq_n_f16(s40, 3.5)), s60);
+  float16x8_t m1 =
+    vsubq_f16(vaddq_f16(vsubq_f16(vmulq_n_f16(s01, 0.5625), vmulq_n_f16(s21, 3.0625)), vmulq_n_f16(s41, 3.5)), s61);
+  vst1q_f16(dst_ptr + 0 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 0 * dst_step + 1 * pack_tile, m1);
+
+  float16x8_t tmp10 = vaddq_f16(vmulq_n_f16(s10, 1.125), vmulq_n_f16(s50, 0.5));
+  float16x8_t tmp11 = vaddq_f16(vmulq_n_f16(s11, 1.125), vmulq_n_f16(s51, 0.5));
+  float16x8_t tmp20 = vsubq_f16(vmulq_n_f16(s20, 2.25), vmulq_n_f16(s40, 3.25));
+  float16x8_t tmp21 = vsubq_f16(vmulq_n_f16(s21, 2.25), vmulq_n_f16(s41, 3.25));
+  m0 = vaddq_f16(vsubq_f16(vaddq_f16(tmp10, tmp20), vmulq_n_f16(s30, 1.625)), s60);
+  m1 = vaddq_f16(vsubq_f16(vaddq_f16(tmp11, tmp21), vmulq_n_f16(s31, 1.625)), s61);
+  vst1q_f16(dst_ptr + 1 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 1 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vaddq_f16(vsubq_f16(tmp20, tmp10), vmulq_n_f16(s30, 1.625)), s60);
+  m1 = vaddq_f16(vaddq_f16(vsubq_f16(tmp21, tmp11), vmulq_n_f16(s31, 1.625)), s61);
+  vst1q_f16(dst_ptr + 2 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 2 * dst_step + 1 * pack_tile, m1);
+
+  tmp10 = vaddq_f16(vmulq_n_f16(s10, 0.5625), s50);
+  tmp11 = vaddq_f16(vmulq_n_f16(s11, 0.5625), s51);
+  tmp20 = vsubq_f16(vmulq_n_f16(s20, 0.5625), vmulq_n_f16(s40, 2.5));
+  tmp21 = vsubq_f16(vmulq_n_f16(s21, 0.5625), vmulq_n_f16(s41, 2.5));
+  m0 = vaddq_f16(vsubq_f16(vaddq_f16(tmp10, tmp20), vmulq_n_f16(s30, 2.5)), s60);
+  m1 = vaddq_f16(vsubq_f16(vaddq_f16(tmp11, tmp21), vmulq_n_f16(s31, 2.5)), s61);
+  vst1q_f16(dst_ptr + 3 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 3 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vaddq_f16(vsubq_f16(tmp20, tmp10), vmulq_n_f16(s30, 2.5)), s60);
+  m1 = vaddq_f16(vaddq_f16(vsubq_f16(tmp21, tmp11), vmulq_n_f16(s31, 2.5)), s61);
+  vst1q_f16(dst_ptr + 4 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 4 * dst_step + 1 * pack_tile, m1);
+
+  tmp10 = vaddq_f16(vmulq_n_f16(s10, 0.375), vmulq_n_f16(s50, 1.5));
+  tmp11 = vaddq_f16(vmulq_n_f16(s11, 0.375), vmulq_n_f16(s51, 1.5));
+  tmp20 = vsubq_f16(vmulq_n_f16(s20, 0.25), vmulq_n_f16(s40, 1.25));
+  tmp21 = vsubq_f16(vmulq_n_f16(s21, 0.25), vmulq_n_f16(s41, 1.25));
+  m0 = vaddq_f16(vsubq_f16(vaddq_f16(tmp10, tmp20), vmulq_n_f16(s30, 1.875)), s60);
+  m1 = vaddq_f16(vsubq_f16(vaddq_f16(tmp11, tmp21), vmulq_n_f16(s31, 1.875)), s61);
+  vst1q_f16(dst_ptr + 5 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 5 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vaddq_f16(vsubq_f16(tmp20, tmp10), vmulq_n_f16(s30, 1.875)), s60);
+  m1 = vaddq_f16(vaddq_f16(vsubq_f16(tmp21, tmp11), vmulq_n_f16(s31, 1.875)), s61);
+  vst1q_f16(dst_ptr + 6 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 6 * dst_step + 1 * pack_tile, m1);
+
+  m0 = vaddq_f16(vsubq_f16(vaddq_f16(vmulq_n_f16(s10, -0.5625), vmulq_n_f16(s30, 3.0625)), vmulq_n_f16(s50, 3.5)), s70);
+  m1 = vaddq_f16(vsubq_f16(vaddq_f16(vmulq_n_f16(s11, -0.5625), vmulq_n_f16(s31, 3.0625)), vmulq_n_f16(s51, 3.5)), s71);
+  vst1q_f16(dst_ptr + 7 * dst_step + 0 * pack_tile, m0);
+  vst1q_f16(dst_ptr + 7 * dst_step + 1 * pack_tile, m1);
+}
+
+void InputTransform8x8Pack16Fp16(float16_t *src_data, float16_t *dst_data, int src_step, int dst_step, int real_c) {
+  int block_tile = 16;
+  int pack_tile = src_step;
+  int src_point_stride = block_tile * pack_tile;
+  for (int l = 0; l < 8; ++l) {
+    float16_t *src_ptr = src_data + l * C8NUM * block_tile;
+    TRANSPOSE_16x8;
+  }
+
+  for (int c = 0; c < real_c; ++c) {
+    float16_t *src_ptr = src_data + c * block_tile;
+    float16_t *dst_ptr = dst_data + c * block_tile;
+    InputTransform8x8Pack16ChannelFp16(src_ptr, dst_ptr, dst_step, pack_tile, src_point_stride);
+  }
+}
+#endif
 
 OutputTransFp16Func GetOutputTransFp16Func(int input_unit, int output_unit, ActType act_type) {
   if (input_unit == 4 && output_unit < 4) {

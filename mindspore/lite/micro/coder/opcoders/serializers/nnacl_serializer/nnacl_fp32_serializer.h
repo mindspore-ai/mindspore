@@ -36,6 +36,7 @@
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "wrapper/fp32/arithmetic_fp32_wrapper.h"
 #include "wrapper/base/affine_wrapper.h"
+#include "wrapper/fp32/conv_winograd_fp32_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -60,6 +61,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter);
   void CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info);
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
+  void CodeStruct(const std::string &name, const TransFuncStr trans_func_str);
 };
 
 }  // namespace mindspore::lite::micro::nnacl

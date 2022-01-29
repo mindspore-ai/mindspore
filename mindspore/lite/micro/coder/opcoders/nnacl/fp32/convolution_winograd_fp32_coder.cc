@@ -172,10 +172,10 @@ int ConvolutionWinogradFP32Coder::InitWeightBias() {
 }
 
 int ConvolutionWinogradFP32Coder::ConfigInputOutput() {
-  in_func_ = GetInputTransFunc(input_unit_);
-  MS_CHECK_TRUE(!in_func_.empty(), "Get input_trans_func failed.");
-  out_func_ = GetOutputTransFunc(input_unit_, output_unit_, conv_param_->act_type_);
-  MS_CHECK_TRUE(!out_func_.empty(), "Get output_trans_func_ failed.");
+  trans_func_str_.in_func_ = GetInputTransFunc(input_unit_);
+  MS_CHECK_TRUE(!trans_func_str_.in_func_.empty(), "Get input_trans_func failed.");
+  trans_func_str_.out_func_ = GetOutputTransFunc(input_unit_, output_unit_, conv_param_->act_type_);
+  MS_CHECK_TRUE(!trans_func_str_.out_func_.empty(), "Get output_trans_func_ failed.");
   return RET_OK;
 }
 
@@ -269,9 +269,10 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
        << allocator_->GetRuntimeAddr(gemm_out_) << ", " << allocator_->GetRuntimeAddr(tmp_data_) << ", "
        << allocator_->GetRuntimeAddr(col_buffer_) << "};\n";
   code.CodeStruct("conv_parameter", *conv_param_);
+  code.CodeStruct("trans_func", trans_func_str_);
   // code operator func
   code.CodeFunction("ConvWinogardFp32", input_tensor_, trans_weight_, new_bias_, output_tensor_,
-                    "tmp_buffer_address_list", kDefaultTaskId, "&conv_parameter", in_func_, out_func_);
+                    "tmp_buffer_address_list", kDefaultTaskId, "&conv_parameter", "trans_func");
   context->AppendCode(code.str());
   return RET_OK;
 }

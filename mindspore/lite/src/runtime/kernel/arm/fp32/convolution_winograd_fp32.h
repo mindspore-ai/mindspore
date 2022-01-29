@@ -62,6 +62,10 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(col_buffer_);
       col_buffer_ = nullptr;
     }
+    if (opt_input_trans_ != nullptr) {
+      ctx_->allocator->Free(opt_input_trans_);
+      opt_input_trans_ = nullptr;
+    }
   }
   int kernel_unit_{0};
   int input_unit_{0};
@@ -73,11 +77,11 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   float *trans_input_ = nullptr;
   float *gemm_out_ = nullptr;
   float *col_buffer_ = nullptr;
+  float *opt_input_trans_ = nullptr;
   float matrix_g_[64];
   float matrix_gt_[64];
-  TmpBufferAddress tmp_buffer_address_list_[4] = {nullptr};
-  InputTransFunc in_func_ = nullptr;
-  OutputTransFunc out_func_ = nullptr;
+  TmpBufferAddress tmp_buffer_address_list_[5] = {nullptr};
+  TransFuncList trans_func_;
 };
 
 }  // namespace mindspore::kernel

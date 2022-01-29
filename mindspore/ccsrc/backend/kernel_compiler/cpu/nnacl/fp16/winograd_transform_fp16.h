@@ -33,6 +33,10 @@ void WinogradInputTransformFp16(const float16_t *input_data, float16_t *trans_in
                                 int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
                                 InputTransFp16Func func);
 
+void WinogradInputTransformOptStepFp16(const float16_t *input_data, float16_t *trans_input, float16_t *tmp_data,
+                                       int cal_num, int out_tile_index, int out_w_block_num,
+                                       const ConvParameter *conv_param, InputTransStepFp16Func func);
+
 void WinogradOutputNHWCTransformFp16(const float16_t *gemm_out, float16_t *tmp_out_data, const float16_t *bias_data,
                                      int cal_num, int out_tile_index, int output_unit_num,
                                      const ConvParameter *conv_param, OutputTransFp16Func func);
