@@ -32,9 +32,10 @@ class BnSplit : public PatternProcessPass {
 
  protected:
   bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
-                                       std::vector<AnfNodePtr> *bn_training_reduce_outputs) const;
+                                       std::vector<AnfNodePtr> *bn_training_reduce_outputs, bool is_dynamic) const;
   AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
-                                             const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const;
+                                             const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
+                                             bool is_dynamic) const;
 
  private:
   AnfNodePtr SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;

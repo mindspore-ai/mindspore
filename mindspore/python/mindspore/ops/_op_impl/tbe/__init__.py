@@ -167,7 +167,9 @@ from .bn_training_reduce_ds import _bn_training_reduce_ds_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
 from .bn_training_reduce_grad_ds import _bn_training_reduce_grad_ds_tbe
 from .bn_training_update import _bn_training_update_tbe
+from .bn_training_update_ds import _bn_training_update_ds_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
+from .bn_training_update_grad_ds import _bn_training_update_grad_ds_tbe
 from .bn_infer import _bn_infer_tbe
 from .bn_infer_grad import _bn_infer_grad_tbe
 from .bn_inference import _bn_inference_tbe

@@ -57,7 +57,7 @@ float BNTrainingReduceGrad::get_epsilon() const {
 AbstractBasePtr BNTrainingReduceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputNum = 7;
+  constexpr int64_t kInputNum = 7;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto type = BNTrainingReduceGradInferType(primitive, input_args);
   auto shape = BNTrainingReduceGradInferShape(primitive, input_args);

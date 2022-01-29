@@ -521,6 +521,8 @@ MS_CORE_API inline const PrimitivePtr kPrimApplyAdadelta = std::make_shared<Prim
 MS_CORE_API inline const PrimitivePtr kPrimApplyAdamWithAmsgrad = std::make_shared<Primitive>("ApplyAdamWithAmsgrad");
 MS_CORE_API inline const PrimitivePtr kPrimGridSampler3D = std::make_shared<Primitive>(kGridSampler3D);
 MS_CORE_API inline const PrimitivePtr kPrimGridSampler3DGrad = std::make_shared<Primitive>(kGridSampler3DGrad);
+MS_CORE_API inline const PrimitivePtr kPrimBNTrainingUpdate = std::make_shared<Primitive>("BNTrainingUpdate");
+MS_CORE_API inline const PrimitivePtr kPrimBNTrainingUpdateGrad = std::make_shared<Primitive>("BNTrainingUpdateGrad");
 
 // Comm ops
 MS_CORE_API inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

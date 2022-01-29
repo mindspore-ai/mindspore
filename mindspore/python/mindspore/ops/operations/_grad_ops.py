@@ -671,25 +671,20 @@ class BNTrainingReduceGrad(Primitive):
     """Gradients of FusedBatchNorm operation."""
 
     @prim_attr_register
-    def __init__(self, epsilon=0.0001):
+    def __init__(self, epsilon=0.0001, data_format='NCHW'):
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         _inputs = ['grads', 'x', 'diff_scale', 'diff_offset', 'scale', 'batch_mean', 'batch_variance']
         self.init_prim_io_names(inputs=_inputs, outputs=['y'])
 
 
-class BNTrainingUpdateGrad(PrimitiveWithInfer):
+class BNTrainingUpdateGrad(Primitive):
     """Gradients of FusedBatchNorm operation."""
 
     @prim_attr_register
-    def __init__(self, epsilon=0.0001):
+    def __init__(self, epsilon=0.0001, data_format='NCHW'):
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         self.init_prim_io_names(inputs=['grads', 'x', 'batch_mean', 'batch_variance'],
                                 outputs=['diff_scale', 'diff_offset'])
-
-    def infer_shape(self, grads, x, batch_mean, batch_variance):
-        return (batch_mean, batch_variance)
-
-    def infer_dtype(self, grads, x, batch_mean, batch_variance):
-        return (batch_mean, batch_variance)
-
 
 class NeighborExchangeV2Grad(PrimitiveWithInfer):
     """"Gradients of NeighborExchangeV2 operation."""
