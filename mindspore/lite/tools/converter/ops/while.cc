@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@
 #include "abstract/primitive_infer_map.h"
 #include "nnacl/op_base.h"
 
-constexpr auto kCondSubgraphIndex = "cond_subgraph_index";
-constexpr auto kBodySubgraphIndex = "body_subgraph_index";
-
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr auto kCondSubgraphIndex = "cond_subgraph_index";
+constexpr auto kBodySubgraphIndex = "body_subgraph_index";
+}  // namespace
+
 void While::Prepare(const int64_t cond_subgraph_index, const int64_t body_subgraph_index) {
   this->set_cond_subgraph_index(cond_subgraph_index);
   this->set_body_subgraph_index(body_subgraph_index);

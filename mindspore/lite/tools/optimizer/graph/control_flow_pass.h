@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class ControlFlowPass : public Pass {
     const FuncGraphPtr &main_fg, const FuncGraphPtr &cond_fg, const std::vector<AnfNodePtr> &remain_nodes,
     const std::vector<AnfNodePtr> &cond_nodes_used_by_after_partial,
     const std::unordered_map<AnfNodePtr, AnfNodePtr> &visited_nodes_and_cond_fg_inputs_replace_pairs,
-    CNodePtr *while_cnode, CNodePtr *after_partial_cnode);
+    const CNodePtr *while_cnode, CNodePtr *after_partial_cnode);
   int ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNodePtr> &visited_nodes,
                      const std::vector<AnfNodePtr> &remain_nodes, const AnfNodePtr &while_node);
 
@@ -64,14 +64,14 @@ class ControlFlowPass : public Pass {
   int CreateIfPartialNodeExternalInputs(const CNodePtr &if_cnode, const FuncGraphPtr &partial_fg,
                                         std::vector<AnfNodePtr> *then_partial_cnode_inputs);
   int CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &index,
-                          std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, CNodePtr *if_cnode,
-                          FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode);
+                          std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr *if_cnode,
+                          const FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode);
   int CreateIfThenPartialNode(const FuncGraphPtr &main_fg,
                               std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, CNodePtr *if_cnode,
                               FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode);
   int CreateIfElsePartialNode(const FuncGraphPtr &main_fg,
-                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, CNodePtr *if_cnode,
-                              FuncGraphPtr *after_fg, CNodePtr *else_partial_cnode);
+                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr *if_cnode,
+                              const FuncGraphPtr *after_fg, CNodePtr *else_partial_cnode);
   int ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodePtr> &visited_nodes,
                   const std::vector<AnfNodePtr> &remain_nodes, const AnfNodePtr &if_node);
 

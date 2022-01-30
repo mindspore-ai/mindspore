@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ AnfNodePtr MultiplePatternProcessPass::Run(const FuncGraphPtr &func_graph, const
     auto name = iter.first;
     auto primitive_var = iter.second;
     auto pattern = this->patterns_[name];
-    MS_EXCEPTION_IF_NULL(primitive_var);
-    MS_EXCEPTION_IF_NULL(pattern);
+    MS_CHECK_TRUE_RET(primitive_var != nullptr, nullptr);
+    MS_CHECK_TRUE_RET(pattern != nullptr, nullptr);
     EquivPtr equiv = pattern_engine_.Match(pattern, node, *primitive_var, empty_equiv);
     if (equiv != nullptr && !equiv->empty()) {
       return Process(name, func_graph, node, equiv);

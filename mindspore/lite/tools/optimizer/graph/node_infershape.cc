@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ void RectifyFormat(const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) 
   }
 }
 
-tensor::TensorPtr NewTensorInfo(lite::Tensor *tensor) {
+tensor::TensorPtr NewTensorInfo(const lite::Tensor *tensor) {
   std::vector<int> shape(tensor->shape());
   std::vector<int64_t> shape_vector(shape.begin(), shape.end());
   auto tensor_info = std::make_shared<tensor::Tensor>(tensor->data_type(), shape_vector);
@@ -84,7 +84,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     MS_LOG(DEBUG) << "primitive is nullptr";
     return lite::RET_ERROR;
   }
-  anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
+  (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(false));
   std::vector<TensorPtr> inputs_ptr;
   if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_, false) != lite::RET_OK) {
     MS_LOG(ERROR) << "get inputs failed.";
@@ -138,11 +138,11 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
   }
   fbb.Clear();
   if (ret == lite::RET_OK) {
-    anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
+    (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
   }
   if (ret == lite::RET_OK || ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstract(cnode, outputs, ret);
-    anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
+    (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(inputs[0]->format()));
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "set CNode abstract failed: " << cnode->fullname_with_scope();
       return set_status;
@@ -154,7 +154,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     std::vector<int64_t> outputs_format;
     std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_format),
                    [](const lite::Tensor *output) { return output->format(); });
-    anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+    (void)anf_prim->AddAttr(kOutputsFormat, MakeValue(outputs_format));
   }
   return ret;
 }

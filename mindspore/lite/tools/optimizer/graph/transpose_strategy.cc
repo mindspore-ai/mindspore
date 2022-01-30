@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -498,7 +498,7 @@ STATUS TransposeStrategy::TransposeInsertDependOnShape(const FuncGraphPtr &func_
   }
   CNodePtr base_node = before ? cnode : node_users.front().first->cast<CNodePtr>();
   MS_ASSERT(base_node != nullptr);
-  size_t input_index = before ? index : node_users.front().second;
+  size_t input_index = before ? index : static_cast<size_t>(node_users.front().second);
   auto shape = node_infer_shape_.GetInputShape(base_node, input_index);
   if (!shape.empty() && shape.size() != kNH2NC.size()) {
     return lite::RET_NO_CHANGE;
@@ -538,7 +538,8 @@ bool TransposeStrategy::IsInOutCanFuison(const std::vector<AnfNodePtr> &nodes, s
   return true;
 }
 
-void TransposeStrategy::DecidePreAndPostTransType(TransTypePair *trans_info, TransTypePair *trans_insert_info) const {
+void TransposeStrategy::DecidePreAndPostTransType(const TransTypePair *trans_info,
+                                                  TransTypePair *trans_insert_info) const {
   if (trans_info->pre_ == trans_info->post_) {
     return;
   }
