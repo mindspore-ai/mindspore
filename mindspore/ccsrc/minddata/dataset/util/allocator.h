@@ -136,7 +136,7 @@ class MemGuard {
  public:
   using allocator = C;
   MemGuard() : n_(0) {}
-  explicit MemGuard(allocator a) : n_(0), alloc_(a) {}
+  explicit MemGuard(const allocator &a) : n_(0), alloc_(a) {}
   // There is no copy constructor nor assignment operator because the memory is solely owned by this object.
   MemGuard(const MemGuard &) = delete;
   MemGuard &operator=(const MemGuard &) = delete;
