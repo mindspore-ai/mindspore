@@ -97,11 +97,11 @@ template <typename T>
 void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &workspaces,
                                              const std::vector<AddressPtr> &outputs) {
-  auto input = inputs.at(0);
-  auto diag = inputs.at(1);
+  auto input = inputs.at(kDim0);
+  auto diag = inputs.at(kDim1);
   constexpr int diag_k_index = 2;
   auto k = inputs.at(diag_k_index);
-  auto output = outputs.at(0);
+  auto output = outputs.at(kDim0);
 
   T *input_addr = reinterpret_cast<T *>(input->addr);
   T *diag_addr = reinterpret_cast<T *>(diag->addr);
@@ -134,67 +134,50 @@ void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   max_diag_len_ = std::min(inner_rows_ + std::min(upper_diag_index_, 0), inner_cols_ - std::max(lower_diag_index_, 0));
 
-  // copy input to output first, then set diagonal value to output.
+  // Copy input to output first, then set diagonal value to output.
   (void)memcpy_s(output_addr, output->size, input_addr, input->size);
-  std::vector<common::Task> tasks;
-  // an arg which depends on hardware.
-  auto thread_pool = GetActorMgrInnerThreadPool();
-  size_t task_nums = thread_pool->GetKernelThreadNum();
-  if (task_nums == 0) {
-    MS_LOG(EXCEPTION) << "MatrixSetDiagCpuKernelMod get kernel thread_pool nums, but kernel thread is 0!";
-  }
-  tasks.reserve(task_nums);
   size_t max_index = IntToSize(outer_batch_ * inner_rows_ * inner_cols_);
-  size_t region = IntToSize(std::div(SizeToInt(max_index), SizeToInt(task_nums)).quot);
-  region = (region == 0) ? max_index : region;
-  for (size_t start = 0; start < max_index; start += region) {
-    size_t end = start + region;
-    if (end > max_index) {
-      end = max_index;
+  auto task = [this, max_index, diag_addr, output_addr](size_t start, size_t end) {
+    MatrixInfoPtr matrix_info = std::make_shared<MatrixInfo>(max_index, input_shape_);
+    if (!matrix_info->SetIndex(start, end)) {
+      MS_LOG(EXCEPTION) << "current data indexes are invalid : [" << start << ", " << end
+                        << "]. you should limit them in [0, " << max_index << "].";
     }
-    (void)tasks.emplace_back([this, max_index, start, end, diag_addr, output_addr]() {
-      MatrixInfoPtr matrix_info = std::make_shared<MatrixInfo>(max_index, input_shape_);
-      if (!matrix_info->SetIndex(start, end)) {
-        MS_LOG(EXCEPTION) << "current data indexes are invalid : [" << start << ", " << end
-                          << "]. you should limit them in [0, " << max_index << "].";
+    auto get_out_batch = [](const std::vector<size_t> &current_indexes) {
+      constexpr size_t last_two_dims = 2;
+      int out_batch = 1;
+      for (size_t i = 0; i < current_indexes.size() - last_two_dims; ++i) {
+        out_batch *= (SizeToInt(current_indexes.at(i)) + 1);
       }
-      auto get_out_batch = [](const std::vector<size_t> &current_indexes) {
-        constexpr size_t last_two_dims = 2;
-        int out_batch = 1;
-        for (size_t i = 0; i < current_indexes.size() - last_two_dims; ++i) {
-          out_batch *= (SizeToInt(current_indexes.at(i)) + 1);
+      size_t inner_row = current_indexes.at(current_indexes.size() - last_two_dims);
+      size_t inner_col = current_indexes.at(current_indexes.size() - 1);
+      std::tuple<int, int, int> flatten_3d_shape = std::make_tuple(out_batch - 1, inner_row, inner_col);
+      return flatten_3d_shape;
+    };
+    for (size_t inner = start; inner < end; ++inner) {
+      std::vector<size_t> current_indexes = matrix_info->IndexIterator();
+      auto flatten_3d_shape = get_out_batch(current_indexes);
+      int batch = std::get<0>(flatten_3d_shape);
+      int m = std::get<1>(flatten_3d_shape);
+      constexpr size_t col_index = 2;
+      int n = std::get<col_index>(flatten_3d_shape);
+      int d = n - m;
+      if (is_single_diag_) {
+        if (d == upper_diag_index_) {
+          output_addr[inner] = diag_addr[batch * max_diag_len_ + n - std::max(upper_diag_index_, 0)];
         }
-        size_t inner_row = current_indexes.at(current_indexes.size() - last_two_dims);
-        size_t inner_col = current_indexes.at(current_indexes.size() - 1);
-        std::tuple<int, int, int> flatten_3d_shape = std::make_tuple(out_batch - 1, inner_row, inner_col);
-        return flatten_3d_shape;
-      };
-      for (size_t inner = start; inner < end; ++inner) {
-        std::vector<size_t> current_indexes = matrix_info->IndexIterator();
-        auto flatten_3d_shape = get_out_batch(current_indexes);
-        int batch = std::get<0>(flatten_3d_shape);
-        int m = std::get<1>(flatten_3d_shape);
-        constexpr size_t col_index = 2;
-        int n = std::get<col_index>(flatten_3d_shape);
-        int d = n - m;
-        if (is_single_diag_) {
-          if (d == upper_diag_index_) {
-            output_addr[inner] = diag_addr[batch * max_diag_len_ + n - std::max(upper_diag_index_, 0)];
-          }
-        } else {
-          int diag_index = upper_diag_index_ - d;
-          int offset = CalDiagOffset(d, max_diag_len_, inner_rows_, inner_cols_, alignment_);
-          int index_in_diag = n - std::max(d, 0) + offset;
-          if (d >= lower_diag_index_ && d <= upper_diag_index_) {
-            output_addr[inner] =
-              diag_addr[batch * num_diags_ * max_diag_len_ + diag_index * max_diag_len_ + index_in_diag];
-          }
+      } else {
+        int diag_index = upper_diag_index_ - d;
+        int offset = CalDiagOffset(d, max_diag_len_, inner_rows_, inner_cols_, alignment_);
+        int index_in_diag = n - std::max(d, 0) + offset;
+        if (d >= lower_diag_index_ && d <= upper_diag_index_) {
+          output_addr[inner] =
+            diag_addr[batch * num_diags_ * max_diag_len_ + diag_index * max_diag_len_ + index_in_diag];
         }
       }
-      return common::SUCCESS;
-    });
-  }
-  ParallelLaunch(tasks);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, max_index);
 }
 }  // namespace kernel
 }  // namespace mindspore
