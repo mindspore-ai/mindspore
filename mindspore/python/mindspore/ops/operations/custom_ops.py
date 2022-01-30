@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,16 +91,16 @@ class Custom(ops.PrimitiveWithInfer):
 
                 Return Value(int):
 
-                - 0: raise no Exception
-                - larger than 0: will raise Exception
+                - 0: MindSpore will continue to run if this aot kernel is successfully executed
+                - others: MindSpore will raise exception and exit
 
-                Examples: see details tests/st/ops/graph_kernel/custom/aot_test_files/
+                Examples: see details in tests/st/ops/graph_kernel/custom/aot_test_files/
 
               - Use it in Custom:
 
                 .. code-block::
 
-                    Custom(func="{path}/{file_name}:{func_name}",...)
+                    Custom(func="{dir_path}/{file_name}:{func_name}",...)
                     (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32))
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of

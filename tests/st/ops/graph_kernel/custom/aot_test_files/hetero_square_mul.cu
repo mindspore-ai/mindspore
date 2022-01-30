@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ extern "C" int CustomHSquareMul(int nparam, void **params, int *ndims, int64_t *
   constexpr int TOTAL_PARAM_NUM = 3;
 
   // Users can add any check on their need. If check fails, user can return any value larger than 0 to safely exit.
-  // Return value larger than 0 will cause mindspore to stop computing and safely exit.
-  // Specially, return 1 will show log: "Number of parameters passed is inconsistent with what the user wants".
-  // return 2 will show log: "Type of parameters passed is inconsistent with what the user wants".
+  // Return value not equal to 0 will cause MindSpore to stop computing and safely exit.
 
   // This is to check if the num of parameters the same as what the user wants.
   // There are two inputs and one output, so the nparam should be 3.
@@ -70,6 +68,6 @@ extern "C" int CustomHSquareMul(int nparam, void **params, int *ndims, int64_t *
   CustomHSquareMulKernel<<<n + 1, THREADS, 0, custream>>>(static_cast<float *>(input1), static_cast<half *>(input2),
                                                           static_cast<half *>(output), size);
 
-  // When return 0, mindspore will continue to run if this kernel could launch successfully.
+  // When return 0, MindSpore will continue to run if this kernel could launch successfully.
   return 0;
 }
