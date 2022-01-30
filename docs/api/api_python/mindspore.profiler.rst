@@ -1,5 +1,6 @@
 mindspore.profiler
 ========================
+
 profiler模块简介。
 
 本模块提供Python API，用于启用MindSpore神经网络性能数据的分析。
@@ -10,7 +11,7 @@ profiler模块简介。
 .. py:class:: mindspore.profiler.Profiler(**kwargs)
 
     性能采集API。
-    
+
     此API能够让MindSpore用户采集神经网络的性能。
     Profiler支持Ascend和GPU，两者的使用方式相同。
 
@@ -61,7 +62,7 @@ profiler模块简介。
         **异常：**
 
         - **RuntimeError** – profiler没有开启。
-    
+
 .. py:class:: mindspore.profiler.ProfileOption
 
     这个类已经弃用，该功能已不再支持。
