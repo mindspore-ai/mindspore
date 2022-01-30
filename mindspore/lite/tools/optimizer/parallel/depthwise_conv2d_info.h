@@ -39,7 +39,7 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
                             const std::vector<AnfNodePtr> &kernel_split_outputs,
                             const std::vector<AnfNodePtr> &bias_split_outputs) override;
   AnfNodePtr CreateOutputsOfSplit(const CNodePtr &orig_node, size_t input_index, std::vector<AnfNodePtr> *split_outputs,
-                                  size_t split_num, const std::vector<int64_t> &splits);
+                                  size_t split_dim, size_t split_num, const std::vector<int64_t> &splits);
   int CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *split_outputs, int input_index);
 
   int CheckDepthWiseConv2DPrimitiveType();

@@ -68,6 +68,11 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
     MS_LOG(ERROR) << "data type of tensor is unknown";
     return nullptr;
   }
+  int size = 1;
+  for (auto dim : shape) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(size, dim, nullptr);
+    size *= dim;
+  }
   tensor::TensorPtr tensor_info = nullptr;
   if (shape.empty() && data_size == mindspore::abstract::TypeIdSize(data_type)) {
     ShapeVector scalar_shape = {1};

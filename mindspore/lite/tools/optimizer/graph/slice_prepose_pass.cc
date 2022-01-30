@@ -416,23 +416,23 @@ bool SlicePreposePass::SiblingsAreSameSlice(const NodeUsedListPtr &output_node_l
     MS_CHECK_TRUE_MSG(slice_node != nullptr, false, "Slice is nullptr");
     slices.push_back(cnode);
   }
-  MS_CHECK_TRUE_MSG(slices.size() > 0, RET_ERROR, "slices.size() is wrong");
+  MS_CHECK_TRUE_MSG(slices.size() > 0, false, "slices.size() is wrong");
   auto first_slice_cnode = slices.front();
   auto first_slice_node = GetSlice(first_slice_cnode);
   MS_CHECK_TRUE_MSG(first_slice_node != nullptr, false, "GetSlice return nullptr");
   auto first_axes = first_slice_node->get_axes();
   auto first_begin = GetSliceBeginAndSize(first_slice_cnode, SliceBeginIndex);
   auto first_size = GetSliceBeginAndSize(first_slice_cnode, SliceSizeIndex);
-  MS_CHECK_TRUE_MSG(first_begin.size() >= first_axes.size(), RET_ERROR, "first_begin.size() is wrong");
-  MS_CHECK_TRUE_MSG(first_size.size() >= first_axes.size(), RET_ERROR, "first_size.size() is wrong");
-  MS_CHECK_TRUE_MSG(slices.size() >= output_node_list->size(), RET_ERROR, "slices.size() is wrong");
+  MS_CHECK_TRUE_MSG(first_begin.size() >= first_axes.size(), false, "first_begin.size() is wrong");
+  MS_CHECK_TRUE_MSG(first_size.size() >= first_axes.size(), false, "first_size.size() is wrong");
+  MS_CHECK_TRUE_MSG(slices.size() >= output_node_list->size(), false, "slices.size() is wrong");
   for (size_t i = 1; i < output_node_list->size(); ++i) {
     auto slice = GetSlice(slices[i]);
     auto axes = slice->get_axes();
     auto begin = GetSliceBeginAndSize(slices[i], SliceBeginIndex);
     auto size = GetSliceBeginAndSize(slices[i], SliceSizeIndex);
-    MS_CHECK_TRUE_MSG(begin.size() >= axes.size(), RET_ERROR, "begin.size() is wrong");
-    MS_CHECK_TRUE_MSG(size.size() >= axes.size(), RET_ERROR, "size.size() is wrong");
+    MS_CHECK_TRUE_MSG(begin.size() >= axes.size(), false, "begin.size() is wrong");
+    MS_CHECK_TRUE_MSG(size.size() >= axes.size(), false, "size.size() is wrong");
     if (axes.size() != first_axes.size()) {
       return false;
     }
@@ -1415,7 +1415,7 @@ bool SlicePreposePass::MergeParallelSlice(const FuncGraphPtr &graph, const NodeU
   auto manager = graph->manager();
   MS_ASSERT(manager != nullptr);
   auto first_slice = utils::cast<CNodePtr>(slices->at(0).first);
-  MS_ASSERT(first_slice == nullptr);
+  MS_ASSERT(first_slice != nullptr);
   if (!CheckPrimitiveType(first_slice, prim::kPrimSliceFusion)) {
     MS_LOG(ERROR) << "first node is not Slice";
     return false;
@@ -1432,7 +1432,7 @@ bool SlicePreposePass::MergeParallelSlice(const FuncGraphPtr &graph, const NodeU
   }
   for (size_t i = 1; i < slices->size(); ++i) {
     auto slice = utils::cast<CNodePtr>(slices->at(i).first);
-    MS_ASSERT(slice == nullptr);
+    MS_ASSERT(slice != nullptr);
     if (!CheckPrimitiveType(slice, prim::kPrimSliceFusion)) {
       MS_LOG(ERROR) << "current node is not Slice";
       return false;

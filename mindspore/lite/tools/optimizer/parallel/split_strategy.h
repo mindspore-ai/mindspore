@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
+#define MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 #include <vector>
 #include <string>
 #include <set>
@@ -23,8 +25,6 @@
 #include "schema/ops_generated.h"
 #include "base/core_ops.h"
 #include "include/lite_types.h"
-#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
-#define MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
 
 namespace mindspore {
 namespace opt {

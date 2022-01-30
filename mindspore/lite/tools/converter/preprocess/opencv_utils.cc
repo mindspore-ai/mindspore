@@ -71,7 +71,11 @@ int GetMatData(const cv::Mat &mat, void **data, size_t *size) {
     (*size) += static_cast<size_t>(mat.cols) * mat.elemSize();
   }
 
-  (*data) = new char[*size];
+  (*data) = new (std::nothrow) char[*size];
+  if (*data == nullptr) {
+    MS_LOG(ERROR) << "new data failed.";
+    return RET_ERROR;
+  }
   if (memcpy_s(*data, *size, mat_local.data,
                static_cast<size_t>(mat.rows * mat.cols * mat.channels()) * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";

@@ -274,11 +274,11 @@ int TransposeFusion::AdjustAxis(const mindspore::AnfNodePtr &node) const {
   MS_CHECK_TRUE_RET(axis >= 0 && static_cast<size_t>(axis) < perm.size(), lite::RET_ERROR);
   auto axis_attr = !utils::isa<ValueSequencePtr>(axis_value_ptr) ? MakeValue<int64_t>(perm.at(axis))
                                                                  : MakeValue<std::vector<int64_t>>({perm.at(axis)});
-  prim->AddAttr(ops::kAxis, axis_attr);
+  (void)prim->AddAttr(ops::kAxis, axis_attr);
   if (perm == kNC2NH) {
-    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
+    (void)prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
   } else if (perm == kNH2NC) {
-    prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+    (void)prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   }
   return lite::RET_OK;
 }
