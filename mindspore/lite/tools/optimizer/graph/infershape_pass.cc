@@ -443,7 +443,7 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "cnode's input0 is not a primitive.");
-  prim->AddAttr(kInferFlags, MakeValue(infer_infos));
+  (void)prim->AddAttr(kInferFlags, MakeValue(infer_infos));
   return RET_OK;
 }
 

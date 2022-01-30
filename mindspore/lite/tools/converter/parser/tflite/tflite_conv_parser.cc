@@ -54,6 +54,7 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
+  MS_CHECK_TRUE_RET(static_cast<size_t>(tflite_op->inputs[1]) < tflite_subgraph->tensors.size(), nullptr);
   const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";

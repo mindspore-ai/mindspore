@@ -365,7 +365,7 @@ int ControlFlowPass::CreateWhileAfterPartialNode(
   const FuncGraphPtr &main_fg, const FuncGraphPtr &cond_fg, const std::vector<AnfNodePtr> &remain_nodes,
   const std::vector<AnfNodePtr> &cond_nodes_used_by_after_partial,
   const std::unordered_map<AnfNodePtr, AnfNodePtr> &visited_nodes_and_cond_fg_inputs_replace_pairs,
-  CNodePtr *while_cnode, CNodePtr *after_partial_cnode) {
+  const CNodePtr *while_cnode, CNodePtr *after_partial_cnode) {
   // create after_fg
   FuncGraphPtr after_fg = nullptr;
   if (CreateAfterGraph(main_fg, remain_nodes, *while_cnode, &after_fg) != RET_SUCCESS) {
@@ -554,8 +554,9 @@ int ControlFlowPass::CreateIfPartialNodeExternalInputs(const CNodePtr &if_cnode,
 }
 
 int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &index,
-                                         std::vector<AnfNodePtr> *visited_nodes_used_by_after_fg, CNodePtr *if_cnode,
-                                         FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode) {
+                                         std::vector<AnfNodePtr> *visited_nodes_used_by_after_fg,
+                                         const CNodePtr *if_cnode, const FuncGraphPtr *after_fg,
+                                         CNodePtr *then_partial_cnode) {
   auto then_vnode = (*if_cnode)->input(index);
   MS_ASSERT(then_vnode != nullptr);
   auto then_fg = GetValueNode<std::shared_ptr<FuncGraph>>(then_vnode);
@@ -649,7 +650,6 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
   // check the inputs of after fg
   auto after_fg_inputs_size = (*after_fg)->get_inputs().size();
   if (after_fg_inputs_size == after_partial_cnode_inputs.size() - kPartialFirstInputSize) {
-    MS_LOG(INFO) << "not need add after fg input parameters.";
     return RET_SUCCESS;
   }
 
@@ -674,7 +674,8 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
 
 int ControlFlowPass::CreateIfElsePartialNode(const FuncGraphPtr &main_fg,
                                              std::vector<AnfNodePtr> *visited_nodes_used_by_after_fg,
-                                             CNodePtr *if_cnode, FuncGraphPtr *after_fg, CNodePtr *else_partial_cnode) {
+                                             const CNodePtr *if_cnode, const FuncGraphPtr *after_fg,
+                                             CNodePtr *else_partial_cnode) {
   return CreateIfPartialNode(main_fg, kIfElseIndex, visited_nodes_used_by_after_fg, if_cnode, after_fg,
                              else_partial_cnode);
 }

@@ -213,8 +213,14 @@ int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(inputs != nullptr);
   auto origin_inputs = cnode->inputs();
-  lite::RemoveIfDepend(cnode);
-  lite::RemoveIfMakeTuple(cnode);
+  if (lite::RemoveIfDepend(cnode) != RET_OK) {
+    MS_LOG(ERROR) << "remove depend failed.";
+    return RET_ERROR;
+  }
+  if (lite::RemoveIfMakeTuple(cnode)) {
+    MS_LOG(ERROR) << "remove makeTuple failed.";
+    return RET_ERROR;
+  }
   RemoveIfMonad(cnode);
   std::vector<TensorPtr> const_inputs;
   if (GetCNodeConstInput(cnode, &const_inputs, fmk_type, train_flag, copy_data) != lite::RET_OK) {
