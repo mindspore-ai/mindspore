@@ -37,9 +37,8 @@ class SwitchActor : public ControlActor {
               const AnfNodePtr &node);
   ~SwitchActor() override = default;
 
-  void Init() override;
-
  protected:
+  void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
 
  private:

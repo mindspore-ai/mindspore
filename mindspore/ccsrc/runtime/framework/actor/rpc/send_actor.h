@@ -33,8 +33,6 @@ class SendActor : public RpcActor {
                  recorder_aid) {}
   ~SendActor() override = default;
 
-  void Init() override;
-
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
@@ -42,6 +40,7 @@ class SendActor : public RpcActor {
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 

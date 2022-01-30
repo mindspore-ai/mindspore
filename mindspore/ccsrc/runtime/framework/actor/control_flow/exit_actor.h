@@ -40,8 +40,6 @@ class ExitActor : public ControlActor {
   }
   ~ExitActor() override = default;
 
-  void Init() override;
-
   const mindspore::HashMap<int, std::vector<AID>> &output_branch_control_arrows() const {
     return output_branch_control_arrows_;
   }
@@ -54,6 +52,7 @@ class ExitActor : public ControlActor {
   const std::vector<bool> &is_need_copy_device_tensors() const { return is_need_copy_device_tensors_; }
 
  protected:
+  void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
