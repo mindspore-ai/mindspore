@@ -240,25 +240,25 @@ def inv(a, overwrite_a=False, check_finite=True):
 
 def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     """
-    Compute the Cholesky decomposition of a matrix, to use in cho_solve
-    Note that if the input tensor's data type only supports `int`, `float` or `double`, and if data tpye is `int`,
-    then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
-    Returns a matrix containing the Cholesky decomposition,
-    ``A = L L*`` or ``A = U* U`` of a Hermitian positive-definite matrix `a`.
-    The return value can be directly used as the first parameter to cho_solve.
+    Compute the cholesky decomposition of a matrix, to use in cho_solve.
+
+    Returns a matrix containing the cholesky decomposition,
+    :math:`A = L L*` or :math:`A = U* U` of a Hermitian positive-definite matrix `a`.
+    The return value can be directly used as the first parameter to `cho_solve`.
 
     Note:
-        `cho_factor` is not supported on Windows platform yet.
+        - `cho_factor` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     .. warning::
         The returned matrix also contains random data in the entries not
-        used by the Cholesky decomposition. If you need to zero these
+        used by the cholesky decomposition. If you need to zero these
         entries, use the function `cholesky` instead.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed. Note that if the input tensor is not a `float`
-            or a `double`, then it will be cast to :class:'mstype.float64'.
-        lower (bool, optional): Whether to compute the upper or lower triangular Cholesky factorization. Default: False.
+        a (Tensor): square Matrix of (M, M) to be decomposed.
+        lower (bool, optional): Whether to compute the upper or lower triangular cholesky factorization. Default: False.
         overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default: False.
             in mindspore, this arg does not work right now.
         check_finite(bool, optional): Whether to check that the input matrix contains only finite numbers.
@@ -267,7 +267,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
             in mindspore, this arg does not work right now.
 
     Returns:
-         - Tensor, matrix whose upper or lower triangle contains the Cholesky factor of `a`.
+         - Tensor, matrix whose upper or lower triangle contains the cholesky factor of `a`.
            Other parts of the matrix contain random data.
          - bool, flag indicating whether the factor is in the lower or upper triangle
 
@@ -310,19 +310,19 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
 
 def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     """
-    Compute the Cholesky decomposition of a matrix.
+    Compute the cholesky decomposition of a matrix.
 
-    Returns the Cholesky decomposition, :math:`A = L L^*` or
+    Returns the cholesky decomposition, :math:`A = L L^*` or
     :math:`A = U^* U` of a Hermitian positive-definite matrix A.
 
     Note:
-        `cholesky` is not supported on Windows platform yet.
+        - `cholesky` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
         a (Tensor): square Matrix of (M, M) to be decomposed.
-        Note that if the input tensor's data type only supports `int`, `float` or `double`, and if data tpye is `int`,
-        then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
-        lower (bool, optional): Whether to compute the upper- or lower-triangular Cholesky
+        lower (bool, optional): Whether to compute the upper- or lower-triangular cholesky
             factorization. Default: False.
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: False.
             in mindspore, this arg does not work right now.
@@ -332,7 +332,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
             in mindspore, this arg does not work right now.
 
     Returns:
-        Tensor, upper- or lower-triangular Cholesky factor of `a`.
+        Tensor, upper- or lower-triangular cholesky factor of `a`.
 
     Raises:
         ValueError: If input a tensor is not a square matrix or it's dims not equal to 2D.
@@ -371,16 +371,19 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
 
 def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
-    """Solve the linear equations Ax = b, given the Cholesky factorization of A.
+    """Given the cholesky factorization of A, solve the linear equation
+
+    .. math::
+        A x = b
 
     Note:
-        `cho_solve` is not supported on Windows platform yet.
+        - `cho_solve` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        c_and_lower ((Tensor, bool)): Cholesky factorization of a, as given by cho_factor
-        b (Tensor): Right-hand side
-        Note that if the input a or b tensor's data type only supports `int`, `float` or `double`,
-        and if data tpye is `int`, then it will be cast to :class: `mstype.float64`. Otherwise, a TypeError will raise.
+        c_and_lower ((Tensor, bool)): Cholesky factorization of a, as given by cho_factor.
+        b (Tensor): Right-hand side.
         overwrite_b (bool, optional): Whether to overwrite data in b (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
