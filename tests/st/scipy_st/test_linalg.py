@@ -25,7 +25,7 @@ from mindspore import context, Tensor
 import mindspore.numpy as mnp
 from mindspore.scipy.linalg import det, solve_triangular
 from tests.st.scipy_st.utils import match_array, create_full_rank_matrix, create_sym_pos_matrix, \
-    create_random_rank_matrix
+    create_random_rank_matrix, match_runtime_exception
 
 onp.random.seed(0)
 context.set_context(mode=context.PYNATIVE_MODE)
@@ -83,6 +83,161 @@ def test_solve_triangular(n: int, dtype, lower: bool, unit_diagonal: bool, trans
         atol = 1.e-3
 
     assert onp.allclose(expect, output, rtol=rtol, atol=atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('n', [3, 4, 6])
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
+def test_solve_triangular_error_dims(n: int, dtype):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: solve_triangular raises expectated Exception
+    """
+    a = onp.random.randint(low=-1024, high=1024, size=(10,) * n).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(dtype)
+    with pytest.raises(RuntimeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', A should be 2D, but got [{n}] dimensions."
+    assert match_runtime_exception(err, msg)
+
+    a = onp.random.randint(low=-1024, high=1024, size=(n, n + 1)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(dtype)
+    with pytest.raises(RuntimeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', the shape of input matrix A should be square matrix like [N X N], " \
+          f"but got [{n} X {n + 1}]."
+    assert match_runtime_exception(err, msg)
+
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(11,) * n).astype(dtype)
+    with pytest.raises(RuntimeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', b should be 1D or 2D,  but got [{n}] dimensions."
+    assert match_runtime_exception(err, msg)
+
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(n,)).astype(dtype)
+    with pytest.raises(RuntimeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', the shape of input should be [10], but got [{n}]."
+    assert match_runtime_exception(err, msg)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_solve_triangular_error_tensor_dtype():
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: solve_triangular raises expectated Exception
+    """
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(onp.float16)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float16)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', the type of `A_dtype` should be in " \
+          f"[mindspore.float32, mindspore.float64], but got Float16."
+    assert str(err.value) == msg
+
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(onp.float32)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float16)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = f"For 'SolveTriangular', the type of `b_dtype` should be in " \
+          f"[mindspore.float32, mindspore.float64], but got Float16."
+    assert str(err.value) == msg
+
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(onp.float32)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float64)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(Tensor(a), Tensor(b))
+    msg = "For 'SolveTriangular' type of `b_dtype` should be same as `A_dtype`, " \
+          "but `A_dtype` is Float32 and `b_dtype` is Float64."
+    assert str(err.value) == msg
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
+@pytest.mark.parametrize('argname, argtype', [('lower', 'bool'), ('overwrite_b', 'bool'), ('check_finite', 'bool')])
+@pytest.mark.parametrize('wrong_argvalue, wrong_argtype', [(5.0, 'float'), (None, 'NoneType'), ('test', 'str')])
+def test_solve_triangular_error_type(dtype, argname, argtype, wrong_argvalue, wrong_argtype):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: solve_triangular raises expectated Exception
+    """
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(dtype)
+
+    kwargs = {argname: wrong_argvalue}
+    with pytest.raises(TypeError) as err:
+        solve_triangular(Tensor(a), Tensor(b), **kwargs)
+    msg = f"For 'solve_triangular', the type of `{argname}` should be '{argtype}', " \
+          f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
+    assert str(err.value) == msg
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
+@pytest.mark.parametrize('wrong_argvalue, wrong_argtype', [(5.0, 'float'), (None, 'NoneType')])
+def test_solve_triangular_error_type_trans(dtype, wrong_argvalue, wrong_argtype):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: solve_triangular raises expectated Exception
+    """
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(dtype)
+
+    with pytest.raises(TypeError) as err:
+        solve_triangular(Tensor(a), Tensor(b), trans=wrong_argvalue)
+    msg = f"For 'solve_triangular', the type of `trans` should be one of '['int', 'str']', " \
+          f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
+    assert str(err.value) == msg
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_solve_triangular_error_tensor_type():
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: solve_triangular raises expectated Exception
+    """
+    a = 'test'
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float32)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(a, Tensor(b))
+    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got String."
+    assert match_runtime_exception(err, msg)
+
+    a = [1, 2, 3]
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float32)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(a, Tensor(b))
+    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got List[Int64*3]."
+    assert match_runtime_exception(err, msg)
+
+    a = (1, 2, 3)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(onp.float32)
+    with pytest.raises(TypeError) as err:
+        solve_triangular(a, Tensor(b))
+    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got Tuple[Int64*3]."
+    assert match_runtime_exception(err, msg)
 
 
 @pytest.mark.level0
@@ -288,6 +443,31 @@ def test_eigh_complex(n: int, data_type):
     msp_wu0 = msp.linalg.eigh(Tensor(onp.array(sym_au).astype(data_type[0])), lower=False, eigvals_only=True)
     assert onp.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), onp.zeros((n, n)), rtol, atol)
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
+@pytest.mark.parametrize('argname, argtype',
+                         [('lower', 'bool'), ('eigvals_only', 'bool'), ('overwrite_a', 'bool'), ('overwrite_b', 'bool'),
+                          ('turbo', 'bool'), ('check_finite', 'bool')])
+@pytest.mark.parametrize('wrong_argvalue, wrong_argtype', [(5.0, 'float'), (None, 'NoneType')])
+def test_eigh_error_type(dtype, argname, argtype, wrong_argvalue, wrong_argtype):
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for solve_triangular for triangular matrix solver [N,N]
+    Expectation: eigh raises expectated Exception
+    """
+    a = onp.random.randint(low=-1024, high=1024, size=(10, 10)).astype(dtype)
+    b = onp.random.randint(low=-1024, high=1024, size=(10,)).astype(dtype)
+
+    kwargs = {argname: wrong_argvalue}
+    with pytest.raises(TypeError) as err:
+        msp.linalg.eigh(Tensor(a), Tensor(b), **kwargs)
+    assert str(err.value) == f"For 'eigh', the type of `{argname}` should be '{argtype}', " \
+                             f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
 
 
 @pytest.mark.level0

@@ -113,7 +113,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
     Args:
         A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
         b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
-        lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
+        lower (bool, optional): Use only data contained in the lower triangle of `A`. Default: False.
         trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
 
             ========  =========
@@ -174,6 +174,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         [4. 2. 4. 2.]
     """
     _type_check('trans', trans, (int, str), 'solve_triangular')
+    _type_check('lower', lower, bool, 'solve_triangular')
     _type_check('overwrite_b', overwrite_b, bool, 'solve_triangular')
     _type_check('check_finite', check_finite, bool, 'solve_triangular')
     if debug is not None:

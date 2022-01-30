@@ -91,6 +91,8 @@ class SolveTriangular(PrimitiveWithInfer):
 
     def __infer__(self, A, b):
         out_shapes = b['shape']
+        validator.check_scalar_or_tensor_types_same({"A_dtype": A['dtype'], "b_dtype": b['dtype']},
+                                                    [mstype.float32, mstype.float64], self.name)
         return {
             'shape': tuple(out_shapes),
             'dtype': A['dtype'],
@@ -98,8 +100,6 @@ class SolveTriangular(PrimitiveWithInfer):
         }
 
     def infer_dtype(self, A_dtype, b_dtype):
-        validator.check_scalar_or_tensor_types_same({"A_dtype": A_dtype, "b_dtype": b_dtype},
-                                                    [mstype.float32, mstype.float64], self.name)
         return A_dtype
 
 
