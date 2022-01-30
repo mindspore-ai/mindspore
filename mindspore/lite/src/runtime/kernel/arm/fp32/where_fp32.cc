@@ -30,6 +30,7 @@ using mindspore::schema::PrimitiveType_Where;
 namespace mindspore::kernel {
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kTripleNum = 3;
+constexpr int kStrideMaxSize = 8;
 int WhereCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kSingleNum || in_tensors_.size() == kTripleNum, RET_ERROR);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
@@ -91,15 +92,20 @@ int WhereCPUKernel::RunWithSingleInput() {
   }
   where_param_->condition_num_ = input->ElementsNum();
   where_param_->rank_ = static_cast<int>(input->shape().size());
-  int strides[8];
+  int strides[kStrideMaxSize];
   ComputeStrides(in_tensors_.at(0)->shape().data(), strides, where_param_->rank_);
-  auto data = ms_context_->allocator->Malloc(where_param_->condition_num_ * where_param_->rank_ *
-                                             static_cast<int>(sizeof(int32_t)));
+  MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(where_param_->condition_num_, where_param_->rank_), RET_ERROR, "mul overflow");
+  int data_num_int = where_param_->condition_num_ * where_param_->rank_;
+  MS_CHECK_TRUE_RET(data_num_int >= 0, RET_ERROR);
+  size_t data_num = static_cast<size_t>(data_num_int);
+  MS_CHECK_FALSE_MSG(SIZE_MUL_OVERFLOW(sizeof(int32_t), data_num), RET_ERROR, "mul overflow");
+  size_t data_size = data_num * sizeof(int32_t);
+  auto data = ms_context_->allocator->Malloc(data_size);
   if (data == nullptr) {
     MS_LOG(ERROR) << "malloc data is error!";
     return RET_ERROR;
   }
-  int *result = reinterpret_cast<int *>(data);
+  int32_t *result = reinterpret_cast<int32_t *>(data);
 
   int result_index = 0;
   int true_num = 0;

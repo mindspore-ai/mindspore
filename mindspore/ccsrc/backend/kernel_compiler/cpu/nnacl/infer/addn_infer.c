@@ -51,6 +51,14 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
     if ((inputs[i]->shape_size_ != max_dims) && (GetElementNum(inputs[i]) != GetElementNum(inputs[max_dims_idx]))) {
       return NNACL_ERR;
     }
+    if (inputs[i]->shape_size_ == max_dims) {
+      for (int j = 0; j < max_dims; j++) {
+        if (inputs[i]->shape_[j] != inputs[max_dims_idx]->shape_[j] && inputs[i]->shape_[j] != 1 &&
+            inputs[max_dims_idx]->shape_[j] != 1) {
+          return NNACL_ERR;
+        }
+      }
+    }
   }
 
   for (size_t d = 0; d < inputs[max_dims_idx]->shape_size_; ++d) {

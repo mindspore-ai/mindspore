@@ -63,7 +63,7 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
     tensor_shape.shape_size_[i] = (int)(input0->shape_size_) - 1;
   }
 
-  ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input1));
+  ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, (size_t)GetElementNum(input1));
   output->element_num_ = (size_t)(dim0);
   int ret = MallocTensorListData(output, input0->data_type_, &tensor_shape);
   if (ret != NNACL_OK) {

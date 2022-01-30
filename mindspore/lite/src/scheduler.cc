@@ -581,10 +581,16 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
 
   if (node->output_indices_.empty()) {
     MS_LOG(ERROR) << "The output size is invalid";
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     return RET_ERROR;
   }
   if (op_parameters_.find(node->output_indices_.at(0)) != op_parameters_.end()) {
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     parameter = op_parameters_[node->output_indices_.at(0)];
   } else {

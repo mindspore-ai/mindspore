@@ -39,7 +39,7 @@ int TensorArrayInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   }
 
   output->data_type_ = param->data_type_;
-  SetShapeArray(output, param->element_shape_, param->element_shape_size_);
+  SetShapeArray(output, param->element_shape_, (size_t)param->element_shape_size_);
 
   return NNACL_OK;
 }

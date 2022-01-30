@@ -48,7 +48,7 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
     if (input0->element_shape_size_ > MAX_SHAPE_SIZE) {
       return NNACL_ERR;
     }
-    for (int i = 0; i < input0->element_shape_size_; i++) {
+    for (size_t i = 0; i < input0->element_shape_size_; i++) {
       ShapePush(output_shape, &output_shape_size, input0->element_shape_[i]);
     }
   } else {
