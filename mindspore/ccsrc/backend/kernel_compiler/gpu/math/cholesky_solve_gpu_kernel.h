@@ -49,8 +49,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     if (AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
       lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
     }
-    // gpu input is col major default, so need to change row major.
-    // in order to speedup it, just change lower to upper, because of cholesky input a is triangle matrix
+    // Gpu input is col major default, so need to change row major.
+    // In order to speedup it, just change lower to upper, because of cholesky input a is triangle matrix
     // when input b_col is not equal to one, maybe need a normal transpose op inplace.
     if (lower_) {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
@@ -96,7 +96,7 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
                               cudaMemcpyAsync(d_b_array_addr, h_b_array_.data(), sizeof(pointer) * outer_batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
-    //  only support rhs = 1
+    //  Only support rhs = 1
     if constexpr (std::is_same_v<T, float>) {
       CHECK_CUSOLVER_RET_WITH_EXCEPT(kernel_node_,
                                      cusolverDnSpotrsBatched(handle_, uplo_, m_, nrhs_, d_a_array_addr, lda_,
@@ -111,7 +111,7 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
     }
     size_t output_elements = outputs.at(kDim0)->size / unit_size_;
-    // copy results from written input's matrix to output's matrix.
+    // Copy results from written input's matrix to output's matrix.
     MatrixCopy(input_b_addr, output_addr, output_elements, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }

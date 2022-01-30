@@ -64,7 +64,7 @@ void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
-  // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
+  // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
   if (AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
     clean_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
   }
