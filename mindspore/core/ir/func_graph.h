@@ -42,6 +42,7 @@
 #include "api/ir/func_graph.h"
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -95,7 +96,7 @@ const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
 const char kFuncGraphFlagReAutoMonad[] = "ReAutoMonad";
 const char kFuncGraphFlagRecursive[] = "Recursive";
 
-class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
+class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
@@ -435,7 +436,7 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
   bool stub_;
-  inline static Drawer drawer_ = nullptr;
+  static Drawer drawer_;
   // Design switch_input and switch_layer_input as a ptr to
   // share between derived backpropagator and cloned graphs.
   std::shared_ptr<bool> switch_input_;

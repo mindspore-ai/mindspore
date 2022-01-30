@@ -156,6 +156,8 @@ enum SubModuleId : int {
 /// \return The sub-module name.
 MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
+MS_CORE_API void InitSubModulesLogLevel();
+
 /// \brief Get current time as a string.
 ///
 /// \return The string presents current time.
@@ -187,7 +189,7 @@ class TryCatchGuard {
 #endif
 
 /// \brief LogWriter defines interface to write log.
-class LogWriter {
+class MS_CORE_API LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
   using TraceProvider = std::function<void(std::ostringstream &oss)>;
@@ -200,18 +202,16 @@ class LogWriter {
   /// \brief Output log message from the input log stream.
   ///
   /// \param[in] stream The input log stream.
-  MS_CORE_API void operator<(const LogStream &stream) const noexcept;
+  void operator<(const LogStream &stream) const noexcept;
 
   /// \brief Output log message from the input log stream and then throw exception.
   ///
   /// \param[in] stream The input log stream.
-  MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
+  void operator^(const LogStream &stream) const __attribute__((noreturn));
 
-  static void set_exception_handler(const ExceptionHandler &exception_handler) {
-    exception_handler_ = exception_handler;
-  }
-  static void set_trace_provider(const TraceProvider &trace_provider) { trace_provider_ = trace_provider; }
-  static TraceProvider trace_provider() { return trace_provider_; }
+  static void set_exception_handler(const ExceptionHandler &exception_handler);
+  static void set_trace_provider(const TraceProvider &trace_provider);
+  static TraceProvider trace_provider();
 
  private:
   void OutputLog(const std::ostringstream &msg) const;
@@ -225,18 +225,20 @@ class LogWriter {
   inline static TraceProvider trace_provider_ = nullptr;
 };
 
-#define MSLOG_IF(level, condition, excp_type)                                                                       \
-  static_cast<void>(0), !(condition)                                                                                \
-                          ? void(0)                                                                                 \
-                          : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, \
-                                                 SUBMODULE_ID, excp_type) < mindspore::LogStream()
+#define MSLOG_IF(level, condition, excp_type)                                                                          \
+  !(condition) ? void(0)                                                                                               \
+               : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, SUBMODULE_ID, \
+                                      excp_type) < mindspore::LogStream()
+
 #define MSLOG_THROW(excp_type)                                                                                         \
   mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
 
-#define IS_OUTPUT_ON(level) \
-  ((level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] && (level) <= mindspore::this_thread_max_log_level)
+inline bool IS_OUTPUT_ON(enum MsLogLevel level) {
+  return (static_cast<int>(level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] &&
+          static_cast<int>(level) <= static_cast<int>(mindspore::this_thread_max_log_level));
+}
 
 #define MS_LOG(level) MS_LOG_##level
 

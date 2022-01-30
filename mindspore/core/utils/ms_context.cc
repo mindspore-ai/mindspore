@@ -26,6 +26,8 @@
 namespace mindspore {
 std::atomic<bool> thread_1_must_end(false);
 
+MsContext::DeviceSeter MsContext::seter_ = nullptr;
+MsContext::DeviceTypeSeter MsContext::device_type_seter_ = nullptr;
 std::shared_ptr<MsContext> MsContext::inst_context_ = nullptr;
 std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBackendGePrior},
                                                                  {"vm", kMsBackendVmOnly},

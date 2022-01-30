@@ -1,5 +1,6 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
+set(USE_GLOG on)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
@@ -233,7 +234,7 @@ target_link_libraries(converter_lite PRIVATE
         proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
-        -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+        mindspore_core
         mslite_converter_plugin
         mindspore::glog
         mindspore::protobuf

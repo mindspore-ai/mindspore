@@ -37,9 +37,6 @@ NativeCpuKernelModFactory &NativeCpuKernelModFactory::GetInstance() {
 void NativeCpuKernelModFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
                                          NativeCpuKernelModCreator &&kernel_creator) {
   (void)name_to_attr_creator_[kernel_name].emplace_back(kernel_attr, kernel_creator);
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-  MS_LOG(DEBUG) << "NativeCpuKernelModFactory register operator: " << kernel_name;
-#endif
 }
 
 std::shared_ptr<NativeCpuKernelMod> NativeCpuKernelModFactory::Create(const std::string &kernel_name,

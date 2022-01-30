@@ -32,14 +32,14 @@ namespace mindspore {
 namespace trace {
 constexpr auto kSectionPrefix = " - ";
 
-std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
-std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
-                         SourceLineTip tip = kSourceLineTipNextLine);
+MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
+MS_CORE_API std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
+                                     SourceLineTip tip = kSourceLineTipNextLine);
 // Generate the call stack of python source code to a string
-std::string DumpSourceLines(const AnfNodePtr &node);
-std::string DumpSourceLines(AnfNode *node);
+MS_CORE_API std::string DumpSourceLines(const AnfNodePtr &node);
+MS_CORE_API std::string DumpSourceLines(AnfNode *node);
 // Generate the call stack of python source code to a vector
-std::vector<std::string> GetSourceLineList(const AnfNodePtr &node);
+MS_CORE_API std::vector<std::string> GetSourceLineList(const AnfNodePtr &node);
 // Get the locations of the call stack of python source code
 std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr &node);
 // Generate the call stack of python source code with relevant trace info

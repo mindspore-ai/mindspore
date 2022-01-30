@@ -37,7 +37,7 @@ std::string type(const T &t) {
   return demangle(typeid(t).name());
 }
 
-class Any {
+class MS_CORE_API Any {
  public:
   // constructors
   Any() : m_ptr(nullptr), m_tpIndex(std::type_index(typeid(void))) {}

@@ -37,7 +37,7 @@ namespace mindspore {
 // Graph generator.
 // Can be called with a pipeline's resources and a list of argument types to
 // generate a graph corresponding to these types.
-class MetaFuncGraph : public FuncGraphBase {
+class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
  public:
   explicit MetaFuncGraph(const std::string &name) : name_(name) { cache_.clear(); }
 

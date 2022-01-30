@@ -20,42 +20,43 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-static const std::vector<std::string> sub_module_names = {
-  "UNKNOWN",            // SM_UNKNOWN
-  "CORE",               // SM_CORE
-  "ANALYZER",           // SM_ANALYZER
-  "COMMON",             // SM_COMMON
-  "DEBUG",              // SM_DEBUG
-  "OFFLINE_DEBUG",      // SM_OFFLINE_DEBUG
-  "DEVICE",             // SM_DEVICE
-  "GE_ADPT",            // SM_GE_ADPT
-  "IR",                 // SM_IR
-  "KERNEL",             // SM_KERNEL
-  "MD",                 // SM_MD
-  "ME",                 // SM_ME
-  "EXPRESS",            // SM_EXPRESS
-  "OPTIMIZER",          // SM_OPTIMIZER
-  "PARALLEL",           // SM_PARALLEL
-  "PARSER",             // SM_PARSER
-  "PIPELINE",           // SM_PIPELINE
-  "PRE_ACT",            // SM_PRE_ACT
-  "PYNATIVE",           // SM_PYNATIVE
-  "SESSION",            // SM_SESSION
-  "UTILS",              // SM_UTILS
-  "VM",                 // SM_VM
-  "PROFILER",           // SM_PROFILER
-  "PS",                 // SM_PS
-  "FL",                 // SM_FL
-  "DISTRIBUTED",        // SM_DISTRIBUTED
-  "LITE",               // SM_LITE
-  "ARMOUR",             // SM_ARMOUR
-  "HCCL_ADPT",          // SM_HCCL_ADPT
-  "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
-  "GE",                 // SM_GE
-  "API",                // SM_API
-};
-
-const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_names[(module_id % NUM_SUBMODUES)]; }
+const std::string GetSubModuleName(SubModuleId module_id) {
+  static const std::vector<std::string> sub_module_names = {
+    "UNKNOWN",            // SM_UNKNOWN
+    "CORE",               // SM_CORE
+    "ANALYZER",           // SM_ANALYZER
+    "COMMON",             // SM_COMMON
+    "DEBUG",              // SM_DEBUG
+    "OFFLINE_DEBUG",      // SM_OFFLINE_DEBUG
+    "DEVICE",             // SM_DEVICE
+    "GE_ADPT",            // SM_GE_ADPT
+    "IR",                 // SM_IR
+    "KERNEL",             // SM_KERNEL
+    "MD",                 // SM_MD
+    "ME",                 // SM_ME
+    "EXPRESS",            // SM_EXPRESS
+    "OPTIMIZER",          // SM_OPTIMIZER
+    "PARALLEL",           // SM_PARALLEL
+    "PARSER",             // SM_PARSER
+    "PIPELINE",           // SM_PIPELINE
+    "PRE_ACT",            // SM_PRE_ACT
+    "PYNATIVE",           // SM_PYNATIVE
+    "SESSION",            // SM_SESSION
+    "UTILS",              // SM_UTILS
+    "VM",                 // SM_VM
+    "PROFILER",           // SM_PROFILER
+    "PS",                 // SM_PS
+    "FL",                 // SM_FL
+    "DISTRIBUTED",        // SM_DISTRIBUTED
+    "LITE",               // SM_LITE
+    "ARMOUR",             // SM_ARMOUR
+    "HCCL_ADPT",          // SM_HCCL_ADPT
+    "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
+    "GE",                 // SM_GE
+    "API",                // SM_API
+  };
+  return sub_module_names[(module_id % NUM_SUBMODUES)];
+}
 
 // export GetTimeString for all sub modules
 std::string GetTimeString() {

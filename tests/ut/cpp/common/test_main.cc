@@ -19,12 +19,12 @@
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 
-namespace mindspore {
-  extern void InitSubModulesLogLevel();
+extern "C" {
+void common_log_init(void);
 }
 
 GTEST_API_ int main(int argc, char** argv) {
-  mindspore::InitSubModulesLogLevel();
+  common_log_init();
   testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
   mindspore::pipeline::ClearResAtexit();

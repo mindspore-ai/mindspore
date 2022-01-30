@@ -22,6 +22,7 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include "utils/visible.h"
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
   ClassType(const ClassType &) = delete;   \
@@ -41,7 +42,7 @@ namespace common {
 // TODO(lzlang): delete
 constexpr auto kEnableAscendKernelByKernel = false;
 inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
-const char *SafeCStr(const std::string &&str);
+MS_CORE_API const char *SafeCStr(const std::string &&str);
 
 static inline std::string GetEnv(const std::string &envvar) {
   const char *value = std::getenv(envvar.c_str());

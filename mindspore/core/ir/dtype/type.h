@@ -48,9 +48,9 @@ TypeId ComplexBitsToTypeId(const int nbits);
 /// \param[in] v Define the input TypeId.
 /// \return The label of input TypeId.
 MS_CORE_API const std::string &TypeIdLabel(const TypeId &v);
-TypeId NormalizeTypeId(const TypeId type_id);
+MS_CORE_API TypeId NormalizeTypeId(const TypeId type_id);
 bool IsSameObjectType(const Type &lhs, const Type &rhs);
-size_t GetTypeByte(const TypePtr &type_ptr);
+MS_CORE_API size_t GetTypeByte(const TypePtr &type_ptr);
 
 enum class BitsNum : int {
   eBits8 = 8,
@@ -166,14 +166,14 @@ class MS_CORE_API Type : public Value {
   /// \param[in] os The ostream to receive the description
   /// \param[in] type The Type object need to show the description
   /// \return The ostream with Type object description
-  friend std::ostream &operator<<(std::ostream &os, const Type &type);
+  MS_CORE_API friend std::ostream &operator<<(std::ostream &os, const Type &type);
 
   /// \brief Get Type object ToString description.
   ///
   /// \param[in] os The ostream to receive the description
   /// \param[in] type The TypePtr need to show the description
   /// \return The ostream with Type object description
-  friend std::ostream &operator<<(std::ostream &os, const TypePtr type);
+  MS_CORE_API friend std::ostream &operator<<(std::ostream &os, const TypePtr type);
 
  private:
   TypeId meta_type_;

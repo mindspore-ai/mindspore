@@ -17,6 +17,7 @@
 import numpy as np
 
 import mindspore.nn as nn
+from mindspore import context
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 import mindspore.ops.functional as F
@@ -455,9 +456,6 @@ def test_stop_gradient():
     """
 
     class StopGradientNet(nn.Cell):
-        def __init__(self):
-            super(StopGradientNet, self).__init__()
-
         def construct(self, x, y):
             c = x * y
             c_s = F.stop_gradient(c)
@@ -476,11 +474,8 @@ def test_switch():
     Description: Compile the backward graph for the switch op.
     Expectation: Load the bprop mindir successfully.
     """
-
+    context.set_context(mode=context.PYNATIVE_MODE)
     class SwitchNet(nn.Cell):
-        def __init__(self):
-            super(SwitchNet, self).__init__()
-
         def construct(self, x, y):
             if x > y:
                 return x

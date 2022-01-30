@@ -307,7 +307,7 @@ if(PLATFORM_ARM64)
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-
+            install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -326,6 +326,8 @@ if(PLATFORM_ARM64)
                     install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
                             DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
                     install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR} RENAME libglog.so.0
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
+                    install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
                 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud" AND MSLITE_ENABLE_RUNTIME_CONVERT)
@@ -517,6 +519,7 @@ elseif(WIN32)
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/../bin/libglog.dll DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         file(GLOB_RECURSE OPENCV_LIB_LIST
                 ${opencv_LIBPATH}/../bin/libopencv_core*
                 ${opencv_LIBPATH}/../bin/libopencv_imgcodecs*
@@ -670,7 +673,7 @@ else()
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-
+        install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_core.so.4.5
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -690,6 +693,7 @@ else()
                         DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR} RENAME libglog.so.0
                         COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
             if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud" AND MSLITE_ENABLE_RUNTIME_CONVERT)
                 file(GLOB DATA_ENGINE_LIB_LIST ${LITE_ACL_DIR}/_c_dataengine/*.so)

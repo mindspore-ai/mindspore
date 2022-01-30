@@ -213,6 +213,11 @@ if(MODE_ASCEND_ALL)
     add_compile_definitions(ENABLE_D)
 endif()
 
+# core/mindir.proto
+file(GLOB_RECURSE CORE_PROTO_IN ${CMAKE_SOURCE_DIR}/mindspore/core/proto/*.proto)
+ms_protobuf_generate(CORE_PROTO_SRC CORE_PROTO_HDR ${CORE_PROTO_IN})
+list(APPEND MINDSPORE_PROTO_LIST ${CORE_PROTO_SRC})
+
 if(MINDSPORE_PROTO_LIST)
     add_library(proto_input STATIC ${MINDSPORE_PROTO_LIST})
     set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
@@ -250,21 +255,19 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
-target_link_libraries(mindspore mindspore_core)
-
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        target_link_libraries(mindspore mindspore::grpc++)
+        target_link_libraries(mindspore PUBLIC mindspore::grpc++)
     else()
-        target_link_libraries(mindspore -Wl,--no-as-needed mindspore::grpc++)
+        target_link_libraries(mindspore PUBLIC -Wl,--no-as-needed mindspore::grpc++)
     endif()
 endif()
 
-target_link_libraries(mindspore securec mindspore::flatbuffers)
+target_link_libraries(mindspore PUBLIC securec mindspore::flatbuffers)
 
 if(NOT WIN32)
-  target_link_libraries(mindspore dl)
+  target_link_libraries(mindspore PUBLIC dl)
 endif()
 
 if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
@@ -301,7 +304,7 @@ if(ENABLE_D)
     find_library(GE_RUNNER ge_runner ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(GRAPH graph ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore ${GE_RUNNER} ${GRAPH} ${HCCL})
+    target_link_libraries(mindspore PUBLIC ${GE_RUNNER} ${GRAPH} ${HCCL})
 endif()
 
 if(MODE_ASCEND_ALL)
@@ -326,16 +329,16 @@ if(MODE_ASCEND_ALL)
     find_library(OPT_FEATURE opt_feature ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
                 ${ASCEND_RUNTIME_NEW_PATH} ${ASCEND_TOOLKIT_RUNTIME_NEW_PATH})
 
-    target_link_libraries(mindspore ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER} -Wl,--no-as-needed
-      ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
-    target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
+    target_link_libraries(mindspore PUBLIC ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
+            -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
+    target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
+    target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
                         -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(mindspore -Wl proto_input mindspore::protobuf mindspore::sentencepiece -Wl)
+    target_link_libraries(mindspore PUBLIC -Wl proto_input mindspore::protobuf mindspore::sentencepiece -Wl)
 else()
-    target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
+    target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 endif()
 
 # set c_expression building
@@ -375,29 +378,26 @@ set(MINDSPORE_RPATH ${ORIGIN_PATH}/lib:${MINDSPORE_RPATH})
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(mindspore mindspore::pybind11_module)
-    target_link_libraries(mindspore mindspore_gvar)
-    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore mindspore_core -Wl,--no-whole-archive)
+    target_link_libraries(mindspore PUBLIC mindspore::pybind11_module)
+    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(mindspore proto_input mindspore::protobuf
+    target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
         mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
-    target_link_libraries(mindspore mindspore::event_core ps_cache)
-    target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore mindspore_core proto_input -Wl,-noall_load)
+    target_link_libraries(mindspore PUBLIC mindspore::event_core ps_cache)
+    target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
-    target_link_libraries(_c_expression PRIVATE mindspore_gvar)
 else()
     if(ENABLE_CPU AND NOT WIN32)
-        target_link_libraries(mindspore proto_input mindspore::protobuf
+        target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
             mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
-        target_link_libraries(mindspore -Wl,--no-as-needed mindspore::event_core ps_cache)
+        target_link_libraries(mindspore PUBLIC -Wl,--no-as-needed mindspore::event_core ps_cache)
         if(${ENABLE_IBVERBS} STREQUAL "ON")
-            target_link_libraries(mindspore ibverbs rdmacm)
+            target_link_libraries(mindspore PUBLIC ibverbs rdmacm)
         endif()
     endif()
-    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore mindspore_core
-        proto_input -Wl,--no-whole-archive)
+    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive
+            mindspore_core)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
-    target_link_libraries(_c_expression PRIVATE mindspore_gvar)
 endif()
 
 if(USE_GLOG)
@@ -405,7 +405,7 @@ if(USE_GLOG)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(mindspore mindspore::crypto mindspore::ssl)
+    target_link_libraries(mindspore PUBLIC mindspore::crypto mindspore::ssl)
 endif()
 
 if(ENABLE_GPU)

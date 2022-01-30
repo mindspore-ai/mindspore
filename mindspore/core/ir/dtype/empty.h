@@ -101,10 +101,10 @@ class MS_CORE_API TypeEllipsis : public Type {
 };
 using TypeEllipsisPtr = std::shared_ptr<TypeEllipsis>;
 
-inline const TypePtr kTypeNone = std::make_shared<TypeNone>();
-inline const TypePtr kTypeNull = std::make_shared<TypeNull>();
-inline const TypePtr kTypeEllipsis = std::make_shared<TypeEllipsis>();
-inline const TypePtr kAnyType = std::make_shared<TypeAnything>();
+MS_CORE_API inline const TypePtr kTypeNone = std::make_shared<TypeNone>();
+MS_CORE_API inline const TypePtr kTypeNull = std::make_shared<TypeNull>();
+MS_CORE_API inline const TypePtr kTypeEllipsis = std::make_shared<TypeEllipsis>();
+MS_CORE_API inline const TypePtr kAnyType = std::make_shared<TypeAnything>();
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_EMPTY_H_

@@ -137,7 +137,7 @@ if(ENABLE_CACHE)
     add_dependencies(engine-cache-server core)
 endif()
 ################### Create _c_dataengine Library ######################
-set(submodules
+set(dataengine_submodules
         $<TARGET_OBJECTS:core>
         $<TARGET_OBJECTS:callback>
         $<TARGET_OBJECTS:utils>
@@ -170,36 +170,33 @@ set(submodules
         $<TARGET_OBJECTS:kernels-ir>
         $<TARGET_OBJECTS:kernels-ir-data>
         $<TARGET_OBJECTS:kernels-ir-vision>
-        $<TARGET_OBJECTS:md_plugin>
-        )
+        $<TARGET_OBJECTS:md_plugin>)
 
 if(ENABLE_ACL)
-    set(submodules
-            ${submodules}
+    set(dataengine_submodules
+            ${dataengine_submodules}
             $<TARGET_OBJECTS:kernels-dvpp-image>
             $<TARGET_OBJECTS:dvpp-utils>)
 endif()
 
 if(ENABLE_PYTHON)
-    set(submodules
-        ${submodules}
+    set(dataengine_submodules
+        ${dataengine_submodules}
         $<TARGET_OBJECTS:APItoPython>)
 endif()
 
 if(ENABLE_TDTQUE)
     if(NOT ENABLE_SECURITY)
-        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-perf> $<TARGET_OBJECTS:engine-tdt>)
-    else()
-        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-tdt>)
+        set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
     endif()
+    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-tdt>)
 else()
     if(NOT ENABLE_SECURITY)
-        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-perf>)
-    else()
-        add_library(_c_dataengine SHARED ${submodules})
+        set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
     endif()
 endif()
-
+set(dataengine_submodules ${dataengine_submodules} CACHE INTERNAL "_c_dataengine objects")
+add_library(_c_dataengine SHARED ${dataengine_submodules})
 if(ENABLE_PYTHON)
 set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
@@ -210,10 +207,8 @@ endif()
 ######################################################################
 
 ################# Link with external libraries ########################
-if(MSLITE_ENABLE_CLOUD_MIND_DATA)
-    target_link_libraries(_c_dataengine PRIVATE mindspore_gvar)
-else()
-    target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
+if(NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
+    target_link_libraries(_c_dataengine PRIVATE mindspore)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

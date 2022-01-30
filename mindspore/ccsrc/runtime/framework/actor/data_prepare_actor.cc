@@ -37,6 +37,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
+
   if ((device_tensor->GetPtr() == nullptr) &&
       (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),

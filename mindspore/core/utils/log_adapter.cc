@@ -115,6 +115,14 @@ static int GetSlogLevel(MsLogLevel level) {
 }
 #endif
 
+void LogWriter::set_exception_handler(const ExceptionHandler &exception_handler) {
+  exception_handler_ = exception_handler;
+}
+
+void LogWriter::set_trace_provider(const TraceProvider &trace_provider) { trace_provider_ = trace_provider; }
+
+LogWriter::TraceProvider LogWriter::trace_provider() { return trace_provider_; }
+
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
 #define google mindspore_private
@@ -424,9 +432,9 @@ void InitSubModulesLogLevel() {
 extern "C" {
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
 #ifdef _MSC_VER
-void common_log_init(void) {
+MS_CORE_API void common_log_init(void) {
 #else
-__attribute__((constructor)) void common_log_init(void) {
+__attribute__((constructor)) MS_CORE_API void common_log_init(void) {
 #endif
 #else
 MS_CORE_API void common_log_init(void) {

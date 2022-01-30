@@ -25,7 +25,7 @@
 namespace mindspore {
 class FuncGraphBase;
 using FuncGraphBasePtr = std::shared_ptr<FuncGraphBase>;
-class FuncGraphLoopBreaker {
+class MS_CORE_API FuncGraphLoopBreaker {
  public:
   ~FuncGraphLoopBreaker();
 

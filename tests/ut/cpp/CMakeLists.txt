@@ -52,7 +52,6 @@ if(ENABLE_MINDDATA)
             ./base/*.cc
             ./dataset/*.cc
             ./ir/dtype/*.cc
-            ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv/*.cc
             ./device/*.cc
             ./ir/*.cc
             ./kernel/*.cc
@@ -169,7 +168,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/session/kernel_graph.cc"
         "../../../mindspore/ccsrc/backend/session/session_basic.cc"
         "../../../mindspore/ccsrc/backend/session/executor.cc"
-        "../../../mindspore/core/ops/*.cc"
         "../../../mindspore/ccsrc/backend/session/executor_manager.cc"
         "../../../mindspore/ccsrc/backend/session/session_factory.cc"
         "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
@@ -191,12 +189,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_util.cc"
         )
 
-if(ENABLE_SECURITY)
-    file(GLOB_RECURSE _INFER_SUMMARY_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "../../../mindspore/core/ops/*_summary.cc"
-            )
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST ${_INFER_SUMMARY_FILES})
-endif()
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
   "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/util.cc")
@@ -238,8 +230,13 @@ add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})
 add_dependencies(_ut_mindspore_obj graph)
 add_dependencies(_ut_ut_obj engine-cache-server graph)
-add_executable(ut_tests $<TARGET_OBJECTS:_ut_ut_obj>
-        $<TARGET_OBJECTS:_ut_mindspore_obj>)
+set(ut_objects $<TARGET_OBJECTS:_ut_ut_obj> $<TARGET_OBJECTS:_ut_mindspore_obj>
+        $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj> $<TARGET_OBJECTS:mindrt_mid>
+        $<TARGET_OBJECTS:mindspore_gvar> $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
+if(ENABLE_MINDDATA)
+    set(ut_objects ${ut_objects} ${dataengine_submodules} $<TARGET_OBJECTS:mindrecord_obj>)
+endif()
+add_executable(ut_tests ${ut_objects})
 
 include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
 file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -266,21 +263,18 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
-                          mindspore::event_openssl mindspore_gvar ${PYTHON_LIBRARIES} pthread util dl)
+                          mindspore::event_openssl ${PYTHON_LIBRARIES} pthread util dl)
     if(ENABLE_MINDDATA)
-
-        # AUX_SOURCE_DIRECTORY(LITE_CV_FILES)
-        # message(STATUS "xxxxxxxxxxxxxxxxx"${LITE_CV_FILES} )
-        # add_library(_live_cv OBJECT ${LITE_CV_FILES})
-
-        target_link_libraries(ut_tests PRIVATE _c_dataengine _c_mindrecord)
+        target_link_libraries(ut_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
+                mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
+                mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
+                mindspore::icui18n)
     endif()
 else()
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore_gvar ${PYTHON_LIBRARIES})
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES})
 endif()
 if(USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
 endif()
 
-target_link_libraries(mindspore mindspore_core)
-target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph error_manager)
+target_link_libraries(ut_tests PRIVATE mindspore securec graph error_manager)

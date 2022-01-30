@@ -52,7 +52,7 @@ using is_value = std::is_base_of<Value, remove_reference_t<T>>;
 template <typename T>
 using is_base_ref = std::is_base_of<BaseRef, remove_reference_t<T>>;
 
-iterator ConstIteratorCast(std::vector<BaseRef> *v, const_iterator iter);
+MS_CORE_API iterator ConstIteratorCast(std::vector<BaseRef> *v, const_iterator iter);
 
 inline std::shared_ptr<VectorRef> MakeNode(const std::vector<BaseRef> &elements) {
   return std::make_shared<VectorRef>(elements);
@@ -272,7 +272,7 @@ T cast(const BaseRef &handle) {
 }
 }  // namespace utils
 
-class VectorRef : public BaseRef {
+class MS_CORE_API VectorRef : public BaseRef {
  public:
   using value_type = BaseRef;
 
@@ -366,7 +366,7 @@ struct VectorRefHash {
   std::size_t operator()(const VectorRef &c) const { return c.hash(); }
 };
 
-class SetRef : public BaseRef {
+class MS_CORE_API SetRef : public BaseRef {
  public:
   SetRef() {}
   explicit SetRef(const std::set<BaseRef, BaseRefLess> &elements) : elements_(elements) {}
@@ -411,7 +411,7 @@ class SetRef : public BaseRef {
 
 using SetRefPtr = std::shared_ptr<SetRef>;
 
-class RunFunctionRef : public BaseRef {
+class MS_CORE_API RunFunctionRef : public BaseRef {
  public:
   RunFunctionRef() {}
   explicit RunFunctionRef(const RunFuncPtr &ref_func) : func_(ref_func) {}

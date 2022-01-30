@@ -20,12 +20,13 @@
 #include <string>
 
 #include "actor/log.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 constexpr auto MINDRT_TCP = "tcp";
 constexpr auto MINDRT_UDP = "udp";
 
-class AID {
+class MS_CORE_API AID {
  public:
   AID() : name(), url() {}
 

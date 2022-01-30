@@ -37,6 +37,7 @@ std::string ShapeVectorToStr(const std::vector<int64_t> &shp) {
   return buffer.str();
 }
 }  // namespace
+
 // used for print BaseShape content
 std::ostream &operator<<(std::ostream &os, const BaseShape &bs) {
   os << bs.ToString();
@@ -128,24 +129,6 @@ BaseShapePtrList SequenceShape::ElementsClone() const {
   return ele_list;
 }
 
-template <typename T>
-bool SequenceShape::SequenceEqual(const BaseShape &other) const {
-  if (tid() != other.tid()) {
-    return false;
-  }
-  auto other_shapes = static_cast<const T &>(other).p_shapes_;
-  if (other_shapes.size() != p_shapes_.size()) {
-    return false;
-  }
-  for (uint64_t i = 0; i < p_shapes_.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(p_shapes_[i]);
-    MS_EXCEPTION_IF_NULL(other_shapes[i]);
-    if (!(*p_shapes_[i] == *other_shapes[i])) {
-      return false;
-    }
-  }
-  return true;
-}
 template bool SequenceShape::SequenceEqual<TupleShape>(const BaseShape &) const;
 template bool SequenceShape::SequenceEqual<ListShape>(const BaseShape &) const;
 }  // namespace abstract

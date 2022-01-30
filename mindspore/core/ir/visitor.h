@@ -23,7 +23,7 @@
 namespace mindspore {
 using VisitFuncType = std::function<void(const AnfNodePtr &)>;
 using PredicateFuncType = std::function<bool(const AnfNodePtr &)>;
-class AnfIrVisitor {
+class MS_CORE_API AnfIrVisitor {
  public:
   virtual void Visit(const AnfNodePtr &);
   virtual void Visit(const CNodePtr &);

@@ -488,7 +488,7 @@ class MS_CORE_API AnyValue : public Value {
   abstract::AbstractBasePtr ToAbstract() override;
 };
 
-inline const ValuePtr kAnyValue = std::make_shared<AnyValue>();
+MS_CORE_API inline const ValuePtr kAnyValue = std::make_shared<AnyValue>();
 
 /// \brief Monad defines a Value class which is used in side effect.
 class MS_CORE_API Monad : public Value {
@@ -535,7 +535,7 @@ class MS_CORE_API UMonad final : public Monad {
   std::string ToString() const override { return "U"; }
 };
 using UMonadPtr = std::shared_ptr<UMonad>;
-extern const ValuePtr kUMonad;
+MS_CORE_API extern const ValuePtr kUMonad;
 
 /// \brief IOMonad defines a Value class which related to IO side effect.
 class MS_CORE_API IOMonad final : public Monad {
@@ -564,7 +564,7 @@ class MS_CORE_API IOMonad final : public Monad {
   std::string ToString() const override { return "IO"; }
 };
 using IOMonadPtr = std::shared_ptr<IOMonad>;
-extern const ValuePtr kIOMonad;
+MS_CORE_API extern const ValuePtr kIOMonad;
 
 template <>
 inline const char *GetValue(const ValuePtr &value) {

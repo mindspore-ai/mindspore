@@ -30,7 +30,7 @@ constexpr auto kInfer = "DS_Infer";
 constexpr auto kInit = "DS_Init";
 constexpr auto kUpdate = "DS_Update";
 
-class AbstractScope {
+class MS_CORE_API AbstractScope {
  public:
   explicit AbstractScope(std::recursive_mutex *mu);
   AbstractScope(const AbstractScope &other) = delete;
@@ -43,7 +43,7 @@ class AbstractScope {
   std::recursive_mutex *mu_;
 };
 
-class AnfUtils {
+class MS_CORE_API AnfUtils {
  public:
   using CustomActorCallback = std::function<void(void *args)>;
   static bool IsDimUnknown(const abstract::ShapePtr &shape);

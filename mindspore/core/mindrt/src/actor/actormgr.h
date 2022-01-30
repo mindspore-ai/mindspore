@@ -33,7 +33,7 @@
 namespace mindspore {
 class ActorBase;
 class IOMgr;
-class ActorMgr {
+class MS_CORE_API ActorMgr {
  public:
   static inline ActorMgr *GetActorMgrRef() { return &actorMgr; }
 

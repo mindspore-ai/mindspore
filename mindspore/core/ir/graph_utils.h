@@ -34,6 +34,7 @@
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "utils/label.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
@@ -46,29 +47,31 @@ using MatchFunc = std::function<bool(const CNodePtr &)>;
 using NodeVisitFunc = std::function<void(const AnfNodePtr &)>;
 
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
-std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
-std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
+MS_CORE_API std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
+MS_CORE_API std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
 
-const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node);
+MS_CORE_API const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node);
 
 inline IncludeType AlwaysInclude(const AnfNodePtr &) { return FOLLOW; }
-IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
+MS_CORE_API IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
 
-std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root,
+                                                          const IncludeFunc &include = AlwaysInclude);
 
-std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root,
+                                                          const IncludeFunc &include = AlwaysInclude);
 
-std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
-                                                        const FilterFunc &filter);
+MS_CORE_API std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, const IncludeFunc &include,
+                                                                    const FilterFunc &filter);
 
-std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
-                                 const IncludeFunc &include = AlwaysInclude);
+MS_CORE_API std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
+                                             const IncludeFunc &include = AlwaysInclude);
 
-std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start);
+MS_CORE_API std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start);
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root);
 
-CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate);
+MS_CORE_API CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate);
 
 }  // namespace mindspore
 

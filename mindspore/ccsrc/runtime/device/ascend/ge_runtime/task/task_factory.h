@@ -65,7 +65,6 @@ class TaskFactory {
   class Register {
    public:
     Register(const TaskInfoType &type, const TASK_CREATOR_FUN &func) {
-      MS_LOG(DEBUG) << "register type " << type;
       TaskFactory::GetInstance().RegisterCreator(type, func);
     }
 

@@ -94,7 +94,7 @@ class WriteFile {
 
 #if defined(SYSTEM_ENV_POSIX)
 // File system of create or delete directory for posix system
-class PosixFileSystem : public FileSystem {
+class MS_CORE_API PosixFileSystem : public FileSystem {
  public:
   PosixFileSystem() = default;
 
@@ -200,7 +200,7 @@ class PosixWriteFile : public WriteFile {
 
 #if defined(SYSTEM_ENV_WINDOWS)
 // File system of create or delete directory for windows system
-class WinFileSystem : public FileSystem {
+class MS_CORE_API WinFileSystem : public FileSystem {
  public:
   WinFileSystem() = default;
 

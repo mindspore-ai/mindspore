@@ -45,15 +45,15 @@ struct StandardPrimitiveImplReg {
 using PrimitiveEvalImplMap =
   mindspore::HashMap<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
 
-PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
+MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
 
-PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
+MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
-StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
+MS_CORE_API StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
-std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode);
+MS_CORE_API std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode);
 
-void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);
+MS_CORE_API void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);
 
 class RegisterStandardPrimitiveEvalHelper {
  public:

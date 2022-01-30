@@ -27,10 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-const mindspore::HashSet<std::string> kConv3DKernel = {prim::kPrimConv3DBackpropInput->name(),
-                                                       prim::kPrimConv3DBackpropFilter->name(),
-                                                       prim::kPrimConv3D->name(), prim::kPrimConv3DTranspose->name()};
-
 void InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, const TypeId &src_type,
                 const TypeId &cast_type) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -71,7 +67,9 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
     if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
-
+    static const mindspore::HashSet<std::string> kConv3DKernel = {
+      prim::kPrimConv3DBackpropInput->name(), prim::kPrimConv3DBackpropFilter->name(), prim::kPrimConv3D->name(),
+      prim::kPrimConv3DTranspose->name()};
     if (kConv3DKernel.find(AnfAlgo::GetCNodeName(node)) == kConv3DKernel.end()) {
       continue;
     }

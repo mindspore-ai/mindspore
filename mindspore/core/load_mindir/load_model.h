@@ -55,7 +55,7 @@ class Layout {
 using LayoutPtr = std::shared_ptr<Layout>;
 using LayoutMap = std::map<string, LayoutPtr>;
 
-class MindIRLoader {
+class MS_CORE_API MindIRLoader {
  public:
   MindIRLoader() = default;
   MindIRLoader(bool is_lite, const unsigned char *dec_key, const size_t key_len, const std::string &dec_mode,
@@ -90,6 +90,6 @@ class MindIRLoader {
 };
 
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
-FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
+MS_CORE_API FuncGraphPtr ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_LOAD_MODEL_H

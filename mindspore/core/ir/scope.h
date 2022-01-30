@@ -24,7 +24,7 @@
 namespace mindspore {
 class Scope;
 using ScopePtr = std::shared_ptr<Scope>;
-extern const ScopePtr kDefaultScope;
+MS_CORE_API extern const ScopePtr kDefaultScope;
 
 class MS_CORE_API Scope {
  public:
@@ -50,10 +50,7 @@ class MS_CORE_API ScopeManager {
   /// \brief Get instance of ScopeManager.
   ///
   /// \return Instance of ScopeManager.
-  static ScopeManager &GetInstance() noexcept {
-    static ScopeManager instance;
-    return instance;
-  }
+  static ScopeManager &GetInstance() noexcept;
 
   /// \brief Disable the default constructor.
   ScopeManager(const ScopeManager &) = delete;

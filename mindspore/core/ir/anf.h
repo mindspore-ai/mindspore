@@ -1076,16 +1076,16 @@ static S GetValue(const ValuePtr &value) {
   return v;
 }
 
-std::string GetCNodeFuncName(CNodePtr cnode);
+MS_CORE_API std::string GetCNodeFuncName(CNodePtr cnode);
 
 // used to get FuncGraphPtr from a cnode first input
-FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
+MS_CORE_API FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
 
 // used to check whether an AnfNode is a cnode with a kind of Primitive as first input
-bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
+MS_CORE_API bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
 // used to get PrimitivePtr from a cnode first input
-PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
+MS_CORE_API PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 
 /// \brief Used to check whether the given node is a ValueNode with some Primitive value.
 ///
@@ -1105,28 +1105,28 @@ bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 MS_CORE_API bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSet &prim_set);
 
 // Check whether two primitives are same.
-bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);
+MS_CORE_API bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);
 
 // Get number of AbstractMonad
-size_t GetAbstractMonadNum(const AbstractBasePtrList &args);
+MS_CORE_API size_t GetAbstractMonadNum(const AbstractBasePtrList &args);
 
 // Check whether the given node has monad abstract.
-bool HasAbstractMonad(const AnfNodePtr &node);
+MS_CORE_API bool HasAbstractMonad(const AnfNodePtr &node);
 
 // Check whether the given node has U monad abstract.
-bool HasAbstractUMonad(const AnfNodePtr &node);
+MS_CORE_API bool HasAbstractUMonad(const AnfNodePtr &node);
 
 // Check whether the given node has IO monad abstract.
-bool HasAbstractIOMonad(const AnfNodePtr &node);
+MS_CORE_API bool HasAbstractIOMonad(const AnfNodePtr &node);
 
 // Gets primitive attribute value as a bool flag.
-bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &attr);
+MS_CORE_API bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &attr);
 
 // Gets effect info from a primitive by its attributes.
-EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
+MS_CORE_API EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
 
 // Check if monad state is equivalent for the connected two nodes, not strict but more faster.
-bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
+MS_CORE_API bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
 
 // used to check whether a ValueNode has some kind of value
 template <typename T>
@@ -1163,17 +1163,17 @@ inline S GetValueNode(const AnfNodePtr &node) {
   return s;
 }
 
-size_t NewSeenGeneration();
+MS_CORE_API size_t NewSeenGeneration();
 
 namespace id_generator {
-std::string get_id(const AnfNodePtr &node);
-void reset_id();
+MS_CORE_API std::string get_id(const AnfNodePtr &node);
+MS_CORE_API void reset_id();
 }  // namespace id_generator
 using TaggedNodeMap = mindspore::HashMap<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
-std::string GetCNodeTarget(const AnfNodePtr &node);
+MS_CORE_API std::string GetCNodeTarget(const AnfNodePtr &node);
 std::string GetOriginNodeTarget(const AnfNodePtr &node);
-bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
+MS_CORE_API bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
 struct GraphSegment {
   GraphSegment(const std::vector<AnfNodePtr> &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
   void AddPreSegment(const std::shared_ptr<GraphSegment> &segment) { (void)pre_segments_.insert(segment); }
@@ -1194,11 +1194,10 @@ inline void SetSequenceNodeElementsUseFlags(const AnfNodePtr &node, const std::s
 }
 
 // Set the sequence nodes' elements use flags to 'new_flag' at specific 'index' position.
-void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, bool new_flag);
+MS_CORE_API void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, std::size_t index, bool new_flag);
 // Set the sequence nodes' elements use flags all to 'new_flag'.
-void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag);
+MS_CORE_API void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag);
 // Set the sequence nodes' elements use flags all to 'new_flag' recursively.
-void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag);
+MS_CORE_API void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new_flag);
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_IR_ANF_H_

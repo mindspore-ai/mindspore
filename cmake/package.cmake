@@ -90,7 +90,7 @@ install(
 )
 
 install(
-    TARGETS mindspore_gvar
+    TARGETS mindspore_core
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
 )

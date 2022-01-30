@@ -17,9 +17,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 
-context.set_context(mode=context.GRAPH_MODE)
 recompute_prefix = 'recompute_'
-
 
 class Net(nn.Cell):
     def __init__(self):
@@ -32,21 +30,25 @@ class Net(nn.Cell):
 
 
 def test_set_recompute_true():
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute()
     assert net.pool.get_scope() == recompute_prefix
 
 def test_set_recompute_true_with_mp_comm_recompute():
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute(mp_comm_recompute=True)
     assert net.pool.get_scope() == recompute_prefix
 
 def test_set_recompute_true_with_mp_comm_recompute_false():
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute(mp_comm_recompute=False)
     assert net.pool.get_scope() == recompute_prefix
 
 def test_set_recompute_true_twice():
+    context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     net.pool.recompute()
     with pytest.raises(RuntimeError):

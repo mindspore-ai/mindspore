@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/meta_func_graph.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 namespace abstract {
@@ -36,7 +37,7 @@ using ArgsSpecToAnalysisContextMap =
   std::unordered_map<AbstractBasePtrList, AnalysisContextWeakPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
 
 // AnalysisContext will be stored in Config in AnalysisCache.
-class AnalysisContext {
+class MS_CORE_API AnalysisContext {
  public:
   AnalysisContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg, const AbstractBasePtrList &args_spec_list)
       : parent_(parent), func_graph_(fg), args_spec_list_(args_spec_list) {

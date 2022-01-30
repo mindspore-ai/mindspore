@@ -33,6 +33,8 @@
 #include <pmmintrin.h>
 #endif
 #endif
+#include "utils/visible.h"
+
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
 constexpr int kMaxCount = 30000;
@@ -122,7 +124,7 @@ class Worker {
   int max_spin_count_{kMinSpinCount};
 };
 
-class ThreadPool {
+class MS_CORE_API ThreadPool {
  public:
   static ThreadPool *CreateThreadPool(size_t thread_num, const std::vector<int> &core_list = {});
   virtual ~ThreadPool();

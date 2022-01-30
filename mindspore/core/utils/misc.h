@@ -25,10 +25,10 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-extern const int RET_SUCCESS;
-extern const int RET_FAILED;
-extern const int RET_CONTINUE;
-extern const int RET_BREAK;
+MS_CORE_API extern const int RET_SUCCESS;
+MS_CORE_API extern const int RET_FAILED;
+MS_CORE_API extern const int RET_CONTINUE;
+MS_CORE_API extern const int RET_BREAK;
 
 /// \brief Demangle the name to make it human reablable.
 ///

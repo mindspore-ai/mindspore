@@ -23,7 +23,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
 # add shared link library
 set_property(SOURCE ${DIR_LIB_SRCS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-add_library(_c_mindrecord SHARED ${DIR_LIB_SRCS})
+add_library(mindrecord_obj OBJECT ${DIR_LIB_SRCS})
+add_library(_c_mindrecord SHARED $<TARGET_OBJECTS:mindrecord_obj>)
 
 set_target_properties(_c_mindrecord PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
@@ -32,15 +33,15 @@ set_target_properties(_c_mindrecord PROPERTIES
 
 # add link library
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore_gvar mindspore::protobuf)
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore::protobuf)
 else()
     target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY}
-                                                mindspore_gvar mindspore::protobuf)
+                                                mindspore::protobuf)
     if(NOT MSLITE_ENABLE_CLOUD_MIND_DATA)
         target_link_libraries(_c_mindrecord PRIVATE mindspore)
     endif()
 endif()
-
+target_link_libraries(_c_mindrecord PRIVATE mindspore_core)
 if(USE_GLOG)
     target_link_libraries(_c_mindrecord PRIVATE mindspore::glog)
 else()

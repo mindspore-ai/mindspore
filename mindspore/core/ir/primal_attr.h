@@ -20,18 +20,15 @@
 #include <memory>
 #include <stack>
 #include "utils/hash_map.h"
-#include "ir/anf.h"
+#include "utils/visible.h"
 
 namespace mindspore {
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
 
-class PrimalAttrManager {
+class MS_CORE_API PrimalAttrManager {
  public:
-  static PrimalAttrManager &GetInstance() noexcept {
-    static PrimalAttrManager instance;
-    return instance;
-  }
+  static PrimalAttrManager &GetInstance() noexcept;
   PrimalAttrManager(const PrimalAttrManager &) = delete;
   PrimalAttrManager &operator=(const PrimalAttrManager &) = delete;
   ~PrimalAttrManager() = default;
