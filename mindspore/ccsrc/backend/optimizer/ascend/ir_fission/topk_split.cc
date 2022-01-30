@@ -30,6 +30,7 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kFloat16Len = 2;  // size of float16;
 constexpr size_t kTopkIndexK = 1;
+constexpr auto kAttrSorted = "sorted";
 
 tensor::TensorPtr CreateTensor() {
   // 1 create tensor
@@ -115,6 +116,32 @@ bool CheckOutputShape(const AnfNodePtr &node) {
   }
   return true;
 }
+
+bool CheckInputType(const AnfNodePtr &node) {
+  auto dtype = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  const std::set<TypeId> aicore_supported_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat};
+  if (aicore_supported_types.find(dtype) == aicore_supported_types.end()) {
+    MS_LOG(INFO) << "The input data type of topk to split must be float";
+    return false;
+  }
+  return true;
+}
+
+bool CheckFusion(const CNodePtr &node) {
+  if (!AnfAlgo::HasNodeAttr(kAttrSorted, node) || !AnfAlgo::GetNodeAttr<bool>(node, kAttrSorted)) {
+    return false;
+  }
+  if (!CheckInputNamesSize(node)) {
+    return false;
+  }
+  if (!CheckOutputShape(node)) {
+    return false;
+  }
+  if (!CheckInputType(node)) {
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 const BaseRef TopKSplit::DefinePattern() const {
@@ -131,13 +158,9 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
     return nullptr;
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  // set value node as topk's input
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!CheckInputNamesSize(cnode)) {
-    return nullptr;
-  }
-  if (!CheckOutputShape(cnode)) {
+  if (!CheckFusion(cnode)) {
     return nullptr;
   }
   // Copy a new node to check supported.
