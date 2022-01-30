@@ -61,7 +61,7 @@ void MatrixSetDiag(const int outer_batch, const int inner_row, const int inner_c
                    const bool right_align_super_diagonal, const bool right_align_sub_diagonal,
                    const bool is_single_diag, const T *diag_addr, T *output_addr, cudaStream_t cuda_stream) {
   int count = outer_batch * inner_row * inner_col;
-  MatrixSetDiagKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(
+  MatrixSetDiagKernel<<<GET_BLOCKS(count), GET_THREADS_MAXSIZE(count), 0, cuda_stream>>>(
     outer_batch, inner_row, inner_col, num_diags, max_diag_len, lower_index, upper_index, right_align_super_diagonal,
     right_align_sub_diagonal, is_single_diag, diag_addr, output_addr);
   return;
