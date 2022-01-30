@@ -52,7 +52,8 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     if (!handle_) {
       handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', open should be successful, but error, " << dlerror();
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, dlopen file '" << file_path_
+                      << "' should be successful, but error occurs! Error message is: " << dlerror();
         return false;
       }
     }
@@ -62,7 +63,8 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
         reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
           dlsym(handle_, func_name_.c_str()));
       if (auto error_info = dlerror(); error_info != nullptr) {
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', error info: " << error_info;
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, error occurs when fetching function '" << func_name_
+                      << "'. Error info: " << error_info;
         return false;
       }
     }
@@ -76,27 +78,17 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
         ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr, nullptr);
       }
     } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', operator failed when running user defined file " << file_path_
-                    << "! "
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, operator failed when executing user defined file "
+                    << file_path_ << "! "
                     << "Error message is " << e.what();
       return false;
     }
 
-    switch (ret) {
-      case 0:
-        break;
-      case 1:
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of parameters passed to AOT kernel is " << nparam
-                      << ", inconsistent with what the user wants";
-        return false;
-      case 2:
-        MS_LOG(ERROR) << "For '" << kernel_name_
-                      << "', type of parameters passed to AOT kernel is inconsistent with what the user wants";
-        return false;
-      default:
-        MS_LOG(ERROR) << "For '" << kernel_name_ << "', error occurred when running AOT kernel, "
-                      << "error id is " << ret;
-        return false;
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "Return value from GPU AOT kernel(" << file_path_ << ")'s function(" << func_name_ << ") is "
+                        << ret << ". "
+                        << "Any return value not equal to 0 will be treated as user defined error code and we will "
+                           "terminate execution. If termination is not your purpose, please set return value to 0.";
     }
 
     return true;
@@ -109,19 +101,21 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
       auto path = exec_info.substr(0, pos);
       auto real_path = FileUtils::GetRealPath(path.c_str());
       if (!real_path.has_value()) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the file path should be exist, but got " << path;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, couldn't find the AOT binary file: " << path;
       }
       file_path_ = real_path.value();
       func_name_ = exec_info.substr(pos + 1);
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', Wrong execute info:" << exec_info;
+      MS_LOG(EXCEPTION)
+        << "For '" << kernel_name_ << "' on GPU, user defined function path '" << exec_info
+        << "' is illegal. Proper function path should follow the format of 'dir_path/file_name:func_name'";
     }
 
     num_input_ = AnfAlgo::GetInputTensorNum(kernel_node);
     auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
     if (num_input_ != input_type_list.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << input_type_list.size()
-                        << ", but got " << num_input_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, number of input types '" << input_type_list.size()
+                        << "' doesn't match number of input shapes '" << num_input_ << "'";
     }
 
     for (size_t i = 0; i < num_input_; i++) {
@@ -138,8 +132,8 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
     auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
 
     if (num_output_ != output_type_list.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << output_type_list.size()
-                        << ", but got " << num_output_;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on GPU, number of outputs types '" << output_type_list.size()
+                        << "' doesn't match number of output shapes '" << num_output_ << "'";
     }
 
     for (size_t i = 0; i < num_output_; i++) {
