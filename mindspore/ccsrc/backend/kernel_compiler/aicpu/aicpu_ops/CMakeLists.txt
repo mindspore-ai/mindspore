@@ -1,5 +1,3 @@
-set(NORMAL_CMAKE_C_COMPILER ${CMAKE_C_COMPILER})
-set(NORMAL_CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER})
 if(DEFINED ENV{ASCEND_CUSTOM_PATH})
     set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/toolkit/toolchain)
 else()
@@ -8,7 +6,10 @@ endif()
 set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-g++)
 
-if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
+if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependency_securec_arm.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf_arm.cmake)
+
     set(AICPU_PROTO_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_op_proto/aicpu_tensor.proto
     )
@@ -26,11 +27,11 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILE
         ${CMAKE_CURRENT_SOURCE_DIR}/random_choice_with_mask_kernels.cc
     )
 
-    add_library(aicpu_kernels SHARED
+    add_library(mindspore_aicpu_kernels SHARED
         ${AICPU_SRC}
     )
 
-    target_compile_options(aicpu_kernels PRIVATE
+    target_compile_options(mindspore_aicpu_kernels PRIVATE
         -march=armv8-a
         -O2
         -fvisibility-inlines-hidden
@@ -39,26 +40,23 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILE
         -fno-common
     )
 
-    target_link_libraries(aicpu_kernels PRIVATE
+    target_link_libraries(mindspore_aicpu_kernels PRIVATE
         -ldl
         -shared
         PUBLIC
-        ${SECUREC_LIBRARY}
+        ${SECUREC_ARM_LIBRARY}
         -Wl,--whole-archive
         -Wl,--no-whole-archive
         -Wl,-Bsymbolic
         -rdynamic
-        mindspore::protobuf
+        mindspore::protobuf_arm
         -pthread
     )
 
     set(INSTALL_LIBRARY_DIR lib)
-    install(TARGETS aicpu_kernels OPTIONAL
-        EXPORT aicpu_kernels-targets
+    install(TARGETS mindspore_aicpu_kernels OPTIONAL
+        EXPORT mindspore_aicpu_kernels-targets
         LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}
     )
 
 endif()
-
-set(CMAKE_C_COMPILER ${NORMAL_CMAKE_C_COMPILER})
-set(CMAKE_CXX_COMPILER ${NORMAL_CMAKE_CXX_COMPILER})
