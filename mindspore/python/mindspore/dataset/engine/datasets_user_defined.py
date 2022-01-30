@@ -427,6 +427,11 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             return False
         return True
 
+    def __del__(self):
+        # del all the Queue & SharedQueue when the iter had been deleted from ITERATORS_LIST
+        del self.idx_queue
+        del self.res_queue
+
 
 class GeneratorDataset(MappableDataset, UnionBaseDataset):
     """

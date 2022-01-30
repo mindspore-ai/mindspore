@@ -21,6 +21,8 @@ You can convert a dataset to a standard format using the following steps:
 After declaring the dataset object, you can further apply dataset operations
 (e.g. filter, skip, concat, map, batch) on it.
 """
+import platform
+
 import numpy as np
 
 import mindspore._c_dataengine as cde
@@ -204,7 +206,15 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             self.load_dataset = False
         else:
             self.load_dataset = True
-        self.dataset_files = dataset_files
+
+        self.dataset_files = ""
+        if platform.system().lower() == "windows":
+            if isinstance(dataset_files, list):
+                self.dataset_files = [item.replace("\\", "/") for item in dataset_files]
+            else:
+                self.dataset_files = dataset_files.replace("\\", "/")
+        else:
+            self.dataset_files = dataset_files
         self.columns_list = replace_none(columns_list, [])
 
         if shuffle is False:

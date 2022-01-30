@@ -93,12 +93,13 @@ def test_chinese_path_on_windows():
     file_name2 = "./训练集/" + mindrecord_file_name
 
     if platform.system().lower() != "windows":
-        pass
+        return
 
     current_pwd = os.getcwd()
 
     # create chinese path for test
-    os.makedirs("data/数据集/train/训练集")
+    if not os.path.exists("data/数据集/train/训练集"):
+        os.makedirs("data/数据集/train/训练集")
 
     # current dir in english, mindrecord path in english
     dir_path = "./"
@@ -148,6 +149,75 @@ def test_chinese_path_on_windows():
     os.chdir(current_pwd)
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_backslash_path_on_windows():
+    """
+    Feature: test path on windows platform which contains both slash and backslash
+    Description: None
+    Expectation: raise axception
+    """
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    cv_dir_name_cn = "./data/数据集/train/"
+    file_name2 = '.\\训练集\\' + mindrecord_file_name
+
+    if platform.system().lower() != "windows":
+        return
+
+    current_pwd = os.getcwd()
+
+    # create chinese path for test
+    if not os.path.exists(os.path.join(cv_dir_name_cn, "训练集")):
+        os.makedirs(os.path.join(cv_dir_name_cn, "训练集"))
+    if not os.path.exists(os.path.join(cv_dir_name_cn, "data")):
+        os.makedirs(os.path.join(cv_dir_name_cn, "data"))
+
+    # current dir in chinese, mindrecord path in chinese with back slash
+    dir_path = cv_dir_name_cn
+    mindrecord_path = file_name2
+
+    add_and_remove_cv_file(dir_path + mindrecord_path)
+
+    os.chdir(dir_path)
+    write_read_mindrecord(mindrecord_path)
+
+    os.chdir(current_pwd)
+    add_and_remove_cv_file(dir_path + mindrecord_path)
+
+    # current dir in chinese, mindrecord path in english with back slash
+    dir_path = "./data/数据集/train"
+    mindrecord_path = mindrecord_file_name
+
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
+    os.chdir(dir_path)
+    write_read_mindrecord('.\\' + mindrecord_path)
+
+    os.chdir(current_pwd)
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
+    # current dir in chinese, mindrecord path in english with back slash
+    dir_path = "./data/数据集/train"
+    mindrecord_path = mindrecord_file_name
+
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
+    write_read_mindrecord(dir_path + '\\' + mindrecord_path)
+
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
+    # current dir in chinese, mindrecord path in english with back slash
+    dir_path = "./data/数据集/train"
+    mindrecord_path = 'data/' + mindrecord_file_name
+
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
+    write_read_mindrecord(dir_path + '\\' + mindrecord_path)
+
+    add_and_remove_cv_file(dir_path + '/' + mindrecord_path)
+
 
 if __name__ == '__main__':
     test_chinese_path_on_windows()
+    test_backslash_path_on_windows()
