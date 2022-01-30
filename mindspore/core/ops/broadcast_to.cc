@@ -27,8 +27,7 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto value_ptr = primitive->GetAttr(kShape);
   auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
-  CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, "input_x", SizeToLong(input_x.size()),
-                              prim_name);
+  CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()), prim_name);
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {

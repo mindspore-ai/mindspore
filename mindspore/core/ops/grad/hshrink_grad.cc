@@ -35,8 +35,7 @@ abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
   auto gradients_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
 
-  CheckAndConvertUtils::Check("gradients_shape", gradients_shape, kEqual, "features_shape", features_shape, prim_name,
-                              TypeError);
+  CheckAndConvertUtils::Check("gradients_shape", gradients_shape, kEqual, features_shape, prim_name, TypeError);
   return std::make_shared<abstract::Shape>(gradients_shape);
 }
 

@@ -191,7 +191,7 @@ class OrderedMap {
   }
 
   // Remove the element given by Iterator.
-  iterator erase(iterator iter) {
+  iterator erase(const iterator &iter) {
     (void)map_data_.erase(&(iter->first));
     return sequential_data_.erase(iter);
   }
@@ -355,7 +355,7 @@ class OrderedMap<std::shared_ptr<T>, ValueT> {
   }
 
   // Remove the element given by Iterator.
-  iterator erase(iterator iter) {
+  iterator erase(const iterator &iter) {
     (void)map_data_.erase(iter->first.get());
     return sequential_data_.erase(iter);
   }

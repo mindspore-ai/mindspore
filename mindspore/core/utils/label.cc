@@ -15,20 +15,15 @@
  */
 
 #include "utils/label.h"
-#include <algorithm>
-#include <sstream>
-#include <utility>
 
 #include "utils/info.h"
-#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace label_manage {
-static TraceLabelType global_trace_type = (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
-                                            ? TraceLabelType::kWithUniqueId
-                                            : TraceLabelType::kShortSymbol;
+static const TraceLabelType global_trace_type = (common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
+                                                  ? TraceLabelType::kWithUniqueId
+                                                  : TraceLabelType::kShortSymbol;
 TraceLabelType GetGlobalTraceLabelType() { return global_trace_type; }
-void SetGlobalTraceLabelType(TraceLabelType label_type) { global_trace_type = label_type; }
 
 struct NameWithTrace {
   std::string name;

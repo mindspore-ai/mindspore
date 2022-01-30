@@ -114,7 +114,7 @@ class MS_CORE_API TraceManager {
   static void DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info);
 
   /// \brief End current debug trace.
-  static void EndTrace() { trace_context_stack_.pop_back(); }
+  static void EndTrace() noexcept { trace_context_stack_.pop_back(); }
 
   /// \brief Clear debug info for parse or resolve.
   static void ClearParseOrResolveDebugInfo();

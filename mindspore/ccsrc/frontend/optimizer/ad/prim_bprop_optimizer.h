@@ -55,7 +55,7 @@ using PrimTupleListCache =
   std::unordered_map<TupleListKey, FuncGraphPtr, PrimitiveTupleListHasher, PrimitiveTupleListEqual>;
 
 struct PrimitiveTupleListHasher {
-  bool operator()(const TupleListKey &key) const {
+  std::size_t operator()(const TupleListKey &key) const {
     abstract::AbstractBasePtrListHasher hasher;
     return hasher(key.second);
   }

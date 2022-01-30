@@ -81,10 +81,10 @@ void Conv2DTranspose::set_pad_mode(const PadMode &pad_mode) {
   std::vector<int64_t> pad = get_pad();
   if (pad_mode == PAD) {
     for (auto item : pad) {
-      CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, "zeros_list", 0, name());
+      CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, 0, name());
     }
   } else {
-    CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
+    CheckAndConvertUtils::Check(kPad, pad, kEqual, {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
   (void)AddAttr(kPadMode, MakeValue(swi));

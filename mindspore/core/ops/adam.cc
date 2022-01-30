@@ -72,9 +72,9 @@ abstract::TupleShapePtr AdamInferShape(const PrimitivePtr &primitive, const std:
   auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, "m_shape", m_shape, prim_name);
-  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, "v_shape", v_shape, prim_name);
-  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, "grad_shape", grad_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, m_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
 }

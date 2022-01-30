@@ -23,6 +23,7 @@ namespace mindspore {
 class ExceptionListener {
  public:
   virtual void OnException() = 0;
+  virtual ~ExceptionListener() = default;
 };
 
 class MsException {
@@ -53,7 +54,7 @@ class MsException {
 
  private:
   MsException() = default;
-  ~MsException() = default;
+  ~MsException() { listener_ = nullptr; }
   DISABLE_COPY_AND_ASSIGN(MsException)
   ExceptionListener *listener_{nullptr};
   std::exception_ptr exception_ptr_{nullptr};

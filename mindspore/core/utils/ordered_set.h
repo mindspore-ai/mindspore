@@ -350,7 +350,7 @@ class OrderedSet<std::shared_ptr<T>> {
 
   OrderedSet &operator=(OrderedSet &&other) = default;
 
-  std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
+  std::pair<iterator, bool> insert(const iterator &pos, const element_type &e) {
     auto [map_iter, inserted] = map_.emplace(e.get(), iterator{});
     if (inserted) {
       map_iter->second = ordered_data_.emplace(pos, e);
@@ -358,7 +358,7 @@ class OrderedSet<std::shared_ptr<T>> {
     return {map_iter->second, inserted};
   }
 
-  std::pair<iterator, bool> insert(iterator pos, element_type &&e) {
+  std::pair<iterator, bool> insert(const iterator &pos, element_type &&e) {
     auto [map_iter, inserted] = map_.emplace(e.get(), iterator{});
     if (inserted) {
       map_iter->second = ordered_data_.emplace(pos, std::move(e));
@@ -389,7 +389,7 @@ class OrderedSet<std::shared_ptr<T>> {
     return true;
   }
 
-  iterator erase(iterator pos) {
+  iterator erase(const iterator &pos) {
     (void)map_.erase(pos->get());
     return ordered_data_.erase(pos);
   }

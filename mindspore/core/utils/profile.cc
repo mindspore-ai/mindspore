@@ -335,7 +335,7 @@ static void PrintTimeStat(std::ostringstream &oss, const TimeInfoGroup &group, c
   oss << "------[" << prefix << "] " << std::setw(10) << std::fixed << std::setprecision(6) << group.total_time
       << std::setw(6) << group.total_count << "\n";
   for (const auto &iter : group.items) {
-    oss << std::setw(5) << std::fixed << std::setprecision(2) << iter->second.time_ / group.total_time * 100
+    oss << std::setw(5) << std::fixed << std::setprecision(2) << (iter->second.time_ / group.total_time) * 100
         << "% : " << std::setw(12) << std::fixed << std::setprecision(6) << iter->second.time_ << "s : " << std::setw(6)
         << iter->second.count_ << ": " << iter->first << "\n";
   }

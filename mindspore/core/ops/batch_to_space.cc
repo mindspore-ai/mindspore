@@ -70,7 +70,7 @@ AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   for (size_t i = 0; i < 2; ++i) {
     auto x_block_prod = out_shape[i + 2] * block_size[i];
     auto crops_sum = crops[i][0] + crops[i][1];
-    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, "crops sum", attr_size, prim_name);
+    CheckAndConvertUtils::Check("x block shape prod", x_block_prod, kGreaterThan, attr_size, prim_name);
     out_shape[i + 2] = x_block_prod - crops_sum;
   }
   (void)CheckAndConvertUtils::CheckInteger("x_shape[0] % (block_size[0]*block_size[1])",

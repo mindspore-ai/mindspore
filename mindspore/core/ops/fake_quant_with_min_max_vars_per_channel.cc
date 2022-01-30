@@ -48,9 +48,9 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
   auto min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("x rank", (int64_t)x_shape.size(), kGreaterThan, 1, op_name);
-  CheckAndConvertUtils::Check("min shape", min_shape, kEqual, "max shape", max_shape, op_name);
+  CheckAndConvertUtils::Check("min shape", min_shape, kEqual, max_shape, op_name);
   (void)CheckAndConvertUtils::CheckInteger("min shape", (int64_t)min_shape.size(), kEqual, 1, op_name);
-  CheckAndConvertUtils::Check("min shape", min_shape[0], kEqual, "x shape", x_shape[x_shape.size() - 1], op_name);
+  CheckAndConvertUtils::Check("min shape", min_shape[0], kEqual, x_shape[x_shape.size() - 1], op_name);
 
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto min_type = input_args[kInputIndex1]->BuildType();

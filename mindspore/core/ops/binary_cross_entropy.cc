@@ -37,10 +37,10 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("x shape", x_shape, kEqual, "y shape", y_shape, prim_name);
+  CheckAndConvertUtils::Check("x shape", x_shape, kEqual, y_shape, prim_name);
   std::vector<int64_t> infer_shape;
   if (weight_shape.size() < 1) {
-    CheckAndConvertUtils::Check("x shape", y_shape, kEqual, "weight shape", weight_shape, prim_name);
+    CheckAndConvertUtils::Check("x shape", y_shape, kEqual, weight_shape, prim_name);
   }
   auto reduction = Reduction(GetValue<int64_t>(primitive->GetAttr(kReduction)));
   if (reduction != REDUCTION_SUM && reduction != MEAN) {

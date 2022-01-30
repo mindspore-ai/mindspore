@@ -32,7 +32,7 @@ ValuePtr GetPythonOps(const std::string &op_name,
                       bool use_signature = false);
 class UnpackGraphPrimitive : public Primitive {
  public:
-  explicit UnpackGraphPrimitive(const std::string &name, const bool &with_sens, const bool &need_unpack_args)
+  explicit UnpackGraphPrimitive(const std::string &, const bool &with_sens, const bool &need_unpack_args)
       : Primitive("UnpackGraph"), with_sens_in_args_(with_sens), need_unpack_args_(need_unpack_args) {}
   ~UnpackGraphPrimitive() override = default;
   MS_DECLARE_PARENT(UnpackGraphPrimitive, Primitive)

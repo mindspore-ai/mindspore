@@ -117,8 +117,8 @@ class CheckAndConvertUtils {
   template <typename T>
   static T CheckValue(const std::string &arg_name, T arg_value, CompareEnum compare_operator, T match_value,
                       const std::string &prim_name) {
-    auto iter = kCompareMap<float>.find(compare_operator);
-    if (iter == kCompareMap<float>.end()) {
+    auto iter = kCompareMap<T>.find(compare_operator);
+    if (iter == kCompareMap<T>.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
     }
     if (iter->second(arg_value, match_value)) {
@@ -142,8 +142,8 @@ class CheckAndConvertUtils {
   template <typename T>
   static void CheckInRange(const std::string &arg_name, T arg_value, CompareRange compare_operator,
                            const std::pair<T, T> &range, const std::string &prim_name) {
-    auto iter = kCompareRangeMap<float>.find(compare_operator);
-    if (iter == kCompareRangeMap<float>.end()) {
+    auto iter = kCompareRangeMap<T>.find(compare_operator);
+    if (iter == kCompareRangeMap<T>.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
     }
     if (range.first >= range.second) {
@@ -175,13 +175,12 @@ class CheckAndConvertUtils {
                                                 const std::vector<AbstractBasePtr> &input_args, size_t index);
   static TypePtr GetTensorInputType(const std::string &prim_name, const std::vector<AbstractBasePtr> &input_args,
                                     size_t index);
-  static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type,
-                    const std::string &value_name, int64_t value, const std::string &prim_name = "",
-                    ExceptionType exception_type = ValueError);
+  static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type, int64_t value,
+                    const std::string &prim_name = "", ExceptionType exception_type = ValueError);
 
   template <typename T>
   static void Check(const std::string &arg_name, const std::vector<T> &arg_value, CompareEnum compare_type,
-                    const std::string &value_name, const std::vector<T> &value, const std::string &prim_name = "",
+                    const std::vector<T> &value, const std::string &prim_name = "",
                     ExceptionType exception_type = ValueError) {
     if (compare_type != kEqual) {
       auto iter = kCompareToString.find(compare_type);
