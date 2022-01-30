@@ -74,6 +74,11 @@ OpParameter *PopulateAdderParameter(const void *prim) {
       param->act_type_ = ActType_Relu6;
       break;
     default:
+      if (act_type != schema::ActivationType_NO_ACTIVATION) {
+        MS_LOG(ERROR) << "activation type does not support, " << act_type;
+        free(param);
+        return nullptr;
+      }
       param->act_type_ = ActType_No;
       break;
   }
