@@ -2484,15 +2484,17 @@ class BatchDataset(UnionBaseDataset):
 
     def __del__(self):
         # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
-        arg_q_list_len = len(self._arg_q_list)
-        for idx in range(arg_q_list_len):
-            del self._arg_q_list[arg_q_list_len - idx - 1]
-        del self._arg_q_list
+        if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
+            arg_q_list_len = len(self._arg_q_list)
+            for idx in range(arg_q_list_len):
+                del self._arg_q_list[arg_q_list_len - idx - 1]
+            del self._arg_q_list
 
-        res_q_list_len = len(self._res_q_list)
-        for idx in range(res_q_list_len):
-            del self._res_q_list[res_q_list_len - idx - 1]
-        del self._res_q_list
+        if hasattr(self, '_res_q_list') and self._res_q_list is not None:
+            res_q_list_len = len(self._res_q_list)
+            for idx in range(res_q_list_len):
+                del self._res_q_list[res_q_list_len - idx - 1]
+            del self._res_q_list
 
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
@@ -3102,15 +3104,17 @@ class MapDataset(UnionBaseDataset):
 
     def __del__(self):
         # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
-        arg_q_list_len = len(self._arg_q_list)
-        for idx in range(arg_q_list_len):
-            del self._arg_q_list[arg_q_list_len - idx - 1]
-        del self._arg_q_list
+        if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
+            arg_q_list_len = len(self._arg_q_list)
+            for idx in range(arg_q_list_len):
+                del self._arg_q_list[arg_q_list_len - idx - 1]
+            del self._arg_q_list
 
-        res_q_list_len = len(self._res_q_list)
-        for idx in range(res_q_list_len):
-            del self._res_q_list[res_q_list_len - idx - 1]
-        del self._res_q_list
+        if hasattr(self, '_res_q_list') and self._res_q_list is not None:
+            res_q_list_len = len(self._res_q_list)
+            for idx in range(res_q_list_len):
+                del self._res_q_list[res_q_list_len - idx - 1]
+            del self._res_q_list
 
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
