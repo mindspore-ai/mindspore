@@ -35,10 +35,10 @@ namespace device {
 namespace ascend {
 using AscendAutoMonad = mindspore::session::AscendAutoMonad;
 
-void AscendGraphOptimization::Clear() {
+void AscendGraphOptimization::Reset() {
   MS_LOG(INFO) << "Clear Ascend Graph Optimization Resource.";
   memo_.clear();
-  graph_manager_ = nullptr;
+  graph_manager_->Clear();
 }
 
 void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
