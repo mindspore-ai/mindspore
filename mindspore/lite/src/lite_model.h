@@ -191,6 +191,7 @@ class LiteModel : public Model {
     auto tensor_count = meta_graph.allTensors()->size();
     for (uint32_t i = 0; i < tensor_count; ++i) {
       auto *tensor = meta_graph.allTensors()->template GetAs<schema::Tensor>(i);
+      MS_CHECK_TRUE_RET(tensor->format() >= schema::Format_MIN && tensor->format() <= schema::Format_MAX, false);
       if (tensor == nullptr) {
         MS_LOG(ERROR) << i << "the tensor in metagraph is nullptr";
         return false;

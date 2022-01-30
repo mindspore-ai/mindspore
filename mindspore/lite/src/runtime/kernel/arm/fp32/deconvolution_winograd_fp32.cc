@@ -112,6 +112,7 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   deconv_param_->thread_num_ = MSMIN(deconv_param_->thread_num_, deconv_param_->in_tile_count_);
 
   thread_num_hw_ = MSMIN(op_parameter_->thread_num_, deconv_param_->output_plane_);
+  MS_CHECK_TRUE_RET(thread_num_hw_ != 0, RET_ERROR);
   thread_stride_hw_ = UP_DIV(deconv_param_->output_plane_, thread_num_hw_);
 
   int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
