@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,3 +104,4 @@ from .grid_sampler_3d import _grid_sampler_3d_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
 from .cross import _cross_aicpu
 from .cummax import _cummax_aicpu
+from .floor_div import _floor_div_aicpu

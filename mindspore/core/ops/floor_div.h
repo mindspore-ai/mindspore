@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_OPS_FLOOR_DIV_H_
 #define MINDSPORE_CORE_OPS_FLOOR_DIV_H_
 #include <vector>
+#include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
@@ -35,6 +36,10 @@ class MS_CORE_API FloorDiv : public PrimitiveC {
   MS_DECLARE_PARENT(FloorDiv, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorDiv for the inputs.
   void Init() const {}
+  AbstractBasePtr FloorDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const std::vector<AbstractBasePtr> &input_args);
+
+  using PrimFloorDivPtr = std::shared_ptr<FloorDiv>;
 };
 AbstractBasePtr FloorDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
