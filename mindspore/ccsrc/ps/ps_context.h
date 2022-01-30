@@ -39,6 +39,7 @@ constexpr char kDPEncryptType[] = "DP_ENCRYPT";
 constexpr char kPWEncryptType[] = "PW_ENCRYPT";
 constexpr char kStablePWEncryptType[] = "STABLE_PW_ENCRYPT";
 constexpr char kNotEncryptType[] = "NOT_ENCRYPT";
+constexpr char kDSEncryptType[] = "SIGNDS";
 
 // Use binary data to represent federated learning server's context so that we can judge which round resets the
 // iteration. From right to left, each bit stands for:
@@ -173,6 +174,21 @@ class PSContext {
   void set_dp_norm_clip(float dp_norm_clip);
   float dp_norm_clip() const;
 
+  void set_sign_k(float sign_k);
+  float sign_k() const;
+
+  void set_sign_eps(float sign_eps);
+  float sign_eps() const;
+
+  void set_sign_thr_ratio(float sign_thr_ratio);
+  float sign_thr_ratio() const;
+
+  void set_sign_global_lr(float sign_global_lr);
+  float sign_global_lr() const;
+
+  void set_sign_dim_out(int sign_dim_out);
+  int sign_dim_out() const;
+
   core::ClusterConfig &cluster_config();
 
   void set_root_first_ca_path(const std::string &root_first_ca_path);
@@ -254,6 +270,11 @@ class PSContext {
         dp_delta_(0.01),
         dp_norm_clip_(1.0),
         encrypt_type_(kNotEncryptType),
+        sign_k_(0.01),
+        sign_eps_(100),
+        sign_thr_ratio_(0.6),
+        sign_global_lr_(1),
+        sign_dim_out_(0),
         enable_ssl_(false),
         client_password_(""),
         server_password_(""),
@@ -363,6 +384,21 @@ class PSContext {
 
   // Secure mechanism for federated learning. Used in federated learning for now.
   std::string encrypt_type_;
+
+  // Top-k of SignDS mechanism.
+  float sign_k_;
+
+  // Privacy budget epsilon of SignDS mechanism.
+  float sign_eps_;
+
+  // The threshold for the expected ratio of topk dimensions in the output of SignDS mechanism.
+  float sign_thr_ratio_;
+
+  // Global learning rate of SignDS mechanism.
+  float sign_global_lr_;
+
+  // The number of output dimension of SignDS mechanism.
+  int sign_dim_out_;
 
   // Whether to enable ssl for network communication.
   bool enable_ssl_;

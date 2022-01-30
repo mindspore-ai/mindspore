@@ -468,12 +468,18 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set configuration files required by the communication layer.")
     .def("config_file_path", &PSContext::config_file_path,
          "Get configuration files required by the communication layer.")
-    .def("set_dp_eps", &PSContext::set_dp_eps, "Set dp epsilon for federated learning secure aggregation.")
-    .def("set_dp_delta", &PSContext::set_dp_delta, "Set dp delta for federated learning secure aggregation.")
-    .def("set_dp_norm_clip", &PSContext::set_dp_norm_clip,
-         "Set dp norm clip for federated learning secure aggregation.")
     .def("set_encrypt_type", &PSContext::set_encrypt_type,
          "Set encrypt type for federated learning secure aggregation.")
+    .def("set_sign_k", &PSContext::set_sign_k, "Set sign k for federated learning SignDS.")
+    .def("sign_k", &PSContext::sign_k, "Get sign k for federated learning SignDS.")
+    .def("set_sign_eps", &PSContext::set_sign_eps, "Set sign eps for federated learning SignDS.")
+    .def("sign_eps", &PSContext::sign_eps, "Get sign eps for federated learning SignDS.")
+    .def("set_sign_thr_ratio", &PSContext::set_sign_thr_ratio, "Set sign thr ratio for federated learning SignDS.")
+    .def("sign_thr_ratio", &PSContext::sign_thr_ratio, "Get sign thr ratio for federated learning SignDS.")
+    .def("set_sign_global_lr", &PSContext::set_sign_global_lr, "Set sign global lr for federated learning SignDS.")
+    .def("sign_global_lr", &PSContext::sign_global_lr, "Get sign global lr for federated learning SignDS.")
+    .def("set_sign_dim_out", &PSContext::set_sign_dim_out, "Set sign dim out for federated learning SignDS.")
+    .def("sign_dim_out", &PSContext::sign_dim_out, "Get sign dim out for federated learning SignDS.")
     .def("set_http_url_prefix", &PSContext::set_http_url_prefix, "Set http url prefix for http communication.")
     .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.");
 

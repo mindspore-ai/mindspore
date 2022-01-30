@@ -71,7 +71,12 @@ _set_ps_context_func_map = {
     "dp_delta": ps_context().set_dp_delta,
     "dp_norm_clip": ps_context().set_dp_norm_clip,
     "encrypt_type": ps_context().set_encrypt_type,
-    "http_url_prefix": ps_context().set_http_url_prefix
+    "http_url_prefix": ps_context().set_http_url_prefix,
+    "sign_k": ps_context().set_sign_k,
+    "sign_eps": ps_context().set_sign_eps,
+    "sign_thr_ratio": ps_context().set_sign_thr_ratio,
+    "sign_global_lr": ps_context().set_sign_global_lr,
+    "sign_dim_out": ps_context().set_sign_dim_out
 }
 
 _get_ps_context_func_map = {
@@ -112,7 +117,12 @@ _get_ps_context_func_map = {
     "server_password": ps_context().server_password,
     "scheduler_manage_port": ps_context().scheduler_manage_port,
     "config_file_path": ps_context().config_file_path,
-    "http_url_prefix": ps_context().http_url_prefix
+    "http_url_prefix": ps_context().http_url_prefix,
+    "sign_k": ps_context().sign_k,
+    "sign_eps": ps_context().sign_eps,
+    "sign_thr_ratio": ps_context().sign_thr_ratio,
+    "sign_global_lr": ps_context().sign_global_lr,
+    "sign_dim_out": ps_context().sign_dim_out
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",

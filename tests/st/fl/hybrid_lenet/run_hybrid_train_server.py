@@ -57,6 +57,12 @@ parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 parser.add_argument("--client_password", type=str, default="")
 parser.add_argument("--server_password", type=str, default="")
 parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
+# parameters for 'SIGNDS'
+parser.add_argument("--sign_k", type=float, default=0.01)
+parser.add_argument("--sign_eps", type=float, default=100)
+parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
+parser.add_argument("--sign_global_lr", type=float, default=0.1)
+parser.add_argument("--sign_dim_out", type=int, default=0)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -92,6 +98,11 @@ root_first_ca_path = args.root_first_ca_path
 root_second_ca_path = args.root_second_ca_path
 equip_crl_path = args.equip_crl_path
 replay_attack_time_diff = args.replay_attack_time_diff
+sign_k = args.sign_k
+sign_eps = args.sign_eps
+sign_thr_ratio = args.sign_thr_ratio
+sign_global_lr = args.sign_global_lr
+sign_dim_out = args.sign_dim_out
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -138,6 +149,11 @@ for i in range(local_server_num):
     cmd_server += " --root_second_ca_path=" + str(root_second_ca_path)
     cmd_server += " --equip_crl_path=" + str(equip_crl_path)
     cmd_server += " --replay_attack_time_diff=" + str(replay_attack_time_diff)
+    cmd_server += " --sign_k=" + str(sign_k)
+    cmd_server += " --sign_eps=" + str(sign_eps)
+    cmd_server += " --sign_thr_ratio=" + str(sign_thr_ratio)
+    cmd_server += " --sign_global_lr=" + str(sign_global_lr)
+    cmd_server += " --sign_dim_out=" + str(sign_dim_out)
     cmd_server += " > server.log 2>&1 &"
 
     import time

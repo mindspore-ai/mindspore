@@ -330,9 +330,17 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
   float dp_delta = param->dp_delta;
   float dp_norm_clip = param->dp_norm_clip;
   auto encrypt_type = fbb->CreateString(ps::PSContext::instance()->encrypt_type());
+  float sign_k = param->sign_k;
+  float sign_eps = param->sign_eps;
+  float sign_thr_ratio = param->sign_thr_ratio;
+  float sign_global_lr = param->sign_global_lr;
+  int sign_dim_out = param->sign_dim_out;
 
+  auto pw_params = schema::CreatePWParams(*fbb.get(), t, p, g, prime);
+  auto dp_params = schema::CreateDPParams(*fbb.get(), dp_eps, dp_delta, dp_norm_clip);
+  auto ds_params = schema::CreateDSParams(*fbb.get(), sign_k, sign_eps, sign_thr_ratio, sign_global_lr, sign_dim_out);
   auto cipher_public_params =
-    schema::CreateCipherPublicParams(*fbb.get(), t, p, g, prime, dp_eps, dp_delta, dp_norm_clip, encrypt_type);
+    schema::CreateCipherPublicParams(*fbb.get(), encrypt_type, pw_params, dp_params, ds_params);
 #endif
 
   schema::FLPlanBuilder fl_plan_builder(*(fbb.get()));

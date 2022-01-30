@@ -310,6 +310,18 @@ public class UpdateModel {
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsDP);
                     LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
                     return this;
+                case SIGNDS:
+                    int[] fmOffsetsSignDS = secureProtocol.signDSModel(builder, trainDataSize, trainedMap);
+                    if (fmOffsetsSignDS == null || fmOffsetsSignDS.length == 0) {
+                        LOGGER.severe("[Encrypt] the return fmOffsetsSignDS from <secureProtocol.signDSModel> is " +
+                                "null, please check");
+                        retCode = ResponseCode.RequestError;
+                        status = FLClientStatus.FAILED;
+                        throw new IllegalArgumentException();
+                    }
+                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignDS);
+                    LOGGER.info(Common.addTag("[Encrypt] SignDS mask model ok!"));
+                    return this;
                 case NOT_ENCRYPT:
                 default:
                     int featureSize = updateFeatureName.size();

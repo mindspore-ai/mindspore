@@ -64,6 +64,12 @@ parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
 parser.add_argument("--client_password", type=str, default="")
 parser.add_argument("--server_password", type=str, default="")
 parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
+# parameters for 'SIGNDS'
+parser.add_argument("--sign_k", type=float, default=0.01)
+parser.add_argument("--sign_eps", type=float, default=100)
+parser.add_argument("--sign_thr_ratio", type=float, default=0.6)
+parser.add_argument("--sign_global_lr", type=float, default=0.1)
+parser.add_argument("--sign_dim_out", type=int, default=0)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -100,6 +106,11 @@ replay_attack_time_diff = args.replay_attack_time_diff
 client_password = args.client_password
 server_password = args.server_password
 enable_ssl = args.enable_ssl
+sign_k = args.sign_k
+sign_eps = args.sign_eps
+sign_thr_ratio = args.sign_thr_ratio
+sign_global_lr = args.sign_global_lr
+sign_dim_out = args.sign_dim_out
 
 ctx = {
     "enable_fl": True,
@@ -135,7 +146,12 @@ ctx = {
     "encrypt_type": encrypt_type,
     "client_password": client_password,
     "server_password": server_password,
-    "enable_ssl": enable_ssl
+    "enable_ssl": enable_ssl,
+    "sign_k": sign_k,
+    "sign_eps": sign_eps,
+    "sign_thr_ratio": sign_thr_ratio,
+    "sign_global_lr": sign_global_lr,
+    "sign_dim_out": sign_dim_out
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)

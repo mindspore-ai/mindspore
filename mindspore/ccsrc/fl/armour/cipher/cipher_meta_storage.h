@@ -68,6 +68,11 @@ struct CipherPublicPara {
   float dp_delta;
   float dp_norm_clip;
   string encrypt_type;
+  float sign_k;
+  float sign_eps;
+  float sign_thr_ratio;
+  float sign_global_lr;
+  int sign_dim_out;
 };
 
 class CipherMetaStorage {
