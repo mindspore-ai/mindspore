@@ -142,6 +142,10 @@ void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDiscon
 }
 
 void TcpServer::Init() {
+  if (PSContext::instance()->enable_ssl()) {
+    MS_LOG(INFO) << "Init ssl.";
+    SSLWrapper::GetInstance().InitSSL();
+  }
   int result = evthread_use_pthreads();
   if (result != 0) {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
