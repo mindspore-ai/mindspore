@@ -145,6 +145,8 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
   } else if (value->isa<Int32Imm>()) {
     type = kNumberTypeInt32;
     (reinterpret_cast<int32_t *>(host_addr.get()))[0] = GetValue<int32_t>(value);
+  } else if (value->isa<Monad>()) {
+    return;
   } else {
     std::string error_info = "Invalid value:" + value->ToString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
