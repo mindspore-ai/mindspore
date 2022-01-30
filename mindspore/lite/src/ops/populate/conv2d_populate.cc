@@ -20,6 +20,38 @@ using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore {
 namespace lite {
+namespace {
+int SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, ConvParameter *param) {
+  switch (pad_mode) {
+    case schema::PadMode_SAME:
+      param->pad_mode_ = Pad_same;
+      break;
+    case schema::PadMode_VALID:
+      param->pad_mode_ = Pad_valid;
+      break;
+    default:
+      param->pad_mode_ = Pad_pad;
+  }
+
+  switch (act_type) {
+    case schema::ActivationType_RELU:
+      param->act_type_ = ActType_Relu;
+      break;
+    case schema::ActivationType_RELU6:
+      param->act_type_ = ActType_Relu6;
+      break;
+    default:
+      if (act_type != schema::ActivationType_NO_ACTIVATION) {
+        MS_LOG(ERROR) << "activation type does not support, " << act_type;
+        return RET_NOT_SUPPORT;
+      }
+      param->act_type_ = ActType_No;
+      break;
+  }
+  return RET_OK;
+}
+}  // namespace
+
 OpParameter *PopulateConvParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
@@ -67,16 +99,6 @@ OpParameter *PopulateConvParameter(const void *prim) {
   param->group_ = static_cast<int>(value->group());
   param->stride_h_ = static_cast<int>(*(stride->begin()));
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      param->pad_mode_ = Pad_pad;
-  }
   if (pad_list == nullptr || pad_list->size() < kMinShapeSizeFour) {
     param->pad_u_ = 0;
     param->pad_d_ = 0;
@@ -92,16 +114,12 @@ OpParameter *PopulateConvParameter(const void *prim) {
   param->dilation_w_ = static_cast<int>(*(dilation->begin() + 1));
   param->input_channel_ = static_cast<int>(value->in_channel());
   param->output_channel_ = static_cast<int>(value->out_channel());
+  auto pad_mode = value->pad_mode();
   auto act_type = value->activation_type();
-  switch (act_type) {
-    case schema::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      param->act_type_ = ActType_No;
+  if (SetPadAndAct(pad_mode, act_type, param) != RET_OK) {
+    MS_LOG(ERROR) << "SetPadAndAct failed.";
+    free(param);
+    return nullptr;
   }
   return reinterpret_cast<OpParameter *>(param);
 }

@@ -20,7 +20,7 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore {
 namespace lite {
-void SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, ConvParameter *param) {
+int SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, ConvParameter *param) {
   switch (pad_mode) {
     case schema::PadMode_SAME:
       param->pad_mode_ = Pad_same;
@@ -40,9 +40,14 @@ void SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, Con
       param->act_type_ = ActType_Relu6;
       break;
     default:
+      if (act_type != schema::ActivationType_NO_ACTIVATION) {
+        MS_LOG(ERROR) << "activation type does not support, " << act_type;
+        return RET_NOT_SUPPORT;
+      }
       param->act_type_ = ActType_No;
       break;
   }
+  return RET_OK;
 }
 
 OpParameter *PopulateDeconvParameter(const void *prim) {
@@ -129,7 +134,11 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
 
   auto act_type = value->activation_type();
   auto pad_mode = value->pad_mode();
-  SetPadAndAct(pad_mode, act_type, param);
+  if (SetPadAndAct(pad_mode, act_type, param) != RET_OK) {
+    MS_LOG(ERROR) << "SetPadAndAct failed.";
+    free(param);
+    return nullptr;
+  }
 
   return reinterpret_cast<OpParameter *>(param);
 }
