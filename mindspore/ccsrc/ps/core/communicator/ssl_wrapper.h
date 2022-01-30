@@ -43,6 +43,7 @@ namespace ps {
 namespace core {
 class SSLWrapper {
  public:
+  void InitSSL();
   static SSLWrapper &GetInstance() {
     static SSLWrapper instance;
     return instance;
@@ -55,7 +56,6 @@ class SSLWrapper {
   SSLWrapper(const SSLWrapper &) = delete;
   SSLWrapper &operator=(const SSLWrapper &) = delete;
 
-  void InitSSL();
   void CleanSSL();
   time_t ConvertAsn1Time(const ASN1_TIME *const time) const;
   void StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path);
