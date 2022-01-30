@@ -115,7 +115,9 @@ void DisableMindRT(const ResourcePtr &res) {
   }
   auto func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph != nullptr && func_graph->ContainMultiTarget() && IsDynamicShapeGraph(func_graph)) {
+  bool enable_old_runtime = (common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "0");
+  if (enable_old_runtime ||
+      (func_graph != nullptr && func_graph->ContainMultiTarget() && IsDynamicShapeGraph(func_graph))) {
     // Heterogeneous scenario + dynamic_shape runs in MsBackend.
     MS_LOG(INFO) << "Disable mindRT in the heterogeneous + dynamic shape scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
