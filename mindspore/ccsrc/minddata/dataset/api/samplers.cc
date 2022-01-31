@@ -29,6 +29,14 @@
 
 namespace mindspore {
 namespace dataset {
+Status Sampler::BuildChildren(std::shared_ptr<SamplerObj> *const sampler) const {
+  for (const auto &child : children_) {
+    std::shared_ptr<SamplerObj> sampler_obj = child->Parse();
+    RETURN_IF_NOT_OK((*sampler)->AddChildSampler(sampler_obj));
+  }
+  return Status::OK();
+}
+
 // DistributedSampler
 DistributedSampler::DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
                                        uint32_t seed, int64_t offset, bool even_dist)
@@ -41,8 +49,13 @@ DistributedSampler::DistributedSampler(int64_t num_shards, int64_t shard_id, boo
       even_dist_(even_dist) {}
 
 std::shared_ptr<SamplerObj> DistributedSampler::Parse() const {
-  return std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_,
-                                                 even_dist_);
+  std::shared_ptr<SamplerObj> output =
+    std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // PKSampler
@@ -50,7 +63,12 @@ PKSampler::PKSampler(int64_t num_val, bool shuffle, int64_t num_samples)
     : num_val_(num_val), shuffle_(shuffle), num_samples_(num_samples) {}
 
 std::shared_ptr<SamplerObj> PKSampler::Parse() const {
-  return std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // RandomSampler
@@ -58,7 +76,12 @@ RandomSampler::RandomSampler(bool replacement, int64_t num_samples)
     : replacement_(replacement), num_samples_(num_samples) {}
 
 std::shared_ptr<SamplerObj> RandomSampler::Parse() const {
-  return std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // SequentialSampler
@@ -66,7 +89,12 @@ SequentialSampler::SequentialSampler(int64_t start_index, int64_t num_samples)
     : start_index_(start_index), num_samples_(num_samples) {}
 
 std::shared_ptr<SamplerObj> SequentialSampler::Parse() const {
-  return std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // SubsetSampler
@@ -74,7 +102,12 @@ SubsetSampler::SubsetSampler(const std::vector<int64_t> &indices, int64_t num_sa
     : indices_(indices), num_samples_(num_samples) {}
 
 std::shared_ptr<SamplerObj> SubsetSampler::Parse() const {
-  return std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // SubsetRandomSampler
@@ -82,7 +115,12 @@ SubsetRandomSampler::SubsetRandomSampler(const std::vector<int64_t> &indices, in
     : SubsetSampler(indices, num_samples) {}
 
 std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() const {
-  return std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 
 // WeightedRandomSampler
@@ -90,7 +128,12 @@ WeightedRandomSampler::WeightedRandomSampler(const std::vector<double> &weights,
     : weights_(weights), num_samples_(num_samples), replacement_(replacement) {}
 
 std::shared_ptr<SamplerObj> WeightedRandomSampler::Parse() const {
-  return std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
+  std::shared_ptr<SamplerObj> output = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
+  Status s = BuildChildren(&output);
+  if (s.IsError()) {
+    MS_LOG(ERROR) << "[Internal ERROR] Error in Parse. Message: " << s;
+  }
+  return output;
 }
 }  // namespace dataset
 }  // namespace mindspore

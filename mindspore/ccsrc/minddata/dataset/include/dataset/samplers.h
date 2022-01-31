@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "include/api/types.h"
+#include "include/api/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -87,6 +88,11 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   /// \brief Pure virtual function to convert a Sampler class into an IR Sampler object.
   /// \return shared pointer to the newly created TensorOperation.
   virtual std::shared_ptr<SamplerObj> Parse() const = 0;
+
+  /// \brief A function that calls Parse() on the children of this sampler
+  /// \param[in] sampler The samplerIR object built from this sampler
+  /// \return the Status code returned
+  Status BuildChildren(std::shared_ptr<SamplerObj> *const sampler) const;
 
   std::vector<std::shared_ptr<Sampler>> children_;
 };
