@@ -471,6 +471,8 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
 #ifndef ENABLE_SECURITY
   session_->SetSummaryNodes(graph.get());
+  // Update needed dump kernels for mindRT.
+  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif
 
   // Adjust kernel graph before run graph.
