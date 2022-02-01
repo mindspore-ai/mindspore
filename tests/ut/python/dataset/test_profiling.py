@@ -78,6 +78,23 @@ class TestMinddataProfilingManager:
             op_info = data["op_info"]
             assert len(op_info) == num_pipeline_ops
 
+            # Confirm memory fields exist
+            assert "pss_mbytes" in data["process_memory_info"]
+            assert "rss_mbytes" in data["process_memory_info"]
+            assert "vss_mbytes" in data["process_memory_info"]
+            assert "available_sys_memory_mbytes" in data["system_memory_info"]
+            assert "total_sys_memory_mbytes" in data["system_memory_info"]
+            assert "used_sys_memory_mbytes" in data["system_memory_info"]
+
+            # Perform sanity check on memory information
+            assert data["process_memory_info"]["pss_mbytes"][0] > 0
+            assert data["process_memory_info"]["rss_mbytes"][0] > 0
+            assert data["process_memory_info"]["vss_mbytes"][0] > 0
+            assert data["system_memory_info"]["available_sys_memory_mbytes"][0] > 0
+            assert data["system_memory_info"]["total_sys_memory_mbytes"][0] > 0
+            assert data["system_memory_info"]["used_sys_memory_mbytes"][0] > 0
+
+
     def confirm_ops_in_pipeline(self, pipeline_file, num_ops, op_list):
         """
         Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops

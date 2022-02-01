@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PROFILE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_PROFILE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_PROFILING_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_PROFILING_H_
 
 #include <atomic>
 #include <chrono>
@@ -41,6 +41,12 @@ const char kDeviceQueueTracingName[] = "Device_Queue_Tracing";
 const char kDatasetIteratorTracingName[] = "Dataset_Iterator_Tracing";
 const char kConnectorSizeSamplingName[] = "Connector_Size_Sampling";
 const char kCpuSamplerName[] = "Cpu_Sampler";
+
+// Values for process memory metrics - common for profiling and cpu_sampler
+enum ProcessMemoryMetric { kPSS, kRSS, kVSS };
+
+// Values for system memory metrics - common for profiling and cpu_sampler
+enum SystemMemoryMetric { kMemoryAvailable, kMemoryTotal, kMemoryUsed };
 
 // Profiling is a class of basic unit of profiling action
 // This base class encapsulate the serialization output logic
@@ -273,6 +279,78 @@ class ProfilingManager {
   /// \param [out] result A vector with the sampled System CPU Utilization of the operator.
   /// \return Status object with the error code
   Status GetSysCpuUtilByTime(int32_t op_id, uint64_t start_ts, uint64_t end_ts, std::vector<uint16_t> *result);
+
+  /// \brief API to get information on main process memory usage
+  /// \param [in] metric The requested memory set usage.  One of these values:
+  ///     - ProcessMemoryMetric::kVSS - virtual set size, virtual memory usage
+  ///     - ProcessMemoryMetric::kPSS - proportional set size, physical memory usage with proportional allocation of
+  ///     shared libraries
+  ///     - ProcessMemoryMetric::kRSS - resident set size, physical memory usage (includes shared libraries)
+  /// \param [in] epoch_num The epoch number for which results are requested
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetMainProcessMemoryInfoByEpoch(ProcessMemoryMetric metric, int32_t epoch_num, std::vector<float> *result);
+
+  /// \brief API to get information on main process memory usage
+  /// \param [in] metric The requested memory set usage.  One of these values:
+  ///     - ProcessMemoryMetric::kVSS - virtual set size, virtual memory usage
+  ///     - ProcessMemoryMetric::kPSS - proportional set size, physical memory usage with proportional allocation of
+  ///     shared libraries
+  ///     - ProcessMemoryMetric::kRSS - resident set size, physical memory usage (includes shared libraries)
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetMainProcessMemoryInfoByStep(ProcessMemoryMetric metric, int32_t start_step, int32_t end_step,
+                                        std::vector<float> *result);
+
+  /// \brief API to get information on main process memory usage
+  /// \param [in] metric The requested memory set usage.  One of these values:
+  ///     - ProcessMemoryMetric::kVSS - virtual set size, virtual memory usage
+  ///     - ProcessMemoryMetric::kPSS - proportional set size, physical memory usage with proportional allocation of
+  ///     shared libraries
+  ///     - ProcessMemoryMetric::kRSS - resident set size, physical memory usage (includes shared libraries)
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetMainProcessMemoryInfoByTime(ProcessMemoryMetric metric, uint64_t start_ts, uint64_t end_ts,
+                                        std::vector<float> *result);
+
+  /// \brief API to get information on system memory usage
+  /// \param [in] metric The requested memory metric.  One of these values:
+  ///     - SystemMemoryMetric::kMemoryAvailable
+  ///     - SystemMemoryMetric::kMemoryTotal
+  ///     - SystemMemoryMetric::kMemoryUsed
+  /// \param [in] epoch_num The epoch number for which results are requested
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetSystemMemoryInfoByEpoch(SystemMemoryMetric metric, int32_t epoch_num, std::vector<float> *result);
+
+  /// \brief API to get information on system memory usage
+  /// \param [in] metric The requested memory metric.  One of these values:
+  ///     - SystemMemoryMetric::kMemoryAvailable
+  ///     - SystemMemoryMetric::kMemoryTotal
+  ///     - SystemMemoryMetric::kMemoryUsed
+  /// \param [in] start_step The step interval start range
+  /// \param [in] end_step The step interval end range
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetSystemMemoryInfoByStep(SystemMemoryMetric metric, int32_t start_step, int32_t end_step,
+                                   std::vector<float> *result);
+
+  /// \brief API to get information on system memory usage
+  /// \param [in] metric The requested memory metric.  One of these values:
+  ///     - SystemMemoryMetric::kMemoryAvailable
+  ///     - SystemMemoryMetric::kMemoryTotal
+  ///     - SystemMemoryMetric::kMemoryUsed
+  /// \param [in] start_ts The time interval start range in ms
+  /// \param [in] end_ts The time interval end range in ms
+  /// \param [out] result The desired value in MB
+  /// \return Status object with the error code
+  Status GetSystemMemoryInfoByTime(SystemMemoryMetric metric, uint64_t start_ts, uint64_t end_ts,
+                                   std::vector<float> *result);
 #endif
 
   /// \brief API to get the connector size of an MD operator
@@ -538,4 +616,4 @@ class ProfilingTime {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_PROFILING_H_"
