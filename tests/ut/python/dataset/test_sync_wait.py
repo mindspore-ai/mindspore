@@ -1,4 +1,5 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019i-2022 Huawei Technologies Co., Ltd
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -232,14 +233,13 @@ def test_sync_exception_04():
 
 def test_sync_exception_05():
     """
-    Test sync: with wrong batch size in update
+    Test sync: with wrong condition name in update
     """
     logger.info("test_sync_exception_05")
 
     dataset = ds.GeneratorDataset(gen, column_names=["input"])
     count = 0
     aug = Augment(0)
-    # try to create dataset with batch_size < 0
     dataset = dataset.sync_wait(condition_name="every batch", callback=aug.update)
     dataset = dataset.map(operations=[aug.preprocess], input_columns=["input"])
     with pytest.raises(RuntimeError) as e:
