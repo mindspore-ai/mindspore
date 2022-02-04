@@ -72,6 +72,7 @@ class EventWriter {
   bool WriteRecord(const std::string &data);
 
  private:
+  void CloseFile() noexcept;
   // True: valid / False: closed
   bool status_ = false;
   std::shared_ptr<FileSystem> fs_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <cstring>
 #include <iostream>
 #include "mindspore/core/utils/log_adapter.h"
 #ifdef ONLINE_DBG_MODE
@@ -162,7 +161,6 @@ class TensorData {
     this->name_ = obj.name_;
     this->execution_order_ = obj.execution_order_;
     this->slot_ = obj.slot_;
-    this->data_ptr_ = obj.data_ptr_;
     this->size_ = obj.size_;
     this->data_type_ = obj.data_type_;
     this->data_type_size_ = obj.data_type_size_;
@@ -177,18 +175,19 @@ class TensorData {
 #endif
   }
 
-#ifdef OFFLINE_DBG_MODE
   ~TensorData() { DeleteDataPtr(); }
-#else
-  ~TensorData() {}
-#endif
 
-  void DeleteDataPtr() {
-    if (this->data_ptr_ != NULL) {
+  void DeleteDataPtr() noexcept {
+#ifdef ONLINE_DBG_MODE
+    this->tensor_ptr_ = nullptr;
+    this->data_ptr_ = nullptr;
+#else
+    if (this->data_ptr_ != nullptr) {
       delete this->data_ptr_;
-      this->data_ptr_ = NULL;
+      this->data_ptr_ = nullptr;
       this->size_ = 0;
     }
+#endif
   }
 
   std::string GetName() const { return this->name_; }
@@ -206,7 +205,7 @@ class TensorData {
   void SetTimeStamp(const std::string &time_stamp) { this->time_stamp_ = time_stamp; }
 
 #ifdef ONLINE_DBG_MODE
-  void SetTensor(mindspore::tensor::TensorPtr out_tensor) { this->tensor_ptr_ = out_tensor; }
+  void SetTensor(const mindspore::tensor::TensorPtr &out_tensor) { this->tensor_ptr_ = out_tensor; }
 #endif
 
   void SetSlot(size_t slot) { this->slot_ = slot; }
@@ -215,7 +214,7 @@ class TensorData {
 
   void SetDataPtr(char *data_ptr) { this->data_ptr_ = data_ptr; }
 
-  uint32_t GetNumElements() { return size_ / data_type_size_; }
+  uint64_t GetNumElements() const { return size_ / data_type_size_; }
 
   uint64_t GetByteSize() const { return this->size_; }
 
@@ -223,7 +222,7 @@ class TensorData {
 
   std::vector<int64_t> GetShape() const { return this->shape_; }
 
-  void SetShape(std::vector<int64_t> shape) { this->shape_ = shape; }
+  void SetShape(const std::vector<int64_t> &shape) { this->shape_ = shape; }
 
   unsigned int GetIteration() const { return this->iteration_; }
 
@@ -245,7 +244,7 @@ class TensorData {
 
   void SetType(unsigned int type) { ConvertMsToDbgType(type); }
 
-  void SetType(std::string type_name) { ConvertStringToDbgType(type_name); }
+  void SetType(const std::string &type_name) { ConvertStringToDbgType(type_name); }
 
   bool GetIsOutput() const { return this->is_output_; }
 

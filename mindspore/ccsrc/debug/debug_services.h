@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ class DebugServices {
 
     std::string FindQualifiedTensorName(const std::string &tensor_name, unsigned const int &tensor_device_id,
                                         unsigned const int &tensor_root_graph_id) const {
-      int indx = 0;
+      size_t indx = 0;
       for (auto check_node : check_node_list) {
         std::string w_name = std::get<0>(check_node);
         bool w_type = std::get<1>(check_node);
@@ -204,8 +204,8 @@ class DebugServices {
 
   struct TensorStat {
     TensorStat(uint64_t data_size, int dtype, const std::vector<int64_t> &shape, bool is_bool, double max_value,
-               double min_value, double avg_value, int count, int neg_zero_count, int pos_zero_count, int nan_count,
-               int neg_inf_count, int pos_inf_count, int zero_count)
+               double min_value, double avg_value, uint64_t count, uint64_t neg_zero_count, uint64_t pos_zero_count,
+               uint64_t nan_count, uint64_t neg_inf_count, uint64_t pos_inf_count, uint64_t zero_count)
         : data_size(data_size),
           dtype(dtype),
           shape(shape),
@@ -230,19 +230,19 @@ class DebugServices {
     double max_value = std::numeric_limits<double>::lowest();
     double min_value = std::numeric_limits<double>::max();
     double avg_value = 0.0;
-    int count = 0;
-    int neg_zero_count = 0;
-    int pos_zero_count = 0;
-    int nan_count = 0;
-    int neg_inf_count = 0;
-    int pos_inf_count = 0;
-    int zero_count = 0;
+    uint64_t count = 0;
+    uint64_t neg_zero_count = 0;
+    uint64_t pos_zero_count = 0;
+    uint64_t nan_count = 0;
+    uint64_t neg_inf_count = 0;
+    uint64_t pos_inf_count = 0;
+    uint64_t zero_count = 0;
   };
 
   static TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
 
   void AddWatchpoint(
-    unsigned int id, unsigned int watch_condition, float parameter,
+    unsigned int id, int watch_condition, float parameter,
     const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
     const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_device_list = nullptr,
     const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list = nullptr);
@@ -263,7 +263,7 @@ class DebugServices {
     const std::vector<parameter_t> &parameter_list);
 #endif
 
-  const void *PreparePrevTensor(uint32_t *prev_num_elements, const std::string &tensor_name);
+  const void *PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name);
 
   void CheckHistoryErrorCode(int *error_code, bool history_not_found);
 
@@ -279,7 +279,7 @@ class DebugServices {
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
 
-  void AddOpOverflowOpNames(const std::string overflow_bin_path, std::vector<std::string> *op_names);
+  void AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names);
 
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *const watchpoint_id,
@@ -363,7 +363,7 @@ class DebugServices {
                                                                    bool error_on_no_value = false);
 
   const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
-                            uint32_t *prev_num_elements, bool *history_not_found);
+                            uint64_t *prev_num_elements, bool *history_not_found);
 
   void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
                          std::size_t *const size, std::vector<int64_t> *const shape,

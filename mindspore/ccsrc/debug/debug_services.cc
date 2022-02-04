@@ -53,6 +53,16 @@ constexpr char *kStrErrorNone = nullptr;
 #endif
 }  // namespace
 
+bool IsRegFile(const std::string &file_path) {
+  struct stat st;
+  int ret = stat(file_path.c_str(), &st);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "stat error for " << file_path << ", ret is: " << ret;
+    return false;
+  }
+  return S_ISREG(st.st_mode);
+}
+
 DebugServices::DebugServices() { tensor_loader_ = std::make_shared<TensorLoader>(); }
 
 DebugServices::DebugServices(const DebugServices &other) {
@@ -80,7 +90,7 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
  * watchpoint_table.
  */
 void DebugServices::AddWatchpoint(
-  unsigned int id, unsigned int watch_condition, float parameter,
+  unsigned int id, int watch_condition, float parameter,
   const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
   const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_device_list,
   const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list) {
@@ -116,8 +126,8 @@ void DebugServices::RemoveWatchpoint(unsigned int id) {
  * not supported.
  */
 std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
-                                              const void *const previous_tensor_ptr, uint32_t num_elements,
-                                              uint32_t prev_num_elements, int tensor_dtype) {
+                                              const void *const previous_tensor_ptr, uint64_t num_elements,
+                                              uint64_t prev_num_elements, int tensor_dtype) {
   MS_EXCEPTION_IF_NULL(tensor);
   switch (tensor_dtype) {
     case DbgDataType::DT_UINT8: {
@@ -217,7 +227,7 @@ DebugServices::TensorStat DebugServices::GetTensorStatistics(const std::shared_p
  * run iteration for tensor's graph.
  */
 const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
-                                         uint32_t *prev_num_elements, bool *history_not_found) {
+                                         uint64_t *prev_num_elements, bool *history_not_found) {
   MS_EXCEPTION_IF_NULL(tensor);
   const void *previous_tensor_ptr = nullptr;
   std::shared_ptr<TensorData> tensor_prev;
@@ -439,7 +449,7 @@ bool DebugServices::CompareCurrentRootGraph(uint32_t id) {
  * Description: Returns the previous tensor pointer if the current root graph id is equal to previous root graph id and
  * prev_tensor_data is not nullptr.
  */
-const void *DebugServices::PreparePrevTensor(uint32_t *prev_num_elements, const std::string &tensor_name) {
+const void *DebugServices::PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name) {
   std::shared_ptr<TensorData> prev_tensor_data;
   if (!CompareCurrentRootGraph(Debugger::GetInstance()->GetPrevRootGraphId())) {
     // not supporting watchpoints that need prev tensor for multi root graph networks.
@@ -526,8 +536,8 @@ void DebugServices::CheckWatchpointsForTensor(
     }
     (*chunk_tensor_byte_size)[chunk_id] += tensor->GetByteSize();
     int tensor_dtype = tensor->GetType();
-    uint32_t num_elements = tensor->GetNumElements();
-    uint32_t prev_num_elements = 0;
+    uint64_t num_elements = tensor->GetNumElements();
+    uint64_t prev_num_elements = 0;
     const void *previous_tensor_ptr = nullptr;
 #ifdef OFFLINE_DBG_MODE
     bool history_not_found = 0;
@@ -875,15 +885,8 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
   }
   struct dirent *dir = nullptr;
   while ((dir = readdir(d_handle)) != nullptr) {
-    struct stat st;
     std::string name = real_dump_iter_dir + std::string("/") + std::string(dir->d_name);
-    int ret = stat(name.c_str(), &st);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "stat error, ret is: " << ret;
-      (void)closedir(d_handle);
-      return;
-    }
-    if (S_ISREG(st.st_mode)) {
+    if (IsRegFile(name)) {
       std::string candidate = dir->d_name;
       for (const std::string &file_to_find : files_after_convert_in_dir) {
         std::string file_n = file_to_find;
@@ -991,18 +994,11 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
   DIR *d = opendir(specific_dump_dir.c_str());
   struct dirent *dir = nullptr;
   while ((dir = readdir(d)) != nullptr) {
-    struct stat st;
-    std::string name = specific_dump_dir + std::string("/") + std::string(dir->d_name);
-    int ret = stat(name.c_str(), &st);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "stat error, ret is: " << ret;
-      (void)closedir(d);
-      return;
-    }
-    if (!(S_ISREG(st.st_mode))) {
+    std::string file_name = dir->d_name;
+    std::string file_path = specific_dump_dir + std::string("/") + file_name;
+    if (!IsRegFile(file_path)) {
       continue;
     }
-    std::string file_name = dir->d_name;
     std::string file_name_w_o_perfix = file_name;
     auto type_pos = file_name.find('.');
     // adding dot to avoid problematic matching in the scope.
@@ -1018,8 +1014,7 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
     } else {
       // otherwise, if file matches prefix and already has been converted to host format
       // add to result of converted files.
-      std::string found_file = specific_dump_dir + "/" + file_name;
-      result_list->insert(found_file);
+      result_list->insert(file_path);
     }
   }
   (void)closedir(d);
@@ -1466,16 +1461,9 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
-      struct stat st;
-      std::string name = abspath + std::string("/") + std::string(dir->d_name);
-      int ret = stat(name.c_str(), &st);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "stat error, ret is: " << ret;
-        (void)closedir(d);
-        return;
-      }
-      if (S_ISREG(st.st_mode)) {
-        std::string file_name = dir->d_name;
+      std::string file_name = dir->d_name;
+      std::string file_path = abspath + std::string("/") + file_name;
+      if (IsRegFile(file_path)) {
         std::string stripped_file_name = GetStrippedFilename(file_name);
         if (stripped_file_name.empty()) {
           continue;
@@ -1484,8 +1472,7 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
         if (found != 0) {
           continue;
         }
-        std::string full_path = specific_dump_dir + "/" + file_name;
-        matched_paths.push_back(full_path);
+        matched_paths.push_back(file_path);
         found_file = true;
       }
     }
@@ -1647,16 +1634,9 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
-      struct stat st;
-      std::string name = specific_dump_dir + std::string("/") + std::string(dir->d_name);
-      int ret = stat(name.c_str(), &st);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "stat error, ret is: " << ret;
-        (void)closedir(d);
-        return;
-      }
-      if (S_ISREG(st.st_mode)) {
-        std::string file_name = dir->d_name;
+      std::string file_name = dir->d_name;
+      std::string file_path = specific_dump_dir + std::string("/") + file_name;
+      if (IsRegFile(file_path)) {
         for (auto &node : proto_to_dump) {
           std::string dump_name = std::get<1>(node);
           std::string stripped_file_name = GetStrippedFilename(file_name);
@@ -1882,7 +1862,7 @@ std::string GetOnlineOpOverflowDir() {
   return overflow_bin_path;
 }
 
-void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, std::vector<std::string> *op_names) {
+void DebugServices::AddOpOverflowOpNames(const std::string &overflow_bin_path, std::vector<std::string> *op_names) {
   MS_EXCEPTION_IF_NULL(op_names);
   std::map<std::pair<uint64_t, uint64_t>, std::string> task_stream_to_opname;
   std::vector<std::pair<uint64_t, uint64_t>> task_stream_hit;
@@ -1896,18 +1876,9 @@ void DebugServices::AddOpOverflowOpNames(const std::string overflow_bin_path, st
   } else {
     struct dirent *dir = nullptr;
     while ((dir = readdir(d)) != nullptr) {
-      struct stat st;
-      std::string name = overflow_bin_path + std::string("/") + std::string(dir->d_name);
-      int ret = stat(name.c_str(), &st);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "stat error, ret is: " << ret;
-        (void)closedir(d);
-        return;
-      }
-      if (S_ISREG(st.st_mode)) {
-        // form fully qualified filename
-        std::string file_path = name;
-        std::string file_name = dir->d_name;
+      std::string file_name = dir->d_name;
+      std::string file_path = overflow_bin_path + std::string("/") + file_name;
+      if (IsRegFile(file_path)) {
         // attempt to read the file
         std::ifstream infile;
         infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
@@ -2082,7 +2053,6 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
       fourth_dot == std::string::npos) {
     return false;
   }
-
   // get node_name
   if (first_dot < second_dot) {
     *node_name = file_name.substr(first_dot + 1, second_dot - first_dot - 1);
@@ -2090,7 +2060,6 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
     MS_LOG(ERROR) << "filename parse error to get node_name.";
     return false;
   }
-
   // get task id
   if (second_dot < third_dot) {
     std::string extracted_task_id = file_name.substr(second_dot + 1, third_dot - second_dot - 1);
@@ -2104,10 +2073,9 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
       return false;
     }
   } else {
-    MS_LOG(ERROR) << "filename parse error to get task_id.";
+    MS_LOG(ERROR) << "Filename <" << file_name << "> parse error to get task_id.";
     return false;
   }
-
   // get stream id
   if (third_dot < fourth_dot) {
     std::string extracted_stream_id = file_name.substr(third_dot + 1, fourth_dot - third_dot - 1);
@@ -2121,7 +2089,7 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
       return false;
     }
   } else {
-    MS_LOG(ERROR) << "filename parse error to get stream_id.";
+    MS_LOG(ERROR) << "Filename <" << file_name << "> parse error to get stream_id.";
     return false;
   }
 

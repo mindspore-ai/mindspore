@@ -105,13 +105,13 @@ class ITensorSummary {
   virtual const double max_value() const = 0;
   virtual const double min_value() const = 0;
   virtual const double avg_value() const = 0;
-  virtual const int count() const = 0;
-  virtual const int neg_zero_count() const = 0;
-  virtual const int pos_zero_count() const = 0;
-  virtual const int nan_count() const = 0;
-  virtual const int neg_inf_count() const = 0;
-  virtual const int pos_inf_count() const = 0;
-  virtual const int zero_count() const = 0;
+  virtual const uint64_t count() const = 0;
+  virtual const uint64_t neg_zero_count() const = 0;
+  virtual const uint64_t pos_zero_count() const = 0;
+  virtual const uint64_t nan_count() const = 0;
+  virtual const uint64_t neg_inf_count() const = 0;
+  virtual const uint64_t pos_inf_count() const = 0;
+  virtual const uint64_t zero_count() const = 0;
 };
 
 template <typename T>
@@ -119,7 +119,7 @@ class TensorSummary : public ITensorSummary {
  public:
   TensorSummary() = default;
   ~TensorSummary() override = default;
-  TensorSummary(const void *, const void *, uint32_t, uint32_t);
+  TensorSummary(const void *, const void *, uint64_t, uint64_t);
   void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) override;
   // returns hit, error_code, parameter_list
   std::tuple<bool, int, std::vector<DebugServices::parameter_t>> IsWatchpointHit(DebugServices::watchpoint_t) override;
@@ -128,30 +128,30 @@ class TensorSummary : public ITensorSummary {
   const double max_value() const override { return max_; }
   const double min_value() const override { return min_; }
   const double avg_value() const override { return avg_; }
-  const int count() const override { return num_elements_; }
-  const int neg_zero_count() const override { return neg_zero_count_; }
-  const int pos_zero_count() const override { return pos_zero_count_; }
-  const int nan_count() const override { return nan_count_; }
-  const int neg_inf_count() const override { return neg_inf_count_; }
-  const int pos_inf_count() const override { return pos_inf_count_; }
-  const int zero_count() const override { return zero_count_; }
+  const uint64_t count() const override { return num_elements_; }
+  const uint64_t neg_zero_count() const override { return neg_zero_count_; }
+  const uint64_t pos_zero_count() const override { return pos_zero_count_; }
+  const uint64_t nan_count() const override { return nan_count_; }
+  const uint64_t neg_inf_count() const override { return neg_inf_count_; }
+  const uint64_t pos_inf_count() const override { return pos_inf_count_; }
+  const uint64_t zero_count() const override { return zero_count_; }
 
  private:
   const T *current_tensor_ptr_;
   const T *prev_tensor_ptr_;
-  uint32_t num_elements_;
-  uint32_t prev_num_elements_;
+  uint64_t num_elements_;
+  uint64_t prev_num_elements_;
   double min_;
   double max_;
   double avg_;
   bool is_bool_;
-  uint32_t neg_zero_count_;
-  uint32_t pos_zero_count_;
-  uint32_t pos_inf_count_;
-  uint32_t neg_inf_count_;
-  uint32_t inf_count_;
-  uint32_t nan_count_;
-  uint32_t zero_count_;
+  uint64_t neg_zero_count_;
+  uint64_t pos_zero_count_;
+  uint64_t pos_inf_count_;
+  uint64_t neg_inf_count_;
+  uint64_t inf_count_;
+  uint64_t nan_count_;
+  uint64_t zero_count_;
   double epsilon_;
   bool mean_sd_cal_enabled_;
   VarianceAndMeanCalculator current_mean_variance_;

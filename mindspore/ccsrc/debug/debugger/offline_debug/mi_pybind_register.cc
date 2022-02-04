@@ -18,6 +18,7 @@
 #include "pybind11/stl_bind.h"
 #include "debugger/offline_debug/dbg_services.h"
 
+namespace mindspore {
 PYBIND11_MODULE(_mindspore_offline_debug, m) {
   m.doc() = "pybind11 debug services api";
   (void)py::class_<DbgServices>(m, "DbgServices")
@@ -90,3 +91,4 @@ PYBIND11_MODULE(_mindspore_offline_debug, m) {
     .def("pos_inf_count", &TensorStatData::pos_inf_count)
     .def("zero_count", &TensorStatData::zero_count);
 }
+}  //  namespace mindspore

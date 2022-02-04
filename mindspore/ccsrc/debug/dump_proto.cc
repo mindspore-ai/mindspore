@@ -125,7 +125,7 @@ void CheckIfValidType(const TypePtr &type) {
   }
 }
 
-void SetTensorType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
+void SetTensorType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *const type_proto) {
   TypePtr elem_type = dyn_cast<TensorType>(type)->element();
   type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
   type_proto->set_data_type(irpb::DT_TENSOR);
@@ -189,7 +189,7 @@ void ProtoExporter::SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *t
   SetNodeOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *value_proto) {
+void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto) {
   if (val->isa<StringImm>()) {
     const StringImmPtr &value = dyn_cast<StringImm>(val);
     value_proto->set_dtype(irpb::DT_STRING);
@@ -580,7 +580,7 @@ void ProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_m
   }
 }
 
-void ProtoExporter::InitModelInfo() { model_.set_ir_version(irpb::IR_VERSION); }
+void ProtoExporter::InitModelInfo() { model_.set_ir_version(static_cast<int64_t>(irpb::IR_VERSION)); }
 
 std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) {
   ProtoExporter exporter;
