@@ -514,7 +514,7 @@ void DebuggerProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> 
   }
 }
 
-void DebuggerProtoExporter::InitModelInfo() { model_.set_ir_version(debugger::IR_VERSION); }
+void DebuggerProtoExporter::InitModelInfo() { model_.set_ir_version(static_cast<int64_t>(debugger::IR_VERSION)); }
 
 debugger::ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph) {
   DebuggerProtoExporter exporter;

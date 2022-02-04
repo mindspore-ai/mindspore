@@ -28,7 +28,7 @@ enum RdrModes : int { Exceptional = 1, Normal = 2 };
 class EnvConfigParser {
  public:
   static EnvConfigParser &GetInstance() {
-    static EnvConfigParser instance;
+    static EnvConfigParser instance = EnvConfigParser();
     instance.Parse();
     return instance;
   }
@@ -42,7 +42,7 @@ class EnvConfigParser {
   int RdrMode() const { return rdr_mode_; }
   std::string RdrPath() const { return rdr_path_; }
 #endif
-  bool GetSysMemreuse() { return sys_memreuse_; }
+  bool GetSysMemreuse() const { return sys_memreuse_; }
   void SetSysMemreuse(bool set_memreuse) { sys_memreuse_ = set_memreuse; }
 
  private:
