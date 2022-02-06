@@ -3,7 +3,6 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
-add_subdirectory(gvar)
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)
     string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -48,8 +47,7 @@ endif()
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
 add_library(core_obj OBJECT ${CORE_SRC_LIST})
 add_library(core_proto_obj OBJECT ${PROTO_SRCS})
-add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>
-        $<TARGET_OBJECTS:mindspore_gvar>)
+add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>)
 target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

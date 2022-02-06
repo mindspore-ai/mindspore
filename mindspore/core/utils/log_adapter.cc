@@ -26,6 +26,15 @@
 
 // namespace to support utils module definition
 namespace mindspore {
+std::map<void **, std::thread *> acl_handle_map;
+// set default log level to WARNING for all sub modules
+int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
+#if defined(_WIN32) || defined(_WIN64)
+enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+#else
+thread_local enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+#endif
+
 #ifdef USE_GLOG
 #define google mindspore_private
 static std::string GetProcName() {
@@ -426,6 +435,75 @@ void InitSubModulesLogLevel() {
     }
     g_ms_submodule_log_levels[mod_idx] = static_cast<int>(submodule_log_level);
   }
+}
+
+const std::string GetSubModuleName(SubModuleId module_id) {
+  static const std::vector<std::string> sub_module_names = {
+    "UNKNOWN",            // SM_UNKNOWN
+    "CORE",               // SM_CORE
+    "ANALYZER",           // SM_ANALYZER
+    "COMMON",             // SM_COMMON
+    "DEBUG",              // SM_DEBUG
+    "OFFLINE_DEBUG",      // SM_OFFLINE_DEBUG
+    "DEVICE",             // SM_DEVICE
+    "GE_ADPT",            // SM_GE_ADPT
+    "IR",                 // SM_IR
+    "KERNEL",             // SM_KERNEL
+    "MD",                 // SM_MD
+    "ME",                 // SM_ME
+    "EXPRESS",            // SM_EXPRESS
+    "OPTIMIZER",          // SM_OPTIMIZER
+    "PARALLEL",           // SM_PARALLEL
+    "PARSER",             // SM_PARSER
+    "PIPELINE",           // SM_PIPELINE
+    "PRE_ACT",            // SM_PRE_ACT
+    "PYNATIVE",           // SM_PYNATIVE
+    "SESSION",            // SM_SESSION
+    "UTILS",              // SM_UTILS
+    "VM",                 // SM_VM
+    "PROFILER",           // SM_PROFILER
+    "PS",                 // SM_PS
+    "FL",                 // SM_FL
+    "DISTRIBUTED",        // SM_DISTRIBUTED
+    "LITE",               // SM_LITE
+    "ARMOUR",             // SM_ARMOUR
+    "HCCL_ADPT",          // SM_HCCL_ADPT
+    "RUNTIME_FRAMEWORK",  // SM_RUNTIME_FRAMEWORK
+    "GE",                 // SM_GE
+    "API",                // SM_API
+  };
+  return sub_module_names[(module_id % NUM_SUBMODUES)];
+}
+
+std::string GetTimeString() {
+  constexpr auto BUFLEN = 80;
+  char buf[BUFLEN];
+  (void)memset(buf, '\0', BUFLEN);
+#if defined(_WIN32) || defined(_WIN64)
+  time_t time_seconds = time(0);
+  struct tm now_time;
+  localtime_s(&now_time, &time_seconds);
+  constexpr int base_year = 1900;
+  (void)snprintf(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + base_year, now_time.tm_mon + 1, now_time.tm_mday,
+                 now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
+#else
+  struct timeval cur_time;
+  (void)gettimeofday(&cur_time, nullptr);
+
+  struct tm now;
+  constexpr size_t time_str_len = 19;
+  constexpr int64_t time_convert_unit = 1000;
+  (void)localtime_r(&cur_time.tv_sec, &now);
+  (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
+#ifdef __APPLE__
+  constexpr auto fmt_str = ".%03lld.%03lld";
+#else
+  constexpr auto fmt_str = ".%03ld.%03ld";
+#endif
+  (void)snprintf(buf + time_str_len, BUFLEN - time_str_len, fmt_str, cur_time.tv_usec / time_convert_unit,
+                 cur_time.tv_usec % time_convert_unit);
+#endif
+  return std::string(buf);
 }
 }  // namespace mindspore
 

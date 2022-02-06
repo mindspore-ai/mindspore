@@ -15,9 +15,7 @@ set(REG_SRC ${CONVERT_REG_SRC}
         ${KERNEL_REG_DIR}/../common/utils.cc
         ${KERNEL_REG_DIR}/../delegate/tensorrt/distribution/distribution_base.cc
         ${CORE_DIR}/utils/log_adapter.cc
-        ${CORE_DIR}/utils/status.cc
-        ${CORE_DIR}/gvar/log_adapter_common.cc
-        ${CORE_DIR}/gvar/logging_level.cc)
+        ${CORE_DIR}/utils/status.cc)
 set_property(SOURCE ${REG_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(mslite_converter_plugin SHARED ${REG_SRC})
 target_link_libraries(mslite_converter_plugin mindspore::glog)
