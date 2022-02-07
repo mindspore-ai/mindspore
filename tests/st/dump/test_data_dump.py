@@ -412,18 +412,18 @@ def check_statistic_dump(dump_file_path):
     with open(real_path) as f:
         reader = csv.DictReader(f)
         stats = list(reader)
-        input1 = stats[0]
-        assert input1['IO'] == 'input'
-        assert input1['Min Value'] == '1'
-        assert input1['Max Value'] == '6'
-        input2 = stats[1]
-        assert input2['IO'] == 'input'
-        assert input2['Min Value'] == '7'
-        assert input2['Max Value'] == '12'
-        output = stats[2]
-        assert output['IO'] == 'output'
-        assert output['Min Value'] == '8'
-        assert output['Max Value'] == '18'
+        num_tensors = len(stats)
+        assert num_tensors == 3
+        for tensor in stats:
+            if (tensor['IO'] == 'input' and tensor['Slot'] == 0):
+                assert tensor['Min Value'] == '1'
+                assert tensor['Max Value'] == '6'
+            elif (tensor['IO'] == 'input' and tensor['Slot'] == 1):
+                assert tensor['Min Value'] == '7'
+                assert tensor['Max Value'] == '12'
+            elif (tensor['IO'] == 'output' and tensor['Slot'] == 0):
+                assert tensor['Min Value'] == '8'
+                assert tensor['Max Value'] == '18'
 
 def check_data_dump(dump_file_path):
     output_name = "Add.Add-op*.output.0.*.npy"
