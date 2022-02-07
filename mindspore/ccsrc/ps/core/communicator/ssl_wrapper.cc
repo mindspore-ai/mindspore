@@ -37,9 +37,7 @@ SSLWrapper::SSLWrapper()
       rootSecondCA_(nullptr),
       check_time_thread_(nullptr),
       running_(false),
-      is_ready_(false) {
-  InitSSL();
-}
+      is_ready_(false) {}
 
 SSLWrapper::~SSLWrapper() { CleanSSL(); }
 
