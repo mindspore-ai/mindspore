@@ -798,14 +798,14 @@ class AscendAutoMonadConverter {
       if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) ||
           AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSwitch) ||
           AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
-        MS_LOG(ERROR) << "this node is Labelxxxx, do not found iter end.";
+        MS_LOG(INFO) << "this node is Labelxxxx, do not found iter end.";
         break;
       }
       AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
       MS_LOG(INFO) << "Set profiling iter-end points: " << (*iter)->DebugString();
       return;
     }
-    MS_LOG(ERROR) << "Do not find iter_end point";
+    MS_LOG(WARNING) << "Do not find iter_end point";
   }
 
   // Find all iteration end points recursively.
