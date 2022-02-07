@@ -21,6 +21,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
+from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register
 from mindspore.ops.operations import _inner_ops as inner
@@ -329,6 +330,26 @@ class TensorShapeNet(Cell):
         return self.shape(x)
 
 
+class UniqueFunc1(Cell):
+    def __init__(self):
+        super(UniqueFunc1, self).__init__()
+        self.unique = ops.unique
+
+    def construct(self, x):
+        y, idx = self.unique(x)
+        return y, idx
+
+
+class UniqueFunc2(Cell):
+    def __init__(self):
+        super(UniqueFunc2, self).__init__()
+        self.unique = ops.unique
+
+    def construct(self, x):
+        y, idx = self.unique(x)
+        return y, idx
+
+
 class RangeNet(Cell):
     def __init__(self):
         super(RangeNet, self).__init__()
@@ -348,6 +369,12 @@ test_case_array_ops = [
     ('CustNet3', {
         'block': CustNet3(),
         'desc_inputs': []}),
+    ('Unique', {
+        'block': UniqueFunc1(),
+        'desc_inputs': [Tensor(np.array([2, 2, 1]), dtype=ms.int32)]}),
+    ('Unique', {
+        'block': UniqueFunc2(),
+        'desc_inputs': [Tensor(np.array([[2, 2], [1, 3]]), dtype=ms.int32)]}),
     ('MathBinaryNet1', {
         'block': MathBinaryNet1(),
         'desc_inputs': [Tensor(np.ones([2, 2]), dtype=ms.int32)]}),
