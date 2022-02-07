@@ -279,5 +279,57 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   }
   return actor_name;
 }
+
+bool HasAbstractRef(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  auto &abs = node->abstract();
+  return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
+}
+
+std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  bool has_monad = false;
+  std::set<size_t> ref_input_indexes;
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto &input = cnode->inputs().at(i);
+    if (HasAbstractMonad(input)) {
+      has_monad = true;
+    }
+    if (HasAbstractRef(input)) {
+      (void)ref_input_indexes.insert(i - 1);
+    }
+  }
+
+  // Only the auto moand node will modify the input.
+  if (has_monad) {
+    return ref_input_indexes;
+  } else {
+    return {};
+  }
+}
+
+std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(graph);
+  std::set<size_t> ref_output_indexes;
+
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  for (size_t i = 0; i < output_num; ++i) {
+    session::AnfWithOutIndex output_pair(cnode, i);
+    // Only the ref node will modify the ref input corresponding to the output.
+    if (!graph->IsInRefOutputMap(output_pair)) {
+      continue;
+    }
+    auto input_pair = graph->GetRefCorrespondOutput(output_pair);
+    MS_EXCEPTION_IF_NULL(input_pair.first);
+    if (HasAbstractRef(input_pair.first)) {
+      (void)ref_output_indexes.insert(i);
+    }
+  }
+  return ref_output_indexes;
+}
 }  // namespace runtime
 }  // namespace mindspore

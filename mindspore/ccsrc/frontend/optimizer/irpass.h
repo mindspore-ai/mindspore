@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr incorporate_environ_get_bypass_recursive_;
   SubstitutionPtr incorporate_environ_get_switch_;
   SubstitutionPtr incorporate_environ_get_switch_layer_;
+  SubstitutionPtr split_environ_get_set_with_tuple_value_;
 
   // Ref eliminate
   SubstitutionPtr make_ref_eliminate_;
@@ -163,6 +164,9 @@ class OptimizeIRPassLib {
 
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
+
+  // Workaround
+  SubstitutionPtr stop_gradient_special_op_;
 };
 
 // the collection of irpass for resolve action

@@ -53,7 +53,8 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto out_type = CheckAndConvertUtils::CheckTensorTypeValid("x", dy_type, valid_types, op_name);
   auto shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, dy_index);
-  return abstract::MakeAbstract(shape, out_type);
+  auto res = abstract::MakeAbstract(shape, out_type);
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGrad, prim::kPrimDropoutGrad, DropoutGradInfer, nullptr, true);
 }  // namespace ops

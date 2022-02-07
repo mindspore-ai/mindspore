@@ -59,8 +59,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
         add5 = Add(real_div4, mul4)
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -71,8 +70,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
                                                       constant_add2_y)
         outputs = make_tuple(tuple_getitem(lamb_next_mv_with_decay, 0), tuple_getitem(lamb_next_mv_with_decay, 1),
                              tuple_getitem(lamb_next_mv_with_decay, 2), tuple_getitem(lamb_next_mv_with_decay, 3))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     @fns
     def before_unmatched_add3(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
@@ -96,8 +94,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
         add5 = Add(real_div4, mul4)
         add3 = Mul(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_unmatched_mul4(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
@@ -121,8 +118,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
         add5 = Add(real_div4, mul4)
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_unmatched_real_div0(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
@@ -146,8 +142,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
         add5 = Add(real_div4, mul4)
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def before_unmatched_real_div1(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
@@ -171,8 +166,7 @@ def test_lamb_next_mv_with_decay_rule_cond4(tag):
         add5 = Add(real_div4, mul4)
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     return fns[tag]
 
@@ -200,8 +194,7 @@ def test_lamb_next_mv_with_decay_rule_cond1(tag):
         add5 = Add(mul4, real_div4)
         add3 = Add(mul4, real_div2)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -212,8 +205,7 @@ def test_lamb_next_mv_with_decay_rule_cond1(tag):
                                                       constant_add2_y)
         outputs = make_tuple(tuple_getitem(lamb_next_mv_with_decay, 0), tuple_getitem(lamb_next_mv_with_decay, 1),
                              tuple_getitem(lamb_next_mv_with_decay, 2), tuple_getitem(lamb_next_mv_with_decay, 3))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     @fns
     def un_match(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -237,8 +229,7 @@ def test_lamb_next_mv_with_decay_rule_cond1(tag):
         # un match
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     return fns[tag]
 
@@ -266,8 +257,7 @@ def test_lamb_next_mv_with_decay_rule_cond2(tag):
         add5 = Add(mul4, real_div4)
         add3 = Add(mul4, real_div2)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -278,8 +268,7 @@ def test_lamb_next_mv_with_decay_rule_cond2(tag):
                                                       constant_add2_y)
         outputs = make_tuple(tuple_getitem(lamb_next_mv_with_decay, 0), tuple_getitem(lamb_next_mv_with_decay, 1),
                              tuple_getitem(lamb_next_mv_with_decay, 2), tuple_getitem(lamb_next_mv_with_decay, 3))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     @fns
     def un_match(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -303,8 +292,7 @@ def test_lamb_next_mv_with_decay_rule_cond2(tag):
         # un_match
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     return fns[tag]
 
@@ -332,8 +320,7 @@ def test_lamb_next_mv_with_decay_rule_cond3(tag):
         add5 = Add(mul4, real_div4)
         add3 = Add(mul4, real_div2)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     @fns
     def after(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -344,8 +331,7 @@ def test_lamb_next_mv_with_decay_rule_cond3(tag):
                                                       constant_add2_y)
         outputs = make_tuple(tuple_getitem(lamb_next_mv_with_decay, 0), tuple_getitem(lamb_next_mv_with_decay, 1),
                              tuple_getitem(lamb_next_mv_with_decay, 2), tuple_getitem(lamb_next_mv_with_decay, 3))
-        output = tuple_getitem(outputs, 0)
-        return make_tuple(output)
+        return make_tuple(outputs)
 
     @fns
     def un_match(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
@@ -369,7 +355,6 @@ def test_lamb_next_mv_with_decay_rule_cond3(tag):
         # un match
         add3 = Add(real_div2, mul4)
         outputs = make_tuple(add3, add0, add1, add5)
-        output = tuple_getitem(outputs, 0)
-        return output
+        return outputs
 
     return fns[tag]

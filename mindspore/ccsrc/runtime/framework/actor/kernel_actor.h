@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_ACTOR_H_
 
 #include <vector>
+#include <set>
 #include <string>
 #include <memory>
 #include <utility>
@@ -45,18 +46,19 @@ class KernelActor : public DebugAwareActor {
  public:
   KernelActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
               const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
-              GraphExecutionStrategy strategy)
+              GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
+              const std::set<size_t> &modifiable_ref_output_indexes)
       : DebugAwareActor(name, KernelTransformType::kKernelActor, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         kernel_info_(nullptr),
         is_dynamic_shape_(false),
         real_input_num_(0),
-        strategy_(strategy) {
+        strategy_(strategy),
+        modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
+        modifiable_ref_output_indexes_(modifiable_ref_output_indexes) {
     (void)device_contexts_.emplace_back(device_context);
   }
   ~KernelActor() override = default;
-
-  void Init() override;
 
   // The kernel actor run when receive the input control and input tensors, used in step mode.
   void RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
@@ -74,8 +76,11 @@ class KernelActor : public DebugAwareActor {
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
   const CNodePtr &kernel() const { return kernel_; }
+  const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
+  const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
 
  protected:
+  void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
@@ -86,6 +91,7 @@ class KernelActor : public DebugAwareActor {
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   void FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context);
+  // Need copy when the data type or format between real parameters and formal parameters are inconsistent.
   void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
   // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.
   void PushInputDeviceTensor(const std::vector<TensorPtr> *input_tensors);
@@ -94,6 +100,8 @@ class KernelActor : public DebugAwareActor {
   void PreLaunchKernel(OpContext<DeviceTensor> *const context);
   // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
   void PostLaunchKernel(OpContext<DeviceTensor> *const context);
+  // Back refresh the dynamic device tensor stores that have been triggered copy.
+  void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
   // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
   // 'Unique' will change after PostExecute, the output address size should update.
@@ -116,8 +124,8 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> input_device_tensors_;
   std::vector<DeviceTensor *> output_device_tensors_;
   std::vector<DeviceTensor *> workspace_device_tensors_;
-  // The received input device type may be different from the device context type in the control flow and host device
-  // scenarios, so it needs to be copied from the input device type to the device context type.
+  // The received input device type and format may be different from the formal parameter in the control flow scenarios,
+  // so it needs to be copied from the input data to real data that kernel launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
 
   // The device tensors for memory alloc and free.
@@ -130,6 +138,10 @@ class KernelActor : public DebugAwareActor {
 
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
+
+  // Record the modifiable ref indexes. Used to refresh the ref data which are modified in the running.
+  std::set<size_t> modifiable_ref_input_indexes_;
+  std::set<size_t> modifiable_ref_output_indexes_;
 
   // Cache output data by output index to modify the output data effectively.
   std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;

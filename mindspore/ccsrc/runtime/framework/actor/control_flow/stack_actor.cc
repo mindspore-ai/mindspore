@@ -218,6 +218,7 @@ void StackActor::FetchInput(OpContext<DeviceTensor> *const context) {
                                  " need:" + std::to_string(input_stack_data_num_) + " for actor:" + GetAID().Name();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
+      MS_EXCEPTION_IF_NULL(one_stack.second.top());
       input_device_tensors_[one_stack.first] = one_stack.second.top();
     }
   }

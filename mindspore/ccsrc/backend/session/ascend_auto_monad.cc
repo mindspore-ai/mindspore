@@ -642,7 +642,7 @@ class CallInfoFinder {
   }
 
   CallBranch GetCallBranch(const CNodePtr &cnode) {
-    auto input_graph = cnode->input(kCallKernelGraphIndex);
+    auto input_graph = cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(input_graph);
     auto kg = GetValueNode<KernelGraphPtr>(input_graph);
     MS_EXCEPTION_IF_NULL(kg);

@@ -26,7 +26,7 @@ namespace ops {
 namespace {
 constexpr size_t kDoutIndex = 0;
 constexpr size_t kInputIndex = 1;
-constexpr size_t kFilterSizeIdex = 2;
+constexpr size_t kFilterSizeIndex = 2;
 constexpr size_t kStride2dSize = 2;
 constexpr size_t kStride4dSize = 4;
 
@@ -56,7 +56,7 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> out_shape;
   abstract::ShapePtr ret_shape;
   TransStrideTo4D(primitive, input_args);
-  auto filter_size = input_args[kFilterSizeIdex];
+  auto filter_size = input_args[kFilterSizeIndex];
   auto filter_size_v = filter_size->BuildValue();
   MS_EXCEPTION_IF_NULL(filter_size_v);
 
@@ -65,7 +65,7 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
       out_shape = CheckAndConvertUtils::CheckTensorIntValue("filter size", filter_size_v, prim_name);
       ret_shape = std::make_shared<abstract::Shape>(out_shape);
     } else {
-      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kFilterSizeIdex);
+      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kFilterSizeIndex);
       MS_EXCEPTION_IF_NULL(shape_ptr);
       auto shape_shape = shape_ptr->shape();
       if (shape_shape.size() != 1) {
@@ -239,8 +239,9 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
-                                                    Conv2DBackpropFilterInferShape(primitive, input_args));
+  auto res = std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
+                                                        Conv2DBackpropFilterInferShape(primitive, input_args));
+  return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer, nullptr,
                              true);

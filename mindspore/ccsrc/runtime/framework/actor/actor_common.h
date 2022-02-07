@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <utility>
 #include <thread>
 #include <algorithm>
@@ -123,7 +124,7 @@ class ActorDispatcher {
       auto actor_manager = ActorMgr::GetActorMgrRef();
       MS_EXCEPTION_IF_NULL(actor_manager);
       auto base_actor = actor_manager->GetActor(aid);
-      T *actor = dynamic_cast<T *>(base_actor.get());
+      T *actor = static_cast<T *>(base_actor.get());
       MS_EXCEPTION_IF_NULL(actor);
       (actor->*method)(arg);
     }
@@ -139,7 +140,7 @@ class ActorDispatcher {
       auto actor_manager = ActorMgr::GetActorMgrRef();
       MS_EXCEPTION_IF_NULL(actor_manager);
       auto base_actor = actor_manager->GetActor(aid);
-      T *actor = dynamic_cast<T *>(base_actor.get());
+      T *actor = static_cast<T *>(base_actor.get());
       MS_EXCEPTION_IF_NULL(actor);
       (actor->*method)(std::forward<Args1>(args)...);
     }
@@ -211,6 +212,14 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
                                              GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 std::string FetchActorName(KernelTransformType kernel_type, const std::string &actor_set_name,
                            const AnfNodePtr &node = nullptr, const KernelGraphPtr &graph = nullptr);
+
+// Check whether the parameter is a ref parameter.
+bool HasAbstractRef(const AnfNodePtr &node);
+
+// Fetch the input indexes which may be modified that exist in the input ref parameter.
+std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &node);
+// Fetch the output indexes which may be modified that exist in the ref node.
+std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const KernelGraphPtr &graph);
 }  // namespace runtime
 }  // namespace mindspore
 

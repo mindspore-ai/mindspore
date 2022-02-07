@@ -330,9 +330,9 @@ void CompileGraph::AddSwitch(const CNodePtr &node) {
     MS_LOG(EXCEPTION) << "Length of inputs of primitive " << prim::kPrimSwitch->name() << " is less than 4";
   }
   VectorRef args;
-  args.emplace_back(Ref(inputs[kCallKernelGraphIndex]));
-  args.emplace_back(Ref(inputs[kSwitchTrueKernelGraphIndex]));
-  args.emplace_back(Ref(inputs[kSwitchFalseKernelGraphIndex]));
+  args.emplace_back(Ref(inputs[kPartialGraphIndex]));
+  args.emplace_back(Ref(inputs[kSwitchTrueBranchIndex]));
+  args.emplace_back(Ref(inputs[kSwitchFalseBranchIndex]));
   AddInst(Instruction::kSwitch, args);
 }
 
@@ -613,10 +613,6 @@ void SetMindRTEnable() {
 
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (common::GetEnv("DISABLE_ASCEND_MINDRT") == "1" && target == kAscendDevice) {
-    return;
-  } else if (!(common::GetEnv("ENABLE_ASCEND_KERNEL_MINDRT") == "1" || common::kEnableAscendKernelByKernel) &&
-             common::GetEnv(kGraphOpRun) == "1" && target == kAscendDevice) {
-    // exception scenario: still run original process after enable ascend mindrt
     return;
   }
 

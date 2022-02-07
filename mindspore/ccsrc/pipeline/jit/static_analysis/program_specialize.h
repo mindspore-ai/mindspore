@@ -63,8 +63,12 @@ class ProgramSpecializer {
   std::shared_ptr<AnalysisEngine> engine() { return engine_; }
 
   const AnalysisContextPtr &top_context() { return top_context_; }
+  void PutSpecializedAbstract(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractFunctionPtr &old_abs_func,
+                              const AbstractFunctionPtr &new_abs_func);
+  AbstractBasePtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
+  void SpecializeCNodeInput0FuncGraph();
 
-  std::vector<AbstractSequencePtr> &sequence_abstract_list() { return sequence_abstract_list_; }
+  std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
 
  private:
   std::shared_ptr<AnalysisEngine> engine_;
@@ -74,7 +78,12 @@ class ProgramSpecializer {
     specializations_;
   AnalysisContextPtr top_context_;
   // The list to purify tuple/list elements.
-  std::vector<AbstractSequencePtr> sequence_abstract_list_;
+  std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> sequence_abstract_list_;
+  // Map for unspecialized abstract function to specialized abstract;
+  std::unordered_map<AbstractFunctionPtr, AbstractBasePtr, AbstractFunctionHasher, AbstractFunctionEqual>
+    specialized_abs_map_;
+
+  AbstractBasePtr SpecializeAbstractFuncRecursively(const AbstractFunctionPtr &old_abs_func);
 };
 
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {
@@ -96,7 +105,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   ClonerPtr cloner_;
   std::vector<AnfNodePtr> todo_;
   mindspore::HashSet<AnfNodePtr> marked_;
-  mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
+  mindspore::HashMap<EvaluatorPtr, EvaluatorCacheMgrPtr> eval_cache_;
 
   void FirstPass();
   void SecondPass();
@@ -131,9 +140,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   // replicated node.
   AnfNodePtr BuildReplacedNode(const AnfNodeConfigPtr &conf);
   // Build a specialized node from given argvals;
-  AnfNodePtr BuildSpecializedNode(const AnfNodePtr &node, const AbstractBasePtr &abs,
+  AnfNodePtr BuildSpecializedNode(const CNodePtr &cnode, const AnfNodePtr &node, const AbstractBasePtr &abs,
                                   const AbstractBasePtrList &argvals);
-  AnfNodePtr BuildSpecializedNodeInner(const AnfNodePtr &node, const AbstractBasePtr &abs,
+  AnfNodePtr BuildSpecializedNodeInner(const CNodePtr &cnode, const AnfNodePtr &node, const AbstractBasePtr &abs,
                                        const AbstractFunctionPtr &func, const AbstractBasePtrList &args,
                                        SpecializeStatusCode *errcode);
 

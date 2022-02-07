@@ -125,6 +125,7 @@ constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironAdd = "EnvironAdd";
+constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 
 //
 // Here list all primitives used in backend or some special primitives used by core.
@@ -721,6 +722,7 @@ inline const PrimitivePtr kPrimEnvironCreate = std::make_shared<Primitive>(kEnvi
 inline const PrimitivePtr kPrimEnvironSet = std::make_shared<Primitive>(kEnvironSet);
 inline const PrimitivePtr kPrimEnvironGet = std::make_shared<Primitive>(kEnvironGet);
 inline const PrimitivePtr kPrimEnvironAdd = std::make_shared<Primitive>(kEnvironAdd);
+inline const PrimitivePtr kPrimEnvironDestroyAll = std::make_shared<Primitive>(kEnvironDestroyAll);
 inline const PrimitivePtr kPrimMakeRefKey = std::make_shared<Primitive>("MakeRefKey");
 inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,6 +332,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.row_tensor_add_zeros_like_,
       irpass.mini_step_allgather_replace_,
       irpass.micro_step_allgather_replace_,
+      irpass.split_environ_get_set_with_tuple_value_,
     },
     false, true);
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
@@ -538,7 +539,7 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
     g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
     g_pass_opts["opt_after_cconv"] =
-      Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, false);
+      Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, true);
     g_pass_opts["opt_trans_graph"] =
       Optimizer::MakeOptimizer("opt_trans_graph", res, GetOptPassesTransformGraph(irpass), true, true);
     g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", res, GetOptPassesC(irpass));
@@ -737,7 +738,7 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
 
 bool EnvironConversionPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
   if (enable_closure) {
     opt::EnvironConversion(res);
   }

@@ -307,7 +307,8 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
 
 KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index,
                                                                bool skip_nop_node,
-                                                               const std::vector<PrimitivePtr> &return_types) {
+                                                               const std::vector<PrimitivePtr> &return_types,
+                                                               abstract::AbstractBasePtr *abstract) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (std::any_of(return_types.begin(), return_types.end(), [&anf_node](const PrimitivePtr &prim_type) -> bool {
         return CheckPrimitiveType(anf_node, prim_type);
@@ -320,8 +321,9 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
-    auto item_with_index_tmp = VisitKernelWithReturnType(GetTupleGetItemRealInput(cnode),
-                                                         GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types);
+    abstract::AbstractBasePtr abs = nullptr;
+    auto item_with_index_tmp = VisitKernelWithReturnType(
+      GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
     if (CheckPrimitiveType(item_with_index_tmp.first, prim::kPrimMakeTuple)) {
       MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
       auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
@@ -332,7 +334,33 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
         MS_LOG(EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
                           << "].";
       }
-      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], 0, skip_nop_node, return_types);
+      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
+    }
+    if (IsCallNode(item_with_index_tmp.first) || item_with_index_tmp.first->isa<Parameter>()) {
+      size_t real_index = item_with_index_tmp.second;
+      if (abs == nullptr) {
+        abs = item_with_index_tmp.first->abstract();
+        real_index = 0;
+      }
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractTuple>()) {
+        auto tuple_abstract = abs->cast<abstract::AbstractTuplePtr>();
+        MS_EXCEPTION_IF_NULL(tuple_abstract);
+        auto sub_abstracts = tuple_abstract->elements();
+        if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
+          MS_LOG(EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
+                            << " for abstract:" << abs->ToString();
+        }
+        for (size_t i = 0; i < GetTupleGetItemOutIndex(cnode); ++i) {
+          MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
+          real_index += AnfAlgo::GetOutputNumByAbstract(sub_abstracts[i]);
+        }
+        if (abstract != nullptr) {
+          (*abstract) = sub_abstracts[GetTupleGetItemOutIndex(cnode)];
+          MS_EXCEPTION_IF_NULL((*abstract));
+        }
+        return {item_with_index_tmp.first, real_index};
+      }
     }
     return item_with_index_tmp;
   }
@@ -1696,7 +1724,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     }
     auto partial_cnode = partial->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(partial_cnode);
-    auto graph_node = partial_cnode->input(kCallKernelGraphIndex);
+    auto graph_node = partial_cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(graph_node);
     auto graph_value_node = graph_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(graph_value_node);
@@ -1706,7 +1734,7 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     return child_graph;
   };
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
-    auto input1 = cnode->input(kCallKernelGraphIndex);
+    auto input1 = cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(input1);
     auto value_node = input1->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -1714,11 +1742,10 @@ std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallSwitchKernelGraph(const 
     MS_EXCEPTION_IF_NULL(kernel_graph);
     return {kernel_graph->cast<KernelGraphPtr>()};
   } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
-    return {get_switch_kernel_graph(kSwitchTrueKernelGraphIndex),
-            get_switch_kernel_graph(kSwitchFalseKernelGraphIndex)};
+    return {get_switch_kernel_graph(kSwitchTrueBranchIndex), get_switch_kernel_graph(kSwitchFalseBranchIndex)};
   } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
     std::vector<KernelGraphPtr> child_graphs;
-    for (size_t idx = kMakeTupleInSwitchLayerIndex; idx < cnode->inputs().size(); idx++) {
+    for (size_t idx = kSwitchLayerBranchesIndex; idx < cnode->inputs().size(); idx++) {
       auto child_graph = get_switch_kernel_graph(idx);
       child_graphs.emplace_back(child_graph);
     }

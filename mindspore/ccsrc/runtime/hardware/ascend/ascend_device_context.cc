@@ -293,30 +293,6 @@ std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
   MS_EXCEPTION_IF_NULL(func_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  // TODO(lzlang): delete
-  if (!(common::GetEnv("ENABLE_ASCEND_KERNEL_MINDRT") == "1" || common::kEnableAscendKernelByKernel)) {
-    std::string backend = context_ptr->backend_policy();
-    auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-    if (func_graph->ContainMultiTarget() || !task_sink) {
-      context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-      context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
-    } else if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-      std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-      auto manager = func_graph->manager();
-      MS_EXCEPTION_IF_NULL(manager);
-      auto graphs = manager->func_graphs();
-      bool exist_while =
-        std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-      if (device_target == kAscendDevice && backend != kMsVm && !exist_while) {
-        MS_LOG(INFO) << "Run graph mode with multigraph sink.";
-        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, true);
-      } else {
-        MS_LOG(INFO) << "Run graph mode with vm.";
-        context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
-        context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
-      }
-    }
-  }
   if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     return std::vector<GraphSegmentPtr>();
   }

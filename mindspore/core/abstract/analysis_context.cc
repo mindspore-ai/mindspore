@@ -160,9 +160,6 @@ bool AnalysisContext::operator==(const AnalysisContext &other) const {
 // for different context, which means the graph is called from different node with different arguments and different
 // free values. In order to decrease the number of cloned graphs, we add this `SpecializeKey` method to control what
 // graph can be reused.
-// The graph called with different SymbolicKey will be reused. The abstract of SymbolicKey parameter will be joined
-// and stored in the intermediate_abstract. The joined SymbolicKey would cause Poly Code in eval, thus the reused
-// graph with SymbolicKey parameter should be inlined in `opt` pipeline before the next renormalize.
 // The graph called with different shape should not be reused, because the combination of `shape` and `Fill` relies
 // on correct shape to specialize a tensor constant.
 AnalysisContextPtr AnalysisContext::SpecializeKey() const {
@@ -170,16 +167,6 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
   (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(args_broad_shp),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->isa<AbstractScalar>()) {
-                           auto val = arg->GetValueTrack();
-                           MS_EXCEPTION_IF_NULL(val);
-                           if (val->isa<SymbolicKeyInstance>()) {
-                             auto scalar_spec = dyn_cast<AbstractScalar>(arg);
-                             MS_EXCEPTION_IF_NULL(scalar_spec);
-                             auto ret_spec = scalar_spec->Broaden();
-                             return ret_spec;
-                           }
-                         }
                          if (arg->isa<AbstractRef>()) {
                            MS_LOG(DEBUG) << "refkey broaden";
                            return arg->Broaden();

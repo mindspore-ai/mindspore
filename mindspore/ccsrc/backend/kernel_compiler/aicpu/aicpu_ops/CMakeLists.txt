@@ -24,13 +24,18 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILE
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_sharder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/random_choice_with_mask_kernels.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/environ/aicpu_environ_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_create.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_set.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_get.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/environ/environ_destroy_all.cc
     )
 
-    add_library(aicpu_kernels SHARED
+    add_library(mindspore_aicpu_kernels SHARED
         ${AICPU_SRC}
     )
 
-    target_compile_options(aicpu_kernels PRIVATE
+    target_compile_options(mindspore_aicpu_kernels PRIVATE
         -march=armv8-a
         -O2
         -fvisibility-inlines-hidden
@@ -39,7 +44,7 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILE
         -fno-common
     )
 
-    target_link_libraries(aicpu_kernels PRIVATE
+    target_link_libraries(mindspore_aicpu_kernels PRIVATE
         -ldl
         -shared
         PUBLIC
@@ -53,8 +58,8 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64" AND EXISTS ${CMAKE_C_COMPILE
     )
 
     set(INSTALL_LIBRARY_DIR lib)
-    install(TARGETS aicpu_kernels OPTIONAL
-        EXPORT aicpu_kernels-targets
+    install(TARGETS mindspore_aicpu_kernels OPTIONAL
+        EXPORT mindspore_aicpu_kernels-targets
         LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}
     )
 

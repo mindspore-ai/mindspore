@@ -109,20 +109,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  // In the input as output scenario, use the device tensor of node.
-  if (!device_tensor->is_ptr_persisted() && (output_node->isa<ValueNode>() || output_node->isa<Parameter>())) {
-    tensor->set_device_address(device_tensor);
-    return tensor;
-  }
-
   if (output_position >= device_contexts_.size()) {
     MS_LOG(ERROR) << "The output position is of range: " << output_position;
     return nullptr;
   }
   auto &device_context = device_contexts_[output_position];
   MS_EXCEPTION_IF_NULL(device_context);
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
   if (device_context->GetDeviceAddressType() != device_tensor->DeviceType()) {
     auto old_device_context = device_context;
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -151,26 +145,19 @@ void OutputActor::UpdateOutputDeviceAddress() {
   // they are fixed addresses and persistent.
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
-    auto &tensor = outputs_[i];
-
     if (i >= output_device_tensors_.size()) {
       MS_LOG(EXCEPTION) << "Invalid index:" << i << " current:" << output_device_tensors_.size();
     }
     auto device_tensor = output_device_tensors_[i];
-
     if (output_node == nullptr || device_tensor == nullptr) {
+      MS_LOG(WARNING) << "The output node or device tensor is nullptr, need check whether affect the result.";
       continue;
     }
 
-    // In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
-    if (!device_tensor->is_ptr_persisted() && (output_node->isa<ValueNode>() || output_node->isa<Parameter>())) {
-      continue;
-    }
-
+    auto &tensor = outputs_[i];
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_device_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
     MS_EXCEPTION_IF_NULL(tensor_device_address);
-
     // Update tensor device address by device tensor of output node.
     tensor_device_address->set_original_ref_count(SIZE_MAX);
     tensor_device_address->ResetRefCount();
@@ -184,8 +171,10 @@ void OutputActor::UpdateOutputDeviceAddress() {
       continue;
     }
 
-    // If the output node whose output address ptr can't be changed, then alloc the new device memory and copy the data.
-    if (device_tensor->is_ptr_persisted()) {
+    // If the output node whose output address ptr can't be changed, then alloc the new device memory and copy the data:
+    // 1.In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
+    // 2.The persisted address can't be replaced.
+    if (output_node->isa<ValueNode>() || output_node->isa<Parameter>() || device_tensor->is_ptr_persisted()) {
       auto device_context = device_contexts_[i];
       MS_EXCEPTION_IF_NULL(device_context);
       if (!device_context->AllocateMemory(tensor_device_address.get(), tensor_device_address->GetSize())) {

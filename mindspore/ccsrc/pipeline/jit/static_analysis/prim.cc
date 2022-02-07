@@ -50,23 +50,20 @@ namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
 mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{
-  "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
+  prim::kPrimMakeTuple->name(),  prim::kPrimMakeList->name(),   prim::kPrimSwitch->name(),
+  prim::kPrimEnvironSet->name(), prim::kPrimEnvironGet->name(), prim::kPrimLoad->name(),
+  prim::kPrimUpdateState->name()};
 
-// The Python primitives who use tuple/list elements.
-// We consider all tuple/list arguments are used by now.
-// Should check 'tuple argument index' and 'element use index' later.
-mindspore::HashSet<std::string> prims_use_sequence_elements{prim::kPrimStack->name(),
-                                                            prim::kPrimBroadcast->name(),
-                                                            prim::kPrimConcat->name(),
-                                                            prim::kPrimTupleToArray->name(),
-                                                            prim::kPrimPack->name(),
-                                                            prim::kPrimSlice->name(),
-                                                            prim::kPrimStridedSlice->name(),
-                                                            prim::kPrimScatterNd->name(),
-                                                            "InvertPermutation",
-                                                            "Meshgrid",
-                                                            "TransShape",
-                                                            "ParallelConcat"};
+// The Python primitives who visit tuple/list elements, but not consume all elements.
+// Including:
+// - Consume no element. For instance, MakeTuple.
+// - Consume partial elements, not all. For instance, TupleGetItem.
+// Map{"primitive name", {vector<int>:"index to transparent pass, -1 means all elements"}}
+mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequence{
+  {prim::kPrimReturn->name(), std::vector({0})},       {prim::kPrimDepend->name(), std::vector({0})},
+  {prim::kPrimIdentity->name(), std::vector({0})},     {prim::kPrimMakeTuple->name(), std::vector({-1})},
+  {prim::kPrimMakeList->name(), std::vector({-1})},    {prim::kPrimListAppend->name(), std::vector({0})},
+  {prim::kPrimTupleGetItem->name(), std::vector({0})}, {prim::kPrimListGetItem->name(), std::vector({0})}};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &out_conf) {
@@ -640,13 +637,14 @@ void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBa
 
 AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output) {
   // Convert to AbstractValue based on type and shape
-  auto out_dtype = output[ATTR_DTYPE];
   if (output[ATTR_VALUE].is_none()) {
     return MakePyInferRes2Abstract(output);
   }
+
   // Convert pyobject to Value, then to AbstractValue
-  ValuePtr converted_ret = nullptr;
+  auto out_dtype = output[ATTR_DTYPE];
   TypePtr dtype = py::isinstance<Type>(out_dtype) ? out_dtype.cast<TypePtr>() : nullptr;
+  ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(output[ATTR_VALUE], &converted_ret, false, dtype);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Convert data failed";
@@ -721,7 +719,61 @@ EvalResultPtr StandardPrimEvaluator::EvalPyCheckPrim(const AnalysisEnginePtr &en
   return RunPyInferValue(engine, abs_base, args);
 }
 
+namespace {
+void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  // To check tuple/list operations with a white list of Python primitive.
+  auto iter = prims_transparent_pass_sequence.find(prim->name());
+  if (iter == prims_transparent_pass_sequence.end()) {
+    // The primitive use all elements of each argument.
+    for (size_t i = 0; i < args.size(); ++i) {
+      if (args[i]->isa<abstract::AbstractSequence>()) {
+        MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
+                      << "]: " << args[i]->ToString();
+        SetSequenceElementsUseFlags(args[i], true);
+      }
+    }
+    return;
+  }
+
+  // It's transparent pass primitive or using partial elements primitive.
+  auto index_list = iter->second;
+  if (index_list.empty()) {
+    MS_LOG(EXCEPTION) << "The primitive list should not be empty for " << prim->name();
+  }
+  // Ignore all arguments, no need checking if AbstractSequence.
+  if (index_list[0] == -1) {
+    return;
+  }
+  // Check the specific arguments index.
+  for (size_t i = 0; i < args.size(); ++i) {
+    if (!args[i]->isa<abstract::AbstractSequence>()) {
+      continue;
+    }
+    if (std::find(index_list.begin(), index_list.end(), i) == index_list.end()) {
+      // For current tuple/list argument, it's not a primitive of total transparent pass or partial element use.
+      MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming specific tuple/list arguments[" << i
+                    << "]: " << args[i]->ToString();
+      SetSequenceElementsUseFlags(args[i], true);
+    }
+  }
+}
+
+void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  // Consider all primitive implemented python infer() real use the tuple/list arguments.
+  for (size_t i = 0; i < args.size(); ++i) {
+    if (args[i]->isa<abstract::AbstractSequence>()) {
+      MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
+                    << "]: " << args[i]->ToString();
+      SetSequenceElementsUseFlags(args[i], true);
+    }
+  }
+}
+}  // namespace
+
 EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  // To check tuple/list operations with a white list of Python primitive.
+  CheckSequenceArgumentForCppPrimitive(prim_, args);
+
   if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
     auto ret_abstract = AbstractEval(args);
     if (ret_abstract != nullptr) {
@@ -764,6 +816,9 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
 }
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+  // Consider all primitive implemented python infer() real use the tuple/list arguments.
+  CheckSequenceArgumentForPythonPrimitive(prim_py_, args);
+
   auto ret_abstract = AbstractEval(args);
   if (ret_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
@@ -775,14 +830,6 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   if (eval_result != nullptr) {
     auto abs = eval_result->abstract()->Clone();
     auto attr = eval_result->attribute();
-
-    // To check tuple/list operations with a white list of Python primitive.
-    if (prim_py_->name() == prim::kPrimStack->name()) {
-      // Set all used flags of tuple as true.
-      for (auto &arg : args) {
-        SetSequenceElementsUseFlags(arg, true);
-      }
-    }
     return std::make_shared<EvalResult>(abs, attr);
   }
 
@@ -796,14 +843,6 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
   auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
   evaluator_cache_mgr_->SetValue(args, infer_result);
-
-  // To check tuple/list operations with a white list of Python primitive.
-  if (prims_use_sequence_elements.find(prim_py_->name()) != prims_use_sequence_elements.end()) {
-    // Set all used flags of tuple as true.
-    for (auto &arg : args) {
-      SetSequenceElementsUseFlags(arg, true);
-    }
-  }
   return infer_result;
 }
 
@@ -1506,23 +1545,21 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-    if (!args_spec_list.empty()) {
-      if (enable_eliminate_unused_element) {
-        for (auto &arg : args_spec_list) {
-          SetSequenceElementsUseFlags(arg, true);
-        }
-      }
-    } else {
+    if (args_spec_list.empty()) {
       MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
-      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
     }
-    AnfNodeWeakPtrList sequence_nodes =
-      (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());
+    std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+    if (enable_eliminate_unused_element) {
+      sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+    }
     auto abs = std::make_shared<AbstractTuple>(args_spec_list, sequence_nodes);
     auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_spec_list, res);
@@ -1537,23 +1574,21 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    static const auto eliminate_unused_element = common::GetEnv("MS_DEV_ELIMINATE_SEQUENCE_UNUSED_ELEMENT");
-    static const auto enable_eliminate_unused_element = (eliminate_unused_element == "1");
-    if (!args_spec_list.empty()) {
-      if (enable_eliminate_unused_element) {
-        for (auto &arg : args_spec_list) {
-          SetSequenceElementsUseFlags(arg, true);
-        }
-      }
-    } else {
+    if (args_spec_list.empty()) {
       MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
 
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
-      SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
     }
-    AnfNodeWeakPtrList sequence_nodes =
-      (enable_eliminate_unused_element ? AnfNodeWeakPtrList({AnfNodeWeakPtr(out_conf->node())}) : AnfNodeWeakPtrList());
+    std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+    if (enable_eliminate_unused_element) {
+      sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+    }
     auto abs = std::make_shared<AbstractList>(args_spec_list, sequence_nodes);
     auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_spec_list, res);

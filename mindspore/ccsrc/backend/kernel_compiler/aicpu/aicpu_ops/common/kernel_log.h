@@ -73,5 +73,23 @@ bool CheckLogLevel(int log_level_check);
       return status;                            \
     }                                           \
   } while (0);
+
+#define AICPU_CHECK_NULLPTR_VOID(value, logText...) \
+  if (value == nullptr) {                           \
+    AICPU_LOGE(logText);                            \
+    return;                                         \
+  }
+
+#define AICPU_CHECK_FALSE(condition, errorCode, logText...) \
+  if (!(condition)) {                                       \
+    AICPU_LOGE(logText);                                    \
+    return errorCode;                                       \
+  }
+
+#define AICPU_CHECK_NULLPTR(value, errorCode, logText...) \
+  if (value == nullptr) {                                 \
+    AICPU_LOGE(logText);                                  \
+    return errorCode;                                     \
+  }
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_KERNEL_LOG_H_

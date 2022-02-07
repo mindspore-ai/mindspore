@@ -17,7 +17,6 @@
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/dead_node_eliminate.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
@@ -67,6 +66,22 @@ FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPt
 #endif
   return opt_fg;
 }
+
+FuncGraphPtr StopGradSpecialOpOptPass(const pipeline::ResourceBasePtr &resource, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(resource);
+
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig stop_gradient_special_op_opt_ = opt::OptPassConfig({irpass.stop_gradient_special_op_});
+  opt::OptPassGroupMap map({{"stop_gradient_special_op_opt_", stop_gradient_special_op_opt_}});
+
+  auto stop_gradient_special_op = opt::Optimizer::MakeOptimizer("stop_gradient_special_op", resource, map);
+
+  FuncGraphPtr opt_fg = nullptr;
+  WITH(MsProfile::GetProfile()->Step("stop_gradient_before_grad"))[&stop_gradient_special_op, func_graph, &opt_fg]() {
+    opt_fg = stop_gradient_special_op->step(func_graph, true);
+  };
+  return opt_fg;
+}
 }  // namespace
 
 FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimzer, bool is_top) {
@@ -82,14 +97,14 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "1";
+  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
   if (enable_closure) {
     if (func_graph->func_graphs_used().size() != 0 && optimzer->is_first_order_j()) {
       lift_fv_before_grad = true;
       grad_fg = LiftFv(resources, func_graph);
     } else {
+      grad_fg = StopGradSpecialOpOptPass(resources, func_graph);
       lift_fv_before_grad = false;
-      opt::EliminateDeadNode(grad_fg);
     }
   } else {
     if (func_graph->func_graphs_used().size() != 0) {

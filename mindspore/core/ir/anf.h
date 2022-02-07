@@ -97,7 +97,6 @@ using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 // scope: return the scope namespace of this AnfNode. Set it using set_scope.
 // abstract: return the cached inferred abstract value. It contains type, shape
 // value. Set New cache using set_abstract.
-// intermediate_abstract: return the cached inferring abstract value.
 // Type/Shape: return the related info of this AnfNode. When this AnfNode is an
 // input of other CNodes, you can get the related info by this method.
 // debug_info: return the information retrieved from parser. Set it using set_debug_info.
@@ -113,7 +112,6 @@ class MS_CORE_API AnfNode : public Base {
   AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
       : func_graph_(FuncGraphWeakPtr(func_graph)),
         abstract_(nullptr),
-        intermediate_abstract_(nullptr),
         debug_info_(std::move(debug_info)),
         fullname_with_scope_(""),
         scope_(ScopeManager::GetInstance().GetCurrentScope()),
@@ -184,16 +182,6 @@ class MS_CORE_API AnfNode : public Base {
   ///
   /// \param[in] abs New abstract value.
   void set_abstract(const AbstractBasePtr &abs);
-
-  /// \brief Obtain the intermediate abstract value of this AnfNode.
-  ///
-  /// \return The intermediate abstract value.
-  AbstractBasePtr intermediate_abstract() { return intermediate_abstract_; }
-
-  /// \brief Set the intermediate abstract value of this AnfNode.
-  ///
-  /// \param[in] abs New intermediate abstract value.
-  void set_intermediate_abstract(const AbstractBasePtr &abs) { intermediate_abstract_ = abs; }
 
   /// \brief Obtain the debugging information of this AnfNode.
   ///
@@ -386,7 +374,6 @@ class MS_CORE_API AnfNode : public Base {
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
   FuncGraphWeakPtr func_graph_;
   AbstractBasePtr abstract_;
-  AbstractBasePtr intermediate_abstract_;
   NodeDebugInfoPtr debug_info_;
   std::string fullname_with_scope_;
 
