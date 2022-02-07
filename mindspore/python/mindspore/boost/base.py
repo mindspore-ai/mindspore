@@ -276,7 +276,7 @@ class ParameterProcess:
         return group_params
 
 
-def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number):
+def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number, network):
     """
     get local pca mat path.
 
@@ -285,6 +285,7 @@ def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_n
         pca_mat_path (str): the path to load pca mat. Default: None.
         n_component (int): pca component.
         device_number (int): device number.
+        network (Cell): The network.
     """
     if pca_mat_path is not None and os.path.exists(pca_mat_path) and os.path.isfile(pca_mat_path) and \
             pca_mat_path.endswith(".npy"):
@@ -312,20 +313,25 @@ def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_n
     if pca_mat_exist:
         pca_mat = np.load(full_pca_mat_path)
     else:
-        data = _load_weights(weight_load_dir)
+        data = _load_weights(weight_load_dir, network)
         pca_mat = _compute_pca_mat(data, n_component)
         np.save(full_pca_mat_path, pca_mat)
     _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component)
     return local_pca_mat_path
 
 
-def _load_weights(weight_load_dir):
+def _load_weights(weight_load_dir, network):
     """
     load weights.
 
     Args:
         weight_load_dir (str): The weight(ckpt) file directory to be load.
+        network (Cell): The network.
     """
+    param_requires_grad_dict = {}
+    for param in network.trainable_params():
+        param_requires_grad_dict[param.name] = param.requires_grad
+
     param_mat_tuple = ()
     weight_file_list = os.listdir(weight_load_dir)
     for file in weight_file_list:
@@ -334,8 +340,9 @@ def _load_weights(weight_load_dir):
         file_path = os.path.join(weight_load_dir, file)
         param_dict = load_checkpoint(file_path)
         param_tuple = ()
-        for _, value in param_dict.items():
-            param_tuple += (value.asnumpy().reshape((1, -1)),)
+        for key, value in param_dict.items():
+            if param_requires_grad_dict[key]:
+                param_tuple += (value.asnumpy().reshape((1, -1)),)
         param = np.concatenate(param_tuple, axis=1)
         param_mat_tuple += (param,)
     param_mat = np.concatenate(param_mat_tuple, axis=0)

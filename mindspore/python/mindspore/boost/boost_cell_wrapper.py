@@ -223,10 +223,10 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             grads = self.grad(self.network, self.weights)(*inputs, sens)
             grads = self.grad_reducer(grads)
             if self.use_grad_accumulation:
-                loss = self.gradient_accumulation_process(loss, grads, *inputs)
+                loss = self.gradient_accumulation_process(loss, grads, sens, *inputs)
             else:
                 if self.enable_dim_reduce:
-                    loss = F.depend(loss, self.dim_reduce(loss, grads, self.weights, self.weights_clone, *inputs))
+                    loss = F.depend(loss, self.dim_reduce(loss, grads, sens, self.weights, self.weights_clone, *inputs))
                 elif self.enable_adasum:
                     loss = F.depend(loss, self.adasum_process(loss, grads))
                 else:
@@ -256,13 +256,14 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             self.step += 1
         return loss
 
-    def gradient_accumulation_process(self, loss, grads, *inputs):
+    def gradient_accumulation_process(self, loss, grads, sens, *inputs):
         r"""
         Gradient accumulation algorithm process.
 
         Args:
             loss (Tensor): Tensor with shape :math:`()`.
             grads (tuple(Tensor)): Tuple of gradient tensors.
+            sens (Tensor): Tensor with shape :math:`()`.
 
         Outputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
@@ -273,8 +274,8 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
         if self.accumulation_step >= self.max_accumulation_step:
             if self.enable_dim_reduce:
-                loss = F.depend(loss, self.dim_reduce(loss, self.grad_accumulation, self.weights, self.weights_clone,
-                                                      *inputs))
+                loss = F.depend(loss, self.dim_reduce(loss, self.grad_accumulation, sens, self.weights,
+                                                      self.weights_clone, *inputs))
             elif self.enable_adasum:
                 loss = F.depend(loss, self.adasum_process(loss, self.grad_accumulation))
             else:
@@ -449,10 +450,11 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         # if there is no overflow, do optimize
         if not overflow:
             if self.use_grad_accumulation:
-                loss = self.gradient_accumulation_process(loss, grads, *inputs)
+                loss = self.gradient_accumulation_process(loss, grads, scaling_sens_filled, *inputs)
             else:
                 if self.enable_dim_reduce:
-                    loss = F.depend(loss, self.dim_reduce(loss, grads, self.weights, self.weights_clone, *inputs))
+                    loss = F.depend(loss, self.dim_reduce(loss, grads, scaling_sens_filled, self.weights,
+                                                          self.weights_clone, *inputs))
                 elif self.enable_adasum:
                     loss = F.depend(loss, self.adasum_process(loss, grads))
                 else:

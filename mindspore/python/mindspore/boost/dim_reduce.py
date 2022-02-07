@@ -27,6 +27,16 @@ from mindspore.common import dtype as mstype
 __all__ = ["DimReduce"]
 
 
+_scale_grad = C.MultitypeFuncGraph("_scale_grad")
+
+
+@_scale_grad.register("Tensor", "Tensor")
+def _scale_grad_process(scale, grad):
+    grad = F.cast(grad, mstype.float32)
+    grad = P.Div()(grad, scale)
+    return grad
+
+
 _save_weight = C.MultitypeFuncGraph("_save_weight")
 
 
@@ -156,7 +166,7 @@ class DimReduce(Cell):
 
     def _set_rho_list(self, rho):
         """set rho list info."""
-        self.max_search_time = 3
+        self.max_search_time = 2
         self.rho_list = []
         for i in range(self.max_search_time):
             self.rho_list.append(Tensor(np.power(rho, i), dtype=self.float_type))
@@ -184,8 +194,7 @@ class DimReduce(Cell):
             self.dk_pad_part = Tensor(np.zeros([pad_num, 1]), dtype=self.float_type)
 
         self.broadcast_list = []
-        pca_rank_num = math.ceil(self.n_components / local_dim)
-        for i in range(pca_rank_num):
+        for i in range(self.rank_size):
             broadcast = P.Broadcast(i)
             self.broadcast_list.append(broadcast)
 
@@ -200,13 +209,16 @@ class DimReduce(Cell):
         self.sk = Parameter(Tensor(np.zeros([self.n_components, 1]), dtype=self.float_type), name="sk")
         self.eye = Tensor(np.eye(self.n_components), dtype=self.float_type)
         self.grad_res_momentum = ParameterTuple(parameter_tuple).clone(prefix="grad_res_momentum", init="zeros")
-
         self.gk_last_back = Parameter(Tensor(np.zeros([self.n_components, 1]), dtype=self.float_type),
                                       name="gk_last_back")
         self.bk_back = Parameter(Tensor(np.eye(self.n_components), dtype=self.float_type), name="bk_back")
+        self.grad_proj_init = ParameterTuple(parameter_tuple).clone(prefix="grad_proj_init", init="zeros")
+        self.dn_init = ParameterTuple(parameter_tuple).clone(prefix="dn_init", init="zeros")
 
-    def construct(self, loss, old_grad, weight, weight_clone, *inputs):
+    def construct(self, loss, old_grad, loss_scale, weight, weight_clone, *inputs):
         weight = F.depend(weight, loss)
+        old_grad = F.depend(old_grad, weight)
+        old_grad = self.hyper_map(F.partial(_scale_grad, loss_scale), old_grad)
         old_loss = self.allreduce(loss) / self.rank_size
 
         gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
@@ -227,15 +239,19 @@ class DimReduce(Cell):
 
         dn_local = self.hyper_map(F.partial(_pca_back_projection, dk_local), self.pca_list_local, old_grad)
         grad_proj_local = self.hyper_map(F.partial(_pca_back_projection, gk_local), self.pca_list_local, old_grad)
-        dn = dn_local
-        grad_proj = grad_proj_local
+        dn = self.dn_init
+        grad_proj = self.grad_proj_init
         for broadcast in self.broadcast_list:
             dn_part = broadcast(dn_local)
             dn = self.hyper_map(self.add, dn, dn_part)
             grad_proj_part = broadcast(grad_proj_local)
             grad_proj = self.hyper_map(self.add, grad_proj, grad_proj_part)
 
-        rho = self._line_search(gk, dk, dn, old_loss, weight, weight_clone, *inputs)
+        rho, find = self._line_search(gk, dk, dn, old_loss, weight, weight_clone, *inputs)
+        if not find:
+            _save_weight(self.gk_last, self.gk_last_back)
+            _save_weight(self.bk, self.bk_back)
+
         update_grad = self.hyper_map(F.partial(_update_grad_res_momentum, self.gamma, self.alpha),
                                      self.grad_res_momentum, old_grad, grad_proj)
         delta_weight = self.hyper_map(F.partial(_get_delta_weight, rho), dn, update_grad)
@@ -254,10 +270,7 @@ class DimReduce(Cell):
             if find:
                 res = self.rho_list[i]
                 break
-        if not find:
-            _save_weight(self.gk_last, self.gk_last_back)
-            _save_weight(self.bk, self.bk_back)
-        return res
+        return res, find
 
     def _find_rho(self, gk, dk, dn, old_loss, weight, weight_clone, rho, *inputs):
         """search rho."""
