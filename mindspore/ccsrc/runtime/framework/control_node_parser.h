@@ -135,6 +135,7 @@ class ControlNodeParser {
   // persistent and real parameters passed.
   bool IsRootGraphPersistentDeviceTensor(const AnfNodePtr &node);
   bool IsRecursionCallNode(const AnfNodePtr &node);
+  bool IsNeedStackControlNode(const AnfNodePtr &node);
   // If there is a recursive call node in the input of the kernel graph, the graph is recursive.
   bool IsRecursionKernelGraph(const KernelGraphPtr &graph);
   bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
@@ -228,9 +229,12 @@ class ControlNodeParser {
   // When a control node or kernel graph has input that is a call node, you need to add a stack actor for it.
   void ParseNeedStackControlNode(const std::vector<AnfNodePtr> &control_nodes);
   bool IsCallNodeNeedStack(const AnfNodePtr &node);
-  void ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
+  void ParseKernelGraphGroup(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts);
   // Parse the level of inputs and outputs of graphs and all control nodes.
   void ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes);
+  // Get the level of the control node, recursively traverse all the inputs of the node, and find the largest level
+  // among them.
+  size_t ParseControlNodeLevel(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes);
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
   void CreateDeviceTensorForRootGraphParameter(DeviceContext *const default_context);

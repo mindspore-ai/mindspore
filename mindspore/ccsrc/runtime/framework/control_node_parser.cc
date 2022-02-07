@@ -407,7 +407,7 @@ void FetchAllExecutionFunction(const FuncGraphPtr &func_graph, std::set<FuncGrap
   }
 }
 
-bool isValidMonadNode(const AnfNodePtr &node) {
+bool IsValidMonadNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->isa<ValueNode>() || node->isa<Parameter>() || AnfAlgo::IsCallNode(node);
 }
@@ -419,7 +419,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     const auto &real_node_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0);
     const auto &real_node = real_node_with_index.first;
     MS_EXCEPTION_IF_NULL(real_node);
-    if (isValidMonadNode(real_node)) {
+    if (IsValidMonadNode(real_node)) {
       return {real_node_with_index};
     }
     MS_LOG(EXCEPTION) << "Invalid monad node:" << real_node->DebugString();
@@ -561,33 +561,6 @@ bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_no
     }
   }
   return true;
-}
-
-// Get the level of the control node, recursively traverse all the inputs of the node, and find the largest level
-// among them.
-size_t ParseControlNodeLevel(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes,
-                             const mindspore::HashMap<AnfNodePtr, size_t> &node_to_level) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(checked_nodes);
-  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
-    return 0;
-  }
-  (void)checked_nodes->emplace(node);
-
-  auto iter = node_to_level.find(node);
-  if (iter != node_to_level.end()) {
-    return iter->second;
-  }
-
-  size_t level = 0;
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  for (const auto &input : inputs) {
-    size_t tmp_level = ParseControlNodeLevel(input, checked_nodes, node_to_level);
-    level = (tmp_level > level ? tmp_level : level);
-  }
-  return level;
 }
 }  // namespace
 
@@ -780,7 +753,7 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseUnRecursionCallNode();
 
-  ParseNeedStackKernelGraph(kernel_graph_to_device_contexts);
+  ParseKernelGraphGroup(kernel_graph_to_device_contexts);
 
   ParseNodeLevel(control_nodes);
 
@@ -866,14 +839,21 @@ bool ControlNodeParser::IsRootGraphPersistentDeviceTensor(const AnfNodePtr &node
   return find(root_graph_parameters_.begin(), root_graph_parameters_.end(), node) != root_graph_parameters_.end();
 }
 
+bool ControlNodeParser::IsNeedStackControlNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!(node->isa<CNode>())) {
+    return false;
+  }
+
+  return need_stack_control_nodes_.find(node) != need_stack_control_nodes_.end();
+}
+
 bool ControlNodeParser::IsRecursionCallNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!AnfAlgo::IsCallNode(node)) {
     return false;
   }
-  return (find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) ==
-          unrecursion_call_nodes_.end()) ||
-         (need_stack_control_nodes_.find(node) != need_stack_control_nodes_.end());
+  return find(unrecursion_call_nodes_.begin(), unrecursion_call_nodes_.end(), node) == unrecursion_call_nodes_.end();
 }
 
 bool ControlNodeParser::IsRecursionKernelGraph(const KernelGraphPtr &graph) {
@@ -1873,6 +1853,16 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
         backend_to_front.second.first->isa<ValueNode>()) {
       continue;
     }
+
+    // Skip the function input.
+    const auto &abstract = backend_to_front.second.first->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    const auto &real_abstract = FetchAbstractByIndex(abstract, backend_to_front.second.second);
+    MS_EXCEPTION_IF_NULL(real_abstract);
+    if (real_abstract->isa<abstract::AbstractFunction>()) {
+      continue;
+    }
+
     MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
                   << " add front output node:" << backend_to_front.second.first->DebugString()
                   << " index:" << backend_to_front.second.second
@@ -1882,7 +1872,7 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
   }
 }
 
-void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts) {
+void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &kernel_graph_to_device_contexts) {
   for (const auto &func_graph_to_kernel_graph_groups : func_graph_to_kernel_graph_groups_) {
     for (const auto &kernel_graph_group : func_graph_to_kernel_graph_groups.second) {
       if (kernel_graph_group.empty()) {
@@ -1924,6 +1914,49 @@ void ControlNodeParser::ParseNeedStackKernelGraph(const KernelGraphToDeviceConte
   }
 }
 
+size_t ControlNodeParser::ParseControlNodeLevel(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+  if (!node->isa<CNode>() || checked_nodes->find(node) != checked_nodes->end()) {
+    return 0;
+  }
+  (void)checked_nodes->emplace(node);
+
+  auto iter = node_to_level_.find(node);
+  if (iter != node_to_level_.end()) {
+    return iter->second;
+  }
+
+  size_t level = 0;
+  const auto &kernel_graph = FetchKernelGraphByFrontNode(node);
+  if (kernel_graph == nullptr) {
+    // If the kernel graph is not found, it means that the input does not come from the kernel graph, then
+    // just continue to traverse the input.
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &inputs = cnode->inputs();
+    for (const auto &input : inputs) {
+      size_t tmp_level = ParseControlNodeLevel(input, checked_nodes);
+      level = (tmp_level > level ? tmp_level : level);
+    }
+    return level;
+  }
+
+  // If the input comes from the kernel graph, you need to check all the graph's input, not just the node's input.
+  auto group_info_iter = kernel_graphs_to_group_info_.find(kernel_graph);
+  if (group_info_iter == kernel_graphs_to_group_info_.end()) {
+    MS_LOG(EXCEPTION) << "Failed to get kernel graph group info for graph:" << kernel_graph->ToString();
+  }
+
+  const auto &inputs = group_info_iter->second->front_input_nodes_;
+  for (const auto &input : inputs) {
+    const auto &node = input.first.first;
+    size_t tmp_level = ParseControlNodeLevel(node, checked_nodes);
+    level = (tmp_level > level ? tmp_level : level);
+  }
+  return level;
+}
+
 void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_nodes) {
   size_t level = 0;
   // 1. Parse levels of control nodes.
@@ -1938,12 +1971,12 @@ void ControlNodeParser::ParseNodeLevel(const std::vector<AnfNodePtr> &control_no
         node_to_level_[parameter] = level;
       }
       continue;
-    } else if (AnfAlgo::IsCallNode(control_node) && IsRecursionCallNode(control_node)) {
+    } else if (IsRecursionCallNode(control_node)) {
       ++level;
       node_to_level_[control_node] = level;
     } else {
       std::set<AnfNodePtr> checked_nodes;
-      node_to_level_[control_node] = ParseControlNodeLevel(control_node, &checked_nodes, node_to_level_);
+      node_to_level_[control_node] = ParseControlNodeLevel(control_node, &checked_nodes);
     }
   }
 
