@@ -93,7 +93,7 @@ void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'var' should be at least 1-D, but got empty tensor.";
+                      << "', the dimension of 'var' should be at least 1-D, but got scalar or None.";
   }
   if (!IsSameShape(var_shape, accum_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -129,15 +129,18 @@ void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node
   }
   if (!lr_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'lr' should be a scalar, but got the dimension of 'lr': " << Vector2Str(lr_shape);
+                      << "', 'lr' should be a scalar,and dimension of 'lr' should be 0,but got the dimension of 'lr': "
+                      << Vector2Str(lr_shape);
   }
   if (!l1_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l1' should be a scalar, but got the dimension of 'l1': " << Vector2Str(l1_shape);
+                      << "', 'l1' should be a scalar,and dimension of 'l1' should be 0,but got the dimension of 'l1': "
+                      << Vector2Str(l1_shape);
   }
   if (!l2_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l2' should be a scalar, but got the dimension of 'l2': " << Vector2Str(l2_shape);
+                      << "', 'l2' should be a scalar,and dimension of 'l2' should be 0,but got the dimension of 'l2': "
+                      << Vector2Str(l2_shape);
   }
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 6);
 }
