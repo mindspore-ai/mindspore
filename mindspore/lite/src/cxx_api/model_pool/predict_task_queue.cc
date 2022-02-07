@@ -37,7 +37,7 @@ PredictTaskQueue *PredictTaskQueue::GetInstance() {
 }
 
 void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task) {
-  std::unique_lock<std::mutex> data_lock(mtx_predict_task_);
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   predict_task_.push(task);
   task_push_cond_.notify_one();
 }
@@ -45,13 +45,20 @@ void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task) {
 std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask() {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
   while (predict_task_.empty() && !predict_task_done_) {
+    waite_model_num_++;
     task_push_cond_.wait(task_lock);
   }
+  waite_model_num_--;
   if (predict_task_done_) {
     return nullptr;
   }
   auto predict_task = predict_task_.front();
   predict_task_.pop();
   return predict_task;
+}
+
+int PredictTaskQueue::GetTaskNum() {
+  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
+  return predict_task_.size();
 }
 }  // namespace mindspore
