@@ -41,7 +41,6 @@ class SplitWithOverlapBaseCPUKernel : public InnerKernel {
  private:
   int CalculateSplitedShapes(const std::vector<int> &shape);
 
- private:
   // range: [start, end)
   std::vector<int> start_indices_;
   std::vector<int> end_indices_;

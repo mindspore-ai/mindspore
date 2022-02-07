@@ -33,8 +33,6 @@ class SliceCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-
- public:
   int SliceParallelRun(int thread_id);
 
  protected:

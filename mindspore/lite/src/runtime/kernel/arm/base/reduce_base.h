@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
-
 #include "nnacl/reduce_parameter.h"
 
 namespace mindspore::kernel {

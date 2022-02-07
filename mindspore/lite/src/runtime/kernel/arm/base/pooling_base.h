@@ -30,7 +30,7 @@ class PoolingBaseCPUKernel : public InnerKernel {
  public:
   PoolingBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     pooling_param_ = reinterpret_cast<PoolingParameter *>(op_parameter_);
   }
   ~PoolingBaseCPUKernel() = default;
@@ -42,7 +42,6 @@ class PoolingBaseCPUKernel : public InnerKernel {
   void FreeQuantParam();
 
  protected:
-  const InnerContext *ctx_;
   int thread_count_;
   PoolingParameter *pooling_param_ = nullptr;
   QuantArg **pooling_quant_arg_ = nullptr;

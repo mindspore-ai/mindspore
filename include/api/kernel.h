@@ -139,7 +139,6 @@ class MS_API Kernel {
   /// \param[in] value define the kernel's attribute value.
   void SetAttr(const std::string &key, const std::string &value) { attrs_[key] = value; }
 
- protected:
   std::string name_;
   const mindspore::Context *context_ = nullptr;
   std::vector<mindspore::MSTensor> inputs_;

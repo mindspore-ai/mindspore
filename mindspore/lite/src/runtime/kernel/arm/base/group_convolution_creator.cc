@@ -81,7 +81,8 @@ lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<in
     MS_LOG(ERROR) << "Tensor data size should not be 0.";
     return nullptr;
   }
-  uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size();
+  void *new_tensor_data =
+    reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size());
   memcpy(new_tensor->data(), reinterpret_cast<void *>(new_tensor_data), new_tensor->Size());
   return new_tensor;
 }
@@ -141,7 +142,7 @@ int GroupConvCreator::NewInputTensor(std::vector<lite::Tensor *> *tensors) {
   return lite::RET_OK;
 }
 
-int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite::Tensor *output) {
+int GroupConvCreator::NewOutputTensor(std::vector<lite::Tensor *> *tensors, const lite::Tensor *output) const {
   auto out_tensor = CreateVarTensor({output_shape_, output->format(), data_type_, output->category(), false}, infered_);
   if (out_tensor == nullptr) {
     return lite::RET_ERROR;
