@@ -1154,14 +1154,12 @@ SpecializeStatusCode FuncGraphSpecializer::AcquireUniqueEvalVal(const AbstractFu
       // Synchronize the new evaluated abstract with the abstract from common evaluating routine.
       MS_EXCEPTION_IF_NULL(res->second);
       auto new_sequence_abs = dyn_cast<abstract::AbstractSequence>(res->second);
-      if (new_sequence_abs != nullptr) {
-        // Just synchronize with the first one.
-        auto &first_choice = choices.begin()->second;
-        MS_EXCEPTION_IF_NULL(first_choice);
-        MS_EXCEPTION_IF_NULL(first_choice->abstract());
-        auto old_sequence_abs = dyn_cast<abstract::AbstractSequence>(first_choice->abstract());
-        if (old_sequence_abs != nullptr) {
-          SynchronizeSequenceElementsUseFlagsRecursively(old_sequence_abs, new_sequence_abs);
+      for (auto &choice : choices) {
+        MS_EXCEPTION_IF_NULL(choice.second);
+        MS_EXCEPTION_IF_NULL(choice.second->abstract());
+        auto abs = choice.second->abstract()->cast<AbstractSequencePtr>();
+        if (abs != nullptr) {
+          SynchronizeSequenceElementsUseFlagsRecursively(abs, new_sequence_abs);
         }
       }
       return kSpecializeSuccess;
