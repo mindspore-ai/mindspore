@@ -15,8 +15,8 @@
  */
 
 #include "include/api/types.h"
-#include <string.h>
-#include <limits.h>
+#include <cstring>
+#include <limits>
 #include <numeric>
 #include "include/api/status.h"
 #include "include/api/dual_abi_helper.h"

@@ -74,7 +74,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
 
   virtual int MallocWeightBiasData() { return RET_OK; }
   virtual void PackWeight() {}
-  bool IsRepack() { return is_repack_; }
+  bool IsRepack() const { return is_repack_; }
   std::unordered_map<uintptr_t, void *> addr_map;
   void *packed_weight_ = nullptr;
   void *bias_data_ = nullptr;

@@ -108,7 +108,7 @@ kernel::InnerKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tenso
                   << conv_param->input_channel_;
     return nullptr;
   }
-  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, ctx, true, kNumberTypeInt8);
+  auto *group_conv_creator = new GroupConvCreator(inputs, outputs, op_parameter, true, kNumberTypeInt8);
   return new (std::nothrow)
     GroupConvolutionInt8CPUKernel(op_parameter, inputs, outputs, ctx, group_conv_creator, group);
 }

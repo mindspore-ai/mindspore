@@ -33,8 +33,6 @@ class PartialFusionKernel : public InnerKernel {
   int Run() override;
   void set_subgraph_kernels(const std::vector<LiteKernel *> &subgraph_kernels) { subgraph_kernels_ = subgraph_kernels; }
   std::vector<LiteKernel *> subgraph_kernels() const { return subgraph_kernels_; }
-
- private:
   // One partial corresponds to a subgraph at offline stage, after graph schedule, a subgraph may be split into many
   // graphs, so use a vector.
   std::vector<LiteKernel *> subgraph_kernels_{};

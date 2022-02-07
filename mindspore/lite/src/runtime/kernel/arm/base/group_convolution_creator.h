@@ -35,12 +35,11 @@ struct TensorInfo {
 class GroupConvCreator {
  public:
   GroupConvCreator(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs, OpParameter *op_parameter,
-                   const lite::InnerContext *ctx, bool is_quant, TypeId data_type)
+                   bool is_quant, TypeId data_type)
       : origin_inputs_(std::move(inputs)),
         origin_outputs_(std::move(outputs)),
         is_quant_(is_quant),
-        data_type_(data_type),
-        ctx_(ctx) {
+        data_type_(data_type) {
     auto shape = origin_outputs_.front()->shape();
     infered_ = std::find(shape.begin(), shape.end(), -1) == shape.end();
     conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter);
@@ -48,10 +47,8 @@ class GroupConvCreator {
 
   ~GroupConvCreator() = default;
 
- public:
   void SetShapeOfTensors();
   int CreateConvs(std::vector<kernel::InnerKernel *> *group_convs);
-  std::vector<kernel::InnerKernel *> *get_group_conv() { return &group_convs_; }
   void CopyQuantParam(const std::vector<lite::Tensor *> *tensors);
   int GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,
                          std::vector<lite::Tensor *> *new_outputs, int group_id);
@@ -64,7 +61,7 @@ class GroupConvCreator {
   void FreeGroupConvs();
   int NewInputTensor(std::vector<lite::Tensor *> *tensors);
   int NewConstTensor(std::vector<lite::Tensor *> *tensors, int group_id);
-  int NewOutputTensor(std::vector<lite::Tensor *> *tensors, lite::Tensor *output);
+  int NewOutputTensor(std::vector<lite::Tensor *> *tensors, const lite::Tensor *output) const;
 
  private:
   std::vector<lite::Tensor *> origin_inputs_;
@@ -78,7 +75,6 @@ class GroupConvCreator {
   bool infered_ = false;
   bool is_quant_ = false;
   TypeId data_type_;
-  const lite::InnerContext *ctx_ = nullptr;
 };
 
 ConvParameter *CreateNewConvParameter(const ConvParameter *parameter);

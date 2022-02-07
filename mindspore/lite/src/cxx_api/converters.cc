@@ -36,7 +36,7 @@ Status ContextUtils::AddCpuDevice(const std::shared_ptr<Allocator> &allocator, i
     MS_LOG(ERROR) << "Invalid affinity mode, only supports 0:no affinities, 1:big cores first, 2:little cores first.";
     return kLiteInputParamInvalid;
   }
-  lite::DeviceInfo device_info = {0};
+  lite::DeviceInfo device_info;
   device_info.cpu_device_info_ = {enable_fp16, static_cast<lite::CpuBindMode>(affinity_mode)};
   inner_context->device_list_.push_back({lite::DT_CPU, device_info, provider, provider_device, allocator});
   return kSuccess;
@@ -46,7 +46,7 @@ Status ContextUtils::AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank
                                   bool enable_gl_texture, void *gl_context, void *gl_display,
                                   const std::string &provider, const std::string &provider_device,
                                   const std::shared_ptr<Allocator> &allocator, lite::InnerContext *inner_context) {
-  lite::DeviceInfo device_info = {0};
+  lite::DeviceInfo device_info;
   device_info.gpu_device_info_ = {enable_fp16,       device_id,  rank_id,   group_size,
                                   enable_gl_texture, gl_context, gl_display};
   inner_context->device_list_.push_back({lite::DT_GPU, device_info, provider, provider_device, allocator});
@@ -54,14 +54,14 @@ Status ContextUtils::AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank
 }
 
 Status ContextUtils::AddNpuDevice(int frequency, lite::InnerContext *inner_context) {
-  lite::DeviceInfo device_info = {0};
+  lite::DeviceInfo device_info;
   device_info.npu_device_info_ = {frequency};
   inner_context->device_list_.push_back({lite::DT_NPU, device_info});
   return kSuccess;
 }
 
 Status ContextUtils::AddAscendDevice(lite::InnerContext *inner_context, DeviceInfoContext *device) {
-  lite::DeviceInfo device_info = {0};
+  lite::DeviceInfo device_info;
   auto ascend_context = device->Cast<AscendDeviceInfo>();
   device_info.ascend_device_info_ = {ascend_context->GetDeviceID(), ascend_context->GetDynamicBatchSize(),
                                      ascend_context->GetDynamicImageSize()};

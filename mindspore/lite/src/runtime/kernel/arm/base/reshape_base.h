@@ -20,7 +20,6 @@
 #include "src/inner_kernel.h"
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/arm/base/carry_data.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {

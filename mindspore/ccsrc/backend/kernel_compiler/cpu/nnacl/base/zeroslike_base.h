@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 static inline void ApproximateZerosLike(void *output, int data_size) {
-  memset(output, 0.0, data_size);
+  (void)memset(output, 0, data_size);
   return;
 }
 

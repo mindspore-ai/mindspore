@@ -159,12 +159,11 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
 
 int PriorBoxCPUKernel::PriorBoxImpl(int task_id) {
   auto src = output_.data();
-  MS_CHECK_TRUE_RET(src != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(src);
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(output);
-  MS_CHECK_TRUE_RET(output != nullptr, RET_NULL_PTR);
   auto output_data = reinterpret_cast<float *>(output->data());
-  MS_CHECK_TRUE_RET(output_data != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(output_data);
   auto ret = PriorBox(src, output_data, output_.size(), task_id, thread_count_);
   return ret;
 }
