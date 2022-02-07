@@ -448,12 +448,7 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithSameFormatType(const ShapeVector
     return false;
   }
   BindDevice();
-  auto ret_rt_memcpy = aclrtMemcpy(ptr_, size, src_ptr, size, ACL_MEMCPY_DEVICE_TO_DEVICE);
-  if (ret_rt_memcpy != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "SyncDeviceToDevice failed, rtMemcpy mem size [" << size << "], ret [" << ret_rt_memcpy << "]";
-    return false;
-  }
-  return true;
+  return AsyncDeviceToDevice(shape, size, type, src_ptr, format);
 }
 
 bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const {

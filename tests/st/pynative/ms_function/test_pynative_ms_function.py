@@ -261,3 +261,31 @@ def test_pynative_ms_function():
     out_b = grad(net_b, params_b)(input_data)
     assert np.allclose(out_a[0][0].asnumpy(), out_b[0][0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(out_a[1][0].asnumpy(), out_b[1][0].asnumpy(), 0.0001, 0.0001)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_mix_execute():
+    """
+    Feature: PyNative ms_function.
+    Description: Mixed execution of PyNative and ms_function.
+    Expectation: The calculation result is correct.
+    """
+
+    class Net(nn.Cell):
+        @ms_function
+        def test_ms_function(self, x, y):
+            return x * y
+
+        def construct(self, x, y):
+            z = x * y
+            return self.test_ms_function(z, x)
+
+    net = Net()
+    a = Tensor(2)
+    b = Tensor(2)
+    output = net(a, b)
+    assert output == 8
