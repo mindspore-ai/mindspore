@@ -31,6 +31,8 @@ class GatherV2CPUKernel : public CPUKernel {
   GatherV2CPUKernel() = default;
   ~GatherV2CPUKernel() override = default;
 
+  void CheckParam(const CNodePtr &kernel_node);
+
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
