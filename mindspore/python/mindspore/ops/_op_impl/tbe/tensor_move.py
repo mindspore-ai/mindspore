@@ -26,12 +26,20 @@ tensor_move_op_info = TBERegOp("TensorMove") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("formatAgnostic") \
+    .dtype_format(DataType.BOOL_None, DataType.BOOL_None) \
+    .dtype_format(DataType.I8_None, DataType.I8_None) \
+    .dtype_format(DataType.I16_None, DataType.I16_None) \
     .dtype_format(DataType.I32_None, DataType.I32_None) \
+    .dtype_format(DataType.I64_None, DataType.I64_None) \
     .dtype_format(DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None) \
-    .dtype_format(DataType.I8_None, DataType.I8_None) \
+    .dtype_format(DataType.F64_None, DataType.F32_None) \
     .dtype_format(DataType.U8_None, DataType.U8_None) \
-    .dtype_format(DataType.BOOL_None, DataType.BOOL_None) \
+    .dtype_format(DataType.U16_None, DataType.U16_None) \
+    .dtype_format(DataType.U32_None, DataType.U32_None) \
+    .dtype_format(DataType.U64_None, DataType.U64_None) \
+    .dtype_format(DataType.C64_Default, DataType.C64_Default) \
+    .dtype_format(DataType.C128_Default, DataType.C128_Default) \
     .get_op_info()
 
 
