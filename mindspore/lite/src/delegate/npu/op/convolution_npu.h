@@ -38,10 +38,6 @@ class ConvolutionNPUOp : public ConvolutionBaseNPUOp {
            const std::vector<mindspore::MSTensor> &out_tensors) override;
 
   int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                   const std::vector<mindspore::MSTensor> &out_tensors,
-                   const std::vector<ge::Operator *> &npu_inputs) override;
-
-  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                    const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
                    const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
 

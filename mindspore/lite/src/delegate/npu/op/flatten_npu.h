@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SCALE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SCALE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FLATTEN_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FLATTEN_NPU_H_
 #include <vector>
 #include <string>
 #include "include/graph/op/all_ops.h"
-#include "include/graph/op/nn_defs.h"
 #include "src/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
-class ScaleNPUOp : public NPUOp {
+class FlattenNPUOp : public NPUOp {
  public:
-  ScaleNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-             const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+  FlattenNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+               const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
-
-  ~ScaleNPUOp() override;
+  ~FlattenNPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -43,28 +41,8 @@ class ScaleNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int GetAxis() { return axis_; }
-
  private:
-  int SetActivation();
-
-  int ConvertScaleToMul(const std::vector<ge::Operator *> &npu_inputs,
-                        const std::vector<mindspore::MSTensor> &in_tensors);
-
-  int Adopt4DScale(const std::vector<ge::Operator *> &npu_inputs, const std::vector<mindspore::MSTensor> &in_tensors);
-
-  ge::Operator *ChangeDims(const ge::Operator *input, std::vector<int64_t> dst_shape, std::string name,
-                           bool need_expand_4d = false);
-
-  int axis_ = 0;
-  bool use_mul_ = false;
-  bool need_expand_ = false;
-  schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
-  hiai::op::Reshape *out_reshape_ = nullptr;
-  hiai::op::Scale *scale_ = nullptr;
-  hiai::op::Mul *mul_ = nullptr;
-  hiai::op::Activation *act_ = nullptr;
-  std::vector<ge::Operator *> scale_ops_ = {};
+  hiai::op::Flatten *flatten_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SCALE_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FLATTEN_NPU_H_

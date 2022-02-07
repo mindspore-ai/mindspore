@@ -27,6 +27,9 @@
 #include "include/graph/op/array_defs.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"
+#include "include/graph/op/all_ops.h"
+#include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 enum NCHW_SHAPE { NCHW_INVALID = -1, NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
@@ -91,5 +94,29 @@ int TransFormAxis(int axis);
 void AssistDataNHWC2NCHW(int *data, size_t unit_size);
 
 int MaskDataNHWC2NCHW(int mask);
+
+template <typename T>
+ge::Operator *GetNPUConst(const uint8_t *const_data, const std::vector<int64_t> &shape, const ge::DataType data_type,
+                          std::string name = "const", bool is_expand_4d = false) {
+  MS_CHECK_TRUE_MSG(const_data != nullptr, nullptr, "Const data can not be nullptr.");
+  int element_num = 1;
+  if (!shape.empty()) {
+    for (size_t i = 0; i < shape.size(); i++) {
+      MS_CHECK_GT(shape.at(i), 0, nullptr);
+      MS_CHECK_INT_MUL_NOT_OVERFLOW(element_num, shape.at(i), nullptr);
+      element_num *= shape.at(i);
+    }
+  }
+  ge::TensorDesc const_tensor_desc(ConverterToNPUShape(shape, is_expand_4d), ge::FORMAT_NCHW, data_type);
+  ge::TensorPtr const_tensor = std::make_shared<hiai::Tensor>(const_tensor_desc);
+  const_tensor->SetData(const_data, element_num * sizeof(T));
+  auto const_op = new (std::nothrow) hiai::op::Const(name);
+  if (const_op == nullptr) {
+    MS_LOG(ERROR) << "New Const op failed.";
+    return const_op;
+  }
+  const_op->set_attr_value(const_tensor);
+  return const_op;
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_CONVERTER_UITLS_H_

@@ -32,12 +32,13 @@ class NPUTransformPass : public NPUBasePass {
  private:
   int InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops);
 
-  int InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops, std::vector<mindspore::MSTensor> graph_outputs);
+  int InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops);
 
  private:
   int total = 0;
-  std::vector<NPUOp *> *all_ops_;
-  std::vector<mindspore::MSTensor *> *all_tensors_;
+  NPUGraph *subgraph_ = nullptr;
+  std::vector<NPUOp *> *all_ops_ = nullptr;
+  std::vector<mindspore::MSTensor *> *all_tensors_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_TRANSFORM_PASS_H_

@@ -32,7 +32,7 @@ int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     return RET_NOT_SUPPORT;
   }
   reduce_mode_ = reduce_prim->mode();
-  if (reduce_mode_ != schema::ReduceMode_ReduceMean) {
+  if (reduce_mode_ != schema::ReduceMode_ReduceMean && reduce_mode_ != schema::ReduceMode_ReduceSum) {
     MS_LOG(WARNING) << "Npu does not support reduce mode " << reduce_prim->mode() << " for op " << name_;
     return RET_NOT_SUPPORT;
   }
@@ -58,6 +58,14 @@ int ReduceNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     }
     reduce_mean->set_attr_keep_dims(reduce_prim->keep_dims());
     reduce_ = reduce_mean;
+  } else if (reduce_mode_ == schema::ReduceMode_ReduceSum) {
+    auto reduce_sum = new (std::nothrow) hiai::op::ReduceSum(name_);
+    if (reduce_sum == nullptr) {
+      MS_LOG(ERROR) << "New reduce operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+    reduce_sum->set_attr_keep_dims(reduce_prim->keep_dims());
+    reduce_ = reduce_sum;
   } else {
     MS_LOG(ERROR) << "Npu does not support reduce mode " << reduce_prim->mode() << " for op " << name_;
     return RET_ERROR;
@@ -71,6 +79,9 @@ int ReduceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
   if (reduce_mode_ == schema::ReduceMode_ReduceMean) {
     auto reduce_mean = reinterpret_cast<hiai::op::ReduceMean *>(reduce_);
     reduce_mean->set_input_x(*npu_inputs[0]).set_input_axes(*npu_inputs[1]);
+  } else if (reduce_mode_ == schema::ReduceMode_ReduceSum) {
+    auto reduce_sum = reinterpret_cast<hiai::op::ReduceSum *>(reduce_);
+    reduce_sum->set_input_x(*npu_inputs[0]).set_input_axes(*npu_inputs[1]);
   }
   return RET_OK;
 }

@@ -33,8 +33,8 @@ class NPUExecutor {
   ~NPUExecutor();
   int Prepare();
 
-  int Run(const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
-          const std::vector<NPUOp *> &in_ops);
+  int Run(const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &valid_out_tensors,
+          const std::vector<mindspore::MSTensor> &all_out_tensors, const std::vector<NPUOp *> &out_ops);
 
   void InitInputMappingRelationShip(const std::vector<size_t> &input_index) { input_relationship_ = input_index; }
 

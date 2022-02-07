@@ -73,6 +73,8 @@ class NPUSubGraph : public kernel::Kernel {
 
   std::vector<mindspore::MSTensor> out_tensor_sorted_;
 
+  std::vector<mindspore::MSTensor> all_tensors_from_out_ops_;
+
   std::vector<ge::Operator *> op_buffer_;
 
   std::vector<NPUOp *> npu_ops_{};
