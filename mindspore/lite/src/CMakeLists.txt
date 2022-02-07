@@ -161,9 +161,7 @@ if(MSLITE_ENABLE_RUNTIME_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
         set(LITE_SRC ${LITE_SRC}
-            ${CORE_DIR}/utils/log_adapter.cc
-            ${CORE_DIR}/gvar/logging_level.cc
-            ${CORE_DIR}/gvar/log_adapter_common.cc)
+            ${CORE_DIR}/utils/log_adapter.cc)
     endif()
 endif()
 
