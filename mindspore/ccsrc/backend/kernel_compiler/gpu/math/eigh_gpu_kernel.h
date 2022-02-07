@@ -64,8 +64,8 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
                         << "] dimensions.";
     }
     if (A_shape[kDim0] != A_shape[kDim1]) {
-      MS_LOG(EXCEPTION) << "Wrong array shape, For '" << kernel_name
-                        << "', a should be a squre matrix like [N X N], but got shape [" << A_shape[kDim0] << " X "
+      MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name
+                        << "', a should be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
                         << A_shape[kDim1] << "].";
     }
     m_ = A_shape[0];

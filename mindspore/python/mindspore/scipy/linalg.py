@@ -493,12 +493,13 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         ``CPU`` ``GPU``
 
     Examples:
+        >>> import numpy as onp
         >>> import mindspore.numpy as mnp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore.common import Tensor, dtype
         >>> from mindspore.scipy.linalg import eigh
-        >>> A = Tensor([[6., 3., 1., 5.], [3., 0., 5., 1.], [1., 5., 6., 2.], [5., 1., 2., 2.]])
-        >>> w, v = eigh(A)
-        >>> print(mnp.sum(mnp.dot(A, v) - mnp.dot(v, mnp.diag(w))) < 1e-10)
+        >>> a = Tensor([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]], dtype.float64)
+        >>> w, v = eigh(a)
+        >>> print(onp.allclose(mnp.dot(a, v).asnumpy(), mnp.dot(v, mnp.diag(w)).asnumpy(), 1e-5, 1e-8))
         True
     """
     _type_check('lower', lower, bool, 'eigh')
