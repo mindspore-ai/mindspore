@@ -15,8 +15,8 @@
  */
 
 #include "nnacl/int8/dynamic_quant_int8.h"
-
 void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *real_max) {
+#ifndef PLATFORM_ARM64
   for (int i = 0; i < count; ++i) {
     if (data[i] < *real_min) {
       *real_min = data[i];
@@ -25,4 +25,40 @@ void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *r
       *real_max = data[i];
     }
   }
+#else
+  int count_4 = DOWN_ROUND(count, C4NUM);
+  asm volatile(
+    "mov x4, %[data]\n"          // reload data
+    "mov w5, %w[count_4]\n"      // reload count
+    "ld1 {v31.4s}, [x4]\n"       // min
+    "ld1 {v30.4s}, [x4], #16\n"  // max
+    "subs w5, w5, #4\n"
+    "ble MinMax\n"
+
+    "LoopCount:\n"
+    "ld1 {v0.4s}, [x4], #16\n"
+    "fmin v31.4s, v31.4s, v0.4s\n"
+    "fmax v30.4s, v30.4s, v0.4s\\nn"
+    "subs w5, w5, #4\n"
+    "bgt LoopCount\n"
+
+    "MinMax:\n"
+    "fminv s6, v31.4s\n"
+    "fmaxv s7, v30.4s\n"
+
+    "str s6, %[real_min]\n"
+    "str s7, %[real_max]\n"
+
+    :
+    : [ data ] "r"(data), [ count_4 ] "r"(count_4), [ real_min ] "r"(real_min), [ real_max ] "r"(real_max)
+    : "x4", "w5", "s6", "s7", "v0", "v30", "v31");
+  for (int i = count_4; i < count; ++i) {
+    if (data[i] < *real_min) {
+      *real_min = data[i];
+    }
+    if (data[i] > *real_max) {
+      *real_max = data[i];
+    }
+  }
+#endif
 }

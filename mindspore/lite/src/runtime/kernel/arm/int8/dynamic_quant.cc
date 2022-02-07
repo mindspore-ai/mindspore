@@ -87,7 +87,7 @@ int DynamicQuantCPUKernel::CalculateMinMax(int task_id) {
   return RET_OK;
 }
 
-int CalculateMinMaxRun(void *cdata, int task_id, float, float) {
+int CalculateMinMaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<DynamicQuantCPUKernel *>(cdata);
   auto ret = g_kernel->CalculateMinMax(task_id);
@@ -112,10 +112,16 @@ void DynamicQuantCPUKernel::ReduceMinMaxFp32() {
 
 void DynamicQuantCPUKernel::CalculateScaleZp() {
   lite::LiteQuantParam quant_parm;
-  double scale = (real_max_ - real_min_) / (INT8_MAX - INT8_MIN);
+  double scale;
   int zp = 0;
+  constexpr int kQSymmetricRange = 255;
+  constexpr int kQAsymmetricRange = 254;
   if (!symmetric_) {
+    scale = (real_max_ - real_min_) / kQSymmetricRange;  // -128 ~ 127
     zp = static_cast<int>(std::round(INT8_MIN - real_min_ / scale));
+  } else {
+    auto max = std::max(abs(real_max_), abs(real_min_));
+    scale = 2 * max / kQAsymmetricRange;  // -127 ~ 127
   }
   quant_parm.scale = scale;
   quant_parm.zeroPoint = zp;

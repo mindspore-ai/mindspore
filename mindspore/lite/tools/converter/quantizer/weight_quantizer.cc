@@ -119,14 +119,15 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      status = MixedBitQuantFilter(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT,
+      status = MixedBitQuantFilter(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type,
                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
-      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, q_max, q_min,
-                                           bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
+      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type, q_max,
+                                           q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
     } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, QuantType_QUANT_WEIGHT, q_max, q_min,
-                                            bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
+      status =
+        FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type, q_max,
+                                     q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1, symmetric);
     }
     if (status == RET_NO_CHANGE) {
       continue;

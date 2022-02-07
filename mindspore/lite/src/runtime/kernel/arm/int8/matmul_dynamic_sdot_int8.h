@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_SDOT_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_SDOT_INT8_H_
 
 #include <vector>
 #include "src/runtime/kernel/arm/int8/matmul_dynamic_base_int8.h"
 
 namespace mindspore::kernel {
-class MatmulDynamicInt8CPUKernel : public MatmulDynamicBaseInt8CPUKernel {
+class MatMulDynamicSdotInt8Kernel : public MatmulDynamicBaseInt8CPUKernel {
  public:
-  MatmulDynamicInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  MatMulDynamicSdotInt8Kernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : MatmulDynamicBaseInt8CPUKernel(parameter, inputs, outputs, ctx) {}
-  ~MatmulDynamicInt8CPUKernel() override = default;
+  ~MatMulDynamicSdotInt8Kernel() override = default;
   int Run() override;
 
  public:
-  int RunImpl(int task_id);
+  int MatMulDynamicRunArm64Sdot();
+  int MatMulDynamicArm64SdotPre(int task_id);
+  int MatMulDynamicArm64SdotImpl(int task_id);
 
  private:
   void InitParameter() override;
-
- private:
-  PackFunc a_pack_func_{nullptr};
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MATMUL_DYNAMIC_SDOT_INT8_H_

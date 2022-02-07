@@ -86,17 +86,19 @@ int PreprocessParser::ParsePreprocess(const DataPreProcessString &data_pre_proce
         preprocess::ConvertColorConversionCodes(data_pre_process->image_pre_process.image_to_format);
     }
   }
-  ret = ParseImagePreProcess(data_pre_process_str, &data_pre_process->image_pre_process);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "image preprocess parse failed.";
-    return ret;
-  }
+  if (!data_pre_process_str.calibrate_path.empty() && !data_pre_process_str.calibrate_size.empty()) {
+    ret = ParseImagePreProcess(data_pre_process_str, &data_pre_process->image_pre_process);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image preprocess parse failed.";
+      return ret;
+    }
 
-  ret = CollectCalibInputs(data_pre_process->calibrate_path, data_pre_process->calibrate_size,
-                           &data_pre_process->calibrate_path_vector);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "collect calibrate inputs failed.";
-    return ret;
+    ret = CollectCalibInputs(data_pre_process->calibrate_path, data_pre_process->calibrate_size,
+                             &data_pre_process->calibrate_path_vector);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "collect calibrate inputs failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -202,8 +204,13 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
       MS_LOG(ERROR) << " close dir failed.";
       return RET_ERROR;
     }
-    auto &cur_inputs = inputs->at(image_path.first);
-    std::sort(cur_inputs.begin(), cur_inputs.end());
+    if (inputs->find(image_path.first) != inputs->end()) {
+      auto &cur_inputs = inputs->at(image_path.first);
+      std::sort(cur_inputs.begin(), cur_inputs.end());
+    } else {
+      MS_LOG(ERROR) << "cant find " << image_path.first << " at input maps.";
+      return RET_ERROR;
+    }
     if (count != limited_count) {
       MS_LOG(ERROR) << " data path: " << image_path.second << " data count:" << count
                     << " < limited_count:" << limited_count;
