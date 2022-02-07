@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,15 +31,16 @@ class Utils:
         if isinstance(attr, int):
             return 'int'
         if isinstance(attr, float):
-            return 'bool'
+            return 'float'
         if isinstance(attr, (list, tuple)):
             if not attr:
-                raise ValueError("Length of attr is 0")
+                raise ValueError("attr is invalid: the length of attr is 0")
             if isinstance(attr[0], int):
                 return 'listInt'
             if isinstance(attr[0], str):
                 return 'listStr'
-        raise ValueError("Unknown type of attr: {}".format(attr))
+        raise ValueError("attr {} type {} is not in supported list ['bool', 'str', 'int', 'float', 'int' list, "
+                         "'str' list]".format(attr, type(attr)))
 
 
 class DataFormat:
@@ -118,7 +119,8 @@ class PrimLib:
             out_shape = op.output.shape
             in_shape = op.inputs[input_idx].shape
             if len(out_shape) < len(in_shape):
-                raise ValueError("input/output size is abnormal")
+                raise ValueError("For '{}', the input/output size is abnormal, as the length of output shape{} is less "
+                                 "than the length of input shape{}".format(op.prim, out_shape, in_shape))
             axis_relation, elem_relation = [], []
             delta = len(out_shape) - len(in_shape)
             if delta > 0:
@@ -412,7 +414,7 @@ class Graph:
                     graph.add(op)
                     outputs.remove(op.output.name)
             for name in outputs:
-                raise ValueError("invalid input tensor : " + name)
+                raise ValueError("Invalid input tensor : {}, can not find it in graph".format(name))
         return graph
 
     def deduce_parameters(self):
@@ -544,7 +546,7 @@ class AddControlBuddy(GraphVisitor):
         """Visit op node"""
         if op.prim == "MakeTuple":
             if len(op.output.to_ops) != 1:
-                raise ValueError("operator's output size is abnormal")
+                raise ValueError("For '{}', the output size is abnormal".format(op.prim))
             owner = op.output.to_ops[0]
             if owner in self.buddies:
                 self.buddies[owner].append(op)

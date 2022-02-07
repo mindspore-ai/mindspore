@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class MatMul(Expander):
     def _check(self):
         input_num = len(self.inputs)
         if input_num < 2:
-            raise GKException("matul inputs number should bigger than 1, but got {}.".format(input_num))
+            raise GKException("For 'MatMul', inputs number should bigger than 1, but got {}.".format(input_num))
 
     def _expand(self, graph_builder):
         def transpose(shape):

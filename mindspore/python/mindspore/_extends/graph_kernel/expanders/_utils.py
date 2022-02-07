@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -111,7 +111,8 @@ class ExpanderInfoValidator:
             inp_formats = [inp['format'] for inp in obj.inputs]
             for formats in getattr(obj, format_list_name):
                 if len(formats) != len(inp_formats):
-                    raise GKException("length of registered format doesn't match the input of {}".format(obj.name))
+                    raise GKException("For '{}', length of registered format is different from the length of inputs "
+                                      "format: {} vs {}".format(obj.name, len(formats), len(inp_formats)))
                 if all([fmt == inp for fmt, inp in zip(formats, inp_formats)]):
                     return
             raise GKException("Unregistered format ({}) for op {}".format(','.join(inp_formats), obj.name))

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ class Tile(Expander):
         multiples = list(multiples)
         diff_len = len(multiples) - len(shape)
         if diff_len < 0:
-            raise GKException("Dimensions of multiples{} < dimensions of input{} in Tile".format(multiples, shape))
+            raise GKException("For 'Tile', dimensions of attr 'multiples' should be greater than or equal to "
+                              "dimensions of input shape, but got {} and {}".format(multiples, shape))
         if diff_len > 0:
             for _ in range(diff_len):
                 shape.insert(0, 1)
@@ -41,7 +42,8 @@ class Tile(Expander):
 
         for sh, mul in list(zip(shape, multiples)):
             if sh != 1 and mul != 1:
-                raise GKException("Tile op in expander only Support Automatic Broadcast!")
+                raise GKException("For 'Tile', input shape{} and attr 'multiples'{} can not broadcast."
+                                  .format(self.inputs[0].shape, multiples))
             dim = sh * mul
             output_shape.append(dim)
         return output_shape

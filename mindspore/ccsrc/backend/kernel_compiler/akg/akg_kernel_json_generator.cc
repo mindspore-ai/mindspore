@@ -423,7 +423,9 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
     }
     (*attr_json)[kJsonKeyValue] = data_format;
   } else {
-    MS_LOG(WARNING) << "No valid json value for attr type: " << type;
+    MS_LOG(WARNING) << "Invalid attr " << op_attr->name() << " found in node " << anf_node->fullname_with_scope()
+                    << ", because its type: " << type
+                    << " is not in supported list: [str, int, bool, float, listInt, listStr].";
   }
 }
 
@@ -1058,12 +1060,16 @@ void ComputeCapability::GetComputeCapability() {
   int a, b;
   auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
   if (ret != CUDA_SUCCESS) {
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, ret=" << ret;
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
     return;
   }
   ret = cuDeviceGetAttribute(&b, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
   if (ret != CUDA_SUCCESS) {
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, ret=" << ret;
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, error message: " << msg;
     return;
   }
   this->compute_capability_ = std::to_string(a) + "." + std::to_string(b);

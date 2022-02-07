@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ class EqualCount(Expander):
 
     def _check(self):
         if self.shape_x != self.shape_y:
-            raise GKException("For 'EqualCount' the `x_shape` should be == `y_shape`: {}, \
-                               but got {}".format(self.shape_y, self.shape_x))
+            raise GKException("For 'EqualCount', the inputs shape should be same, but got {} and {}"
+                              .format(self.shape_x, self.shape_y))
         if self.dtype_x != self.dtype_y:
-            raise GKException("For 'EqualCount' the data type of `y` should the same as `x`, but `x` with {}, \
-                               and `y` with {}".format(self.dtype_x, self.dtype_y))
+            raise GKException("For 'EqualCount', the inputs data type should be same, but got {} and {}"
+                              .format(self.dtype_x, self.dtype_y))
 
     def _expand(self, graph_builder):
         input_x = self.inputs[0]

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ class ExpandDims(Expander):
         """infer shape for expand_dims"""
         def insert_axis(shape, axis):
             if not isinstance(axis, int) or axis > len(shape) or axis < -len(shape) - 1:
-                raise ValueError("invalid dim for ExpandDims")
+                raise ValueError("For 'ExpandDims', value of attr 'axis' should be of type int and in the range [{}, "
+                                 "{}], but got {} with type {}".format(-len(shape) - 1, len(shape), axis, type(axis)))
             if axis >= 0:
                 shape.insert(axis, 1)
             else:
@@ -45,4 +46,5 @@ class ExpandDims(Expander):
             for i in axis:
                 out_shape = insert_axis(out_shape, i)
             return out_shape
-        raise ValueError("invalid dim for ExpandDims")
+        raise ValueError("For 'ExpandDims', type of attr 'axis' should be one of ['int', 'list', 'tuple'], but got {} "
+                         "with type {}".format(axis, type(axis)))

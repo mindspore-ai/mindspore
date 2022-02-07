@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class OpInfer:
         for i, t in enumerate(self.inputs[1:]):
             if t.dtype != dtype:
                 raise GKException(
-                    "Incompatible dtype between input {}({}) and {}({})".format(0, dtype, i + 1, t.dtype))
+                    "Incompatible data type between input {}({}) and {}({})".format(0, dtype, i + 1, t.dtype))
 
     def _check_format(self):
         """check formats are compatible. only DefaultFormat is compatible with others"""
@@ -115,7 +115,7 @@ class _Elemwise(OpInfer):
                 if out_shape[i] == 1:
                     out_shape[i] = align_shape[i]
                 elif out_shape[i] != align_shape[i]:
-                    raise GKException("shape broadcast failed!")
+                    raise GKException("Input shapes {} can not broadcast.".format(shapes))
         return out_shape
 
     @staticmethod
@@ -129,18 +129,24 @@ class _Elemwise(OpInfer):
         if len(two_d_shape) == 1 or (len(two_d_shape) == 2 and two_d_shape[0] == 1):
             shape = [two_d_shape[-1] // 16, 1, 1, 16]
             if two_d_shape[-1] % 16 != 0:
-                raise GKException("should be multiplies of 16")
+                raise GKException("Can not convert default format shape{} to fractal_Nz format shape, because default "
+                                  "format shape[-1] should be multiplies of 16, but got {}"
+                                  .format(default_shape, two_d_shape[-1]))
             return more_two_d_shape + shape
         # (32, 1) -> (1, 2, 16, 1)
         if len(two_d_shape) == 2 and two_d_shape[1] == 1:
             shape = [1, two_d_shape[0] // 16, 16, 1]
             if two_d_shape[0] % 16 != 0:
-                raise GKException("should be multiples of 16")
+                raise GKException("Can not convert default format shape{} to fractal_Nz format shape, because default "
+                                  "format shape[-2] should be multiples of 16, but got {}"
+                                  .format(default_shape, two_d_shape[0]))
             return more_two_d_shape + shape
         # (32, 48) -> (3, 2, 16, 16)
         shape = [two_d_shape[1] // 16, two_d_shape[0] // 16, 16, 16]
         if two_d_shape[0] % 16 != 0 or two_d_shape[1] % 16 != 0:
-            raise GKException("should be multiples of 16")
+            raise GKException("Can not convert default format shape{} to fractal_Nz format shape, because default "
+                              "format shape[-2] and shape[-1] should be multiples of 16, but got {} and {}"
+                              .format(default_shape, two_d_shape[0], two_d_shape[1]))
         return more_two_d_shape + shape
 
     def _infer_shape(self):
@@ -159,7 +165,9 @@ class _Elemwise(OpInfer):
                          else op_input.shape for op_input in self.inputs]
             return self.broadcast_shape(nz_shapes)
 
-        raise GKException("Only support default and fractal_nz")
+        inputs_format = [op_input.data_format for op_input in self.inputs]
+        raise GKException("Only support DefaultFormat, NHWC, NCHW and FRACTAL_NZ in inputs format, but got {}"
+                          .format(inputs_format))
 
     def _infer_format(self):
         for tensor in self.inputs:
@@ -180,7 +188,7 @@ class _Reduce(OpInfer):
             axis = [axis]
         if not all([(-shape_len <= i < shape_len) for i in axis]):
             raise GKException(
-                "reduce_axis should be in range [{},{}) but got {}".format(-shape_len, shape_len, axis))
+                "Reduce axis should be in range [{},{}) but got {}".format(-shape_len, shape_len, axis))
 
     def _infer_shape(self):
         shape = copy.deepcopy(self.inputs[0].shape)
@@ -222,10 +230,12 @@ class Reshape(_Reshape):
     """Reshape op infer"""
 
     def _check_shape(self):
-        size_before_reshape = prod_reduce(lambda x, y: x * y, self.inputs[0].shape)
-        size_after_reshape = prod_reduce(lambda x, y: x * y, self.attrs["shape"])
+        input_shape = self.inputs[0].shape
+        output_shape = self.attrs["shape"]
+        size_before_reshape = prod_reduce(lambda x, y: x * y, input_shape)
+        size_after_reshape = prod_reduce(lambda x, y: x * y, output_shape)
         if size_before_reshape != size_after_reshape:
-            raise GKException("The shape product before and after reshaping should be equal")
+            raise GKException("For 'Reshape', can not reshape {} to {}".format(input_shape, output_shape))
 
     def _infer_shape(self):
         return self.attrs["shape"]
@@ -274,7 +284,7 @@ class CImag(OpInfer):
     def _check_type(self):
         if self.inputs[0].dtype != "complex64":
             raise GKException(
-                "CImag's input[0] should be a complex64 condition but got {}".format(self.inputs[0].dtype))
+                "For 'CImag', input[0] should be of type complex64, but got {}".format(self.inputs[0].dtype))
 
     def _infer_type(self):
         return "float32"
@@ -286,7 +296,7 @@ class CReal(OpInfer):
     def _check_type(self):
         if self.inputs[0].dtype != "complex64":
             raise GKException(
-                "CReal's input[0] should be a complex64 condition but got {}".format(self.inputs[0].dtype))
+                "For 'CReal', input[0] should be of type complex64, but got {}".format(self.inputs[0].dtype))
 
     def _infer_type(self):
         return "float32"
@@ -298,9 +308,10 @@ class Complex(OpInfer):
     def _check_type(self):
         if self.inputs[0].dtype != "float32":
             raise GKException(
-                "Complex's input[0] should be a float32 condition but got {}".format(self.inputs[0].dtype))
+                "For 'Complex', input[0] should be of type float32, but got {}".format(self.inputs[0].dtype))
         if self.inputs[0].dtype != self.inputs[1].dtype:
-            raise GKException("Complex's input mismatch ({} vs {})".format(self.inputs[0].dtype, self.inputs[1].dtype))
+            raise GKException("For 'Complex', inputs data type mismatch ({} vs {})"
+                              .format(self.inputs[0].dtype, self.inputs[1].dtype))
 
     def _infer_type(self):
         return "complex64"
@@ -331,9 +342,10 @@ class Select(_Elemwise):
 
     def _check_type(self):
         if self.inputs[0].dtype != "bool":
-            raise GKException("Select's input[0] should be a bool condition but got {}".format(self.inputs[0].dtype))
+            raise GKException("For 'Select', input[0] should be of type bool, but got {}".format(self.inputs[0].dtype))
         if self.inputs[1].dtype != self.inputs[2].dtype:
-            raise GKException("Select's input mismatch ({} vs {})".format(self.inputs[1].dtype, self.inputs[2].dtype))
+            raise GKException("For 'Select', input[1] and input[2] data type mismatch ({} vs {})"
+                              .format(self.inputs[1].dtype, self.inputs[2].dtype))
 
     def _infer_type(self):
         return self.inputs[1].dtype
@@ -342,9 +354,9 @@ class Select(_Elemwise):
 def check_format_any(formats, checked_format):
     """Check whether input format in formats list"""
     if not isinstance(formats, (list, tuple)):
-        raise GKException("formats {} should be list or tuple, but got {}.".format(formats, type(formats)))
+        raise GKException("formats {} should be of type list or tuple, but got {}.".format(formats, type(formats)))
     if checked_format not in formats:
-        raise GKException("Check {} failed in {}".format(checked_format, formats))
+        raise GKException("Check {} failed: can not find it in {}".format(checked_format, formats))
 
 
 def check_nd(data, nd):
@@ -417,13 +429,14 @@ class MatMul(OpInfer):
         shape_0 = list(self.inputs[0].shape)
         shape_1 = list(self.inputs[1].shape)
         if len(shape_0) != 2 or len(shape_1) != 2:
-            raise GKException("MatMul's inputs shape must be 2D, but got {}, {}".format(len(shape_0), len(shape_1)))
+            raise GKException("For 'MatMul', inputs shape must be 2D, but got {}, {}"
+                              .format(shape_0, shape_1))
         transpose_a = self.attrs["transpose_a"]
         transpose_b = self.attrs["transpose_b"]
         m, k1 = (shape_0[-1], shape_0[-2]) if transpose_a else (shape_0[-2], shape_0[-1])
         k2, n = (shape_1[-1], shape_1[-2]) if transpose_b else (shape_1[-2], shape_1[-1])
         if k1 != k2:
-            raise GKException("MatMul's inputs have different k value: {} vs {}".format(k1, k2))
+            raise GKException("For 'MatMul', inputs have different k value: {} vs {}".format(k1, k2))
         output_shape = [m, n]
         return output_shape
 
@@ -437,7 +450,7 @@ class PadAkg(OpInfer):
         pad_before = list(self.attrs["head"])
         pad_after = list(self.attrs["tail"])
         if len(pad_before) != n or len(pad_after) != n:
-            raise GKException("Input dimension and pad mismatch: {}d vs {}d vs {}d"
+            raise GKException("For 'PadAkg', input dimension and pad mismatch: {}d vs {}d vs {}d"
                               .format(n, len(pad_before), len(pad_after)))
         out_shape = [shape[i] + pad_before[i] + pad_after[i] for i in range(n)]
         return out_shape
@@ -451,7 +464,8 @@ class UnPadAkg(OpInfer):
         n = len(shape)
         unpad_after = list(self.attrs["tail"])
         if len(unpad_after) != n:
-            raise GKException("Input dimension and pad mismatch: {}d vs {}d".format(n, len(unpad_after)))
+            raise GKException("For 'UnPadAkg', input dimension and pad mismatch: {}d vs {}d"
+                              .format(n, len(unpad_after)))
         out_shape = [shape[i] - unpad_after[i] for i in range(n)]
         return out_shape
 
@@ -478,4 +492,5 @@ class Gather(OpInfer):
 
     def _check_type(self):
         if self.inputs[1].dtype != "int32":
-            raise GKException("Indices dtype must be int32!")
+            raise GKException("For 'Gather', inputs[1] should be of type int32, but got {}"
+                              .format(self.inputs[1].dtype))

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ class GraphBuilder:
                 self.gb.current = None
 
         if self.current is not None:
-            raise ValueError("self.current wrong value")
+            raise ValueError("self.current is not None!")
         self.current = self.GraphWrapper(name)
         return GraphScope(self)
 
