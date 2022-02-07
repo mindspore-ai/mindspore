@@ -144,53 +144,6 @@ Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) c
   return SUCCESS;
 }
 
-Status Conv2DInfo::CheckHWStrategySameModeByDimension(int64_t strategy, const std::string &dimension) {
-  int64_t h_or_w_input_shape = 0, h_or_w_slice_shape = 0, h_or_w_kernel_size = 0, h_or_w_stride = 0;
-  if (dimension == H_DIMENSION) {
-    h_or_w_input_shape = inputs_shape_[0][2];
-    h_or_w_slice_shape = h_or_w_input_shape / strategy;
-    h_or_w_kernel_size = kernel_size_use_dilation_[0];
-    h_or_w_stride = stride_[2];
-  } else {
-    h_or_w_input_shape = inputs_shape_[0][3];
-    h_or_w_slice_shape = h_or_w_input_shape / strategy;
-    h_or_w_kernel_size = kernel_size_use_dilation_[1];
-    h_or_w_stride = stride_[3];
-  }
-
-  if (strategy > 1 && (h_or_w_kernel_size <= h_or_w_stride && h_or_w_slice_shape % h_or_w_stride != 0)) {
-    MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                  << " when kernel_size_use_dilation_ <= stride but slice shape is not divisible by stride ";
-    return FAILED;
-  }
-
-  if (strategy > 1 && (h_or_w_kernel_size > h_or_w_stride)) {
-    if (h_or_w_input_shape % h_or_w_stride != 0) {
-      MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                    << " when kernel_size_use_dilation_ > stride but input shape is not divisible by stride";
-      return FAILED;
-    }
-
-    if (h_or_w_slice_shape <= ((h_or_w_kernel_size - h_or_w_stride + 1) / 2)) {
-      MS_LOG(ERROR) << name_ << ": The 'same' mode do not support to split " << dimension
-                    << " when kernel_size_use_dilation_ > stride but slice shape <= (k - s + 1) / 2";
-      return FAILED;
-    }
-  }
-  return SUCCESS;
-}
-
-Status Conv2DInfo::CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy) {
-  if (CheckHWStrategySameModeByDimension(h_strategy, H_DIMENSION) != SUCCESS) {
-    return FAILED;
-  }
-
-  if (CheckHWStrategySameModeByDimension(w_strategy, W_DIMENSION) != SUCCESS) {
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
 Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy) {
   int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
   int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
@@ -221,18 +174,58 @@ Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strate
   return SUCCESS;
 }
 
+Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, const std::string &dimension) {
+  if (strategy == 1) {
+    return SUCCESS;
+  }
+
+  int64_t h_or_w_input_shape = 0, h_or_w_output_shape = 0, h_or_w_kernel_size = 0, h_or_w_stride = 0, pad_all = 0;
+  if (dimension == H_DIMENSION) {
+    h_or_w_input_shape = inputs_shape_[0][2];
+    h_or_w_output_shape = outputs_shape_[0][2];
+    h_or_w_kernel_size = kernel_size_use_dilation_[0];
+    h_or_w_stride = stride_[2];
+    pad_all = pad_list_[0] + pad_list_[1];
+  } else {
+    h_or_w_input_shape = inputs_shape_[0][3];
+    h_or_w_output_shape = outputs_shape_[0][3];
+    h_or_w_kernel_size = kernel_size_use_dilation_[1];
+    h_or_w_stride = stride_[3];
+    pad_all = pad_list_[2] + pad_list_[3];
+  }
+
+  if ((h_or_w_input_shape + pad_all - h_or_w_kernel_size) % h_or_w_stride != 0) {
+    MS_LOG(ERROR) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension
+                  << " when input_shape + pad_all - k is not divisible by stride ";
+    return FAILED;
+  }
+
+  if ((h_or_w_output_shape * h_or_w_stride - h_or_w_input_shape) % strategy != 0) {
+    MS_LOG(ERROR) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension
+                  << " when output_shape * s - input_shape is not divisible by stride ";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status Conv2DInfo::CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy) {
+  if (CheckHWStrategyPadModeByDimension(h_strategy, H_DIMENSION) != SUCCESS) {
+    return FAILED;
+  }
+
+  if (CheckHWStrategyPadModeByDimension(w_strategy, W_DIMENSION) != SUCCESS) {
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status Conv2DInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   if (CheckHWStrategyBase(h_strategy, w_strategy) != SUCCESS) {
     return FAILED;
   }
 
-  if (pad_mode_ == 0) {  // 'pad' mode
-    MS_LOG(ERROR) << name_ << ": The 'pad' mode do not support to split H or W";
-    return FAILED;
-  }
-
-  if (pad_mode_ == 1) {  // 'same' mode
-    return CheckHWStrategySameMode(h_strategy, w_strategy);
+  if (pad_mode_ == 0 || pad_mode_ == 1) {  // 'pad' mode or 'same' mode
+    return CheckHWStrategyPadMode(h_strategy, w_strategy);
   }
 
   if (pad_mode_ == 2) {  // 'valid' mode
@@ -309,12 +302,12 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
-  // kernel size larger than stride and the h/w dimension is split, need to exchange overlap
-  if ((kernel_size_use_dilation_[0] > stride_[2]) && (input_strategy[2] > 1)) {
+  // if the h/w dimension is split, need to exchange overlap
+  if (input_strategy[2] > 1) {
     h_dim_need_exchange_overlap_ = true;
   }
 
-  if ((kernel_size_use_dilation_[1] > stride_[3]) && (input_strategy[3] > 1)) {
+  if (input_strategy[3] > 1) {
     w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
@@ -563,6 +556,54 @@ void Conv2DInfo::InferOverlapSizeForWDim() {
   }
 }
 
+void Conv2DInfo::CheckOverlapSizeNonNegative() {
+  // check h dimension
+  int64_t h_first_rank_bottom_size = ComputeOverlapBottomSizeByRankBias(0);
+  if (h_first_rank_bottom_size < 0) {
+    MS_LOG(EXCEPTION) << name_ << ": The bottom overlap size of h dimension rank bias 0 must be positive, but it is "
+                      << h_first_rank_bottom_size;
+  }
+
+  for (int64_t h_rank_bias = 1; h_rank_bias < h_dimension_shard_num_ - 1; ++h_rank_bias) {
+    auto top_size = ComputeOverlapTopSizeByRankBias(h_rank_bias);
+    auto bottom_size = ComputeOverlapBottomSizeByRankBias(h_rank_bias);
+    if (top_size < 0 || bottom_size < 0) {
+      MS_LOG(EXCEPTION) << name_ << ": The overlap size of h dimension rank bias " << h_rank_bias
+                        << " must be positive, but top overlap size is " << top_size << ", bottom overlap size is "
+                        << bottom_size;
+    }
+  }
+
+  int64_t h_last_rank_top_size = ComputeOverlapTopSizeByRankBias(h_dimension_shard_num_ - 1);
+  if (h_last_rank_top_size < 0) {
+    MS_LOG(EXCEPTION) << name_ << ": The top overlap size of h dimension last rank bias must be positive, but it is "
+                      << h_last_rank_top_size;
+  }
+
+  // check w dimension
+  int64_t w_first_rank_right_size = ComputeOverlapRightSizeByRankBias(0);
+  if (w_first_rank_right_size < 0) {
+    MS_LOG(EXCEPTION) << name_ << ": The right overlap size of w dimension rank bias 0 must be positive, but it is "
+                      << w_first_rank_right_size;
+  }
+
+  for (int64_t w_rank_bias = 1; w_rank_bias < w_dimension_shard_num_ - 1; ++w_rank_bias) {
+    auto left_size = ComputeOverlapLeftSizeByRankBias(w_rank_bias);
+    auto right_size = ComputeOverlapRightSizeByRankBias(w_rank_bias);
+    if (left_size < 0 || right_size < 0) {
+      MS_LOG(EXCEPTION) << name_ << ": The overlap size of w dimension rank bias " << w_rank_bias
+                        << " must be positive, but left overlap size is " << left_size << ", right overlap size is "
+                        << right_size;
+    }
+  }
+
+  int64_t w_last_rank_left_size = ComputeOverlapLeftSizeByRankBias(w_dimension_shard_num_ - 1);
+  if (w_last_rank_left_size < 0) {
+    MS_LOG(EXCEPTION) << name_ << ": The left overlap size of w dimension last rank bias must be positive, but it is "
+                      << w_last_rank_left_size;
+  }
+}
+
 void Conv2DInfo::InferOverlapSize() {
   InferOverlapSizeForHDim();
   InferOverlapSizeForWDim();
@@ -575,6 +616,8 @@ void Conv2DInfo::InferOverlapSize() {
                << ", the bottom overlap size of current rank is " << overlap_bottom_size_
                << ", the bottom overlap size of top rank is " << top_rank_overlap_bottom_size_
                << ", the top overlap size of bottom rank is " << bottom_rank_overlap_top_size_;
+
+  CheckOverlapSizeNonNegative();
 }
 
 Status Conv2DInfo::InferTensorMap() {
@@ -710,6 +753,18 @@ void Conv2DInfo::InferCommunicationAttrs() {
   MS_LOG(INFO) << name_ << ": The send rank ids is " << send_rank_ids_ << ", the send lens is " << send_lens_
                << ", the recv rank ids is " << recv_rank_ids_ << ", the recv lens is " << recv_lens_;
 
+  for (auto &send_len : send_lens_) {
+    if (send_len < 0) {
+      MS_LOG(EXCEPTION) << name_ << ": Send len less than 0 is not supported, but it is " << send_len;
+    }
+  }
+
+  for (auto &recv_len : recv_lens_) {
+    if (recv_len < 0) {
+      MS_LOG(EXCEPTION) << name_ << ": Recv len less than 0 is not supported, but it is " << recv_len;
+    }
+  }
+
   int64_t h_slice_shape = input_slice_shape_[2];
   if (send_top_len > h_slice_shape || send_bottom_len > h_slice_shape || recv_top_len > h_slice_shape ||
       recv_bottom_len > h_slice_shape) {
@@ -833,6 +888,17 @@ ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
   InferOverlapSize();
 
   InferNewOperatorAttrs();
+
+  int64_t all_send_lens = std::accumulate(send_lens_.begin(), send_lens_.end(), 0);
+  int64_t all_recv_lens = std::accumulate(recv_lens_.begin(), recv_lens_.end(), 0);
+  if (all_send_lens + all_recv_lens == 0) {
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    prim->set_attr(OUT_CHANNEL, MakeValue(new_out_channel_));
+    prim->set_attr(PAD_MODE, MakeValue(PAD));
+    prim->set_attr(PAD, MakeValue(new_pad_list_));
+    MS_LOG(INFO) << name_ << ": the send lens and recv lens is 0, no need exchange data";
+    return nullptr;
+  }
 
   ComputeReplaceGraph(cnode);
   return replace_graph_;

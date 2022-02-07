@@ -53,6 +53,7 @@ class Conv2DInfo : public OperatorInfo {
   void InferAdjacentRankInfo();
   std::vector<int64_t> GetAdjacentRankIdsAndBiases(int64_t rank_id, const std::string &dimension);
   void InferOverlapSize();
+  void CheckOverlapSizeNonNegative();
   void InferOverlapSizeForHDim();
   void InferOverlapSizeForWDim();
   void InferNewOperatorAttrs();
@@ -142,9 +143,9 @@ class Conv2DInfo : public OperatorInfo {
   virtual int64_t ComputeOverlapRightSizeByRankBias(int64_t rank_bias);
 
  private:
-  Status CheckHWStrategySameModeByDimension(int64_t strategy, const std::string &dimension);
-  Status CheckHWStrategySameMode(int64_t h_strategy, int64_t w_strategy);
   Status CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy);
+  Status CheckHWStrategyPadModeByDimension(int64_t strategy, const std::string &dimension);
+  Status CheckHWStrategyPadMode(int64_t h_strategy, int64_t w_strategy);
 };
 
 class Conv2DBackpropInputInfo : public Conv2DInfo {
