@@ -35,6 +35,7 @@ import mindspore.schema.ResponseGetModel;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -278,32 +279,47 @@ public class SyncFLJob {
      */
     public int[] modelInference() {
         if (Common.checkFLName(flParameter.getFlName())) {
+            LOGGER.warning(Common.addTag(Common.LOG_DEPRECATED));
             return deprecatedModelInference();
         }
+        return new int[0];
+    }
 
+    /**
+     * Starts an inference task on the device.
+     *
+     * @return the status code corresponding to the response message.
+     */
+    public List<Object> modelInfer() {
         Client client = ClientManager.getClient(flParameter.getFlName());
         localFLParameter.setMsConfig(0, flParameter.getThreadNum(), flParameter.getCpuBindMode(), false);
         localFLParameter.setStopJobFlag(false);
-        int[] labels = new int[0];
+        if (!(null == flParameter.getInputShape())) {
+            LOGGER.info("[model inference] the inference model has dynamic input.");
+        }
         Map<RunType, Integer> dataSize = client.initDataSets(flParameter.getDataMap());
         if (dataSize.isEmpty()) {
             LOGGER.severe("[model inference] initDataSets failed, please check");
-            return new int[0];
+            client.free();
+            return null;
         }
-        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig());
+        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe(Common.addTag("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
                     " status is: " + tag));
-            return new int[0];
+            client.free();
+            return null;
         }
         client.setBatchSize(flParameter.getBatchSize());
         LOGGER.info(Common.addTag("===========model inference============="));
-        labels = client.inferModel().stream().mapToInt(Integer::valueOf).toArray();
-        if (labels == null || labels.length == 0) {
+        List<Object> labels = client.inferModel();
+        if (labels == null || labels.size() == 0) {
             LOGGER.severe("[model inference] the returned label from client.inferModel() is null, please " +
                     "check");
+            client.free();
+            return null;
         }
-        LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
+        LOGGER.info(Common.addTag("[model inference] the predicted outputs: " + Arrays.deepToString(labels.toArray())));
         client.free();
         LOGGER.info(Common.addTag("[model inference] inference finish"));
         return labels;
@@ -416,6 +432,18 @@ public class SyncFLJob {
         }
     }
 
+    private static int[][] getInputShapeArray(String inputShape) {
+        String[] inputs = inputShape.split(";");
+        int inputsSize = inputs.length;
+        int[][] inputsArray = new int[inputsSize][];
+        for (int i = 0; i < inputsSize; i++) {
+            String[] input = inputs[i].split(",");
+            int[] inputArray = Arrays.stream(input).mapToInt(Integer::parseInt).toArray();
+            inputsArray[i] = inputArray;
+        }
+        return inputsArray;
+    }
+
     private static void task(String[] args) {
         String trainDataPath = args[0];
         String evalDataPath = args[1];
@@ -438,9 +466,13 @@ public class SyncFLJob {
         String inferWeightName = args[17];
         String nameRegex = args[18];
         String serverMod = args[19];
+        String inputShape = args[21];
         int batchSize = Integer.parseInt(args[20]);
-
         FLParameter flParameter = FLParameter.getInstance();
+
+        if (!("null".equals(inputShape) || inputShape == null)) {
+            flParameter.setInputShape(getInputShapeArray(inputShape));
+        }
 
         // create dataset of map
         Map<RunType, List<String>> dataMap = createDatasetMap(trainDataPath, evalDataPath, inferDataPath, pathRegex);
@@ -476,7 +508,7 @@ public class SyncFLJob {
                 flParameter.setThreadNum(threadNum);
                 flParameter.setCpuBindMode(BindMode.valueOf(cpuBindMode));
                 flParameter.setBatchSize(batchSize);
-                syncFLJob.modelInference();
+                syncFLJob.modelInfer();
                 break;
             case "getModel":
                 LOGGER.info(Common.addTag("start syncFLJob.getModel()"));

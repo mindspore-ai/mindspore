@@ -82,6 +82,8 @@ public class LocalFLParameter {
     private boolean stopJobFlag = false;
     private MSConfig msConfig = new MSConfig();
     private boolean useSSL = true;
+    private float lr = 0.1f;
+
 
     private LocalFLParameter() {
         // set classifierWeightName albertWeightName
@@ -233,12 +235,20 @@ public class LocalFLParameter {
         msConfig.init(DeviceType, threadNum, cpuBindMode, enable_fp16);
     }
 
-
     public boolean isUseSSL() {
         return useSSL;
     }
 
     public void setUseSSL(boolean useSSL) {
         this.useSSL = useSSL;
+    }
+
+    public float getLr() {
+        LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <lr> from server is: " + lr));
+        return lr;
+    }
+
+    public void setLr(float lr) {
+        this.lr = lr;
     }
 }
