@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ class MinimumGrad(Expander):
 
     def _check(self):
         if not self.attrs.get('grad_x', True) and not self.attrs.get('grad_y', True):
-            raise GKException("both grad_x and grad_y are False.")
+            raise GKException("For 'MinimumGrad', value of attr 'grad_x' and 'grad_y' should be False, but got {} and "
+                              "{}".format(self.attrs.get('grad_x'), self.attrs.get('grad_y')))
         return super(MinimumGrad, self)._check()
 
     def _expand(self, graph_builder):
@@ -34,7 +35,7 @@ class MinimumGrad(Expander):
         dx = graph_builder.emit('Mul', [le_result, input_dout])
         dy = graph_builder.emit('Sub', [input_dout, dx])
 
-        # for minimumgrad op,  output_shape should be equal to input_shape,
+        # for minimumgrad op, output_shape should be equal to input_shape,
         # but some elementwise operating may broadcast input_shape
         # then output_shape not equal to original input_shape, so need to reduce output to let them equal
         reduce_axis_x = self.get_reduce_axis(input_x.shape, dx.shape)
@@ -64,7 +65,8 @@ class MinimumGrad(Expander):
     def get_reduce_axis(original_shape, broadcast_shape):
         """compute reduce axis for final output_shape"""
         if len(original_shape) > len(broadcast_shape):
-            raise ValueError("original_shape size need to less equal than broadcast_shape")
+            raise ValueError("For 'MinimumGrad', the length of original_shape should be less than or equal to the "
+                             "length of broadcast_shape, but got {} and {}".format(original_shape, broadcast_shape))
 
         tmp_shape = [1] * (len(broadcast_shape) - len(original_shape)) + original_shape
         reduce_axis = []
@@ -73,5 +75,6 @@ class MinimumGrad(Expander):
                 if tmp_shape[idx] == 1:
                     reduce_axis.append(idx)
                 else:
-                    raise ValueError("broadcast dismatch %s vs %s" % (tmp_shape[idx], broadcast_shape[idx]))
+                    raise ValueError("For 'MinimumGrad', original_shape {} and broadcast_shape {} can not broadcast."
+                                     .format(original_shape, broadcast_shape))
         return reduce_axis

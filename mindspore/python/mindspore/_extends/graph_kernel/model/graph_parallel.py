@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,10 +84,10 @@ class ScheduleAnalyzer:
             if PrimLib.iter_type(op) == PrimLib.REDUCE:
                 if reduce_op:
                     raise RuntimeError(
-                        "Not support multiply reduce op in a graph now.")
+                        "Not support multiple reduce op in a graph now.")
                 reduce_op = op
         if not reduce_op:
-            raise RuntimeError("Wrong analyze for reduce!")
+            raise RuntimeError("Wrong analyze for reduce: no reduce op found in graph!")
         shape = reduce_op.inputs[0].shape
         reduce_axis = reduce_op.attrs['reduce_axis']
         total_space = self.prod(shape)

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ def _compile_akg_task_ascend(json_strs, attrs):
         try:
             subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=True)
         except BaseException as e:
-            logger.error(e, "Failed, args: {}! build attrs: {}".format(json_str, attrs))
+            logger.error(e, "Compile error, args: {}! build attrs: {}".format(json_str, attrs))
 
 
 def create_akg_parallel_process(process_num, wait_time, platform):
@@ -86,12 +86,14 @@ class AkgProcess:
         """
         Args:
             process_num: int. processes number
-            waittime: int. max time the function blocked
+            wait_time: int. max time the function blocked
         """
         if not isinstance(process_num, int):
-            raise ValueError("process number must be a num")
+            raise ValueError("process number must be of type int, but got {} with type {}"
+                             .format(process_num, type(wait_time)))
         if not isinstance(wait_time, int):
-            raise ValueError("wait time must be a num")
+            raise ValueError("wait time must be of type int, but got {} with type {}"
+                             .format(wait_time, type(wait_time)))
         if process_num == 0:
             process_num = 1
         max_proc_num = 16
@@ -127,6 +129,6 @@ class AkgProcess:
             json: str. kernel info.
         """
         if not isinstance(json, str):
-            raise ValueError("json must be a str")
+            raise ValueError("json must be of type str, but got {} with type {}".format(json, type(json)))
         self.args[self.argc % self.process_num].append(json)
         self.argc += 1

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for SquareSumAll"""
+from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander
 
 
@@ -23,7 +24,7 @@ class SquareSumAll(Expander):
         """check inputs"""
         input_num = len(self.inputs)
         if input_num != 2:
-            raise GKException("SquareSumAll inputs number should be 2, but got {}.".format(input_num))
+            raise GKException("For 'SquareSumAll', the inputs number should be 2, but got {}.".format(input_num))
 
     def _expand(self, graph_builder):
         """do expand"""

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ class Conv2D(Expander):
         type_0 = self.inputs[0]['data_type']
         type_1 = self.inputs[1]['data_type']
         if type_0 != "float16" or type_1 != "float16":
-            raise GKException(
-                "inputs type should be float16, but got {} and {}".format(type_0, type_1))
+            raise GKException("For 'Conv2D', inputs data type should be both float16, but got {} and {}"
+                              .format(type_0, type_1))
 
         formats = [self.inputs[0]['format'], self.inputs[1]['format'], self.attrs['format']]
         check_format_any(formats, DF.NHWC)
@@ -80,14 +80,14 @@ class Conv2D(Expander):
         groups = self.attrs['groups']
         group = self.attrs['group']
         if groups != 1 or group != 1:
-            raise GKException(
-                "groups and group should be both 1, but got {} and {}.".format(groups, group))
+            raise GKException("For 'Conv2D', value of attr 'groups' and 'group' should be both 1, but got {} and {}."
+                              .format(groups, group))
 
         dilation = self.attrs['dilation']
         check_nd(dilation, 4)
         if dilation != [1, 1, 1, 1]:
-            raise GKException(
-                "dilation should be all 1, but got {}".format(dilation))
+            raise GKException("For 'Conv2D', value of attr 'dilation' should be [1, 1, 1, 1], but got {}"
+                              .format(dilation))
 
         pad_list = self.attrs['pad_list']
         pad_mode = self.attrs['pad_mode']
@@ -103,12 +103,14 @@ class Conv2D(Expander):
         n0, h0, w0, c0 = shape_0
         n1, h1, w1, c1 = shape_1
         if (n0 % N0_CHANNEL_ALIGN) != 0:
-            raise GKException("N({}) channel of first input should be multiples of {}".format(n0, N0_CHANNEL_ALIGN))
+            raise GKException("For 'Conv2D', N channel of first input should be multiples of {}, but got {}"
+                              .format(N0_CHANNEL_ALIGN, n0))
         if (n1 % N1_CHANNEL_ALIGN) != 0:
-            raise GKException("O({}) channel of second input should be multiples of {}".format(n1, N1_CHANNEL_ALIGN))
+            raise GKException("For 'Conv2D', N channel of second input should be multiples of {}, but got {}"
+                              .format(N1_CHANNEL_ALIGN, n1))
         if c0 != c1 or (c0 % C_CHANNEL_ALIGN) != 0:
-            raise GKException("C channel of inputs({}, {}) should be same and also be multiples of {}".format(
-                c0, c1, C_CHANNEL_ALIGN))
+            raise GKException("For 'Conv2D', C channel of inputs should be same and also be multiples of {}, but got "
+                              "{} and {}".format(C_CHANNEL_ALIGN, c0, c1))
         # n0 pad
         n0 = ((n0 + N0_CHANNEL_ALIGN - 1) //
               N0_CHANNEL_ALIGN) * N0_CHANNEL_ALIGN
@@ -130,18 +132,19 @@ class Conv2D(Expander):
         # requirements
         if self.can_optimize_to_matmul:
             if self.k > K_LIMIT:
-                raise GKException(
-                    "If transformed to MatMul, C0({}) should not be larger than {}".format(self.k, K_LIMIT))
+                raise GKException("For 'Conv2D', if transformed to 'MatMul', C0 should not be larger than {}, but got "
+                                  "{}".format(K_LIMIT, self.k))
             if self.m * self.n * self.k >= MNK_LIMIT:
-                raise GKException("If transformed to MatMul, The total size({}) should not be larger than {}".format(
-                    self.m * self.n * self.k, MNK_LIMIT))
+                raise GKException("For 'Conv2D', if transformed to 'MatMul', The total size should not be larger than "
+                                  "{}, but got {}".format(MNK_LIMIT, self.m * self.n * self.k))
         else:
             out_h, out_w = (h0 - h1) // stride[-2] + 1, (w0 - w1) // stride[-1] + 1
             if ((n0 * out_h * out_w) % OUT_NHW_ALIGN) != 0:
-                raise GKException("N({}) * H({}) * W({}) of output should be multiplies of {}".format(
-                    n0, out_h, out_w, OUT_NHW_ALIGN))
+                raise GKException("For 'Conv2D', N({}) * H({}) * W({}) of output should be multiplies of {}"
+                                  .format(n0, out_h, out_w, OUT_NHW_ALIGN))
             if stride != [1, 1, 2, 2]:
-                raise GKException("Stride H and W should be [2, 2] but got [{}, {}]".format(stride[2], stride[3]))
+                raise GKException("For 'Conv2D', value of attr 'stride' should be [1, 1, 2, 2], but got {}"
+                                  .format(stride))
 
         self.shape_0_pad = [n0, h0, w0, c0]
         self.shape_1_pad = [n1, h1, w1, c1]

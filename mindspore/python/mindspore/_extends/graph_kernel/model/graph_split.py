@@ -793,7 +793,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             elif "axis" in op.attrs:
                 reduce_axis = [op.attrs["axis"]]
             else:
-                raise Exception("the operator has no attr reduce_axis or axis")
+                raise Exception("For '{}', can not find the attr 'reduce_axis' or 'axis'".format(op.prim))
             if len(op.inputs[0].shape) - 1 in reduce_axis:
                 reduce_size = prod_reduce(lambda x, y: x * y, [op.inputs[0].shape[i] for i in reduce_axis])
                 return reduce_size >= 1024
@@ -1215,7 +1215,7 @@ class GraphSplitAscend(GraphSplitByPattern):
                 op_attrs = dom.dom_op().attrs
                 if 'src_format' not in op_attrs.keys() \
                         or 'dst_format' not in op_attrs.keys():
-                    logger.error("src_format or dst_format not be found in the attrs of Transdata op")
+                    logger.error("For 'TransData', can not find the attr 'src_format' or 'dst_format'")
                     return False
                 src_format, dst_format = op_attrs['src_format'], op_attrs['dst_format']
                 if src_format == DF.FRAC_NZ and dst_format in (DF.DEFAULT, DF.NCHW):

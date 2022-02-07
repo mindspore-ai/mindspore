@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ class AddN(Expander):
 
     def _check(self):
         if len(self.inputs) < 2:
-            raise GKException("Inputs num of AddN should be greater than 1 but got {}".format(len(self.inputs)))
+            raise GKException("For 'AddN', the inputs num should be greater than 1, but got {}"
+                              .format(len(self.inputs)))
 
     def _expand(self, graph_builder):
         result = self.inputs[0]

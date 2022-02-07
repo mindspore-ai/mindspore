@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ class MaximumGrad(Expander):
 
     def _check(self):
         if not self.attrs.get('grad_x', True) and not self.attrs.get('grad_y', True):
-            raise GKException("both grad_x and grad_y are False.")
+            raise GKException("For 'MaximumGrad', value of attr 'grad_x' and 'grad_y' should be False, but got {} and "
+                              "{}".format(self.attrs.get('grad_x'), self.attrs.get('grad_y')))
         return super()._check()
 
     def _expand(self, graph_builder):

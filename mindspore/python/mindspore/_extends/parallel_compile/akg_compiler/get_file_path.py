@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,15 +19,18 @@ import os
 
 def get_akg_path():
     """get akg directory base path"""
+    hint = "Please check: 1) whether MindSpore is compiled successfully. " \
+           "2) Whether MindSpore is installed successfully with pip install or " \
+           "the path ${mindspore_build_dir}/package is set in env PYTHONPATH."
     search_res = importlib.util.find_spec("mindspore")
     if search_res is None:
-        raise RuntimeError("Cannot find mindspore module!")
+        raise RuntimeError("Cannot find mindspore module! {}".format(hint))
 
     res_path = search_res.origin
     find_pos = res_path.find("__init__.py")
     if find_pos == -1:
-        raise RuntimeError("Find module mindspore origin file failed!")
+        raise RuntimeError("Find module mindspore origin file failed! {}".format(hint))
     akg_path = "{}_akg".format(res_path[:find_pos])
     if not os.path.isdir(akg_path):
-        raise RuntimeError("Cannot find akg from mindspore module!")
+        raise RuntimeError("Cannot find akg from mindspore module! {}".format(hint))
     return akg_path
