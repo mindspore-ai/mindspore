@@ -29,16 +29,19 @@ constexpr size_t kOutputsNum = 2;
 
 template <typename T>
 void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   compute_eigen_vectors_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
   lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (A_shape.size() != kShape2dDims) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be 2D, but got [" << A_shape.size() << "] dimensions.";
+    MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a should be 2D, but got [" << A_shape.size()
+                      << "] dimensions.";
   }
   if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be a squre matrix like [N X N], but got shape [" << A_shape[kDim0]
-                      << " X " << A_shape[kDim1] << "].";
+    MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_
+                      << "', a should be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
+                      << A_shape[kDim1] << "].";
   }
   m_ = A_shape[kDim0];
 }
