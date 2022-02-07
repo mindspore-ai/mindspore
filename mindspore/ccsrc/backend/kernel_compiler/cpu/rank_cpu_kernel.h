@@ -79,7 +79,7 @@ class RankCpuKernelMod : public NativeCpuKernelMod {
       return std::numeric_limits<T>::min();
     }
   }
-  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank, int nans_count) const;
+  void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank, size_t nans_count) const;
   void PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank) const;
   // shape info
   AxisIterator axisIterator_{};

@@ -84,7 +84,7 @@ template <typename T>
 void RankCpuKernelMod<T>::SetFunc() {
   switch (method_) {
     case Method::Max: {
-      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int /* culmutive_rank */, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i + 1;
@@ -92,7 +92,7 @@ void RankCpuKernelMod<T>::SetFunc() {
       };
     } break;
     case Method::Min: {
-      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int /* culmutive_rank */, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i - duplicate_count + 2;
@@ -105,7 +105,7 @@ void RankCpuKernelMod<T>::SetFunc() {
       //     = duplicate_count * (2 * i - duplicate_count + 1) / 2
       // rank_sum = sum + duplicate_count = duplicate_count * (2 * i - duplicate_count + 3) / 2
       // avg = rank_sum / duplicate_count = (2 * i - duplicate_count + 3) / 2
-      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int /* culmutive_rank */, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         float avg = (2 * i - duplicate_count + 3) / 2.0;
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
@@ -114,7 +114,7 @@ void RankCpuKernelMod<T>::SetFunc() {
       };
     } break;
     case Method::First: {
-      func_ = [](size_t i, size_t duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, size_t duplicate_count, int /* culmutive_rank */, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = j + 1;
@@ -201,7 +201,7 @@ void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *val
 
   int culmutive_rank = 1;
   size_t duplicate_count = 0;
-  int nans_count = 0;
+  size_t nans_count = 0;
 
   for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
@@ -226,7 +226,7 @@ void RankCpuKernelMod<T>::Launch1D(const T *input_addr, size_t *sort_idx, T *val
 
 template <typename T>
 void RankCpuKernelMod<T>::PctConvert(float *output_addr, const AxisIterator &iter, int culmutive_rank,
-                                     int nans_count) const {
+                                     size_t nans_count) const {
   const size_t n = iter.AxisSize();
   if (pct_) {
     // pct calculation
