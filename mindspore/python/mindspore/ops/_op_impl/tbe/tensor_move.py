@@ -33,7 +33,7 @@ tensor_move_op_info = TBERegOp("TensorMove") \
     .dtype_format(DataType.I64_None, DataType.I64_None) \
     .dtype_format(DataType.F16_None, DataType.F16_None) \
     .dtype_format(DataType.F32_None, DataType.F32_None) \
-    .dtype_format(DataType.F64_None, DataType.F32_None) \
+    .dtype_format(DataType.F64_None, DataType.F64_None) \
     .dtype_format(DataType.U8_None, DataType.U8_None) \
     .dtype_format(DataType.U16_None, DataType.U16_None) \
     .dtype_format(DataType.U32_None, DataType.U32_None) \
