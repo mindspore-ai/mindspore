@@ -38,7 +38,7 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   void InitGpuTensorInfoShape();
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
  private:
   bool element_flag_{true};

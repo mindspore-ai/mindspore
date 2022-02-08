@@ -78,7 +78,7 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
-  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(2)->IsConst()) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(DIMENSION_2D)->IsConst()) {
     MS_LOG(WARNING) << "FullConnection don't support non-constant bias yet.";
     return RET_ERROR;
   }
@@ -116,7 +116,7 @@ int FullConnectionOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -341,17 +341,18 @@ int FullConnectionOpenCLKernel::InitBias() {
 }
 #endif
 
-void FullConnectionOpenCLKernel::SetGlobalLocal() {
+int FullConnectionOpenCLKernel::SetGlobalLocal() {
   local_size_ = {32, 4, 1};
   size_t CO = CO_;
   size_t N = N_;
-  global_size_ = {UP_DIV(CO, C4NUM), 4, N};
+  global_size_ = {UP_DIV(CO, C4NUM), C4NUM, N};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int FullConnectionOpenCLKernel::SetConstArgs() {
   if (!weight_var_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, true) != CL_SUCCESS) {  // arg index 2
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

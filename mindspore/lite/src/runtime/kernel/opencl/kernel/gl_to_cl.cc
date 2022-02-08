@@ -35,10 +35,11 @@ int GLToCLOpenCLKernel::PreProcess() {
 
 int GLToCLOpenCLKernel::SetConstArgs() { return RET_OK; }
 
-void GLToCLOpenCLKernel::SetGlobalLocal() {
+int GLToCLOpenCLKernel::SetGlobalLocal() {
   global_size_ = {W_ * UP_DIV(C_, C4NUM), N_ * H_};
   local_size_ = {1, 1};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int GLToCLOpenCLKernel::Prepare() {
@@ -75,7 +76,7 @@ int GLToCLOpenCLKernel::Prepare() {
     return ret;
   }
 
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

@@ -42,7 +42,7 @@ int OneHotOpenCLKernel::Prepare() {
   in_shape_ = GpuTensorInfo(in_tensors_[0]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
   axis_ = out_shape_.AlignAxis(param_->axis_);
-  if (in_tensors_[0]->shape().size() == DIMENSION_1D && axis_ == 3) {
+  if (in_tensors_[0]->shape().size() == DIMENSION_1D && axis_ == kNHWC_C) {
     kernel_name += "2DAxis3";
   } else {
     kernel_name += "Axis" + std::to_string(axis_);
@@ -69,7 +69,7 @@ int OneHotOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -79,13 +79,13 @@ int OneHotOpenCLKernel::InitWeights() {
   MS_ASSERT(depth_);
   // inputs num is 3 or 4.
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {  // onnx
-    off_value_ = static_cast<float *>(in_tensors_[2]->data())[0];
-    on_value_ = static_cast<float *>(in_tensors_[2]->data())[1];
+    off_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[0];
+    on_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[1];
     param_->support_neg_index_ = true;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_4) {  // tf
-    on_value_ = static_cast<float *>(in_tensors_[2]->data())[0];
-    off_value_ = static_cast<float *>(in_tensors_[3]->data())[0];
+    on_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[0];
+    off_value_ = static_cast<float *>(in_tensors_[DIMENSION_3D]->data())[0];
     param_->support_neg_index_ = false;
   }
   MS_ASSERT(off_value_);
@@ -128,10 +128,11 @@ int OneHotOpenCLKernel::SetConstArgs() {
   }
   return RET_OK;
 }
-void OneHotOpenCLKernel::SetGlobalLocal() {
+int OneHotOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
   global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int OneHotOpenCLKernel::Run() {

@@ -118,11 +118,19 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
-  SetGlobalLocal();
-  if (SetConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "SeConstArgs failed.";
-    return RET_ERROR;
+
+  ret = SetGlobalLocal();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetGlobalLocal failed.";
+    return ret;
   }
+
+  ret = SetConstArgs();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SeConstArgs failed.";
+    return ret;
+  }
+
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
   return RET_OK;
 }
@@ -202,27 +210,29 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   size_t dtype_size = sizeof(float);
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // weight: o, h, w, i; o == group, i == 1
-  void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
-  MS_ASSERT(origin_weight);
   int CO4 = UP_DIV(out_info.C, C4NUM);
-  int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
   int plane_in = parameter->kernel_h_ * parameter->kernel_w_;
   int plane_out = plane_in * C4NUM;
+
+  int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
   if (filter_type_ == MemType::IMG) {
     int alignment = ocl_runtime_->GetImagePitchAlignment();
     plane_out = UP_ROUND(plane_out, alignment) * C4NUM;
     pack_weight_size = plane_out * CO4;
   }
   pack_weight_size = pack_weight_size * dtype_size;
+
+  void *origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
+  MS_ASSERT(origin_weight);
   auto ConvertFilter = [](void *src, void *dst, TypeId src_type, TypeId dst_type, size_t plane_in, size_t plane_out,
                           size_t channel) {
     std::function<float(float)> to_dtype = [](float x) -> float { return x; };
     PackNCHWToNC4HW4<float, float>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
   };
-  std::vector<char> temp_filter(pack_weight_size);
   auto src_type = in_tensors_.at(kWeightIndex)->data_type();
   auto dst_type = kNumberTypeFloat32;
+  std::vector<char> temp_filter(pack_weight_size);
   ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
   if (filter_type_ == MemType::IMG) {
     size_t img_dtype = CL_FLOAT;
@@ -233,7 +243,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     packed_weight_ = allocator->Malloc(pack_weight_size, temp_filter.data());
   }
   if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc data failed.";
     return RET_ERROR;
   }
   FreeStoredData(stored_weight_);
@@ -303,14 +313,15 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     src_type = in_tensors_.at(kBiasIndex)->data_type();
     dst_type = kNumberTypeFloat32;
-    auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
     MS_ASSERT(src_data);
+    auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
+
     ConvertBias(src_data, temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
   bias_data_ = allocator->Malloc(bias_size, temp_bias.data());
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc failed.";
+    MS_LOG(ERROR) << "Malloc bias data failed.";
     return RET_ERROR;
   }
 
@@ -380,15 +391,15 @@ int DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
+int DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // set global
   size_t CO4 = UP_DIV(out_info.C, C4NUM * block_size_.C);
   global_size_ = {CO4, (size_t)UP_DIV(out_info.W, block_size_.W),
                   (size_t)UP_DIV(out_info.H, block_size_.H) * out_info.N};
   // set local
-  int local_max = filter_type_ == MemType::IMG ? 64 : 128;
-  if (ocl_runtime_->DeviceComputeUnits() > 16) {
+  int local_max = filter_type_ == MemType::IMG ? 64 : 128;  // IMG : 64, BUFFER : 128
+  if (ocl_runtime_->DeviceComputeUnits() > 16) {            // Max Device Compute Units : 16
     local_max = 256;
   }
   const int local_c_max = 16;
@@ -401,15 +412,19 @@ void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   size_t local_h;
   size_t local_w;
   if (out_info.H >= OH_threshold && out_info.W >= OW_threshold && out_info.C <= OC_threshold) {  // c -> w -> h
-    local_w = std::min(global_size_[1], local_hw);
-    local_h = std::min(local_hw / local_w, global_size_[2]);
+    local_w = std::min(global_size_[DIMENSION_1D], local_hw);
+    CHECK_EQUAL_RETURN(local_w, 0);
+    local_h = std::min(local_hw / local_w, global_size_[DIMENSION_2D]);
   } else {  // c -> h -> w
-    local_h = std::min(global_size_[2], local_hw);
-    local_w = std::min(local_hw / local_h, global_size_[1]);
+    local_h = std::min(global_size_[DIMENSION_2D], local_hw);
+    CHECK_EQUAL_RETURN(local_h, 0);
+    local_w = std::min(local_hw / local_h, global_size_[DIMENSION_1D]);
   }
 
   local_size_ = {local_c, local_w, local_h};
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int DepthwiseConv2dOpenCLKernel::StoreConstData() {

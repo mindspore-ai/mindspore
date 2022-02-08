@@ -160,10 +160,11 @@ int ArgMinMaxOpenCLKernel::SetGlobalLocalPre() {
   return RET_OK;
 }
 
-void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
+int ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   local_size_ = {1, 1, 1};
   global_size_ = {static_cast<size_t>(strides_.s[0]), static_cast<size_t>(src_size_.s[1]), 1};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int ArgMinMaxOpenCLKernel::InitWeights() {
@@ -217,7 +218,7 @@ int ArgMinMaxOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SetGlobalLocalPre failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

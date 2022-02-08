@@ -71,9 +71,10 @@ int CastOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void CastOpenCLKernel::SetGlobalLocal() {
+int CastOpenCLKernel::SetGlobalLocal() {
   global_size_ = {shape_.width, shape_.height};
   OpenCLKernel::AlignGlobalLocal(global_size_, {});
+  return RET_OK;
 }
 
 int CastOpenCLKernel::Prepare() {
@@ -95,7 +96,7 @@ int CastOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 

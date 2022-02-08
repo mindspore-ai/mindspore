@@ -30,11 +30,12 @@ class TransposeOpenCLKernel : public OpenCLKernel {
   using OpenCLKernel::OpenCLKernel;
   ~TransposeOpenCLKernel() override = default;
 
+  void BroadCastPerm();
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
  private:
   TransposeType type_{TransposeType::AXIS0312};

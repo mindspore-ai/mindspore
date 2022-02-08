@@ -54,7 +54,7 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
     }
     return RET_OK;
   }
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
   int Run() override;
 

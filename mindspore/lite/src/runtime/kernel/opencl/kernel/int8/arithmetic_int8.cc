@@ -77,13 +77,15 @@ int ArithmeticInt8OpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void ArithmeticInt8OpenCLKernel::SetGlobalLocal() {
+int ArithmeticInt8OpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
     global_size_ = {out_shape_.width, out_shape_.height};
   } else {
     global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
   }
   AlignGlobalLocal(global_size_, {});
+
+  return RET_OK;
 }
 
 int ArithmeticInt8OpenCLKernel::InitWeights() {
@@ -236,7 +238,7 @@ int ArithmeticInt8OpenCLKernel::Prepare() {
     return error_code;
   }
 
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   // BiasAdd InitWeight will be called in opencl_subgraph prepare
   if (type() != PrimitiveType_BiasAdd) {
     InitWeights();

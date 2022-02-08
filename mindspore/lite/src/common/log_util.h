@@ -69,10 +69,19 @@
     }                                                            \
   } while (0)
 
+#define CHECK_EQUAL_RETURN(size1, size2)                             \
+  do {                                                               \
+    if ((size1) == (size2)) {                                        \
+      MS_LOG(ERROR) << #size1 << " must be not equal to " << #size2; \
+      return mindspore::lite::RET_ERROR;                             \
+    }                                                                \
+  } while (0)
+
 #else
 #define CHECK_NULL_RETURN(ptr)
 #define CHECK_NULL_RETURN_VOID(ptr)
 #define CHECK_LESS_RETURN(size1, size2)
 #define CHECK_NOT_EQUAL_RETURN(size1, size2)
+#define CHECK_EQUAL_RETURN(size1, size2)
 #endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_UTIL_H_

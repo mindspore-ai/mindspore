@@ -71,11 +71,13 @@ int ReshapeOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ReshapeOpenCLKernel::SetGlobalLocal() {
+int ReshapeOpenCLKernel::SetGlobalLocal() {
   auto out = GpuTensorInfo(out_tensors_.front());
   local_size_ = {};
   global_size_ = {out.width, out.height};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int ReshapeOpenCLKernel::Prepare() {
@@ -93,7 +95,7 @@ int ReshapeOpenCLKernel::Prepare() {
     return ret;
   }
 
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

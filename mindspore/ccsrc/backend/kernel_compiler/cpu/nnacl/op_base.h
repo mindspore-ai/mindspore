@@ -45,6 +45,7 @@
 #define C56NUM 56
 #define C64NUM 64
 #define C128NUM 128
+#define C256NUM 256
 #define C1500NUM 1500
 #define TILE_NUM 8
 
@@ -116,6 +117,17 @@
 #define kDefaulLiteIosSpinCount 1
 #define DEFAULT_GROUP_NAME_LEN 101
 #define kValueThreshold6 6
+
+#define CLARGSINDEX0 0
+#define CLARGSINDEX1 1
+#define CLARGSINDEX2 2
+#define CLARGSINDEX3 3
+#define CLARGSINDEX4 4
+#define CLARGSINDEX5 5
+#define CLARGSINDEX6 6
+#define CLARGSINDEX7 7
+#define CLARGSINDEX8 8
+#define CLARGSINDEX9 9
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

@@ -33,7 +33,7 @@ class StridedSliceOpenCLKernel : public OpenCLKernel {
 
   int Prepare() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
   int Run() override;
 

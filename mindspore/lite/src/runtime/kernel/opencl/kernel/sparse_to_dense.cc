@@ -200,12 +200,14 @@ int SparseToDenseOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void SparseToDenseOpenCLKernel::SetGlobalLocal() {
+int SparseToDenseOpenCLKernel::SetGlobalLocal() {
   local_size_ = {1, 1};
   size_t OH = n_ * h_;
   size_t OW = w_ * UP_DIV(c_, C4NUM);
   global_size_ = {OH, OW};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int SparseToDenseOpenCLKernel::Prepare() {
@@ -256,7 +258,7 @@ int SparseToDenseOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "InferShapeTo4D failed.";
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

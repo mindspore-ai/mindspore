@@ -57,26 +57,31 @@ int BatchNormOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
+int BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
+  CHECK_EQUAL_RETURN(x, 0);
   int yz = max_size / x;
-  int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
-  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
+
+  int y = std::min(std::min(GetMaxDivisorStrategy1(global[DIMENSION_1D], max_divider), yz), max_y);
+  CHECK_EQUAL_RETURN(y, 0);
+  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[DIMENSION_2D], DIMENSION_2D)));
 
   local->clear();
   local->push_back(x);
   local->push_back(y);
   local->push_back(z);
+
+  return RET_OK;
 }
 
 int BatchNormOpenCLKernel::SetConstArgs() {
   int arg_cn = 6;
   auto param = reinterpret_cast<BatchNormParameter *>(this->op_parameter_);
   auto input0_shape = in_tensors_.at(0)->shape();
-  cl_int4 input_shape_ = {input0_shape.at(0), input0_shape.at(1), input0_shape.at(2),
-                          UP_DIV(input0_shape.at(3), C4NUM)};
+  cl_int4 input_shape_ = {input0_shape.at(kNHWC_N), input0_shape.at(kNHWC_H), input0_shape.at(kNHWC_W),
+                          UP_DIV(input0_shape.at(kNHWC_C), C4NUM)};
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
@@ -85,24 +90,29 @@ int BatchNormOpenCLKernel::SetConstArgs() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input0_shape.at(3)) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input0_shape.at(kNHWC_C)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-void BatchNormOpenCLKernel::SetGlobalLocal() {
+int BatchNormOpenCLKernel::SetGlobalLocal() {
   auto output_shape = out_tensors_.at(0)->shape();
-  uint32_t OH = output_shape.at(1);
-  uint32_t OW = output_shape.at(2);
-  uint32_t OC = UP_DIV(output_shape.at(3), C4NUM);
+  uint32_t OH = output_shape.at(kNHWC_H);
+  uint32_t OW = output_shape.at(kNHWC_W);
+  uint32_t OC = UP_DIV(output_shape.at(kNHWC_C), C4NUM);
 
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   local_size_ = {1, 1, 1};  // init local
   global_size_ = {OH, OW, OC};
-  BatchNormGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  auto ret = BatchNormGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "BatchNormGetWorkGroup failed.";
+    return ret;
+  }
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int BatchNormOpenCLKernel::UnmapBuffer() {
@@ -182,20 +192,20 @@ int BatchNormOpenCLKernel::Initweight() {
   CHECK_NULL_RETURN(in_tensors_.at(kNumInput4)->data());
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
-      memcpy(scale_, in_tensors_.at(1)->data(), weight_size);
-      memcpy(offset_, in_tensors_.at(2)->data(), weight_size);
-      memcpy(mean_, in_tensors_.at(3)->data(), weight_size);
-      memcpy(variance_, in_tensors_.at(4)->data(), weight_size);
+      memcpy(scale_, in_tensors_.at(kNumInput1)->data(), weight_size);
+      memcpy(offset_, in_tensors_.at(kNumInput2)->data(), weight_size);
+      memcpy(mean_, in_tensors_.at(kNumInput3)->data(), weight_size);
+      memcpy(variance_, in_tensors_.at(kNumInput4)->data(), weight_size);
     } else {
       auto scale_fp32 = reinterpret_cast<float *>(scale_);
       auto offset_fp32 = reinterpret_cast<float *>(offset_);
       auto mean_fp32 = reinterpret_cast<float *>(mean_);
       auto variance_fp32 = reinterpret_cast<float *>(variance_);
 
-      auto origin_scale_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
-      auto origin_offset_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
-      auto origin_mean_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(3)->data());
-      auto origin_variance_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(4)->data());
+      auto origin_scale_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInput1)->data());
+      auto origin_offset_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInput2)->data());
+      auto origin_mean_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInput3)->data());
+      auto origin_variance_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInput4)->data());
 
       for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp32[i] = static_cast<float>(origin_scale_fp16[i]);
@@ -211,10 +221,10 @@ int BatchNormOpenCLKernel::Initweight() {
       auto mean_fp16 = reinterpret_cast<float16_t *>(mean_);
       auto variance_fp16 = reinterpret_cast<float16_t *>(variance_);
 
-      auto origin_scale_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data());
-      auto origin_offset_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data());
-      auto origin_mean_fp32 = reinterpret_cast<float *>(in_tensors_.at(3)->data());
-      auto origin_variance_fp32 = reinterpret_cast<float *>(in_tensors_.at(4)->data());
+      auto origin_scale_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNumInput1)->data());
+      auto origin_offset_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNumInput2)->data());
+      auto origin_mean_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNumInput3)->data());
+      auto origin_variance_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNumInput4)->data());
 
       for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp16[i] = static_cast<float16_t>(origin_scale_fp32[i]);
@@ -223,10 +233,10 @@ int BatchNormOpenCLKernel::Initweight() {
         variance_fp16[i] = static_cast<float16_t>(origin_variance_fp32[i]);
       }
     } else {
-      memcpy(scale_, in_tensors_.at(1)->data(), weight_size);
-      memcpy(offset_, in_tensors_.at(2)->data(), weight_size);
-      memcpy(mean_, in_tensors_.at(3)->data(), weight_size);
-      memcpy(variance_, in_tensors_.at(4)->data(), weight_size);
+      memcpy(scale_, in_tensors_.at(kNumInput1)->data(), weight_size);
+      memcpy(offset_, in_tensors_.at(kNumInput2)->data(), weight_size);
+      memcpy(mean_, in_tensors_.at(kNumInput3)->data(), weight_size);
+      memcpy(variance_, in_tensors_.at(kNumInput4)->data(), weight_size);
     }
   }
   if (UnmapBuffer() != RET_OK) {
@@ -261,7 +271,11 @@ int BatchNormOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  ret = SetGlobalLocal();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetGlobalLocal failed.";
+    return ret;
+  }
 
   return RET_OK;
 }
@@ -304,10 +318,10 @@ int BatchNormOpenCLKernel::Initweight() {
   CHECK_NULL_RETURN(in_tensors_.at(kNumInput2)->data());
   CHECK_NULL_RETURN(in_tensors_.at(kNumInput3)->data());
   CHECK_NULL_RETURN(in_tensors_.at(kNumInput4)->data());
-  memcpy(scale_, in_tensors_.at(1)->data(), weight_size);
-  memcpy(offset_, in_tensors_.at(2)->data(), weight_size);
-  memcpy(mean_, in_tensors_.at(3)->data(), weight_size);
-  memcpy(variance_, in_tensors_.at(4)->data(), weight_size);
+  memcpy(scale_, in_tensors_.at(kNumInput1)->data(), weight_size);
+  memcpy(offset_, in_tensors_.at(kNumInput2)->data(), weight_size);
+  memcpy(mean_, in_tensors_.at(kNumInput3)->data(), weight_size);
+  memcpy(variance_, in_tensors_.at(kNumInput4)->data(), weight_size);
   if (UnmapBuffer() != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
@@ -340,7 +354,11 @@ int BatchNormOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  ret = SetGlobalLocal();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set Global Local failed.";
+    return ret;
+  }
 
   return RET_OK;
 }
