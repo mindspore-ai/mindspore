@@ -43,6 +43,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool Init() override;
   bool LoadData(const session::KernelGraph &graph) override;
   bool GenTask(const session::KernelGraph &graph);
+  void GenKernelEventsForMindRT(const session::KernelGraph &graph);
   void GenKernelEvents(const session::KernelGraph &graph) override;
   std::pair<vector<std::function<void()>>, vector<std::function<void()>>> GetKernelEventFuncs(
     const CNodePtr &kernel) const;
