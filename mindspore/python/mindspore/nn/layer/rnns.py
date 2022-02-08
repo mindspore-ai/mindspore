@@ -391,6 +391,9 @@ class _RNNBase(Cell):
             gate_size = 4 * hidden_size
             self.rnn = _DynamicLSTMAscend() if is_ascend else _DynamicLSTMCPUGPU()
         elif mode == "GRU":
+            if is_ascend and hidden_size % 16 != 0:
+                raise ValueError(f"GRU on ascend do not support hidden size that is not divisible by 16, "
+                                 f"but get hidden size {hidden_size}, please reset the argument.")
             gate_size = 3 * hidden_size
             self.rnn = _DynamicGRUAscend() if is_ascend else _DynamicGRUCPUGPU()
         elif mode == "RNN_TANH":
