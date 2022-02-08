@@ -138,13 +138,15 @@ int WhereCPUKernel::RunWithSingleInput() {
   std::vector<int> output_shape = {true_num, where_param_->rank_};
   out_tensors_.at(0)->set_shape(output_shape);
   out_tensors_.at(0)->FreeData();
-  auto out_data = out_tensors_.at(0)->MutableData();
-  if (out_data == nullptr) {
-    MS_LOG(ERROR) << "malloc out tensor failed.";
-    return RET_ERROR;
+  if (true_num > 0) {
+    auto out_data = out_tensors_.at(0)->MutableData();
+    if (out_data == nullptr) {
+      MS_LOG(ERROR) << "malloc out tensor failed.";
+      return RET_ERROR;
+    }
+    MS_CHECK_GE(where_param_->condition_num_, true_num, RET_ERROR);
+    (void)memcpy(out_data, result, true_num * where_param_->rank_ * static_cast<int>(sizeof(int32_t)));
   }
-  MS_CHECK_GE(where_param_->condition_num_, true_num, RET_ERROR);
-  memcpy(out_data, result, true_num * where_param_->rank_ * static_cast<int>(sizeof(int32_t)));
   ms_context_->allocator->Free(data);
   return RET_OK;
 }
