@@ -69,7 +69,7 @@ class MSTensor::Impl {
 #endif
 
   virtual const std::string &Name() const {
-    static std::string empty = "";
+    static const std::string empty = "";
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return empty;
@@ -111,7 +111,7 @@ class MSTensor::Impl {
   }
 
   virtual const std::vector<int64_t> &Shape() const {
-    static std::vector<int64_t> empty;
+    static std::vector<int64_t> empty{};
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return empty;

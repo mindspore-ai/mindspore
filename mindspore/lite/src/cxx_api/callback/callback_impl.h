@@ -17,17 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_CXX_API_CALLBACK_CALLBACK_IMPL_H_
 #define MINDSPORE_LITE_SRC_CXX_API_CALLBACK_CALLBACK_IMPL_H_
 
-#include <functional>
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-#include <utility>
-#include <unordered_map>
-#include "include/api/model.h"
-#include "include/api/context.h"
-#include "include/api/cell.h"
-#include "include/lite_session.h"
 #include "include/train/train_loop_callback.h"
 
 namespace mindspore {

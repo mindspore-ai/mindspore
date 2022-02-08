@@ -34,7 +34,7 @@ Key::Key(const char *dec_key, size_t key_len) {
     return;
   }
 
-  memcpy(key, dec_key, key_len);
+  (void)memcpy(key, dec_key, key_len);
   len = key_len;
 }
 

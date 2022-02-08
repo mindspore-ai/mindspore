@@ -17,8 +17,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CALL_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/tensor.h"
+#include "src/inner_kernel.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #endif

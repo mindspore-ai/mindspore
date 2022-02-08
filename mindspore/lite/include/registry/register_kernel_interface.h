@@ -83,7 +83,7 @@ class MS_API KernelInterfaceReg {
   /// \param[in] op_type Define the ordinary op type.
   /// \param[in] creator Define the KernelInterface create function.
   KernelInterfaceReg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
-    RegisterKernelInterface::Reg(provider, op_type, creator);
+    (void)RegisterKernelInterface::Reg(provider, op_type, creator);
   }
 
   /// \brief Constructor of KernelInterfaceReg to register custom op.
@@ -92,7 +92,7 @@ class MS_API KernelInterfaceReg {
   /// \param[in] op_type Define the concrete type of a custom op.
   /// \param[in] creator Define the KernelInterface create function.
   KernelInterfaceReg(const std::string &provider, const std::string &op_type, const KernelInterfaceCreator creator) {
-    RegisterKernelInterface::CustomReg(provider, op_type, creator);
+    (void)RegisterKernelInterface::CustomReg(provider, op_type, creator);
   }
 
   virtual ~KernelInterfaceReg() = default;

@@ -87,7 +87,6 @@ int OneHotCPUKernel::ReSize() {
 }
 
 int RunOneHot(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto onehot_kernel = reinterpret_cast<OneHotCPUKernel *>(cdata);
   if (onehot_kernel == nullptr) {
     MS_LOG(ERROR) << "cast OneHotCPUKernel failed";
