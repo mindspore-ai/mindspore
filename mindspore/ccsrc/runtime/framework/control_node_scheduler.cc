@@ -525,7 +525,7 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   const auto &parser = graph_compiler_info.control_node_parser_;
   for (auto &switch_actor : control_actor_set->switch_actors_) {
     MS_EXCEPTION_IF_NULL(switch_actor);
-    if (parser->need_stack_control_nodes_.find(switch_actor->node_) == parser->need_stack_control_nodes_.end()) {
+    if (!parser->IsNeedStackControlNode(switch_actor->node_)) {
       for (size_t i = 0; i < switch_actor->formal_parameters_.size(); ++i) {
         LinkArrowbyFormalParameter(switch_actor.get(), switch_actor->formal_parameters_[i], {switch_actor->node_, i},
                                    parser);
@@ -537,13 +537,13 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
       MS_EXCEPTION_IF_NULL(actor);
       auto stack_actor = dynamic_cast<StackActor *>(actor);
       MS_EXCEPTION_IF_NULL(stack_actor);
-      LinkArrowFromStackActor(stack_actor, switch_actor.get());
+      LinkArrowFromStackActor(stack_actor, switch_actor.get(), parser);
     }
   }
 
   for (auto &gather_actor : control_actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor->node_);
-    if (parser->need_stack_control_nodes_.find(gather_actor->node_) == parser->need_stack_control_nodes_.end()) {
+    if (!parser->IsNeedStackControlNode(gather_actor->node_)) {
       for (size_t i = 0; i < gather_actor->formal_parameters_.size(); ++i) {
         LinkArrowbyFormalParameter(gather_actor.get(), gather_actor->formal_parameters_[i], {gather_actor->node_, i},
                                    parser);
@@ -555,7 +555,7 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
       MS_EXCEPTION_IF_NULL(actor);
       auto stack_actor = dynamic_cast<StackActor *>(actor);
       MS_EXCEPTION_IF_NULL(stack_actor);
-      LinkArrowFromStackActor(stack_actor, gather_actor.get());
+      LinkArrowFromStackActor(stack_actor, gather_actor.get(), parser);
     }
   }
 
@@ -567,20 +567,19 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
 
   for (auto &exit_actor : control_actor_set->exit_actors_) {
     MS_EXCEPTION_IF_NULL(exit_actor);
-    if (exit_actor->node_ == nullptr ||
-        (parser->need_stack_control_nodes_.find(exit_actor->node_) == parser->need_stack_control_nodes_.end())) {
+
+    auto stack_actor_name = (exit_actor->node_ == nullptr ? GetStackActorNameByExitName(exit_actor->GetAID().Name())
+                                                          : GetActorName(exit_actor->node_) + kStackActorNameSuffix);
+    auto actor = FetchActor(stack_actor_name);
+    if (actor == nullptr) {
       for (size_t i = 0; i < exit_actor->formal_parameters_.size(); ++i) {
         LinkArrowbyFormalParameter(exit_actor.get(), exit_actor->formal_parameters_[i], {exit_actor->node_, i}, parser);
       }
     } else {
       // If the control actor has a corresponding stack actor, the input should be linked to the stack actor.
-      auto stack_actor_name = (exit_actor->node_ == nullptr ? GetStackActorNameByExitName(exit_actor->GetAID().Name())
-                                                            : GetActorName(exit_actor->node_) + kStackActorNameSuffix);
-      auto actor = FetchActor(stack_actor_name);
-      MS_EXCEPTION_IF_NULL(actor);
       auto stack_actor = dynamic_cast<StackActor *>(actor);
       MS_EXCEPTION_IF_NULL(stack_actor);
-      LinkArrowFromStackActor(stack_actor, exit_actor.get());
+      LinkArrowFromStackActor(stack_actor, exit_actor.get(), parser);
     }
   }
 
@@ -592,7 +591,8 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
   }
 }
 
-void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor, ControlActor *const to_actor) {
+void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor, ControlActor *const to_actor,
+                                                   const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(stack_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -605,6 +605,14 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
     }
 
     // Fetch the arrow type of input.
+    if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr && from_node->isa<CNode>() &&
+        (!AnfAlgo::IsCallNode(from_node)) && (!AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) &&
+        to_actor->GetAID().Name().find(
+          parser->FetchGroupNameByKernelGraph(parser->FetchKernelGraphByFrontNode(from_node))) != std::string::npos) {
+      LinkArrowByKernel(from_node, to_actor, formal_parameter, {to_actor->node_, to_index}, parser);
+      continue;
+    }
+
     size_t from_index = stack_actor->FetchNodePosition(formal_parameter);
     const auto &abstract = formal_parameter.first->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
@@ -876,7 +884,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     }
 
     auto from_actor = control_actor;
-    if (parser->need_stack_control_nodes_.find(node) != parser->need_stack_control_nodes_.end()) {
+    if (parser->IsNeedStackControlNode(node)) {
       const auto &stack_actor_name = GetActorName(node) + kStackActorNameSuffix;
       auto actor = FetchActor(stack_actor_name);
       MS_EXCEPTION_IF_NULL(actor);
@@ -1116,8 +1124,8 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       (void)from_actors.emplace_back(from_actor);
       LinkControlArrow(from_actor, to_actor);
     }
-    if (to_actor->type_ != KernelTransformType::kStackActor || parser->IsRecursionCallNode(depend_node) ||
-        (graph != nullptr && parser->IsRecursionKernelGraph(graph))) {
+    if (to_actor->type_ != KernelTransformType::kStackActor || parser->IsNeedStackControlNode(depend_node) ||
+        parser->IsRecursionCallNode(depend_node) || (graph != nullptr && parser->IsRecursionKernelGraph(graph))) {
       continue;
     }
     // If the control arrow comes from a recursive call node or a recursive kernel graph, these control edges will be
