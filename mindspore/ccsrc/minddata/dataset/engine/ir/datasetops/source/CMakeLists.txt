@@ -44,6 +44,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         semeion_node.cc
         sogou_news_node.cc
         speech_commands_node.cc
+        squad_node.cc
         stl10_node.cc
         tedlium_node.cc
         text_file_node.cc

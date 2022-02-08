@@ -30,7 +30,7 @@ from .validators import check_imdb_dataset, check_iwslt2016_dataset, check_iwslt
     check_penn_treebank_dataset, check_ag_news_dataset, check_amazon_review_dataset, check_udpos_dataset, \
     check_wiki_text_dataset, check_conll2000_dataset, check_cluedataset, \
     check_sogou_news_dataset, check_textfiledataset, check_dbpedia_dataset, check_yelp_review_dataset, \
-    check_en_wik9_dataset, check_yahoo_answers_dataset, check_multi30k_dataset
+    check_en_wik9_dataset, check_yahoo_answers_dataset, check_multi30k_dataset, check_squad_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -1320,6 +1320,117 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
     def parse(self, children=None):
         return cde.SogouNewsNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
                                  self.num_shards, self.shard_id)
+
+
+class SQuADDataset(SourceDataset, TextBaseDataset):
+    """
+    A source dataset that reads and parses SQuAD 1.1 and SQuAD 2.0 datasets.
+
+    The generated dataset with different versions and usages has the same output columns:
+        :py:obj:`[context, question, text, answer_start]`.
+    The tensor of column :py:obj:`context` is of the string type.
+    The tensor of column :py:obj:`question` is of the string type.
+    The tensor of column :py:obj:`text` is the answer in the context of the string type.
+    The tensor of column :py:obj:`answer_start` is the start index of answer in context,
+        which is of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Specify the `train`, `dev` or `all` part of dataset (default=None, all samples).
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, will include all samples).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
+            (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> squad_dataset_dir = "/path/to/squad_dataset_file"
+        >>> dataset = ds.SQuADDataset(dataset_dir=squad_dataset_dir, usage='all')
+
+    About SQuAD dataset:
+
+    Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by
+    crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span,
+    from the corresponding reading passage, or the question might be unanswerable.
+
+    SQuAD 1.1, the previous version of the SQuAD dataset, contains 100,000+ question-answer pairs on 500+ articles.
+    SQuAD 2.0 combines the 100,000 questions in SQuAD 1.1 with over 50,000 unanswerable questions written adversarially
+    by crowdworkers to look similar to answerable ones. To do well on SQuAD 2.0, systems must not only answer questions
+    when possible, but also determine when no answer is supported by the paragraph and abstain from answering.
+
+    You can get the dataset files into the following structure and read by MindSpore's API,
+
+    For SQuAD 1.1:
+
+    .. code-block::
+        .
+        └── SQuAD1
+             ├── train-v1.1.json
+             └── dev-v1.1.json
+
+    For SQuAD 2.0:
+
+    .. code-block::
+        .
+        └── SQuAD2
+             ├── train-v2.0.json
+             └── dev-v2.0.json
+
+    Citation:
+
+    .. code-block::
+
+        @misc{rajpurkar2016squad,
+            title         = {SQuAD: 100,000+ Questions for Machine Comprehension of Text},
+            author        = {Pranav Rajpurkar and Jian Zhang and Konstantin Lopyrev and Percy Liang},
+            year          = {2016},
+            eprint        = {1606.05250},
+            archivePrefix = {arXiv},
+            primaryClass  = {cs.CL}
+        }
+
+        @misc{rajpurkar2018know,
+            title         = {Know What You Don't Know: Unanswerable Questions for SQuAD},
+            author        = {Pranav Rajpurkar and Robin Jia and Percy Liang},
+            year          = {2018},
+            eprint        = {1806.03822},
+            archivePrefix = {arXiv},
+            primaryClass  = {cs.CL}
+        }
+    """
+
+    @check_squad_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
+                         num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, 'all')
+
+    def parse(self, children=None):
+        return cde.SQuADNode(self.dataset_dir, self.usage, self.num_samples, self.shuffle_flag,
+                             self.num_shards, self.shard_id)
 
 
 class TextFileDataset(SourceDataset, TextBaseDataset):

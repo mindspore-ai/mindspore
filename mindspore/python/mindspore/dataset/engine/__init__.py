@@ -77,6 +77,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "Multi30kDataset",          # Text
            "PennTreebankDataset",      # Text
            "SogouNewsDataset",         # Text
+           "SQuADDataset",             # Text
            "TextFileDataset",          # Text
            "UDPOSDataset",             # Text
            "WikiTextDataset",          # Text

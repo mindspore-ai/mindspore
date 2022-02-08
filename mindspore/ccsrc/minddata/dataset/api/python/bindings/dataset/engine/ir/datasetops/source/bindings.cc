@@ -56,6 +56,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/semeion_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/stl10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tedlium_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
@@ -610,6 +611,18 @@ PYBIND_REGISTER(SpeechCommandsNode, 2, ([](const py::module *m) {
                         THROW_IF_ERROR(speech_commands->ValidateParams());
                         return speech_commands;
                       }));
+                }));
+
+PYBIND_REGISTER(SQuADNode, 2, ([](const py::module *m) {
+                  (void)py::class_<SQuADNode, DatasetNode, std::shared_ptr<SQuADNode>>(*m, "SQuADNode",
+                                                                                       "to create a SQuADNode")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &usage, int64_t num_samples,
+                                     int32_t shuffle, int32_t num_shards, int32_t shard_id) {
+                      std::shared_ptr<SQuADNode> squad = std::make_shared<dataset::SQuADNode>(
+                        dataset_dir, usage, num_samples, toShuffleMode(shuffle), num_shards, shard_id, nullptr);
+                      THROW_IF_ERROR(squad->ValidateParams());
+                      return squad;
+                    }));
                 }));
 
 PYBIND_REGISTER(STL10Node, 2, ([](const py::module *m) {
