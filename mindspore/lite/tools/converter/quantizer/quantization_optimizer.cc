@@ -82,26 +82,22 @@ int DoWeightQuant(const FuncGraphPtr &old_graph, const converter::Flags *config)
     auto quantizer = std::make_unique<WeightQuantizer>(*config);
     if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
     status = static_cast<WeightQuantizer *>(quantizer.get())->DoQuantize(old_graph, init_scale);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantization failed " << status;
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
     }
   } else {
     auto quantizer = std::make_unique<WeightQuantizer>(*config);
     if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
     auto status = quantizer->DoQuantize(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantization failed " << status;
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
     }
   }
@@ -112,13 +108,11 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config
   auto quantizer = std::make_unique<DynamicQuantizer>(*config);
   if (quantizer == nullptr) {
     MS_LOG(ERROR) << "New DynamicQuantizer failed";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
     return RET_ERROR;
   }
   auto status = quantizer->DoQuantize(old_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "DoQuantization failed " << status;
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return RET_ERROR;
   }
   return RET_OK;

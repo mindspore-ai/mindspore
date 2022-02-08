@@ -177,9 +177,9 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
   }
   quant_debug_info->clip = 0;
 
+  CHECK_NULL_RETURN(tensor.data());
   quant_debug_info->tensor_data.data = malloc(tensor.Size());
   CHECK_MALLOC_RES(quant_debug_info->tensor_data.data, RET_NULL_PTR);
-  CHECK_NULL_RETURN(tensor.data());
   auto ret = memcpy_s(quant_debug_info->tensor_data.data, tensor.Size(), tensor.data(), tensor.Size());
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy memory failed.";

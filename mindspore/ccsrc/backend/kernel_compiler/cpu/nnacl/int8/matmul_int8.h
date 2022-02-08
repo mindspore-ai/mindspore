@@ -45,11 +45,6 @@ void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int c
                    const int *bias, int act_min, int act_max, int out_zp, const int32_t *multiplier,
                    const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,
                    const int32_t *filter_zp);
-
-void DynamicMatmulInt8AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
-                           int deep16, float input_scale, const float *filter_scale, size_t stride,
-                           bool filter_per_channel);
-
 /* 8x4 4x8 -> 8x8 */
 /* optimize conv */
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
