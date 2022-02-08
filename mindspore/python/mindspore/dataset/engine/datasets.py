@@ -317,6 +317,10 @@ class Dataset:
         Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
         as a destructor for a processingPool object.
         """
+        if hasattr(self, 'process_pool') and self.process_pool is not None:
+            self.process_pool.close()
+            self.process_pool.join()
+
         # del all the SharedQueue when close the pool
         if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
             arg_q_list_len = len(self._arg_q_list)
@@ -330,8 +334,6 @@ class Dataset:
                 del self._res_q_list[res_q_list_len - idx - 1]
             del self._res_q_list
 
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.close()
         for child in self.children:
             child.close_pool()
 
@@ -2486,6 +2488,12 @@ class BatchDataset(UnionBaseDataset):
             self.eot.set()
 
     def __del__(self):
+        if hasattr(self, 'process_pool') and self.process_pool is not None:
+            self.process_pool.close()
+            self.process_pool.join()
+        if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
+            self._abort_watchdog()
+
         # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
         if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
             arg_q_list_len = len(self._arg_q_list)
@@ -2498,11 +2506,6 @@ class BatchDataset(UnionBaseDataset):
             for idx in range(res_q_list_len):
                 del self._res_q_list[res_q_list_len - idx - 1]
             del self._res_q_list
-
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.close()
-        if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
-            self._abort_watchdog()
 
 
 class BatchInfo(cde.CBatchInfo):
@@ -3106,6 +3109,12 @@ class MapDataset(UnionBaseDataset):
             self.eot.set()
 
     def __del__(self):
+        if hasattr(self, 'process_pool') and self.process_pool is not None:
+            self.process_pool.close()
+            self.process_pool.join()
+        if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
+            self._abort_watchdog()
+
         # del all the SharedQueue when the iter had been deleted from ITERATORS_LIST
         if hasattr(self, '_arg_q_list') and self._arg_q_list is not None:
             arg_q_list_len = len(self._arg_q_list)
@@ -3118,12 +3127,6 @@ class MapDataset(UnionBaseDataset):
             for idx in range(res_q_list_len):
                 del self._res_q_list[res_q_list_len - idx - 1]
             del self._res_q_list
-
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.close()
-            self.process_pool.join()
-        if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
-            self._abort_watchdog()
 
 
 class FilterDataset(UnionBaseDataset):
