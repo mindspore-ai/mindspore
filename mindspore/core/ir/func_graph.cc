@@ -18,10 +18,6 @@
 
 #include "ir/func_graph.h"
 
-#include <algorithm>
-#include <sstream>
-#include <utility>
-
 #include "utils/trace_base.h"
 #include "ir/manager.h"
 #include "utils/flags.h"

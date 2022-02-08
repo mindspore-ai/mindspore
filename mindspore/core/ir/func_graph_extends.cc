@@ -18,9 +18,6 @@
 
 #include "ir/func_graph.h"
 
-#include <algorithm>
-#include <sstream>
-
 #include "ir/manager.h"
 #include "base/core_ops.h"
 #include "utils/ordered_set.h"

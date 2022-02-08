@@ -16,10 +16,6 @@
 
 #include "ir/cell.h"
 
-#include <utility>
-#include <map>
-#include <algorithm>
-
 #include "abstract/abstract_value.h"
 #include "utils/ms_utils.h"
 
