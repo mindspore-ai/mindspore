@@ -36,20 +36,3 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
 }
 
-publishing {
-    repositories {
-        maven {
-            url uri("build")
-        }
-    }
-    publications {
-        maven(MavenPublication) {
-            groupId = 'mindspore'
-            artifactId = 'mindspore-lite'
-            version = project.hasProperty("LITE_VERSION") ? LITE_VERSION : ""
-            String path = project.buildDir.path + File.separator + "outputs" + File.separator + "aar" + File.separator + "mindspore-lite.aar";
-            artifact(path)
-        }
-    }
-}
-

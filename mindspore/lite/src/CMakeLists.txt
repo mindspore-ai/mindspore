@@ -73,15 +73,16 @@ set(API_SRC ${CXX_API_SRCS} ${C_API_SRCS})
 if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
     set(API_SRC ${API_SRC} ${CORE_DIR}/utils/status.cc)
 endif()
-
-file(GLOB CXX_API_TRAIN_SRCS
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/metrics/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/callback/*.cc
-        )
-set(API_TRAIN_SRC
-        ${CXX_API_TRAIN_SRCS}
-        )
+if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
+    file(GLOB CXX_API_TRAIN_SRCS
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/metrics/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/callback/*.cc
+            )
+    set(API_TRAIN_SRC
+            ${CXX_API_TRAIN_SRCS}
+            )
+endif()
 
 if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
@@ -230,14 +231,19 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
             ${CUDA_RUNTIME_SRC}
             )
 endif()
+if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
+  set(TRAIN_SRC_WITH_MD
+          ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
+          )
+endif()
 set(TRAIN_SRC
         ${API_TRAIN_SRC}
+        ${TRAIN_SRC_WITH_MD}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/lr_scheduler.cc
@@ -398,12 +404,20 @@ if(SUPPORT_TRAIN)
   add_library(mindspore-lite-train SHARED $<TARGET_OBJECTS:lite_train_src_mid>)
   set_target_properties(mindspore-lite-train PROPERTIES OUTPUT_NAME "mindspore-lite-train")
   set_target_properties(mindspore-lite-train PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-  target_link_libraries(mindspore-lite-train minddata-lite mindspore-lite)
+  if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
+      target_link_libraries(mindspore-lite-train minddata-lite mindspore-lite)
+  else()
+      target_link_libraries(mindspore-lite-train mindspore-lite)
+  endif()
 
   add_library(mindspore-lite-train_static STATIC $<TARGET_OBJECTS:lite_train_src_mid>)
   set_target_properties(mindspore-lite-train_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
   set_target_properties(mindspore-lite-train_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-  target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
+  if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
+      target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
+  else()
+      target_link_libraries(mindspore-lite-train_static mindspore-lite)
+  endif()
 endif()
 
 ########################## build optimize and float16 library #################################
