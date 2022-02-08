@@ -25,6 +25,9 @@ csr_mv_op_info = AkgGpuRegOp("CSRMV") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.F32_Default, \
                   DataType.F32_Default, \
                   DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.F32_Default, \
+                  DataType.F32_Default, \
+                  DataType.F32_Default) \
     .get_op_info()
 
 @op_info_register(csr_mv_op_info)

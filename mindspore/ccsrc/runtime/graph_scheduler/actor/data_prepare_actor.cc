@@ -110,6 +110,17 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
         (void)values->emplace_back(element);
       }
     }
+  } else if (value->isa<tensor::CSRTensor>()) {
+    auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    MS_EXCEPTION_IF_NULL(csr_tensor->GetIndptr());
+    MS_EXCEPTION_IF_NULL(csr_tensor->GetIndices());
+    MS_EXCEPTION_IF_NULL(csr_tensor->GetValues());
+    values->emplace_back(csr_tensor->GetIndptr());
+    values->emplace_back(csr_tensor->GetIndices());
+    values->emplace_back(csr_tensor->GetValues());
+    std::transform(csr_tensor->shape().begin(), csr_tensor->shape().end(), std::back_inserter(*values),
+                   [](int64_t n) { return std::make_shared<Int64Imm>(n); });
   } else {
     (void)values->emplace_back(value);
   }

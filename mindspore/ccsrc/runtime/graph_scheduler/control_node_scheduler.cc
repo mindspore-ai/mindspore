@@ -1434,6 +1434,13 @@ void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &
   }
 }
 
+void SetCSRTensorIndex(AnfNodePtr front_node, KernelWithIndex *front_node_with_index) {
+  if (front_node != nullptr && common::AnfAlgo::CheckAbsCSRTensor(front_node)) {
+    MS_EXCEPTION_IF_NULL(front_node_with_index);
+    front_node_with_index->second = kCsrTensorValuesIndex;
+  }
+}
+
 void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, ControlActor *const entrance_actor,
                                                       const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -1473,6 +1480,9 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       if (from_node_with_index.first == nullptr) {
         from_node_with_index = tuple_node_with_index;
       }
+
+      // Adapt CSRTensor to new runtime
+      SetCSRTensorIndex(front_node, &from_node_with_index);
 
       if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
         MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()

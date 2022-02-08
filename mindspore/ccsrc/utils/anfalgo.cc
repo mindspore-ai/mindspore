@@ -156,10 +156,9 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   }
 
   // If the node is a call, the outputs num should get from the abstract.
-  if (AnfAlgo::IsCallNode(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-    auto abstract = node->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    outputs_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+  if (AnfAlgo::IsCallNode(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
+      AnfAlgo::CheckAbsCSRTensor(node)) {
+    outputs_num = AnfAlgo::GetOutputNumByAbstract(node->abstract());
   }
 
   // The output may be the tuple of node, so need visit all the outputs of node.
