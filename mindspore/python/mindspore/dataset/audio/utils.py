@@ -140,7 +140,9 @@ def CreateDct(n_mfcc, n_mels, norm=NormMode.NONE):
         numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
 
     Examples:
-        >>> dct = audio.CreateDct(100, 200, audio.NormMode.NONE)
+        >>> from mindspore.dataset.audio import CreateDct
+        >>>
+        >>> dct = CreateDct(100, 200, audio.NormMode.NONE)
     """
 
     if not isinstance(n_mfcc, int):

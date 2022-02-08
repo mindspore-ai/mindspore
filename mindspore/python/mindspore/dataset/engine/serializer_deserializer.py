@@ -41,7 +41,7 @@ def serialize(dataset, json_filepath=""):
         OSError: Can not open a file
 
     Examples:
-        >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
         >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
@@ -70,7 +70,7 @@ def deserialize(input_dict=None, json_filepath=None):
         OSError: Can not open the JSON file.
 
     Examples:
-        >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
         >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
@@ -132,9 +132,9 @@ def compare(pipeline1, pipeline2):
         Whether pipeline1 is equal to pipeline2.
 
     Examples:
-        >>> pipeline1 = ds.MnistDataset(mnist_dataset_dir, 100)
-        >>> pipeline2 = ds.Cifar10Dataset(cifar_dataset_dir, 100)
-        >>> ds.compare(pipeline1, pipeline2)
+        >>> pipeline1 = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
+        >>> pipeline2 = ds.Cifar10Dataset(cifar_dataset_dir, num_samples=100)
+        >>> res = ds.compare(pipeline1, pipeline2)
     """
 
     return pipeline1.to_json() == pipeline2.to_json()

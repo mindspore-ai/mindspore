@@ -53,9 +53,9 @@ class AllpassBiquad(AudioTensorOperation):
     Design two-pole all-pass filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        central_freq (float): central frequency (in Hz).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        central_freq (float): Central frequency (in Hz).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
         >>> import numpy as np
@@ -91,11 +91,12 @@ class AmplitudeToDB(AudioTensorOperation):
         amin (float, optional): Lower bound to clamp the input waveform. It must be greater than zero (default=1e-10).
         top_db (float, optional): Minimum cut-off decibels. The range of values is non-negative.
             Commonly set at 80 (default=80.0).
+
     Examples:
         >>> import numpy as np
         >>> from mindspore.dataset.audio import ScaleType
         >>>
-        >>> waveform = np.random.random([1, 400//2+1, 30])
+        >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
@@ -197,9 +198,9 @@ class BandrejectBiquad(AudioTensorOperation):
     Design two-pole band-reject filter for audio waveform of dimension of (..., time).
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-        central_freq (float): central frequency (in Hz).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        central_freq (float): Central frequency (in Hz).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
         >>> import numpy as np
@@ -227,8 +228,8 @@ class BassBiquad(AudioTensorOperation):
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
         gain (float): Desired gain at the boost (or attenuation) in dB.
-        central_freq (float): Central frequency (in Hz) (default=100.0).
-        Q(float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
+        central_freq (float, optional): Central frequency (in Hz) (default=100.0).
+        Q (float, optional): Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (default=0.707).
 
     Examples:
         >>> import numpy as np
@@ -252,7 +253,7 @@ class BassBiquad(AudioTensorOperation):
 
 class Biquad(TensorOperation):
     """
-    Perform a biquad filter of input tensor.
+    Perform a biquad filter of input audio.
 
     Args:
         b0 (float): Numerator coefficient of current input, x[n].
@@ -359,8 +360,9 @@ class Contrast(AudioTensorOperation):
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
     Args:
-        enhancement_amount (float): Controls the amount of the enhancement. Allowed range is [0, 100] (default=75.0).
-            Note that enhancement_amount equal to 0 still gives a significant contrast enhancement.
+        enhancement_amount (float, optional): Controls the amount of the enhancement.
+            Allowed range is [0, 100] (default=75.0). Note that enhancement_amount equal
+            to 0 still gives a significant contrast enhancement.
 
     Examples:
         >>> import numpy as np
@@ -420,7 +422,7 @@ class DCShift(AudioTensorOperation):
         >>> waveform = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DCShift(0.5, 0.02)]
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operation=transforms, input_columns=["audio"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
 
     @check_dc_shift
@@ -672,11 +674,11 @@ class FrequencyMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        frequency_mask_param (int): Maximum possible length of the mask, range: [0, freq_length] (default=0).
+        frequency_mask_param (int, optional): Maximum possible length of the mask, range: [0, freq_length] (default=0).
             Indices uniformly sampled from [0, frequency_mask_param].
-        mask_start (int): Mask start takes effect when iid_masks=true,
+        mask_start (int, optional): Mask start takes effect when iid_masks=true,
             range: [0, freq_length-frequency_mask_param] (default=0).
-        mask_value (double): Mask value (default=0.0).
+        mask_value (float, optional): Mask value (default=0.0).
 
     Examples:
         >>> import numpy as np
@@ -1112,11 +1114,11 @@ class TimeMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example (default=false).
-        time_mask_param (int): Maximum possible length of the mask, range: [0, time_length] (default=0).
+        time_mask_param (int, optional): Maximum possible length of the mask, range: [0, time_length] (default=0).
             Indices uniformly sampled from [0, time_mask_param].
-        mask_start (int): Mask start takes effect when iid_masks=true,
+        mask_start (int, optional): Mask start takes effect when iid_masks=true,
             range: [0, time_length-time_mask_param] (default=0).
-        mask_value (double): Mask value (default=0.0).
+        mask_value (float, optional): Mask value (default=0.0).
 
     Examples:
         >>> import numpy as np

@@ -31,13 +31,15 @@ class DSCallback:
 
     Examples:
         >>> from mindspore.dataset import DSCallback
+        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_epoch_end(self, ds_run_context):
-        ...         print(cb_params.cur_epoch_num)
-        ...         print(cb_params.cur_step_num)
+        ...         print(ds_run_context.cur_epoch_num)
+        ...         print(ds_run_context.cur_step_num)
         >>>
-        >>> # dataset is an instance of Dataset object
+        >>> # dataset is an instance of Dataset object and op is a certain data processing operator
+        >>> op = c_transforms.Fill(3)
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
@@ -132,14 +134,70 @@ class WaitedDSCallback(Callback, DSCallback):
            will be equal to the batch size (Default=1).
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> from mindspore.dataset import WaitedDSCallback
+        >>> from mindspore import context
+        >>> from mindspore.train import Model
+        >>> from mindspore.train.callback import Callback
         >>>
-        >>> my_cb = WaitedDSCallback(32)
-        >>> # dataset is an instance of Dataset object
-        >>> dataset = dataset.map(operations=AugOp(), callbacks=my_cb)
-        >>> dataset = dataset.batch(32)
-        >>> # define the model
-        >>> model.train(epochs, data, callbacks=[my_cb])
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>>
+        >>> # custom callback class for data synchronization in data pipeline
+        >>> class MyWaitedCallback(WaitedDSCallback):
+        ...     def __init__(self, events, step_size=1):
+        ...         super().__init__(step_size)
+        ...         self.events = events
+        ...
+        ...     # callback method to be executed by data pipeline before the epoch starts
+        ...     def sync_epoch_begin(self, train_run_context, ds_run_context):
+        ...         event = f"ds_epoch_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+        ...         self.events.append(event)
+        ...
+        ...     # callback method to be executed by data pipeline before the step starts
+        ...     def sync_step_begin(self, train_run_context, ds_run_context):
+        ...         event = f"ds_step_begin_{ds_run_context.cur_epoch_num}_{ds_run_context.cur_step_num}"
+        ...         self.events.append(event)
+        >>>
+        >>> # custom callback class for data synchronization in network training
+        >>> class MyMSCallback(Callback):
+        ...     def __init__(self, events):
+        ...         self.events = events
+        ...
+        ...     # callback method to be executed by network training after the epoch ends
+        ...     def epoch_end(self, run_context):
+        ...         cb_params = run_context.original_args()
+        ...         event = f"ms_epoch_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+        ...         self.events.append(event)
+        ...
+        ...     # callback method to be executed by network training after the step ends
+        ...     def step_end(self, run_context):
+        ...         cb_params = run_context.original_args()
+        ...         event = f"ms_step_end_{cb_params.cur_epoch_num}_{cb_params.cur_step_num}"
+        ...         self.events.append(event)
+        >>>
+        >>> # custom network
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y):
+        ...         return x
+        >>>
+        >>> # define a parameter that needs to be synchronized between data pipeline and network training
+        >>> events = []
+        >>>
+        >>> # define callback classes of data pipeline and netwok training
+        >>> my_cb1 = MyWaitedCallback(events, 1)
+        >>> my_cb2 = MyMSCallback(events)
+        >>> arr = [1, 2, 3, 4]
+        >>>
+        >>> # construct data pipeline
+        >>> data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
+        >>> # map the data callback object into the pipeline
+        >>> data = data.map(operations=(lambda x: x), callbacks=my_cb1)
+        >>>
+        >>> net = Net()
+        >>> model = Model(net)
+        >>>
+        >>> # add the data and network callback objects to the model training callback list
+        >>> model.train(2, data, dataset_sink_mode=False, callbacks=[my_cb2, my_cb1])
     """
 
     def __init__(self, step_size=1):

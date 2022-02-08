@@ -43,8 +43,9 @@ class DatasetCache:
     Examples:
             >>> import mindspore.dataset as ds
             >>>
-            >>> # create a cache instance, in which session_id is generated from command line `cache_admin -g`
-            >>> some_cache = ds.DatasetCache(session_id=session_id, size=0)
+            >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
+            >>> # In the following code, suppose the session_id is 780643335
+            >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
             >>>
             >>> dataset_dir = "path/to/imagefolder_directory"
             >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
