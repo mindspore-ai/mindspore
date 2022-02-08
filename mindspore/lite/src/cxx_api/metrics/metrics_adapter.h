@@ -17,18 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_CXX_API_METRICS_METRICS_ADAPTER_H_
 #define MINDSPORE_LITE_SRC_CXX_API_METRICS_METRICS_ADAPTER_H_
 
-#include <functional>
-#include <map>
-#include <string>
 #include <vector>
-#include <memory>
-#include <utility>
-#include <unordered_map>
-#include "include/api/model.h"
-#include "include/api/context.h"
-#include "include/api/cell.h"
-#include "include/api/metrics/metrics.h"
-#include "include/lite_session.h"
 #include "include/train/metrics.h"
 
 namespace mindspore {

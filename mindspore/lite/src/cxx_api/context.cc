@@ -18,6 +18,7 @@
 #include <memory>
 #include "include/api/types.h"
 #include "include/api/data_type.h"
+#include "include/lite_types.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/delegate/tensorrt/distribution/distribution_base.h"
@@ -108,6 +109,10 @@ void Context::SetThreadAffinity(int mode) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return;
+  }
+  if (mode < lite::NO_BIND || mode > lite::MID_CPU) {
+    MS_LOG(WARNING) << "Invalid thread affinity mode: " << mode << ", change to NO_BIND mode.";
+    mode = lite::NO_BIND;
   }
   data_->affinity_mode_ = mode;
   return;

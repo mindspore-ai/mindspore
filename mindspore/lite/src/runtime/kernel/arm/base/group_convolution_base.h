@@ -35,7 +35,7 @@ class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
         group_conv_creator_(group_conv_creator),
         group_num_(group_num) {}  // opParameter(in channel, out channel) in this kernel has been split to groups, if
                                   // you want to get real params, multiply in channel / out channel with group num
-  ~GroupConvolutionBaseCPUKernel() override { FreeSubKernel(); }
+  ~GroupConvolutionBaseCPUKernel() override;
 
   int Prepare() override;
   int ReSize() override;

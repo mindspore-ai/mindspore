@@ -36,7 +36,7 @@ class Graph::GraphData {
 
   std::shared_ptr<lite::Model> lite_model() { return lite_model_; }
 
-  bool IsTrainModel() { return true; }
+  bool IsTrainModel() const { return true; }
 
  private:
   std::shared_ptr<lite::Model> lite_model_ = nullptr;

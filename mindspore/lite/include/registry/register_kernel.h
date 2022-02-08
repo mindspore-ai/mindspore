@@ -116,7 +116,7 @@ class MS_API KernelReg {
   /// \param[in] creator Define a function pointer to create a kernel.
   KernelReg(const std::string &arch, const std::string &provider, DataType data_type, int op_type,
             const CreateKernel creator) {
-    RegisterKernel::RegKernel(arch, provider, data_type, op_type, creator);
+    (void)RegisterKernel::RegKernel(arch, provider, data_type, op_type, creator);
   }
 
   /// \brief Method to register customized op.
@@ -128,7 +128,7 @@ class MS_API KernelReg {
   /// \param[in] creator Define a function pointer to create a kernel.
   KernelReg(const std::string &arch, const std::string &provider, DataType data_type, const std::string &op_type,
             const CreateKernel creator) {
-    RegisterKernel::RegCustomKernel(arch, provider, data_type, op_type, creator);
+    (void)RegisterKernel::RegCustomKernel(arch, provider, data_type, op_type, creator);
   }
 };
 

@@ -25,9 +25,9 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SplitWithOverlap;
-#define MIN_NUM_SPLIT 2
 
 namespace mindspore::kernel {
+const int MIN_NUM_SPLIT = 2;
 
 int SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int> &shape) {
   int total_block_count = 0;

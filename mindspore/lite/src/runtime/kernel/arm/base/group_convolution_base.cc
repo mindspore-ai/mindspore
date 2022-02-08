@@ -55,7 +55,7 @@ int GroupConvolutionBaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void GroupConvolutionBaseCPUKernel::FreeSubKernel() {
+GroupConvolutionBaseCPUKernel::~GroupConvolutionBaseCPUKernel() {
   for (auto &sub_conv : group_convs_) {
     // free sub conv input tensors / output tensors manually
     auto sub_in_tensors = sub_conv->in_tensors();
@@ -102,7 +102,6 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
       sub_kernel_in_tensor->set_shape(in_shape);
       ret = sub_kernel_in_tensor->MallocData();
       if (ret != RET_OK) {
-        FreeSubKernel();
         MS_LOG(ERROR) << "sub kernel in tensor malloc data failed.";
         return ret;
       }
@@ -116,7 +115,6 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
         tensor->set_shape(out_shape);
         ret = tensor->MallocData();
         if (ret != RET_OK) {
-          FreeSubKernel();
           MS_LOG(ERROR) << "sub kernel out tensor malloc data failed.";
           return ret;
         }
@@ -134,7 +132,6 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
     CHECK_NULL_RETURN(output);
     auto ret = output->MallocData();
     if (ret != RET_OK) {
-      FreeSubKernel();
       MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
       return ret;
     }

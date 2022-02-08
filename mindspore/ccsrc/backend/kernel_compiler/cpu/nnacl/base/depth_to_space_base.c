@@ -21,7 +21,7 @@ void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, c
   int32_t block_size = param->block_size_;
   int32_t in_shape_dim2 = in_shape[2];
   int32_t in_shape_dim1 = in_shape[1];
-  size_t copy_size = block_size * param->out_stride_dim2_ * param->data_type_size_;
+  size_t copy_size = (size_t)block_size * param->out_stride_dim2_ * param->data_type_size_;
   for (int i = 0; i < in_shape[0]; ++i) {
     int in_offset_n = i * param->in_stride_dim0_;
     int out_offset_n = i * param->out_stride_dim0_;
