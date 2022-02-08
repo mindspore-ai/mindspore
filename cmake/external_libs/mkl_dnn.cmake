@@ -11,8 +11,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
         LIBS dnnl mkldnn
         HEAD_ONLY ./include
         RELEASE on
-        URL https://github.com/oneapi-src/oneDNN/releases/download/v2.2/dnnl_win_2.2.0_cpu_vcomp.zip
-        MD5 fa12c693b2ec07700d174e1e99d60a7e)
+        URL http://tools.mindspore.cn/libs/dnnl/dnnl_win_2.2.0_cpu_vcomp.zip
+        MD5 139fcdbd601a970fb86dd15b30ba5ae3)
 else()
     if(ENABLE_GITEE)
         set(REQ_URL "https://gitee.com/mirrors/MKL-DNN/repository/archive/v2.2.tar.gz")

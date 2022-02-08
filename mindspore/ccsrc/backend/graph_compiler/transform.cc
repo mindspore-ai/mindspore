@@ -615,11 +615,6 @@ void SetMindRTEnable() {
     return;
   }
 
-#if defined(_WIN32) || defined(_WIN64)
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-  return;
-#endif
-
   MS_LOG(DEBUG) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }
