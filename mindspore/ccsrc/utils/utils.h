@@ -338,6 +338,8 @@ constexpr auto kEnvironCreateOpName = "EnvironCreate";
 constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
+constexpr auto kScatterAddOpName = "ScatterAdd";
+constexpr auto kScatterUpdateOpName = "ScatterUpdate";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
@@ -716,6 +718,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kLARSUpdateName,
                                                kCombineMomentumWeightOpName,
                                                kCombineMomentumOpName,
+                                               kScatterAddOpName,
+                                               kScatterUpdateOpName,
                                                kSparseApplyProximalAdagradOpName};
 
 const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,

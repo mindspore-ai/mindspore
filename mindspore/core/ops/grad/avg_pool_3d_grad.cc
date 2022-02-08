@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {

@@ -41,8 +41,8 @@
 namespace mindspore {
 namespace trans {
 constexpr int64_t kAlign16 = 16;
-enum kAxis4D : int { kN = 0, kC, kH, kW, kNchwDims };
-enum Axis5D : int {
+enum kAxis4D : size_t { kN = 0, kC, kH, kW, kNchwDims };
+enum Axis5D : size_t {
   N_ncdhw = 0,
   C_ncdhw,
   D_ncdhw,
@@ -142,7 +142,7 @@ class DataTypeTransfer {
     {std::pair<TypeId, TypeId>(kNumberTypeInt64, kNumberTypeInt32), DataTypeTransMode::FROM_INT64_TO_INT32},
     {std::pair<TypeId, TypeId>(kNumberTypeUInt16, kNumberTypeInt32), DataTypeTransMode::FROM_UINT16_TO_INT32},
     {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeInt32), DataTypeTransMode::FROM_BOOL_TO_INT32},
-    {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat), DataTypeTransMode::FROM_BOOL_TO_FLOAT},
+    {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat32), DataTypeTransMode::FROM_BOOL_TO_FLOAT},
     {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeUInt8), DataTypeTransMode::FROM_BOOL_TO_UINT8},
     {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), DataTypeTransMode::FROM_BOOL_TO_FLOAT16}};
 
