@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/int8/matmul_dynamic_int8.h"
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
-#include "src/common/file_utils.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/dynamic_matmul_int8.h"
 

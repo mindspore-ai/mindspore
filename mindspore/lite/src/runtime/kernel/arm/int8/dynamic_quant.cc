@@ -87,7 +87,7 @@ int DynamicQuantCPUKernel::CalculateMinMax(int task_id) {
   return RET_OK;
 }
 
-int CalculateMinMaxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int CalculateMinMaxRun(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<DynamicQuantCPUKernel *>(cdata);
   auto ret = g_kernel->CalculateMinMax(task_id);

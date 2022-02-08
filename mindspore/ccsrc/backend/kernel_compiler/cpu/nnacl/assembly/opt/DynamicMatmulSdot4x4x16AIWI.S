@@ -3,8 +3,9 @@
 .text
 .align 5
 
-// void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep, float *multi_scales,
-//                                  float *bias, size_t row, size_t col, size_t stride);
+// void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
+//                                  float *bias, size_t row, size_t col, size_t stride, const int *a_sums,
+//                                  const int *b_sums, size_t a_zp, size_t b_zp, size_t deep);
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
 // x2: out ptr
@@ -14,9 +15,22 @@
 // x6: row
 // x7: col
 // x8: stride
+// x9: a_sums
+// x10: b_sums
+// x19/w19: a_zp
+// x19/w20: b_zp
 
 asm_function DynamicMatmulSdot4x4x16AIWI
+    sub sp, sp, #144
+    st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+    st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+    stp x19, x20, [sp], #16
+    
     ldr x8, [sp]
+    ldr x9, [sp, #8]
+    ldr x10, [sp, #16]
+    ldr x19, [sp, #24]
+    ldr x20, [sp, #32]
 
     dup v16.4s, wzr // dup:Duplicate general-purpose register to vector.
     dup v17.4s, wzr
@@ -44,60 +58,137 @@ asm_function DynamicMatmulSdot4x4x16AIWI
     cmp x7, #8
     ble LoopDepthHalf
 
-    LoopDepth:
-        ld1 {v0.16b}, [x17], #16
-        ld1 {v1.16b, v2.16b, v3.16b, v4.16b}, [x18], #64
+LoopDepth:
+    ld1 {v0.16b}, [x17], #16
+    ld1 {v1.16b, v2.16b, v3.16b, v4.16b}, [x18], #64
 
-        sdot v16.4s, v1.16b, v0.4b[0]
-        sdot v17.4s, v2.16b, v0.4b[0]
-        sdot v18.4s, v3.16b, v0.4b[0]
-        sdot v19.4s, v4.16b, v0.4b[0]
-        sdot v20.4s, v1.16b, v0.4b[1]
-        sdot v21.4s, v2.16b, v0.4b[1]
-        sdot v22.4s, v3.16b, v0.4b[1]
-        sdot v23.4s, v4.16b, v0.4b[1]
-        sdot v24.4s, v1.16b, v0.4b[2]
-        sdot v25.4s, v2.16b, v0.4b[2]
-        sdot v26.4s, v3.16b, v0.4b[2]
-        sdot v27.4s, v4.16b, v0.4b[2]
-        sdot v28.4s, v1.16b, v0.4b[3]
-        sdot v29.4s, v2.16b, v0.4b[3]
-        sdot v30.4s, v3.16b, v0.4b[3]
-        sdot v31.4s, v4.16b, v0.4b[3]
+    sdot v16.4s, v1.16b, v0.4b[0]
+    sdot v17.4s, v2.16b, v0.4b[0]
+    sdot v18.4s, v3.16b, v0.4b[0]
+    sdot v19.4s, v4.16b, v0.4b[0]
+    sdot v20.4s, v1.16b, v0.4b[1]
+    sdot v21.4s, v2.16b, v0.4b[1]
+    sdot v22.4s, v3.16b, v0.4b[1]
+    sdot v23.4s, v4.16b, v0.4b[1]
+    sdot v24.4s, v1.16b, v0.4b[2]
+    sdot v25.4s, v2.16b, v0.4b[2]
+    sdot v26.4s, v3.16b, v0.4b[2]
+    sdot v27.4s, v4.16b, v0.4b[2]
+    sdot v28.4s, v1.16b, v0.4b[3]
+    sdot v29.4s, v2.16b, v0.4b[3]
+    sdot v30.4s, v3.16b, v0.4b[3]
+    sdot v31.4s, v4.16b, v0.4b[3]
 
-        subs x16, x16, #4
-        bgt LoopDepth
-        b Convert2Float
+    subs x16, x16, #4
+    bgt LoopDepth
+    b AddInputSum
 
-    LoopDepthHalf:
-        ld1 {v0.16b}, [x17], #16
-        ld1 {v1.16b, v2.16b}, [x18]
-        add x18, x18, #64
-        sdot v16.4s, v1.16b, v0.4b[0]
-        sdot v17.4s, v2.16b, v0.4b[0]
-        sdot v20.4s, v1.16b, v0.4b[1]
-        sdot v21.4s, v2.16b, v0.4b[1]
-        sdot v24.4s, v1.16b, v0.4b[2]
-        sdot v25.4s, v2.16b, v0.4b[2]
-        sdot v28.4s, v1.16b, v0.4b[3]
-        sdot v29.4s, v2.16b, v0.4b[3]
+LoopDepthHalf:
+    ld1 {v0.16b}, [x17], #16
+    ld1 {v1.16b, v2.16b}, [x18]
+    add x18, x18, #64
+    sdot v16.4s, v1.16b, v0.4b[0]
+    sdot v17.4s, v2.16b, v0.4b[0]
+    sdot v20.4s, v1.16b, v0.4b[1]
+    sdot v21.4s, v2.16b, v0.4b[1]
+    sdot v24.4s, v1.16b, v0.4b[2]
+    sdot v25.4s, v2.16b, v0.4b[2]
+    sdot v28.4s, v1.16b, v0.4b[3]
+    sdot v29.4s, v2.16b, v0.4b[3]
 
-        subs x16, x16, #4
-        bgt LoopDepthHalf
-        b Convert2Float
+    subs x16, x16, #4
+    bgt LoopDepthHalf
+    b AddInputSum
 
-    LoopDepthQuarter:
-        ld1 {v0.16b}, [x17], #16
-        ld1 {v1.16b}, [x18]
-        add x18, x18, #64
-        sdot v16.4s, v1.16b, v0.4b[0]
-        sdot v20.4s, v1.16b, v0.4b[1]
-        sdot v24.4s, v1.16b, v0.4b[2]
-        sdot v28.4s, v1.16b, v0.4b[3]
+LoopDepthQuarter:
+    ld1 {v0.16b}, [x17], #16
+    ld1 {v1.16b}, [x18]
+    add x18, x18, #64
+    sdot v16.4s, v1.16b, v0.4b[0]
+    sdot v20.4s, v1.16b, v0.4b[1]
+    sdot v24.4s, v1.16b, v0.4b[2]
+    sdot v28.4s, v1.16b, v0.4b[3]
 
-        subs x16, x16, #4
-        bgt LoopDepthQuarter
-        b Convert2Float
+    subs x16, x16, #4
+    bgt LoopDepthQuarter
+    b AddInputSum
+
+AddInputSum:
+    cmp w20, #0
+    beq AddInputSumEnd
+    ld1 {v5.4s}, [x9], #16
+    dup v6.4s, v5.s[0]
+    dup v7.4s, v5.s[1]
+    dup v8.4s, v5.s[2]
+    dup v9.4s, v5.s[3]
+
+    sub v16.4s, v16.4s, v6.4s
+    sub v17.4s, v17.4s, v6.4s
+    sub v18.4s, v18.4s, v6.4s
+    sub v19.4s, v19.4s, v6.4s
+    sub v20.4s, v20.4s, v7.4s
+    sub v21.4s, v21.4s, v7.4s
+    sub v22.4s, v22.4s, v7.4s
+    sub v23.4s, v23.4s, v7.4s
+    sub v24.4s, v24.4s, v8.4s
+    sub v25.4s, v25.4s, v8.4s
+    sub v26.4s, v26.4s, v8.4s
+    sub v27.4s, v27.4s, v8.4s
+    sub v28.4s, v28.4s, v9.4s
+    sub v29.4s, v29.4s, v9.4s
+    sub v30.4s, v30.4s, v9.4s
+    sub v31.4s, v31.4s, v9.4s
+AddInputSumEnd:
+
+AddWeightSum:
+    ld1 {v9.4s},  [x10], #16
+    ld1 {v10.4s}, [x10], #16
+    ld1 {v11.4s}, [x10], #16
+    ld1 {v12.4s}, [x10], #16
+    dup v13.4s, w19
+    mul v9.4s, v9.4s, v13.4s
+    mul v10.4s, v10.4s, v13.4s
+    mul v11.4s, v11.4s, v13.4s
+    mul v12.4s, v12.4s, v13.4s
+    sub v16.4s, v16.4s, v9.4s
+    sub v17.4s, v17.4s, v10.4s
+    sub v18.4s, v18.4s, v11.4s
+    sub v19.4s, v19.4s, v12.4s
+    sub v20.4s, v20.4s, v9.4s
+    sub v21.4s, v21.4s, v10.4s
+    sub v22.4s, v22.4s, v11.4s
+    sub v23.4s, v23.4s, v12.4s
+    sub v24.4s, v24.4s, v9.4s
+    sub v25.4s, v25.4s, v10.4s
+    sub v26.4s, v26.4s, v11.4s
+    sub v27.4s, v27.4s, v12.4s
+    sub v28.4s, v28.4s, v9.4s
+    sub v29.4s, v29.4s, v10.4s
+    sub v30.4s, v30.4s, v11.4s
+    sub v31.4s, v31.4s, v12.4s
+
+AddZpSum:
+    mul w15, w19, w20
+    cmp w15, #0
+    beq AddZpSumEnd
+    dup v14.4s, w15
+    add v16.4s, v16.4s, v14.4s
+    add v17.4s, v17.4s, v14.4s
+    add v18.4s, v18.4s, v14.4s
+    add v19.4s, v19.4s, v14.4s
+    add v20.4s, v20.4s, v14.4s
+    add v21.4s, v21.4s, v14.4s
+    add v22.4s, v22.4s, v14.4s
+    add v23.4s, v23.4s, v14.4s
+    add v24.4s, v24.4s, v14.4s
+    add v25.4s, v25.4s, v14.4s
+    add v26.4s, v26.4s, v14.4s
+    add v27.4s, v27.4s, v14.4s
+    add v28.4s, v28.4s, v14.4s
+    add v29.4s, v29.4s, v14.4s
+    add v30.4s, v30.4s, v14.4s
+    add v31.4s, v31.4s, v14.4s
+AddZpSumEnd:
 
 Convert2Float:
     scvtf v16.4s, v16.4s
@@ -483,5 +574,9 @@ Write1:
     st1 {v28.s}[0], [x12]
     b StoreDataEnd
 StoreDataEnd:
+    sub sp, sp, #144
+    ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
+    ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
+    ldp x19, x20, [sp], #16
     ret
 #endif

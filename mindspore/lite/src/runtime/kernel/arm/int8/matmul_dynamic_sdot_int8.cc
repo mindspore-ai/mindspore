@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/arm/int8/matmul_dynamic_sdot_int8.h"
 #include <vector>
-#include "src/common/file_utils.h"
 #include "nnacl/int8/dynamic_matmul_int8.h"
 #include "nnacl/int8/matmul_int8.h"
 
@@ -61,12 +60,23 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotPre(int task_id) {
   }
 
   auto current_a_pack = pack_a_ptr_ + row_current_stride * param_->deep_align_;
+  int weight_zp = quant_param_->filter_zp_[0];
   if (param_->a_transpose_) {
     auto current_src_a = batch_input_ptr_ + row_current_stride;
-    PackInput2Col4x4(current_src_a, current_a_pack, param_->deep_, cur_r, param_->row_);
+    if (weight_zp == 0) {
+      PackInput2Col4x4(current_src_a, current_a_pack, param_->deep_, cur_r, param_->row_);
+    } else {
+      PackInput2Col4x4AndInputSumPert(current_src_a, current_a_pack, input_sums_ + row_current_stride, param_->deep_,
+                                      cur_r, param_->row_, weight_zp);
+    }
   } else {
     auto current_src_a = batch_input_ptr_ + row_current_stride * param_->deep_;
-    PackInput4x4(current_src_a, current_a_pack, param_->deep_, cur_r);
+    if (weight_zp == 0) {
+      PackInput4x4(current_src_a, current_a_pack, param_->deep_, cur_r);
+    } else {
+      PackInput4x4AndInputSumPert(current_src_a, current_a_pack, input_sums_ + row_current_stride, param_->deep_, cur_r,
+                                  weight_zp);
+    }
   }
   return RET_OK;
 }
@@ -81,14 +91,17 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
   if (cur_oc <= 0) {
     return RET_OK;
   }
+  auto current_sums = batch_sums_ + cur_stride;
   if (!param_->b_const_) {
     auto current_b_pack = batch_b_ptr_ + cur_stride * param_->deep_align_;
     if (param_->b_transpose_) {
       auto current_weight = batch_weight_ptr_ + cur_stride * param_->deep_;
       RowMajor2Row4x16MajorInt8(current_weight, current_b_pack, cur_oc, param_->deep_);
+      CalcPartWeightSums(current_weight, param_->deep_, param_->col_, cur_oc, current_sums, ColMajor);
     } else {
       auto current_weight = batch_weight_ptr_ + cur_stride;
       RowMajor2Col4x16MajorPartInt8(current_weight, current_b_pack, param_->deep_, param_->col_, cur_oc);
+      CalcPartWeightSums(current_weight, param_->deep_, param_->col_, cur_oc, current_sums, RowMajor);
     }
   }
 
@@ -100,20 +113,24 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
       multi_scale[i] = quant_param_->input_scale_ * quant_param_->filter_scale_[cur_stride + i];
     }
   }
+  auto out_stride = param_->col_ * sizeof(float);
   for (int r = 0; r < param_->row_; r += C4NUM) {
     size_t row = MSMIN(C4NUM, param_->row_ - r);
     auto a_ptr = pack_a_ptr_ + r * param_->deep_align_;
+    int *input_sums_ptr = input_sums_ + r;
     for (int c = 0; c < cur_oc; c += C16NUM) {
       size_t col = MSMIN(C16NUM, cur_oc - c);
       auto col_offset = cur_stride + c;
       auto b_ptr = batch_b_ptr_ + col_offset * param_->deep_align_;
+      int *weight_sums_ptr = current_sums + c;
       auto out_ptr = batch_c_ptr_ + r * param_->col_ + col_offset;
       auto bias = fp32_bias_ptr_;
       if (bias != nullptr) {
         bias += col_offset;
       }
       DynamicMatmulSdot4x4x16AIWI(a_ptr, b_ptr, out_ptr, param_->deep_align_, multi_scale.data() + c, bias, row, col,
-                                  param_->col_ * sizeof(float));
+                                  out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_,
+                                  quant_param_->filter_zp_[0] * param_->deep_);
     }
   }
 #endif
@@ -153,6 +170,7 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicRunArm64Sdot() {
     }
 
     batch_weight_ptr_ = b_ptr + i * param_->col_ * param_->deep_;
+    batch_sums_ = weight_sums_ + i * param_->col_align_;
     batch_b_ptr_ = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
 
