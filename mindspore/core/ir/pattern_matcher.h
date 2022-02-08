@@ -64,6 +64,7 @@ class PIsEqual {
 template <typename T = AnfNodePtr>
 class PatternNode : public PBase<PatternNode<T> > {
  public:
+  virtual ~PatternNode() = default;
   T GetNode(const AnfNodePtr &) const {
     if (!captured_) {
       MS_EXCEPTION(ValueError) << "A Pattern wasn't captured for this Token before the call to GetNode.";
@@ -169,7 +170,7 @@ struct apply_func_tuple_item {
 template <size_t Index, typename Func>
 struct apply_func_tuple_item<true, Index, Func> {
   template <typename TTuple>
-  static void apply(Func *func, const TTuple &tuple) {}
+  static void apply(Func *, const TTuple &) {}
 };
 
 template <typename Func, typename TTuple>
@@ -179,7 +180,7 @@ inline void apply_func_tuple(Func *func, const TTuple &tuple) {
 
 struct PTupleResetCapture {
   template <typename T>
-  void operator()(size_t i, const T &pattern) const {
+  void operator()(size_t, const T &pattern) const {
     pattern.Reset();
   }
 };
@@ -221,7 +222,7 @@ template <typename... TArgs>
 class PCNode : public PBase<PCNode<TArgs...> > {
  public:
   explicit PCNode(const TArgs &... args) : args_(args...) {}
-  ~PCNode() = default;
+  virtual ~PCNode() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
     tuple_utils::PTupleGetNode get_node(node);
@@ -260,13 +261,13 @@ class PCNode : public PBase<PCNode<TArgs...> > {
       // Pattern may accept extra (non specified) nodes at the end of the CNode
       // There must be at least `min_extra_nodes` additional nodes in the inputs.
       if (inputs.size() >= pattern_arg_len + min_extra_nodes_) {
-        AnfNodePtrList tokens(inputs.begin(), inputs.begin() + pattern_arg_len);
+        AnfNodePtrList tokens(inputs.begin(), inputs.begin() + SizeToLong(pattern_arg_len));
         tuple_utils::PTupleCapture capture_func(tokens);
         tuple_utils::apply_func_tuple(&capture_func, args_);
         // If it could capture the initial set of nodes specified in the Pattern
         // and there are enough extra inputs to add
         if (capture_func.captured_ && inputs.size() > pattern_arg_len) {
-          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + pattern_arg_len, inputs.end());
+          extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + SizeToLong(pattern_arg_len), inputs.end());
           return true;
         }
         return capture_func.captured_;
@@ -304,7 +305,7 @@ template <typename... TArgs>
 class PPrimitive : public PBase<PPrimitive<TArgs...> > {
  public:
   explicit PPrimitive(const PrimitivePtr &prim, const TArgs &... args) : prim_(prim), args_(args...) {}
-  ~PPrimitive() = default;
+  virtual ~PPrimitive() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
     tuple_utils::PTupleGetNode get_node(node);
@@ -348,7 +349,7 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
       // Pattern may accept extra (non specified) nodes at the end of the Primitive
       // There must be at least `min_extra_nodes` additional nodes in the inputs.
       if ((inputs.size() - 1) >= pattern_arg_len + min_extra_nodes_) {
-        AnfNodePtrList tokens(inputs.begin() + 1, inputs.begin() + 1 + pattern_arg_len);
+        AnfNodePtrList tokens(inputs.begin() + 1, inputs.begin() + 1 + SizeToLong(pattern_arg_len));
         tuple_utils::PTupleCapture capture_func(tokens);
         tuple_utils::apply_func_tuple(&capture_func, args_);
         // If it could capture the initial set of nodes specified in the Pattern
@@ -356,7 +357,7 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
         if (capture_func.captured_) {
           captured_prim_node_ = node;
           if (inputs.size() > pattern_arg_len + 1) {
-            extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
+            extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + SizeToLong(pattern_arg_len), inputs.end());
           }
         }
         return capture_func.captured_;
@@ -431,7 +432,7 @@ class PConstant : public PBase<PConstant<T> > {
         check_value_(check_value),
         is_scalar_(is_scalar) {}
 
-  ~PConstant() = default;
+  virtual ~PConstant() = default;
   // Sets as_node_ as the node received as argument to produce a same-shape node with GetNode
   const PConstant<T> &WithShapeAs(const AnfNodePtr &node) const {
     if (node == nullptr) {
@@ -479,7 +480,7 @@ class PConstant : public PBase<PConstant<T> > {
     return *this;
   }
 
-  AnfNodePtr GetNode(const AnfNodePtr &node) const {
+  AnfNodePtr GetNode(const AnfNodePtr &) const {
     // If a NewValueNode was requested (using NewValue function) then return that created node.
     if (is_new_value_node_) {
       return captured_node_;
@@ -578,7 +579,7 @@ class PConstant : public PBase<PConstant<T> > {
     return IsTensorConstant(value);
   }
 
-  void *GetPointerToTensorData(const AnfNodePtr &node, bool writable = false) const {
+  void *GetPointerToTensorData(const AnfNodePtr &node) const {
     if (!node->isa<ValueNode>()) {
       return nullptr;
     }
@@ -645,7 +646,7 @@ class PConstant : public PBase<PConstant<T> > {
       auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
       char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
-        ret = memcpy_s(data + i * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
+        ret = memcpy_s(data + IntToSize(i) * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
         if (ret != 0) {
           MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << tensor_type_byte << ", dest size "
                        << tensor_type_byte;
