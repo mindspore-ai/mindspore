@@ -171,19 +171,16 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
 
 int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
-  NNaclFp32Serializer code;
-  NNaclFp32Serializer init_code;
-  NNaclFp32Serializer w_init_size_code;
+  NNaclFp32Serializer code, init_code, w_init_size_code;
   size_t w_buf_size = 0;
 
   code.CodeStruct("mat_mul_parameter", *params_);
   init_code.CodeStruct("mat_mul_parameter", *params_);
   // do bias packing to init
-  if (bias_ptr_) {
+  if (input_tensors_.size() == DIMENSION_3D) {
     init_code.CodeBufferOffsetExpression(bias_ptr_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), bias_pack_ptr_size_);
     w_buf_size += bias_pack_ptr_size_;
-
     int max_bias_data = params_->col_align_;
     if (is_bias_broadcast_) {
       float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data()))[0];
@@ -192,17 +189,16 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
       init_code << "\t\t" << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";
       init_code << "\t}\n";
     } else {
-      init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, ori_bias_pack_ptr_size_);
+      std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
+      init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_str, ori_bias_pack_ptr_size_);
     }
   }
-
   // Get Tensor Pointer
   std::string a_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string b_str = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string c_str = allocator_->GetRuntimeAddr(output_tensor_);
   std::string a_pack_str = allocator_->GetRuntimeAddr(a_pack_ptr_);
   std::string b_pack_str = allocator_->GetRuntimeAddr(b_pack_ptr_);
-
   // do const value packing to init
   if (!params_->a_const_) {
     code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
@@ -244,13 +240,10 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     init_code.CodeFunction("InitMatrixA", a_src_str, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
     code.CodeFunction("InitMatrixB", filter_tensor_, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
-
   int current_stride_oc = thread_stride_ * col_tile_;
   int current_rest_oc = params_->col_ - kDefaultTaskId * thread_stride_ * col_tile_;
   int cur_oc = MSMIN(current_stride_oc, current_rest_oc);
-  if (cur_oc <= 0) {
-    return RET_OK;
-  }
+  if (cur_oc <= 0) return RET_OK;
   code << "for (int i = 0; i < " << params_->batch << "; ++i) {\n";
   if (vec_matmul_) {
     code << "\t\tfloat *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
@@ -261,7 +254,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     code << "\t\tfloat *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_ << ";\n";
     code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
   }
-
   if (vec_matmul_) {
     code.CodeFunction("MatVecMulFp32", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, cur_oc);
@@ -271,7 +263,6 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   }
   code << "\t\t}\n";
   w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
-
   context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendCode(code.str());
   context->AppendInitCode(init_code.str());

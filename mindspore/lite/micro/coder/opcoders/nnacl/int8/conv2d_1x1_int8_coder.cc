@@ -172,16 +172,18 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
     filter_zp_str = "filter_zp";
     code << "int32_t filter_zp[1] = {" << conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_ << "};\n";
   }
-
+  std::string bias_tensor_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);
+  bias_tensor_str = (bias_tensor_str == "") ? "NULL" : bias_tensor_str;
+  std::string filter_tensor_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(filter_tensor_);
   if (target_ == kARM64) {
-    code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_, bias_tensor_, filter_zp_str, input_channel,
+    code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_str, bias_tensor_str, filter_zp_str, input_channel,
                                output_channel, input_zp, "GetSupportOptFlag()", filter_peroc_, packed_weight_str,
                                bias_data_str, context->weight_name(), ("&" + context->weight_offset_name()),
                                context->weight_size_name());
     w_init_size_code << context->weight_size_name() << " += ";
     w_init_size_code.CodeFunction("Conv1x1PackWeightSize", input_channel, output_channel, "GetSupportOptFlag()");
   } else {
-    code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_, bias_tensor_, filter_zp_str, input_channel,
+    code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_str, bias_tensor_str, filter_zp_str, input_channel,
                                output_channel, input_zp, support_optimize_, filter_peroc_, packed_weight_str,
                                bias_data_str, context->weight_name(), ("&" + context->weight_offset_name()),
                                context->weight_size_name());

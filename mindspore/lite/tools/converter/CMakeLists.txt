@@ -187,6 +187,7 @@ ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
 
 add_library(proto_mid OBJECT ${PROTO_SRCS})
 target_compile_options(proto_mid PRIVATE "-Wno-array-bounds")
+target_compile_options(core_proto_obj PRIVATE "-Wno-array-bounds")
 
 set(TFLITE_FBS_FILES
         ${TOP_DIR}/third_party/proto/tensorflow/lite/schema.fbs
