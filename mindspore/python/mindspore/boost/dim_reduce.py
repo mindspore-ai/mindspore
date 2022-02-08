@@ -157,8 +157,6 @@ class DimReduce(Cell):
         self._set_init_parameter(weight)
 
         self.hyper_map = C.HyperMap()
-        self.allreduce = P.AllReduce()
-        self.allgather = P.AllGather()
         self.concat = P.Concat()
         self.matmul = P.MatMul()
         self.mul = P.Mul()
@@ -193,10 +191,13 @@ class DimReduce(Cell):
             self.dk_pad_flag = True
             self.dk_pad_part = Tensor(np.zeros([pad_num, 1]), dtype=self.float_type)
 
-        self.broadcast_list = []
-        for i in range(self.rank_size):
-            broadcast = P.Broadcast(i)
-            self.broadcast_list.append(broadcast)
+        if self.rank_size > 1:
+            self.broadcast_list = []
+            for i in range(self.rank_size):
+                broadcast = P.Broadcast(i)
+                self.broadcast_list.append(broadcast)
+            self.allreduce = P.AllReduce()
+            self.allgather = P.AllGather()
 
     def _set_init_parameter(self, parameter_tuple):
         """init parameters."""
@@ -219,11 +220,11 @@ class DimReduce(Cell):
         weight = F.depend(weight, loss)
         old_grad = F.depend(old_grad, weight)
         old_grad = self.hyper_map(F.partial(_scale_grad, loss_scale), old_grad)
-        old_loss = self.allreduce(loss) / self.rank_size
+        old_loss = self.allreduce(loss) / self.rank_size if self.rank_size > 1 else loss
 
         gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
         gk_local = F.addn(gk_local)
-        gk_pad = self.allgather(gk_local)
+        gk_pad = self.allgather(gk_local) if self.rank_size > 1 else gk_local
         gk_pad = F.reshape(gk_pad, (-1, 1))
         gk = gk_pad[0:self.n_components, :]
 
@@ -239,13 +240,14 @@ class DimReduce(Cell):
 
         dn_local = self.hyper_map(F.partial(_pca_back_projection, dk_local), self.pca_list_local, old_grad)
         grad_proj_local = self.hyper_map(F.partial(_pca_back_projection, gk_local), self.pca_list_local, old_grad)
-        dn = self.dn_init
-        grad_proj = self.grad_proj_init
-        for broadcast in self.broadcast_list:
-            dn_part = broadcast(dn_local)
-            dn = self.hyper_map(self.add, dn, dn_part)
-            grad_proj_part = broadcast(grad_proj_local)
-            grad_proj = self.hyper_map(self.add, grad_proj, grad_proj_part)
+        dn = self.dn_init if self.rank_size > 1 else dn_local
+        grad_proj = self.grad_proj_init if self.rank_size > 1 else grad_proj_local
+        if self.rank_size > 1:
+            for broadcast in self.broadcast_list:
+                dn_part = broadcast(dn_local)
+                dn = self.hyper_map(self.add, dn, dn_part)
+                grad_proj_part = broadcast(grad_proj_local)
+                grad_proj = self.hyper_map(self.add, grad_proj, grad_proj_part)
 
         rho, find = self._line_search(gk, dk, dn, old_loss, weight, weight_clone, *inputs)
         if not find:
@@ -279,7 +281,8 @@ class DimReduce(Cell):
         sn = F.depend(sn, old_loss)
         update = self.optimizer(sn)
         new_loss = F.depend(self.network(*inputs), update)
-        new_loss = self.allreduce(new_loss) / self.rank_size
+        if self.rank_size > 1:
+            new_loss = self.allreduce(new_loss) / self.rank_size
         old_loss_delta = old_loss + self.sigma * rho * F.squeeze(self.matmul(F.transpose(gk, (1, 0)), dk))
         if old_loss_delta > new_loss:
             _save_weight(self.sk, rho * dk)
