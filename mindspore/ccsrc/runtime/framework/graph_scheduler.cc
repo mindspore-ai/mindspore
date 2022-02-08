@@ -1940,8 +1940,8 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
 
       // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
       if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceAddressType()) == nullptr) {
-        MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                     << ", type:" << device_context->GetDeviceAddressType();
+        MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
+                        << ", type:" << device_context->GetDeviceAddressType();
         auto other_type_device_tensor = device_context->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id());
         other_type_device_tensor->SetNodeIndex(input_node, 0);
