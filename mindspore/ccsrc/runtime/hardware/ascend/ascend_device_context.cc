@@ -357,24 +357,30 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start preprocess before run graph. graph id: " << graph->graph_id();
   PROF_START(preprocess_before_run_graph);
-  if (graph->is_executing_sink()) {
-    device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
-    UpdateExecOrder(graph);
-    device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
-    device::KernelAdjust::GetInstance().ProcessLoopSink(graph);
-    AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+  SetErrorManagerContext();
+  try {
+    if (graph->is_executing_sink()) {
+      device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
+      UpdateExecOrder(graph);
+      device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
+      device::KernelAdjust::GetInstance().ProcessLoopSink(graph);
+      AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
 #ifndef ENABLE_SECURITY
-    // Insert profiling point, this function must be executed after assign stream.
-    device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
+      // Insert profiling point, this function must be executed after assign stream.
+      device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
 #endif
-    CreateKernel(graph->execution_order());
-    AllocateGraphMemory(NOT_NULL(graph));
-    LoadModel(NOT_NULL(graph));
-    AssignOutputNopNodeDeviceAddress(graph);
-  } else {
-    PreprocessBeforeRunSingleOpGraph(graph);
-    AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
-    GenKernelEvents(NOT_NULL(graph));
+      CreateKernel(graph->execution_order());
+      AllocateGraphMemory(NOT_NULL(graph));
+      LoadModel(NOT_NULL(graph));
+      AssignOutputNopNodeDeviceAddress(graph);
+    } else {
+      PreprocessBeforeRunSingleOpGraph(graph);
+      AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+      GenKernelEvents(NOT_NULL(graph));
+    }
+  } catch (const std::exception &e) {
+    ReportErrorMessage();
+    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id();
   }
 
   PROF_END(preprocess_before_run_graph);
@@ -568,6 +574,7 @@ bool AscendDeviceContext::LaunchGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
+  SetErrorManagerContext();
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(graph);
   auto ret = ExecuteGraph(graph);
   if (!ret) {
@@ -587,6 +594,8 @@ void AscendDeviceContext::ReportErrorMessage() const {
     MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
   }
 }
+
+void AscendDeviceContext::SetErrorManagerContext() const { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
 
 void AscendDeviceContext::ReportWarningMessage() const {
   const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
