@@ -1444,7 +1444,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
 }
 
 FuncGraphPtr GraphExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
-                                         const py::object &broadcast_params) {
+                                         const py::object &broadcast_params) const {
 #if ((defined ENABLE_GE) || (defined ENABLE_D))
   return BuildDFGraph(info_, init_params, phase, broadcast_params);
 #else

@@ -59,11 +59,11 @@ class PyPassManager {
   PassGroupPtr GetPassGroup(Phase phase);
   MatchResultPtr GetMatchResult() { return res_; }
   void SetRenorm(bool should_renorm) { should_renorm_ = should_renorm; }
-  bool ShouldRenorm() { return should_renorm_; }
+  bool ShouldRenorm() const { return should_renorm_; }
   void SetReOpt(bool should_reopt) { should_reopt_ = should_reopt; }
-  bool ShouldReOpt() { return should_reopt_; }
-  void SetResource(pipeline::ResourcePtr resource) { resource_ = resource; }
-  pipeline::ResourcePtr GetResource() { return resource_; }
+  bool ShouldReOpt() const { return should_reopt_; }
+  void SetResource(const pipeline::ResourcePtr &resource) { resource_ = resource; }
+  pipeline::ResourcePtr GetResource() const { return resource_; }
   void ClearRes();
   void ClearPipelineRes() {
     resource_ = nullptr;

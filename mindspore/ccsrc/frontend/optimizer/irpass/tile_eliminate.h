@@ -50,7 +50,7 @@ class TileEliminater : public AnfVisitor {
 
     auto fn = [this]() -> size_t {
       auto x_shape_base = x_->Shape();
-      auto x_size = 0;
+      uint64_t x_size = 0;
       ShapePtr x_shape;
       if (x_shape_base && (x_shape = x_shape_base->cast<ShapePtr>())) {
         x_size = x_shape->shape().size();

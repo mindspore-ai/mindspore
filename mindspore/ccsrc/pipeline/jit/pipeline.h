@@ -97,7 +97,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   bool HasCompiled(const std::string &phase) const;
 
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
-                          const py::object &broadcast_params = {});
+                          const py::object &broadcast_params = {}) const;
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params);
   void RunInitGraph(const py::dict &init_params, const std::string &phase) const;
