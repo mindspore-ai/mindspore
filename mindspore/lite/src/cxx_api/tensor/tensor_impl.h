@@ -102,7 +102,7 @@ class MSTensor::Impl {
     lite_tensor_->set_data_type(static_cast<enum TypeId>(data_type));
   }
 
-  int64_t ElementNum() const {
+  virtual int64_t ElementNum() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return -1;
