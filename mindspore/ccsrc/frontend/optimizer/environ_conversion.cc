@@ -132,6 +132,20 @@ AnfNodePtr GetTransformedKeyNode(const AnfNodePtr &old_key_node, SymbolicKeyConv
   transformed_key_node->set_abstract(tensor_key->ToAbstract());
   return transformed_key_node;
 }
+
+void InsertEnvironDestroyAll(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto output = func_graph->output();
+  auto u = NewValueNode(kUMonad);
+  u->set_abstract(kUMonad->ToAbstract());
+  auto depend1 = func_graph->NewCNode({NewValueNode(prim::kPrimDepend), u, output});
+  depend1->set_abstract(kUMonad->ToAbstract());
+  auto environ_destroy_all = func_graph->NewCNode({NewValueNode(prim::kPrimEnvironDestroyAll), depend1});
+  environ_destroy_all->set_abstract(std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>()));
+  auto depend2 = func_graph->NewCNode({NewValueNode(prim::kPrimDepend), output, environ_destroy_all});
+  depend2->set_abstract(output->abstract());
+  func_graph->set_output(depend2);
+}
 }  // namespace
 
 bool EnvironConversion(const pipeline::ResourcePtr &resource) {
@@ -145,10 +159,12 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   auto mng = resource->manager();
   const auto &all_nodes = mng->all_nodes();
   auto txn = mng->Transact();
+  auto destroy_env = false;
   for (const auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimEnvironSet) && !IsPrimitiveCNode(node, prim::kPrimEnvironGet)) {
       continue;
     }
+    destroy_env = true;
     const auto &cnode = node->cast<CNodePtr>();
     // Prim
     AnfNodePtr transformed_prim_node;
@@ -189,6 +205,11 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     txn.SetEdge(node, kSymbolicKeyOffset, transformed_key_node);
   }
   txn.Commit();
+
+  // Insert EnvironDestroyAll if env ops exist.
+  if (destroy_env) {
+    InsertEnvironDestroyAll(resource->func_graph());
+  }
 
   // Previous loop is depending on the AbstractType, so use another loop to modify the AbstractType.
   const auto &new_all_nodes = mng->all_nodes();

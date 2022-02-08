@@ -205,6 +205,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimEnvironGet, R{InferImplEnvironGet, nullptr, true}},
     {prim::kPrimEnvironSet, R{InferImplEnvironSet, nullptr, true}},
     {prim::kPrimEnvironAdd, R{InferImplEnvironAdd, nullptr, true}},
+    {prim::kPrimEnvironDestroyAll, R{InferImplEnvironDestroyAll, nullptr, true}},
     {prim::kPrimMakeRefKey, R{InferImplMakeRefKey, nullptr, true}},
     {prim::kPrimMakeRef, R{InferImplMakeRef, nullptr, true}},
     {prim::kPrimGetRefKey, R{InferImplGetRefKey, nullptr, true}},
