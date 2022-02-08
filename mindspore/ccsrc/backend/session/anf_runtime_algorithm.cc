@@ -356,6 +356,10 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
         if (abstract != nullptr) {
           (*abstract) = sub_abstracts[GetTupleGetItemOutIndex(cnode)];
           MS_EXCEPTION_IF_NULL((*abstract));
+        } else {
+          // In recursion of getitem node, the index of the first input of its real node is returned.
+          // When the recursion ends, the outermost index needs to be accumulated.
+          real_index += index;
         }
         return {item_with_index_tmp.first, real_index};
       }
