@@ -145,6 +145,7 @@ class AscendDeviceContext : public DeviceContext {
 
   void ReportErrorMessage() const;
   void ReportWarningMessage() const;
+  void SetErrorManagerContext() const;
 
   // Kernel Runtime  --- only for task sink
   AscendKernelRuntime *runtime_instance_{nullptr};
