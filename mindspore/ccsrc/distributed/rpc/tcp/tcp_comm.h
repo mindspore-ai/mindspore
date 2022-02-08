@@ -20,9 +20,11 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <mutex>
 
-#include "actor/iomgr.h"
+#include "actor/msg.h"
 #include "distributed/rpc/tcp/connection.h"
+#include "distributed/rpc/tcp/connection_pool.h"
 #include "distributed/rpc/tcp/event_loop.h"
 
 namespace mindspore {
@@ -34,15 +36,11 @@ void OnAccept(int server, uint32_t events, void *arg);
 // Send messages buffered in the connection.
 void DoSend(Connection *conn);
 
-// Create a server socket and connect to it, this is a local connection..
-int DoConnect(const std::string &to, Connection *conn, ConnectionCallBack eventCallBack,
-              ConnectionCallBack writeCallBack, ConnectionCallBack readCallBack);
-
 void DoDisconnect(int fd, Connection *conn, uint32_t error, int soError);
 
 void ConnectedEventHandler(int fd, uint32_t events, void *context);
 
-class TCPComm : public IOMgr {
+class TCPComm {
  public:
   TCPComm() : server_fd_(-1), recv_event_loop_(nullptr), send_event_loop_(nullptr) {}
   TCPComm(const TCPComm &) = delete;
@@ -50,52 +48,46 @@ class TCPComm : public IOMgr {
   ~TCPComm();
 
   // Init the event loop for reading and writing.
-  bool Initialize() override;
+  bool Initialize();
 
   // Destroy all the resources.
-  void Finalize() override;
+  void Finalize();
 
   // Create the server socket represented by url.
-  bool StartServerSocket(const std::string &url, const std::string &aAdvertiseUrl) override;
+  bool StartServerSocket(const std::string &url);
 
-  // Build a connection between the source and destination.
-  void Link(const AID &source, const AID &destination) override;
-  void UnLink(const AID &destination) override;
+  // Connection operation for a specified destination.
+  void Connect(const std::string &dst_url);
+  bool IsConnected(const std::string &dst_url);
+  void Disconnect(const std::string &dst_url);
 
   // Send the message from the source to the destination.
-  int Send(std::unique_ptr<MessageBase> &&msg, bool remoteLink = false, bool isExactNotRemote = false) override;
+  int Send(MessageBase *msg);
 
-  uint64_t GetInBufSize() override;
-  uint64_t GetOutBufSize() override;
-  void CollectMetrics() override;
+  // Set the message processing handler.
+  void SetMessageHandler(MessageHandler handler);
 
  private:
   // Build the connection.
   Connection *CreateDefaultConn(std::string to);
-  void Reconnect(const AID &source, const AID &destination);
-  void DoReConnectConn(Connection *conn, std::string to, const AID &source, const AID &destination, int *oldFd);
 
   // Send a message.
-  int Send(MessageBase *msg, bool remoteLink = false, bool isExactNotRemote = false);
-  static void Send(MessageBase *msg, const TCPComm *tcpmgr, bool remoteLink, bool isExactNotRemote);
-  void SendByRecvLoop(MessageBase *msg, const TCPComm *tcpmgr, bool remoteLink, bool isExactNotRemote);
   static void SendExitMsg(const std::string &from, const std::string &to);
 
   // Called by ReadCallBack when new message arrived.
   static int ReceiveMessage(Connection *conn);
 
-  void SetMessageHandler(IOMgr::MessageHandler handler);
   static int SetConnectedHandler(Connection *conn);
 
-  static int Connect(Connection *conn, const struct sockaddr *sa, socklen_t saLen);
+  static int DoConnect(Connection *conn, const struct sockaddr *sa, socklen_t saLen);
 
-  static bool IsHttpMsg();
+  static void DropMessage(MessageBase *msg);
 
   // Read and write events.
-  static void ReadCallBack(void *context);
-  static void WriteCallBack(void *context);
+  static void ReadCallBack(void *conn);
+  static void WriteCallBack(void *conn);
   // Connected and Disconnected events.
-  static void EventCallBack(void *context);
+  static void EventCallBack(void *conn);
 
   // The server url.
   std::string url_;
@@ -103,20 +95,18 @@ class TCPComm : public IOMgr {
   // The socket of server.
   int server_fd_;
 
-  // The message size waiting to be sent.
-  static uint64_t output_buf_size_;
-
   // User defined handler for Handling received messages.
-  static MessageHandler message_handler_;
-
-  // The source url of a message.
-  static std::vector<char> advertise_url_;
-
-  static bool is_http_msg_;
+  MessageHandler message_handler_;
 
   // All the connections share the same read and write event loop objects.
   EventLoop *recv_event_loop_;
   EventLoop *send_event_loop_;
+
+  // The connection pool used to store new connections.
+  std::shared_ptr<ConnectionPool> conn_pool_;
+
+  // The mutex for connection operations.
+  std::shared_ptr<std::mutex> conn_mutex_;
 
   friend void OnAccept(int server, uint32_t events, void *arg);
   friend void DoSend(Connection *conn);

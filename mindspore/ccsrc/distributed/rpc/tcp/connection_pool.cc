@@ -20,8 +20,6 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-ConnectionPool *ConnectionPool::conn_pool = new ConnectionPool();
-
 void ConnectionPool::SetLinkPattern(bool linkPattern) { double_link_ = linkPattern; }
 
 void ConnectionPool::CloseConnection(Connection *conn) {
@@ -36,55 +34,20 @@ void ConnectionPool::CloseConnection(Connection *conn) {
   }
 
   if (!conn->destination.empty()) {
-    if (conn->is_remote) {
-      (void)remote_conns_.erase(conn->destination);
-    } else {
-      (void)local_conns_.erase(conn->destination);
-    }
+    (void)connections_.erase(conn->destination);
   }
   conn->Close();
   delete conn;
   conn = nullptr;
 }
 
-Connection *ConnectionPool::FindConnection(const std::string &to, bool remoteLink) {
+Connection *ConnectionPool::FindConnection(const std::string &dst_url) {
   Connection *conn = nullptr;
-  if (!remoteLink) {
-    auto iter = local_conns_.find(to);
-    if (iter != local_conns_.end()) {
-      conn = iter->second;
-      return conn;
-    }
-  }
-  auto iter = remote_conns_.find(to);
-  if (iter != remote_conns_.end()) {
+  auto iter = connections_.find(dst_url);
+  if (iter != connections_.end()) {
     conn = iter->second;
   }
   return conn;
-}
-
-Connection *ConnectionPool::ExactFindConnection(const std::string &to, bool remoteLink) {
-  Connection *conn = nullptr;
-  if (!remoteLink) {
-    auto iter = local_conns_.find(to);
-    if (iter != local_conns_.end()) {
-      conn = iter->second;
-    }
-  } else {
-    auto iter = remote_conns_.find(to);
-    if (iter != remote_conns_.end()) {
-      conn = iter->second;
-    }
-  }
-  return conn;
-}
-
-Connection *ConnectionPool::FindConnection(const std::string &to, bool remoteLink, bool exactNotRemote) {
-  if (exactNotRemote) {
-    return ExactFindConnection(to, false);
-  } else {
-    return FindConnection(to, remoteLink);
-  }
 }
 
 void ConnectionPool::ResetAllConnMetrics() {
@@ -96,46 +59,10 @@ void ConnectionPool::ResetAllConnMetrics() {
   }
 }
 
-Connection *ConnectionPool::FindMaxConnection() {
-  Connection *conn = nullptr;
-  size_t count = 0;
-  for (const auto &iter : local_conns_) {
-    if (iter.second->send_metrics->accum_msg_count > count) {
-      count = iter.second->send_metrics->accum_msg_count;
-      conn = iter.second;
-    }
-  }
-  for (const auto &iter : remote_conns_) {
-    if (iter.second->send_metrics->accum_msg_count > count) {
-      count = iter.second->send_metrics->accum_msg_count;
-      conn = iter.second;
-    }
-  }
-  return conn;
-}
-
-Connection *ConnectionPool::FindFastConnection() {
-  Connection *conn = nullptr;
-  size_t size = 0;
-  for (const auto &iter : local_conns_) {
-    if (iter.second->send_metrics->max_msg_size > size) {
-      size = iter.second->send_metrics->max_msg_size;
-      conn = iter.second;
-    }
-  }
-  for (const auto &iter : remote_conns_) {
-    if (iter.second->send_metrics->max_msg_size > size) {
-      size = iter.second->send_metrics->max_msg_size;
-      conn = iter.second;
-    }
-  }
-  return conn;
-}
-
-void ConnectionPool::ExactDeleteConnection(const std::string &to, bool remoteLink) {
-  Connection *conn = ExactFindConnection(to, remoteLink);
+void ConnectionPool::DeleteConnection(const std::string &dst_url) {
+  Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
-    MS_LOG(INFO) << "unLink fd:" << conn->socket_fd << ",to:" << to.c_str() << ",remote:" << remoteLink;
+    MS_LOG(INFO) << "unLink fd:" << conn->socket_fd << ",to:" << dst_url;
     CloseConnection(conn);
   }
 }
@@ -156,26 +83,15 @@ void ConnectionPool::DeleteAllConnections(std::map<std::string, Connection *> *l
 
 void ConnectionPool::AddConnection(Connection *conn) {
   if (conn == nullptr) {
+    MS_LOG(ERROR) << "The connection is null";
     return;
   }
-  Connection *tmpConn = ExactFindConnection(conn->destination, conn->is_remote);
-  if (tmpConn != nullptr && tmpConn->is_remote == conn->is_remote) {
+  Connection *tmpConn = FindConnection(conn->destination);
+  if (tmpConn != nullptr) {
     MS_LOG(INFO) << "unLink fd:" << tmpConn->socket_fd << ",to:" << tmpConn->destination.c_str();
     CloseConnection(tmpConn);
   }
-
-  if (conn->is_remote) {
-    (void)remote_conns_.emplace(conn->destination, conn);
-  } else {
-    (void)local_conns_.emplace(conn->destination, conn);
-  }
-}
-
-void ConnectionPool::SetConnPriority(const std::string &to, bool remoteLink, ConnectionPriority pri) {
-  Connection *conn = ExactFindConnection(to, remoteLink);
-  if (conn != nullptr && conn->is_remote == remoteLink) {
-    conn->priority = pri;
-  }
+  (void)connections_.emplace(conn->destination, conn);
 }
 
 void ConnectionPool::DeleteConnInfo(int fd) {
@@ -207,23 +123,13 @@ void ConnectionPool::DeleteConnInfo(const std::string &to, int fd) {
   // If run in single link pattern, link fd and send fd may not be the same, we should send Exit message bind
   // on link fd and remote link fd. Here 'deleted' flag should be set true to avoid duplicate Exit message with
   // same aid.
-  Connection *nonRemoteConn = ConnectionPool::ExactFindConnection(to, false);
-  if (nonRemoteConn != nullptr) {
-    nonRemoteConn->deleted = true;
-    DeleteConnInfo(nonRemoteConn->socket_fd);
+  Connection *conn = FindConnection(to);
+  if (conn != nullptr) {
+    conn->deleted = true;
+    DeleteConnInfo(conn->socket_fd);
 
-    if (nonRemoteConn->socket_fd != fd) {
-      MS_LOG(INFO) << "delete linker bind on link fd:" << nonRemoteConn->socket_fd << ",delete fd:" << fd;
-    }
-  }
-
-  Connection *remoteConn = ConnectionPool::ExactFindConnection(to, true);
-  if (remoteConn != nullptr) {
-    remoteConn->deleted = true;
-    DeleteConnInfo(remoteConn->socket_fd);
-
-    if (remoteConn->socket_fd != fd) {
-      MS_LOG(INFO) << "delete linker bind on remote link fd:" << remoteConn->socket_fd << ",delete fd:" << fd;
+    if (conn->socket_fd != fd) {
+      MS_LOG(INFO) << "delete linker bind on link fd:" << conn->socket_fd << ",delete fd:" << fd;
     }
   }
 }
@@ -243,7 +149,7 @@ void ConnectionPool::DeleteAllConnInfos() {
   }
 }
 
-ConnectionInfo *ConnectionPool::FindConnInfo(int fd, const AID &sAid, const AID &dAid) {
+ConnectionInfo *ConnectionPool::FindConnInfo(int fd, const std::string &dst_url) {
   auto iter = conn_infos_.find(fd);
   if (iter == conn_infos_.end()) {
     return nullptr;
@@ -253,7 +159,7 @@ ConnectionInfo *ConnectionPool::FindConnInfo(int fd, const AID &sAid, const AID 
 
   while (iter2 != conn_infos.end()) {
     auto linkInfo = *iter2;
-    if (AID(linkInfo->from) == sAid && AID(linkInfo->to) == dAid) {
+    if (linkInfo->to == dst_url) {
       return linkInfo;
     }
     ++iter2;
@@ -261,19 +167,18 @@ ConnectionInfo *ConnectionPool::FindConnInfo(int fd, const AID &sAid, const AID 
   return nullptr;
 }
 
-void ConnectionPool::AddConnInfo(int fd, const AID &sAid, const AID &dAid, DeleteCallBack callback) {
-  ConnectionInfo *linker = FindConnInfo(fd, sAid, dAid);
+void ConnectionPool::AddConnInfo(int fd, const std::string &dst_url, DeleteCallBack callback) {
+  ConnectionInfo *linker = FindConnInfo(fd, dst_url);
   if (linker != nullptr) {
     return;
   }
   linker = new (std::nothrow) ConnectionInfo();
   if (linker == nullptr) {
-    MS_LOG(ERROR) << "new ConnectionInfo fail sAid:" << std::string(sAid).c_str()
-                  << ",dAid:" << std::string(dAid).c_str();
+    MS_LOG(ERROR) << "new ConnectionInfo fail dAid:" << dst_url;
     return;
   }
-  linker->from = sAid;
-  linker->to = dAid;
+  linker->from = "";
+  linker->to = dst_url;
   linker->socket_fd = fd;
   linker->delete_callback = callback;
   (void)conn_infos_[fd].insert(linker);
@@ -299,8 +204,6 @@ ConnectionPool::~ConnectionPool() {
     MS_LOG(ERROR) << "Failed to release resource for connection pool.";
   }
 }
-
-ConnectionPool *ConnectionPool::GetConnectionPool() { return ConnectionPool::conn_pool; }
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

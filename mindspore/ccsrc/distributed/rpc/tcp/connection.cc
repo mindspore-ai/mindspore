@@ -25,8 +25,6 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-std::mutex Connection::conn_mutex;
-
 // Handle socket events like read/write.
 void SocketEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
@@ -245,7 +243,7 @@ void Connection::Close() {
   }
 }
 
-int Connection::ReceiveMessage(IOMgr::MessageHandler msgHandler) {
+int Connection::ReceiveMessage() {
   bool ok = ParseMessage();
   // If no message parsed, wait for next read
   if (!ok) {
@@ -255,26 +253,12 @@ int Connection::ReceiveMessage(IOMgr::MessageHandler msgHandler) {
     return 0;
   }
 
-  if (destination.empty()) {
-    std::string fromUrl = recv_message->from;
-    size_t index = fromUrl.find("@");
-    if (index != std::string::npos) {
-      destination = fromUrl.substr(index + 1);
-      MS_LOG(INFO) << "Create new connection fd: " << socket_fd << " to: " << destination.c_str();
-
-      Connection::conn_mutex.lock();
-      ConnectionPool::GetConnectionPool()->SetConnPriority(destination, false, ConnectionPriority::kPriorityLow);
-      state = ConnectionState::kConnected;
-      ConnectionPool::GetConnectionPool()->AddConnection(this);
-      Connection::conn_mutex.unlock();
-    }
-  }
   std::unique_ptr<MessageBase> msg(recv_message);
   recv_message = nullptr;
 
   // Call msg handler if set
-  if (msgHandler != nullptr) {
-    msgHandler(std::move(msg));
+  if (message_handler != nullptr) {
+    message_handler(std::move(msg));
   } else {
     MS_LOG(INFO) << "Message handler was not found";
   }
@@ -282,7 +266,6 @@ int Connection::ReceiveMessage(IOMgr::MessageHandler msgHandler) {
 }
 
 void Connection::CheckMessageType() {
-  std::lock_guard<std::mutex> lock(Connection::conn_mutex);
   if (recv_message_type != ParseType::kUnknown) {
     return;
   }

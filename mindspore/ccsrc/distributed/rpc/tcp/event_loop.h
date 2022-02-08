@@ -66,7 +66,7 @@ class EventLoop {
   bool Initialize(const std::string &threadName);
   void Finalize();
 
-  // Add task (eg. send message, reconnect etc.) to task queue of the event loop by user.
+  // Add task (eg. send message, reconnect etc.) to task queue of the event loop.
   // These tasks are executed asynchronously.
   int AddTask(std::function<void()> &&task);
 

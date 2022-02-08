@@ -20,12 +20,15 @@
 #include <string>
 #include <csignal>
 #include <queue>
+#include <memory>
 
 #include "actor/log.h"
+#include "actor/msg.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+using MessageHandler = void (*)(std::unique_ptr<MessageBase> &&msg);
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
 using ConnectionCallBack = void (*)(void *conn);
 

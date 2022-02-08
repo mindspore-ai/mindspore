@@ -20,9 +20,9 @@
 #include <queue>
 #include <string>
 #include <mutex>
+#include <memory>
 
 #include "actor/msg.h"
-#include "actor/iomgr.h"
 #include "distributed/rpc/tcp/constants.h"
 #include "distributed/rpc/tcp/event_loop.h"
 #include "distributed/rpc/tcp/socket_operation.h"
@@ -118,7 +118,7 @@ struct Connection {
   // Close this connection.
   void Close();
 
-  int ReceiveMessage(IOMgr::MessageHandler msgHandler);
+  int ReceiveMessage();
   void CheckMessageType();
 
   // Fill the message to be sent based on the input message.
@@ -170,6 +170,9 @@ struct Connection {
   MessageBase *send_message;
   MessageBase *recv_message;
 
+  // Owned by the tcp_comm.
+  std::shared_ptr<std::mutex> conn_mutex;
+
   State recv_state;
 
   // Total length of received and sent messages.
@@ -201,6 +204,9 @@ struct Connection {
   ConnectionCallBack write_callback;
   ConnectionCallBack read_callback;
 
+  // Function for handling received messages.
+  MessageHandler message_handler;
+
   // Buffer for messages to be sent.
   std::queue<MessageBase *> send_message_queue;
 
@@ -208,8 +214,6 @@ struct Connection {
 
   // The error code when sending or receiving messages.
   int error_code;
-
-  static std::mutex conn_mutex;
 
  private:
   // Add handler for socket connect event.
