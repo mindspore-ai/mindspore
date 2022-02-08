@@ -87,8 +87,8 @@ enum class InstanceState {
 };
 
 enum class IterationResult {
-  // The iteration is timeout because of startfljob or updatemodel timeout.
-  kTimeout,
+  // The iteration is failed.
+  kFail,
   // The iteration is successful aggregation.
   kSuccess
 };

@@ -60,21 +60,21 @@ void RoundKernel::set_finish_iteration_cb(const FinishIterCb &finish_iteration_c
 void RoundKernel::GenerateOutput(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
                                  size_t len) {
   if (message == nullptr) {
-    MS_LOG(ERROR) << "The message handler is nullptr.";
+    MS_LOG(WARNING) << "The message handler is nullptr.";
     return;
   }
   if (data == nullptr || len == 0) {
     std::string reason = "The output of the round " + name_ + " is empty.";
     MS_LOG(WARNING) << reason;
     if (!message->SendResponse(reason.c_str(), reason.size())) {
-      MS_LOG(ERROR) << "Sending response failed.";
+      MS_LOG(WARNING) << "Sending response failed.";
       return;
     }
     return;
   }
   IncreaseTotalClientNum();
   if (!message->SendResponse(data, len)) {
-    MS_LOG(ERROR) << "Sending response failed.";
+    MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
 }

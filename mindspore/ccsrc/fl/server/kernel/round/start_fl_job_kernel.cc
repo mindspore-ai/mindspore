@@ -57,7 +57,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
-    MS_LOG(ERROR) << reason;
+    MS_LOG(WARNING) << reason;
     GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
