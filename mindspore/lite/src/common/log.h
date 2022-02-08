@@ -18,6 +18,9 @@
 
 #include <memory>
 #include <sstream>
+#include <vector>
+#include <map>
+#include <unordered_map>
 #include "utils/overload.h"
 
 // NOTICE: when relative path of 'log.h' changed, macro 'LITE_LOG_HEAR_FILE_REL_PATH' must be changed
@@ -53,6 +56,47 @@ class LiteLogStream {
   template <typename T>
   LiteLogStream &operator<<(const T &val) noexcept {
     (*sstream_) << val;
+    return *this;
+  }
+
+  template <typename T>
+  LiteLogStream &operator<<(const std::vector<T> &val) noexcept {
+    (*sstream_) << "[";
+    for (size_t i = 0; i < val.size(); i++) {
+      (*this) << val[i];
+      if (i + 1 < val.size()) {
+        (*sstream_) << ", ";
+      }
+    }
+    (*sstream_) << "]";
+    return *this;
+  }
+
+  template <typename K, typename V>
+  LiteLogStream &operator<<(const std::unordered_map<K, V> &val) noexcept {
+    (*sstream_) << "{";
+    size_t index = 0;
+    for (auto &item : val) {
+      (*this) << item.first << ": " << item.second;
+      if (index + 1 < val.size()) {
+        (*sstream_) << ", ";
+      }
+    }
+    (*sstream_) << "}";
+    return *this;
+  }
+
+  template <typename K, typename V>
+  LiteLogStream &operator<<(const std::map<K, V> &val) noexcept {
+    (*sstream_) << "{";
+    size_t index = 0;
+    for (auto &item : val) {
+      (*this) << item.first << ": " << item.second;
+      if (index + 1 < val.size()) {
+        (*sstream_) << ", ";
+      }
+    }
+    (*sstream_) << "}";
     return *this;
   }
 
