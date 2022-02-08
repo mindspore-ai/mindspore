@@ -1,6 +1,12 @@
 mindspore.nn
 =============
 
+神经网络Cell。
+
+用于构建神经网络中的预定义构建块或计算单元。
+
+MindSpore中 `mindspore.nn` 算子与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_。
+
 Cell
 ----
 
@@ -152,6 +158,20 @@ Dynamic Learning Rate
 LearningRateSchedule
 ^^^^^^^^^^^^^^^^^^^^^
 
+本模块中的动态学习率都是LearningRateSchedule的子类，将LearningRateSchedule的实例传递给优化器。在训练过程中，优化器以当前step为输入调用该实例，得到当前的学习率。
+
+.. code-block::
+
+    import mindspore.nn as nn
+    
+    min_lr = 0.01
+    max_lr = 0.1
+    decay_steps = 4
+    cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
+    
+    net = Net()
+    optim = nn.Momentum(net.trainable_params(), learning_rate=cosine_decay_lr, momentum=0.9)
+
 .. cnmsplatformautosummary::
     :toctree: nn
 
@@ -165,6 +185,23 @@ LearningRateSchedule
 Dynamic LR
 ^^^^^^^^^^
 
+本模块中的动态学习率都是function，调用function并将结果传递给优化器。在训练过程中，优化器将result[current step]作为当前学习率。
+
+.. code-block::
+
+    import mindspore.nn as nn
+    
+    min_lr = 0.01
+    max_lr = 0.1
+    total_step = 6
+    step_per_epoch = 1
+    decay_epoch = 4
+    
+    lr= nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+    
+    net = Net()
+    optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
+    
 .. cnmsautosummary::
     :toctree: nn
 

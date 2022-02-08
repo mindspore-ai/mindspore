@@ -10,13 +10,19 @@ mindspore.dataset
 请注意Windows平台上还不支持缓存服务，因此在Windows上加载和处理数据时，请勿使用。更多介绍和限制，
 请参考 `Single-Node Tensor Cache <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_。
 
-
 在API示例中，常用的模块导入方法如下：
 
 .. code-block::
 
     import mindspore.dataset as ds
     from mindspore.dataset.transforms import c_transforms
+
+常用数据集术语说明如下：
+
+- Dataset，所有数据集的基类，提供了数据处理方法来帮助预处理数据。
+- SourceDataset，一个抽象类，表示数据集管道的来源，从文件和数据库等数据源生成数据。
+- MappableDataset，一个抽象类，表示支持随机访问的源数据集。
+- Iterator，用于枚举元素的数据集迭代器的基类。
 
 Vision
 -------
