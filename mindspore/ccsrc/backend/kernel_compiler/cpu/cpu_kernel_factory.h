@@ -77,9 +77,13 @@ class NativeCpuKernelRegistrar {
   static const NativeCpuKernelRegistrar g_cpu_kernel_##COUNT##_##OPNAME##_##T##_reg(                            \
     #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T>>(); });
 
-#define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S)                                                         \
+#define MS_REG_CPU_KERNEL_T_S(OPNAME, ATTR, OPCLASS, T, S) \
+  MS_REG_CPU_KERNEL_T_S_(__COUNTER__, OPNAME, ATTR, OPCLASS, T, S)
+#define MS_REG_CPU_KERNEL_T_S_(COUNT, OPNAME, ATTR, OPCLASS, T, S) \
+  _MS_REG_CPU_KERNEL_T_S_(COUNT, OPNAME, ATTR, OPCLASS, T, S)
+#define _MS_REG_CPU_KERNEL_T_S_(COUNT, OPNAME, ATTR, OPCLASS, T, S)                                                \
   static_assert(std::is_base_of<NativeCpuKernelMod, OPCLASS<T, S>>::value, " must be base of NativeCpuKernelMod"); \
-  static const NativeCpuKernelRegistrar g_cpu_kernel_##OPNAME##_##T##_##S##_reg(                                   \
+  static const NativeCpuKernelRegistrar g_cpu_kernel_##COUNT##_##OPNAME##_##T##_##S##_reg(                         \
     #OPNAME, ATTR, []() { return std::make_shared<OPCLASS<T, S>>(); });
 }  // namespace kernel
 }  // namespace mindspore

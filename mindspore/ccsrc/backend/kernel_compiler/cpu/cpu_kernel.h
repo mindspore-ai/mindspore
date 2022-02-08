@@ -99,6 +99,7 @@ constexpr char TRANS[] = "trans";
 constexpr char MODE[] = "mode";
 constexpr char UNIT_DIAGONAL[] = "unit_diagonal";
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
+constexpr char COMPUTE_V[] = "compute_v";
 constexpr char ADJOINT[] = "adjoint";
 constexpr char ALIGNMENT[] = "alignment";
 

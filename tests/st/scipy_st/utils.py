@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ============================================================================
 """utility functions for mindspore.scipy st tests"""
 from typing import List
+from functools import cmp_to_key
 
 import numpy as onp
 from mindspore import Tensor
@@ -80,7 +81,13 @@ def create_random_rank_matrix(shape, dtype):
     if len(shape) < 2:
         raise ValueError(
             'random rank matrix must shape bigger than two dims, but has shape: ', shape)
-    return onp.random.random(shape).astype(dtype)
+
+    if dtype in [onp.complex64, onp.complex128]:
+        random_data = onp.random.uniform(low=-1.0, high=1.0, size=shape).astype(dtype)
+        random_data += 1j * onp.random.uniform(low=-1.0, high=1.0, size=shape).astype(dtype)
+    else:
+        random_data = onp.random.random(shape).astype(dtype)
+    return random_data
 
 
 def create_sym_pos_matrix(shape, dtype):
@@ -144,3 +151,39 @@ def match_runtime_exception(err, expected_str):
     err_str = str(err.value)
     err_str = err_str[err_str.find("]") + 2:]
     return err_str == expected_str
+
+
+def compare_eigen_decomposition(src_res, tgt_res, compute_v, rtol, atol):
+    def my_argsort(w):
+        """
+        Sort eigenvalues, by comparing the real part first, and then the image part
+        when the real part is comparatively same (less than rtol).
+        """
+
+        def my_cmp(x_id, y_id):
+            x = w[x_id]
+            y = w[y_id]
+            if abs(onp.real(x) - onp.real(y)) < rtol:
+                return onp.imag(x) - onp.imag(y)
+            return onp.real(x) - onp.real(y)
+
+        w_ind = list(range(len(w)))
+        w_ind.sort(key=cmp_to_key(my_cmp))
+        return w_ind
+
+    sw, mw = src_res[0], tgt_res[0]
+    s_perm = my_argsort(sw)
+    m_perm = my_argsort(mw)
+    sw = onp.take(sw, s_perm, -1)
+    mw = onp.take(mw, m_perm, -1)
+    assert onp.allclose(sw, mw, rtol=rtol, atol=atol)
+
+    if compute_v:
+        sv, mv = src_res[1], tgt_res[1]
+        sv = onp.take(sv, s_perm, -1)
+        mv = onp.take(mv, m_perm, -1)
+
+        # Normalize eigenvectors.
+        phases = onp.sum(sv.conj() * mv, -2, keepdims=True)
+        sv = phases / onp.abs(phases) * sv
+        assert onp.allclose(sv, mv, rtol=rtol, atol=atol)
