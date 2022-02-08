@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <vector>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+
 namespace mindspore {
 namespace lite {
 namespace preprocess {
@@ -71,7 +72,11 @@ int GetMatData(const cv::Mat &mat, void **data, size_t *size) {
     (*size) += static_cast<size_t>(mat.cols) * mat.elemSize();
   }
 
-  (*data) = new char[*size];
+  (*data) = new (std::nothrow) char[*size];
+  if (*data == nullptr) {
+    MS_LOG(ERROR) << "new data failed.";
+    return RET_ERROR;
+  }
   if (memcpy_s(*data, *size, mat_local.data,
                static_cast<size_t>(mat.rows * mat.cols * mat.channels()) * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";

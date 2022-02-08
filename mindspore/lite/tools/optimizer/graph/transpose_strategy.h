@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ class TransposeStrategy {
                                     bool before, size_t index);
   STATUS TransposeInsertDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool before, size_t index);
   bool IsInOutCanFuison(const std::vector<AnfNodePtr> &nodes, size_t *trans_count, FormatTransNodeType *trans_type);
-  void DecidePreAndPostTransType(TransTypePair *trans_info, TransTypePair *trans_insert_info) const;
+  void DecidePreAndPostTransType(const TransTypePair *trans_info, TransTypePair *trans_insert_info) const;
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;

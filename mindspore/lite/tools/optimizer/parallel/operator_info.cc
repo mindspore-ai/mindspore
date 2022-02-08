@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,7 @@ int OperatorInfo::CheckStrategyValue() {
 
 int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num,
                                                  std::vector<AnfNodePtr> *outputs) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(outputs);
+  MS_ASSERT(node != nullptr && outputs != nullptr);
   AbstractBasePtrList ptr_list;
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
@@ -136,7 +135,7 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
 
 AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                            int32_t concat_dim, size_t input_nodes_num) {
-  MS_EXCEPTION_IF_NULL(orig_node);
+  MS_ASSERT(orig_node != nullptr);
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of concat is not equal to input nodes number.";
     return nullptr;
@@ -163,7 +162,7 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
 
 AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
                                           size_t input_nodes_num) {
-  MS_EXCEPTION_IF_NULL(orig_node);
+  MS_ASSERT(orig_node != nullptr);
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of reduce is not equal to input nodes number.";
     return nullptr;

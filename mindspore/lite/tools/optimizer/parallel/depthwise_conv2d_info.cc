@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,11 +111,11 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
     [&](const tensor::TensorPtr &constant_tensor) { return (reinterpret_cast<char *>(constant_tensor->data_c())); });
   int64_t outer_total_dim = 1;
   for (int64_t i = 0; i < split_dim; i++) {
-    outer_total_dim *= static_cast<size_t>(constant_shape[i]);
+    outer_total_dim *= constant_shape[i];
   }
   int64_t inner_stride = 1;
   for (int64_t i = static_cast<int64_t>(constant_shape.size()) - 1; i > split_dim; i--) {
-    inner_stride *= static_cast<size_t>(constant_shape[i]);
+    inner_stride *= constant_shape[i];
   }
   auto constant_tensor_ptr = reinterpret_cast<char *>(constant_tensor->data_c());
   // init split_constant_tensor_data
@@ -330,8 +330,8 @@ int DepthwiseConv2DInfo::ConstructOutputCNodes(const std::shared_ptr<ops::Conv2D
 }
 
 AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, size_t input_index,
-                                                     std::vector<AnfNodePtr> *split_outputs, size_t split_num,
-                                                     const std::vector<int64_t> &splits) {
+                                                     std::vector<AnfNodePtr> *split_outputs, size_t split_dim,
+                                                     size_t split_num, const std::vector<int64_t> &splits) {
   MS_ASSERT(orig_node != nullptr && split_outputs != nullptr);
   auto depth_wise_conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
   MS_ASSERT(depth_wise_conv_prim != nullptr);
@@ -354,7 +354,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
   MS_CHECK_TRUE_RET(split_prim != nullptr, nullptr);
   std::vector<int64_t> new_splits = splits;
-  MS_CHECK_TRUE_RET(input_shape.size() > static_cast<size_t>(split_dim_), nullptr);
+  MS_CHECK_TRUE_RET(input_shape.size() > static_cast<size_t>(split_dim), nullptr);
   if (split_mode_ == SplitH) {
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     MS_CHECK_GE(depth_wise_conv_prim->get_kernel_size().size(), 1, nullptr);
@@ -365,7 +365,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
     MS_CHECK_GE(split_num, 1, nullptr);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
-    if (!UpdateRatioWithPadStride(new_splits.data(), new_splits.size(), split_num, input_shape[split_dim_])) {
+    if (!UpdateRatioWithPadStride(new_splits.data(), new_splits.size(), split_num, input_shape[split_dim])) {
       MS_LOG(ERROR) << "UpdateRatioWithPadStride failed";
       return nullptr;
     }
@@ -373,8 +373,8 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
     split_prim->set_extend_top(std::vector<int64_t>(split_num, 0));
     split_prim->set_extend_bottom(std::vector<int64_t>(split_num, 0));
   }
-  split_prim->set_split_dim(split_dim_);
-  split_prim->set_number_split(split_num);
+  split_prim->set_split_dim(static_cast<int64_t>(split_dim));
+  split_prim->set_number_split(static_cast<int64_t>(split_num));
   split_prim->set_ratio(new_splits);
 
   std::vector<AnfNodePtr> split_inputs;
@@ -429,7 +429,7 @@ int DepthwiseConv2DInfo::CreateConstantOutputsOfSplit(std::vector<AnfNodePtr> *s
   }
   for (const auto &split_constant_tensor : split_constant_tensors) {
     auto parameter_node = func_graph_->add_parameter();
-    MS_EXCEPTION_IF_NULL(parameter_node);
+    MS_CHECK_TRUE_RET(parameter_node != nullptr, RET_ERROR);
     auto type_id_ptr = TypeIdToType(split_constant_tensor->data_type());
     parameter_node->set_abstract(
       std::make_shared<abstract::AbstractTensor>(type_id_ptr, split_constant_tensor->shape()));
@@ -457,7 +457,8 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     case SplitN:
     case SplitH: {
       name_ = input_op_name + ("_input");
-      auto feature_split_cnode = CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, dev_num, splits_);
+      auto feature_split_cnode =
+        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, static_cast<size_t>(split_dim_), dev_num, splits_);
       MS_CHECK_TRUE_RET(feature_split_cnode != nullptr, RET_ERROR);
       if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
         return RET_ERROR;
@@ -467,7 +468,8 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
     case SplitCIN:
     case SplitCOUT: {
       name_ = input_op_name + ("_input");
-      auto feature_split_cnode = CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, dev_num, splits_);
+      auto feature_split_cnode =
+        CreateOutputsOfSplit(cnode_, 0, &feature_split_outputs, static_cast<size_t>(split_dim_), dev_num, splits_);
       MS_CHECK_TRUE_RET(feature_split_cnode != nullptr, RET_ERROR);
       if (CheckSplitResult(feature_split_cnode, feature_split_outputs, dev_num) != RET_OK) {
         return RET_ERROR;

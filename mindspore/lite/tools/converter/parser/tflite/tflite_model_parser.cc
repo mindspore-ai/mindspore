@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -400,6 +400,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
     if (input_idx < 0) {
       input_idx += tflite_subgraph->tensors.size();
     }
+    MS_CHECK_TRUE_RET(static_cast<size_t>(input_idx) < tflite_subgraph->tensors.size(), RET_ERROR);
     const auto &input_tensor = tflite_subgraph->tensors[input_idx];
     std::vector<schema::QuantParamT> quant_params;
     auto status = SetTensorQuantParam(input_tensor, &quant_params, round_type);
@@ -415,6 +416,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const std::unique_ptr<tflite::Ope
     if (output_idx < 0) {
       output_idx += tflite_subgraph->tensors.size();
     }
+    MS_CHECK_TRUE_RET(static_cast<size_t>(output_idx) < tflite_subgraph->tensors.size(), RET_ERROR);
     const auto &output_tensor = tflite_subgraph->tensors.at(output_idx);
     std::vector<schema::QuantParamT> quant_params;
     auto status = SetTensorQuantParam(output_tensor, &quant_params, round_type);
@@ -474,6 +476,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
   if (tflite_subgraph->outputs.size() > 1) {
     for (auto output_node : tflite_subgraph->outputs) {
       auto output_idx = output_node < 0 ? output_node + tflite_subgraph->tensors.size() : output_node;
+      MS_CHECK_TRUE_RET(anf_node_map->find(output_idx) != anf_node_map->end(), RET_NOT_FIND_OP);
       auto cnode = anf_node_map->at(output_idx);
       if (cnode == nullptr) {
         MS_LOG(ERROR) << "Can't find input node.";
@@ -519,6 +522,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs(const std::unique_ptr<tflite::SubG
     auto value_node = NewValueNode(returnPrim);
     MSLITE_CHECK_PTR(value_node);
     std::vector<AnfNodePtr> op_inputs{value_node};
+    MS_CHECK_TRUE_RET(anf_node_map->find(output_idx) != anf_node_map->end(), RET_NOT_FIND_OP);
     auto cnode = anf_node_map->at(output_idx);
     if (cnode == nullptr) {
       MS_LOG(ERROR) << "Can't find input node.";

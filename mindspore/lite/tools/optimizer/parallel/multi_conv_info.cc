@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,8 +103,7 @@ bool MultiConvSplit::CheckSplitValid() {
 }
 
 int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  MS_EXCEPTION_IF_NULL(conv_node);
+  MS_ASSERT(func_graph_ != nullptr && conv_node != nullptr);
   // get nodes to be splited
   // node in graph 1->2->3...
   // node in vector ...->3->2->1
