@@ -60,6 +60,12 @@ def test_vocab_tokens_to_ids():
     ids = vocab.tokens_to_ids("hello")
     assert ids == -1
 
+    ids = vocab.tokens_to_ids(np.array(["w1", "w3"]))
+    assert ids == [1, 3]
+
+    ids = vocab.tokens_to_ids(np.array("w1"))
+    assert ids == 1
+
 
 def test_vocab_ids_to_tokens():
     """
@@ -81,6 +87,12 @@ def test_vocab_ids_to_tokens():
 
     tokens = vocab.ids_to_tokens(7)
     assert tokens == ""
+
+    tokens = vocab.ids_to_tokens(np.array([2, 3]))
+    assert tokens == ["w2", "w3"]
+
+    tokens = vocab.ids_to_tokens(np.array(2))
+    assert tokens == "w2"
 
 
 def test_vocab_exception():

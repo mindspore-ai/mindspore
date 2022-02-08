@@ -72,6 +72,8 @@ class Vocab:
             >>> ids = vocab.tokens_to_ids(["w1", "w3"])
         """
         check_vocab(self.c_vocab)
+        if isinstance(tokens, np.ndarray):
+            tokens = tokens.tolist()
         if isinstance(tokens, str):
             tokens = [tokens]
         return self.c_vocab.tokens_to_ids(tokens)
@@ -93,6 +95,8 @@ class Vocab:
             >>> token = vocab.ids_to_tokens(0)
         """
         check_vocab(self.c_vocab)
+        if isinstance(ids, np.ndarray):
+            ids = ids.tolist()
         if isinstance(ids, int):
             ids = [ids]
         return self.c_vocab.ids_to_tokens(ids)
