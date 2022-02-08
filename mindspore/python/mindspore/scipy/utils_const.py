@@ -53,6 +53,7 @@ def _raise_type_error(info):
     """
     raise TypeError(info)
 
+
 @constexpr
 def _type_check(arg_name, arg_value, valid_types, prim_name=None):
     """
@@ -68,8 +69,8 @@ def _type_check(arg_name, arg_value, valid_types, prim_name=None):
         num_types = len(valid_types)
         msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
         raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                        f'\'{type_names if num_types > 1 else type_names[0]}\', '
-                        f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
+                        f'{type_names if num_types > 1 else type_names[0]}, '
+                        f'but got \'{arg_value}\' with type {type(arg_value).__name__}.')
 
     # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
     #         `check_value_type('x', True, [bool, int])` will check pass
