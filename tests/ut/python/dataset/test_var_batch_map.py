@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,9 +55,16 @@ def test_batch_corner_cases():
     assert len(tst4) == 4, "\nATTENTION BATCH FAILED\n"
 
 
-# each sub-test in this function is tested twice with exact parameter except that the second test passes each row
-# to a pyfunc which makes a deep copy of the row
 def test_variable_size_batch():
+    """
+    Feature: Batch
+    Description: Test batch variations with repeat and with/without per_batch_map.
+        Each sub-test is tested with same parameters except that
+        - the second test uses per_batch_map which passes each row a pyfunc and makes a deep copy of the row
+        - the third test (if it exists) uses per_batch_map and python multiprocessing
+    Expectation: Results are the same, independent of per_batch_map or python_multiprocessing settings
+    """
+
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -108,6 +115,18 @@ def test_variable_size_batch():
             res.append(item["num"])
         return res
 
+    # same as test_batch_repeat_with_copy_map except with python multiprocessing enabled
+    def test_batch_repeat_with_copy_map_multiproc(gen_num, r, drop, func, num_workers, my_maxrowsize):
+        res = []
+        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"], num_parallel_workers=num_workers,
+                                    python_multiprocessing=True, max_rowsize=my_maxrowsize) \
+            .batch(batch_size=func, drop_remainder=drop, input_columns=["num"], per_batch_map=simple_copy,
+                   num_parallel_workers=num_workers, python_multiprocessing=True,
+                   max_rowsize=my_maxrowsize).repeat(r)
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(item["num"])
+        return res
+
     tst1, tst2, tst3, tst4, tst5, tst6, tst7 = [], [], [], [], [], [], []
 
     # no repeat, simple var size, based on batch_num
@@ -140,6 +159,10 @@ def test_variable_size_batch():
     assert check_res(tst7, [[[0]], [[1]], [[2]], [[3]], [[0], [1]], [[2], [3]], [[0], [1], [2]], [[3]],
                             [[0], [1], [2], [3]]]), "\nATTENTION VAR BATCH FAILED\n" + str(tst7)
     assert check_res(tst7, test_batch_repeat_with_copy_map(4, 4, False, add_one_by_epoch)), "\nMAP FAILED\n"
+    assert check_res(tst7, test_batch_repeat_with_copy_map_multiproc(
+        4, 4, False, add_one_by_epoch, 4, 1)), "\nMULTIPROC1 MAP FAILED\n"
+    assert check_res(tst7, test_batch_repeat_with_copy_map_multiproc(
+        4, 4, False, add_one_by_epoch, 2, 2)), "\nMULTIPROC2 MAP FAILED\n"
 
 
 def test_basic_batch_map():
@@ -369,11 +392,11 @@ def test_multi_col_map():
     # test exceptions
     assert "output_columns with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], 233)
     assert "column_order with value 233 is not of type" in batch_map_config(2, 2, split_col, ["col2"], ["col1"], 233)
-    assert "columns that are not involved in 'per_batch_map' should not be in output_columns"\
+    assert "columns that are not involved in 'per_batch_map' should not be in output_columns" \
            in batch_map_config(2, 2, split_col, ["col2"], ["col1"])
-    assert "the number of columns returned in 'per_batch_map' function should be 3"\
+    assert "the number of columns returned in 'per_batch_map' function should be 3" \
            in batch_map_config(2, 2, split_col, ["col2"], ["col3", "col4", "col5"])
-    assert "'col-1' of 'input_columns' doesn't exist"\
+    assert "'col-1' of 'input_columns' doesn't exist" \
            in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 
 

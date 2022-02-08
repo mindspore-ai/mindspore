@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import numpy as np
 
 import mindspore.dataset as ds
 
+CIFAR10_DIR = "../data/dataset/testCifar10Data"
 
 # This UT test tests the following cases
 
@@ -109,8 +110,7 @@ def test_batch_padding_05():
 
 
 def batch_padding_performance_3d():
-    cifar10_dir = "../data/dataset/testCifar10Data"
-    data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     pad_info = {"image": ([36, 36, 3], 0)}
     # pad_info = None
@@ -124,8 +124,7 @@ def batch_padding_performance_3d():
 
 
 def batch_padding_performance_1d():
-    cifar10_dir = "../data/dataset/testCifar10Data"
-    data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     pad_info = {"image": ([3888], 0)}  # 3888 =36*36*3
@@ -140,8 +139,7 @@ def batch_padding_performance_1d():
 
 
 def batch_pyfunc_padding_3d():
-    cifar10_dir = "../data/dataset/testCifar10Data"
-    data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     # pad_info = {"image": ([36, 36, 3], 0)}
     data1 = data1.map(operations=(lambda x: np.pad(x, ((0, 4), (0, 4), (0, 0)))), input_columns="image",
@@ -156,8 +154,7 @@ def batch_pyfunc_padding_3d():
 
 
 def batch_pyfunc_padding_1d():
-    cifar10_dir = "../data/dataset/testCifar10Data"
-    data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image", python_multiprocessing=False)
@@ -170,34 +167,56 @@ def batch_pyfunc_padding_1d():
     # print(res)
 
 
-# this function runs pad_batch and numpy.pad then compare the results
+def pad_map_config(my_num_workers=None, py_multiproc=False, my_max_rowsize=16):
+    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
+    data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image",
+                      num_parallel_workers=my_num_workers, python_multiprocessing=py_multiproc,
+                      max_rowsize=my_max_rowsize)  # reshape to 1d
+    data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image",
+                      num_parallel_workers=my_num_workers, python_multiprocessing=py_multiproc,
+                      max_rowsize=my_max_rowsize)
+    data1 = data1.batch(batch_size=25, drop_remainder=True)
+    res = []
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(data["image"])
+    return res
+
+def pad_batch_config():
+    data2 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
+    data2 = data2.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
+    data2 = data2.batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
+    res = []
+    for data in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(data["image"])
+    return res
+
+
 def test_pad_via_map():
-    cifar10_dir = "../data/dataset/testCifar10Data"
-
-    def pad_map_config():
-        data1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False, num_samples=1000)  # shape = [32,32,3]
-        data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
-        data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image")
-        data1 = data1.batch(batch_size=25, drop_remainder=True)
-        res = []
-        for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-            res.append(data["image"])
-        return res
-
-    def pad_batch_config():
-        data2 = ds.Cifar10Dataset(cifar10_dir, shuffle=False, num_samples=1000)  # shape = [32,32,3]
-        data2 = data2.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
-        data2 = data2.batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
-        res = []
-        for data in data2.create_dict_iterator(num_epochs=1, output_numpy=True):
-            res.append(data["image"])
-        return res
-
+    """
+    Feature: Batch Padding
+    Description: Compare results for pad_batch versus numpy.pad
+    Expectation: pad_batch and numpy.pad results are the same
+    """
     res_from_map = pad_map_config()
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
     for i, _ in enumerate(res_from_map):
         np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
+
+
+def test_pad_via_map_multiproc():
+    """
+    Feature: Batch Padding
+    Description: Compare results for pad_batch versus numpy.pad, with multiprocessing for map
+    Expectation: pad_batch and numpy.pad results are the same
+    """
+    # Note: Reduce shared memory needed (for CI) by using small num_parallel_workers and max_rowsize values
+    res_from_map = pad_map_config(2, True, 1)
+    res_from_batch = pad_batch_config()
+    assert len(res_from_batch) == len(res_from_batch)
+    for i, _ in enumerate(res_from_map):
+        np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
+
 
 
 if __name__ == '__main__':
@@ -211,3 +230,4 @@ if __name__ == '__main__':
     # batch_pyfunc_padding_3d()
     # batch_pyfunc_padding_1d()
     test_pad_via_map()
+    test_pad_via_map_multiproc()
