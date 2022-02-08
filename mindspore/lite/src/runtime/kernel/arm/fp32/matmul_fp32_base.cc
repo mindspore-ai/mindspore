@@ -567,6 +567,7 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
   }
   if (params_->col_ == 1 && !params_->a_const_) {
     is_pack_ = false;
+    batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
     if (params_->deep_ == 1) {
       gemmIsNotPackFun = GemmIsNotPack;
@@ -650,7 +651,7 @@ int MatmulFp32BaseCPUKernel::Run() {
     }
   }
 
-  if (batch_split_ || !is_pack_) {
+  if (batch_split_) {
     auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulRun failed in split by batch";
