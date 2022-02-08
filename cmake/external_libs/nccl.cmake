@@ -12,7 +12,7 @@ mindspore_add_pkg(nccl
         LIBS nccl
         URL ${REQ_URL}
         MD5 ${MD5}
-        BUILD_OPTION src.build NVCC_GENCODE="-gencode=arch=compute_70,code=sm_70"
+        BUILD_OPTION src.build
         INSTALL_INCS build/include/*
         INSTALL_LIBS build/lib/*)
 include_directories(${nccl_INC})

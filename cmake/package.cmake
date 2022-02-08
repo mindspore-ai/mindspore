@@ -202,6 +202,10 @@ if(ENABLE_GPU)
           DESTINATION ${INSTALL_LIB_DIR}
           COMPONENT mindspore
         )
+        if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+            install(FILES ${nccl_LIBPATH}/libnccl.so.2.7.6 DESTINATION ${INSTALL_LIB_DIR}
+                    RENAME libnccl.so.2 COMPONENT mindspore)
+        endif()
     endif()
     install(
         TARGETS gpu_queue
