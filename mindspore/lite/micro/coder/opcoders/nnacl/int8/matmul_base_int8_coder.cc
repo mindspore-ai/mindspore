@@ -156,9 +156,6 @@ int MatMulBaseInt8Coder::InitBias() {
     int max_bias_data_elements = UP_ROUND(bias_tensor_->ElementsNum(), C4NUM);
     // to pack to init
     bias_ptr_size_ = static_cast<size_t>(max_bias_data_elements * sizeof(int));
-    bias_ptr_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, kOnlineSize, kOnlinePackWeight));
-    MS_CHECK_PTR(bias_ptr_);
-    *bias_ptr_ = bias_ptr_size_;
   }
   return RET_OK;
 }
@@ -199,12 +196,10 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   std::string value_str_end = ";\n";
   NNaclInt8Serializer init_code, code, w_init_size_code;
   size_t w_buf_size = 0;
-  if (bias_ptr_) {
-    init_code.CodeBufferOffsetExpression(bias_ptr_, context->weight_name(), context->weight_offset_name(),
-                                         context->weight_size_name(), bias_ptr_size_);
-    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_tensor_->Size());
-    w_buf_size += bias_ptr_size_;
-  }
+  auto filter_tensor_name = MemoryAllocator::GetInstance()->GetRuntimeAddr(filter_tensor_);
+  std::string bias_ptr_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);
+  bias_ptr_str = (bias_ptr_str == "") ? "NULL" : bias_ptr_str;
+
   if (param_->b_const_) {
     init_code.CodeBufferOffsetExpression(weight_bias_sums_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), weight_bias_sums_size_);
@@ -212,14 +207,14 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
                                          context->weight_size_name(), b_pack_ptr_size_);
     w_buf_size += weight_bias_sums_size_ + b_pack_ptr_size_;
     init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
-    init_code.CodeFunction("InitInt8MatrixB", filter_tensor_, weight_bias_sums_, pack_b_ptr_, param_->batch,
+    init_code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
                            param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
-                           "init_filter_zp", bias_ptr_, param_->b_transpose_, filter_per_channel_);
+                           "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
   } else {
     code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
-    code.CodeFunction("InitInt8MatrixB", filter_tensor_, weight_bias_sums_, pack_b_ptr_, param_->batch, param_->deep_,
-                      param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_, "init_filter_zp",
-                      bias_ptr_, param_->b_transpose_, filter_per_channel_);
+    code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
+                      param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
+                      "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
   }
   w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
   std::string a_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);

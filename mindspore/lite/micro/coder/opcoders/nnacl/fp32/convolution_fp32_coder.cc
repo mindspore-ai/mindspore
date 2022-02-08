@@ -100,10 +100,11 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
     auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
     bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
     MS_CHECK_PTR(bias_data_);
+    std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
     init_code.CodeBufferOffsetExpression(bias_data_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), bias_data_size);
     w_buf_size += bias_data_size;
-    init_code.CodeFunction("memcpy", bias_data_, bias_tensor_, out_channel_size * sizeof(float));
+    init_code.CodeFunction("memcpy", bias_data_, bias_tensor_str, out_channel_size * sizeof(float));
   }
   w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
