@@ -438,11 +438,6 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
                         << "' failed, value of attribute 'primitive_target' must be CPU|GPU|Ascend but got "
                         << py::str(obj);
     }
-    if (target != kCPUDevice && target != kGPUDevice) {
-      auto context_ptr = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context_ptr);
-      context_ptr->set_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT, true);
-    }
   }
 
   attrs_[attr_name] = converted_ret;

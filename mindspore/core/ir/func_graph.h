@@ -348,8 +348,9 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   void set_switch_layer_input(const std::shared_ptr<bool> &switch_layer_input) {
     switch_layer_input_ = switch_layer_input;
   }
-  bool ContainMultiTarget();
-  bool IsMultiTarget() const { return exist_multi_target_; }
+  void SetMultiTarget();
+  bool exist_multi_target() const { return exist_multi_target_; }
+  void set_exist_multi_target(bool exist_multi_target) { exist_multi_target_ = exist_multi_target; }
   int64_t stage() const { return stage_; }
   void set_stage(int64_t stage) { stage_ = stage; }
 

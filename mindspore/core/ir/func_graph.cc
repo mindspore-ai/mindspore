@@ -758,18 +758,25 @@ ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
   return parameter;
 }
 
-bool FuncGraph::ContainMultiTarget() {
+void FuncGraph::SetMultiTarget() {
   auto graph_manager = manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
   FuncGraphSet graphs = graph_manager->func_graphs();
+  std::vector<AnfNodePtr> all_nodes;
   for (auto &g : graphs) {
     auto nodes = mindspore::TopoSort(g->get_return());
-    if (mindspore::ContainMultiTarget(nodes)) {
-      exist_multi_target_ = true;
-      return true;
-    }
+    (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(all_nodes));
   }
-  return false;
+
+  bool exist_multi_target = false;
+  if (mindspore::ContainMultiTarget(all_nodes)) {
+    exist_multi_target = true;
+    MS_LOG(INFO) << "The graph " << ToString() << " exists the multi target.";
+  }
+
+  for (auto &g : graphs) {
+    g->set_exist_multi_target(exist_multi_target);
+  }
 }
 
 void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes) {

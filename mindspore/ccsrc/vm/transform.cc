@@ -601,22 +601,22 @@ BackendPtr CreateBackend() {
 void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ALREADY_SET_ENABLE_MINDRT)) {
-    return;
-  }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
     return;
   }
 #endif
 
   std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (common::GetEnv("DISABLE_ASCEND_MINDRT") == "1" && target == kAscendDevice) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
     return;
   }
 
 #if defined(_WIN32) || defined(_WIN64)
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
   return;
 #endif
 
