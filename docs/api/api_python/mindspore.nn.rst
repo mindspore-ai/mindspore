@@ -98,6 +98,7 @@ Optimizer Functions
     mindspore.nn.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.SGD
+    mindspore.nn.thor
 
 Wrapper Functions
 -----------------
