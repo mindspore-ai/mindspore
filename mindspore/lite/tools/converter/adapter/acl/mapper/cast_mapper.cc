@@ -30,7 +30,7 @@ STATUS CastMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   if (cnode->size() != kNameCastInputNum) {
-    MS_LOG(ERROR) << "Input size of cast must be three, real size: " << cnode->size();
+    MS_LOG(ERROR) << "Input size of cast must be " << kNameCastInputNum << ", real size: " << cnode->size();
     return lite::RET_ERROR;
   }
   // convert last parameter to const value node
