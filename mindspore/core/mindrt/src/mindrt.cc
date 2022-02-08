@@ -43,12 +43,9 @@ void MindrtFinalizeC() { mindspore::Finalize(); }
 }
 
 namespace mindspore {
-
 namespace local {
-
 static MindrtAddress g_mindrtAddress = MindrtAddress();
 static std::atomic_bool g_finalizeMindrtStatus(false);
-
 }  // namespace local
 
 const MindrtAddress &GetMindrtAddress() { return local::g_mindrtAddress; }
@@ -75,7 +72,6 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const st
   /* support repeat initialize  */
   int result = InitializeImp(tcpUrl, tcpUrlAdv, udpUrl, udpUrlAdv, threadCount);
   static MindrtExit mindrtExit;
-
   return result;
 }
 
@@ -84,7 +80,6 @@ AID Spawn(const ActorReference actor, bool sharedThread) {
     MS_LOG(ERROR) << "Actor is nullptr.";
     MINDRT_EXIT("Actor is nullptr.");
   }
-
   if (local::g_finalizeMindrtStatus.load() == true) {
     return actor->GetAID();
   } else {
@@ -109,7 +104,6 @@ void Finalize() {
     MS_LOG(DEBUG) << "mindrt has been Finalized.";
     return;
   }
-
   MS_LOG(DEBUG) << "mindrt starts to finalize.";
   mindspore::ActorMgr::GetActorMgrRef()->Finalize();
 
@@ -132,6 +126,5 @@ void SetHttpKmsgFlag(int flag) {
   MS_LOG(DEBUG) << "Set Mindrt http message format:" << flag;
   g_httpKmsgEnable = flag;
 }
-
 int GetHttpKmsgFlag() { return g_httpKmsgEnable; }
 }  // namespace mindspore

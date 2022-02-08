@@ -21,6 +21,15 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 namespace mindspore {
 namespace lite {
 namespace {
+int CheckPoolingParam(PoolingParameter *param) {
+  const int max_pooling_pad = 50;
+  if (param->pad_u_ > max_pooling_pad || param->pad_d_ > max_pooling_pad || param->pad_l_ > max_pooling_pad ||
+      param->pad_r_ > max_pooling_pad) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 void UpdateRoundMode(enum schema::RoundMode round_mode, PoolingParameter *param) {
   switch (round_mode) {
     case schema::RoundMode_FLOOR:
@@ -107,6 +116,12 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   UpdateRoundMode(value->round_mode(), param);
   UpdateActivationType(value->activation_type(), param);
   UpdatePadMode(value->pad_mode(), param);
+
+  if (CheckPoolingParam(param) != RET_OK) {
+    MS_LOG(ERROR) << "param is invalid!";
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -154,6 +169,12 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
   UpdateRoundMode(value->round_mode(), param);
   UpdateActivationType(value->activation_type(), param);
   UpdatePadMode(value->pad_mode(), param);
+
+  if (CheckPoolingParam(param) != RET_OK) {
+    MS_LOG(ERROR) << "param is invalid!";
+    free(param);
+    return nullptr;
+  }
   return reinterpret_cast<OpParameter *>(param);
 }
 

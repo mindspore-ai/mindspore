@@ -74,10 +74,10 @@ int InstanceNormRun(const void *cdata, int task_id, float, float) {
 }
 
 int InstanceNormCPUKernel::Run() {
-  src_data_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
-  gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data());
-  beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data());
-  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  src_data_ = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
+  gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
+  beta_data_ = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
+  dst_data_ = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(src_data_);
   CHECK_NULL_RETURN(gamma_data_);
   CHECK_NULL_RETURN(beta_data_);

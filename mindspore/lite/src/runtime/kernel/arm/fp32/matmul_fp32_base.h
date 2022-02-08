@@ -48,7 +48,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
- public:
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
