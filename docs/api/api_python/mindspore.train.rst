@@ -19,7 +19,7 @@ mindspore.train.callback
 
 .. include:: train/mindspore.train.callback.ModelCheckpoint.rst
 
-.. include:: train/mindspore.train.SummaryCollector.rst
+.. include:: train/mindspore.train.callback.SummaryCollector.rst
 
 .. include:: train/mindspore.train.callback.CheckpointConfig.rst
 
