@@ -24,7 +24,7 @@ mindspore.nn.Conv2dTranspose
      - **pad**：对输入进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
 
    - **padding** (`Union[int, tuple[int]]`) –  输入的高度和宽度方向上填充的数量。数据类型为整型或包含四个整数的tuple。如果 `padding` 是一个整数，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有四个整数的tuple，那么上、下、左、右的填充分别等于 `padding[0]` 、 `padding[1]` 、 `padding[2]` 和 `padding[3]` 。值应该要大于等于0，默认值：0。
-   - **dilation** (`Union[int, tuple[int]]`) –  二维卷积核膨胀尺寸。数据类型为整型或具有两个整型的tuple。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。高度和宽度方向上的 ｀k｀ ，其取值范围分别为[1, H]和[1, W]。默认值：1。
+   - **dilation** (`Union[int, tuple[int]]`) –  二维卷积核膨胀尺寸。数据类型为整型或具有两个整型的tuple。若 :math:`k > 1` ，则kernel间隔 `k` 个元素进行采样。高度和宽度方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值：1。
    - **group** (`int`) –  将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。如果组数等于 `in_channels` 和 `out_channels` ，这个二维卷积层也被称为二维深度卷积层。默认值：1.
    - **has_bias** (`bool`) –  Conv2dTranspose层是否添加偏置参数。默认值：False。
    - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选"TruncatedNormal"，"Normal"，"Uniform"，"HeUniform"和"XavierUniform"分布以及常量"One"和"Zero"分布的值，可接受别名"xavier_uniform"，"he_uniform"，"ones"和"zeros"。上述字符串大小写均可。更多细节请参考Initializer的值。默认值："normal"。
