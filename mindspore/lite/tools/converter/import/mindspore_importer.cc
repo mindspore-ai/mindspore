@@ -35,6 +35,9 @@
 namespace mindspore::lite {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
+constexpr size_t kDependInputNum = 3;
+constexpr size_t kDependFirstInputIdx = 1;
+constexpr size_t kTupleGetItemFirstInputIdx = 1;
 }  // namespace
 STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
   MS_ASSERT(func_graph != nullptr);
@@ -112,65 +115,68 @@ size_t MindsporeImporter::Hex2ByteArray(const std::string &hex_str, unsigned cha
   return byte_len;
 }
 
-STATUS MindsporeImporter::ProcessDependCnode(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (!opt::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
-    output_tensor_name_.push_back(cnode->fullname_with_scope());
-    return RET_NO_CHANGE;
-  }
-  auto depend_input = cnode->input(1);
-  MS_CHECK_TRUE_MSG(depend_input != nullptr, RET_ERROR, "depend_input is nullptr");
-  if (utils::isa<CNodePtr>(depend_input)) {
-    auto depend_input_cnode = utils::cast<CNodePtr>(depend_input);
-    auto status = ProcessDependCnode(depend_input_cnode);
-    if (status == RET_NO_CHANGE) {
-      return RET_OK;
+STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
+  MS_ASSERT(return_node != nullptr);
+  for (size_t i = 1; i < return_node->inputs().size(); i++) {
+    auto output_node = return_node->input(i);
+    MS_CHECK_TRUE_MSG(output_node != nullptr, RET_NULL_PTR, "Output node is nullptr.");
+    if (opt::CheckPrimitiveType(output_node, prim::kPrimUpdateState) ||
+        opt::CheckPrimitiveType(output_node, prim::kPrimLoad)) {
+      continue;
     }
-  } else if (utils::isa<ParameterPtr>(depend_input) || utils::isa<ValueNode>(depend_input)) {
-    output_tensor_name_.push_back(depend_input->fullname_with_scope());
+    if (TraceOutput(output_node) != RET_OK) {
+      MS_LOG(ERROR) << "Trace output failed , name: " << output_node->fullname_with_scope();
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
 
-STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
-  MS_ASSERT(return_node != nullptr);
-  for (size_t i = 0; i < return_node->inputs().size(); i++) {
-    auto output_node = return_node->input(i);
-    if (output_node == nullptr) {
-      MS_LOG(ERROR) << "output_node is nullptr.";
-      return RET_ERROR;
-    } else if (output_node->isa<mindspore::CNode>()) {
-      if (opt::CheckPrimitiveType(output_node, prim::kPrimUpdateState) ||
-          opt::CheckPrimitiveType(output_node, prim::kPrimLoad)) {
+STATUS MindsporeImporter::TraceOutput(const AnfNodePtr &node) {
+  static size_t iter = 0;
+  MS_CHECK_TRUE_MSG(node != nullptr, RET_NULL_PTR, "node is nullptr.");
+  AnfNodePtr cur_node = node;
+  if (utils::isa<ParameterPtr>(cur_node) || utils::isa<ValueNode>(cur_node)) {
+    output_tensor_name_.push_back(cur_node->fullname_with_scope());
+    MS_LOG(INFO) << "Graph out name: " << cur_node->fullname_with_scope();
+    return RET_OK;
+  }
+  while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
+    auto tmp = cur_node->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(tmp != nullptr, RET_NULL_PTR, "Tmp cnode is nullptr.");
+    cur_node = tmp->input(kTupleGetItemFirstInputIdx);
+  }
+  auto cnode = cur_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "Cur cnode is nullptr.");
+
+  std::string name = GetCNodeFuncName(cnode);
+  iter++;
+  MS_LOG(INFO) << "Func name of cnode " << name << " ,trace iter: " << iter;
+  if (name == prim::kPrimMakeTuple->name()) {
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      auto make_tuple_input = cnode->input(i);
+      if (opt::CheckPrimitiveType(make_tuple_input, prim::kPrimUpdateState) ||
+          opt::CheckPrimitiveType(make_tuple_input, prim::kPrimLoad)) {
         continue;
       }
-      auto output_cnode = utils::cast<CNodePtr>(output_node);
-      if (opt::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
-        for (size_t j = 0; j < output_cnode->inputs().size(); j++) {
-          auto tuple_input = output_cnode->input(j);
-          MS_CHECK_TRUE_MSG(tuple_input != nullptr, RET_ERROR, "tuple_input is nullptr");
-          if (!utils::isa<CNodePtr>(tuple_input)) {
-            continue;
-          }
-          auto tuple_input_cnode = utils::cast<CNodePtr>(tuple_input);
-          if (opt::CheckPrimitiveType(output_node, prim::kPrimUpdateState) ||
-              opt::CheckPrimitiveType(output_node, prim::kPrimLoad)) {
-            continue;
-          }
-          auto status = ProcessDependCnode(tuple_input_cnode);
-          if (status != RET_OK && status != RET_NO_CHANGE) {
-            MS_LOG(ERROR) << "ProcessDependCnode failed.";
-          }
-        }
-      } else if (opt::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
-        auto status = ProcessDependCnode(output_cnode);
-        if (status != RET_OK && status != RET_NO_CHANGE) {
-          MS_LOG(ERROR) << "ProcessDependCnode failed.";
-        }
-      } else {
-        output_tensor_name_.push_back(output_cnode->fullname_with_scope());
+      if (TraceOutput(make_tuple_input) != lite::RET_OK) {
+        MS_LOG(ERROR) << "The input[ " << i << "]"
+                      << " trace output failed, name: " << name;
+        return RET_ERROR;
       }
     }
+  } else if (name == prim::kPrimDepend->name()) {
+    if (cnode->inputs().size() < kDependInputNum) {
+      MS_LOG(ERROR) << "Length of inputs is " << cnode->inputs().size() << ", which is less than three.";
+      return RET_ERROR;
+    }
+    if (TraceOutput(cnode->input(kDependFirstInputIdx)) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Depend node trace output failed.";
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(INFO) << "Graph out name: " << cnode->fullname_with_scope();
+    output_tensor_name_.emplace_back(cnode->fullname_with_scope());
   }
   return RET_OK;
 }

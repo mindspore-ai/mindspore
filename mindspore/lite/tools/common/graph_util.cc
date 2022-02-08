@@ -410,6 +410,9 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
           return RET_ERROR;
         }
         for (const auto &tuple_item : tuple->elements()) {
+          if (utils::isa<abstract::AbstractTuple>(tuple_item)) {
+            continue;
+          }
           TypeId type = GetAbstractTensorDtype(tuple_item->cast<abstract::AbstractTensorPtr>());
           ConverterInnerContext::GetInstance()->UpdateGraphOutputDType(idx, type);
           idx++;

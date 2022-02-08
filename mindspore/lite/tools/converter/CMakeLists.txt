@@ -247,8 +247,7 @@ target_link_libraries(converter_lite PRIVATE
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(converter_lite PRIVATE
             lite_acl_mid
-            ascend_kernel_mid
-            mindspore_shared_lib)
+            ascend_kernel_mid)
 endif()
 
 if(NOT MSVC)

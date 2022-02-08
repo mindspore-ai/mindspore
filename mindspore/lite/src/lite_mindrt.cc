@@ -70,6 +70,11 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
 }
 
 TypeId GetSubgraphInTensorDataType(const kernel::LiteKernel *kernel, const lite::Tensor *tensor) {
+#ifdef ENABLE_LITE_ACL
+  if (kernel->subgraph_type() == kernel::kCustomSubGraph) {
+    return tensor->data_type();
+  }
+#endif
   if (kernel->subgraph_type() != kernel::kGpuFp16SubGraph || tensor->IsGraphInput() || tensor->IsGraphOutput()) {
     if (tensor->data_type() == kNumberTypeFloat16 || tensor->data_type() == kNumberTypeFloat32) {
       return kernel->desc().data_type;
