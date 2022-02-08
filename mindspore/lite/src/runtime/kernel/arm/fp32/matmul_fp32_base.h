@@ -59,7 +59,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int ParallelRunIsNotPackByBatch(int task_id) const;
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
-  bool is_pack_ = true;
 
  protected:
   int InitBufferA();
@@ -111,6 +110,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
   bool batch_split_ = false;
+  bool is_pack_ = true;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
