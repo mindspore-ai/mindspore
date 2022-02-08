@@ -29,10 +29,6 @@ mindspore.dataset.GraphData
     - **ValueError:** - `port` 参数不在范围[1024, 65535]内。
     - **ValueError:** - `num_client` 参数不在范围[1, 255]内。
 
-    **支持平台：**:
-    
-    - ``CPU``
-
     .. py:method:: get_all_edges(edge_type)
 
         获取图的所有边。
