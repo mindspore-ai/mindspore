@@ -41,7 +41,7 @@ class SchemaRegisterImpl {
 
  private:
   std::vector<GetSchemaDef> op_def_funcs_;
-  GetSchemaDef prim_type_gen_;
+  GetSchemaDef prim_type_gen_{nullptr};
 };
 
 class SchemaOpRegister {

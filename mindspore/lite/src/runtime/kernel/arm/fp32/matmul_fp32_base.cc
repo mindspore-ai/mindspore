@@ -403,10 +403,6 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
   if (params_->col_ == 1 && !params_->a_const_) {
     is_pack_ = false;
     out_need_aligned_ = false;
@@ -417,6 +413,10 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
   matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
   matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
