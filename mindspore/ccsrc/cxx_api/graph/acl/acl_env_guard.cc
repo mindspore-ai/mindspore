@@ -18,7 +18,7 @@
 #include "acl/acl.h"
 
 namespace mindspore {
-std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_;
+std::weak_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
 AclEnvGuard::AclEnvGuard() {
@@ -42,7 +42,7 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv() {
   std::shared_ptr<AclEnvGuard> acl_env;
 
   std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
-  acl_env = global_acl_env_;
+  acl_env = global_acl_env_.lock();
   if (acl_env != nullptr) {
     MS_LOG(INFO) << "Acl has been initialized, skip.";
   } else {
