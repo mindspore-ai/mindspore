@@ -49,9 +49,9 @@ class NameSpace final : public Named {
   ~NameSpace() override = default;
   MS_DECLARE_PARENT(NameSpace, Named);
 
-  py::object obj() { return obj_; }
-  py::object module_obj() { return module_obj_; }
-  std::string module() { return module_; }
+  const py::object &obj() const { return obj_; }
+  const py::object &module_obj() const { return module_obj_; }
+  const std::string &module() const { return module_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<NameSpace>(), std::make_shared<External>());
   }
@@ -75,7 +75,7 @@ class Symbol final : public Named {
   ~Symbol() override = default;
   MS_DECLARE_PARENT(Symbol, Named);
 
-  std::string symbol() { return symbol_; }
+  const std::string &symbol() const { return symbol_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<Symbol>(), std::make_shared<External>());
   }
@@ -151,33 +151,6 @@ class ClassType final : public PyObjectWrapper {
   abstract::AbstractBasePtr ToAbstract() override;
 };
 using ClassTypePtr = std::shared_ptr<ClassType>;
-
-// SymbolResolver class for resolving symbol extracted from AnfNode.
-class SymbolResolver {
- public:
-  SymbolResolver(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node)
-      : namespace_(name_space), symbol_(symbol), resolved_node_(node) {}
-
-  ~SymbolResolver() = default;
-
-  // resolve symbol in namespace and save it in result_;
-  bool Resolve();
-
-  SymbolPtr symbol() const { return symbol_; }
-
-  const py::object &result() const { return result_; }
-
- private:
-  // namespace where the symbol locates
-  NameSpacePtr namespace_;
-  // the symbol that needs to be resovled
-  SymbolPtr symbol_;
-  // the node that has been resolved
-  AnfNodePtr resolved_node_;
-  // Resolve result
-  py::object result_;
-};
-using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 
 // Get python object with index from a list or the whole list if the index is not fixed.
 py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,

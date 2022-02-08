@@ -73,19 +73,6 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   return ret_val;
 }
 
-// call python PYTHON_MOD_RESOLVE_FUNCTION interface to resolve the symbol in corresponding namespace
-bool SymbolResolver::Resolve() {
-  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-
-  py::object obj = namespace_->obj();
-  std::string symbol = symbol_->symbol();
-  if (py::isinstance<py::none>(obj)) {
-    MS_EXCEPTION(NameError) << "The name \'" << symbol << "\' is not defined.";
-  }
-  result_ = python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_FUNCTION, obj, common::SafeCStr(symbol));
-  return true;
-}
-
 namespace {
 // If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
@@ -317,15 +304,7 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
                                  const AnfNodePtr &index_node) {
   MS_EXCEPTION_IF_NULL(node);
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
-  if (node->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
-  }
-  SymbolResolver symbol_resolver(name_space, symbol, node);
-  if (!symbol_resolver.Resolve()) {
-    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo.";
-  }
-
-  py::object obj = symbol_resolver.result();
+  py::object obj = GetSymbolObject(name_space, symbol, node);
   if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {
     MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
   }
@@ -372,12 +351,12 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
   if (node->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
-  SymbolResolver symbol_resolver(name_space, symbol, node);
-  if (!symbol_resolver.Resolve()) {
-    MS_LOG(EXCEPTION) << "Fail to resolve node, NodeInfo.";
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  auto &obj = name_space->obj();
+  if (py::isinstance<py::none>(obj)) {
+    MS_EXCEPTION(NameError) << "The name \'" << symbol << "\' is not defined.";
   }
-  py::object obj = symbol_resolver.result();
-  return obj;
+  return python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_FUNCTION, obj, common::SafeCStr(symbol->symbol()));
 }
 
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
