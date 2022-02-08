@@ -21,5 +21,8 @@ mindspore.ops.BiasAdd
     **异常：**
 
     - **TypeError** - `data_format` 不是str。
+    - **ValueError** - `data_format` 的值不在['NHWC', 'NCHW', 'NCDHW']范围内。
     - **TypeError** - `input_x` 或  `bias` 不是Tensor。
     - **TypeError** - `input_x` 或  `bias` 的数据类型既不是float16也不是float32。
+    - **TypeError** - `input_x` 或  `bias` 的数据类型不一致。
+    - **TypeError** - `input_x` 的维度不在[2, 5]范围内。
