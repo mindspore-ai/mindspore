@@ -892,9 +892,10 @@ ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
   int64_t all_send_lens = std::accumulate(send_lens_.begin(), send_lens_.end(), 0);
   int64_t all_recv_lens = std::accumulate(recv_lens_.begin(), recv_lens_.end(), 0);
   if (all_send_lens + all_recv_lens == 0) {
+    int64_t pad_mode = 0;  // 0 is "pad" mode
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     prim->set_attr(OUT_CHANNEL, MakeValue(new_out_channel_));
-    prim->set_attr(PAD_MODE, MakeValue(PAD));
+    prim->set_attr(PAD_MODE, MakeValue(pad_mode));  // need to use int64_t to define pad_mode
     prim->set_attr(PAD, MakeValue(new_pad_list_));
     MS_LOG(INFO) << name_ << ": the send lens and recv lens is 0, no need exchange data";
     return nullptr;
@@ -986,12 +987,12 @@ Status Conv2DBackpropInputInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
-  // kernel size larger than stride and the h/w dimension is split, need to exchange overlap
-  if ((kernel_size_use_dilation_[0] > stride_[2]) && (input_strategy[2] > 1)) {
+  // if the h/w dimension is split, need to exchange overlap
+  if (input_strategy[2] > 1) {
     h_dim_need_exchange_overlap_ = true;
   }
 
-  if ((kernel_size_use_dilation_[1] > stride_[3]) && (input_strategy[3] > 1)) {
+  if (input_strategy[3] > 1) {
     w_dim_need_exchange_overlap_ = true;
   }
   return SUCCESS;
@@ -1002,18 +1003,8 @@ Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_st
     return FAILED;
   }
 
-  if (pad_mode_ != 1) {  // only support same mode
+  if (pad_mode_ != 0 && pad_mode_ != 1) {  // only support pad mode and same mode
     MS_LOG(ERROR) << name_ << ": Do not support the pad mode " << pad_mode_ << " when split H or W dimension";
-    return FAILED;
-  }
-
-  if (h_strategy > 1 && inputs_shape_[0][2] * stride_[2] != outputs_shape_[0][2]) {
-    MS_LOG(ERROR) << name_ << ": Do not support to split h dimension when in_shape * stride != out_shape";
-    return FAILED;
-  }
-
-  if (w_strategy > 1 && inputs_shape_[0][3] * stride_[3] != outputs_shape_[0][3]) {
-    MS_LOG(ERROR) << name_ << ": Do not support to split w dimension when in_shape * stride != out_shape";
     return FAILED;
   }
 
@@ -1265,8 +1256,9 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
   //       if (o/n + k - o + ws - s - x) is divisible by s, real_left_pad = s - 1.
   //       otherwise, real_left_pad = (o/n + k - o + ws - s - x) % s - 1
   //    3) the middle rank:
-  //       if (r*on - k + x + 1) is divisible by s, real_left_pad = 0.
-  //       otherwise, real_left_pad = s - (r*on - k + x + 1) % s
+  //       if (r*o/n - k + x + 1) < 0, real_left_pad = -(r*o/n - k + x + 1);
+  //       otherwise, if (r*o/n - k + x + 1) is divisible by s, real_left_pad = 0.
+  //       otherwise, real_left_pad = s - (r*o/n - k + x + 1) % s
   int64_t current_rank_required_size = 0;
   int64_t real_top_or_left_pad = 0;
   int64_t h_or_w_output_shape = -1;
@@ -1324,7 +1316,9 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
 
     int64_t tmp =
       h_or_w_rank_bias * h_or_w_output_shape / h_or_w_dim_shard_num - h_or_w_kernel_size + top_or_left_pad + 1;
-    if (tmp % h_or_w_stride == 0) {
+    if (tmp < 0) {
+      real_top_or_left_pad = -tmp;
+    } else if (tmp % h_or_w_stride == 0) {
       real_top_or_left_pad = 0;
     } else {
       real_top_or_left_pad = h_or_w_stride - tmp % h_or_w_stride;
