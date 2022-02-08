@@ -62,7 +62,7 @@ int BiasGradCPUKernel::Execute(int task_id) {
   size_t nhw_size = 1;
   size_t channels = bias_param->in_shape0_[bias_param->ndim_ - 1];  // C in NHWC
   for (unsigned int i = 0; i < bias_param->ndim_ - 1; i++) {
-    nhw_size *= bias_param->in_shape0_[i];
+    nhw_size *= static_cast<size_t>(bias_param->in_shape0_[i]);
   }
 
   size_t total_size = channels * nhw_size;

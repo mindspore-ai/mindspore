@@ -29,8 +29,8 @@ class ArithmeticSelfGradCPUKernel : public InnerKernel {
  public:
   ArithmeticSelfGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
-  ~ArithmeticSelfGradCPUKernel() override {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_), self_grad_operation_(nullptr) {}
+  ~ArithmeticSelfGradCPUKernel() override = default;
   int Prepare() override;
   int ReSize() override;
   int Run() override;

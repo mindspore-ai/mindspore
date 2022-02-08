@@ -49,9 +49,9 @@ int SoftmaxGradCPUKernel::Prepare() {
 
   inner_size_ = 1;
   for (size_t i = axis + 1; i < in_dims; i++) {
-    inner_size_ *= in_shape.at(i);
+    inner_size_ *= static_cast<size_t>(in_shape.at(i));
   }
-  set_workspace_size(inner_size_ * (1 + in_shape.at(axis)) * sizeof(float));
+  set_workspace_size(inner_size_ * (1 + static_cast<size_t>(in_shape.at(axis))) * sizeof(float));
   return RET_OK;
 }
 

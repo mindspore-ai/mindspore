@@ -85,13 +85,13 @@ int ArithmeticGradCPUKernel::Prepare() {
 int ArithmeticGradCPUKernel::ArithmeticGradAdd(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                int dx2_size) {
   if (dx1_size == dy_size) {
-    memcpy(dx1, dy, dy_size * sizeof(float));
+    memcpy(dx1, dy, static_cast<size_t>(dy_size) * sizeof(float));
   } else {
     ReduceSumByAxes(dy, arithmeticParameter_->out_shape_, dx1, arithmeticParameter_->in_shape0_,
                     arithmeticParameter_->ndim_);
   }
   if (dx2_size == dy_size) {
-    memcpy(dx2, dy, dy_size * sizeof(float));
+    memcpy(dx2, dy, static_cast<size_t>(dy_size) * sizeof(float));
   } else {
     ReduceSumByAxes(dy, arithmeticParameter_->out_shape_, dx2, arithmeticParameter_->in_shape1_,
                     arithmeticParameter_->ndim_);
@@ -102,7 +102,7 @@ int ArithmeticGradCPUKernel::ArithmeticGradAdd(float *dy, int dy_size, float *dx
 int ArithmeticGradCPUKernel::ArithmeticGradSub(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                int dx2_size) {
   if (dx1_size == dy_size) {
-    memcpy(dx1, dy, dy_size * sizeof(float));
+    memcpy(dx1, dy, static_cast<size_t>(dy_size) * sizeof(float));
   } else {
     ReduceSumByAxes(dy, arithmeticParameter_->out_shape_, dx1, arithmeticParameter_->in_shape0_,
                     arithmeticParameter_->ndim_);
@@ -263,7 +263,6 @@ int ArithmeticGradCPUKernel::Execute(int task_id) {
 }
 
 int ArithmeticGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
-  CHECK_NULL_RETURN(cdata);
   auto Arithmetic_kernel = reinterpret_cast<ArithmeticGradCPUKernel *>(cdata);
   CHECK_NULL_RETURN(Arithmetic_kernel);
   auto error_code = Arithmetic_kernel->Execute(task_id);

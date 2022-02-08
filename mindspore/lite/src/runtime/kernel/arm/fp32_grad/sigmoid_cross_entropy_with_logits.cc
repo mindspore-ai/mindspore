@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/sigmoid_cross_entropy_with_logits.h"
-#include <cmath>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 

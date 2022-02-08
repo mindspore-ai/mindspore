@@ -33,11 +33,11 @@ class SmoothL1LossCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int Execute(int task_id);
+  int Execute(size_t task_id);
 
  private:
   SmoothL1LossParameter *smooth_l1_param_;
-  int thread_count_ = 1;
+  size_t thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

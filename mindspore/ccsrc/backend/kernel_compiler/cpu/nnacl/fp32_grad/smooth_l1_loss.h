@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct SmoothL1LossParameter {
+typedef struct {
   OpParameter op_parameter_;
   float beta_;
 } SmoothL1LossParameter;

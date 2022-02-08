@@ -33,7 +33,7 @@ class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
       : LossKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
-  ~SoftmaxCrossEntropyWithLogitsCPUKernel() override {}
+  ~SoftmaxCrossEntropyWithLogitsCPUKernel() override = default;
 
   void ForwardPostExecute(const float *labels, const float *logits, float *output1, float *output2) const;
 

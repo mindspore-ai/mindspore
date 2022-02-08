@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp16_grad/bn_fp16_grad.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <string>

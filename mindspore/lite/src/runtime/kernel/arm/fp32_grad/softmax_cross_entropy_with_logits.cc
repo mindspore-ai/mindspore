@@ -33,7 +33,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
                                                                 float *output2) const {
   float eps = 1e-6;
   if (grads != nullptr) {
-    for (int i = 0; i < param_->batch_size_; ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(param_->batch_size_); ++i) {
       float loss = 0.f;
       for (size_t j = 0; j < param_->number_of_classes_; ++j) {
         float logit =
@@ -45,7 +45,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
       output2[i] = loss;
     }
   } else {
-    for (int i = 0; i < param_->batch_size_; ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(param_->batch_size_); ++i) {
       float loss = 0.f;
       for (size_t j = 0; j < param_->number_of_classes_; ++j) {
         float logit =
@@ -123,7 +123,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
   }
 
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  set_workspace_size((data_size + dims.at(0)) * sizeof(float));
+  set_workspace_size((data_size + static_cast<size_t>(dims.at(0))) * sizeof(float));
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;
   sm_params_.axis_ = 1;

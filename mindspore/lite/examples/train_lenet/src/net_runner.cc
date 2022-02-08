@@ -185,7 +185,7 @@ float NetRunner::CalculateAccuracy(int max_tests) {
 
   Rescaler rescale(kScalePoint);
 
-  loop_->Eval(test_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale});
+  loop_->Eval(test_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale}, nullptr, INT_MAX);
   std::cout << "Accuracy is " << acc_metrics_->Eval() << std::endl;
 
   return 0.0;
@@ -222,12 +222,13 @@ int NetRunner::TrainLoop() {
   Measurement measure(epochs_);
 
   if (virtual_batch_ > 0) {
-    loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &measure});
+    loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &measure},
+                 nullptr);
   } else {
     struct mindspore::lite::StepLRLambda step_lr_lambda(1, kGammaFactor);
     mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 1);
     loop_->Train(epochs_, train_ds_.get(),
-                 std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched, &measure});
+                 std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched, &measure}, nullptr);
   }
 
   return 0;

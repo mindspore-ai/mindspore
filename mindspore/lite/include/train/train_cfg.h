@@ -36,13 +36,7 @@ class MixPrecisionCfg {
     this->keep_batchnorm_fp32_ = rhs.keep_batchnorm_fp32_;
     this->num_of_not_nan_iter_th_ = rhs.num_of_not_nan_iter_th_;
   }
-  MixPrecisionCfg &operator=(MixPrecisionCfg const &rhs) {
-    this->dynamic_loss_scale_ = rhs.dynamic_loss_scale_;
-    this->loss_scale_ = rhs.loss_scale_;
-    this->keep_batchnorm_fp32_ = rhs.keep_batchnorm_fp32_;
-    this->num_of_not_nan_iter_th_ = rhs.num_of_not_nan_iter_th_;
-    return *this;
-  }
+  MixPrecisionCfg &operator=(MixPrecisionCfg const &rhs) = default;
   bool dynamic_loss_scale_ = false; /**< Enable\disable dynamic loss scale during mix precision training */
   float loss_scale_;                /**< Initial loss scale factor  */
   bool keep_batchnorm_fp32_ = true; /**< Keep batch norm in FP32 while training */
@@ -58,12 +52,7 @@ class TrainCfg {
     this->mix_precision_cfg_ = rhs.mix_precision_cfg_;
     this->accumulate_gradients_ = rhs.accumulate_gradients_;
   }
-  TrainCfg &operator=(const TrainCfg &rhs) {
-    this->loss_name_ = rhs.loss_name_;
-    this->mix_precision_cfg_ = rhs.mix_precision_cfg_;
-    this->accumulate_gradients_ = rhs.accumulate_gradients_;
-    return *this;
-  }
+  TrainCfg &operator=(const TrainCfg &rhs) = default;
   std::vector<std::string> loss_name_ = {"loss_fct"}; /**< Set part of the name that identify a loss kernel */
   MixPrecisionCfg mix_precision_cfg_;                 /**< Mix precision configuration */
   bool accumulate_gradients_ = false; /**< If true gardents are accmulated and can be read by GetGradients */

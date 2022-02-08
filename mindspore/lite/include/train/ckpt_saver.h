@@ -15,24 +15,22 @@
  */
 #ifndef MINDSPORE_LITE_INCLUDE_TRAIN_CKPT_SAVER_H_
 #define MINDSPORE_LITE_INCLUDE_TRAIN_CKPT_SAVER_H_
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <string>
 #include <utility>
 #include <unordered_map>
 #include "include/train/train_loop.h"
 
-using GraphPoint = std::pair<int, float>;
-
 namespace mindspore {
 namespace lite {
 
 class CkptSaver : public session::TrainLoopCallBack {
  public:
-  CkptSaver(int save_every_n, const std::string &filename_prefix)
-      : save_every_n_(save_every_n), filename_prefix_(filename_prefix) {}
+  CkptSaver(size_t save_every_n, std::string filename_prefix)
+      : save_every_n_(save_every_n), filename_prefix_(std::move(filename_prefix)) {}
 
-  ~CkptSaver() = default;
+  ~CkptSaver() override = default;
 
   int EpochEnd(const session::TrainLoopCallBackData &cb_data) override {
     if ((cb_data.epoch_ + 1) % save_every_n_ == 0) {
@@ -44,7 +42,7 @@ class CkptSaver : public session::TrainLoopCallBack {
   }
 
  private:
-  int save_every_n_;
+  size_t save_every_n_;
   std::string filename_prefix_;
 };
 

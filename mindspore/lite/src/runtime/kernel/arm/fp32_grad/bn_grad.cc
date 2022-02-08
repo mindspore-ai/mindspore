@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
-#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -121,6 +120,9 @@ int BNGradCPUKernel::Execute(int task_id) {
           case 2:
             std::fill(dscale, dscale + channels, 0.f);
             break;
+          default:
+            MS_LOG(ERROR) << "Exceeds the maximum thread";
+            return RET_ERROR;
         }
       }
       if (thread_num == 1) {
@@ -137,6 +139,9 @@ int BNGradCPUKernel::Execute(int task_id) {
                  scale, count, total, channels, dx + task_id * stride * channels);
       break;
     }
+    default:
+      MS_LOG(ERROR) << "Unsupported stage";
+      return RET_ERROR;
   }
 
   return RET_OK;

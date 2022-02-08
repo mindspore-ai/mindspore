@@ -21,8 +21,6 @@
 #include <utility>
 #include "include/api/callback/callback.h"
 
-using GraphPoint = std::pair<int, float>;
-
 namespace mindspore {
 
 class LossMonitor: public TrainCallBack {

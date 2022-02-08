@@ -18,7 +18,7 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct LayerNormGradParameter {
+typedef struct {
   OpParameter op_parameter_;
   int begin_norm_axis_;
   int begin_params_axis_;

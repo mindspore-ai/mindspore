@@ -18,7 +18,7 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct BinaryCrossEntropyGradParameter {
+typedef struct {
   OpParameter op_parameter_;
   int reduction;
 } BinaryCrossEntropyGradParameter;

@@ -21,8 +21,6 @@
 #include <unordered_map>
 #include "include/train/train_loop.h"
 
-using GraphPoint = std::pair<int, float>;
-
 namespace mindspore {
 namespace lite {
 

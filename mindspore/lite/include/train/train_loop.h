@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include <tuple>
-#include <climits>
 #include <unordered_map>
 #include "include/train/train_loop_callback.h"
 #include "include/train/metrics.h"
@@ -87,7 +86,7 @@ class TrainLoop {
   ///
   /// \return 0 on success or -1 in case of error
   virtual int Train(int epochs, mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs,
-                    LoadDataFunc load_func = nullptr) = 0;
+                    LoadDataFunc load_func) = 0;
 
   /// \brief Performs loop over all data in Eval Mode
   ///
@@ -97,8 +96,8 @@ class TrainLoop {
   /// \param[in] max_steps (with default = INT_MAX the method iterates all dataset)
   ///
   /// \return 0 on success or -1 in case of error
-  virtual int Eval(mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs,
-                   LoadDataFunc load_func = nullptr, int max_steps = INT_MAX) = 0;
+  virtual int Eval(mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs, LoadDataFunc load_func,
+                   int max_steps) = 0;
 };
 }  // namespace session
 }  // namespace mindspore

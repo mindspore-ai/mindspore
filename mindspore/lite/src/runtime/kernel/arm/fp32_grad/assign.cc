@@ -36,7 +36,7 @@ int AssignCPUKernel::Execute(int task_id) {
   CHECK_NULL_RETURN(y);
   int length = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);
-  int count = MSMIN(stride, length - stride * task_id);
+  size_t count = MSMIN(stride, length - stride * task_id);
 
   int start = stride * task_id;
 

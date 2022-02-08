@@ -240,7 +240,7 @@ static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size
   }
 
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C12NUM] = src_r[i];
     }
     src_r += lead;
@@ -457,7 +457,7 @@ static void RowMajor2Col8MajorStride(const float *src_ptr, float *dst_ptr, size_
     dst_r += C8NUM * col;
   }
   for (; ri < row; ri++) {
-    for (int i = 0; i < col; i++) {
+    for (size_t i = 0; i < col; i++) {
       dst_r[i * C8NUM] = src_r[i];
     }
     src_r += lead;
