@@ -726,7 +726,7 @@ void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col)
   for (int i = 0; i < all_block_num; i += cur_block) {
     cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
     int dst_stride = cur_block * C16NUM;
-    int row_num = MSMIN(dst_stride, row - i * C8NUM);
+    int row_num = MSMIN(dst_stride, row - i * C16NUM);
     const float *src = src_ptr + i * C16NUM * col;
     float *dst = dst_ptr + i * C16NUM * col;
     int r = 0;
