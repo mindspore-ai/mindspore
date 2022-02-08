@@ -29,7 +29,7 @@
     **异常：**
 
     - **TypeError：** `max_file_size` 不是整型，或 `file_prefix` 和 `file_suffix` 不是字符串。
-    - **ValueError：** ：编译MindSpore时，设置 `-s on` 关闭了维测功能。
+    - **ValueError：** 编译MindSpore时，设置 `-s on` 关闭了维测功能。
 
     .. py:method:: add_value(plugin, name, value)
 
