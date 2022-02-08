@@ -145,7 +145,7 @@ if [[ $backend == "all" || $backend == "arm64_cpu_cropping" ]]; then
 fi
 
 if [[ $backend == "all" || $backend == "x86_gpu" ]]; then
-    sh $cur_path/scripts/tensorrt/run_tensorrt.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_benchmark_tensorrt.sh -r $release_path -m $models_path -d $device_id -e $backend
     tensorrt_status=$?
     if [[ $tensorrt_status -ne 0 ]]; then
       echo "Run x86 tensorrt gpu failed"
