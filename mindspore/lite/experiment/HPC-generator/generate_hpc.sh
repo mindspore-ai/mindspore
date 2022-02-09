@@ -14,6 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
+CRTDIR=$( cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # generate gemm fma asm code
 #python3 generator.py -I ./template_file/gemm_fma_nc8hw8_asm.c.in -A row_block=12 col_block=8 -O ./gemm_fma/nnacl_gemm_fma_12x8_kernel_nc8hw8_fp32_asm.c
 #python3 generator.py -I ./template_file/gemm_fma_nc8hw8_asm.c.in -A row_block=11 col_block=8 -O ./gemm_fma/nnacl_gemm_fma_11x8_kernel_nc8hw8_fp32_asm.c
@@ -75,29 +76,13 @@
 #python3 generator.py -I ./template_file/gemm_fma_nc8hw8.c.in -A row_block=1 col_block=32 -O ./gemm_fma/nnacl_gemm_fma_1x32_kernel_nc8hw8_fp32.c
 
 # generate gemm avx512 asm code
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=4 col_block=96 -O ./gemm_avx512/nnacl_gemm_avx512_4x96_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=3 col_block=96 -O ./gemm_avx512/nnacl_gemm_avx512_3x96_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=2 col_block=96 -O ./gemm_avx512/nnacl_gemm_avx512_2x96_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=1 col_block=96 -O ./gemm_avx512/nnacl_gemm_avx512_1x96_kernel_nhwc_fp32.c
-
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=5 col_block=80 -O ./gemm_avx512/nnacl_gemm_avx512_5x80_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=4 col_block=80 -O ./gemm_avx512/nnacl_gemm_avx512_4x80_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=3 col_block=80 -O ./gemm_avx512/nnacl_gemm_avx512_3x80_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=2 col_block=80 -O ./gemm_avx512/nnacl_gemm_avx512_2x80_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=1 col_block=80 -O ./gemm_avx512/nnacl_gemm_avx512_1x80_kernel_nhwc_fp32.c
-
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=6 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_6x64_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=5 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_5x64_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=4 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_4x64_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=3 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_3x64_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=2 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_2x64_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=1 col_block=64 -O ./gemm_avx512/nnacl_gemm_avx512_1x64_kernel_nhwc_fp32.c
-
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=8 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_8x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=7 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_7x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=6 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_6x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=5 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_5x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=4 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_4x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=3 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_3x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=2 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_2x32_kernel_nhwc_fp32.c
-python3 generator.py -I ./template_file/gemm_avx512_nhwc_asm.c.in -A row_block=1 col_block=32 -O ./gemm_avx512/nnacl_gemm_avx512_1x32_kernel_nhwc_fp32.c
+n=(96 80 64 48 32 16)
+m=(4 5 6 8 12 12)
+for ((index = 0; index < 6; index++))
+do
+  for ((row = 1; row <= ${m[index]}; row++))
+  do
+    dst_file=$CRTDIR"/gemm_avx512/nnacl_gemm_avx512_$row""x${n[index]}_kernel_nhwc_fp32.c"
+    python3 $CRTDIR/generator.py -I $CRTDIR/template_file/gemm_avx512_nhwc_asm.c.in -A row_block=$row col_block=${n[index]} -O $dst_file
+  done
+done

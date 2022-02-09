@@ -105,7 +105,8 @@ endif()
 if("${X86_64_SIMD}" STREQUAL "avx512")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
             ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S)
+            ${NNACL_DIR}/assembly/avx/*.S
+            ${TOP_DIR}/mindspore/lite/experiment/HPC-generator/gemm_avx512/*.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
