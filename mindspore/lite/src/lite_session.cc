@@ -19,7 +19,7 @@
 #ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
 #endif
-#if defined(MACHINE_LINUX_ARM64)
+#if defined(LINUX_RUNTIME)
 #include <malloc.h>
 #endif
 #include <vector>
@@ -636,7 +636,7 @@ int LiteSession::CompileGraph(Model *model) {
   }
 
   is_running_.store(false);
-#if defined(MACHINE_LINUX_ARM64)
+#if defined(LINUX_RUNTIME)
   (void)malloc_trim(0);
 #endif
   return RET_OK;
@@ -1230,7 +1230,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 #endif
 
   is_running_.store(false);
-#if defined(MACHINE_LINUX_ARM64)
+#if defined(LINUX_RUNTIME)
   (void)malloc_trim(0);
 #endif
   return RET_OK;
