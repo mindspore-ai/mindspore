@@ -379,7 +379,7 @@ class GradWrap(Cell):
 
 
 def test_pynative_resnet50():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", runtime_num_threads=20)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=False, device_num=8)
     init()
