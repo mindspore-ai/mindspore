@@ -355,15 +355,15 @@ int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *d
   return ret;
 }
 
-int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,
-                               TypeId dst_data_type) {
+int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
+                               const std::string &model_version) {
   if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT) {
     return RET_OK;
   }
   int index = 0;
   for (auto &tensor : in_tensors) {
     MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
-    auto preferred_dim = GetPreferredDim(op_parameter, index++, tensor->shape());
+    auto preferred_dim = GetPreferredDim(op_parameter, index++, tensor->shape(), model_version);
     auto ret = WeightDecoder::DequantTensor(tensor, preferred_dim, dst_data_type);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(DEBUG) << "Dequant tensor failed";
@@ -416,7 +416,26 @@ int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_in
   return 0;
 }
 
-int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims) {
+bool IsChannelFirst(int index, const OpParameter *op_parameter) {
+  MS_ASSERT(op_parameter != nullptr);
+  if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
+    const auto *param = reinterpret_cast<const MatMulParameter *>(op_parameter);
+    if (index == 0) {
+      return !(param->a_transpose_);
+    } else if (index == 1) {
+      return param->b_transpose_;
+    }
+  }
+  return true;
+}
+
+int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims,
+                                   const std::string &model_version) {
+  const int first_version_offset = 5;
+  if (model_version.empty() ||
+      model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.6.0") {
+    return IsChannelFirst(index, op_parameter) ? 0 : 1;
+  }
   if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
     return GetMatMulPreferredDim(op_parameter, index, dims);
   }

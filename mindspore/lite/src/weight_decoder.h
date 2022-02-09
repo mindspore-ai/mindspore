@@ -132,11 +132,13 @@ int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_ind
 
 class WeightDecoder {
  public:
-  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type);
+  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
+                         const std::string &model_version);
 
   static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
-  static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims);
+  static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims,
+                             const std::string &model_version);
 
   template <typename ST, typename DT = float>
   static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim) {

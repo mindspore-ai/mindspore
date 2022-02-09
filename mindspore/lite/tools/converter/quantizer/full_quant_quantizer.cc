@@ -389,13 +389,6 @@ void FullQuantQuantizer::InitCpuConfig() {
     prim::kPrimTranspose,
     prim::kPrimShape,
     prim::kPrimUnsqueeze,
-    prim::kPrimSplit,
-    prim::kPrimTupleGetItem,
-    prim::kPrimConcat,
-    prim::kPrimCrop,
-    prim::kPrimGather,
-    prim::kPrimReduceFusion,
-    prim::kPrimAffine,
   };
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion, prim::kPrimMatMulFusion,

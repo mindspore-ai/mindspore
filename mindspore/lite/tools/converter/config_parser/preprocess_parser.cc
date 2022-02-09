@@ -87,17 +87,19 @@ int PreprocessParser::ParsePreprocess(const DataPreProcessString &data_pre_proce
         preprocess::ConvertColorConversionCodes(data_pre_process->image_pre_process.image_to_format);
     }
   }
-  ret = ParseImagePreProcess(data_pre_process_str, &data_pre_process->image_pre_process);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "image preprocess parse failed.";
-    return ret;
-  }
+  if (!data_pre_process_str.calibrate_path.empty() && !data_pre_process_str.calibrate_size.empty()) {
+    ret = ParseImagePreProcess(data_pre_process_str, &data_pre_process->image_pre_process);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "image preprocess parse failed.";
+      return ret;
+    }
 
-  ret = CollectCalibInputs(data_pre_process->calibrate_path, data_pre_process->calibrate_size,
-                           &data_pre_process->calibrate_path_vector);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "collect calibrate inputs failed.";
-    return ret;
+    ret = CollectCalibInputs(data_pre_process->calibrate_path, data_pre_process->calibrate_size,
+                             &data_pre_process->calibrate_path_vector);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "collect calibrate inputs failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -243,7 +245,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
   }
   if (!data_pre_process_str.resize_height.empty()) {
     if (!ConvertIntNum(data_pre_process_str.resize_height, &image_pre_process->resize_height)) {
-      MS_LOG(ERROR) << "resize_width should be a valid number.";
+      MS_LOG(ERROR) << "resize_height should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->resize_height <= kMinSize || image_pre_process->resize_height > kMaxSize) {
