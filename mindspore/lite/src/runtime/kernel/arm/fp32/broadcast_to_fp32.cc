@@ -38,7 +38,6 @@ int BroadcastToCPUKernel::ReSize() {
   shape_info_.output_shape_size_ = static_cast<int>(output_shape.size());
 
   data_type_ = in_tensors_.at(0)->data_type();
-  MS_ASSERT(data_type_ == out_tensors_.at(0)->data_type());
   return RET_OK;
 }
 

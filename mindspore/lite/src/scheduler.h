@@ -35,6 +35,9 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/control_flow_scheduler.h"
 #endif
+#ifndef RUNTIME_PASS_CLIP
+#include "src/runtime/runtime_shape_fusion_pass.h"
+#endif
 
 namespace mindspore::lite {
 constexpr int kDefaultDeviceType = -1;
@@ -176,6 +179,12 @@ class Scheduler {
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
+#ifndef RUNTIME_PASS_CLIP
+  std::shared_ptr<ShapeFusionPass> shape_fusion_pass_ = nullptr;
+#ifndef DELEGATE_CLIP
+  std::vector<Tensor *> shape_fusion_outputs_;
+#endif
+#endif
 };
 }  // namespace mindspore::lite
 

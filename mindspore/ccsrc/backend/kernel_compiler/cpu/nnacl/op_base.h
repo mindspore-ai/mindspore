@@ -459,7 +459,15 @@ enum PrimType {
   PrimType_ReduceScatter = 202,
   PrimType_DynamicQuant = 203,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_DynamicQuant + 1
+  PrimType_MAX = PrimType_DynamicQuant + 1,
+
+  // inner operators.
+  PrimType_Inner_ToFormat = 10000,
+  PrimType_Inner_GltextureToOpencl = 10001,
+  PrimType_Inner_Identity = 10002,
+  PrimType_Inner_ShapeFusion = 10003,
+  PrimType_InnerOpMin = PrimType_Inner_ToFormat,
+  PrimType_InnerOpMax = PrimType_Inner_ShapeFusion + 1
 };
 
 typedef enum LiteDataType {

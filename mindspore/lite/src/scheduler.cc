@@ -306,6 +306,9 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
     return check_input_ret;
   }
+#ifndef RUNTIME_PASS_CLIP
+  shape_fusion_pass_ = std::make_shared<ShapeFusionPass>(reinterpret_cast<LiteModel *>(src_model_), src_tensors_);
+#endif
 
   int ret = SchedulePreProcess();
   if (ret != RET_OK) {
@@ -328,6 +331,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
 #ifndef DELEGATE_CLIP
+  // Free the output tensor data of shape fusion.
+  for (auto tensor : shape_fusion_outputs_) {
+    tensor->FreeData();
+    tensor->set_category(VAR);
+  }
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
@@ -634,6 +642,11 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
         return RET_ERROR;
       }
     }
+#ifndef DELEGATE_CLIP
+    if (node->node_type_ == PrimType_Inner_ShapeFusion) {
+      shape_fusion_outputs_.insert(shape_fusion_outputs_.end(), outputs.begin(), outputs.end());
+    }
+#endif
   } else if (ret != RET_INFER_INVALID) {
     FreeOpParameters();
     return RET_ERROR;
@@ -764,6 +777,17 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
       MS_LOG(ERROR) << "Op " << node->name_ << " should exist in model!";
       return RET_ERROR;
     }
+#ifndef RUNTIME_PASS_CLIP
+    if (node->node_type_ == schema::PrimitiveType_Shape) {
+      // convert shape to built-in shape
+      MS_CHECK_TRUE_RET(node->input_indices_.size() == 1, RET_ERROR);
+      if (shape_fusion_pass_->ConvertToShapeFusion(node) != RET_OK) {
+        MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
+      } else if (shape_fusion_pass_->FusePostNodes(node, subgraph_index) != RET_OK) {
+        MS_LOG(WARNING) << "Fused to built-in shape failed: " << node->name_;
+      }
+    }
+#endif
     auto ret = InferNodeShape(node);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_
@@ -1078,7 +1102,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   int kernel_thread_count = op_parameter->thread_num_;
 #endif
   op_parameter->is_train_session_ = is_train_session_;
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(op_parameter->type_)};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, op_parameter->type_};
 
 #ifdef GPU_OPENCL
   bool gpu_priority = DeviceTypePriority(context_, DT_GPU, DT_CPU);
@@ -1217,8 +1241,7 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
       MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
       return RET_ERROR;
     }
-    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16,
-                           static_cast<schema::PrimitiveType>(op_parameter->type_)};
+    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, op_parameter->type_};
     if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
       *prefer_data_type = kNumberTypeFloat32;
       return RET_OK;

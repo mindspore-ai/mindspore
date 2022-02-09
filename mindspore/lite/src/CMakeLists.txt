@@ -185,6 +185,7 @@ endif()
 if(MSLITE_ENABLE_RUNTIME_PASS)
     set(LITE_SRC
             ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_shape_fusion_pass.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
             )
 endif()

@@ -103,7 +103,7 @@ int SubGraphKernel::ReSize() {
       }
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
       // replace with custom op in the future.
-      if (parameter->type_ == static_cast<int>(lite::PRIM_IDENTITY)) {
+      if (parameter->type_ == static_cast<int>(PrimType::PrimType_Inner_Identity)) {
         ret = kernel->ReSize();
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "kernel " << kernel->name() << " resize fail!ret = " << ret;

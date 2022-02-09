@@ -26,13 +26,12 @@
 #include "src/runtime/kernel/opencl/kernel/gl_to_cl.h"
 #include "include/errorcode.h"
 #include "src/common/utils.h"
-#include "src/common/prim_inner.h"
 
 namespace mindspore::kernel {
-using mindspore::lite::PRIM_TO_FORMAT;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
+using PrimType::PrimType_Inner_ToFormat;
 
 OpenCLSubGraph::~OpenCLSubGraph() { UnInit(); }
 
@@ -100,7 +99,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     out_tensors->emplace_back(new_tensor);
-    KernelKey desc{kGPU, kNumberTypeFloat32, PRIM_TO_FORMAT};
+    KernelKey desc{kGPU, kNumberTypeFloat32, PrimType_Inner_ToFormat};
     auto *parameter = static_cast<OpenCLToFormatParameter *>(malloc(sizeof(OpenCLToFormatParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
@@ -111,7 +110,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     parameter->op_parameter.is_zero_shape_ = false;
-    parameter->op_parameter.type_ = PRIM_TO_FORMAT;
+    parameter->op_parameter.type_ = PrimType_Inner_ToFormat;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     InnerKernel *in_convert_op_inner = nullptr;
@@ -196,7 +195,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     out_tensors->emplace_back(new_tensor);
-    KernelKey desc{kGPU, kNumberTypeGLUInt, lite::PRIM_GLTEXTURE_TO_OPENCL};
+    KernelKey desc{kGPU, kNumberTypeGLUInt, PrimType::PrimType_Inner_GltextureToOpencl};
     auto *parameter = static_cast<OpenGLTexture2DToOpenCLParameter *>(malloc(sizeof(OpenGLTexture2DToOpenCLParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
@@ -207,7 +206,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     parameter->op_parameter.is_zero_shape_ = false;
-    parameter->op_parameter.type_ = lite::PRIM_GLTEXTURE_TO_OPENCL;
+    parameter->op_parameter.type_ = PrimType::PrimType_Inner_GltextureToOpencl;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     InnerKernel *in_convert_op_inner = nullptr;
@@ -351,7 +350,7 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
         bool last_kernel = true;
         for (auto k : iv->out_kernels()) {
           int type = k->op_parameter() == nullptr ? k->type() : k->op_parameter()->type_;
-          if (type == lite::PRIM_TO_FORMAT) {
+          if (type == PrimType::PrimType_Inner_ToFormat) {
             last_kernel = false;
             break;
           }

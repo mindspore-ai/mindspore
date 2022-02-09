@@ -67,7 +67,7 @@ LiteKernel *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  param->type_ = lite::PRIM_IDENTITY;
+  param->type_ = PrimType::PrimType_Inner_Identity;
   auto inner_kernel = new IdentityKernel(param, in_tensors, out_tensors, ctx);
   MS_CHECK_TRUE_MSG(inner_kernel != nullptr, nullptr, "new inner kernel failed.");
   std::shared_ptr<kernel::Kernel> shared_kernel(inner_kernel);
