@@ -526,11 +526,8 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
       MS_LOG(ERROR) << "Get tensor_info fail.";
       return false;
     }
+    node->set_abstract(tensor_info);
     if (tensor_proto.has_ref_key() && top_graph_ != nullptr) {
-      auto ref_key = std::make_shared<RefKey>(tensor_proto.ref_key());
-      auto abs_ref_key = ref_key->ToAbstract();
-      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, tensor_info);
-      node->set_abstract(abs_ref);
       auto parameters = top_graph_->parameters();
       for (auto parameter : parameters) {
         auto parameter_abs = parameter->abstract();
@@ -542,8 +539,6 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
           }
         }
       }
-    } else {
-      node->set_abstract(tensor_info);
     }
   } else if (value_proto.has_denotation()) {
     if (value_proto.denotation() == "UMonadType") {
