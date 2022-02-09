@@ -347,7 +347,7 @@ void AscendDeviceContext::UpdateExecOrder(const KernelGraphPtr &graph) const {
 void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const {
   MS_LOG(INFO) << "Start GenKernelEvents for graph " << root_graph->graph_id();
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->GenKernelEvents(*root_graph.get());
+  runtime_instance_->GenKernelEventsForMindRT(*root_graph.get());
   MS_LOG(INFO) << "Finish!";
 }
 
