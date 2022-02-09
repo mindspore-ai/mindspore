@@ -34,8 +34,11 @@ class SolveTriangularCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  int m_{0};
-  int n_{0};
+  void InitShape(const CNodePtr &kernel_node);
+
+  size_t m_{0};
+  size_t n_{0};
+  size_t batch_{1};
   bool lower_{false};
   bool trans_{false};
   bool unit_diagonal_{false};

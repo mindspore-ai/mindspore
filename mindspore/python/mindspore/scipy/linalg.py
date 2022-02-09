@@ -97,13 +97,13 @@ def block_diag(*arrs):
     return accum
 
 
-def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
+def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
                      overwrite_b=False, debug=None, check_finite=False):
     """
-    Assuming a is a triangular matrix, solve the equation
+    Assuming a is a batched triangular matrix, solve the equation
 
     .. math::
-        A x = b
+        a x = b
 
     Note:
         - `solve_triangular` is not supported on Windows platform yet.
@@ -111,9 +111,10 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
           `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
-        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`A x = b`.
-        lower (bool, optional): Use only data contained in the lower triangle of `A`. Default: False.
+        a (Tensor): A non-singular triangular matrix of shape :math:`(..., M, M)`.
+        b (Tensor): A Tensor of shape :math:`(..., M,)` or :math:`(..., M, N)`.
+            Right-hand side matrix in :math:`a x = b`.
+        lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
         trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
 
             ========  =========
@@ -123,7 +124,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
             1 or 'T'  a^T x = b
             2 or 'C'  a^H x = b
             ========  =========
-        unit_diagonal (bool, optional): If True, diagonal elements of :math:`A` are assumed to be 1 and
+        unit_diagonal (bool, optional): If True, diagonal elements of :math:`a` are assumed to be 1 and
             will not be referenced. Default: False.
         overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
         debug (None): Not implemented now. Default: False.
@@ -132,15 +133,16 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.
 
     Returns:
-        Tensor of shape :math:`(M,)` or :math:`(M, N)`,
-        which is the solution to the system :math:`A x = b`.
+        Tensor of shape :math:`(..., M,)` or :math:`(..., M, N)`,
+        which is the solution to the system :math:`a x = b`.
         Shape of :math:`x` matches :math:`b`.
 
     Raises:
-        TypeError: If `A` is not Tensor.
+        TypeError: If `a` is not Tensor.
         TypeError: If `b` is not Tensor.
-        TypeError: If dtype of `A` and `b` are not the same.
-        RuntimeError: If shape of `A` and `b` are not matched or more than 2D.
+        TypeError: If dtype of `a` and `b` are not the same.
+        ValueError: If batch dimensions of `a` and `b` are not the same.
+        ValueError: If the shape of `a` and `b` are not matched.
         TypeError: If `trans` is not int or str.
         ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
         TypeError: If `lower` is not bool.
@@ -148,16 +150,16 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `check_finite` is not bool.
         ValueError: If `debug` is not None.
-        ValueError: If `A` is singular matrix.
+        ValueError: If `a` is singular matrix.
 
     Supported Platforms:
         ``CPU`` ``GPU``
 
     Examples:
-        Solve the lower triangular system :math:`A x = b`, where::
+        Solve the lower triangular system :math:`a x = b`, where::
 
                  [3  0  0  0]       [4]
-            A =  [2  1  0  0]   b = [2]
+            a =  [2  1  0  0]   b = [2]
                  [1  0  1  0]       [4]
                  [1  1  1  1]       [2]
 
@@ -165,12 +167,12 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         >>> from mindspore.common import Tensor
         >>> import mindspore.numpy as mnp
         >>> from mindspore.scipy.linalg import solve_triangular
-        >>> A = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
+        >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
         >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
-        >>> x = solve_triangular(A, b, lower=True, unit_diagonal=False, trans='N')
+        >>> x = solve_triangular(a, b, lower=True, unit_diagonal=False, trans='N')
         >>> print(x)
         [ 1.33333333 -0.66666667  2.66666667 -1.33333333]
-        >>> print(mnp.dot(A, x))  # Check the result
+        >>> print(mnp.dot(a, x))  # Check the result
         [4. 2. 4. 2.]
     """
     _type_check('trans', trans, (int, str), 'solve_triangular')
@@ -179,8 +181,8 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
     _type_check('check_finite', check_finite, [bool], 'solve_triangular')
     if debug is not None:
         _raise_value_error("Currently only case debug=None of solve_triangular Implemented.")
-    if F.dtype(A) == F.dtype(b) and F.dtype(A) in (mstype.int32, mstype.int64):
-        A = F.cast(A, mstype.float64)
+    if F.dtype(a) == F.dtype(b) and F.dtype(a) in (mstype.int32, mstype.int64):
+        a = F.cast(a, mstype.float64)
         b = F.cast(b, mstype.float64)
     if trans not in (0, 1, 2, 'N', 'T', 'C'):
         _raise_value_error("The value of trans should be one of (0, 1, 2, 'N', 'T', 'C'), but got " + str(trans))
@@ -188,7 +190,7 @@ def solve_triangular(A, b, trans=0, lower=False, unit_diagonal=False,
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]
     solve = SolveTriangular(lower, unit_diagonal, trans)
-    return solve(A, b)
+    return solve(a, b)
 
 
 def inv(a, overwrite_a=False, check_finite=True):

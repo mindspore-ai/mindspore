@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/math/trsm_solve_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/math/solve_triangular_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  TrsmGpuKernelMod, float)
+  SolveTriangularGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  TrsmGpuKernelMod, double)
+  SolveTriangularGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

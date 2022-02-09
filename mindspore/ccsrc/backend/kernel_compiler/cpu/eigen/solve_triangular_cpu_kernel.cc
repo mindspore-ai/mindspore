@@ -35,40 +35,33 @@ constexpr auto kSolveTriangularInputsNum = 2;
 constexpr auto kSolveTriangularOutputsNum = 1;
 constexpr auto kAVectorxDimNum = 1;
 constexpr auto kAMatrixDimNum = 2;
+constexpr size_t kRowIndex = 2;
+constexpr size_t kColIndex = 1;
+template <typename T>
+void SolveTriangularCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
+  auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
+  size_t a_dims = a_shape.size();
+  size_t aRowIndex = a_dims - kRowIndex;
+  m_ = a_shape[aRowIndex];
+  size_t b_sims = b_shape.size();
+  bool vector_b = b_sims == a_dims - 1;
+  if (vector_b) {
+    n_ = 1;
+  } else {
+    n_ = b_shape[b_sims - 1];
+  }
+  batch_ = 1;
+  for (size_t batch = 0; batch < a_dims - kRowIndex; ++batch) {
+    batch_ *= a_shape[batch];
+  }
+}
+
 template <typename T>
 void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-
-  if (A_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', A should be 2D, but got [" << A_shape.size() << "] dimensions.";
-  }
-  if (A_shape[kDim0] != A_shape[kDim1]) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of input matrix A should be square matrix like [N X N], but got ["
-                      << A_shape[kDim0] << " X " << A_shape[kDim1] << "].";
-  }
-  m_ = SizeToInt(A_shape[kDim0]);
-
-  if (b_shape.size() != kAVectorxDimNum && b_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', b should be 1D or 2D,  but got [" << b_shape.size()
-                      << "] dimensions.";
-  }
-  if (SizeToInt(b_shape[kDim0]) != m_) {
-    if (b_shape.size() == kAVectorxDimNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be [" << m_ << "], but got ["
-                        << b_shape[kDim0] << "].";
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be [" << m_ << " X "
-                        << b_shape[kDim1] << "], but got [" << b_shape[kDim0] << " X " << b_shape[kDim1] << "].";
-    }
-  }
-  if (b_shape.size() == kAVectorxDimNum || (b_shape.size() == kAMatrixDimNum && b_shape[kDim1] == 1)) {
-    n_ = 1;
-  } else {
-    n_ = SizeToInt(b_shape[kDim1]);
-  }
+  InitShape(kernel_node);
   lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
   const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
@@ -83,21 +76,21 @@ void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-template <typename Derived_A, typename Derived_b, typename T>
-inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b, T *output_addr, int m, int n,
+template <typename Derived_a, typename Derived_b, typename T>
+inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b, T *output_addr, int m, int n,
                   bool lower, bool unit_diagonal) {
   Map<Matrix<T, RowMajor>> output(output_addr, m, n);
   if (unit_diagonal) {
     if (lower) {
-      output.noalias() = A.template triangularView<UnitLower>().solve(b);
+      output.noalias() = a.template triangularView<UnitLower>().solve(b);
     } else {
-      output.noalias() = A.template triangularView<UnitUpper>().solve(b);
+      output.noalias() = a.template triangularView<UnitUpper>().solve(b);
     }
   } else {
     if (lower) {
-      output.noalias() = A.template triangularView<Lower>().solve(b);
+      output.noalias() = a.template triangularView<Lower>().solve(b);
     } else {
-      output.noalias() = A.template triangularView<Upper>().solve(b);
+      output.noalias() = a.template triangularView<Upper>().solve(b);
     }
   }
 }
@@ -109,18 +102,27 @@ bool SolveTriangularCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &input
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 
-  auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto a_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  Map<Matrix<T, RowMajor>> b(b_addr, m_, n_);
+  size_t a_batch_size = m_ * m_;
+  size_t b_batch_size = m_ * n_;
+  size_t output_batch_size = m_ * n_;
 
-  if (trans_) {
-    Map<Matrix<T, ColMajor>> A(A_addr, m_, m_);
-    solve(A, b, output_addr, m_, n_, !lower_, unit_diagonal_);
-  } else {
-    Map<Matrix<T, RowMajor>> A(A_addr, m_, m_);
-    solve(A, b, output_addr, m_, n_, lower_, unit_diagonal_);
+  for (size_t i = 0; i < batch_; ++i) {
+    T *a_batch_addr = a_addr + i * a_batch_size;
+    T *b_batch_addr = b_addr + i * b_batch_size;
+    T *output_batch_addr = output_addr + i * output_batch_size;
+
+    Map<Matrix<T, RowMajor>> b(b_batch_addr, m_, n_);
+    if (trans_) {
+      Map<Matrix<T, ColMajor>> a(a_batch_addr, m_, m_);
+      solve(a, b, output_batch_addr, m_, n_, !lower_, unit_diagonal_);
+    } else {
+      Map<Matrix<T, RowMajor>> a(a_batch_addr, m_, m_);
+      solve(a, b, output_batch_addr, m_, n_, lower_, unit_diagonal_);
+    }
   }
 
   return true;
