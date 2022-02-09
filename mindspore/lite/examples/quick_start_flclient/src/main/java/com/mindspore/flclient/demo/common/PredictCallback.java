@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class PredictCallback extends Callback {
     private static final Logger LOGGER = Logger.getLogger(PredictCallback.class.toString());
-    private final List<Integer> predictResults = new ArrayList<>();
+    private final List<Object> predictResults = new ArrayList<>();
     private final int numOfClass;
     private final int batchSize;
 
@@ -75,7 +75,7 @@ public class PredictCallback extends Callback {
      *
      * @return predict result.
      */
-    public List<Integer> getPredictResults() {
+    public List<Object> getPredictResults() {
         return predictResults;
     }
 
