@@ -657,7 +657,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   MS_EXCEPTION_IF_NULL(graph_inputs);
   ParameterPtr new_parameter = nullptr;
   auto func_graph = anf->func_graph();
-  if (func_graph->manager() != nullptr && func_graph->IsMultiTarget() &&
+  if (func_graph->manager() != nullptr && func_graph->exist_multi_target() &&
       graph->device_target() == device::DeviceAddressType::kCPU) {
     auto iter = default_param_map_.find(anf);
     if (iter != default_param_map_.end()) {

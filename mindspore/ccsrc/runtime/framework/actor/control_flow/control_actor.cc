@@ -401,10 +401,12 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
                                  " position:" + std::to_string(formal_parameter_position) + " copy failed.";
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
-      output_data->data_ = device_tensor.get();
       DeviceTensorCopyStore::GetInstance().Insert(device_tensor.get(), data);
+      output_data->data_ = device_tensor.get();
+      continue;
     }
 
+    // Ref node may use the ptr of device tensor as the output address, so need set the ptr from data.
     device_tensor->set_ptr(data->GetMutablePtr());
     MS_LOG(DEBUG) << "Set the ptr: " << data->GetMutablePtr()
                   << " for the ref formal parameter: " << formal_parameter.first->DebugString()

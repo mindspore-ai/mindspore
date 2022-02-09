@@ -117,7 +117,7 @@ void DisableMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(func_graph);
   bool enable_old_runtime = (common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "0");
   if (enable_old_runtime ||
-      (func_graph != nullptr && func_graph->ContainMultiTarget() && IsDynamicShapeGraph(func_graph))) {
+      (func_graph != nullptr && func_graph->exist_multi_target() && IsDynamicShapeGraph(func_graph))) {
     // Heterogeneous scenario + dynamic_shape runs in MsBackend.
     MS_LOG(INFO) << "Disable mindRT in the heterogeneous + dynamic shape scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
@@ -783,21 +783,14 @@ void SetRunMode(const ResourcePtr &res) {
   }
 
   // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-  if (func_graph->ContainMultiTarget() && ExistControlNode(func_graph)) {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    set_ctx(false, false, false);
-    return;
-  }
-
-  // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-  if (func_graph->ContainMultiTarget() && ExistControlNode(func_graph)) {
+  if (func_graph->exist_multi_target() && ExistControlNode(func_graph)) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
     set_ctx(false, false, false);
     return;
   }
 
   // GRAPH | Heterogeneous scenario : SubGraph path in MindRT.
-  if (func_graph->ContainMultiTarget()) {
+  if (func_graph->exist_multi_target()) {
     MS_LOG(INFO) << "Run graph mode with subgraph sink.";
     set_ctx(true, false, false);
     return;
@@ -817,7 +810,7 @@ void OriginSetRunMode(const ResourcePtr &res) {
   std::string backend = MsContext::GetInstance()->backend_policy();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  if (func_graph->ContainMultiTarget() || !task_sink) {
+  if (func_graph->exist_multi_target() || !task_sink) {
     bc_ptr->set_is_multi_graph_sink(false);
     context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, false);
@@ -845,13 +838,16 @@ void OriginSetRunMode(const ResourcePtr &res) {
 
 bool TaskEmitAction(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      CheckGraphOutputConstOrParameter(res->func_graph())) {
-    return true;
-  }
-  if (res->func_graph() == nullptr) {
+  FuncGraphPtr func_graph = res->func_graph();
+  if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      CheckGraphOutputConstOrParameter(func_graph)) {
+    return true;
+  }
+
+  func_graph->SetMultiTarget();
   DisableMindRT(res);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -861,8 +857,6 @@ bool TaskEmitAction(const ResourcePtr &res) {
     OriginSetRunMode(res);
   }
 
-  FuncGraphPtr func_graph = res->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
   auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(bc_ptr);
   std::string backend = context_ptr->backend_policy();
