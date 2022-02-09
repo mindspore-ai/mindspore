@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """st for scipy.ops_wrapper."""
+import numpy
 import pytest
 import mindspore.scipy as msp
 from mindspore import context, Tensor
+from mindspore import dtype
 from tests.st.scipy_st.utils import match_array
 
 aligndict = {0: "LEFT_RIGHT", 1: "LEFT_LEFT", 2: "RIGHT_LEFT", 3: "RIGHT_RIGHT"}
@@ -204,7 +206,7 @@ PAD_VALUE = -1
                                                       [[-1, -1, 3], [-1, 8, 1], [2, 4, 2]]],
                                           (1, 1, 2): [[2, 5], [8, 1]],
                                           (1, 2, 3): [[[-1, 2], [2, 5]], [[-1, 3], [8, 1]]], (2, 2, 0): [[2], [3]]})])
-def test_matrix_diag_part_net(array_dict):
+def test_matrix_diag_part(array_dict):
     """
     testcase generate from below
     from tf.python.ops import array_ops
@@ -227,7 +229,7 @@ def test_matrix_diag_part_net(array_dict):
     print(Adict, file= f)
     f.close()
     Feature: ALL To ALL
-    Description: test cases for eigen decomposition test cases for Ax= lambda * x /( A- lambda * E)X=0
+    Description:
     Expectation: the result match to numpy
     """
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -235,7 +237,26 @@ def test_matrix_diag_part_net(array_dict):
     for key1, b in kadict.items():
         k0, k1, align_ = key1
         if k0 == k1:
-            r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), k0, PAD_VALUE, align=aligndict[align_])
+            r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), k0, PAD_VALUE, align=aligndict.get(align_))
         else:
-            r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), (k0, k1), PAD_VALUE, align=aligndict[align_])
+            r_b = msp.ops_wrapper.matrix_diag_part(Tensor(a), (k0, k1), PAD_VALUE, align=aligndict.get(align_))
             match_array(b, r_b.asnumpy())
+
+
+def test_matrix_diag_part_valid():
+    """
+    test case for pad different type
+    Description: test cases for default/none default padding value, if padding value type not eq to a,
+        will raise exception
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    a = [[1, 2, 3], [3, 4, 5], [4, 5, 6]]
+    padding_value = 0
+    k = [-1, 0]
+    b = msp.ops_wrapper.matrix_diag_part(Tensor(a).astype(dtype.float32), k, padding_value, align="LEFT_RIGHT")
+    match_array(b.asnumpy(), numpy.array([[1.0, 4.0, 6.0], [0.0, 3.0, 5.0]]).astype(numpy.float32))
+    b = msp.ops_wrapper.matrix_diag_part(Tensor(a).astype(dtype.int32), k, padding_value, align="LEFT_RIGHT")
+    match_array(b.asnumpy(), numpy.array([[1, 4, 6], [0, 3, 5]]).astype(numpy.int32))
+    b = msp.ops_wrapper.matrix_diag_part(Tensor(a).astype(dtype.float32), k, padding_value=1.1, align="LEFT_RIGHT")
+    match_array(b.asnumpy(), numpy.array([[1.0, 4.0, 6.0], [1.1, 3.0, 5.0]]).astype(numpy.float32))

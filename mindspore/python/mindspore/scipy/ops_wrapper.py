@@ -14,10 +14,11 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .. import numpy as mnp
-from .ops import MatrixSetDiag, MatrixBandPartNet, MatrixDiagPartNet
+from .ops import MatrixSetDiag, MatrixBandPart, MatrixDiagPart
 from ..common import dtype as mstype
 from .utils import _to_tensor
 from .utils_const import _raise_value_error
+from ..ops import functional as F
 
 
 def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
@@ -78,7 +79,7 @@ def matrix_band_part(a, lower, upper):
     """
     MatrixBandPart
     """
-    msp_matrixbandpart = MatrixBandPartNet()
+    msp_matrixbandpart = MatrixBandPart()
     return msp_matrixbandpart(a, lower, upper)
 
 
@@ -97,5 +98,7 @@ def matrix_diag_part(a, k=0, padding_value=0, align="RIGHT_LEFT"):
         k_vec = k
     else:
         _raise_value_error("input k to indicate diagonal region is invalid.")
-    msp_matrixdiagpart = MatrixDiagPartNet(align)
+    if padding_value == 0:
+        padding_value = F.cast(padding_value, F.dtype(a))
+    msp_matrixdiagpart = MatrixDiagPart(align)
     return msp_matrixdiagpart(a, k_vec, padding_value)
