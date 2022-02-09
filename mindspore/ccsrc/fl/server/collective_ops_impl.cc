@@ -250,7 +250,6 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
   }
 
   // Ring AllGather.
-  MS_LOG(DEBUG) << "Start Ring AllGather.";
   for (size_t i = 0; i < rank_size_ - 1; i++) {
     size_t send_chunk_index = (rank_id_ - i + rank_size_) % rank_size_;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
@@ -340,7 +339,7 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -365,10 +364,10 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
   rank_id_ = node_->rank_id();
   switch (node_role_) {
     case ps::core::WORKER:
-      rank_size_ = IntToUint(node_->worker_num());
+      rank_size_ = node_->worker_num();
       break;
     case ps::core::SERVER:
-      rank_size_ = IntToUint(node_->server_num());
+      rank_size_ = node_->server_num();
       break;
     default:
       MS_LOG(ERROR) << "The node role " << node_role_ << " for collective communication is invalid.";
@@ -379,7 +378,7 @@ bool CollectiveOpsImpl::AllGather(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -405,7 +404,7 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *const recvbuff, si
     return false;
   }
   if (rank_size_ == 1) {
-    MS_LOG(DEBUG) << "Rank size is 1. Do nothing.";
+    MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
 
@@ -420,7 +419,7 @@ bool CollectiveOpsImpl::ReInitForScaling() {
 
   MS_LOG(INFO) << "Cluster scaling out completed. Reinitialize ring for collective communication.";
   rank_id_ = server_node_->rank_id();
-  server_num_ = IntToUint(server_node_->server_num());
+  server_num_ = server_node_->server_num();
   MS_LOG(INFO) << "After scheduler scaling out, this server's rank is " << rank_id_ << ", server number is "
                << server_num_;
   return true;

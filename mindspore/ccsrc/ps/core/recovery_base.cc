@@ -20,6 +20,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 bool RecoveryBase::Initialize(const std::string &config_json) {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   nlohmann::json recovery_config;
   try {
     recovery_config = nlohmann::json::parse(config_json);
@@ -87,7 +88,8 @@ bool RecoveryBase::InitializeNodes(const std::string &config_json) {
   return true;
 }
 
-void RecoveryBase::Persist(const core::ClusterConfig &clusterConfig) const {
+void RecoveryBase::Persist(const core::ClusterConfig &clusterConfig) {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   if (recovery_storage_ == nullptr) {
     MS_LOG(WARNING) << "recovery storage is null, so don't persist meta data";
     return;
@@ -95,7 +97,8 @@ void RecoveryBase::Persist(const core::ClusterConfig &clusterConfig) const {
   recovery_storage_->PersistFile(clusterConfig);
 }
 
-void RecoveryBase::PersistNodesInfo(const core::ClusterConfig &clusterConfig) const {
+void RecoveryBase::PersistNodesInfo(const core::ClusterConfig &clusterConfig) {
+  std::unique_lock<std::mutex> lock(recovery_mtx_);
   if (scheduler_recovery_storage_ == nullptr) {
     MS_LOG(WARNING) << "scheduler recovery  storage is null, so don't persist nodes meta data";
     return;

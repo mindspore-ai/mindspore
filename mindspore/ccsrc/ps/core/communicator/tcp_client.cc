@@ -37,14 +37,13 @@ event_base *TcpClient::event_base_ = nullptr;
 std::mutex TcpClient::event_base_mutex_;
 bool TcpClient::is_started_ = false;
 
-TcpClient::TcpClient(const std::string &address, std::uint16_t port, Configuration *const config)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port)
     : event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
       is_stop_(true),
-      is_connected_(false),
-      config_(config) {
+      is_connected_(false) {
   message_handler_.SetCallback(
     [this](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
       if (message_callback_) {

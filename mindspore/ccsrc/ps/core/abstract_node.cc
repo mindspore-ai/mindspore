@@ -181,15 +181,12 @@ void AbstractNode::BroadcastEvent(const uint32_t &event) {
     auto client = GetOrCreateTcpClient(rank_id, role);
     if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, event_resp_message.SerializeAsString().data(),
                          event_resp_message.ByteSizeLong())) {
-      MS_LOG(ERROR) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
-                    << " timeout!";
-    } else {
-      MS_LOG(INFO) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
-                   << " successful!";
+      MS_LOG(WARNING) << "send event to node role:" << CommUtil::NodeRoleToString(role) << ", rank id:" << rank_id
+                      << " timeout!";
     }
   }
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << " the node id:" << node_info_.node_id_ << "is send event to server/worker!";
+               << " the node id:" << node_info_.node_id_ << " send event to server/worker!";
 }
 
 void AbstractNode::RegisterEventCallback(const core::ClusterEvent &event, const EventCallback &event_cb) {
@@ -548,7 +545,6 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
     heartbeat_message.set_persistent_state(persistent_state_);
   }
 
-  MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " Send heartbeat!";
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
                        heartbeat_message.ByteSizeLong(), kCommTimeoutInSeconds)) {
     MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
@@ -720,7 +716,6 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
 
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
-  PersistMetaData();
 }
 
 void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -747,7 +742,6 @@ void AbstractNode::ProcessScaleOutDone(const std::shared_ptr<TcpConnection> &con
   }
   is_ready_ = true;
   UpdateClusterState(ClusterState::CLUSTER_READY);
-  PersistMetaData();
 }
 
 void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn,
@@ -761,7 +755,6 @@ void AbstractNode::ProcessScaleInDone(const std::shared_ptr<TcpConnection> &conn
   }
   is_ready_ = true;
   UpdateClusterState(ClusterState::CLUSTER_READY);
-  PersistMetaData();
 }
 
 void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -890,7 +883,7 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
     return true;
   }
   std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  auto condition_func = [&] {
+  auto condition_func = [this] {
     if (is_finish_.load()) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success finish!";
     }
@@ -911,7 +904,7 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 
 void AbstractNode::InitClientToServer() {
   // create tcp client to myself in case of event dispatch failed when Send msg to server 0 failed
-  client_to_server_ = std::make_shared<TcpClient>(node_info_.ip_, node_info_.port_, config_.get());
+  client_to_server_ = std::make_shared<TcpClient>(node_info_.ip_, node_info_.port_);
   MS_EXCEPTION_IF_NULL(client_to_server_);
   client_to_server_->Init();
   MS_LOG(INFO) << "The node start a tcp client to this node!";
@@ -922,7 +915,7 @@ bool AbstractNode::InitClientToScheduler() {
     MS_LOG(WARNING) << "The config is empty.";
     return false;
   }
-  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_, config_.get());
+  client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_ip_, scheduler_port_);
   MS_EXCEPTION_IF_NULL(client_to_scheduler_);
   client_to_scheduler_->SetMessageCallback(
     [&](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data, size_t size) {
@@ -942,7 +935,7 @@ bool AbstractNode::InitClientToScheduler() {
       }
     });
   client_to_scheduler_->Init();
-  client_to_scheduler_thread_ = std::make_unique<std::thread>([&]() {
+  client_to_scheduler_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
@@ -980,7 +973,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
     MS_LOG(INFO) << "Create tcp client for role: " << role << ", rank: " << rank_id;
     std::string ip = nodes_address_[key].first;
     uint16_t port = nodes_address_[key].second;
-    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
+    auto client = std::make_shared<TcpClient>(ip, port);
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                    size_t size) {
@@ -993,7 +986,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
           MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a collective_send_data message response!";
           break;
         case NodeCommand::SEND_EVENT:
-          MS_LOG(INFO) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
+          MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
           break;
         default:
           MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
@@ -1200,8 +1193,8 @@ void AbstractNode::InitNodeInfo(const NodeRole &role) {
 }
 
 void AbstractNode::InitNodeNum() {
-  worker_num_ = UintToInt(PSContext::instance()->cluster_config().initial_worker_num);
-  server_num_ = UintToInt(PSContext::instance()->cluster_config().initial_server_num);
+  worker_num_ = PSContext::instance()->cluster_config().initial_worker_num;
+  server_num_ = PSContext::instance()->cluster_config().initial_server_num;
   scheduler_ip_ = PSContext::instance()->cluster_config().scheduler_host;
   scheduler_port_ = PSContext::instance()->cluster_config().scheduler_port;
   MS_LOG(INFO) << "The worker num:" << worker_num_ << ", the server num:" << server_num_

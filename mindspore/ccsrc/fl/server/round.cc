@@ -25,6 +25,8 @@ namespace fl {
 namespace server {
 class Server;
 class Iteration;
+std::atomic<uint32_t> kPrintTimes = 0;
+const uint32_t kPrintTimesThreshold = 3000;
 Round::Round(const std::string &name, bool check_timeout, size_t time_window, bool check_count, size_t threshold_count,
              bool server_num_as_threshold)
     : name_(name),
@@ -106,7 +108,7 @@ bool Round::ReInitForUpdatingHyperParams(size_t updated_threshold_count, size_t 
   threshold_count_ = updated_threshold_count;
   if (check_count_) {
     if (!DistributedCountService::GetInstance().ReInitCounter(name_, threshold_count_)) {
-      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
+      MS_LOG(WARNING) << "Reinitializing count for " << name_ << " failed.";
       return false;
     }
   }
@@ -132,7 +134,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
   std::string reason = "";
   if (!IsServerAvailable(&reason)) {
     if (!communicator_->SendResponse(reason.c_str(), reason.size(), message)) {
-      MS_LOG(ERROR) << "Sending response failed.";
+      MS_LOG(WARNING) << "Sending response failed.";
       return;
     }
     return;
@@ -226,14 +228,31 @@ bool Round::IsServerAvailable(std::string *reason) {
     return false;
   }
 
-  // If the server is still in the process of scaling, reject the request.
+  // If the server is still in safemode, reject the request.
   if (Server::GetInstance().IsSafeMode()) {
-    MS_LOG(WARNING) << "The cluster is still in process of scaling, please retry " << name_ << " later.";
+    if (kPrintTimes % kPrintTimesThreshold == 0) {
+      MS_LOG(WARNING) << "The cluster is still in safemode, please retry " << name_ << " later.";
+      kPrintTimes = 0;
+    }
+    kPrintTimes += 1;
     *reason = ps::kClusterSafeMode;
     return false;
   }
   return true;
 }
+
+void Round::KernelSummarize() {
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
+  (void)kernel_->Summarize();
+}
+
+size_t Round::kernel_total_client_num() const { return kernel_->total_client_num(); }
+
+size_t Round::kernel_accept_client_num() const { return kernel_->accept_client_num(); }
+
+size_t Round::kernel_reject_client_num() const { return kernel_->reject_client_num(); }
+
+void Round::InitkernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

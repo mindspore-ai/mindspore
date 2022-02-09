@@ -90,7 +90,7 @@ std::map<std::string, AddressPtr> ModelStore::GetModelByIterNum(size_t iteration
   std::unique_lock<std::mutex> lock(model_mtx_);
   std::map<std::string, AddressPtr> model = {};
   if (iteration_to_model_.count(iteration) == 0) {
-    MS_LOG(ERROR) << "Model for iteration " << iteration << " is not stored.";
+    MS_LOG(WARNING) << "Model for iteration " << iteration << " is not stored. Return latest model";
     return model;
   }
   model = iteration_to_model_[iteration]->addresses();
@@ -114,8 +114,8 @@ size_t ModelStore::model_size() const { return model_size_; }
 std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
   std::map<std::string, AddressPtr> model = Executor::GetInstance().GetModel();
   if (model.empty()) {
-    MS_LOG(EXCEPTION) << "Model feature map is empty.";
-    return nullptr;
+    MS_LOG(WARNING) << "Model feature map is empty.";
+    return std::make_shared<MemoryRegister>();
   }
 
   // Assign new memory for the model.

@@ -35,7 +35,7 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   // required_pull_count_ normally used in parameter server training mode.
   required_pull_count_ = threshold_count;
 
-  MS_LOG(DEBUG) << "Start initializing kernels for " << AnfAlgo::GetCNodeName(cnode);
+  MS_LOG(INFO) << "Start initializing kernels for " << AnfAlgo::GetCNodeName(cnode);
   if (!InitAggregationKernels(cnode)) {
     MS_LOG(EXCEPTION) << "Initializing aggregation kernels failed.";
     return false;
@@ -193,10 +193,10 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
 bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &) {
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
       ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
-    MS_LOG(DEBUG) << "Federated learning mode doesn't need optimizer kernel.";
+    MS_LOG(INFO) << "Federated learning mode doesn't need optimizer kernel.";
     return true;
   }
-  return true;
+  return false;
 }
 
 template <typename K>

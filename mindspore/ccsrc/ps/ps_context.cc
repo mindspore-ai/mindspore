@@ -540,5 +540,11 @@ void PSContext::set_server_password(const std::string &password) { server_passwo
 std::string PSContext::http_url_prefix() const { return http_url_prefix_; }
 
 void PSContext::set_http_url_prefix(const std::string &http_url_prefix) { http_url_prefix_ = http_url_prefix; }
+
+void PSContext::set_global_iteration_time_window(const uint64_t &global_iteration_time_window) {
+  global_iteration_time_window_ = global_iteration_time_window;
+}
+
+uint64_t PSContext::global_iteration_time_window() const { return global_iteration_time_window_; }
 }  // namespace ps
 }  // namespace mindspore

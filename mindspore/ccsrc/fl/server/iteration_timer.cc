@@ -21,12 +21,18 @@ namespace fl {
 namespace server {
 IterationTimer::~IterationTimer() {
   running_ = false;
-  if (monitor_thread_.joinable()) {
-    monitor_thread_.join();
+  try {
+    if (monitor_thread_.joinable()) {
+      monitor_thread_.join();
+    }
+  } catch (std::exception &e) {
+    MS_LOG(ERROR) << "monitor thread join failed: " << e.what();
   }
 }
 
 void IterationTimer::Start(const std::chrono::milliseconds &duration) {
+  std::unique_lock<std::mutex> lock(timer_mtx_);
+  MS_LOG(INFO) << "The timer begin to start.";
   if (running_.load()) {
     MS_LOG(WARNING) << "The timer already started.";
     return;
@@ -43,13 +49,17 @@ void IterationTimer::Start(const std::chrono::milliseconds &duration) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   });
+  MS_LOG(INFO) << "The timer start success.";
 }
 
 void IterationTimer::Stop() {
+  std::unique_lock<std::mutex> lock(timer_mtx_);
+  MS_LOG(INFO) << "The timer begin to stop.";
   running_ = false;
   if (monitor_thread_.joinable()) {
     monitor_thread_.join();
   }
+  MS_LOG(INFO) << "The timer stop success.";
 }
 
 void IterationTimer::SetTimeOutCallBack(const TimeOutCb &timeout_cb) {

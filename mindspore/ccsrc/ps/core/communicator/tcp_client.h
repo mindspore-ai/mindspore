@@ -54,7 +54,7 @@ class TcpClient {
     std::function<void(const std::shared_ptr<MessageMeta> &, const Protos &, const void *, size_t size)>;
   using OnTimer = std::function<void()>;
 
-  explicit TcpClient(const std::string &address, std::uint16_t port, Configuration *const config);
+  explicit TcpClient(const std::string &address, std::uint16_t port);
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;

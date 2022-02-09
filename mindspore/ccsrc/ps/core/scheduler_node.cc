@@ -67,11 +67,10 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
 void SchedulerNode::RunRecovery() {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   // create tcp client to myself in case of event dispatch failed when Send reconnect msg to server failed
-  client_to_scheduler_ =
-    std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port, config_.get());
+  client_to_scheduler_ = std::make_shared<TcpClient>(clusterConfig.scheduler_host, clusterConfig.scheduler_port);
   MS_EXCEPTION_IF_NULL(client_to_scheduler_);
   client_to_scheduler_->Init();
-  client_thread_ = std::make_unique<std::thread>([&]() {
+  client_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
@@ -83,8 +82,8 @@ void SchedulerNode::RunRecovery() {
     return;
   }
   MS_LOG(INFO) << "The scheduler start run recovery!";
-  int worker_num = clusterConfig.initial_worker_num;
-  int server_num = clusterConfig.initial_server_num;
+  uint32_t worker_num = clusterConfig.initial_worker_num;
+  uint32_t server_num = clusterConfig.initial_server_num;
 
   node_manager_.set_worker_num(worker_num);
   node_manager_.set_server_num(server_num);
@@ -95,7 +94,7 @@ void SchedulerNode::RunRecovery() {
   for (const auto &kvs : initial_node_infos) {
     auto &node_id = kvs.first;
     auto &node_info = kvs.second;
-    auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_, config_.get());
+    auto client = std::make_shared<TcpClient>(node_info.ip_, node_info.port_);
     client->SetMessageCallback([this](const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *, size_t) {
       MS_LOG(INFO) << "received the response. ";
       NotifyMessageArrival(meta);
@@ -114,7 +113,7 @@ void SchedulerNode::RunRecovery() {
     scheduler_recovery_message.set_rank_id(rank_id);
     if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, scheduler_recovery_message.SerializeAsString().data(),
                          scheduler_recovery_message.ByteSizeLong())) {
-      if (node_info.node_role_ == NodeRole::WORKER) {
+      if (node_info.node_role_ == NodeRole::WORKER && PSContext::instance()->server_mode() == kServerModePS) {
         is_worker_timeout_ = true;
         break;
       }
@@ -137,7 +136,6 @@ void SchedulerNode::ProcessHeartbeat(const std::shared_ptr<TcpServer> &server,
   CHECK_RETURN_TYPE(heartbeat_message.ParseFromArray(data, SizeToInt(size)));
 
   std::string node_id = heartbeat_message.node_id();
-  MS_LOG(DEBUG) << "The scheduler get a heartbeat from node id :" << heartbeat_message.node_id();
 
   HeartbeatRespMessage heartbeat_resp_message;
   heartbeat_resp_message.set_persistent_cmd(PersistentCommand::DEFAULT);
@@ -221,7 +219,7 @@ void SchedulerNode::CreateTcpServer() {
     (this->*handler_ptr)(server_, conn, meta, data, size);
   });
 
-  const auto client_disconn = [&](const TcpServer &, const TcpConnection &conn) {
+  const auto client_disconn = [this](const TcpServer &, const TcpConnection &conn) {
     int fd = conn.GetFd();
     if (register_connection_fd_.count(fd) > 0) {
       MS_LOG(WARNING) << "remove client fd:" << fd << ", remove client id:" << register_connection_fd_[fd];
@@ -312,6 +310,10 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
           auto scale_in_client = GetOrCreateClient(nodes[id]);
           SendMetadata(scale_in_client, nodes[id].rank_id_);
           node_manager_.UpdateHeartbeat(id);
+        }
+        if (connected_nodes_.count(id)) {
+          MS_LOG(INFO) << "remove scale in node id: " << id << " connection.";
+          connected_nodes_.erase(id);
         }
       }
     }
@@ -513,8 +515,8 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
                       << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending metadata to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " is sending metadata to workers and servers!";
 }
 
 void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
@@ -587,13 +589,13 @@ void SchedulerNode::SendEvent(const std::shared_ptr<TcpClient> &client, const ui
     return;
   }
 
-  MS_LOG(DEBUG) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << " the node id:" << node_info_.node_id_ << "is sending event resp to workers and servers!";
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << " is sending event resp to workers and servers!";
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {
   MS_LOG(INFO) << "[Scheduler start]: 3. The scheduler start a heartbeat timer!";
-  node_manager_.setPersistCallback([&]() { PersistMetaData(); });
+  node_manager_.setPersistCallback([this]() { PersistMetaData(); });
   update_state_thread_ = std::make_unique<std::thread>([&]() {
     auto start_time = std::chrono::steady_clock::now();
     while (!is_finish_.load()) {
@@ -644,7 +646,7 @@ const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInf
     std::string ip = node_info.ip_;
     uint16_t port = node_info.port_;
     MS_LOG(INFO) << "ip:" << ip << ", port:" << port << ", node id:" << node_info.node_id_;
-    auto client = std::make_shared<TcpClient>(ip, port, config_.get());
+    auto client = std::make_shared<TcpClient>(ip, port);
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback(
       [&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
@@ -763,14 +765,14 @@ void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &r
     return;
   }
 
-  int32_t scale_worker_num = 0;
+  uint32_t scale_worker_num = 0;
   status = resp->ParseValueFromKey(kWorkerNum, &scale_worker_num);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
 
-  int32_t scale_server_num = 0;
+  uint32_t scale_server_num = 0;
   status = resp->ParseValueFromKey(kServerNum, &scale_server_num);
   if (status != RequestProcessResultCode::kSuccess) {
     resp->ErrorResponse(HTTP_BADREQUEST, status);
@@ -783,8 +785,8 @@ void SchedulerNode::ProcessScaleOut(const std::shared_ptr<HttpMessageHandler> &r
     return;
   }
 
-  int32_t total_worker_num = scale_worker_num + node_manager_.worker_num();
-  int32_t total_server_num = scale_server_num + node_manager_.server_num();
+  uint32_t total_worker_num = scale_worker_num + node_manager_.worker_num();
+  uint32_t total_server_num = scale_server_num + node_manager_.server_num();
 
   MS_LOG(INFO) << "After scale out, the total worker num:" << total_worker_num
                << ", the total server num:" << total_server_num;
@@ -851,8 +853,8 @@ void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &re
 
   std::unordered_map<std::string, bool> scale_in_nodes;
 
-  int32_t scale_worker_num = 0;
-  int32_t scale_server_num = 0;
+  uint32_t scale_worker_num = 0;
+  uint32_t scale_server_num = 0;
   auto node_infos = node_manager_.nodes_info();
   node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_IN);
   node_manager_.ResetMetadata(scale_in_node_ids_);
@@ -870,8 +872,8 @@ void SchedulerNode::ProcessScaleIn(const std::shared_ptr<HttpMessageHandler> &re
 
   MS_LOG(INFO) << "The scale worker num:" << scale_worker_num << ", the scale server num:" << scale_server_num;
 
-  int32_t total_worker_num = node_manager_.worker_num() - scale_worker_num;
-  int32_t total_server_num = node_manager_.server_num() - scale_server_num;
+  uint32_t total_worker_num = node_manager_.worker_num() - scale_worker_num;
+  uint32_t total_server_num = node_manager_.server_num() - scale_server_num;
 
   node_manager_.set_worker_num(total_worker_num);
   node_manager_.set_server_num(total_server_num);

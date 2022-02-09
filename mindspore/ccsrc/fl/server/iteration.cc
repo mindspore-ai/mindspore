@@ -162,6 +162,8 @@ void Iteration::SetIterationRunning() {
   std::unique_lock<std::mutex> lock(iteration_state_mtx_);
   iteration_state_ = IterationState::kRunning;
   start_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
+  MS_LOG(INFO) << "Iteratoin " << iteration_num_ << " start global timer.";
+  global_iter_timer_->Start(std::chrono::milliseconds(global_iteration_time_window_));
 }
 
 void Iteration::SetIterationEnd() {
@@ -405,7 +407,7 @@ void Iteration::HandleSyncIterationRequest(const std::shared_ptr<ps::core::Messa
 bool Iteration::IsMoveToNextIterRequestReentrant(uint64_t iteration_num) {
   std::unique_lock<std::mutex> lock(pinned_mtx_);
   if (pinned_iter_num_ == iteration_num) {
-    MS_LOG(WARNING) << "MoveToNextIteration is not reentrant. Ignore this call.";
+    MS_LOG(DEBUG) << "MoveToNextIteration is not reentrant. Ignore this call.";
     return true;
   }
   pinned_iter_num_ = iteration_num;
@@ -436,7 +438,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
   notify_leader_to_next_iter_rsp.set_result("success");
   if (!communicator_->SendResponse(notify_leader_to_next_iter_rsp.SerializeAsString().data(),
                                    notify_leader_to_next_iter_rsp.SerializeAsString().size(), message)) {
-    MS_LOG(ERROR) << "Sending response failed.";
+    MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
 
@@ -476,7 +478,7 @@ bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, cons
   prepare_next_iter_req.set_reason(reason);
 
   std::vector<uint32_t> offline_servers = {};
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
     if (!communicator_->SendPbRequest(prepare_next_iter_req, i, ps::core::TcpUserCommand::kPrepareForNextIter)) {
       MS_LOG(WARNING) << "Sending prepare for next iteration request to server " << i << " failed. Retry later.";
       offline_servers.push_back(i);
@@ -533,7 +535,7 @@ bool Iteration::BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const st
   proceed_to_next_iter_req.set_is_last_iter_valid(is_last_iter_valid);
   proceed_to_next_iter_req.set_last_iter_num(iteration_num_);
   proceed_to_next_iter_req.set_reason(reason);
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
     if (!communicator_->SendPbRequest(proceed_to_next_iter_req, i, ps::core::TcpUserCommand::kProceedToNextIter)) {
       MS_LOG(WARNING) << "Sending proceed to next iteration request to server " << i << " failed.";
       continue;
@@ -577,6 +579,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
     // Store the model which is successfully aggregated for this iteration.
     const auto &model = Executor::GetInstance().GetModel();
     ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    iteration_result_ = IterationResult::kSuccess;
     MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
@@ -584,12 +587,36 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
     size_t latest_iter_num = iter_to_model.rbegin()->first;
     const auto &model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
     ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
+    iteration_result_ = IterationResult::kFail;
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
 
   for (auto &round : rounds_) {
     MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->Reset();
+  }
+  MS_LOG(INFO) << "Iteratoin " << iteration_num_ << " stop global timer.";
+  global_iter_timer_->Stop();
+
+  for (const auto &round : rounds_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(round);
+    round->KernelSummarize();
+  }
+
+  for (const auto &round : rounds_) {
+    if (round->name() == "startFLJob") {
+      round_client_num_map_[kStartFLJobTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kStartFLJobAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kStartFLJobRejectClientNum] += round->kernel_reject_client_num();
+    } else if (round->name() == "updateModel") {
+      round_client_num_map_[kUpdateModelTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kUpdateModelAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kUpdateModelRejectClientNum] += round->kernel_reject_client_num();
+    } else if (round->name() == "getModel") {
+      round_client_num_map_[kGetModelTotalClientNum] += round->kernel_total_client_num();
+      round_client_num_map_[kGetModelAcceptClientNum] += round->kernel_accept_client_num();
+      round_client_num_map_[kGetModelRejectClientNum] += round->kernel_reject_client_num();
+    }
   }
 }
 
@@ -598,11 +625,14 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   MS_LOG(INFO) << "Notify all follower servers to end last iteration.";
   EndLastIterRequest end_last_iter_req;
   end_last_iter_req.set_last_iter_num(last_iter_num);
-  for (uint32_t i = 1; i < IntToUint(server_node_->server_num()); i++) {
-    if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter)) {
+  std::shared_ptr<std::vector<unsigned char>> client_info_rsp_msg = nullptr;
+  for (uint32_t i = 1; i < server_node_->server_num(); i++) {
+    if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter,
+                                      &client_info_rsp_msg)) {
       MS_LOG(WARNING) << "Sending ending last iteration request to server " << i << " failed.";
       continue;
     }
+    UpdateRoundClientNumMap(client_info_rsp_msg);
   }
 
   EndLastIter();
@@ -629,10 +659,29 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
     return;
   }
 
-  EndLastIter();
-
   EndLastIterResponse end_last_iter_rsp;
   end_last_iter_rsp.set_result("success");
+
+  for (const auto &round : rounds_) {
+    if (round == nullptr) {
+      continue;
+    }
+    if (round->name() == "startFLJob") {
+      end_last_iter_rsp.set_startfljob_total_client_num(round->kernel_total_client_num());
+      end_last_iter_rsp.set_startfljob_accept_client_num(round->kernel_accept_client_num());
+      end_last_iter_rsp.set_startfljob_reject_client_num(round->kernel_reject_client_num());
+    } else if (round->name() == "updateModel") {
+      end_last_iter_rsp.set_updatemodel_total_client_num(round->kernel_total_client_num());
+      end_last_iter_rsp.set_updatemodel_accept_client_num(round->kernel_accept_client_num());
+      end_last_iter_rsp.set_updatemodel_reject_client_num(round->kernel_reject_client_num());
+    } else if (round->name() == "getModel") {
+      end_last_iter_rsp.set_getmodel_total_client_num(round->kernel_total_client_num());
+      end_last_iter_rsp.set_getmodel_accept_client_num(round->kernel_accept_client_num());
+      end_last_iter_rsp.set_getmodel_reject_client_num(round->kernel_reject_client_num());
+    }
+  }
+
+  EndLastIter();
   if (!communicator_->SendResponse(end_last_iter_rsp.SerializeAsString().data(),
                                    end_last_iter_rsp.SerializeAsString().size(), message)) {
     MS_LOG(ERROR) << "Sending response failed.";
@@ -668,7 +717,11 @@ void Iteration::EndLastIter() {
       MS_LOG(WARNING) << "Can't save current iteration number into persistent storage.";
     }
   }
-
+  for (const auto &round : rounds_) {
+    MS_ERROR_IF_NULL_WO_RET_VAL(round);
+    round->InitkernelClientVisitedNum();
+  }
+  round_client_num_map_.clear();
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
@@ -692,12 +745,8 @@ bool Iteration::SummarizeIteration() {
   metrics_->set_instance_state(instance_state_.load());
   metrics_->set_loss(loss_);
   metrics_->set_accuracy(accuracy_);
-  // The joined client number is equal to the threshold of updateModel.
-  size_t update_model_threshold = static_cast<size_t>(
-    std::ceil(ps::PSContext::instance()->start_fl_job_threshold() * ps::PSContext::instance()->update_model_ratio()));
-  metrics_->set_joined_client_num(update_model_threshold);
-  // The rejected client number is equal to threshold of startFLJob minus threshold of updateModel.
-  metrics_->set_rejected_client_num(ps::PSContext::instance()->start_fl_job_threshold() - update_model_threshold);
+  metrics_->set_round_client_num_map(round_client_num_map_);
+  metrics_->set_iteration_result(iteration_result_.load());
 
   if (complete_timestamp_ < start_timestamp_) {
     MS_LOG(ERROR) << "The complete_timestamp_: " << complete_timestamp_ << ", start_timestamp_: " << start_timestamp_
@@ -749,7 +798,21 @@ bool Iteration::UpdateHyperParams(const nlohmann::json &json) {
       ps::PSContext::instance()->set_client_learning_rate(item.value().get<float>());
       continue;
     }
+    if (key == "global_iteration_time_window") {
+      ps::PSContext::instance()->set_global_iteration_time_window(item.value().get<uint64_t>());
+      continue;
+    }
   }
+
+  MS_LOG(INFO) << "start_fl_job_threshold: " << ps::PSContext::instance()->start_fl_job_threshold();
+  MS_LOG(INFO) << "start_fl_job_time_window: " << ps::PSContext::instance()->start_fl_job_time_window();
+  MS_LOG(INFO) << "update_model_ratio: " << ps::PSContext::instance()->update_model_ratio();
+  MS_LOG(INFO) << "update_model_time_window: " << ps::PSContext::instance()->update_model_time_window();
+  MS_LOG(INFO) << "fl_iteration_num: " << ps::PSContext::instance()->fl_iteration_num();
+  MS_LOG(INFO) << "client_epoch_num: " << ps::PSContext::instance()->client_epoch_num();
+  MS_LOG(INFO) << "client_batch_size: " << ps::PSContext::instance()->client_batch_size();
+  MS_LOG(INFO) << "client_learning_rate: " << ps::PSContext::instance()->client_learning_rate();
+  MS_LOG(INFO) << "global_iteration_time_window: " << ps::PSContext::instance()->global_iteration_time_window();
   return true;
 }
 
@@ -783,6 +846,36 @@ bool Iteration::ReInitRounds() {
     return false;
   }
   return true;
+}
+
+void Iteration::InitGlobalIterTimer(const TimeOutCb &timeout_cb) {
+  global_iteration_time_window_ = ps::PSContext::instance()->global_iteration_time_window();
+  global_iter_timer_ = std::make_shared<IterationTimer>();
+
+  // Set the timeout callback for the timer.
+  global_iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool, const std::string &) -> void {
+    std::string reason = "Global Iteration " + std::to_string(iteration_num_) +
+                         " timeout! This iteration is invalid. Proceed to next iteration.";
+    timeout_cb(false, reason);
+  });
+}
+
+void Iteration::UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(client_info_rsp_msg);
+  EndLastIterResponse end_last_iter_rsp;
+  (void)end_last_iter_rsp.ParseFromArray(client_info_rsp_msg->data(), SizeToInt(client_info_rsp_msg->size()));
+
+  round_client_num_map_[kStartFLJobTotalClientNum] += end_last_iter_rsp.startfljob_total_client_num();
+  round_client_num_map_[kStartFLJobAcceptClientNum] += end_last_iter_rsp.startfljob_accept_client_num();
+  round_client_num_map_[kStartFLJobRejectClientNum] += end_last_iter_rsp.startfljob_reject_client_num();
+
+  round_client_num_map_[kUpdateModelTotalClientNum] += end_last_iter_rsp.updatemodel_total_client_num();
+  round_client_num_map_[kUpdateModelAcceptClientNum] += end_last_iter_rsp.updatemodel_accept_client_num();
+  round_client_num_map_[kUpdateModelRejectClientNum] += end_last_iter_rsp.updatemodel_reject_client_num();
+
+  round_client_num_map_[kGetModelTotalClientNum] += end_last_iter_rsp.getmodel_total_client_num();
+  round_client_num_map_[kGetModelAcceptClientNum] += end_last_iter_rsp.getmodel_accept_client_num();
+  round_client_num_map_[kGetModelRejectClientNum] += end_last_iter_rsp.getmodel_reject_client_num();
 }
 }  // namespace server
 }  // namespace fl

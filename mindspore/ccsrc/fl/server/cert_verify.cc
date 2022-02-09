@@ -27,8 +27,8 @@ namespace mindspore {
 namespace ps {
 namespace server {
 #ifndef _WIN32
+static const int64_t certStartTimeDiff = -600;
 static int64_t replayAttackTimeDiff;
-static int64_t certStartTimeDiff = -600;
 
 X509 *CertVerify::readCertFromFile(const std::string &certPath) {
   BIO *bio = BIO_new_file(certPath.c_str(), "r");
@@ -72,11 +72,11 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
     return false;
   }
   if (day < 0) {
-    MS_LOG(ERROR) << "cert start day time is later than now day time, day is" << day;
+    MS_LOG(WARNING) << "cert start day time is later than now day time, day is" << day;
     return false;
   }
   if (day == 0 && sec < certStartTimeDiff) {
-    MS_LOG(ERROR) << "cert start second time is later than 600 second, second is" << sec;
+    MS_LOG(WARNING) << "cert start second time is later than 600 second, second is" << sec;
     return false;
   }
   day = 0;
@@ -87,10 +87,10 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
   }
 
   if (day < 0 || sec < 0) {
-    MS_LOG(ERROR) << "cert end time is sooner than now time.";
+    MS_LOG(WARNING) << "cert end time is sooner than now time.";
     return false;
   }
-  MS_LOG(INFO) << "verify cert time success.";
+  MS_LOG(DEBUG) << "verify cert time end.";
   return true;
 }
 
@@ -105,20 +105,20 @@ bool CertVerify::verifyPublicKey(const X509 *keyAttestationCertObj, const X509 *
     int ret = 0;
     ret = X509_verify(const_cast<X509 *>(keyAttestationCertObj), equipPubKey);
     if (ret != 1) {
-      MS_LOG(ERROR) << "keyAttestationCert verify is failed";
+      MS_LOG(WARNING) << "keyAttestationCert verify is failed";
       result = false;
       break;
     }
     ret = X509_verify(const_cast<X509 *>(equipCertObj), equipCAPubKey);
     if (ret != 1) {
-      MS_LOG(ERROR) << "equip cert verify is failed";
+      MS_LOG(WARNING) << "equip cert verify is failed";
       result = false;
       break;
     }
     int ret_first = X509_verify(const_cast<X509 *>(equipCACertObj), rootFirstPubKey);
     int ret_second = X509_verify(const_cast<X509 *>(equipCACertObj), rootSecondPubKey);
     if (ret_first != 1 && ret_second != 1) {
-      MS_LOG(ERROR) << "equip ca cert verify is failed";
+      MS_LOG(WARNING) << "equip ca cert verify is failed";
       result = false;
       break;
     }
@@ -128,7 +128,7 @@ bool CertVerify::verifyPublicKey(const X509 *keyAttestationCertObj, const X509 *
   EVP_PKEY_free(equipCAPubKey);
   EVP_PKEY_free(rootFirstPubKey);
   EVP_PKEY_free(rootSecondPubKey);
-  MS_LOG(INFO) << "verify Public Key success.";
+  MS_LOG(DEBUG) << "verify Public Key end.";
   return result;
 }
 
@@ -143,7 +143,7 @@ bool CertVerify::verifyCAChain(const std::string &keyAttestation, const std::str
   bool result = true;
   do {
     if (rootFirstCA == nullptr || rootSecondCA == nullptr) {
-      MS_LOG(ERROR) << "rootFirstCA or rootSecondCA is nullptr";
+      MS_LOG(WARNING) << "rootFirstCA or rootSecondCA is nullptr";
       result = false;
       break;
     }
@@ -158,37 +158,37 @@ bool CertVerify::verifyCAChain(const std::string &keyAttestation, const std::str
     }
 
     if (!verifyCertCommonName(equipCACertObj, equipCertObj)) {
-      MS_LOG(ERROR) << "equip ca cert subject cn is not equal with equip cert issuer cn.";
+      MS_LOG(WARNING) << "equip ca cert subject cn is not equal with equip cert issuer cn.";
       result = false;
       break;
     }
 
     if (!verifyCertCommonName(rootFirstCA, equipCACertObj) && !verifyCertCommonName(rootSecondCA, equipCACertObj)) {
-      MS_LOG(ERROR) << "root CA cert subject cn is not equal with equip CA cert issuer cn.";
+      MS_LOG(WARNING) << "root CA cert subject cn is not equal with equip CA cert issuer cn.";
       result = false;
       break;
     }
 
     if (!verifyExtendedAttributes(equipCACertObj)) {
-      MS_LOG(ERROR) << "verify equipCACert Extended Attributes failed.";
+      MS_LOG(WARNING) << "verify equipCACert Extended Attributes failed.";
       result = false;
       break;
     }
 
     if (!verifyCertKeyID(rootFirstCA, equipCACertObj) && !verifyCertKeyID(rootSecondCA, equipCACertObj)) {
-      MS_LOG(ERROR) << "root CA cert subject keyid is not equal with equip CA cert issuer keyid.";
+      MS_LOG(WARNING) << "root CA cert subject keyid is not equal with equip CA cert issuer keyid.";
       result = false;
       break;
     }
 
     if (!verifyCertKeyID(equipCACertObj, equipCertObj)) {
-      MS_LOG(ERROR) << "equip CA cert subject keyid is not equal with equip cert issuer keyid.";
+      MS_LOG(WARNING) << "equip CA cert subject keyid is not equal with equip cert issuer keyid.";
       result = false;
       break;
     }
 
     if (!verifyPublicKey(keyAttestationCertObj, equipCertObj, equipCACertObj, rootFirstCA, rootSecondCA)) {
-      MS_LOG(ERROR) << "verify Public Key failed";
+      MS_LOG(WARNING) << "verify Public Key failed";
       result = false;
       break;
     }
@@ -198,7 +198,7 @@ bool CertVerify::verifyCAChain(const std::string &keyAttestation, const std::str
   X509_free(keyAttestationCertObj);
   X509_free(equipCertObj);
   X509_free(equipCACertObj);
-  MS_LOG(INFO) << "verifyCAChain success.";
+  MS_LOG(DEBUG) << "verifyCAChain end.";
   return result;
 }
 
@@ -216,7 +216,7 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
     char subject_keyid[512] = {0};
     for (int i = 0; i < skid->length; i++) {
       char keyid[8] = {0};
-      int base = 512;
+      size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
       int ret = strcat_s(subject_keyid, base, keyid);
       if (ret == -1) {
@@ -232,13 +232,13 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
     }
     char issuer_keyid[512] = {0};
     if (akeyid->keyid == nullptr) {
-      MS_LOG(ERROR) << "keyid is nullprt.";
+      MS_LOG(WARNING) << "keyid is nullprt.";
       result = false;
       break;
     }
     for (int i = 0; i < akeyid->keyid->length; i++) {
       char keyid[8] = {0};
-      int base = 512;
+      size_t base = 512;
       (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
       int ret = strcat_s(issuer_keyid, base, keyid);
       if (ret == -1) {
@@ -271,11 +271,11 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
       break;
     }
     if (!bcons->ca) {
-      MS_LOG(ERROR) << "Subject Type is End Entity.";
+      MS_LOG(WARNING) << "Subject Type is End Entity.";
       result = false;
       break;
     }
-    MS_LOG(INFO) << "Subject Type is CA.";
+    MS_LOG(DEBUG) << "Subject Type is CA.";
 
     lASN1UsageStr = reinterpret_cast<ASN1_BIT_STRING *>(X509_get_ext_d2i(cert, NID_key_usage, NULL, NULL));
     if (lASN1UsageStr == nullptr) {
@@ -289,11 +289,11 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
     }
 
     if (!(usage & KU_KEY_CERT_SIGN)) {
-      MS_LOG(ERROR) << "Subject is not Certificate Signature.";
+      MS_LOG(WARNING) << "Subject is not Certificate Signature.";
       result = false;
       break;
     }
-    MS_LOG(INFO) << "Subject is Certificate Signature.";
+    MS_LOG(DEBUG) << "Subject is Certificate Signature.";
   } while (0);
   BASIC_CONSTRAINTS_free(bcons);
   ASN1_BIT_STRING_free(lASN1UsageStr);
@@ -346,14 +346,14 @@ bool CertVerify::verifyCRL(const std::string &equipCert, const std::string &equi
     }
 
     if (equipCrl == nullptr) {
-      MS_LOG(INFO) << "equipCrl is nullptr. return true.";
+      MS_LOG(DEBUG) << "equipCrl is nullptr. return true.";
       result = true;
       break;
     }
     evp_pkey = X509_get_pubkey(equipCertObj);
     int ret = X509_CRL_verify(equipCrl, evp_pkey);
     if (ret == 1) {
-      MS_LOG(ERROR) << "equip cert in equip crl, verify failed";
+      MS_LOG(WARNING) << "equip cert in equip crl, verify failed";
       result = false;
       break;
     }
@@ -362,14 +362,14 @@ bool CertVerify::verifyCRL(const std::string &equipCert, const std::string &equi
   EVP_PKEY_free(evp_pkey);
   X509_free(equipCertObj);
   X509_CRL_free(equipCrl);
-  MS_LOG(INFO) << "verifyCRL success.";
+  MS_LOG(DEBUG) << "verifyCRL end.";
   return result;
 }
 
 bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned char *signData, const std::string &flID,
                               const std::string &timeStamp) {
   if (keyAttestation.empty() || signData == nullptr || flID.empty() || timeStamp.empty()) {
-    MS_LOG(ERROR) << "keyAttestation or signData or flID or timeStamp is empty.";
+    MS_LOG(WARNING) << "keyAttestation or signData or flID or timeStamp is empty.";
     return false;
   }
   bool result = true;
@@ -386,7 +386,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
     pubKey = X509_get_pubkey(keyAttestationCertObj);
     RSA *pRSAPublicKey = EVP_PKEY_get0_RSA(pubKey);
     if (pRSAPublicKey == nullptr) {
-      MS_LOG(ERROR) << "get rsa public key failed.";
+      MS_LOG(WARNING) << "get rsa public key failed.";
       result = false;
       break;
     }
@@ -395,7 +395,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
     unsigned char buffer[256];
     int ret = RSA_public_decrypt(pubKeyLen, signData, buffer, pRSAPublicKey, RSA_NO_PADDING);
     if (ret == -1) {
-      MS_LOG(ERROR) << "rsa public decrypt failed.";
+      MS_LOG(WARNING) << "rsa public decrypt failed.";
       result = false;
       break;
     }
@@ -403,11 +403,11 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
     int saltLen = -2;
     ret = RSA_verify_PKCS1_PSS(pRSAPublicKey, srcDataHash, EVP_sha256(), buffer, saltLen);
     if (ret != 1) {
-      int64_t ulErr = SizeToLong(ERR_get_error());
+      uint64_t ulErr = ERR_get_error();
       char szErrMsg[1024] = {0};
-      MS_LOG(ERROR) << "verify error. error number: " << ulErr;
+      MS_LOG(WARNING) << "verify WARNING. WARNING number: " << ulErr;
       std::string str_res = ERR_error_string(ulErr, szErrMsg);
-      MS_LOG(ERROR) << szErrMsg;
+      MS_LOG(WARNING) << szErrMsg;
       if (str_res.empty()) {
         result = false;
         break;
@@ -420,7 +420,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const unsigned 
   X509_free(keyAttestationCertObj);
   CRYPTO_cleanup_all_ex_data();
 
-  MS_LOG(INFO) << "verifyRSAKey success.";
+  MS_LOG(DEBUG) << "verifyRSAKey end.";
   return result;
 }
 
@@ -445,7 +445,7 @@ void CertVerify::sha256Hash(const uint8_t *src, const int src_len, uint8_t *hash
 
 std::string CertVerify::toHexString(const unsigned char *data, const int len) {
   if (data == nullptr) {
-    MS_LOG(ERROR) << "data hash is null.";
+    MS_LOG(WARNING) << "data hash is null.";
     return "";
   }
 
@@ -465,10 +465,10 @@ bool CertVerify::verifyEquipCertAndFlID(const std::string &flID, const std::stri
   sha256Hash(equipCert, hash, SHA256_DIGEST_LENGTH);
   std::string equipCertSha256 = toHexString(hash, SHA256_DIGEST_LENGTH);
   if (flID == equipCertSha256) {
-    MS_LOG(INFO) << "verifyEquipCertAndFlID success.";
+    MS_LOG(DEBUG) << "verifyEquipCertAndFlID success.";
     return true;
   } else {
-    MS_LOG(ERROR) << "verifyEquipCertAndFlID failed.";
+    MS_LOG(WARNING) << "verifyEquipCertAndFlID failed.";
     return false;
   }
 }
@@ -482,13 +482,13 @@ bool CertVerify::verifyTimeStamp(const std::string &flID, const std::string &tim
     return false;
   }
   int64_t now = tv.tv_sec * base + tv.tv_usec / base;
-  MS_LOG(INFO) << "flID: " << flID.c_str() << ",now time: " << now << ",requestTime: " << requestTime;
+  MS_LOG(DEBUG) << "flID: " << flID.c_str() << ",now time: " << now << ",requestTime: " << requestTime;
 
   int64_t diff = now - requestTime;
   if (abs(diff) > replayAttackTimeDiff) {
     return false;
   }
-  MS_LOG(INFO) << "verifyTimeStamp success.";
+  MS_LOG(DEBUG) << "verifyTimeStamp success.";
   return true;
 }
 
@@ -501,7 +501,7 @@ void CertVerify::sha256Hash(const std::string &src, uint8_t *hash, const int len
   if (ret != 1) {
     return;
   }
-  ret = SHA256_Update(&sha_ctx, src.c_str(), src.size());
+  ret = SHA256_Update(&sha_ctx, src.c_str(), IntToSize(src.size()));
   if (ret != 1) {
     return;
   }
@@ -514,7 +514,7 @@ void CertVerify::sha256Hash(const std::string &src, uint8_t *hash, const int len
 bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *srcData, const uint8_t *signData,
                               int srcDataLen) {
   if (keyAttestation.empty() || signData == nullptr || srcData == nullptr || srcDataLen <= 0) {
-    MS_LOG(ERROR) << "keyAttestation or signData or srcData is invalid.";
+    MS_LOG(WARNING) << "keyAttestation or signData or srcData is invalid.";
     return false;
   }
   bool result = true;
@@ -525,7 +525,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
     pubKey = X509_get_pubkey(keyAttestationCertObj);
     RSA *pRSAPublicKey = EVP_PKEY_get0_RSA(pubKey);
     if (pRSAPublicKey == nullptr) {
-      MS_LOG(ERROR) << "get rsa public key failed.";
+      MS_LOG(WARNING) << "get rsa public key failed.";
       result = false;
       break;
     }
@@ -534,7 +534,7 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
     unsigned char buffer[256];
     int ret = RSA_public_decrypt(pubKeyLen, signData, buffer, pRSAPublicKey, RSA_NO_PADDING);
     if (ret == -1) {
-      MS_LOG(ERROR) << "rsa public decrypt failed.";
+      MS_LOG(WARNING) << "rsa public decrypt failed.";
       result = false;
       break;
     }
@@ -542,11 +542,11 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
     int saltLen = -2;
     ret = RSA_verify_PKCS1_PSS(pRSAPublicKey, srcData, EVP_sha256(), buffer, saltLen);
     if (ret != 1) {
-      int64_t ulErr = SizeToLong(ERR_get_error());
+      uint64_t ulErr = ERR_get_error();
       char szErrMsg[1024] = {0};
-      MS_LOG(ERROR) << "verify error. error number: " << ulErr;
+      MS_LOG(WARNING) << "verify WARNING. WARNING number: " << ulErr;
       std::string str_res = ERR_error_string(ulErr, szErrMsg);
-      MS_LOG(ERROR) << szErrMsg;
+      MS_LOG(WARNING) << szErrMsg;
       if (str_res.empty()) {
         result = false;
         break;
@@ -559,24 +559,28 @@ bool CertVerify::verifyRSAKey(const std::string &keyAttestation, const uint8_t *
   X509_free(keyAttestationCertObj);
   CRYPTO_cleanup_all_ex_data();
 
-  MS_LOG(INFO) << "verifyRSAKey success.";
+  MS_LOG(DEBUG) << "verifyRSAKey end.";
   return result;
 }
 
 bool CertVerify::initRootCertAndCRL(const std::string rootFirstCaFilePath, const std::string rootSecondCaFilePath,
                                     const std::string equipCrlPath, const uint64_t replay_attack_time_diff) {
   if (rootFirstCaFilePath.empty() || rootSecondCaFilePath.empty()) {
-    MS_LOG(ERROR) << "the root or crl path is empty.";
+    MS_LOG(WARNING) << "the root or crl path is empty.";
     return false;
   }
 
   if (!checkFileExists(rootFirstCaFilePath)) {
-    MS_LOG(ERROR) << "The rootFirstCaFilePath is not exist.";
+    MS_LOG(WARNING) << "The rootFirstCaFilePath is not exist.";
     return false;
   }
   if (!checkFileExists(rootSecondCaFilePath)) {
-    MS_LOG(ERROR) << "The rootSecondCaFilePath is not exist.";
+    MS_LOG(WARNING) << "The rootSecondCaFilePath is not exist.";
     return false;
+  }
+
+  if (!checkFileExists(equipCrlPath)) {
+    MS_LOG(WARNING) << "The equipCrlPath is not exist.";
   }
   replayAttackTimeDiff = UlongToLong(replay_attack_time_diff);
   return true;

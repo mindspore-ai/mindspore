@@ -178,11 +178,10 @@ def call_get_instance_detail():
         return process_self_define_json(Status.FAILED.value, "error. metrics file is not existed.")
 
     ans_json_obj = {}
-    joined_client_num_list = []
-    rejected_client_num_list = []
     metrics_auc_list = []
     metrics_loss_list = []
     iteration_execution_time_list = []
+    client_visited_info_list = []
 
     with open(metrics_file_path, 'r') as f:
         metrics_list = f.readlines()
@@ -193,8 +192,7 @@ def call_get_instance_detail():
     for metrics in metrics_list:
         json_obj = json.loads(metrics)
         iteration_execution_time_list.append(json_obj['iterationExecutionTime'])
-        joined_client_num_list.append(json_obj['joinedClientNum'])
-        rejected_client_num_list.append(json_obj['rejectedClientNum'])
+        client_visited_info_list.append(json_obj['clientVisitedInfo'])
         metrics_auc_list.append(json_obj['metricsAuc'])
         metrics_loss_list.append(json_obj['metricsLoss'])
 
@@ -210,8 +208,7 @@ def call_get_instance_detail():
     ans_json_result['flName'] = last_metrics_obj['flName']
     ans_json_result['instanceStatus'] = last_metrics_obj['instanceStatus']
     ans_json_result['iterationExecutionTime'] = iteration_execution_time_list
-    ans_json_result['joinedClientNum'] = joined_client_num_list
-    ans_json_result['rejectedClientNum'] = rejected_client_num_list
+    ans_json_result['clientVisitedInfo'] = client_visited_info_list
     ans_json_result['metricsAuc'] = metrics_auc_list
     ans_json_result['metricsLoss'] = metrics_loss_list
 

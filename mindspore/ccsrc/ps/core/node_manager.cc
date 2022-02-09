@@ -98,7 +98,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
         rank_id = next_server_rank_id_;
-        ++next_server_rank_id_;
+        next_server_rank_id_ += 1;
       }
     } else {
       registered_nodes_info_.erase((*rank_it).first);
@@ -107,7 +107,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     if (rank_id >= meta_data_->server_num) {
       MS_LOG(ERROR) << "The rank id is greater than the number of servers:" << meta_data_->server_num;
       rank_id = UINT_MAX;
-      --next_server_rank_id_;
+      next_server_rank_id_ -= 1;
       return rank_id;
     }
     NodeInfo node_info;
@@ -139,7 +139,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
         rank_id = next_worker_rank_id_;
-        ++next_worker_rank_id_;
+        next_worker_rank_id_ += 1;
       }
     } else {
       registered_nodes_info_.erase((*worker_rank_it).first);
@@ -148,7 +148,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     if (rank_id >= meta_data_->worker_num) {
       MS_LOG(ERROR) << "The rank id is greater than the number of workers:" << meta_data_->worker_num;
       rank_id = UINT_MAX;
-      --next_worker_rank_id_;
+      next_worker_rank_id_ -= 1;
       return rank_id;
     }
     NodeInfo node_info;
@@ -222,8 +222,8 @@ void NodeManager::UpdateCluster() {
       (void)heartbeats_.erase(iter->first);
       finish_nodes_id_.insert(iter->first);
     }
-    if (onPersist) {
-      onPersist();
+    if (onPersist_) {
+      onPersist_();
     }
   } else if (SizeToUint(heartbeats_.size()) == total_node_num_) {
     if (cluster_state_ == ClusterState::NODE_TIMEOUT) {
@@ -232,15 +232,16 @@ void NodeManager::UpdateCluster() {
           registered_nodes_info_[it->first].is_alive = true;
         }
       }
-      if (onPersist) {
-        onPersist();
+      if (onPersist_) {
+        onPersist_();
       }
       UpdateClusterState(ClusterState::CLUSTER_READY);
     }
   }
 
   // 2. update cluster finish state
-  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_) {
+  if (SizeToUint(finish_nodes_id_.size()) == total_node_num_ &&
+      PSContext::instance()->server_mode() != kServerModeHybrid) {
     UpdateClusterState(ClusterState::CLUSTER_EXIT);
   }
 }
@@ -315,7 +316,7 @@ void NodeManager::ResetMetadata(const std::vector<std::string> &scale_in_nodes) 
       }
     }
     auto min_rank_id = std::min_element(server_rank_ids.begin(), server_rank_ids.end());
-    next_server_rank_id_ = UintToInt(*min_rank_id - 1);
+    next_server_rank_id_ = *min_rank_id;
     MS_LOG(INFO) << "The next server rank id:" << next_server_rank_id_;
   }
   registered_nodes_info_.clear();
@@ -395,7 +396,7 @@ void NodeManager::set_next_worker_rank_id(const uint32_t &next_worker_rank_id) {
 void NodeManager::set_next_server_rank_id(const uint32_t &next_server_rank_id) {
   this->next_server_rank_id_ = next_server_rank_id;
 }
-void NodeManager::setPersistCallback(const OnPersist &onPersist) { this->onPersist = onPersist; }
+void NodeManager::setPersistCallback(const OnPersist &onPersist) { this->onPersist_ = onPersist; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -242,6 +242,8 @@ void Server::InitIteration() {
   FinishIterCb finish_iter_cb =
     std::bind(&Iteration::NotifyNext, iteration_, std::placeholders::_1, std::placeholders::_2);
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
+
+  iteration_->InitGlobalIterTimer(time_out_cb);
   return;
 }
 
@@ -294,9 +296,11 @@ void Server::InitCipher() {
   if (prim != NULL) {
     BN_clear_free(prim);
   }
-  cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
-                     cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_push_list_sign_cnt_,
-                     cipher_get_list_sign_cnt_, cipher_reconstruct_secrets_up_cnt_);
+  if (!cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
+                          cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_push_list_sign_cnt_,
+                          cipher_get_list_sign_cnt_, cipher_reconstruct_secrets_up_cnt_)) {
+    MS_LOG(EXCEPTION) << "cipher init fail.";
+  }
 #endif
 }
 
@@ -392,6 +396,7 @@ void Server::InitExecutor() {
   // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph_, executor_threshold_);
+  func_graph_ = nullptr;
   ModelStore::GetInstance().Initialize();
   return;
 }
@@ -514,7 +519,7 @@ void Server::ProcessAfterScalingOut() {
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
   }
-  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
+  if (!iteration_->ReInitForScaling(server_node_->server_num(), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
@@ -542,7 +547,7 @@ void Server::ProcessAfterScalingIn() {
   if (!DistributedCountService::GetInstance().ReInitForScaling()) {
     MS_LOG(WARNING) << "DistributedCountService reinitializing failed.";
   }
-  if (!iteration_->ReInitForScaling(IntToUint(server_node_->server_num()), server_node_->rank_id())) {
+  if (!iteration_->ReInitForScaling(server_node_->server_num(), server_node_->rank_id())) {
     MS_LOG(WARNING) << "Iteration reinitializing failed.";
   }
   if (!Executor::GetInstance().ReInitForScaling()) {
@@ -628,6 +633,7 @@ void Server::HandleQueryInstanceRequest(const std::shared_ptr<ps::core::MessageH
   response["client_epoch_num"] = ps::PSContext::instance()->client_epoch_num();
   response["client_batch_size"] = ps::PSContext::instance()->client_batch_size();
   response["client_learning_rate"] = ps::PSContext::instance()->client_learning_rate();
+  response["global_iteration_time_window"] = ps::PSContext::instance()->global_iteration_time_window();
   auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
   MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
   if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {

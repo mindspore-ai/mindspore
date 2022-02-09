@@ -232,7 +232,7 @@ bool CommUtil::IsFileEmpty(const std::string &file) {
 }
 
 bool CommUtil::CreateDirectory(const std::string &directoryPath) {
-  uint32_t dirPathLen = directoryPath.length();
+  uint32_t dirPathLen = SizeToUint(directoryPath.length());
   constexpr uint32_t MAX_PATH_LEN = 512;
   if (dirPathLen > MAX_PATH_LEN) {
     return false;

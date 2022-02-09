@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <map>
 #include "ps/core/communicator/communicator_base.h"
 #include "fl/server/common.h"
 #include "fl/server/round.h"
@@ -125,8 +126,14 @@ class Iteration {
   // Synchronize server iteration after another server's recovery is completed.
   bool SyncAfterRecovery(uint64_t iteration_num);
 
+  // Initialize global iteration timer.
+  void InitGlobalIterTimer(const TimeOutCb &timeout_cb);
+
   // The round kernels whose Launch method has not returned yet.
   std::atomic_uint32_t running_round_num_;
+
+  // Update count with client visited num in round
+  void UpdateRoundClientNumMap(const std::string &name, const size_t num);
 
  private:
   Iteration()
@@ -147,9 +154,18 @@ class Iteration {
         is_instance_being_updated_(false),
         loss_(0.0),
         accuracy_(0.0),
-        joined_client_num_(0),
-        rejected_client_num_(0),
-        time_cost_(0) {
+        time_cost_(0),
+        global_iteration_time_window_(0),
+        round_client_num_map_({{kStartFLJobTotalClientNum, 0},
+                               {kUpdateModelTotalClientNum, 0},
+                               {kGetModelTotalClientNum, 0},
+                               {kStartFLJobAcceptClientNum, 0},
+                               {kUpdateModelAcceptClientNum, 0},
+                               {kGetModelAcceptClientNum, 0},
+                               {kStartFLJobRejectClientNum, 0},
+                               {kUpdateModelRejectClientNum, 0},
+                               {kGetModelRejectClientNum, 0}}),
+        iteration_result_(IterationResult::kSuccess) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration();
@@ -202,6 +218,8 @@ class Iteration {
   // Reinitialize rounds and round kernels.
   bool ReInitRounds();
 
+  void UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
+
   std::shared_ptr<ps::core::ServerNode> server_node_;
   std::shared_ptr<ps::core::TcpCommunicator> communicator_;
 
@@ -246,6 +264,7 @@ class Iteration {
   // Every instance is not reentrant.
   // This flag represents whether the instance is being updated.
   std::mutex instance_mtx_;
+
   bool is_instance_being_updated_;
 
   // The training loss after this federated learning iteration, passed by worker.
@@ -254,14 +273,20 @@ class Iteration {
   // The evaluation result after this federated learning iteration, passed by worker.
   float accuracy_;
 
-  // The number of clients which join the federated aggregation.
-  size_t joined_client_num_;
-
-  // The number of clients which are not involved in federated aggregation.
-  size_t rejected_client_num_;
-
   // The time cost in millisecond for this completed iteration.
   uint64_t time_cost_;
+
+  // global iteration time window
+  uint64_t global_iteration_time_window_;
+
+  // for example: "startFLJobTotalClientNum" -> startFLJob total client num
+  std::map<std::string, size_t> round_client_num_map_;
+
+  // Iteration global timer.
+  std::shared_ptr<IterationTimer> global_iter_timer_;
+
+  // The result for current iteration result.
+  std::atomic<IterationResult> iteration_result_;
 };
 }  // namespace server
 }  // namespace fl

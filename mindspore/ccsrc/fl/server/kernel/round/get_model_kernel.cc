@@ -30,7 +30,7 @@ void GetModelKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
-
+  InitClientVisitedNum();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -67,9 +67,9 @@ bool GetModelKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
     return true;
   }
 
-  ++retry_count_;
+  retry_count_ += 1;
   if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
-    MS_LOG(INFO) << "Launching GetModelKernel kernel. Retry count is " << retry_count_.load();
+    MS_LOG(DEBUG) << "Launching GetModelKernel kernel. Retry count is " << retry_count_.load();
   }
 
   const schema::RequestGetModel *get_model_req = flatbuffers::GetRoot<schema::RequestGetModel>(req_data);
@@ -95,7 +95,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
   auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
   std::map<std::string, AddressPtr> feature_maps;
   size_t current_iter = LocalMetaStore::GetInstance().curr_iter_num();
-  size_t get_model_iter = static_cast<size_t>(get_model_req->iteration());
+  size_t get_model_iter = IntToSize(get_model_req->iteration());
   const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
   size_t latest_iter_num = iter_to_model.rbegin()->first;
   // If this iteration is not finished yet, return ResponseCode_SucNotReady so that clients could get model later.
@@ -106,22 +106,22 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req, cons
     BuildGetModelRsp(fbb, schema::ResponseCode_SucNotReady, reason, current_iter, feature_maps,
                      std::to_string(next_req_time));
     if (retry_count_.load() % kPrintGetModelForEveryRetryTime == 1) {
-      MS_LOG(WARNING) << reason;
+      MS_LOG(DEBUG) << reason;
     }
     return;
   }
 
   if (iter_to_model.count(get_model_iter) == 0) {
     // If the model of get_model_iter is not stored, return the latest version of model and current iteration number.
-    MS_LOG(WARNING) << "The iteration of GetModel request " << std::to_string(get_model_iter)
-                    << " is invalid. Current iteration is " << std::to_string(current_iter);
+    MS_LOG(DEBUG) << "The iteration of GetModel request " << std::to_string(get_model_iter)
+                  << " is invalid. Current iteration is " << std::to_string(current_iter);
     feature_maps = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
   } else {
     feature_maps = ModelStore::GetInstance().GetModelByIterNum(get_model_iter);
   }
-
-  MS_LOG(INFO) << "GetModel last iteratin is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
-               << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
+  IncreaseAcceptClientNum();
+  MS_LOG(DEBUG) << "GetModel last iteratin is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
+                << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
   BuildGetModelRsp(fbb, schema::ResponseCode_SUCCEED, "Get model for iteration " + std::to_string(get_model_iter),
                    current_iter, feature_maps, std::to_string(next_req_time));
   return;
