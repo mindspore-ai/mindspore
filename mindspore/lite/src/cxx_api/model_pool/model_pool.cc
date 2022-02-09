@@ -20,7 +20,9 @@
 #include "include/lite_types.h"
 #include "src/common/config_file.h"
 namespace mindspore {
-void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
+namespace {
+constexpr int32_t kNumThreads = 4;
+int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
   SYSTEM_INFO sysinfo;
@@ -29,6 +31,12 @@ void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_li
 #else
   core_num = sysconf(_SC_NPROCESSORS_CONF);
 #endif
+  return core_num;
+}
+}  // namespace
+
+void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num) {
+  int core_num = GetCoreNum();
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread num is zero.";
     return;
@@ -80,7 +88,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     }
   } else {
     MS_LOG(DEBUG) << "use default config.";
-    model_context->SetThreadNum(1);
+    model_context->SetThreadNum(kNumThreads);
     model_context->SetEnableParallel(false);
     model_context->SetThreadAffinity(lite::NO_BIND);
     auto &device_list = model_context->MutableDeviceInfo();
@@ -97,6 +105,11 @@ ModelPoolContex ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig
     MS_LOG(ERROR) << "context is nullptr.";
     return {};
   }
+  if (model_context->GetThreadNum() == 0) {
+    MS_LOG(ERROR) << "thread num is zero.";
+    return {};
+  }
+  num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
   ModelPoolContex model_pool_context;
   std::vector<std::vector<int>> all_model_bind_list;
   if (model_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
@@ -140,6 +153,10 @@ std::vector<MSTensor> ModelPool::GetInputs() {
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
                        const Key &dec_key, const std::string &dec_mode) {
   auto model_pool_context = CreateModelContext(runner_config);
+  if (model_pool_context.empty()) {
+    MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
+    return kLiteError;
+  }
   for (size_t i = 0; i < num_models_; i++) {
     auto model_thread = std::make_shared<ModelThread>();
     auto status = model_thread->Init(model_path, model_pool_context[i], dec_key, dec_mode);
@@ -151,12 +168,110 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   return kSuccess;
 }
 
+Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                     std::vector<std::vector<MSTensor>> *new_inputs) {
+  auto batch = inputs[0].Shape()[0];
+  if (batch % batch_split_num_ != 0) {
+    MS_LOG(DEBUG) << "Can not split input tensor.";
+    return kLiteSuccessExit;
+  }
+  std::vector<std::vector<std::vector<int64_t>>> all_input_shape;
+  for (size_t k = 0; k < batch_split_num_; k++) {  // do for batch
+    std::vector<std::vector<int64_t>> inputs_shape;
+    std::vector<MSTensor> new_inputs_tensor;
+    for (size_t i = 0; i < inputs.size(); i++) {  // do for input
+      std::vector<int64_t> shape;
+      size_t input_size = batch / batch_split_num_;
+      shape.push_back(batch / batch_split_num_);
+      for (size_t j = 1; j < inputs[i].Shape().size(); j++) {  // do for dims
+        shape.push_back(inputs[i].Shape()[j]);
+        input_size *= inputs[i].Shape()[j];
+      }
+      inputs_shape.push_back(shape);
+      if (inputs[i].DataType() == static_cast<enum DataType>(kNumberTypeFloat32)) {
+        void *data = malloc(input_size * sizeof(float));
+        memcpy(reinterpret_cast<float *>(data),
+               reinterpret_cast<float *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_size * k,
+               input_size * sizeof(float));
+        auto new_tensor = mindspore::MSTensor::CreateTensor(
+          inputs[i].Name(), static_cast<enum DataType>(kNumberTypeFloat32), shape, data, input_size * sizeof(float));
+        new_inputs_tensor.push_back(*new_tensor);
+        free(data);
+      } else if (inputs[i].DataType() == static_cast<enum DataType>(kNumberTypeInt32)) {
+        void *data = malloc(input_size * sizeof(int32_t));
+        memcpy(reinterpret_cast<int32_t *>(data),
+               reinterpret_cast<int32_t *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_size * k,
+               input_size * sizeof(int32_t));
+        auto new_tensor = mindspore::MSTensor::CreateTensor(
+          inputs[i].Name(), static_cast<enum DataType>(kNumberTypeInt32), shape, data, input_size * sizeof(int32_t));
+        new_inputs_tensor.push_back(*new_tensor);
+        free(data);
+      } else {
+        MS_LOG(ERROR) << "not support data type in split batch.";
+        return kLiteError;
+      }
+    }
+    new_inputs->push_back(new_inputs_tensor);
+    all_input_shape.push_back(inputs_shape);
+  }
+  return kSuccess;
+}
+
+Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs) {
+  for (size_t i = 0; i < outputs->at(0).size(); i++) {
+    std::vector<int64_t> output_tensor_shape = outputs->at(0)[i].Shape();
+    output_tensor_shape[0] *= batch_split_num_;
+    if (all_out_data != nullptr) {
+      free(all_out_data);
+      all_out_data = nullptr;
+    }
+    all_out_data = malloc(outputs->at(0).at(i).DataSize() * batch_split_num_);
+    for (size_t j = 0; j < batch_split_num_; j++) {
+      void *out_data = outputs->at(j)[i].MutableData();
+      memcpy(reinterpret_cast<float *>(all_out_data) + outputs->at(j)[i].ElementNum() * j,
+             reinterpret_cast<float *>(out_data), outputs->at(j)[i].DataSize());
+    }
+    auto new_tensor =
+      mindspore::MSTensor::CreateTensor(outputs->at(0)[i].Name(), outputs->at(i)[0].DataType(), output_tensor_shape,
+                                        all_out_data, outputs->at(0)[i].DataSize() * batch_split_num_);
+    new_outputs->push_back(*new_tensor);
+  }
+  return kSuccess;
+}
+
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   outputs->clear();
-  auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
-  PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
-  PredictTaskQueue::GetInstance()->WaitUntilPredictActive(outputs);
+  if (PredictTaskQueue::GetInstance()->GetTaskNum() == 0 &&
+      batch_split_num_ <= static_cast<size_t>(PredictTaskQueue::GetInstance()->GetWaitModelNum())) {
+    std::vector<std::vector<MSTensor>> new_inputs;
+    std::vector<std::vector<MSTensor>> new_outputs;
+    auto status = SplitTensorByBatch(inputs, outputs, &new_inputs);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "model pool predict failed.";
+      return kLiteError;
+    }
+    for (size_t i = 0; i < batch_split_num_; i++) {
+      std::vector<MSTensor> new_output;
+      new_outputs.push_back(new_output);
+    }
+    for (size_t i = 0; i < batch_split_num_; i++) {
+      auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs[i], before, after);
+      PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+    }
+    for (size_t i = 0; i < batch_split_num_; i++) {
+      PredictTaskQueue::GetInstance()->WaitUntilPredictActive(&new_outputs[i]);
+    }
+    status = ConcatPredictOutput(&new_outputs, outputs);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "ConcatPredictOutput failed.";
+      return kLiteError;
+    }
+  } else {
+    auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
+    PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+    PredictTaskQueue::GetInstance()->WaitUntilPredictActive(outputs);
+  }
   return kSuccess;
 }
 
@@ -166,5 +281,7 @@ ModelPool::~ModelPool() {
       th.join();
     }
   }
+  free(all_out_data);
+  all_out_data = nullptr;
 }
 }  // namespace mindspore
