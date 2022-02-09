@@ -13,11 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
-from .. import numpy as mnp
 from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
 from .ops_wrapper import matrix_set_diag
 from .utils_const import _raise_value_error
-from .. import dtype as mstype
 from ..ops import operations as P
 from ..ops import functional as F
 from ..ops._grad.grad_base import bprop_getters
@@ -31,9 +29,8 @@ _matrix_band_part = MatrixBandPart()
 def _compute_f(w, epsilon=1E-20):
     diff = F.expand_dims(w, -2) - F.expand_dims(w, -1)
     diff_inv = diff / (diff * diff + epsilon)
-    eye_mask = F.eye(F.shape(diff)[-1], F.shape(diff)[-2], mstype.bool_)
-    zeros = F.zeros_like(diff)
-    return F.select(eye_mask, zeros, diff_inv)
+    f = matrix_set_diag(diff_inv, F.zeros_like(w))
+    return f
 
 
 def _adjoint(a):
@@ -97,7 +94,6 @@ def get_bprpo_eig(self):
             f = _compute_f(w)
             grad_a = _diag(grad_w) + f * vh_gv
             grad_a = _matrix_solve(vh, _matmul(grad_a, vh))  # not support
-
         return (grad_a,)
 
     return bprop
@@ -111,6 +107,7 @@ def get_bprpo_eigh(self):
     """
     is_compute_v = self.compute_eigenvectors
     is_lower = self.lower
+    lower = int(is_lower)
     eigh = Eigh(compute_eigenvectors=True)
 
     def bprop(a, out, dout):
@@ -128,12 +125,10 @@ def get_bprpo_eigh(self):
 
         # The forward implementation only focus on lower part or upper part,
         # so we only retain the corresponding part.
-        if is_lower:
-            grad_a = mnp.tril(grad_a + _adjoint(grad_a))
-        else:
-            grad_a = mnp.triu(grad_a + _adjoint(grad_a))
-        grad_a = grad_a - 0.5 * _diag(grad_a.diagonal(0, -2, -1))
-
+        grad_a = grad_a + _adjoint(grad_a)
+        grad_a = _matrix_band_part(grad_a, 0 - lower, lower - 1)
+        middle_diag = 0.5 * grad_a.diagonal(0, -2, -1)
+        grad_a = matrix_set_diag(grad_a, middle_diag)
         return (grad_a,)
 
     return bprop
@@ -146,26 +141,24 @@ def get_bprpo_trsm(self):
     """
     is_lower = self.lower
     is_unit_diagonal = self.unit_diagonal
-    k = int(is_unit_diagonal)
+    lower = int(is_lower)
     bp_trans = ("N" if self.trans == "T" else "T")
     solve_triangular = SolveTriangular(is_lower, is_unit_diagonal, bp_trans)
 
     def bprop(a, b, out, dout):
         x, grad_x = out, dout
+        row_size = F.shape(a)[-2]
         grad_b = solve_triangular(a, grad_x)
-        grad_b_align = F.reshape(grad_b, (F.shape(a)[-2], -1))
-        x_align = F.reshape(x, (F.shape(a)[-2], -1))
-
+        grad_b_align = F.reshape(grad_b, (row_size, -1))
+        x_align = F.reshape(x, (row_size, -1))
         if bp_trans == "T":
             grad_a = _matmul(grad_b_align, _adjoint(x_align))
         else:
             grad_a = _matmul(x_align, _adjoint(grad_b_align))
 
-        if is_lower:
-            grad_a = -mnp.tril(grad_a, -k)
-        else:
-            grad_a = -mnp.triu(grad_a, k)
-
+        grad_a = -1 * _matrix_band_part(grad_a, 0 - lower, lower - 1)
+        if is_unit_diagonal:
+            grad_a = matrix_set_diag(grad_a, F.fill(grad_a.dtype, (row_size,), 0))
         return grad_a, grad_b
 
     return bprop
