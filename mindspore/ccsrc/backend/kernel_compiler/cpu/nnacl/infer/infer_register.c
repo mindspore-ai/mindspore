@@ -369,7 +369,7 @@ InferShape GetInferFunc(int prim_type) {
     RegAllInferFunc3();
   }
 #endif
-  if (prim_type < PrimType_MAX) {
+  if (prim_type > PrimType_MIN && prim_type < PrimType_MAX) {
     return g_infer_func[prim_type];
   } else if (prim_type >= PrimType_InnerOpMin && prim_type < PrimType_InnerOpMax) {
     return g_inner_op_infer_func[prim_type - PrimType_InnerOpMin];
@@ -378,7 +378,7 @@ InferShape GetInferFunc(int prim_type) {
 }
 
 void RegInfer(int prim_type, InferShape func) {
-  if (prim_type < PrimType_MAX) {
+  if (prim_type > PrimType_MIN && prim_type < PrimType_MAX) {
     g_infer_func[prim_type] = func;
   } else if (prim_type >= PrimType_InnerOpMin && prim_type < PrimType_InnerOpMax) {
     g_inner_op_infer_func[prim_type - PrimType_InnerOpMin] = func;
