@@ -103,6 +103,10 @@ from .lower_bound import _lower_bound_aicpu
 from .upper_bound import _upper_bound_aicpu
 from .grid_sampler_3d import _grid_sampler_3d_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
+from .environ_create import _environ_create_aicpu
+from .environ_set import _environ_set_aicpu
+from .environ_get import _environ_get_aicpu
+from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .cummax import _cummax_aicpu
 from .floor_div import _floor_div_aicpu

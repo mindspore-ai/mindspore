@@ -337,6 +337,10 @@ constexpr auto kNPUClearFloatStatusOpName = "NPUClearFloatStatus";
 constexpr auto kAssignOpName = "Assign";
 constexpr auto kScatterAddOpName = "ScatterAdd";
 constexpr auto kScatterUpdateOpName = "ScatterUpdate";
+constexpr auto kEnvironCreateOpName = "EnvironCreate";
+constexpr auto kEnvironSetOpName = "EnvironSet";
+constexpr auto kEnvironGetOpName = "EnvironGet";
+constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";

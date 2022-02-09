@@ -139,6 +139,7 @@
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
 #include "backend/optimizer/ascend/enhancer/split_n_optimizer.h"
 #include "backend/optimizer/ascend/mindir/space_batch_nd_attr_update.h"
+#include "backend/optimizer/ascend/mindir/env_op_attr_update.h"
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
@@ -575,6 +576,7 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::EnvOpAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
