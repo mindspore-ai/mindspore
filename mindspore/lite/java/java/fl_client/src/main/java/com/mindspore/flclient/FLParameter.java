@@ -389,6 +389,11 @@ public class FLParameter {
     }
 
     public void setTimeOut(int timeOut) {
+        if (timeOut <= 0) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <timeOut> <= 0, it should be > 0, please " +
+                    "set it before using"));
+            throw new IllegalArgumentException();
+        }
         this.timeOut = timeOut;
     }
 
@@ -397,6 +402,11 @@ public class FLParameter {
     }
 
     public void setSleepTime(int sleepTime) {
+        if (sleepTime <= 0) {
+            LOGGER.severe(Common.addTag("[flParameter] the parameter of <sleepTime> <= 0, it should be > 0, please " +
+                    "set it before using"));
+            throw new IllegalArgumentException();
+        }
         this.sleepTime = sleepTime;
     }
 
