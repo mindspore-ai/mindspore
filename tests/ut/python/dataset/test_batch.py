@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -240,9 +240,11 @@ def test_batch_12():
 
 def test_batch_13():
     """
-    Test batch: python_multiprocessing is True and does not work for per_batch_map is None
+    Feature: Batch op
+    Description: Test python_multiprocessing is True with per_batch_map is None
+    Expectation: python_multiprocessing is True is ignored when per_batch_map is None
     """
-    logger.info("test_batch_12")
+    logger.info("test_batch_13")
     # define parameters
     batch_size = True
 

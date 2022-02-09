@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,7 @@ Status DeviceQueueOp::SendDataToAscend() {
     send_finished_ = true;
   }
   tree_->SetFinished();
-  MS_LOG(INFO) << "Device queue send " << send_batch << " batch.";
+  MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
 
   return Status::OK();
 }
@@ -505,7 +505,7 @@ Status DeviceQueueOp::PushDataToGPU() {
     send_finished_ = true;
   }
   tree_->SetFinished();
-  MS_LOG(INFO) << "Device queue send " << send_batch << " batch.";
+  MS_LOG(INFO) << "ExecutionTree finished.  Device queue pushed number of batches: " << send_batch;
 
   GpuBufferMgr::GetInstance().Close(handle);
   GpuBufferMgr::GetInstance().CloseConfirm();
@@ -581,7 +581,7 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(receive_queues_[worker_id]->PopFront(&current_row));
   }
 
-  MS_LOG(INFO) << "Device queue worker id " << worker_id << "proc " << batch_num << "batch.";
+  MS_LOG(INFO) << "Device queue worker id " << worker_id << " processed number of batches: " << batch_num;
   // Add empty data_item vector with eoe_flag=false as quit flag.
   GpuConnectorItem connector_item = {{}, false};
   RETURN_IF_NOT_OK(gpu_connector_->Add(worker_id, std::move(connector_item)));
@@ -641,7 +641,7 @@ Status DeviceQueueOp::SendDataToGPU() {
     RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(quit_flag)));
   }
 
-  MS_LOG(INFO) << "Device queue receive " << num_buf - num_workers_ << " batch.";
+  MS_LOG(INFO) << "Device queue received number of batches and EOEs: " << (num_buf - num_workers_);
   return Status::OK();
 }
 
