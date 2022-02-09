@@ -135,6 +135,8 @@ class DeviceQueueOp : public PipelineOp {
   Status SendDataToAscend();
   void LimitSendingBatches(int64_t send_batch, int64_t *sending_num, std::shared_ptr<ConfigManager> cfg);
   Status SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost);
+  // check status that push data into device
+  Status CheckPushStatus(Status status, bool stop_send, bool *send_finished, bool *is_break_loop);
   bool ascend_keep_waiting_;
 #endif
 
