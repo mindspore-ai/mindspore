@@ -148,7 +148,7 @@ int MatmulCPUKernel::InitBroadcastParams() {
 int MatmulCPUKernel::ReSize() {
   InitShapeA();
   InitShapeB();
-  InitBroadcastParams();
+  (void)InitBroadcastParams();
 
   return MatmulFp32BaseCPUKernel::ReSize();
 }
