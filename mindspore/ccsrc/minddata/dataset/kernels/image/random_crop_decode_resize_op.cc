@@ -29,7 +29,7 @@ RandomCropDecodeResizeOp::RandomCropDecodeResizeOp(int32_t target_height, int32_
 
 Status RandomCropDecodeResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  const int output_count = input.size();
+  const auto output_count = input.size();
   output->resize(output_count);
   int x = 0;
   int y = 0;

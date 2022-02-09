@@ -79,9 +79,9 @@ class RandomCropOp : public TensorOp {
 
   std::string Name() const override { return kRandomCropOp; }
 
-  uint32_t NumInput() override { return -1; }
+  uint32_t NumInput() override { return 1; }
 
-  uint32_t NumOutput() override { return -1; }
+  uint32_t NumOutput() override { return 1; }
 
  protected:
   int32_t crop_height_ = 0;

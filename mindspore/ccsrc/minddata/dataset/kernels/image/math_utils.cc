@@ -30,7 +30,7 @@ Status ComputeUpperAndLowerPercentiles(std::vector<int32_t> *hist, int32_t hi_p,
     int32_t n = std::accumulate(hist->begin(), hist->end(), 0);
     constexpr float kMaxPerc = 100.0;
     int32_t cut = static_cast<int32_t>((low_p / kMaxPerc) * n);
-    for (int32_t lb = 0; lb < hist->size() && cut > 0; lb++) {
+    for (int32_t lb = 0; lb < static_cast<int32_t>(hist->size()) && cut > 0; lb++) {
       if (cut > (*hist)[lb]) {
         cut -= (*hist)[lb];
         (*hist)[lb] = 0;

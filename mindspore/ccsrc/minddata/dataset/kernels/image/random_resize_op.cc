@@ -27,7 +27,7 @@ const int32_t RandomResizeOp::kDefTargetWidth = 0;
 
 Status RandomResizeOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  const int output_count = input.size();
+  const auto output_count = input.size();
   output->resize(output_count);
   InterpolationMode interpolation_random_resize = static_cast<InterpolationMode>(distribution_(random_generator_));
   std::shared_ptr<TensorOp> resize_op = std::make_shared<ResizeOp>(size1_, size2_, interpolation_random_resize);

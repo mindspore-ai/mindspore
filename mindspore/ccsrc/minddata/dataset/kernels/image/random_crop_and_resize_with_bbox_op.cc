@@ -28,7 +28,7 @@ namespace dataset {
 Status RandomCropAndResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
-  RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResizeWithBBox", input[0]->shape().Size()));
+  RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResizeWithBBox", static_cast<int32_t>(input[0]->shape().Size())));
 
   const int output_count = 2;
   output->resize(output_count);

@@ -17,10 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_
 
 #include <float.h>
-#include <math.h>
-#include <limits.h>
 #include <string.h>
-#include <cmath>
 #include <vector>
 #include <utility>
 #include <random>
@@ -31,7 +28,7 @@
 namespace mindspore {
 namespace dataset {
 /// \brief Calculate the coefficient for interpolation firstly
-int calc_coeff(int input_size, int out_size, int input0, int input1, struct interpolation *interp,
+int calc_coeff(int input_size, int out_size, int input0, int input1, const struct interpolation *interp,
                std::vector<int> &regions, std::vector<double> &coeffs_interp);
 
 /// \brief Normalize the coefficient for interpolation
@@ -54,7 +51,7 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
 /// \param[out] dst Output image
 /// \param[in] dst_w expected Output image width
 /// \param[in] dst_h expected Output image height
-bool ResizeCubic(const LiteMat &input, LiteMat &dst, int dst_w, int dst_h);
+bool ResizeCubic(const LiteMat &input, const LiteMat &dst, int dst_w, int dst_h);
 }  // namespace dataset
 }  // namespace mindspore
 

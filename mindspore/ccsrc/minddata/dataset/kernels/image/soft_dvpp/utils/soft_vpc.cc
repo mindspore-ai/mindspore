@@ -83,8 +83,8 @@ SoftVpc::SoftVpc()
 
 void SoftVpc::SetYuv422OutBuffer() {
   out_y_data_ = out_data_;
-  out_u_data_ = out_y_data_ + out_width_ * out_height_;
-  out_v_data_ = out_u_data_ + out_width_ * out_height_ / yuvCoeffiNum2;
+  out_u_data_ = out_y_data_ + ((ptrdiff_t)out_width_ * out_height_);
+  out_v_data_ = out_u_data_ + ((ptrdiff_t)out_width_ * out_height_ / yuvCoeffiNum2);
 }
 
 int32_t SoftVpc::CheckParamter() {
@@ -96,7 +96,7 @@ int32_t SoftVpc::CheckParamter() {
                                    in_height_);
 
   uint32_t crop_width = right_ - left_ + 1;
-  uint32_t crop_height = down_ - up_ + 1;
+  uint32_t crop_height = (down_ - up_) + 1;
   VPC_CHECK_COND_FAIL_PRINT_RETURN((crop_width >= 10), dpFail,  // mini width is 10
                                    "right(%u) - left(%u) + 1 = crop_width(%u) should be >= 10.", right_, left_,
                                    crop_width);
@@ -141,20 +141,22 @@ void SoftVpc::Init(VpcInfo input, SoftDpCropInfo crop, VpcInfo output) {
 
   in_data_ = input.addr;
   // Offset the start address of each channel to the cropped address.
-  in_y_data_ = in_data_ + up_ * in_width_ + left_;
-  in_u_data_ = in_data_ + in_width_ * in_height_ + up_ * in_width_ / yuvCoeffiNum4 + left_ / yuvCoeffiNum2;
-  in_v_data_ = in_data_ + in_width_ * in_height_ * yuvCoeffiNum5 / yuvCoeffiNum4 + up_ * in_width_ / yuvCoeffiNum4 +
-               left_ / yuvCoeffiNum2;
+  in_y_data_ = in_data_ + ((ptrdiff_t)up_ * in_width_) + left_;
+  in_u_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_) + ((ptrdiff_t)up_ * in_width_ / yuvCoeffiNum4) +
+               ((ptrdiff_t)left_ / yuvCoeffiNum2);
+  in_v_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_ * yuvCoeffiNum5 / yuvCoeffiNum4) +
+               ((ptrdiff_t)up_ * in_width_ / yuvCoeffiNum4) + ((ptrdiff_t)left_ / yuvCoeffiNum2);
 
   if (in_format_ == INPUT_YUV422_PLANNER) {
-    in_u_data_ = in_data_ + in_width_ * in_height_ + up_ * in_width_ / yuvCoeffiNum2 + left_ / yuvCoeffiNum2;
-    in_v_data_ = in_data_ + in_width_ * in_height_ * yuvCoeffiNum3 / yuvCoeffiNum2 + up_ * in_width_ / yuvCoeffiNum2 +
-                 left_ / yuvCoeffiNum2;
+    in_u_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_) + ((ptrdiff_t)up_ * in_width_ / yuvCoeffiNum2) +
+                 ((ptrdiff_t)left_ / yuvCoeffiNum2);
+    in_v_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_ * yuvCoeffiNum3 / yuvCoeffiNum2) +
+                 ((ptrdiff_t)up_ * in_width_ / yuvCoeffiNum2) + ((ptrdiff_t)left_ / yuvCoeffiNum2);
   }
 
   if (in_format_ == INPUT_YUV444_PLANNER) {
-    in_u_data_ = in_data_ + in_width_ * in_height_ + up_ * in_width_ + left_;
-    in_v_data_ = in_data_ + in_width_ * in_height_ * yuvCoeffiNum2 + up_ * in_width_ + left_;
+    in_u_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_) + ((ptrdiff_t)up_ * in_width_) + left_;
+    in_v_data_ = in_data_ + ((ptrdiff_t)in_width_ * in_height_ * yuvCoeffiNum2) + ((ptrdiff_t)up_ * in_width_) + left_;
   }
 
   out_width_ = output.width;
@@ -272,8 +274,8 @@ bool SoftVpc::CanVpcChipProcess(const ResizeUnit &pre_unit) {
 // Creates a scaling parameter stack based on the user input and output information. The elements in the stack are
 // the input and output information, and the input and output information stores the scaling information.
 void SoftVpc::BuildResizeStack() {
-  uint32_t in_width = right_ - left_ + 1;
-  uint32_t in_height_ = down_ - up_ + 1;
+  uint32_t in_width = (right_ - left_) + 1;
+  uint32_t in_height_ = (down_ - up_) + 1;
   ResizeUnit pre_unit = {in_width, in_height_, out_width_, out_height_};  // Scaling information to be split.
 
   while (!CanVpcChipProcess(pre_unit)) {
@@ -312,8 +314,8 @@ int32_t SoftVpc::Yuv422pToYuv420p() {
   out_data_ = new (std::nothrow) uint8_t[buffer_size];
   VPC_CHECK_COND_FAIL_PRINT_RETURN((out_data_ != nullptr), dpFail, "alloc buffer fail.");
   out_y_data_ = out_data_;
-  out_u_data_ = out_y_data_ + out_width_ * out_height_;
-  out_v_data_ = out_u_data_ + out_width_ * out_height_ / yuvCoeffiNum4;
+  out_u_data_ = out_y_data_ + ((ptrdiff_t)out_width_ * out_height_);
+  out_v_data_ = out_u_data_ + ((ptrdiff_t)out_width_ * out_height_ / yuvCoeffiNum4);
 
   for (uint32_t i = 0; i < out_height_; i++) {  // Y data remains unchanged.
     for (uint32_t j = 0; j < out_width_; j++) {
@@ -336,8 +338,8 @@ int32_t SoftVpc::Yuv422pToYuv420p() {
 
 void SoftVpc::ChipPreProcess() {
   pre_scaler_num_ = 0;
-  uint32_t crop_width = (right_ - left_ + 1);
-  uint32_t crop_height = (down_ - up_ + 1);
+  uint32_t crop_width = (right_ - left_) + 1;
+  uint32_t crop_height = (down_ - up_) + 1;
   // The minimum scaling ratio of the scaler module is 1/4. If the scaling ratio is less than 1/4, the prescaler is
   // used for scaling. One prescaler is scaled by 1/2.
   while ((out_width_ * scalerTap4 < crop_width) || (out_height_ * scalerTap4 < crop_height)) {
@@ -349,13 +351,13 @@ void SoftVpc::ChipPreProcess() {
   }
   // Each time a prescaler is used, the alignment value needs to be doubled.
   uint32_t align_size = (yuvCoeffiNum2 << pre_scaler_num_);
-  crop_width = (right_ - left_ + 1);
+  crop_width = (right_ - left_) + 1;
   uint32_t gap = crop_width % align_size;
   left_ += AlignDown(gap / yuvCoeffiNum2, yuvCoeffiNum2);
   right_ -= AlignUp(gap / yuvCoeffiNum2, yuvCoeffiNum2);
   crop_width -= gap;
 
-  crop_height = (down_ - up_ + 1);
+  crop_height = (down_ - up_) + 1;
   gap = crop_height % align_size;
   up_ += AlignDown(gap / yuvCoeffiNum2, yuvCoeffiNum2);
   down_ -= AlignUp(gap / yuvCoeffiNum2, yuvCoeffiNum2);
@@ -384,7 +386,7 @@ void SoftVpc::ChipPreProcess() {
 }
 
 void SoftVpc::SetUvValue(int32_t *u_value, int32_t *v_value, int32_t y, int32_t pos) {
-  int32_t crop_width = right_ - left_ + 1;
+  int32_t crop_width = (right_ - left_) + 1;
   int32_t in_w_stride = in_width_;
   // 5-order filtering dimension reduction algorithm.
   for (uint32_t i = 0; i < uvReductCoeffNum; i++) {
@@ -402,8 +404,8 @@ void SoftVpc::SetUvValue(int32_t *u_value, int32_t *v_value, int32_t y, int32_t 
 
 int32_t SoftVpc::Yuv444PackedToYuv422Packed() {
   int32_t in_w_stride = in_width_;
-  int32_t crop_width = right_ - left_ + 1;
-  int32_t crop_height = down_ - up_ + 1;
+  int32_t crop_width = (right_ - left_) + 1;
+  int32_t crop_height = (down_ - up_) + 1;
   out_width_ = crop_width;
   out_height_ = crop_height;
 
@@ -412,11 +414,12 @@ int32_t SoftVpc::Yuv444PackedToYuv422Packed() {
   SetYuv422OutBuffer();
 
   for (int32_t i = 0; i < crop_height; i++) {  // 拷贝y数据
-    int32_t ret = memcpy_s(out_y_data_ + i * crop_width, crop_width, in_y_data_ + i * in_w_stride, crop_width);
+    int32_t ret = memcpy_s(out_y_data_ + ((ptrdiff_t)i * crop_width), crop_width,
+                           in_y_data_ + ((ptrdiff_t)i * in_w_stride), crop_width);
     VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
   }
 
-  int32_t uv_width = crop_width / yuvCoeffiNum2;
+  int32_t uv_width = crop_width / static_cast<int32_t>(yuvCoeffiNum2);
   // Reduces the dimension of the UV data. The 5-order filtering algorithm is used for dimension reduction.
   for (int32_t y = 0; y < crop_height; y++) {
     for (int32_t x = 0; x < uv_width; x++) {
@@ -489,8 +492,8 @@ void SoftVpc::UvPrescaler() {
 
 int32_t SoftVpc::PreScaler() {
   uint32_t in_w_stride = in_width_;
-  uint32_t crop_width = right_ - left_ + 1;
-  uint32_t crop_height = down_ - up_ + 1;
+  uint32_t crop_width = (right_ - left_) + 1;
+  uint32_t crop_height = (down_ - up_) + 1;
   out_width_ = crop_width / yuvCoeffiNum2;
   out_height_ = crop_height / yuvCoeffiNum2;
   out_data_ = new (std::nothrow) uint8_t[out_width_ * out_height_ * yuvCoeffiNum2];
@@ -520,10 +523,11 @@ int32_t SoftVpc::PreScaler() {
 
 int32_t SoftVpc::BypassHorizonScaler() {
   uint32_t in_w_stride = in_width_;
-  uint32_t crop_width = right_ - left_ + 1;
-  uint32_t crop_height = down_ - up_ + 1;
+  uint32_t crop_width = (right_ - left_) + 1;
+  uint32_t crop_height = (down_ - up_) + 1;
   for (uint32_t i = 0; i < crop_height; i++) {
-    int32_t ret = memcpy_s(out_y_data_ + i * crop_width, crop_width, in_y_data_ + i * in_w_stride, crop_width);
+    int32_t ret = memcpy_s(out_y_data_ + ((ptrdiff_t)i * crop_width), crop_width,
+                           in_y_data_ + ((ptrdiff_t)i * in_w_stride), crop_width);
     VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
   }
 
@@ -535,25 +539,28 @@ int32_t SoftVpc::BypassHorizonScaler() {
   if (in_format_ == INPUT_YUV420_PLANNER) {
     uint32_t uv_height = crop_height / yuvCoeffiNum2;
     for (uint32_t i = 0; i < uv_height; i++) {
-      int32_t ret =
-        memcpy_s(out_u_data_ + uv_width * i * yuvCoeffiNum2, uv_width, in_u_data_ + uv_w_stride * i, uv_width);
+      int32_t ret = memcpy_s(out_u_data_ + ((ptrdiff_t)uv_width * i * yuvCoeffiNum2), uv_width,
+                             in_u_data_ + ((ptrdiff_t)uv_w_stride * i), uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
-      ret =
-        memcpy_s(out_u_data_ + uv_width * (i * yuvCoeffiNum2 + 1), uv_width, in_u_data_ + uv_w_stride * i, uv_width);
+      ret = memcpy_s(out_u_data_ + ((ptrdiff_t)uv_width * (i * yuvCoeffiNum2 + 1)), uv_width,
+                     in_u_data_ + ((ptrdiff_t)uv_w_stride * i), uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
 
-      ret = memcpy_s(out_v_data_ + uv_width * i * yuvCoeffiNum2, uv_width, in_v_data_ + uv_w_stride * i, uv_width);
+      ret = memcpy_s(out_v_data_ + ((ptrdiff_t)uv_width * i * yuvCoeffiNum2), uv_width,
+                     in_v_data_ + ((ptrdiff_t)uv_w_stride * i), uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
-      ret =
-        memcpy_s(out_v_data_ + uv_width * (i * yuvCoeffiNum2 + 1), uv_width, in_v_data_ + uv_w_stride * i, uv_width);
+      ret = memcpy_s(out_v_data_ + ((ptrdiff_t)uv_width * (i * yuvCoeffiNum2 + 1)), uv_width,
+                     in_v_data_ + ((ptrdiff_t)uv_w_stride * i), uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
     }
   } else {
     uint32_t uv_height = crop_height;
     for (uint32_t i = 0; i < uv_height; i++) {
-      int32_t ret = memcpy_s(out_u_data_ + uv_width * i, uv_width, in_u_data_ + uv_w_stride * i, uv_width);
+      int32_t ret = memcpy_s(out_u_data_ + ((ptrdiff_t)uv_width * i), uv_width,
+                             in_u_data_ + ((ptrdiff_t)uv_w_stride * i), uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
-      ret = memcpy_s(out_v_data_ + uv_width * i, uv_width, in_v_data_ + uv_w_stride * i, uv_width);
+      ret = memcpy_s(out_v_data_ + ((ptrdiff_t)uv_width * i), uv_width, in_v_data_ + ((ptrdiff_t)uv_w_stride * i),
+                     uv_width);
       VPC_CHECK_COND_FAIL_PRINT_RETURN((ret == dpSucc), dpFail, "memcpy fail.");
     }
   }
@@ -577,7 +584,7 @@ void SoftVpc::StartHorizonScalerEx(uint32_t width_index, uint32_t tmp_offset, ui
   for (uint32_t j = 0; j < out_w[width_index]; j++) {
     uint32_t pos = acc >> bit16Offset;
     uint32_t phase = (acc >> bit13Offset) & low3BitVal;
-    int16_t *coeffs = taps[width_index] + taps_num[width_index] * phase;
+    int16_t *coeffs = taps[width_index] + ((ptrdiff_t)taps_num[width_index] * phase);
 
     int32_t value = 0;
     for (uint32_t k = 0; k < taps_num[width_index]; k++) {  // convolution operation
@@ -607,7 +614,7 @@ void SoftVpc::HorizonScalerEx() {
       auto tmp_offset = i * in_w_stride[m];  // Offset of each row of data relative to the start position.
       if ((m > 0) && (in_format_ == INPUT_YUV420_PLANNER)) {
         // The width of the UV channel is half of that of the Y channel.
-        tmp_offset = i / yuvCoeffiNum2 * in_w_stride[m];
+        tmp_offset = (i / yuvCoeffiNum2) * in_w_stride[m];
       }
       StartHorizonScalerEx(m, tmp_offset, in_data, out_data);
     }
@@ -615,8 +622,8 @@ void SoftVpc::HorizonScalerEx() {
 }
 
 int32_t SoftVpc::HorizonScaler() {
-  uint32_t crop_width = right_ - left_ + 1;
-  uint32_t crop_height = down_ - up_ + 1;
+  uint32_t crop_width = (right_ - left_) + 1;
+  uint32_t crop_height = (down_ - up_) + 1;
   out_width_ = (crop_width << scalerCoeff) / horizon_coeff_;
   out_height_ = crop_height;
   out_data_ = new (std::nothrow) uint8_t[out_width_ * out_height_ * yuvCoeffiNum2];
@@ -651,7 +658,7 @@ void SoftVpc::StartVerticalScaler(uint32_t yuv_index, uint32_t out_w[], uint8_t 
     uint32_t acc = i * vertical_coeff_;
     uint32_t pos = acc >> bit16Offset;
     uint32_t phase = (acc >> bit13Offset) & low3BitVal;
-    int16_t *coeffs = vertical_tap_ + num_taps * phase;
+    int16_t *coeffs = vertical_tap_ + ((ptrdiff_t)num_taps * phase);
     for (uint32_t j = 0; j < out_w[yuv_index]; j++) {
       int32_t value = 0;
       for (uint32_t k = 0; k < num_taps; k++) {  // convolution operation

@@ -29,7 +29,7 @@ const InterpolationMode ResizeOp::kDefInterpolation = InterpolationMode::kLinear
 
 Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  RETURN_IF_NOT_OK(ValidateImageRank("Resize", input->shape().Size()));
+  RETURN_IF_NOT_OK(ValidateImageRank("Resize", static_cast<int32_t>(input->shape().Size())));
   int32_t output_h = 0;
   int32_t output_w = 0;
   int32_t input_h = static_cast<int>(input->shape()[0]);
@@ -38,11 +38,11 @@ Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     if (input_h < input_w) {
       CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "Resize: the input height cannot be 0.");
       output_h = size1_;
-      output_w = static_cast<int>(std::lround(static_cast<float>(input_w) / input_h * output_h));
+      output_w = static_cast<int>(std::lround((static_cast<float>(input_w) / input_h) * output_h));
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "Resize: the input width cannot be 0.");
       output_w = size1_;
-      output_h = static_cast<int>(std::lround(static_cast<float>(input_h) / input_w * output_w));
+      output_h = static_cast<int>(std::lround((static_cast<float>(input_h) / input_w) * output_w));
     }
   } else {
     output_h = size1_;
