@@ -96,7 +96,7 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
 
 int TensorRTSubGraph::GetInt8DynamicRange() {
   if (!IsInt8Mode() || !runtime_->GetBuilder()->platformHasFastInt8()) {
-    MS_LOG(WARNING) << "no int8 mode, not need dynamic range.";
+    MS_LOG(INFO) << "no int8 mode, not need dynamic range.";
   }
   // input tensor
   for (size_t i = 0; i < inputs_.size(); i++) {
@@ -185,33 +185,6 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   return RET_OK;
 }
 
-bool TensorRTSubGraph::SupportFP16() {
-  int deviceCnt = 0;
-
-  cudaError ret = cudaGetDeviceCount(&deviceCnt);
-  if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
-    return false;
-  }
-  std::vector<std::string> supportFP16_versions{"5.3", "6.0", "6.2", "7.0", "7.2", "7.5", "8.0", "8.6"};
-  cudaDeviceProp prop;
-  std::string version;
-  for (int dev = 0; dev < deviceCnt; dev++) {
-    ret = cudaGetDeviceProperties(&prop, dev);
-    if (ret != cudaSuccess) {
-      MS_LOG(ERROR) << "cuDeviceGetAttribute failed.";
-      return false;
-    }
-    version = std::to_string(prop.major) + "." + std::to_string(prop.minor);
-    if (std::find(supportFP16_versions.begin(), supportFP16_versions.end(), version) != supportFP16_versions.end()) {
-      MS_LOG(INFO) << "cuda device version is: " << version << ", support FP16, set enable FP16 tag successful";
-      return true;
-    }
-  }
-  MS_LOG(WARNING) << "cuda device version is: " << version << ", don't support FP16, set enable FP16 tag failed";
-  return false;
-}
-
 bool TensorRTSubGraph::IsInt8Mode() {
   bool isInt8Mode = false;
   for (auto cur_op : all_ops_) {
@@ -242,7 +215,7 @@ bool TensorRTSubGraph::IsInt8Mode() {
 
 void TensorRTSubGraph::SetInt8LayerPresion() {
   if (!IsInt8Mode() || !runtime_->GetBuilder()->platformHasFastInt8()) {
-    MS_LOG(WARNING) << "no int8 mode, not need layer presion.";
+    MS_LOG(INFO) << "no int8 mode, not need layer presion.";
     return;
   }
 
@@ -373,9 +346,6 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
     return input_dims;
   }
   nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
-  if (input_batchsize_index_ != -1) {
-    input_dims_opt.d[input_batchsize_index_] = 1;
-  }
   if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
     MS_LOG(ERROR) << "setDimensions of kOPT failed for " << in_tensor.Name();
     return input_dims;

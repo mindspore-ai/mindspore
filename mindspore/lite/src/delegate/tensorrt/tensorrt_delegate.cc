@@ -43,6 +43,7 @@
 #include "src/delegate/tensorrt/op/reducescatter_tensorrt.h"
 #include "src/delegate/tensorrt/op/allgather_tensorrt.h"
 #include "src/delegate/tensorrt/op/lstm_tensorrt.h"
+#include "src/delegate/tensorrt/op/fullyconnected_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -102,7 +103,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
     {schema::PrimitiveType_LSTM, GetTensorRTOp<LSTMTensorRT>},
     {schema::PrimitiveType_MatMulFusion, GetTensorRTOp<MatMulTensorRT>},
-    {schema::PrimitiveType_FullConnection, GetTensorRTOp<MatMulTensorRT>},
+    {schema::PrimitiveType_FullConnection, GetTensorRTOp<FullyConnectedTensorRT>},
     {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},

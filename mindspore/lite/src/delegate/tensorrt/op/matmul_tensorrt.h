@@ -28,7 +28,7 @@ class MatMulTensorRT : public TensorRTOp {
                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
       : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
 
-  ~MatMulTensorRT() override = default;
+  ~MatMulTensorRT() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -36,11 +36,17 @@ class MatMulTensorRT : public TensorRTOp {
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
  private:
-  int PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
+  int PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
+
+  nvinfer1::ITensor *AddAsMatmul(nvinfer1::INetworkDefinition *network);
+
+  nvinfer1::ITensor *AddAsFullConnect(nvinfer1::INetworkDefinition *network);
+
   nvinfer1::MatrixOperation transpose_a_ = nvinfer1::MatrixOperation::kNONE;
   nvinfer1::MatrixOperation transpose_b_ = nvinfer1::MatrixOperation::kNONE;
   Format out_format_;
   schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
+  void *weight_ptr_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_MATMUL_TENSORRT_H_

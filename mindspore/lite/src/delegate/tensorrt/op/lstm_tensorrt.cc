@@ -162,7 +162,10 @@ int LSTMTensorRT::AddLSTMLayers() {
     layer_weights[0].max_seq_size_ = max_sequence_size;
     int ret = ParseLSTMCellInputs(i, hidden_init, cell_init, layer_input_states, &input_weight_offset,
                                   &state_weight_offset, &bias_offset, layer_weights, next_state);
-
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ParseLSTMCellInputs failed for " << op_name_;
+      return RET_ERROR;
+    }
     data_out = AddLSTMCell(layer_input_states, layer_weights, &next_state);
     hidden_outputs.push_back(next_state.hidden_);
     cell_outputs.push_back(next_state.cell_);

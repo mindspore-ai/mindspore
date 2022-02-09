@@ -19,6 +19,7 @@
 #include <map>
 #include <numeric>
 #include <functional>
+#include "src/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
@@ -236,53 +237,100 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
-  nvinfer1::Weights weights{};
-  MS_LOG(DEBUG) << "ms_tensor.DataType(): " << static_cast<int>(ms_tensor.DataType());
-  if (ms_tensor.DataType() == DataType::kNumberTypeFloat16) {
-    weights.type = nvinfer1::DataType::kHALF;
-    weights.count = ms_tensor.ElementNum();
-    void *pack_weight_tmp = malloc(ms_tensor.DataSize());
-    if (pack_weight_tmp == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return weights;
-    }
-    MS_ASSERT(ms_tensor.Data());
-    auto weight_shape = ms_tensor.Shape();
-    PackNHWCToNCHWFp16(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
-                       weight_shape[3], 0, 0);
-    *pack_weight = pack_weight_tmp;
-    weights.values = pack_weight_tmp;
-    return weights;
-  } else {
-    return TransposeWeightFP32(ms_tensor, pack_weight);
-  }
-}
-
-nvinfer1::Weights TransposeWeightFP32(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
+nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
   // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
   nvinfer1::Weights weights{};
   weights.count = ms_tensor.ElementNum();
-  if (lite::ConvertDataType(ms_tensor.DataType()) != nvinfer1::DataType::kFLOAT) {
-    MS_LOG(WARNING) << "weights data type is not float32";
-  }
-  weights.type = nvinfer1::DataType::kFLOAT;
   auto weight_shape = ms_tensor.Shape();
-  const void *src_ptr = ms_tensor.Data().get();
-  if (src_ptr == nullptr) {
-    MS_LOG(ERROR) << "TransposeWeight from a MSTensor with nullptr data";
+  if (weight_shape.size() != DIMENSION_4D) {
+    MS_LOG(ERROR) << ms_tensor.Name() << " dims is " << weight_shape.size();
     return weights;
   }
-
-  float *pack_weight_tmp = reinterpret_cast<float *>(malloc(ms_tensor.ElementNum() * sizeof(float)));
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << ms_tensor.Name() << " has null data";
+    return weights;
+  }
+  void *pack_weight_tmp = malloc(ms_tensor.DataSize());
   if (pack_weight_tmp == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return weights;
   }
-  PackNHWCToNCHWFp32(src_ptr, pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2], weight_shape[3], 0,
-                     0);
-  weights.values = pack_weight_tmp;
   *pack_weight = pack_weight_tmp;
+  weights.values = pack_weight_tmp;
+
+  switch (ms_tensor.DataType()) {
+    case DataType::kNumberTypeFloat16: {
+      weights.type = nvinfer1::DataType::kHALF;
+      PackNHWCToNCHWFp16(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
+                         weight_shape[3], 0, 0);
+      break;
+    }
+    case DataType::kNumberTypeFloat32: {
+      weights.type = nvinfer1::DataType::kFLOAT;
+      PackNHWCToNCHWFp32(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
+                         weight_shape[3], 0, 0);
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << ms_tensor.Name() << " has unsupported tensor datatype for transpose data : "
+                    << static_cast<int>(ms_tensor.DataType());
+    }
+  }
+  return weights;
+}
+
+nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
+  // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
+  nvinfer1::Weights weights{};
+  weights.count = ms_tensor.ElementNum();
+  auto weight_shape = ms_tensor.Shape();
+  if (weight_shape.size() != DIMENSION_2D) {
+    MS_LOG(ERROR) << ms_tensor.Name() << " dims is " << weight_shape.size();
+    return weights;
+  }
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << ms_tensor.Name() << " has null data";
+    return weights;
+  }
+  void *pack_weight_tmp = malloc(ms_tensor.DataSize());
+  if (pack_weight_tmp == nullptr) {
+    MS_LOG(ERROR) << "Malloc buffer failed.";
+    return weights;
+  }
+  *pack_weight = pack_weight_tmp;
+  weights.values = pack_weight_tmp;
+
+  int row = weight_shape[0];
+  int col = weight_shape[1];
+
+  switch (ms_tensor.DataType()) {
+    case DataType::kNumberTypeFloat16: {
+      weights.type = nvinfer1::DataType::kHALF;
+      auto src = static_cast<const uint16_t *>(ms_tensor.Data().get());
+      auto dst = static_cast<uint16_t *>(pack_weight_tmp);
+      for (int r = 0; r < row; ++r) {
+        for (int c = 0; c < col; ++c) {
+          dst[c * row + r] = src[r * col + c];
+        }
+      }
+      break;
+    }
+    case DataType::kNumberTypeFloat32: {
+      weights.type = nvinfer1::DataType::kFLOAT;
+      auto dst = static_cast<float *>(pack_weight_tmp);
+      auto src = static_cast<const float *>(ms_tensor.Data().get());
+      for (int r = 0; r < row; ++r) {
+        for (int c = 0; c < col; ++c) {
+          dst[c * row + r] = src[r * col + c];
+        }
+      }
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << ms_tensor.Name() << " has unsupported tensor datatype for transpose data : "
+                    << static_cast<int>(ms_tensor.DataType());
+    }
+  }
   return weights;
 }
 
@@ -521,5 +569,21 @@ void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, siz
   std::memcpy(value, *buffer, cpy_size);
   *buffer = static_cast<const char *>(*buffer) + cpy_size;
   *buffer_size -= cpy_size;
+}
+
+nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+                           const std::vector<int64_t> &shape) {
+  return Reshape(network, input, ConvertCudaDims(shape));
+}
+
+nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+                           const nvinfer1::Dims &shape) {
+  auto reshape_layer = network->addShuffle(*input);
+  if (reshape_layer == nullptr) {
+    MS_LOG(ERROR) << "add reshape_layer failed";
+    return nullptr;
+  }
+  reshape_layer->setReshapeDimensions(shape);
+  return reshape_layer->getOutput(0);
 }
 }  // namespace mindspore::lite

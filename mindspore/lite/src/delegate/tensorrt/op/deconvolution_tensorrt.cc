@@ -66,7 +66,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // transpose weight
   const mindspore::MSTensor &weight_tensor = in_tensors_[1];
-  nvinfer1::Weights kernelWeights = lite::TransposeWeight(weight_tensor, &pack_weight_);
+  nvinfer1::Weights kernelWeights = lite::TransposeWeight4D(weight_tensor, &pack_weight_);
 
   // deconv basic params
   int nbOutputMaps = weight_tensor.Shape()[0];
