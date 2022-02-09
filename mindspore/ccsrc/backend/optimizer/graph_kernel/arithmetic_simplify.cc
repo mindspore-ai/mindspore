@@ -641,8 +641,8 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       bool change_anf_graph = false;
       while (find_pattern) {
         find_pattern = false;
-        find_pattern = DoArithmeticTrans(lg) || find_pattern;
         find_pattern = DoConstantFold(lg) || find_pattern;
+        find_pattern = DoArithmeticTrans(lg) || find_pattern;
         change_anf_graph = change_anf_graph || find_pattern;
       }
       if (!change_anf_graph) continue;
