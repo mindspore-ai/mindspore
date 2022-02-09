@@ -55,6 +55,8 @@ class SplitModel {
  protected:
   // transform the litegraph to areas, and initialize inner tables.
   void InitGraph(const LiteGraphPtr &litegraph);
+  // Push leading "1" to shapes to facilitate pattern match.
+  void AlignShape(const LiteGraphPtr &litegraph);
   // initialize fusion pattern list.
   virtual void InitFusePatterns() = 0;
   bool RunOnePattern(const FusePatternPtr &pattern);
