@@ -311,39 +311,10 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   // Start new server instance.
   is_instance_being_updated_ = true;
 
-  // Reset current instance.
-  instance_state_ = InstanceState::kFinish;
-  Server::GetInstance().WaitExitSafeMode();
-  WaitAllRoundsFinish();
-  MS_LOG(INFO) << "Proceed to a new instance.";
-  for (auto &round : rounds_) {
-    MS_ERROR_IF_NULL_W_RET_VAL(round, false);
-    round->Reset();
-  }
-  iteration_num_ = 1;
-  LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
-  ModelStore::GetInstance().Reset();
-  if (metrics_ != nullptr) {
-    if (!metrics_->Clear()) {
-      MS_LOG(WARNING) << "Clear metrics file failed.";
-    }
-  }
-
-  // Update the hyper-parameters on server and reinitialize rounds.
-  if (!UpdateHyperParams(new_instance_json)) {
-    *result = "Updating hyper-parameters failed.";
-    return false;
-  }
-  if (!ReInitRounds()) {
-    *result = "Reinitializing rounds failed.";
-    return false;
-  }
-
-  instance_state_ = InstanceState::kRunning;
+  new_instance_json_ = new_instance_json;
   *result = "New FL-Server instance succeeded.";
 
-  // End new server instance.
-  is_instance_being_updated_ = false;
+  MS_LOG(INFO) << "Process new instance success, cluster will start new job after this iteration end.";
   return true;
 }
 
@@ -618,6 +589,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       round_client_num_map_[kUpdateModelTotalClientNum] += round->kernel_total_client_num();
       round_client_num_map_[kUpdateModelAcceptClientNum] += round->kernel_accept_client_num();
       round_client_num_map_[kUpdateModelRejectClientNum] += round->kernel_reject_client_num();
+      set_loss(loss_ + round->kernel_upload_loss());
     } else if (round->name() == "getModel") {
       round_client_num_map_[kGetModelTotalClientNum] += round->kernel_total_client_num();
       round_client_num_map_[kGetModelAcceptClientNum] += round->kernel_accept_client_num();
@@ -631,14 +603,15 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   MS_LOG(INFO) << "Notify all follower servers to end last iteration.";
   EndLastIterRequest end_last_iter_req;
   end_last_iter_req.set_last_iter_num(last_iter_num);
-  std::shared_ptr<std::vector<unsigned char>> client_info_rsp_msg = nullptr;
   for (uint32_t i = 1; i < server_node_->server_num(); i++) {
+    std::shared_ptr<std::vector<unsigned char>> client_info_rsp_msg = nullptr;
     if (!communicator_->SendPbRequest(end_last_iter_req, i, ps::core::TcpUserCommand::kEndLastIter,
                                       &client_info_rsp_msg)) {
       MS_LOG(WARNING) << "Sending ending last iteration request to server " << i << " failed.";
       continue;
     }
     UpdateRoundClientNumMap(client_info_rsp_msg);
+    UpdateRoundClientUploadLoss(client_info_rsp_msg);
   }
 
   EndLastIter();
@@ -680,6 +653,7 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
       end_last_iter_rsp.set_updatemodel_total_client_num(round->kernel_total_client_num());
       end_last_iter_rsp.set_updatemodel_accept_client_num(round->kernel_accept_client_num());
       end_last_iter_rsp.set_updatemodel_reject_client_num(round->kernel_reject_client_num());
+      end_last_iter_rsp.set_upload_loss(round->kernel_upload_loss());
     } else if (round->name() == "getModel") {
       end_last_iter_rsp.set_getmodel_total_client_num(round->kernel_total_client_num());
       end_last_iter_rsp.set_getmodel_accept_client_num(round->kernel_accept_client_num());
@@ -712,7 +686,22 @@ void Iteration::EndLastIter() {
   if (!SummarizeIteration()) {
     MS_LOG(WARNING) << "Summarizing iteration data failed.";
   }
-  iteration_num_++;
+
+  if (is_instance_being_updated_) {
+    MS_LOG(INFO) << "Process iteration new instance.";
+    iteration_num_ = 1;
+    is_instance_being_updated_ = false;
+    ModelStore::GetInstance().Reset();
+
+    // Update the hyper-parameters on server and reinitialize rounds.
+    UpdateHyperParams(new_instance_json_);
+    if (!ReInitRounds()) {
+      MS_LOG(ERROR) << "Reinitializing rounds failed.";
+    }
+  } else {
+    iteration_num_++;
+  }
+
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
 
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
@@ -726,8 +715,10 @@ void Iteration::EndLastIter() {
   for (const auto &round : rounds_) {
     MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->InitkernelClientVisitedNum();
+    round->InitkernelClientUploadLoss();
   }
   round_client_num_map_.clear();
+  set_loss(0.0f);
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
   MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
@@ -749,7 +740,11 @@ bool Iteration::SummarizeIteration() {
   metrics_->set_fl_iteration_num(ps::PSContext::instance()->fl_iteration_num());
   metrics_->set_cur_iteration_num(iteration_num_);
   metrics_->set_instance_state(instance_state_.load());
-  metrics_->set_loss(loss_);
+  uint64_t update_model_threshold =
+    ps::PSContext::instance()->start_fl_job_threshold() * ps::PSContext::instance()->update_model_ratio();
+  if (update_model_threshold > 0) {
+    metrics_->set_loss(loss_ / update_model_threshold);
+  }
   metrics_->set_accuracy(accuracy_);
   metrics_->set_round_client_num_map(round_client_num_map_);
   metrics_->set_iteration_result(iteration_result_.load());
@@ -882,6 +877,14 @@ void Iteration::UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsign
   round_client_num_map_[kGetModelTotalClientNum] += end_last_iter_rsp.getmodel_total_client_num();
   round_client_num_map_[kGetModelAcceptClientNum] += end_last_iter_rsp.getmodel_accept_client_num();
   round_client_num_map_[kGetModelRejectClientNum] += end_last_iter_rsp.getmodel_reject_client_num();
+}
+
+void Iteration::UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(client_info_rsp_msg);
+  EndLastIterResponse end_last_iter_rsp;
+  (void)end_last_iter_rsp.ParseFromArray(client_info_rsp_msg->data(), SizeToInt(client_info_rsp_msg->size()));
+
+  set_loss(loss_ + end_last_iter_rsp.upload_loss());
 }
 }  // namespace server
 }  // namespace fl

@@ -33,6 +33,8 @@ public class LossCallback extends Callback {
 
     private float lossSum = 0.0f;
 
+    private float uploadLoss = 0.0f;
+
     /**
      * Defining a constructor of loss callback.
      */
@@ -71,10 +73,17 @@ public class LossCallback extends Callback {
     @Override
     public Status epochEnd() {
         logger.info(Common.addTag("----------epoch:" + epochs + ",average loss:" + lossSum / steps + "----------"));
+        setUploadLoss(lossSum / steps);
         steps = 0;
         epochs++;
         lossSum = 0.0f;
         return Status.SUCCESS;
     }
+    public float getUploadLoss() {
+        return uploadLoss;
+    }
 
+    public void setUploadLoss(float uploadLoss) {
+        this.uploadLoss = uploadLoss;
+    }
 }

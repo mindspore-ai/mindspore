@@ -74,6 +74,10 @@ class Round {
 
   void InitkernelClientVisitedNum();
 
+  void InitkernelClientUploadLoss();
+
+  float kernel_upload_loss() const;
+
  private:
   // The callbacks which will be set to DistributedCounterService.
   void OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message);
