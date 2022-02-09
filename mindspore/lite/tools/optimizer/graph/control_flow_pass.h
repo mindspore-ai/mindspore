@@ -64,14 +64,14 @@ class ControlFlowPass : public Pass {
   int CreateIfPartialNodeExternalInputs(const CNodePtr &if_cnode, const FuncGraphPtr &partial_fg,
                                         std::vector<AnfNodePtr> *then_partial_cnode_inputs);
   int CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &index,
-                          std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr *if_cnode,
-                          const FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode);
+                          std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr &if_cnode,
+                          const FuncGraphPtr &after_fg, CNodePtr *then_partial_cnode);
   int CreateIfThenPartialNode(const FuncGraphPtr &main_fg,
-                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, CNodePtr *if_cnode,
-                              FuncGraphPtr *after_fg, CNodePtr *then_partial_cnode);
+                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr &if_cnode,
+                              const FuncGraphPtr &after_fg, CNodePtr *then_partial_cnode);
   int CreateIfElsePartialNode(const FuncGraphPtr &main_fg,
-                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr *if_cnode,
-                              const FuncGraphPtr *after_fg, CNodePtr *else_partial_cnode);
+                              std::vector<AnfNodePtr> *fg_inputs_only_used_by_after_partial, const CNodePtr &if_cnode,
+                              const FuncGraphPtr &after_fg, CNodePtr *else_partial_cnode);
   int ProcessIfOp(const FuncGraphPtr &fg, const std::set<AnfNodePtr> &visited_nodes,
                   const std::vector<AnfNodePtr> &remain_nodes, const AnfNodePtr &if_node);
 
