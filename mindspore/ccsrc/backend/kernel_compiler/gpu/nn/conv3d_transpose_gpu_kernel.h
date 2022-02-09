@@ -551,6 +551,7 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
       }
       output_desc_real = greater_stride_ ? stride_padded_descriptor_ : output_desc_;
       input_desc_real = input_desc_;
+    }
 
     return std::make_pair(input_desc_real, output_desc_real);
   }
