@@ -265,6 +265,41 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   return tensor;
 }
 
+abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType(
+  const mind_ir::AttributeProto &attr_proto) {
+  switch (attr_proto.type()) {
+    case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(0);
+      return GetAbsTensorFromTensorProto(attr_tensor);
+    }
+    case mind_ir::AttributeProto_AttributeType_TUPLE: {
+      std::vector<abstract::AbstractBasePtr> vec;
+      for (int i = 0; i < attr_proto.values_size(); ++i) {
+        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+        if (abs == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the abstract from AttrProto.";
+          return nullptr;
+        }
+        (void)vec.emplace_back(abs);
+      }
+      return std::make_shared<abstract::AbstractTuple>(vec);
+    }
+    case mind_ir::AttributeProto_AttributeType_UMONAD: {
+      return kUMonad->ToAbstract();
+    }
+    case mind_ir::AttributeProto_AttributeType_IOMONAD: {
+      return kIOMonad->ToAbstract();
+    }
+    case mind_ir::AttributeProto_AttributeType_BOOL: {
+      return kBool->ToAbstract();
+    }
+    default: {
+      MS_LOG(ERROR) << "Not support to get the abstract from AttrProto type: " << attr_proto.type();
+      return nullptr;
+    }
+  }
+}
+
 bool MSANFModelParser::SetNodeAbstractFromAttrProto(const mind_ir::AttributeProto &attr_proto,
                                                     const AnfNodePtr &node_ptr) {
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> kv;
@@ -310,14 +345,23 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
   }
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
     const mind_ir::AttributeProto &attr_proto = node_proto.attribute(i);
-    // CNode abstract
-    if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
-      SetCNodeAbstract(attr_proto, cnode_ptr);
-      continue;
-    }
-    if (prim_to_add_attr != nullptr) {
-      if (!GetAttrValueForCNode(prim_to_add_attr, attr_proto)) {
-        MS_LOG(ERROR) << "Parser prim: " << prim->ToString() << " attributes error : " << attr_proto.DebugString();
+    // Compatible with older versions.
+    if (attr_proto.has_ref_attr_name()) {
+      if (attr_proto.ref_attr_name().find("shape:") != string::npos) {
+        (void)SetCNodeAbstract(attr_proto, cnode_ptr);
+        continue;
+      }
+      if (prim_to_add_attr != nullptr && !GetAttrValueForCNode(prim_to_add_attr, attr_proto)) {
+        MS_LOG(ERROR) << "Parse prim: " << prim->ToString() << " attributes error : " << attr_proto.DebugString();
+      }
+    } else {
+      // ref_attr_name is removed in newer versions.
+      if (attr_proto.name() == "shape") {
+        (void)SetCNodeAbstract(attr_proto, cnode_ptr);
+        continue;
+      }
+      if (prim_to_add_attr != nullptr && !GetAttrValueForCNodeWithType(prim_to_add_attr, attr_proto)) {
+        MS_LOG(ERROR) << "Parse prim: " << prim->ToString() << " attributes error : " << attr_proto.DebugString();
       }
     }
   }
@@ -510,9 +554,20 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
     MS_LOG(DEBUG) << "Not tensor. parameter type: " << value_proto.denotation();
   }
   if (value_proto.has_attr_info()) {
-    if (!SetNodeAbstractFromAttrProto(value_proto.attr_info(), node)) {
-      MS_LOG(ERROR) << "Failed to get abstract from proto.";
-      return false;
+    auto attr_proto = value_proto.attr_info();
+    // Compatible with the previous proto.
+    if (attr_proto.has_ref_attr_name()) {
+      if (!SetNodeAbstractFromAttrProto(attr_proto, node)) {
+        MS_LOG(ERROR) << "Failed to get abstract from proto.";
+        return false;
+      }
+    } else {
+      auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto);
+      if (abs == nullptr) {
+        MS_LOG(ERROR) << "Failed to get abstract for input node " << node->name() << " from proto.";
+        return false;
+      }
+      node->set_abstract(abs);
     }
   }
   anfnode_build_map_[value_proto.name()] = node;
@@ -664,7 +719,7 @@ ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::Attr
     }
     default:
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_type;
-      return {};
+      return nullptr;
   }
 }
 
@@ -679,6 +734,73 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
     return false;
   }
   prim->AddAttr(attr_proto.name(), MakeValue(tensor_info));
+  return true;
+}
+
+bool MSANFModelParser::GetAttrValueForCNodeWithType(const PrimitivePtr &prim,
+                                                    const mind_ir::AttributeProto &attr_proto) {
+  MS_EXCEPTION_IF_NULL(prim);
+  const std::string &attr_name = attr_proto.name();
+  switch (attr_proto.type()) {
+    case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
+      if (tensor_proto.has_raw_data()) {
+        // For real tensor.
+        tensor::TensorPtr tensor_info = GenerateTensorPtrFromTensorProto(tensor_proto);
+        if (tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
+          return false;
+        }
+        prim->AddAttr(attr_name, tensor_info);
+      } else {
+        // For data type.
+        const int attr_tensor_type = tensor_proto.data_type();
+        auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+        if (iter == kDefaultValueSwitchMap.end()) {
+          MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
+          return false;
+        }
+        prim->AddAttr(attr_name, TypeIdToType(iter->second));
+      }
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_NONE: {
+      prim->AddAttr(attr_name, kNone);
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_TUPLE:
+    case mind_ir::AttributeProto_AttributeType_LIST: {
+      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+      if (sequence_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
+        return false;
+      }
+      prim->AddAttr(attr_name, sequence_value);
+      break;
+    }
+    default: {
+      ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+      if (value == nullptr) {
+        MS_LOG(ERROR) << "Can not get the value for attr: " << attr_name;
+        return false;
+      }
+      const std::string &op_type = prim->name();
+      if (!IsLite()) {
+        (void)CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
+      }
+      if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
+        auto str_dtype = GetValue<std::string>(value);
+        if (str_dtype == "int32") {
+          prim->AddAttr(attr_name, MakeValue<int64_t>(3));
+          break;
+        }
+        MS_EXCEPTION(NotSupportError)
+          << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
+          << value->ToString();
+      }
+      prim->AddAttr(attr_name, value);
+    }
+  }
   return true;
 }
 
@@ -732,15 +854,6 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     }
     case FORM_PARSE_NONE: {
       prim->AddAttr(attr_name, kNone);
-      break;
-    }
-    case FORM_PARSE_SEQUENCE: {
-      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
-      if (sequence_value == nullptr) {
-        MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
-        return false;
-      }
-      prim->AddAttr(attr_name, sequence_value);
       break;
     }
     default:
@@ -805,19 +918,19 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
 bool MSANFModelParser::ObtainValueNodeInTypeForm(const std::string &value_node_name,
                                                  const mind_ir::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
-  if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
+  auto iter = kDefaultValueSwitchMap.find(attr_tensor_type);
+  if (iter == kDefaultValueSwitchMap.end()) {
     MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
     return false;
   }
-  auto value = TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]);
+  auto value = TypeIdToType(iter->second);
   auto new_value_node = NewValueNode(value);
   new_value_node->set_abstract(value->ToAbstract());
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
 
-bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_name,
-                                                 const mind_ir::AttributeProto &attr_proto) {
+bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_name) {
   auto new_value_node = NewValueNode(kNone);
   MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(kNone->ToAbstract());
@@ -907,6 +1020,63 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
   return value_sequence;
 }
 
+bool MSANFModelParser::GetAttrValueForValueNodeWithType(const std::string &value_node_name,
+                                                        const mind_ir::AttributeProto &attr_proto) {
+  ValueNodePtr new_value_node;
+  switch (attr_proto.type()) {
+    case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
+      if (tensor_proto.has_raw_data()) {
+        // For real tensor.
+        ObtainValueNodeInTensorForm(value_node_name, tensor_proto);
+      } else {
+        // For data type.
+        ObtainValueNodeInTypeForm(value_node_name, tensor_proto);
+      }
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_NONE: {
+      ObtainValueNodeInNoneForm(value_node_name);
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_UMONAD: {
+      new_value_node = NewValueNode(kUMonad);
+      new_value_node->set_abstract(kUMonad->ToAbstract());
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_IOMONAD: {
+      new_value_node = NewValueNode(kIOMonad);
+      new_value_node->set_abstract(kIOMonad->ToAbstract());
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
+    case mind_ir::AttributeProto_AttributeType_TUPLE:
+    case mind_ir::AttributeProto_AttributeType_LIST: {
+      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+      if (sequence_value == nullptr) {
+        MS_LOG(ERROR) << "Failed to get sequence value for " << value_node_name;
+        return false;
+      }
+      new_value_node = NewValueNode(sequence_value);
+      new_value_node->set_abstract(sequence_value->ToAbstract());
+      anfnode_build_map_[value_node_name] = new_value_node;
+      break;
+    }
+    default: {
+      ValuePtr value = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+      if (value == nullptr) {
+        MS_LOG(ERROR) << "Can not get the value for attr: " << value_node_name;
+        return false;
+      }
+      new_value_node = NewValueNode(value);
+      new_value_node->set_abstract(value->ToAbstract());
+      anfnode_build_map_[value_node_name] = new_value_node;
+    }
+  }
+  return true;
+}
+
 bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_name,
                                                 const mind_ir::AttributeProto &attr_proto) {
   if (!attr_proto.has_ref_attr_name()) {
@@ -930,7 +1100,6 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
         anfnode_build_map_[value_node_name] = new_value_node;
         break;
       }
-      // Compatible with old versions.
       if (ref_attr_name.find("Tuple[]") != std::string::npos) {
         MS_LOG(INFO) << "Build Tuple() ValueNode for primitive.";
         ValuePtr res = MakeValue(std::vector<ValuePtr>{});
@@ -952,29 +1121,17 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_NONE: {
-      ObtainValueNodeInNoneForm(value_node_name, attr_proto);
+      ObtainValueNodeInNoneForm(value_node_name);
       break;
     }
     case FORM_PARSE_MONAD: {
       ObtainValueNodeInMonadForm(value_node_name, attr_proto);
       break;
     }
-    case FORM_PARSE_SEQUENCE: {
-      auto sequence_value = ObtainValueInSequenceForm(attr_proto);
-      if (sequence_value == nullptr) {
-        MS_LOG(ERROR) << "Failed to get sequence value for " << value_node_name;
-        return false;
-      }
-      new_value_node = NewValueNode(sequence_value);
-      new_value_node->set_abstract(sequence_value->ToAbstract());
-      anfnode_build_map_[value_node_name] = new_value_node;
-      break;
-    }
     default:
       MS_LOG(ERROR) << "parse attr type don't support the ref_attr_name: " << ref_attr_name;
       return false;
   }
-  // Compatible with old versions.
   if (type == FORM_PARSE_SCALAR && !multi_value_map.empty()) {
     if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
@@ -993,11 +1150,10 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
 bool MSANFModelParser::BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto) {
   const std::string &value_node_name = node_proto.output(0);
   const mind_ir::AttributeProto &attr_proto = node_proto.attribute(0);
-  if (!attr_proto.has_ref_attr_name()) {
-    MS_LOG(ERROR) << "parse ValueNode  don't have ref_attr_name";
-    return false;
+  if (attr_proto.has_ref_attr_name()) {
+    return GetAttrValueForValueNode(value_node_name, attr_proto);
   }
-  return GetAttrValueForValueNode(value_node_name, attr_proto);
+  return GetAttrValueForValueNodeWithType(value_node_name, attr_proto);
 }
 
 mindspore::HashMap<std::string, abstract::AbstractBasePtr> MSANFModelParser::GetAbstractForNode(
@@ -1119,9 +1275,18 @@ bool MSANFModelParser::SetCNodeAbstract(const mind_ir::AttributeProto &attr_prot
   if (CheckCNodePrim(cnode_ptr)) {
     return true;
   }
-  if (!SetNodeAbstractFromAttrProto(attr_proto, cnode_ptr)) {
-    MS_LOG(ERROR) << "Failed to get CNode abstract from proto.";
-    return false;
+  if (attr_proto.has_ref_attr_name()) {
+    if (!SetNodeAbstractFromAttrProto(attr_proto, cnode_ptr)) {
+      MS_LOG(ERROR) << "Failed to get CNode abstract from proto.";
+      return false;
+    }
+  } else {
+    auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto);
+    if (abs == nullptr) {
+      MS_LOG(ERROR) << "Failed to get CNode abstract from proto.";
+      return false;
+    }
+    cnode_ptr->set_abstract(abs);
   }
   return true;
 }
