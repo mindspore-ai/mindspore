@@ -729,6 +729,61 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   return true;
 }
 
+bool HasIncorporateCall(const FuncGraphPtr &func_graph) {
+  if (func_graph->func_graphs_used_total().empty()) {
+    return false;
+  }
+  const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (IsPrimitiveCNode(cnode, prim::kPrimPartial)) {
+      auto partial_function = cnode->input(kPartialGraphIndex);
+      if (!IsValueNode<FuncGraph>(partial_function)) {
+        MS_LOG(INFO) << "Partial has indirect call:" << cnode->DebugString();
+        return true;
+      }
+      continue;
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
+      const auto &switch_inputs = cnode->inputs();
+      if (std::any_of(switch_inputs.begin() + kSwitchTrueBranchIndex, switch_inputs.end(), [](const AnfNodePtr &input) {
+            return !IsPrimitiveCNode(input, prim::kPrimPartial) && !IsValueNode<FuncGraph>(input);
+          })) {
+        MS_LOG(INFO) << "Switch has indirect call:" << cnode->DebugString();
+        return true;
+      }
+      continue;
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
+      auto make_tuple = cnode->input(kSwitchLayerBranchesIndex);
+      if (!IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple)) {
+        MS_LOG(EXCEPTION) << "SwitchLayer input2 should be make_tuple,but got: " << make_tuple->DebugString();
+      }
+      const auto &make_tuple_inputs = make_tuple->cast<CNodePtr>()->inputs();
+      if (std::any_of(make_tuple_inputs.begin() + 1, make_tuple_inputs.end(), [](const AnfNodePtr &input) {
+            return !IsPrimitiveCNode(input, prim::kPrimPartial) && !IsValueNode<FuncGraph>(input);
+          })) {
+        MS_LOG(INFO) << "SwitchLayer has indirect call:" << cnode->DebugString();
+        return true;
+      }
+      continue;
+    }
+    if (!IsValueNode<Primitive>(cnode->input(0))) {  // If cnode is a call node.
+      auto input0 = cnode->input(0);
+      if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
+          IsValueNode<FuncGraph>(input0)) {
+        continue;
+      }
+      MS_LOG(INFO) << "Call has indirect call:" << cnode->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
 void SetRunMode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   auto context_ptr = MsContext::GetInstance();
@@ -765,18 +820,13 @@ void SetRunMode(const ResourcePtr &res) {
   }
 
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
-  auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto graphs = manager->func_graphs();
-  FuncGraphAnalyzer analyzer(func_graph);
-  analyzer.Run();
-  bool exist_func = analyzer.HasIncorporateCall();
-  bool exist_closure = analyzer.ExistClosure();
+  auto graphs = func_graph->func_graphs_used_total();
+  graphs.insert(func_graph);
+  bool exist_func = HasIncorporateCall(func_graph);
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_closure: " << exist_closure
-               << " exist_while: " << exist_while;
-  if (exist_while || exist_func || exist_closure) {
+  MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_while: " << exist_while;
+  if (exist_while || exist_func) {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
     set_ctx(false, false, false);
     return;
