@@ -102,7 +102,7 @@ public class LenetClient extends Client {
     }
 
     @Override
-    public List<Integer> getInferResult(List<Callback> inferCallbacks) {
+    public List<Object> getInferResult(List<Callback> inferCallbacks) {
         DataSet inferDataSet = dataSets.getOrDefault(RunType.INFERMODE, null);
         if (inferDataSet == null) {
             return new ArrayList<>();

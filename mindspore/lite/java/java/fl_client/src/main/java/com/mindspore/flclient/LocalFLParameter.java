@@ -244,7 +244,6 @@ public class LocalFLParameter {
     }
 
     public float getLr() {
-        LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <lr> from server is: " + lr));
         return lr;
     }
 
