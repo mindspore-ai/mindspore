@@ -58,6 +58,7 @@ class ModelThread {
 
   // num thread is configured according to the hardware
   int num_models_;
+  bool is_copy_output_ = true;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_

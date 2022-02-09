@@ -26,12 +26,13 @@
 namespace mindspore {
 struct PredictTask {
   PredictTask(const std::vector<MSTensor> *in, std::vector<MSTensor> *out, MSKernelCallBack before,
-              MSKernelCallBack after)
-      : inputs(in), outputs(out), before(before), after(after) {}
+              MSKernelCallBack after, bool ready = false)
+      : inputs(in), outputs(out), before(before), after(after), ready(ready) {}
   const std::vector<MSTensor> *inputs;
   std::vector<MSTensor> *outputs;
   MSKernelCallBack before;
   MSKernelCallBack after;
+  bool ready;
 };
 
 class PredictTaskQueue {
@@ -40,7 +41,7 @@ class PredictTaskQueue {
   ~PredictTaskQueue();
 
   void PushPredictTask(std::shared_ptr<PredictTask> task);
-  void WaitUntilPredictActive(std::vector<MSTensor> *outputs);
+  void WaitUntilPredictActive(std::shared_ptr<PredictTask> task);
   std::shared_ptr<PredictTask> GetPredictTask();
   void ActiveTask();
   bool IsPredictTaskDone() { return predict_task_done_; }

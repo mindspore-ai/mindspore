@@ -938,7 +938,9 @@ int BenchmarkUnifiedApi::PrintInputData() {
 int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
   // model pool init
   ModelParallelRunner model_pool;
-  auto runner_config = std::make_shared<RunnerConfig>(context, flags_->num_model_);
+  auto runner_config = std::make_shared<RunnerConfig>();
+  runner_config->model_ctx = context;
+  runner_config->num_model = flags_->num_model_;
   auto model_init_start = GetTimeUs();
   auto ret = model_pool.Init(flags_->model_file_, runner_config);
   if (ret != kSuccess) {

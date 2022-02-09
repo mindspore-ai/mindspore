@@ -21,14 +21,12 @@
 #include <string>
 #include "include/api/status.h"
 #include "include/api/context.h"
-
 namespace mindspore {
 class ModelPool;
 
 struct RunnerConfig {
-  RunnerConfig(std::shared_ptr<Context> &ctx, int num) : model_ctx(ctx), num_model(num) {}
   std::shared_ptr<Context> model_ctx = nullptr;
-  int num_model;
+  int num_model = 0;
 };
 
 /// \brief The ModelRunner class is used to define a MindSpore ModelPoolManager, facilitating Model management.
@@ -40,9 +38,7 @@ class MS_API ModelParallelRunner {
   /// \brief build a model runner from model path so that it can run on a device. Only valid for Lite.
   ///
   /// \param[in] model_path Define the model path.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] runner_config Define the config used to store options during model pool init.
   /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16, 24, or 32.
   /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM, AES-CBC.
   ///
@@ -50,17 +46,17 @@ class MS_API ModelParallelRunner {
   Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr,
               const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
 
-  /// \brief Obtains all input tensors of the model.
+  /// \brief Obtains all input tensors information of the model.
   ///
   /// \return The vector that includes all input tensors.
   std::vector<MSTensor> GetInputs();
 
-  /// \brief Obtains all output tensors of the model.
+  /// \brief Obtains all output tensors information of the model.
   ///
   /// \return The vector that includes all output tensors.
   std::vector<MSTensor> GetOutputs();
 
-  /// \brief Inference ModelPoolManager.
+  /// \brief Inference ModelParallelRunner.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
