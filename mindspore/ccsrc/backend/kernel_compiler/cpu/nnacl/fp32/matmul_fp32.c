@@ -726,7 +726,7 @@ void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col)
   for (int i = 0; i < all_block_num; i += cur_block) {
     cur_block = MSMIN(C4NUM, all_block_num - i);  // max_tile = 4
     int dst_stride = cur_block * C16NUM;
-    int row_num = MSMIN(dst_stride, row - i * C8NUM);
+    int row_num = MSMIN(dst_stride, row - i * C16NUM);
     const float *src = src_ptr + i * C16NUM * col;
     float *dst = dst_ptr + i * C16NUM * col;
     int r = 0;
@@ -2268,3 +2268,331 @@ void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float
     }
   }
 }
+
+#ifdef ENABLE_ARM64
+void MatMul4x1Kernel(const float *input, const float *weight, float *output, const float *bias, size_t deep) {
+  // 1: LoopD16, 2: LoopD12, 3: LoopD8, 4: LoopD4, 5: LoopD1, 6: LoopDEnd, 7: LoopDTail, 8: LoopDTailCompute
+  // 9: WriteBack
+  asm volatile(
+    "mov x8, %[input]\n"
+    "mov x9, %[weight]\n"
+    "mov x10, %[deep]\n"
+    "add x5, %[input], %[deep], LSL #2\n"
+    "add x6, %[input], %[deep], LSL #3\n"
+    "add x7, x5, %[deep], LSL #3\n"
+    "dup v0.2d, xzr\n"
+    "dup v1.2d, xzr\n"
+    "dup v2.2d, xzr\n"
+    "dup v3.2d, xzr\n"
+    "subs x10, x10, #16\n"
+    "blt 2f\n"
+    "1:\n"  // LoopD16
+    "ld1 {v4.4s, v5.4s, v6.4s, v7.4s}, [x8], #64\n"
+    "ld1 {v16.4s, v17.4s, v18.4s, v19.4s}, [x5], #64\n"
+    "ld1 {v20.4s, v21.4s, v22.4s, v23.4s}, [x6], #64\n"
+    "ld1 {v24.4s, v25.4s, v26.4s, v27.4s}, [x7], #64\n"
+    "ld1 {v28.4s, v29.4s, v30.4s, v31.4s}, [x9], #64\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v2.4s, v20.4s, v28.4s\n"
+    "fmla v3.4s, v24.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "fmla v2.4s, v21.4s, v29.4s\n"
+    "fmla v3.4s, v25.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "fmla v1.4s, v18.4s, v30.4s\n"
+    "fmla v2.4s, v22.4s, v30.4s\n"
+    "fmla v3.4s, v26.4s, v30.4s\n"
+    "fmla v0.4s, v7.4s, v31.4s\n"
+    "fmla v1.4s, v19.4s, v31.4s\n"
+    "fmla v2.4s, v23.4s, v31.4s\n"
+    "fmla v3.4s, v27.4s, v31.4s\n"
+    "subs x10, x10, #16\n"
+    "bge 1b\n"
+    "2:\n"  // LoopD12
+    "adds x10, x10, #16\n"
+    "cbz x10, 6f\n"
+    "cmp x10, #12\n"
+    "blt 3f\n"
+    "ld1 {v4.4s, v5.4s, v6.4s}, [x8], #48\n"
+    "ld1 {v16.4s, v17.4s, v18.4s}, [x5], #48\n"
+    "ld1 {v20.4s, v21.4s, v22.4s}, [x6], #48\n"
+    "ld1 {v24.4s, v25.4s, v26.4s}, [x7], #48\n"
+    "ld1 {v28.4s, v29.4s, v30.4s}, [x9], #48\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v2.4s, v20.4s, v28.4s\n"
+    "fmla v3.4s, v24.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "fmla v2.4s, v21.4s, v29.4s\n"
+    "fmla v3.4s, v25.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "fmla v1.4s, v18.4s, v30.4s\n"
+    "fmla v2.4s, v22.4s, v30.4s\n"
+    "fmla v3.4s, v26.4s, v30.4s\n"
+    "sub x10, x10, #12\n"
+    "b 7f\n"
+    "3:\n"  // LoopD8
+    "cmp x10, #8\n"
+    "blt 4f\n"
+    "ld1 {v4.4s, v5.4s}, [x8], #32\n"
+    "ld1 {v16.4s, v17.4s}, [x5], #32\n"
+    "ld1 {v20.4s, v21.4s}, [x6], #32\n"
+    "ld1 {v24.4s, v25.4s}, [x7], #32\n"
+    "ld1 {v28.4s, v29.4s}, [x9], #32\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v2.4s, v20.4s, v28.4s\n"
+    "fmla v3.4s, v24.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "fmla v2.4s, v21.4s, v29.4s\n"
+    "fmla v3.4s, v25.4s, v29.4s\n"
+    "sub x10, x10, #8\n"
+    "b 7f\n"
+    "4:\n"  // LoopD4
+    "cmp x10, #4\n"
+    "blt 7f\n"
+    "ld1 {v4.4s}, [x8], #16\n"
+    "ld1 {v16.4s}, [x5], #16\n"
+    "ld1 {v20.4s}, [x6], #16\n"
+    "ld1 {v24.4s}, [x7], #16\n"
+    "ld1 {v28.4s}, [x9], #16\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v2.4s, v20.4s, v28.4s\n"
+    "fmla v3.4s, v24.4s, v28.4s\n"
+    "sub x10, x10, #4\n"
+    "7:\n"
+    "cbz x10, 6f\n"
+    "dup v4.2d, xzr\n"
+    "dup v16.2d, xzr\n"
+    "dup v20.2d, xzr\n"
+    "dup v24.2d, xzr\n"
+    "dup v28.2d, xzr\n"
+    "subs x10, x10, #2\n"
+    "blt 5f\n"
+    "ld1 {v4.d}[0], [x8], #8\n"  // LoopD2
+    "ld1 {v16.d}[0], [x5], #8\n"
+    "ld1 {v20.d}[0], [x6], #8\n"
+    "ld1 {v24.d}[0], [x7], #8\n"
+    "ld1 {v28.d}[0], [x9], #8\n"
+    "cbz x10, 8f\n"
+    "5:\n"  // LoopD1
+    "ld1 {v4.s}[2], [x8]\n"
+    "ld1 {v16.s}[2], [x5]\n"
+    "ld1 {v20.s}[2], [x6]\n"
+    "ld1 {v24.s}[2], [x7]\n"
+    "ld1 {v28.s}[2], [x9]\n"
+    "8:\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v2.4s, v20.4s, v28.4s\n"
+    "fmla v3.4s, v24.4s, v28.4s\n"
+    "6:\n"
+    "faddp v4.4s, v0.4s, v1.4s\n"
+    "faddp v5.4s, v2.4s, v3.4s\n"
+    "faddp v0.4s, v4.4s, v5.4s\n"
+    "cbz %[bias], 9f\n"
+    "ld1r {v1.4s}, [%[bias]]\n"
+    "fadd v0.4s, v0.4s, v1.4s\n"
+    "9:\n"
+    "st1 {v0.4s}, [%[output]]\n"
+
+    :
+    : [ input ] "r"(input), [ weight ] "r"(weight), [ output ] "r"(output), [ bias ] "r"(bias), [ deep ] "r"(deep)
+    : "cc", "x5", "x6", "x7", "x8", "x9", "x10", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v16", "v17", "v18",
+      "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31");
+}
+
+void MatMul2x1Kernel(const float *input, const float *weight, float *output, const float *bias, size_t deep) {
+  // 1: LoopD16, 2: LoopD12, 3: LoopD8, 4: LoopD4, 5: LoopD1, 6: LoopDEnd, 7: LoopDTail, 8: LoopDTailCompute
+  // 9: WriteBack
+  asm volatile(
+    "mov x8, %[input]\n"
+    "mov x9, %[weight]\n"
+    "mov x10, %[deep]\n"
+    "add x5, %[input], %[deep], LSL #2\n"
+    "dup v0.2d, xzr\n"
+    "dup v1.2d, xzr\n"
+    "subs x10, x10, #16\n"
+    "blt 2f\n"
+    "1:\n"  // LoopD16
+    "ld1 {v4.4s, v5.4s, v6.4s, v7.4s}, [x8], #64\n"
+    "ld1 {v16.4s, v17.4s, v18.4s, v19.4s}, [x5], #64\n"
+    "ld1 {v28.4s, v29.4s, v30.4s, v31.4s}, [x9], #64\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "fmla v1.4s, v18.4s, v30.4s\n"
+    "fmla v0.4s, v7.4s, v31.4s\n"
+    "fmla v1.4s, v19.4s, v31.4s\n"
+    "subs x10, x10, #16\n"
+    "bge 1b\n"
+    "2:\n"  // LoopD12
+    "adds x10, x10, #16\n"
+    "cbz x10, 6f\n"
+    "cmp x10, #12\n"
+    "blt 3f\n"
+    "ld1 {v4.4s, v5.4s, v6.4s}, [x8], #48\n"
+    "ld1 {v16.4s, v17.4s, v18.4s}, [x5], #48\n"
+    "ld1 {v28.4s, v29.4s, v30.4s}, [x9], #48\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "fmla v1.4s, v18.4s, v30.4s\n"
+    "sub x10, x10, #12\n"
+    "b 7f\n"
+    "3:\n"  // LoopD8
+    "cmp x10, #8\n"
+    "blt 4f\n"
+    "ld1 {v4.4s, v5.4s}, [x8], #32\n"
+    "ld1 {v16.4s, v17.4s}, [x5], #32\n"
+    "ld1 {v28.4s, v29.4s}, [x9], #32\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v1.4s, v17.4s, v29.4s\n"
+    "sub x10, x10, #8\n"
+    "b 7f\n"
+    "4:\n"  // LoopD4
+    "cmp x10, #4\n"
+    "blt 7f\n"
+    "ld1 {v4.4s}, [x8], #16\n"
+    "ld1 {v16.4s}, [x5], #16\n"
+    "ld1 {v28.4s}, [x9], #16\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "sub x10, x10, #4\n"
+    "7:\n"
+    "cbz x10, 6f\n"
+    "dup v4.2d, xzr\n"
+    "dup v16.2d, xzr\n"
+    "subs x10, x10, #2\n"
+    "blt 5f\n"
+    "ld1 {v4.d}[0], [x8], #8\n"  // LoopD2
+    "ld1 {v16.d}[0], [x5], #8\n"
+    "ld1 {v28.d}[0], [x9], #8\n"
+    "cbz x10, 8f\n"
+    "5:\n"  // LoopD1
+    "ld1 {v4.s}[2], [x8]\n"
+    "ld1 {v16.s}[2], [x5]\n"
+    "ld1 {v28.s}[2], [x9]\n"
+    "8:\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v1.4s, v16.4s, v28.4s\n"
+    "6:\n"
+    "faddp v4.4s, v0.4s, v1.4s\n"
+    "faddp v0.4s, v4.4s, v4.4s\n"
+    "cbz %[bias], 9f\n"
+    "ld1r {v1.4s}, [%[bias]]\n"
+    "fadd v0.2s, v0.2s, v1.2s\n"
+    "9:\n"
+    "st1 {v0.2s}, [%[output]]\n"
+
+    :
+    : [ input ] "r"(input), [ weight ] "r"(weight), [ output ] "r"(output), [ bias ] "r"(bias), [ deep ] "r"(deep)
+    : "cc", "x5", "x8", "x9", "x10", "v0", "v1", "v4", "v5", "v6", "v7", "v16", "v17", "v18", "v19", "v28", "v29",
+      "v30", "v31", "memory");
+}
+
+void MatMul1x1Kernel(const float *input, const float *weight, float *output, const float *bias, size_t deep) {
+  // 1: LoopD16, 2: LoopD12, 3: LoopD8, 4: LoopD4, 5: LoopD1, 6: LoopDEnd, 7: LoopDTail, 8: LoopDTailCompute
+  // 9: WriteBack
+  asm volatile(
+    "mov x8, %[input]\n"
+    "mov x9, %[weight]\n"
+    "mov x10, %[deep]\n"
+    "dup v0.2d, xzr\n"
+    "subs x10, x10, #16\n"
+    "blt 2f\n"
+    "1:\n"  // LoopD16
+    "ld1 {v4.4s, v5.4s, v6.4s, v7.4s}, [x8], #64\n"
+    "ld1 {v28.4s, v29.4s, v30.4s, v31.4s}, [x9], #64\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "fmla v0.4s, v7.4s, v31.4s\n"
+    "subs x10, x10, #16\n"
+    "bge 1b\n"
+    "2:\n"  // LoopD12
+    "adds x10, x10, #16\n"
+    "cbz x10, 6f\n"
+    "cmp x10, #12\n"
+    "blt 3f\n"
+    "ld1 {v4.4s, v5.4s, v6.4s}, [x8], #48\n"
+    "ld1 {v28.4s, v29.4s, v30.4s}, [x9], #48\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "fmla v0.4s, v6.4s, v30.4s\n"
+    "sub x10, x10, #12\n"
+    "b 7f\n"
+    "3:\n"  // LoopD8
+    "cmp x10, #8\n"
+    "blt 4f\n"
+    "ld1 {v4.4s, v5.4s}, [x8], #32\n"
+    "ld1 {v28.4s, v29.4s}, [x9], #32\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "fmla v0.4s, v5.4s, v29.4s\n"
+    "sub x10, x10, #8\n"
+    "b 7f\n"
+    "4:\n"  // LoopD4
+    "cmp x10, #4\n"
+    "blt 7f\n"
+    "ld1 {v4.4s}, [x8], #16\n"
+    "ld1 {v28.4s}, [x9], #16\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "sub x10, x10, #4\n"
+    "7:\n"
+    "cbz x10, 6f\n"
+    "dup v4.2d, xzr\n"
+    "subs x10, x10, #2\n"
+    "blt 5f\n"
+    "ld1 {v4.d}[0], [x8], #8\n"  // LoopD2
+    "ld1 {v28.d}[0], [x9], #8\n"
+    "cbz x10, 8f\n"
+    "5:\n"  // LoopD1
+    "ld1 {v4.s}[3], [x8]\n"
+    "ld1 {v28.s}[3], [x9]\n"
+    "8:\n"
+    "fmla v0.4s, v4.4s, v28.4s\n"
+    "6:\n"
+    "faddp v4.4s, v0.4s, v0.4s\n"
+    "faddp v0.4s, v4.4s, v4.4s\n"
+    "cbz %[bias], 9f\n"
+    "ld1 {v1.s}[0], [%[bias]]\n"
+    "fadd s0, s0, s1\n"
+    "9:\n"
+    "st1 {v0.s}[0], [%[output]]\n"
+
+    :
+    : [ input ] "r"(input), [ weight ] "r"(weight), [ output ] "r"(output), [ bias ] "r"(bias), [ deep ] "r"(deep)
+    : "cc", "x8", "x9", "x10", "v0", "v4", "v5", "v6", "v7", "v16", "v17", "v18", "v19", "v28", "v29", "v30", "v31");
+}
+
+void GemmIsNotPackByRow(const float *a, const float *b, float *c, const float *bias, int start_row, int end_row,
+                        int deep) {
+  const float *input = a + start_row * deep;
+  float *output = c + start_row;
+  const int step = C4NUM * deep;
+  for (; start_row <= end_row - C4NUM; start_row += C4NUM) {
+    MatMul4x1Kernel(input, b, output, bias, deep);
+    input += step;
+    output += C4NUM;
+  }
+  for (; start_row <= end_row - C2NUM; start_row += C2NUM) {
+    MatMul2x1Kernel(input, b, output, bias, deep);
+    input += C2NUM * deep;
+    output += C2NUM;
+  }
+  if (start_row == end_row - 1) {
+    MatMul1x1Kernel(input, b, output, bias, deep);
+  }
+}
+#endif

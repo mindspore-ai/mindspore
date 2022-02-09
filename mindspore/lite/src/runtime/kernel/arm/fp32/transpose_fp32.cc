@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,21 +36,31 @@ int TransposeCPUKernel::Prepare() {
 }
 
 int TransposeCPUKernel::ReSize() {
+  auto &inTensor = in_tensors_.front();
+  auto in_shape = inTensor->shape();
   if (in_tensors_.size() == 2) {
     param_->num_axes_ = in_tensors_.at(1)->ElementsNum();
   }
-  int trans3d[3] = {0, 2, 1};
+  if (in_shape.size() > MAX_TRANSPOSE_DIM_SIZE) {
+    MS_LOG(ERROR) << "input shape out of range.";
+    return RET_ERROR;
+  }
+  int transNd[MAX_TRANSPOSE_DIM_SIZE] = {0, 2, 1};
   int *perm_data = nullptr;
   auto input_tensor = in_tensors_.at(kInputIndex);
   if (input_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
-    if (input_tensor->shape().size() == 3 && param_->num_axes_ == 4) {
-      param_->num_axes_ = 3;
-      perm_data = trans3d;
-    } else {
-      return RET_OK;
+    perm_data = transNd;
+    if (input_tensor->shape().size() == C3NUM && param_->num_axes_ == C4NUM) {
+      param_->num_axes_ = C3NUM;
+    }
+    if (param_->num_axes_ == 0) {
+      for (int i = 0; i < static_cast<int>(in_shape.size()); ++i) {
+        transNd[i] = static_cast<int>(in_shape.size()) - 1 - i;
+      }
+      param_->num_axes_ = static_cast<int>(in_shape.size());
     }
   } else {
-    MS_ASSERT(in_tensors_.size() == 2);
+    MS_ASSERT(in_tensors_.size() == C2NUM);
     auto perm_tensor = in_tensors_.at(1);
     if (perm_tensor->data_type() != kNumberTypeInt32) {
       MS_LOG(ERROR) << "Unsupported type id: " << perm_tensor->data_type() << " of perm tensor.";
@@ -59,30 +69,31 @@ int TransposeCPUKernel::ReSize() {
     perm_data = reinterpret_cast<int *>(perm_tensor->data());
     MSLITE_CHECK_PTR(perm_data);
   }
-  if (param_->num_axes_ > MAX_TRANSPOSE_DIM_SIZE || param_->num_axes_ < 0) {
-    MS_LOG(ERROR) << "num_axes_ " << param_->num_axes_ << "is invalid.";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(param_->num_axes_ <= MAX_TRANSPOSE_DIM_SIZE, RET_ERROR, "transpose's perm is invalid.");
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
   }
 
-  for (int i = 0; i < param_->num_axes_; i++) {
-    if (param_->perm_[i] < 0 || param_->perm_[i] >= param_->num_axes_) {
-      MS_LOG(ERROR) << "Check perm failed.";
-      return RET_ERROR;
-    }
+  if (GetOptParameters() != RET_OK) {
+    MS_LOG(ERROR) << "cannot compute optimizer parameters.";
+    return RET_ERROR;
+  }
+  DecideIfOnlyCopy();
+  if (only_copy_) {
+    return RET_OK;
+  }
+  GetOptTransposeFunc();
+  if (optTransposeFunc_ != nullptr) {
+    return RET_OK;
   }
 
-  auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
-  auto in_shape = inTensor->shape();
   auto out_shape = outTensor->shape();
   param_->strides_[param_->num_axes_ - 1] = 1;
   param_->out_strides_[param_->num_axes_ - 1] = 1;
   param_->data_num_ = inTensor->ElementsNum();
-  MS_CHECK_LE(static_cast<size_t>(param_->num_axes_), in_shape.size(), RET_ERROR);
-  MS_CHECK_LE(static_cast<size_t>(param_->num_axes_), out_shape.size(), RET_ERROR);
+  MS_CHECK_TRUE_RET(static_cast<size_t>(param_->num_axes_) == in_shape.size(), RET_ERROR);
+  MS_CHECK_TRUE_RET(static_cast<size_t>(param_->num_axes_) == out_shape.size(), RET_ERROR);
   for (int i = param_->num_axes_ - 2; i >= 0; i--) {
     param_->strides_[i] = in_shape.at(i + 1) * param_->strides_[i + 1];
     param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
@@ -102,21 +113,101 @@ int TransposeCPUKernel::ReSize() {
   return RET_OK;
 }
 
+int TransposeCPUKernel::GetOptParameters() {
+  auto in_shape = in_tensors_[0]->shape();
+  if (in_shape.size() != static_cast<size_t>(param_->num_axes_)) {
+    return RET_OK;
+  }
+  for (int i = 0; i < param_->num_axes_; i++) {
+    if (param_->perm_[i] < 0 || param_->perm_[i] >= param_->num_axes_) {
+      MS_LOG(ERROR) << "Check perm failed.";
+      return RET_ERROR;
+    }
+  }
+  std::vector<std::vector<int>> segments;
+  for (int i = 0; i < param_->num_axes_;) {
+    std::vector<int> segment{param_->perm_[i]};
+    ++i;
+    for (; i < param_->num_axes_; ++i) {
+      if (param_->perm_[i] - 1 != param_->perm_[i - 1]) {
+        break;
+      }
+      segment.push_back(param_->perm_[i]);
+    }
+    segments.push_back(segment);
+  }
+  in_shape_opt_ = std::vector<int>(segments.size(), 1);
+  perm_opt_ = std::vector<int>(segments.size(), 0);
+  for (size_t i = 0; i < segments.size(); ++i) {
+    for (size_t j = 0; j < segments.size(); ++j) {
+      perm_opt_[i] += (segments[j].front() < segments[i].front() ? 1 : 0);
+    }
+    for (auto index : segments[i]) {
+      MS_CHECK_FALSE(INT_MUL_OVERFLOW(in_shape_opt_[perm_opt_[i]], in_shape[index]), RET_ERROR);
+      in_shape_opt_[perm_opt_[i]] *= in_shape[index];
+    }
+  }
+  return RET_OK;
+}
+
+void TransposeCPUKernel::DecideIfOnlyCopy() {
+  auto in_shape = in_tensors_[0]->shape();
+  int dim = 0;
+  if (in_shape.size() != static_cast<size_t>(param_->num_axes_) || perm_opt_.size() == 1) {
+    only_copy_ = true;
+    return;
+  }
+  dim = 0;
+  std::vector<int> need_trans_dims;
+  std::for_each(perm_opt_.begin(), perm_opt_.end(), [&dim, &need_trans_dims](int val) {
+    if (val != dim) {
+      need_trans_dims.push_back(dim);
+    }
+    ++dim;
+  });
+  if (need_trans_dims.size() == C2NUM && need_trans_dims.back() - need_trans_dims.front() == C1NUM) {
+    if (in_shape_opt_[need_trans_dims.front()] == 1 || in_shape_opt_[need_trans_dims.back()] == 1) {
+      only_copy_ = true;
+      return;
+    }
+  }
+  only_copy_ = false;
+}
+
+void TransposeCPUKernel::SetOptTransposeFunc() { optTransposeFunc_ = PackNHWCToNCHWFp32; }
+
+int TransposeCPUKernel::GetOptTransposeFunc() {
+  if (in_tensors_[0]->data_type() != kNumberTypeFloat32 || perm_opt_.size() > C3NUM || perm_opt_.size() < C2NUM) {
+    optTransposeFunc_ = nullptr;
+    return RET_OK;
+  }
+  bool trans_last_two_dim{true};
+  for (size_t i = 0; i < perm_opt_.size() - C2NUM; ++i) {
+    if (perm_opt_[i] != static_cast<int>(i)) {
+      trans_last_two_dim = false;
+      break;
+    }
+  }
+  if (!trans_last_two_dim) {
+    optTransposeFunc_ = nullptr;
+    return RET_OK;
+  }
+  SetOptTransposeFunc();
+  if (perm_opt_.size() == C2NUM) {
+    nhnc_param_[FIRST_INPUT] = 1;
+    nhnc_param_[SECOND_INPUT] = in_shape_opt_.front();
+    nhnc_param_[THIRD_INPUT] = in_shape_opt_.back();
+  } else {
+    nhnc_param_[FIRST_INPUT] = in_shape_opt_.front();
+    nhnc_param_[SECOND_INPUT] = in_shape_opt_[SECOND_INPUT];
+    nhnc_param_[THIRD_INPUT] = in_shape_opt_.back();
+  }
+  return RET_OK;
+}
+
 TransposeCPUKernel::~TransposeCPUKernel() {
   if (this->out_shape_ != nullptr) {
     free(this->out_shape_);
-  }
-}
-
-void TransposeCPUKernel::GetNchwToNhwcFunc(TypeId dtype) {
-  if (dtype == kNumberTypeFloat32) {
-    NHNCTransposeFunc_ = PackNCHWToNHWCFp32;
-  }
-}
-
-void TransposeCPUKernel::GetNhwcToNchwFunc(TypeId dtype) {
-  if (dtype == kNumberTypeFloat32) {
-    NHNCTransposeFunc_ = PackNHWCToNCHWFp32;
   }
 }
 
@@ -130,34 +221,35 @@ int TransposeCPUKernel::TransposeDimGreaterThan6(int task_id) {
   return RET_OK;
 }
 
-int TransposeCPUKernel::GetNHNCTransposeFunc(const lite::Tensor *in_tensor, const lite::Tensor *out_tensor) {
-  if (in_tensor->shape().size() != 4) {
+int TransposeCPUKernel::CopyInputToOutput() {
+  auto in_tensor = in_tensors().front();
+  CHECK_NULL_RETURN(in_tensor);
+  auto out_tensor = out_tensors().front();
+  CHECK_NULL_RETURN(out_tensor);
+  if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
+      in_tensor->allocator() != ms_context_->allocator || op_parameter_->is_train_session_ ||
+      ((in_tensor->IsGraphInput() || in_tensor->IsGraphOutput()) && out_tensor->IsGraphOutput())) {
+    CHECK_NULL_RETURN(out_tensor->data());
+    CHECK_NULL_RETURN(in_tensor->data());
+    MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);
+    if (in_tensor->data() != out_tensor->data()) {
+      memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
+    }
     return RET_OK;
   }
-  auto out_shape = out_tensor->shape();
-  if (param_->perm_[FIRST_INPUT] == FIRST_INPUT && param_->perm_[SECOND_INPUT] == THIRD_INPUT &&
-      param_->perm_[THIRD_INPUT] == FOURTH_INPUT && param_->perm_[FOURTH_INPUT] == SECOND_INPUT) {
-    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[SECOND_INPUT], out_shape[THIRD_INPUT]), RET_ERROR);
-    nhnc_param_[SECOND_INPUT] = out_shape[SECOND_INPUT] * out_shape[THIRD_INPUT];
-    nhnc_param_[THIRD_INPUT] = out_shape[FOURTH_INPUT];
-    GetNchwToNhwcFunc(in_tensor->data_type());
-  }
-  if (param_->perm_[FIRST_INPUT] == FIRST_INPUT && param_->perm_[SECOND_INPUT] == FOURTH_INPUT &&
-      param_->perm_[THIRD_INPUT] == SECOND_INPUT && param_->perm_[FOURTH_INPUT] == THIRD_INPUT) {
-    nhnc_param_[FIRST_INPUT] = out_shape[FIRST_INPUT];
-    MS_CHECK_FALSE(INT_MUL_OVERFLOW(out_shape[THIRD_INPUT], out_shape[FOURTH_INPUT]), RET_ERROR);
-    nhnc_param_[SECOND_INPUT] = out_shape[THIRD_INPUT] * out_shape[FOURTH_INPUT];
-    nhnc_param_[THIRD_INPUT] = out_shape[SECOND_INPUT];
-    GetNhwcToNchwFunc(in_tensor->data_type());
-  }
+
+  out_tensor->FreeData();
+  out_tensor->ResetRefCount();
+  in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
+  out_tensor->set_data(in_tensor->data());
+  out_tensor->set_own_data(in_tensor->own_data());
   return RET_OK;
 }
 
 int TransposeCPUKernel::RunImpl(int task_id) {
-  if (NHNCTransposeFunc_ != nullptr) {
-    NHNCTransposeFunc_(in_data_, out_data_, nhnc_param_[FIRST_INPUT], nhnc_param_[SECOND_INPUT],
-                       nhnc_param_[THIRD_INPUT], task_id, op_parameter_->thread_num_);
+  if (optTransposeFunc_ != nullptr) {
+    optTransposeFunc_(in_data_, out_data_, nhnc_param_[FIRST_INPUT], nhnc_param_[SECOND_INPUT],
+                      nhnc_param_[THIRD_INPUT], task_id, op_parameter_->thread_num_);
   } else {
     return TransposeDimGreaterThan6(task_id);
   }
@@ -176,6 +268,9 @@ int TransposeImpl(void *kernel, int task_id, float lhs_scale, float rhs_scale) {
 int TransposeCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
   MS_ASSERT(out_tensors_.size() == 1);
+  if (only_copy_) {
+    return CopyInputToOutput();
+  }
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {
@@ -186,16 +281,7 @@ int TransposeCPUKernel::Run() {
   out_data_ = out_tensor->data();
   CHECK_NULL_RETURN(in_data_);
   CHECK_NULL_RETURN(out_data_);
-
-  if (in_tensor->shape().size() != static_cast<size_t>(param_->num_axes_)) {
-    memcpy(out_data_, in_data_, in_tensor->Size());
-    return RET_OK;
-  }
-  if (GetNHNCTransposeFunc(in_tensor, out_tensor) != RET_OK) {
-    MS_LOG(ERROR) << "Get NHWC tranpose func fail!";
-    return RET_ERROR;
-  }
-  if (NHNCTransposeFunc_ != nullptr) {
+  if (optTransposeFunc_ != nullptr) {
     return ParallelLaunch(this->ms_context_, TransposeImpl, this, op_parameter_->thread_num_);
   }
   if (out_tensor->shape().size() <= DIMENSION_6D) {
