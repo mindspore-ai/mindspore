@@ -65,6 +65,15 @@ std::vector<MSTensor> ModelThread::GetInputs() {
   return inputs;
 }
 
+std::vector<MSTensor> ModelThread::GetOutputs() {
+  if (model_ == nullptr) {
+    MS_LOG(ERROR) << "model is nullptr in ModelThread.";
+    return {};
+  }
+  auto outputs = model_->GetOutputs();
+  return outputs;
+}
+
 std::pair<std::vector<std::vector<int64_t>>, bool> ModelThread::GetModelResize(
   const std::vector<MSTensor> &model_inputs, const std::vector<MSTensor> &inputs) {
   std::unique_lock<std::mutex> model_lock(mtx_model_);

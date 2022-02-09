@@ -37,6 +37,8 @@ class ModelPool {
 
   std::vector<MSTensor> GetInputs();
 
+  std::vector<MSTensor> GetOutputs();
+
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
@@ -52,6 +54,7 @@ class ModelPool {
   void *all_out_data = nullptr;
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;
+  std::vector<MSTensor> model_outputs_;
   size_t num_models_ = 10;
   size_t batch_split_num_ = 4;
 };
