@@ -320,8 +320,7 @@ void PSContext::set_sign_dim_out(int sign_dim_out) {
     sign_dim_out_ = sign_dim_out;
   } else {
     MS_LOG(WARNING) << sign_dim_out << " is invalid, sign_dim_out must be in range of [0, 50], 0 is used by default.";
-    float sign_dim_out_default = 0;
-    sign_dim_out_ = sign_dim_out_default;
+    sign_dim_out_ = 0;
   }
 }
 int PSContext::sign_dim_out() const { return sign_dim_out_; }
