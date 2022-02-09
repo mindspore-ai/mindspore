@@ -49,7 +49,7 @@ class Dataset(MindData):
 
 
 config = TransformerOpParallelConfig(data_parallel=2, model_parallel=8, vocab_emb_dp=False)
-moe_config = MoEConfig(expert_num=4)
+moe_config = MoEConfig(expert_num=4, num_experts_chosen=3)
 
 
 class NetWithLossFiveInputs(nn.Cell):

@@ -41,8 +41,8 @@ class MoEConfig:
                 which is >=1.0. Default: 1.1.
             aux_loss_factor (float): The factor is used to indicate how much the load balance loss (produced by the
                 router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
-            num_experts_chosen (int): The number of experts is chosen by each token. Since only 'Top1' routing policy
-                is supported currently, the value should be 1. Default: 1.
+            num_experts_chosen (int): The number of experts is chosen by each token and it should not be larger
+                than expert_num. Default: 1.
         Supported Platforms:
             ``Ascend`` ``GPU``
 
@@ -62,9 +62,9 @@ class MoEConfig:
         if aux_loss_factor >= 1.0:
             raise ValueError(f"'aux_loss_factor' should be less than 1.0, "
                              f"but got {aux_loss_factor}.")
-        if num_experts_chosen != 1:
-            raise ValueError(f"'num_experts_chosen' should be 1. Since only 'Top1' routing policy supported currently, "
-                             f"the value should be 1.")
+        if num_experts_chosen > expert_num:
+            raise ValueError(f"'num_experts_chosen' should not be larger than 'expert_num', "
+                             f"but got {num_experts_chosen}.")
         self.expert_num = expert_num
         self.capacity_factor = capacity_factor
         self.aux_loss_factor = aux_loss_factor
@@ -225,11 +225,13 @@ class Router(Cell):
     r"""
         A router backbone used to calculate logits of each token, which should be cascaded by router implementations
         mapping tokens to experts.
+        when moe_config.num_experts_chosen = 1, use top1 routing;
+        when moe_config.num_experts_chosen > 1, use topk routing
 
         Args:
             d_model (int): The hidden size of each token.
             moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
-            routing_policy: The policy of mapping tokens to experts. Default: SwitchRouter
+            routing_policy: The policy of mapping tokens to experts. Default: topkRouter
             training (bool): The value indicating whether is in training phase.
             parallel_config: The parallel-related configuration.
         Inputs:
@@ -251,6 +253,7 @@ class Router(Cell):
         self.d_model = d_model
         self.expert_dim = moe_config.expert_num
         self.capacity_factor = moe_config.capacity_factor
+        self.num_experts_chosen = moe_config.num_experts_chosen
         self.training = training
         self.routing_policy = routing_policy
         self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
@@ -263,8 +266,8 @@ class Router(Cell):
         self.cast = P.Cast()
 
         if self.routing_policy is None:
-            self.router = SwitchRouter(d_model=d_model, moe_config=moe_config, training=training,
-                                       parallel_config=parallel_config)
+            self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
+                                     parallel_config=parallel_config)
         else:
             self.router = routing_policy
 
@@ -279,10 +282,9 @@ class Router(Cell):
         return self.router(router_logits)
 
 
-class SwitchRouter(Cell):
+class TopkRouter(Cell):
     r"""
-        A router implementation which maps each tokens to the top1 expert.
-        Reference: https://github.com/tensorflow/mesh/blob/master/mesh_tensorflow/transformer/moe.py
+        A router implementation which maps each tokens to the topk expert.
 
         Args:
             d_model (int): The hidden size of each token.
@@ -304,7 +306,7 @@ class SwitchRouter(Cell):
                  moe_config,
                  training=True,
                  parallel_config=None):
-        super(SwitchRouter, self).__init__()
+        super(TopkRouter, self).__init__()
         dp = parallel_config.data_parallel
         self.d_model = d_model
         self.expert_dim = moe_config.expert_num
@@ -317,7 +319,7 @@ class SwitchRouter(Cell):
         self.shape = P.Shape()
         self.softmax = P.Softmax(axis=-1).shard(((dp, 1, 1,),))
         self.argmax = P.ArgMaxWithValue(axis=-1, keep_dims=False).shard(((dp, 1, 1),))
-
+        self.num_experts_chosen = moe_config.num_experts_chosen
         self.onehot = P.OneHot().shard(((dp, 1, 1), (), ()))
         self.onehot2 = P.OneHot().shard(((dp, 1, 1), (), ()))
         self.onehot3 = P.OneHot().shard(((dp, 1, 1, 1), (), ()))
@@ -337,10 +339,19 @@ class SwitchRouter(Cell):
         self.mul8 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
         self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
         self.not_equal = P.NotEqual().shard(((dp, 1, 1, 1), ()))
+        self.div1 = P.RealDiv().shard(((dp, 1, 1), (dp, 1, 1)))
+        self.div2 = P.RealDiv().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+        self.add = P.Add().shard(((dp, 1, 1), (dp, 1, 1)))
+        self.add2 = P.Add().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+        self.add3 = P.Add().shard(((dp, 1), (dp, 1)))
+        self.add4 = P.Add().shard(((dp, 1, 1, 1), ()))
+        self.sub = P.Sub().shard(((), (dp, 1, 1)))
 
         self.cumsum = P.CumSum(exclusive=True).shard(((dp, 1, 1),))
         self.less = P.Less().shard(((dp, 1, 1), ()))
         self.reduce_sum = P.ReduceSum(keep_dims=False).shard(((dp, 1, 1),))
+        self.reduce_sum_keep = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1),))
+        self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1, 1),))
         self.expand = P.ExpandDims().shard(((dp, 1),))
         self.expand2 = P.ExpandDims().shard(((dp, 1, 1),))
 
@@ -357,11 +368,13 @@ class SwitchRouter(Cell):
         loss = self.mul3(self.mul2(loss, self.expert_dim), self.expert_dim)
         return loss
 
-    def _maskout_overflowed_tokens(self, expert_mask, expert_capacity, expert_gate):
+    def _maskout_overflowed_tokens(self, expert_mask, expert_capacity, expert_gate, last_num, expert_chosen_index):
         """
         Keeping only the tokens that fit within expert_capacity.
         """
         cumsum = self.cumsum(expert_mask, 1)
+        if expert_chosen_index > 0:
+            cumsum = self.add(cumsum, last_num)
         # position_in_expert's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         position_in_expert = self.mul4(cumsum, expert_mask)
         less_result = self.less(position_in_expert, expert_capacity)
@@ -373,40 +386,61 @@ class SwitchRouter(Cell):
         # Mask out the experts that have overflowed the expert_capacity.
         # expert_gate's shape: (expert_parallel, tokens_per_device)
         expert_gate = self.mul6(expert_gate, expert_mask_flat)
-        return expert_gate, expert_mask_flat, position_in_expert
+        output = (expert_mask, expert_gate, expert_mask_flat, position_in_expert)
+        return output
 
     def construct(self, router_logits):
         router_logits_shape = self.shape(router_logits)
         router_logits = self.reshape(router_logits, (-1, router_logits_shape[-1]))
         logits_shape = self.shape(router_logits)
         tokens_per_device = logits_shape[0] // self.expert_parallel
-        expert_capacity = calculate_expert_capacity(1, tokens_per_device, self.capacity_factor, self.expert_dim)
+        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_device, self.capacity_factor,
+                                                    self.expert_dim)
         router_logits = self.reshape(router_logits, (self.expert_parallel, tokens_per_device, self.expert_dim))
-        # Currently, lack of gumbel sampler for router_logits.
 
+        accum_expert_mask = 0
+        accum_expert_gate = 0
+        loss = 0
+        mask_count = 0
+        accum_combine_tensor = 0
         # Probabilities for each token of what expert is should be sent to
         router_prob = self.softmax(router_logits)
-        # shape is : (expert_parallel, tokens_per_device)
-        expert_index, expert_gate = self.argmax(router_prob)
-        # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
-        expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
 
-        # Computing the load balance loss:
-        loss = self._auxiliary_loss(expert_mask, router_prob)
+        for expert_chosen_index in range(self.num_experts_chosen):
+            # for each token, set the router_prob of the selected experts to zero
+            router_prob = self.mul4(router_prob, self.sub(self.on_value, accum_expert_mask))
+            # shape is : (expert_parallel, tokens_per_device)
+            expert_index, expert_gate = self.argmax(router_prob)
+            # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+            expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
+            #renormalize the rest prob to be of sum 1
+            router_prob_normal = self.div1(router_prob, self.add(self.reduce_sum_keep(router_prob, -1), 1e-9))
 
-        expert_gate, expert_mask_flat, position_in_expert = \
-            self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate)
+            #the balance loss is computed at each routing step
+            loss += self._auxiliary_loss(expert_mask, router_prob_normal)
 
-        # combine_tensor's shape: (expert_parallel, tokens_per_device)
-        combine_tensor = self.mul7(expert_gate, expert_mask_flat)
-        # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim)
-        combine_tensor = self.mul8(self.expand(combine_tensor, -1),
-                                   self.onehot2(expert_index, self.expert_dim, self.on_value, self.off_value))
-        # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
-        combine_tensor = self.mul9(self.expand2(combine_tensor, -1),
-                                   self.onehot3(self.cast(position_in_expert, mstype.int32), expert_capacity,
-                                                self.on_value, self.off_value))
+            output = self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate,
+                                                     mask_count, expert_chosen_index)
+            expert_mask, expert_gate, expert_mask_flat, position_in_expert = output[0], output[1], output[2], output[3]
+            accum_expert_mask = self.add(accum_expert_mask, expert_mask)
+            accum_expert_gate = self.add3(accum_expert_gate, expert_gate)
+            mask_count = self.add(mask_count, self.reduce_sum_keep(expert_mask, 1))
+
+            # combine_tensor's shape: (expert_parallel, tokens_per_device)
+            combine_tensor = self.mul7(expert_gate, expert_mask_flat)
+            # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+            combine_tensor = self.mul8(self.expand(combine_tensor, -1),
+                                       self.onehot2(expert_index, self.expert_dim, self.on_value, self.off_value))
+            # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
+            combine_tensor = self.mul9(self.expand2(combine_tensor, -1),
+                                       self.onehot3(self.cast(position_in_expert, mstype.int32), expert_capacity,
+                                                    self.on_value, self.off_value))
+            accum_combine_tensor = self.add2(accum_combine_tensor, combine_tensor)
+
+        #expert weights normalization
+        combine_tensor_sum = self.reduce_sum_keep2(self.reduce_sum_keep2(accum_combine_tensor, -1), -2)
+        accum_combine_tensor = self.div2(accum_combine_tensor, self.add4(combine_tensor_sum, 1e-9))
         # dispatch_tensor is of boolean type. Here, using NotEqual instead of Cast, for that 'Cast to bool' has
         # bad performance
-        dispatch_tensor = self.not_equal(combine_tensor, 0.0)
-        return dispatch_tensor, combine_tensor, loss
+        dispatch_tensor = self.not_equal(accum_combine_tensor, 0.0)
+        return dispatch_tensor, accum_combine_tensor, loss
