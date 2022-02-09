@@ -24,7 +24,6 @@
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
-#include "src/delegate/tensorrt/distribution/distribution_collective.h"
 
 #define kNCHW_N 0
 #define kNCHW_C 1
@@ -81,9 +80,9 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name);
 
-nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight);
+nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
 
-nvinfer1::Weights TransposeWeightFP32(const mindspore::MSTensor &ms_tensor, void **pack_weight);
+nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
 
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
@@ -116,6 +115,12 @@ int GetDimsVolume(const std::vector<int64_t> &shape);
 void SerializeValue(void **buffer, const void *value, size_t cpy_size);
 
 void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size);
+
+nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+                           const std::vector<int64_t> &shape);
+
+nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+                           const nvinfer1::Dims &shape);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
