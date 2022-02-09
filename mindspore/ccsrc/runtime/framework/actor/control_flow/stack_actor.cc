@@ -285,12 +285,19 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
       return;
     }
 
-    for (auto &one_stack : control_iter->second) {
-      if (one_stack.second == 0) {
-        MS_LOG(ERROR) << "Input stack control aid:" << one_stack.first << " is null in actor:" << GetAID();
+    for (auto stack_iter = control_iter->second.begin(); stack_iter != control_iter->second.end();) {
+      if (stack_iter->second == 0) {
+        MS_LOG(ERROR) << "Input stack control aid:" << stack_iter->first << " is null in actor:" << GetAID();
         return;
+      } else if (stack_iter->second == 1) {
+        control_iter->second.erase(stack_iter++);
+      } else {
+        stack_iter->second--;
+        stack_iter++;
       }
-      one_stack.second--;
+    }
+    if (control_iter->second.empty()) {
+      input_stack_controls_.erase(control_iter);
     }
   }
 }
