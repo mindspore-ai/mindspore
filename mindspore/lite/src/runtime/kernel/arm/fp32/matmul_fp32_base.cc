@@ -176,7 +176,7 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
     MS_LOG(ERROR) << "malloc bias_ptr_ failed";
     return RET_ERROR;
   }
-  memcpy(bias_ptr_, bias_tensor->data(), bias_num * static_cast<int>(sizeof(float)));
+  (void)memcpy(bias_ptr_, bias_tensor->data(), bias_num * static_cast<int>(sizeof(float)));
   memset(bias_ptr_ + bias_num, 0, (max_bias_data - bias_num) * sizeof(float));
   return RET_OK;
 }

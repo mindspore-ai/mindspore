@@ -471,10 +471,10 @@ int LstmCPUKernel::Run() {
 
   auto output_hidden_state = out_tensors_[1];
   CHECK_NULL_RETURN(output_hidden_state->data());
-  memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float));
+  (void)memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float));
   auto output_cell_state = out_tensors_[2];
   CHECK_NULL_RETURN(output_cell_state->data());
-  memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float));
+  (void)memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float));
 
   auto ret = InitInputWeightBias();
   if (ret != RET_OK) {
