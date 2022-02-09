@@ -47,9 +47,9 @@ class RandomResizeOp : public ResizeOp {
 
   std::string Name() const override { return kRandomResizeOp; }
 
-  uint32_t NumInput() override { return -1; }
+  uint32_t NumInput() override { return 1; }
 
-  uint32_t NumOutput() override { return -1; }
+  uint32_t NumOutput() override { return 1; }
 
  private:
   std::mt19937 random_generator_;

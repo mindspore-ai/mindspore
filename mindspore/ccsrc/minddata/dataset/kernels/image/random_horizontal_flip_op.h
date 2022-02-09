@@ -49,9 +49,9 @@ class RandomHorizontalFlipOp : public TensorOp {
 
   std::string Name() const override { return kRandomHorizontalFlipOp; }
 
-  uint32_t NumInput() override { return -1; }
+  uint32_t NumInput() override { return 1; }
 
-  uint32_t NumOutput() override { return -1; }
+  uint32_t NumOutput() override { return 1; }
 
  private:
   std::mt19937 rnd_;

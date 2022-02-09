@@ -60,16 +60,15 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
       }
     }
   }
-  const int output_count = input.size();
-  output->resize(output_count);
+  output->resize(input.size());
   int x = 0;
   int y = 0;
   int crop_height = 0;
   int crop_width = 0;
   for (size_t i = 0; i < input.size(); i++) {
-    RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResize", input[i]->shape().Size()));
-    int h_in = input[i]->shape()[0];
-    int w_in = input[i]->shape()[1];
+    RETURN_IF_NOT_OK(ValidateImageRank("RandomCropAndResize", static_cast<int32_t>(input[i]->shape().Size())));
+    int h_in = static_cast<int>(input[i]->shape()[0]);
+    int w_in = static_cast<int>(input[i]->shape()[1]);
     if (i == 0) {
       RETURN_IF_NOT_OK(GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
     }
@@ -116,11 +115,12 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
       (std::numeric_limits<int32_t>::max() / h_in) > w_in,
       "RandomCropAndResizeOp: multiplication out of bounds, check image width and image height first.");
     CHECK_FAIL_RETURN_UNEXPECTED(
-      (std::numeric_limits<int32_t>::max() / h_in / w_in) > sample_scale,
+      static_cast<double>((std::numeric_limits<int32_t>::max() / h_in) / w_in) > sample_scale,
       "RandomCropAndResizeOp: multiplication out of bounds, check image width, image height and sample scale first.");
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in / w_in / sample_scale) > sample_aspect,
-                                 "RandomCropAndResizeOp: multiplication out of bounds, check image width, image "
-                                 "height, sample scale and sample aspect first.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (static_cast<double>((std::numeric_limits<int32_t>::max() / h_in) / w_in) / sample_scale) > sample_aspect,
+      "RandomCropAndResizeOp: multiplication out of bounds, check image width, image "
+      "height, sample scale and sample aspect first.");
     *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
     *crop_height = static_cast<int32_t>(std::round(*crop_width / sample_aspect));
 

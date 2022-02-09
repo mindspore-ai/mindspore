@@ -54,7 +54,7 @@ RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::
 
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  RETURN_IF_NOT_OK(ValidateImageRank("Rotate", input->shape().Size()));
+  RETURN_IF_NOT_OK(ValidateImageRank("Rotate", static_cast<int32_t>(input->shape().Size())));
 #ifndef ENABLE_ANDROID
   return Rotate(input, output, center_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
 #else

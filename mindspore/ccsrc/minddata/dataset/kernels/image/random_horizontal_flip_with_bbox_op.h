@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <random>
-#include <cstdlib>
 #include <string>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "minddata/dataset/core/tensor.h"

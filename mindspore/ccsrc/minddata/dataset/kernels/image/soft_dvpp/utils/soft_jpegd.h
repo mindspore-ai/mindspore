@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include <cstdint>
-#include <cstdio>
 #include <iostream>
 #include "./jpeglib.h"
 #include "minddata/dataset/kernels/image/soft_dvpp/utils/soft_dp.h"
@@ -29,7 +28,7 @@ class SoftJpegd {
  public:
   SoftJpegd();
 
-  ~SoftJpegd() {}
+  ~SoftJpegd() = default;
 
   /*
    * @brief : decode interface
