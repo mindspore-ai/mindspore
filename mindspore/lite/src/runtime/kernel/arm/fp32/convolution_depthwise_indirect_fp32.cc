@@ -16,7 +16,9 @@
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "include/errorcode.h"
-
+#ifdef SERVER_INFERENCE
+#include "src/pack_weight_manager.h"
+#endif
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
@@ -199,7 +201,17 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
+#ifdef SERVER_INFERENCE
+    auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors_[1], static_cast<size_t>(pack_weight_size * sizeof(float)));
+    packed_weight_ = packed.second;
+    weight_is_packed_ = packed.first;
+    if (weight_is_packed_ == lite::MALLOC && packed_weight_ == nullptr) {
+      packed_weight_ = malloc(pack_weight_size * sizeof(float));
+    }
+#else
     packed_weight_ = malloc(pack_weight_size * sizeof(float));
+#endif
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;

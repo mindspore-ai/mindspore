@@ -208,13 +208,25 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
   if (!op_parameter_->is_train_session_) {
     if (packed_weight_ == nullptr) {
       CHECK_LESS_RETURN(MAX_MALLOC_SIZE, trans_matrix_data_size);
+#ifdef SERVER_INFERENCE
+      auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(in_tensors_[1], trans_matrix_data_size);
+      packed_weight_ = packed.second;
+      weight_is_packed_ = packed.first;
+      if (weight_is_packed_ == lite::MALLOC && packed_weight_ == nullptr) {
+        packed_weight_ = malloc(trans_matrix_data_size);
+        memset(packed_weight_, 0, trans_matrix_data_size);
+      }
+#else
       packed_weight_ = malloc(trans_matrix_data_size);
+#endif
       if (packed_weight_ == nullptr) {
         MS_LOG(ERROR) << "malloc matrix_buffer failed.";
         return RET_MEMORY_FAILED;
       }
     }
+#ifndef SERVER_INFERENCE
     memset(packed_weight_, 0, trans_matrix_data_size);
+#endif
   }
 
   float matrix_a[64];

@@ -131,6 +131,13 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+            )
+endif()
+
 if(MSLITE_ENABLE_CONTROLFLOW)
     file(GLOB CONTROL_FLOW_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/*.cc
