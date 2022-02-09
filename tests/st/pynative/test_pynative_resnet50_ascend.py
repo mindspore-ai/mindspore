@@ -444,7 +444,7 @@ def test_pynative_resnet50():
 def test_pynative_resnet50_with_env(queue, device_id, device_num):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", device_id=device_id)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", device_id=device_id, runtime_num_threads=20)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
     os.environ['RANK_ID'] = str(device_id)
     os.environ['RANK_SIZE'] = str(device_num)
