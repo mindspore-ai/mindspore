@@ -57,7 +57,7 @@ STATUS UnIndexTensorData(const std::vector<int> &unique_values, const std::vecto
   if (un_indexed_data.size() * sizeof(T) != dst_data_size) {
     MS_LOG(ERROR) << "un idnexed data size: " << un_indexed_data.size() * sizeof(T)
                   << " expected by tensor: " << dst_data_size;
-    return false;
+    return RET_ERROR;
   }
   memcpy(dst_data, un_indexed_data.data(), un_indexed_data.size() * sizeof(T));
 
@@ -102,12 +102,12 @@ STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vect
   if (un_sparsed_data.size() * sizeof(T) > dst_data_size) {
     MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T)
                   << " tensor size: " << dst_data_size;
-    return false;
+    return RET_ERROR;
   } else if (un_sparsed_data.size() * sizeof(T) < dst_data_size &&
              (un_sparsed_data.size() + (1 << coor_best_bit) - 1) * sizeof(T) < dst_data_size) {
     MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T) << " tensor size: " << dst_data_size
                   << " coor_best_bit: " << coor_best_bit;
-    return false;
+    return RET_ERROR;
   }
 
   for (; data_index < dst_data_size / sizeof(T); data_index++) {

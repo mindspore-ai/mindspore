@@ -78,7 +78,7 @@ class InnerKernel : public Kernel {
 
   bool InferShapeDone() const {
     if (std::any_of(in_tensors_.begin(), in_tensors_.end(),
-                    [](lite::Tensor *input) { return input->data_type() == kObjectTypeTensorType; })) {
+                    [](const lite::Tensor *input) { return input->data_type() == kObjectTypeTensorType; })) {
       return false;
     }
     auto shape = out_tensors_.front()->shape();
