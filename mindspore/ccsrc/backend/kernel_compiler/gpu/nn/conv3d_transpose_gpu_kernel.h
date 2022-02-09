@@ -169,8 +169,8 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     std::vector<int> stride_pad_list(k3DPadSize, 0);
-    SetPad(kernel_node, input_shape, filter_shape, &pad_list, &stride_pad_list);
     SetStrideAndDilation(kernel_node);
+    SetPad(kernel_node, input_shape, filter_shape, &pad_list, &stride_pad_list);
     auto [input_desc_real, output_desc_real] = GetInputAndOutputDescReal(pad_list, stride_pad_list);
     if (cudnn_data_type_ == CUDNN_DATA_HALF) {
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
@@ -551,7 +551,6 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
       }
       output_desc_real = greater_stride_ ? stride_padded_descriptor_ : output_desc_;
       input_desc_real = input_desc_;
-    }
 
     return std::make_pair(input_desc_real, output_desc_real);
   }
