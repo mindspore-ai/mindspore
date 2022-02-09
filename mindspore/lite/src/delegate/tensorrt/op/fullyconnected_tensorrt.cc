@@ -58,6 +58,7 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "addFullyConnected failed for " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = fc_layer;
   fc_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = fc_layer->getOutput(0);
 

@@ -111,6 +111,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   cal_layer->setName(op_name_.c_str());
+  this->layer_ = cal_layer;
 
   // add activation
   nvinfer1::ITensor *activation_tensor = cal_layer->getOutput(0);

@@ -97,6 +97,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   cal_layer->setName(op_name_.c_str());
+  this->layer_ = cal_layer;
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   if (op_out_tensor == nullptr) {

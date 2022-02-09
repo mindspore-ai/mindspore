@@ -63,7 +63,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
-    tensor_name_map_[transpose_layer_in->getOutput(0)->getName()] = op_name_;
+    this->transpose_layer_ = transpose_layer_in;
     pool_input = transpose_layer_in->getOutput(0);
   }
 
@@ -80,7 +80,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   AddParams(pooling_layer);
   pooling_layer->setName(op_name_.c_str());
-  tensor_name_map_[pooling_layer->getOutput(0)->getName()] = op_name_;
+  this->layer_ = pooling_layer;
 
   // add activation
   nvinfer1::ILayer *activation_layer = nullptr;
@@ -98,7 +98,6 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *out_trt_tensor = activation_layer->getOutput(0);
   out_trt_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, false});
-  tensor_name_map_[activation_layer->getOutput(0)->getName()] = op_name_;
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }

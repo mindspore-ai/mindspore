@@ -59,6 +59,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       transpose_layer->setName((op_name_ + "_transpose_in").c_str());
       reduce_input = transpose_layer->getOutput(0);
       out_format_ = Format::NHWC;
+      this->transpose_layer_ = transpose_layer;
     } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
       // NHWC->NCHW
       nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
@@ -69,6 +70,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       transpose_layer->setName((op_name_ + "_transpose_in").c_str());
       reduce_input = transpose_layer->getOutput(0);
       out_format_ = Format::NCHW;
+      this->transpose_layer_ = transpose_layer;
     } else {
       MS_LOG(WARNING) << "input tensor format needs check: " << op_name_;
     }
@@ -83,6 +85,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   layer->setName(op_name_.c_str());
+  this->layer_ = layer;
 
   nvinfer1::ITensor *out_tensor = layer->getOutput(0);
   if (out_tensor == nullptr) {

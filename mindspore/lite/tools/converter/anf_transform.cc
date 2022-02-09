@@ -196,7 +196,9 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ActivationFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
+  if (config->fullQuantParam.target_device != quant::NVGPU) {
+    fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
+  }
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());

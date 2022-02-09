@@ -64,6 +64,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer->setName((op_name_ + "_transpose_in").c_str());
     resize_in_tensor = transpose_layer->getOutput(0);
+    this->transpose_layer_ = transpose_layer;
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, false);
 
@@ -87,6 +88,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   resize_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NCHW, false});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  this->layer_ = resize_layer;
   return RET_OK;
 }
 

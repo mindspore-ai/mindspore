@@ -51,6 +51,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NHWC").c_str());
     shape_input = transpose_layer_in->getOutput(0);
+    this->transpose_layer_ = transpose_layer_in;
   }
   nvinfer1::IShapeLayer *shape_layer = network->addShape(*shape_input);
 
@@ -61,6 +62,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   shape_layer->setName(op_name_.c_str());
   shape_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), Format::NHWC, true});
+  this->layer_ = shape_layer;
   return RET_OK;
 }
 }  // namespace mindspore::lite

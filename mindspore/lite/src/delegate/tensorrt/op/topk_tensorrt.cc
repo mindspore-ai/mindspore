@@ -78,6 +78,7 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     transpose_layer->setName((op_name_ + "_transpose_in").c_str());
     topk_input = transpose_layer->getOutput(0);
+    this->transpose_layer_ = transpose_layer;
   }
   uint32_t reduce_axes = 1 << axis_value;
 
@@ -86,6 +87,7 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "addTopK failed for: " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = topk_layer;
   topk_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *op_out_tensor = topk_layer->getOutput(1);
   // output 0 is data value, output 1 is index

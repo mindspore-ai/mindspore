@@ -78,6 +78,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     transpose_layer_in->setName((op_name_ + "_transpose2NCHW").c_str());
+    this->transpose_layer_ = transpose_layer_in;
     pad_input = transpose_layer_in->getOutput(0);
     MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(pad_input, Format::NCHW, false);
   }
@@ -126,6 +127,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "add padding layer failed for " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = padding_layer;
   padding_layer->setName(op_name_.c_str());
   padding_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   bool same_format = SameDims(padding_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&

@@ -169,9 +169,9 @@ nvinfer1::ITensor *MatMulTensorRT::AddAsMatmul(nvinfer1::INetworkDefinition *net
     MS_LOG(ERROR) << "addMatrixMultiply failed for " << op_name_;
     return nullptr;
   }
+  this->layer_ = matmul_layer;
   matmul_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = matmul_layer->getOutput(0);
-  tensor_name_map_[matmul_layer->getOutput(0)->getName()] = op_name_;
 
   if (in_tensors_.size() == BIAS_INDEX + 1) {
     nvinfer1::ITensor *bias = nullptr;
@@ -246,6 +246,7 @@ nvinfer1::ITensor *MatMulTensorRT::AddAsFullConnect(nvinfer1::INetworkDefinition
     MS_LOG(ERROR) << "add fully connected layer failed for " << op_name_;
     return nullptr;
   }
+  this->layer_ = fc_layer;
   fc_layer->setName((op_name_ + "_fullyconnected").c_str());
   nvinfer1::ITensor *out_tensor = fc_layer->getOutput(0);
   if (out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
