@@ -20,7 +20,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <memory>
 #include "include/api/kernel.h"
 #include "src/delegate/tensorrt/tensorrt_runtime.h"
@@ -88,13 +87,7 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   bool IsInt8Mode();
 
-  void SetInt8LayerPresion();
-
-  int GetInt8DynamicRange();
-
-  int SetInt8DynamicRange();
-
-  int GetTensorName(TensorRTOp *cur_op);
+  bool SupportFP16();
 
   nvinfer1::ITensor *SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor);
 
@@ -134,9 +127,6 @@ class TensorRTSubGraph : public kernel::Kernel {
 
   std::vector<mindspore::MSTensor> cache_const_inputs_;
   std::map<std::string, CacheTensorInfo> network_cache_tensor_info_;
-
-  std::unordered_map<std::string, float> dynamic_range_map_;
-  std::unordered_map<std::string, std::string> tensor_name_map_;
 
   nvinfer1::INetworkDefinition *network_{nullptr};
   nvinfer1::IBuilderConfig *config_{nullptr};

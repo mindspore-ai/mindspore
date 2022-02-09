@@ -84,6 +84,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
 
+  this->layer_ = gather_layer;
   gather_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
   // keep shape

@@ -100,7 +100,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(
     ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
-  tensor_name_map_[out_tensor->getName()] = op_name_;
+  this->layer_ = activation_layer;
   return RET_OK;
 }
 nvinfer1::IActivationLayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,

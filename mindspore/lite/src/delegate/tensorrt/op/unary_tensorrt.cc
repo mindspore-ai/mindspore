@@ -50,6 +50,7 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   cal_layer->setName(op_name_.c_str());
+  this->layer_ = cal_layer;
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   op_out_tensor->setName((op_name_ + "_output").c_str());

@@ -50,6 +50,7 @@ int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   softmax_layer_->setName((op_name_ + "_softmax").c_str());
+  this->layer_ = softmax_layer_;
 
   nvinfer1::ITensor *out_tensor = softmax_layer_->getOutput(0);
   if (out_tensor == nullptr) {

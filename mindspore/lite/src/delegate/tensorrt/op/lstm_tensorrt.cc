@@ -300,6 +300,7 @@ nvinfer1::ITensor *LSTMTensorRT::AddLSTMCell(const LstmState *layer_input_states
   if (backward_output != nullptr && backward_hidden_out != nullptr && backward_cell_out != nullptr) {
     nvinfer1::ITensor *output_concat_input[BIDIRECTIONAL] = {forward_output, backward_output};
     auto ouput_out_layer = network_->addConcatenation(output_concat_input, BIDIRECTIONAL);
+    this->layer_ = ouput_out_layer;
     if (ouput_out_layer == nullptr) {
       MS_LOG(ERROR) << "create one loop output concat failed for " << op_name_;
       return nullptr;

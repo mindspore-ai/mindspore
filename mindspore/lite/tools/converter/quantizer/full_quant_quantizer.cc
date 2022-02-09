@@ -250,7 +250,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
       if (weight_data_type_ == kTypeUnknown) {
-        MS_LOG(INFO) << "weight not need parameter quant.";
+        MS_LOG(INFO) << "weight parameters do not need to be quantified.";
         continue;
       }
       ret = DoParameterNodeQuant(cnode, input_node->cast<ParameterPtr>(), i);
@@ -265,7 +265,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         primitive_quant_holder->get_input_quant_params()[i - 1];
     } else if (input_node->isa<mindspore::ValueNode>()) {
       if (weight_data_type_ == kTypeUnknown) {
-        MS_LOG(INFO) << "weight not need parameter quant.";
+        MS_LOG(INFO) << "weight parameters do not need to be quantified.";
         continue;
       }
       ret = DoValueNodeQuant(cnode, input_node->cast<ValueNodePtr>(), i);
@@ -424,9 +424,9 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   activation_symmetry_ = true;
   weight_data_type_ = kTypeUnknown;
   weight_symmetry_ = true;
-  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection, prim::kPrimMatMul,
-                       prim::kPrimConv2dTransposeFusion, prim::kPrimConv2dTransposeFusion};
-  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimFullConnection};
+  support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimActivation,
+                       prim::kPrimConv2dTransposeFusion};
+  per_channel_ops_ = {};
   flags_.fullQuantParam.bias_correction = false;
 }
 

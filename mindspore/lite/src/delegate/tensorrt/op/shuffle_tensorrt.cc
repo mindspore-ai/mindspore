@@ -109,6 +109,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   shuffle_layer->setName(op_name_.c_str());
+  this->layer_ = shuffle_layer;
 
   ret = RET_OK;
   switch (type_) {

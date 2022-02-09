@@ -69,6 +69,7 @@ int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   allgather_out->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(
     ITensorHelper{allgather_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  this->layer_ = allgather_layer;
   return RET_OK;
 }
 

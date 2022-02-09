@@ -20,7 +20,6 @@
 #include <NvInfer.h>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -73,6 +72,8 @@ class TensorRTOp {
 
   virtual int AddInnerOp(nvinfer1::INetworkDefinition *network) = 0;
 
+  virtual int SetInt8DynamicRange();
+
   virtual int Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine);
 
   const schema::Primitive *GetPrimitive();
@@ -105,10 +106,17 @@ class TensorRTOp {
 
   DynamicShapeParams GetDynamicShapeParams() const;
 
-  std::unordered_map<std::string, std::string> GetTensorNameMap();
+  nvinfer1::ILayer *layer() { return layer_; }
+
+ private:
+  int SetTransposeDynamicRange();
 
  protected:
   bool IsShapeKnown();
+
+  nvinfer1::ILayer *layer_ = nullptr;
+
+  nvinfer1::IShuffleLayer *transpose_layer_ = nullptr;
 
   const schema::Primitive *op_primitive_{nullptr};
 
@@ -133,8 +141,6 @@ class TensorRTOp {
   TensorRTRuntime *runtime_{nullptr};
 
   DynamicShapeParams dynamic_shape_params_;
-
-  std::unordered_map<std::string, std::string> tensor_name_map_;
 };
 
 template <class T>

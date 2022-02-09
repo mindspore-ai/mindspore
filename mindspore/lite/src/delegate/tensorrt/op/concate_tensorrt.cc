@@ -80,6 +80,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
           return RET_ERROR;
         }
         trt_input_tensors[i] = transpose_layer->getOutput(0);
+        this->transpose_layer_ = transpose_layer;
         same_format = true;
         MS_LOG(DEBUG) << "concate input " << GetTensorFormat(trt_input_tensors[i], Format::NHWC, true);
       }
@@ -117,6 +118,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   concate_layer->setName(op_name_.c_str());
   concate_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{concate_layer->getOutput(0), out_format, same_format});
+  this->layer_ = concate_layer;
   return RET_OK;
 }
 }  // namespace mindspore::lite

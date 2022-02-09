@@ -70,6 +70,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
   }
+  this->layer_ = slice_layer;
   slice_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
   if (out_tensor == nullptr) {

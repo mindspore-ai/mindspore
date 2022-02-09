@@ -47,14 +47,13 @@ const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_
 
 void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) { this->runtime_ = runtime; }
 
-std::unordered_map<std::string, std::string> TensorRTOp::GetTensorNameMap() { return this->tensor_name_map_; }
-
 bool TensorRTOp::IsShapeKnown() {
   if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {
     return false;
   }
   return true;
 }
+
 int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) {
   if (op_binding_tensor_.size() != 0) {
     MS_LOG(ERROR) << "need special op Prepare for " << op_name_;
@@ -62,5 +61,61 @@ int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *e
   }
   return RET_OK;
 }
+
 DynamicShapeParams TensorRTOp::GetDynamicShapeParams() const { return this->dynamic_shape_params_; }
+
+int TensorRTOp::SetInt8DynamicRange() {
+  // setting param layer_ forcely
+  if (this->layer_ == nullptr) {
+    MS_LOG(ERROR) << op_name_ << " layer is nullptr.";
+    return RET_ERROR;
+  }
+  if (in_tensors_.empty() || out_tensors_.empty()) {
+    MS_LOG(ERROR) << "input or output tensor empty.";
+    return RET_ERROR;
+  }
+  if (in_tensors_[0].QuantParams().empty() || out_tensors_[0].QuantParams().empty()) {
+    MS_LOG(INFO) << op_name_ << " quant param is empty.";
+    return RET_OK;
+  }
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    auto tensor = in_tensors_.at(i);
+    if (!tensor.IsConst()) {
+      tensorrt_in_tensors_.at(i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min,
+                                                              tensor.QuantParams().at(0).max);
+      // Don't set the presion on non-computation layers as they don't support int8.
+      if (this->layer_->getType() != nvinfer1::LayerType::kCONSTANT &&
+          this->layer_->getType() != nvinfer1::LayerType::kCONCATENATION &&
+          this->layer_->getType() != nvinfer1::LayerType::kSHAPE) {
+        this->layer_->setPrecision(nvinfer1::DataType::kINT8);
+      }
+    }
+  }
+  for (size_t i = 0; i < out_tensors_.size(); i++) {
+    auto tensor = out_tensors_.at(0);
+    tensorrt_out_tensors_.at(i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min,
+                                                             tensor.QuantParams().at(0).max);
+    // set output type of execution tensors.
+    if (this->layer_->getOutput(i)->isExecutionTensor()) {
+      this->layer_->setOutputType(i, nvinfer1::DataType::kINT8);
+    }
+  }
+  return SetTransposeDynamicRange();
+}
+
+int TensorRTOp::SetTransposeDynamicRange() {
+  if (this->transpose_layer_ == nullptr) {
+    MS_LOG(INFO) << op_name_ << " transpose_layer is nullptr.";
+    return RET_OK;
+  }
+  if (!in_tensors_[0].QuantParams().empty() && !out_tensors_[0].QuantParams().empty()) {
+    this->transpose_layer_->getInput(0)->setDynamicRange(in_tensors_.front().QuantParams().at(0).min,
+                                                         in_tensors_.front().QuantParams().at(0).max);
+    this->transpose_layer_->getOutput(0)->setDynamicRange(in_tensors_.front().QuantParams().at(0).min,
+                                                          in_tensors_.front().QuantParams().at(0).max);
+    this->transpose_layer_->setOutputType(0, nvinfer1::DataType::kINT8);
+    this->transpose_layer_->setPrecision(nvinfer1::DataType::kINT8);
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite
