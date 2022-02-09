@@ -30,8 +30,10 @@ if(SUPPORT_TRAIN)
 endif()
 
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-
-if(NOT PLATFORM_ARM32 AND NOT TARGET_HIMIX AND NOT MACHINE_LINUX_ARM64)
+if(MACHINE_LINUX_ARM64)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+fp16")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+fp16")
+elseif(NOT PLATFORM_ARM32 AND NOT TARGET_HIMIX)
     list(APPEND SDOT_FILES ${SDOT_SRC})
     add_library(nnacl_optimize_mid OBJECT ${SDOT_FILES})
     add_dependencies(nnacl_optimize_mid fbs_src)

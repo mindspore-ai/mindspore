@@ -113,7 +113,7 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
     zp1 = quant_arg->in_quant_args_[1].zp_;
     zp2 = quant_arg->in_quant_args_[0].zp_;
   }
-#ifdef ENABLE_ARM
+#ifdef ENABLE_NENO
   int32x4_t output_multiplier_vec = vdupq_n_s32(quant_arg->output_multiplier_);
   int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)quant_arg->shift_left_);
   int32x4_t right_shift_out_vec = vdupq_n_s32(-quant_arg->shift_right_);
@@ -127,7 +127,7 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
 #endif
   for (int index = 0; index < real_dst_count; ++index) {
     int j = 0;
-#ifdef ENABLE_ARM
+#ifdef ENABLE_NENO
     for (; j <= depth - 16; j += 16) {
       int8x16_t input0_vec = vld1q_s8(input0_data + j);
       int8x16_t input1_vec = vld1q_s8(input1_data);
