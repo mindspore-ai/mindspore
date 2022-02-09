@@ -24,7 +24,7 @@ const float RandomHorizontalFlipOp::kDefProbability = 0.5;
 
 Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  const int output_count = input.size();
+  const auto output_count = input.size();
   output->resize(output_count);
   if (distribution_(rnd_)) {
     for (size_t i = 0; i < input.size(); i++) {

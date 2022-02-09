@@ -45,11 +45,11 @@ Status SoftDvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input,
       if (input_h < input_w) {
         CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "SoftDvppDecodeReiszeJpeg: the input height is 0.");
         info.output_height = target_height_;
-        info.output_width = static_cast<int>(std::lround(static_cast<float>(input_w) / input_h * info.output_height));
+        info.output_width = static_cast<int>(std::lround((static_cast<float>(input_w) / input_h) * info.output_height));
       } else {
         CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "SoftDvppDecodeReiszeJpeg: the input width is 0.");
         info.output_width = target_height_;
-        info.output_height = static_cast<int>(std::lround(static_cast<float>(input_h) / input_w * info.output_width));
+        info.output_height = static_cast<int>(std::lround((static_cast<float>(input_h) / input_w) * info.output_width));
       }
     } else {
       info.output_height = target_height_;

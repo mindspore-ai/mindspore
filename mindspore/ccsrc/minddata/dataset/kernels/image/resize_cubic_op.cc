@@ -62,7 +62,7 @@ struct interpolation {
   double threshold;
 };
 
-int calc_coeff(int input_size, int out_size, int input0, int input1, struct interpolation *interp,
+int calc_coeff(int input_size, int out_size, int input0, int input1, const struct interpolation *interp,
                std::vector<int> &regions, std::vector<double> &coeffs_interp) {
   double threshold, scale, interp_scale;
   int kernel_size;
@@ -97,7 +97,7 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, struct inte
     double mm = 0.0, ss = 1.0 / interp_scale;
     int x;
     // Round for x_min
-    int x_min = static_cast<int>((center - threshold + 0.5));
+    int x_min = static_cast<int>((center - threshold) + 0.5);
     if (x_min < 0) {
       x_min = 0;
     }
@@ -109,7 +109,7 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, struct inte
     x_max -= x_min;
     double *coeff = &coeffs[xx * kernel_size];
     for (x = 0; x < x_max; x++) {
-      double m = interp->interpolation((x + x_min - center + 0.5) * ss);
+      double m = interp->interpolation(((x + x_min) - center + 0.5) * ss);
       coeff[x] = m;
       mm += m;
     }
@@ -275,7 +275,7 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
   return true;
 }
 
-bool ResizeCubic(const LiteMat &input, LiteMat &dst, int dst_w, int dst_h) {
+bool ResizeCubic(const LiteMat &input, const LiteMat &dst, int dst_w, int dst_h) {
   if (input.data_type_ != LDataType::UINT8 || input.channel_ != 3) {
     MS_LOG(ERROR) << "Unsupported data type, only support input image of uint8 dtype and 3 channel, got channel: " +
                        std::to_string(input.channel_);

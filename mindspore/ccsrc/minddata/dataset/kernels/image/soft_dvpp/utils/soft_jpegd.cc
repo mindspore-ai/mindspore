@@ -171,7 +171,7 @@ uint32_t SoftJpegd::ConfigVpcInputData(struct VpcInfo *vpc_input_info, int32_t *
   vpc_input_info->width = *width;
 
   if (vpc_input_info->is_fake420) {
-    uint8_t *u_start = vpc_input_info->addr + vpc_input_info->width * vpc_input_info->height;
+    uint8_t *u_start = vpc_input_info->addr + ((ptrdiff_t)vpc_input_info->width * vpc_input_info->height);
     int32_t uv_size = vpc_input_info->width * vpc_input_info->height / num2;
     int32_t safe_ret = memset_s(reinterpret_cast<void *>((uintptr_t)u_start), uv_size, yuv400UvValue, uv_size);
     if (safe_ret != 0) {
