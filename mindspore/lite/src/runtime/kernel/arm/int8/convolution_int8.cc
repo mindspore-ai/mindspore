@@ -54,7 +54,15 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
+  if (input_channel <= 0) {
+    MS_LOG(ERROR) << "get channel from filter tensor failed.";
+    return RET_ERROR;
+  }
   auto output_channel = filter_tensor->Batch();
+  if (output_channel <= 0) {
+    MS_LOG(ERROR) << "get batch from filter tensor failed.";
+    return RET_ERROR;
+  }
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   conv_param_->input_channel_ = input_channel;
   conv_param_->output_channel_ = output_channel;
@@ -79,19 +87,19 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   // init weight
   auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->data());
   CHECK_NULL_RETURN(origin_weight);
-  packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
-  if (packed_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc packed_weight_ failed.";
+  packed_weight_sub_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
+  if (packed_weight_sub_ == nullptr) {
+    MS_LOG(ERROR) << "malloc packed_weight_sub_ failed.";
     return RET_ERROR;
   }
-  memset(packed_weight_, 0, pack_weight_size);
+  (void)memset(packed_weight_sub_, 0, pack_weight_size);
 #ifdef ENABLE_ARM32
-  RowMajor2Row2x16MajorInt8(origin_weight, packed_weight_, output_channel, input_channel * kernel_plane);
+  RowMajor2Row2x16MajorInt8(origin_weight, packed_weight_sub_, output_channel, input_channel * kernel_plane);
 #else
   if (support_optimize_) {
-    RowMajor2Row8x4MajorInt8(origin_weight, packed_weight_, output_channel, input_channel * kernel_plane);
+    RowMajor2Row8x4MajorInt8(origin_weight, packed_weight_sub_, output_channel, input_channel * kernel_plane);
   } else {
-    RowMajor2Row16x4MajorInt8(origin_weight, packed_weight_, output_channel, input_channel * kernel_plane);
+    RowMajor2Row16x4MajorInt8(origin_weight, packed_weight_sub_, output_channel, input_channel * kernel_plane);
   }
 #endif
 
@@ -101,12 +109,11 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, bias_size);
+  (void)memset(bias_data_, 0, bias_size);
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->data());
     CHECK_NULL_RETURN(ori_bias);
-    MS_CHECK_GT(output_channel, 0, RET_ERROR);
-    memcpy(bias_data_, ori_bias, static_cast<size_t>(output_channel) * sizeof(int32_t));
+    (void)memcpy(bias_data_, ori_bias, static_cast<size_t>(output_channel) * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
@@ -143,7 +150,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc input_sum_ failed.";
     return RET_ERROR;
   }
-  memset(input_sum_, 0, input_sum_size);
+  (void)memset(input_sum_, 0, input_sum_size);
   return RET_OK;
 }
 
@@ -210,12 +217,13 @@ int ConvolutionInt8CPUKernel::ReSize() {
 int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->data());
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->data());
-  ConvInt8(ori_input_data, packed_input_, matmul_packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
-           output_addr, filter_zp_ptr_, input_sum_, task_id, conv_param_, matmul_func_, support_optimize_);
+  ConvInt8(ori_input_data, packed_input_, matmul_packed_input_, packed_weight_sub_,
+           reinterpret_cast<int32_t *>(bias_data_), output_addr, filter_zp_ptr_, input_sum_, task_id, conv_param_,
+           matmul_func_, support_optimize_);
   return RET_OK;
 }
 
-int ConvolutionInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ConvolutionInt8Impl(void *cdata, int task_id, float, float) {
   auto conv = reinterpret_cast<ConvolutionInt8CPUKernel *>(cdata);
   auto error_code = conv->RunImpl(task_id);
   if (error_code != RET_OK) {

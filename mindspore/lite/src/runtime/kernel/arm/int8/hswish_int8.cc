@@ -33,11 +33,15 @@ int HswishInt8CPUKernel::Prepare() {
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
+  const auto &in_quant_args = input->quant_params();
+  const auto &out_quant_args = output->quant_params();
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
 
-  quant_arg_.input_scale = input->quant_params().front().scale;
-  quant_arg_.input_zp = input->quant_params().front().zeroPoint;
-  quant_arg_.output_scale = output->quant_params().front().scale;
-  quant_arg_.output_zp = output->quant_params().front().zeroPoint;
+  quant_arg_.input_scale = in_quant_args.front().scale;
+  quant_arg_.input_zp = in_quant_args.front().zeroPoint;
+  quant_arg_.output_scale = out_quant_args.front().scale;
+  quant_arg_.output_zp = out_quant_args.front().zeroPoint;
 
   const float output_multiplier = (1.0f / 128.0f) * quant_arg_.input_scale / quant_arg_.output_scale;
 
@@ -81,7 +85,7 @@ int HswishInt8CPUKernel::DoActivation(int task_id) {
   return RET_OK;
 }
 
-int HswishInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int HswishInt8Run(void *cdata, int task_id, float, float) {
   auto activation_kernel = reinterpret_cast<HswishInt8CPUKernel *>(cdata);
   auto error_code = activation_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

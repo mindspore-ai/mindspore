@@ -175,6 +175,7 @@ int BatchnormInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(batchnorm_param_);
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
+  CHECK_LESS_RETURN(n_dim, 1);
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->units_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
@@ -218,7 +219,7 @@ int BatchnormInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int BatchNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int BatchNormInt8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto g_kernel = reinterpret_cast<BatchnormInt8CPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);

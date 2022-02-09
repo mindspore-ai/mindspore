@@ -41,14 +41,19 @@ int L2NormInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Malloc L2NormQuantArg for L2Norm int8 op failed!";
     return RET_ERROR;
   }
-  quant_param_->in_.scale_ = input->quant_params().front().scale;
-  quant_param_->in_.zp_ = input->quant_params().front().zeroPoint;
-  quant_param_->out_.scale_ = output->quant_params().front().scale;
-  quant_param_->out_.zp_ = output->quant_params().front().zeroPoint;
+  const auto &input_params = input->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
+
+  quant_param_->in_.scale_ = static_cast<float>(input_params.front().scale);
+  quant_param_->in_.zp_ = input_params.front().zeroPoint;
+  quant_param_->out_.scale_ = static_cast<float>(output_params.front().scale);
+  quant_param_->out_.zp_ = output_params.front().zeroPoint;
   return ReSize();
 }
 
-int L2NormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int L2NormInt8Run(void *cdata, int task_id, float, float) {
   auto kernel = reinterpret_cast<L2NormInt8CPUKernel *>(cdata);
   auto ret = kernel->DoExecute(task_id);
   if (ret != RET_OK) {

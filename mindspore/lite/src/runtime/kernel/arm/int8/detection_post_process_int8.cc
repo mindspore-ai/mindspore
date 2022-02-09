@@ -38,7 +38,7 @@ int DetectionPostProcessInt8CPUKernel::DequantizeInt8ToFp32(const int task_id) {
   return RET_OK;
 }
 
-int DequantizeInt8ToFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int DequantizeInt8ToFp32Run(void *cdata, int task_id, float, float) {
   auto KernelData = reinterpret_cast<DetectionPostProcessInt8CPUKernel *>(cdata);
   auto ret = KernelData->DequantizeInt8ToFp32(task_id);
   if (ret != RET_OK) {

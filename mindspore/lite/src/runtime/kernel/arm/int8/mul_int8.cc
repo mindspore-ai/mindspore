@@ -44,12 +44,19 @@ int MulInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Malloc MulQuantArg for Mul int8 op failed!";
     return RET_ERROR;
   }
-  quant_args_->in_quant_args_[0].scale_ = input0->quant_params().front().scale;
-  quant_args_->in_quant_args_[0].zp_ = input0->quant_params().front().zeroPoint * -1;
-  quant_args_->in_quant_args_[1].scale_ = input1->quant_params().front().scale;
-  quant_args_->in_quant_args_[1].zp_ = input1->quant_params().front().zeroPoint * -1;
-  quant_args_->out_quant_arg_.scale_ = output->quant_params().front().scale;
-  quant_args_->out_quant_arg_.zp_ = output->quant_params().front().zeroPoint;
+  const auto &input0_params = input0->quant_params();
+  const auto &input1_params = input1->quant_params();
+  const auto &output_params = output->quant_params();
+  MS_CHECK_TRUE_MSG(!input0_params.empty(), RET_ERROR, "Input 0 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!input1_params.empty(), RET_ERROR, "Input 1 quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
+
+  quant_args_->in_quant_args_[0].scale_ = static_cast<float>(input0_params.front().scale);
+  quant_args_->in_quant_args_[0].zp_ = input0_params.front().zeroPoint * -1;
+  quant_args_->in_quant_args_[1].scale_ = static_cast<float>(input1_params.front().scale);
+  quant_args_->in_quant_args_[1].zp_ = input1_params.front().zeroPoint * -1;
+  quant_args_->out_quant_arg_.scale_ = static_cast<float>(output_params.front().scale);
+  quant_args_->out_quant_arg_.zp_ = output_params.front().zeroPoint;
   quant_args_->output_activation_max_ = std::numeric_limits<int8_t>::max();
   quant_args_->output_activation_min_ = std::numeric_limits<int8_t>::min();
 
@@ -191,13 +198,13 @@ int MulInt8CPUKernel::Run() {
   return ret;
 }
 
-int FastHWBroadcastMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int FastHWBroadcastMulInt8Run(void *cdata, int task_id, float, float) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->FastDoExecute(task_id);
   return lite::RET_OK;
 }
 
-int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int MulInt8Run(void *cdata, int task_id, float, float) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->DoExecute(task_id);
   return lite::RET_OK;

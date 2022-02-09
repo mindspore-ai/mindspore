@@ -62,7 +62,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int InitWeightBiasArm32();
   void Pre1x1Trans(int8_t *src_input, int8_t *src_output);
   void CheckSupportOptimize();
-  int InitBiasByzp(const void *src_weight, int input_channel, int output_channel, int round_oc);
+  int InitBiasByzp(const void *src_weight, int input_channel, int output_channel, size_t round_oc);
 
  private:
   int32_t *input_sum_ = nullptr;     /* per-oc */
@@ -70,7 +70,7 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int32_t *left_shift_ = nullptr;    /* per-oc up round  */
   int32_t *right_shift_ = nullptr;   /* per-oc up round  */
   int32_t *multiplier_ = nullptr;    /* per-oc up round  */
-  int8_t *packed_weight_ = nullptr;
+  int8_t *packed_weight_sub_ = nullptr;
   int8_t *packed_input_ = nullptr;
   int8_t *input_ptr_ = nullptr;
   int8_t *output_ptr_ = nullptr;

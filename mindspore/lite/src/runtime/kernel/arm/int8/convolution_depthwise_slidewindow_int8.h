@@ -37,7 +37,7 @@ class ConvolutionDepthwiseSWInt8CPUKernel : public ConvolutionBaseCPUKernel {
 
   int InitWeightBias();
   int InitPackedInputOutput();
-  int Execute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   void FreePackedInputOutput();
@@ -46,7 +46,7 @@ class ConvolutionDepthwiseSWInt8CPUKernel : public ConvolutionBaseCPUKernel {
   void FreeTmpQuant();
 
   SlidingWindowParam *sliding_ = nullptr;
-  int16_t *packed_weight_ = nullptr;
+  int16_t *packed_weight_sub_ = nullptr;
   int8_t *packed_input_ = nullptr;
   int8_t *packed_output_ = nullptr;
   bool need_align_ = false;

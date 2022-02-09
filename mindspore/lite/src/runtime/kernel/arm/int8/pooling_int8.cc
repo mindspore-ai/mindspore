@@ -84,7 +84,7 @@ int PoolingInt8CPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-int PoolingInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int PoolingInt8Impl(void *cdata, int task_id, float, float) {
   auto pooling = reinterpret_cast<PoolingInt8CPUKernel *>(cdata);
   auto error_code = pooling->RunImpl(task_id);
   if (error_code != RET_OK) {

@@ -69,7 +69,7 @@ int ReshapeInt8CPUKernel::Run() {
   return ret;
 }
 
-int ReshapeInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+int ReshapeInt8Run(void *cdata, int task_id, float, float) {
   CHECK_NULL_RETURN(cdata);
   auto reshape = reinterpret_cast<ReshapeInt8CPUKernel *>(cdata);
   if (reshape->DoExecute(task_id) != RET_OK) {
