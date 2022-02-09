@@ -44,10 +44,13 @@ class PredictTaskQueue {
   std::shared_ptr<PredictTask> GetPredictTask();
   void ActiveTask();
   bool IsPredictTaskDone() { return predict_task_done_; }
+  int GetTaskNum();
+  int GetWaitModelNum() { return waite_model_num_; }
 
  private:
   PredictTaskQueue() = default;
   std::queue<std::shared_ptr<PredictTask>> predict_task_;
+  int waite_model_num_ = 0;
 
   std::mutex mtx_predict_task_;
   std::condition_variable task_pop_cond_;
