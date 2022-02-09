@@ -101,7 +101,11 @@ bool CastOpAdjust::Run(const FuncGraphPtr &func_graph) {
     if ((int_input && int_output) || (input_type_value == output_type_value) ||
         (input_type_value == kNumberTypeFloat32 && output_type_value == kNumberTypeFloat16) ||
         (input_type_value == kNumberTypeFloat16 && output_type_value == kNumberTypeFloat32)) {
-      manager->Replace(node, cast_cnode->input(1));
+      auto ret = manager->Replace(node, cast_cnode->input(1));
+      if (!ret) {
+        MS_LOG(ERROR) << "Replace node to its input failed.";
+        return false;
+      }
     }
     if (output_type_value == kNumberTypeInt64) {
       auto parameter = opt::BuildIntValueParameterNode(func_graph, kNumberTypeInt32,
@@ -110,7 +114,11 @@ bool CastOpAdjust::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "Create parameter failed.";
         return false;
       }
-      manager->Replace(node, parameter);
+      auto ret = manager->Replace(node, parameter);
+      if (!ret) {
+        MS_LOG(ERROR) << "Replace node to parameter failed.";
+        return false;
+      }
     }
   }
   return true;

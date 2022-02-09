@@ -96,7 +96,7 @@ class FusionPattern {
 
   ~FusionPattern();
 
-  std::string GetName();
+  std::string GetName() const;
 
   FusionPattern &AddPatternOp(const std::string &id, const std::initializer_list<schema::PrimitiveType> &types = {});
 
