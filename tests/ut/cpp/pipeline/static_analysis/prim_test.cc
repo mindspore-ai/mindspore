@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "debug/draw.h"
 #include "ir/tensor.h"
 #include "utils/symbolic.h"
+#include "utils/ms_context.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -414,9 +415,13 @@ TEST_F(TestPrim, test_environ_get) {
   AbstractBasePtr abstract_z = FromValue(static_cast<int64_t>(3), false);
   args_spec_list = {res, embed_x, abstract_z};
 
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  context->set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, true);
+
   res = engine_->Run(graph_environ_get, args_spec_list).eval_result->abstract();
 
-  ASSERT_TRUE(*res == *abstract_x);
+  ASSERT_TRUE(*res == *(abstract_x->Broaden()));
 }
 
 /// Feature: Check inference result of primitive by build a FuncGraph with single primitive.

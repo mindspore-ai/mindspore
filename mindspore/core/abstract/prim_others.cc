@@ -81,7 +81,8 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
   (void)expected->Join(dflt);
-  return expected;
+  // As expected maybe a AbstractRef, so don't use it as return value, but use default value.
+  return dflt->Broaden();
 }
 
 AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
