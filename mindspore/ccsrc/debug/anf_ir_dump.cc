@@ -808,6 +808,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   // Output global info
   fout << buffer.str() << std::endl;
+  buffer.str(std::string());
   buffer.clear();
 
   // Output each sub graph
@@ -872,6 +873,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
 
   // Output global info
   fout << buffer.str() << std::endl;
+  buffer.str(std::string());
   buffer.clear();
 
   // Output each sub graph
