@@ -42,6 +42,9 @@
 #ifdef ENABLE_OPENGL_TEXTURE
 #include "tools/common/opengl_util.h"
 #endif
+#ifdef SERVER_INFERENCE
+#include "include/api/model_parallel_runner.h"
+#endif
 
 namespace mindspore::lite {
 class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
@@ -81,7 +84,9 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
   int CompareOutput() override;
-
+#ifdef SERVER_INFERENCE
+  int CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs);
+#endif
   int CompareOutputByCosineDistance(float cosine_distance_threshold);
 
   int InitTimeProfilingCallbackParameter() override;
@@ -93,6 +98,9 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int InitPrintTensorDataCallbackParameter() override;
 
   int PrintInputData();
+#ifdef SERVER_INFERENCE
+  int RunModelPool(std::shared_ptr<mindspore::Context> context);
+#endif
 
   template <typename T>
   std::vector<int64_t> ConverterToInt64Vector(const std::vector<T> &srcDims) {
@@ -122,6 +130,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;
+  std::vector<std::vector<mindspore::MSTensor>> all_inputs_;
+  std::vector<std::vector<mindspore::MSTensor>> all_outputs_;
 };
 
 }  // namespace mindspore::lite
