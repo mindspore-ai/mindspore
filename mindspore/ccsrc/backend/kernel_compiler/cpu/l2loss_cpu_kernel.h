@@ -39,6 +39,7 @@ class L2LossCPUKernel : public CPUKernel {
  private:
   TypeId dtype_{kTypeUnknown};
   size_t tensor_size_ = 1;
+  std::vector<size_t> input_shape_;
 };
 
 MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCPUKernel, float16);
