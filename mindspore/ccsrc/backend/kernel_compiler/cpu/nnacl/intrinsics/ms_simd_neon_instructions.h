@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version C2NUM.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@
 #define MS_MOV128_EPI32 vmovq_n_s32
 #define MS_SUBQ_F32 vsubq_f32
 #define MS_SUB128_F32 vsubq_f32
+#define MS_SUB128_EPI32 vsubq_s32
 #define MS_MLAQ_F32(src1, src2, src3) vmlaq_f32(src1, src2, src3)
 #define MS_STQ_F32 vst1q_f32
 #define MS_ST128_F32 vst1q_f32
@@ -87,6 +88,18 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
 
+#ifdef ENABLE_ARM64
+#define MS_GET_MAX128_F32 vmaxvq_f32
+#else
+static inline float MS_GET_MAX128_F32(MS_FLOAT32X4 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // neon block num : 4
+    result = fmaxf(result, MS_F32X4_GETI(src, i));
+  }
+  return result;
+}
+#endif
+
 static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
   int32x4_t result;
   result[0] = src1[0] / src2[0];  // C0 : 0
@@ -104,6 +117,16 @@ static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_F32X4_GETI(dst, 3) = sqrtf(MS_F32X4_GETI(src, 3));
   return dst;
 }
+
+static inline MS_FLOAT32X4 MS_SQRT128_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = sqrtf(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = sqrtf(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = sqrtf(MS_F32X4_GETI(src, 3));
+  return dst;
+}
+#define MS_RSQRT128_F32 vrsqrteq_f32
 
 #define LOAD128X8_F32(src, input_ptr, num)               \
   MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \

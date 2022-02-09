@@ -39,10 +39,20 @@
 #define MS_ST256_F32 _mm256_storeu_ps
 #define MS_ST256_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)
 #define MS_SUB256_F32 _mm256_sub_ps
+#define MS_SUB256_EPI32 _mm256_sub_epi32
 #define MS_MAX256_F32 _mm256_max_ps
 #define MS_MAX256_EPI32 _mm256_max_epi32
 #define MS_MIN256_F32 _mm256_min_ps
 #define MS_MIN256_EPI32 _mm256_min_epi32
+#define MS_SQRT256_F32 _mm256_sqrt_ps
+#define MS_RSQRT256_F32 _mm256_rsqrt_ps
+#define MS_LOG256_F32 _mm256_log_ps
+#define MS_COS256_F32 _mm256_cos_ps
+#define MS_SIN256_F32 _mm256_sin_ps
+#define MS_ERF256_F32 _mm256_erf_ps
+#define MS_ROUND256_F32(src) _mm256_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+#define MS_FLOOR256_F32 _mm256_floor_ps
+#define MS_CEIL256_F32 _mm256_ceil_ps
 #define MS_MUL256_F32(src1, src2) _mm256_mul_ps(src1, src2)
 #define MS_MUL256_EPI32(src1, src2) _mm256_mul_epi32(src1, src2)
 #define MS_DIV256_F32(src1, src2) _mm256_div_ps(src1, src2)
@@ -59,6 +69,14 @@
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
 #define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
+
+static inline float MS_GET_MAX256_F32(__m256 src) {
+  float result = MS_F32X8_GETI(src, 0);
+  for (int i = 1; i < 8; i++) {  // avx block num : 8
+    result = fmaxf(result, MS_F32X8_GETI(src, i));
+  }
+  return result;
+}
 
 #define MS_DIV256_EPI32(src1, src2) \
   _mm256_cvttps_epi32(MS_DIV256_F32(_mm256_cvtepi32_ps(src1), _mm256_cvtepi32_ps(src2)))

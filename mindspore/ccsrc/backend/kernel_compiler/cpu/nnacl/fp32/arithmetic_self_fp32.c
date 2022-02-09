@@ -19,14 +19,24 @@
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 // abs:
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementAbsCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {  \
+    MS_ST_F32(block_size, output + i, MS_ABS_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementAbs(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  // only avx512 support abs fp32 instruction
+  MS_SIMD_RUN_AVX512(SimdElementAbsCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     output[i] = fabsf(input[i]);
   }
   return NNACL_OK;
 }
 
-// cos:
+// cos
 int ElementCos(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = cosf(input[i]);
@@ -46,16 +56,35 @@ int ElementLog(const float *input, float *output, const int element_size) {
 }
 
 // Square
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementSquareCoreCalc(block_size, block_num, input, output, element_size, i)        \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) { \
+    MS_FLOAT_32xN(block_num) vin = MS_LD_F32(block_size, input + i);                            \
+    MS_ST_F32(block_size, output + i, MS_MUL_F32(block_size, vin, vin));                        \
+  }
+
 int ElementSquare(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementSquareCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     output[i] = input[i] * input[i];
   }
   return NNACL_OK;
 }
 
 // Sqrt
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementSqrtCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {   \
+    MS_ST_F32(block_size, output + i, MS_SQRT_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementSqrt(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementSqrtCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     if (input[i] < 0) {
       return NNACL_ERRCODE_SQRT_NEGATIVE;
     }
@@ -65,8 +94,17 @@ int ElementSqrt(const float *input, float *output, const int element_size) {
 }
 
 // rsqrt
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementRsqrtCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {    \
+    MS_ST_F32(block_size, output + i, MS_RSQRT_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementRsqrt(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementRsqrtCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     if (input[i] < 0) {
       return NNACL_ERRCODE_RSQRT_NEGATIVE;
     }
@@ -76,6 +114,12 @@ int ElementRsqrt(const float *input, float *output, const int element_size) {
 }
 
 // sin:
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementSinCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {  \
+    MS_ST_F32(block_size, output + i, MS_SIN_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementSin(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = sinf(input[i]);
@@ -100,37 +144,87 @@ int ElementLogicalNotBool(const bool *input, bool *output, const int element_siz
 }
 
 // round:
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementRoundCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {    \
+    MS_ST_F32(block_size, output + i, MS_ROUND_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementRound(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  // avx512 do not support round instruction
+  MS_SIMD_RUN_AVX(SimdElementRoundCoreCalc, input, output, element_size, i);
+  MS_SIMD_RUN_SSE(SimdElementRoundCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     output[i] = roundf(input[i]);
   }
   return NNACL_OK;
 }
 
 // floor:
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementFloorCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {    \
+    MS_ST_F32(block_size, output + i, MS_FLOOR_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
 int ElementFloor(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; i++) {
+  int i = 0;
+
+  MS_SIMD_RUN_X86_NO_SCALAR(SimdElementFloorCoreCalc, input, output, element_size, i);
+  for (; i < element_size; i++) {
     output[i] = floorf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementCeil(const float *input, float *output, const int number) {
-  for (int i = 0; i < number; ++i) {
+// ceil
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementCeilCoreCalc(block_size, block_num, input, output, element_size, i)            \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {   \
+    MS_ST_F32(block_size, output + i, MS_CEIL_F32(block_size, MS_LD_F32(block_size, input + i))); \
+  }
+
+int ElementCeil(const float *input, float *output, const int element_size) {
+  int i = 0;
+
+  MS_SIMD_RUN_X86_NO_SCALAR(SimdElementCeilCoreCalc, input, output, element_size, i);
+  for (; i < element_size; ++i) {
     output[i] = ceilf(input[i]);
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementNegativeCoreCalc(block_size, block_num, input, output, element_size, i)                \
+  for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {           \
+    MS_ST_F32(block_size, output + i, MS_MUL_N_F32(block_size, MS_LD_F32(block_size, input + i), -1.0f)); \
+  }
+
 int ElementNegative(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; ++i) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementNegativeCoreCalc, input, output, element_size, i);
+  for (; i < element_size; ++i) {
     output[i] = -input[i];
   }
   return NNACL_OK;
 }
 
+#define SimdElementReciprocalCoreCalc(block_size, block_num, input, output, element_size, i)                         \
+  do {                                                                                                               \
+    MS_FLOAT_32xN(block_num) num1_##block_num = MS_MOVN_F32(block_size, 1.0f);                                       \
+    for (int block_max_size = element_size - block_num + 1; i < block_max_size; i += block_num) {                    \
+      MS_ST_F32(block_size, output + i, MS_DIV_F32(block_size, num1_##block_num, MS_LD_F32(block_size, input + i))); \
+    }                                                                                                                \
+  } while (0)
+
 int ElementReciprocal(const float *input, float *output, const int element_size) {
-  for (int i = 0; i < element_size; ++i) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementReciprocalCoreCalc, input, output, element_size, i);
+  for (; i < element_size; ++i) {
     if (input[i] == 0.0f) {
       return NNACL_ERR;
     }
@@ -139,6 +233,7 @@ int ElementReciprocal(const float *input, float *output, const int element_size)
   return NNACL_OK;
 }
 
+// Erf
 int ElementErf(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = erff(input[i]);

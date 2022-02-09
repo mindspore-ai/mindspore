@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version C2NUM.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,23 @@
 #define MS_ST128_EPI32(src1, src2) _mm_storeu_si128((__m128i *)(src1), src2)
 #define MS_SUBQ_F32 _mm_sub_ps
 #define MS_SUB128_F32 _mm_sub_ps
+#define MS_SUB128_EPI32 _mm_sub_epi32
 #define MS_MAXQ_F32 _mm_max_ps
 #define MS_MAXQ_EPI32 _mm_max_epi32
 #define MS_MAX128_F32 _mm_max_ps
 #define MS_MAX128_EPI32 _mm_max_epi32
 #define MS_MINQ_F32 _mm_min_ps
 #define MS_MINQ_EPI32 _mm_min_epi32
+#define MS_SQRT128_F32 _mm_sqrt_ps
+#define MS_RSQRT128_F32 _mm_rsqrt_ps
+#define MS_LOG128_F32 _mm_log_ps
+#define MS_COS128_F32 _mm_cos_ps
+#define MS_SIN128_F32 _mm_sin_ps
+#define MS_ERF128_F32 _mm_erf_ps
+#define MS_ABS128_F32 _mm_abs_ps
+#define MS_ROUND128_F32(src) _mm_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+#define MS_FLOOR128_F32 _mm_floor_ps
+#define MS_CEIL128_F32 _mm_ceil_ps
 #define MS_MULQ_F32(src1, src2) _mm_mul_ps(src1, src2)
 #define MS_MULQ_EPI32(src1, src2) _mm_mul_epi32(src1, src2)
 #define MS_MIN128_F32 _mm_min_ps
@@ -88,6 +99,14 @@ static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_F32X4_GETI(dst, 2) = sqrtf(MS_F32X4_GETI(src, 2));
   MS_F32X4_GETI(dst, 3) = sqrtf(MS_F32X4_GETI(src, 3));
   return dst;
+}
+
+static inline float MS_GET_MAX128_F32(__m128 src) {
+  float result = MS_F32X4_GETI(src, 0);
+  for (int i = 1; i < 4; i++) {  // sse block num : 4
+    result = fmaxf(result, MS_F32X4_GETI(src, i));
+  }
+  return result;
 }
 
 #define STORE128X8_F32(output_ptr, num, dst) \
