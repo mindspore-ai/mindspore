@@ -253,6 +253,10 @@ size_t Round::kernel_accept_client_num() const { return kernel_->accept_client_n
 size_t Round::kernel_reject_client_num() const { return kernel_->reject_client_num(); }
 
 void Round::InitkernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
+
+void Round::InitkernelClientUploadLoss() { kernel_->InitClientUploadLoss(); }
+
+float Round::kernel_upload_loss() const { return kernel_->upload_loss(); }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

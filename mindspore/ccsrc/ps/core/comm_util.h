@@ -135,6 +135,7 @@ class CommUtil {
   static void verifyCertPipeline(const X509 *caCert, const X509 *subCert);
   static bool checkCRLTime(const std::string &crlPath);
   static bool CreateDirectory(const std::string &directoryPath);
+  static bool CheckHttpUrl(const std::string &http_url);
 
  private:
   static std::random_device rd;

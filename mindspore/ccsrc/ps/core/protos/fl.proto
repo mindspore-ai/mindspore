@@ -246,6 +246,7 @@ message EndLastIterResponse {
   uint64 getModel_total_client_num = 8;
   uint64 getModel_accept_client_num = 9;
   uint64 getModel_reject_client_num = 10;
+  float upload_loss = 11;
 }
 
 message SyncAfterRecover {

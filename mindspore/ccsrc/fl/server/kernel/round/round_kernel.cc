@@ -139,6 +139,10 @@ void RoundKernel::Summarize() {
                  << ", accept client num is: " << accept_client_num_
                  << ", reject client num is: " << (total_client_num_ - accept_client_num_);
   }
+
+  if (name_ == "updateModel" && accept_client_num() > 0) {
+    MS_LOG(INFO) << "Client Upload avg Loss: " << (upload_loss_ / accept_client_num());
+  }
 }
 
 size_t RoundKernel::total_client_num() const { return total_client_num_; }
@@ -151,6 +155,12 @@ void RoundKernel::InitClientVisitedNum() {
   total_client_num_ = 0;
   accept_client_num_ = 0;
 }
+
+void RoundKernel::InitClientUploadLoss() { upload_loss_ = 0.0f; }
+
+void RoundKernel::UpdateClientUploadLoss(const float upload_loss) { upload_loss_ = upload_loss_ + upload_loss; }
+
+float RoundKernel::upload_loss() const { return upload_loss_; }
 }  // namespace kernel
 }  // namespace server
 }  // namespace fl

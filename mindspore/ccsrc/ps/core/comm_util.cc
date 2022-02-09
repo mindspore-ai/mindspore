@@ -58,6 +58,16 @@ bool CommUtil::CheckIp(const std::string &ip) {
   return true;
 }
 
+bool CommUtil::CheckHttpUrl(const std::string &http_url) {
+  std::regex pattern(
+    "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)");
+  std::smatch res;
+  if (regex_match(http_url, res, pattern)) {
+    return true;
+  }
+  return false;
+}
+
 bool CommUtil::CheckPort(const uint16_t &port) {
   if (port > 65535) {
     MS_LOG(ERROR) << "The range of port should be 1 to 65535.";

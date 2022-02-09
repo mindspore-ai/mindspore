@@ -56,6 +56,7 @@ public abstract class Client {
 
     private final List<ByteBuffer> inputsBuffer = new ArrayList<>();
 
+    private float uploadLoss = 0.0f;
     /**
      * Get callback.
      *
@@ -236,6 +237,10 @@ public abstract class Client {
             }
             for (Callback callBack : callbacks) {
                 callBack.epochEnd();
+                if (callBack instanceof LossCallback && i == epochs - 1) {
+                    LossCallback lossCallback = (LossCallback)callBack;
+                    setUploadLoss(lossCallback.getUploadLoss());
+                }
             }
         }
         long endTime = System.currentTimeMillis();
@@ -388,5 +393,13 @@ public abstract class Client {
         for (DataSet dataset : dataSets.values()) {
             dataset.batchSize = batchSize;
         }
+    }
+
+    public float getUploadLoss() {
+        return uploadLoss;
+    }
+
+    public void setUploadLoss(float uploadLoss) {
+        this.uploadLoss = uploadLoss;
     }
 }

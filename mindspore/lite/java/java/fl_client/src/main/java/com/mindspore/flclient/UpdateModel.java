@@ -100,16 +100,19 @@ public class UpdateModel {
     public byte[] getRequestUpdateFLJob(int iteration, SecureProtocol secureProtocol, int trainDataSize) {
         RequestUpdateModelBuilder builder = new RequestUpdateModelBuilder(localFLParameter.getEncryptLevel());
         boolean isPkiVerify = flParameter.isPkiVerify();
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        float uploadLoss = client.getUploadLoss();
         if (isPkiVerify) {
             Date date = new Date();
             long timestamp = date.getTime();
             String dateTime = String.valueOf(timestamp);
             byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
             return builder.flName(flParameter.getFlName()).time(dateTime).id(localFLParameter.getFlID())
-                    .featuresMap(secureProtocol, trainDataSize).iteration(iteration).signData(signature).build();
+                    .featuresMap(secureProtocol, trainDataSize).iteration(iteration)
+                    .signData(signature).uploadLoss(uploadLoss).build();
         }
         return builder.flName(flParameter.getFlName()).time("null").id(localFLParameter.getFlID())
-                .featuresMap(secureProtocol, trainDataSize).iteration(iteration).build();
+                .featuresMap(secureProtocol, trainDataSize).iteration(iteration).uploadLoss(uploadLoss).build();
     }
 
     /**
@@ -210,6 +213,7 @@ public class UpdateModel {
         private int signDataOffset = 0;
         private int iteration = 0;
         private EncryptLevel encryptLevel = EncryptLevel.NOT_ENCRYPT;
+        private float uploadLossOffset = 0.0f;
 
         private RequestUpdateModelBuilder(EncryptLevel encryptLevel) {
             builder = new FlatBufferBuilder();
@@ -361,6 +365,17 @@ public class UpdateModel {
         }
 
         /**
+         * Serialize the element uploadLoss in RequestUpdateModel.
+         *
+         * @param upload loss that client train.
+         * @return the RequestUpdateModelBuilder object.
+         */
+        private RequestUpdateModelBuilder uploadLoss(float uploadLoss) {
+            this.uploadLossOffset = uploadLoss;
+            return this;
+        }
+
+        /**
          * Create a flatBuffer builder of RequestUpdateModel.
          *
          * @return the flatBuffer builder of RequestUpdateModel in byte[] format.
@@ -373,6 +388,7 @@ public class UpdateModel {
             RequestUpdateModel.addIteration(builder, this.iteration);
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
             RequestUpdateModel.addSignature(builder, this.signDataOffset);
+            RequestUpdateModel.addUploadLoss(builder, this.uploadLossOffset);
             int root = RequestUpdateModel.endRequestUpdateModel(builder);
             builder.finish(root);
             return builder.sizedByteArray();
