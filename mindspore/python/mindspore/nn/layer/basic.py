@@ -862,6 +862,8 @@ class ResizeBilinear(Cell):
         - **align_corners** (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
           aligns the 4 corners of images and resized images. If false, rescale by :math:`new\_height / height`.
           Default: False.
+        - **half_pixel_centers** (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+                                 Default: False.
 
     Outputs:
         Resized tensor.
@@ -874,6 +876,9 @@ class ResizeBilinear(Cell):
         TypeError: If `size` is not one of tuple, list, None.
         TypeError: If `scale_factor` is neither int nor None.
         TypeError: If `align_corners` is not a bool.
+        TypeError: If `half_pixel_centers` is not a bool.
+        TypeError: If `align_corners` and `half_pixel_centers` are all True.
+        TypeError: If `half_pixel_centers` is True and device_target not Ascend.
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `size` and `scale_factor` are both None or not None.
         ValueError: If length of shape of `x` is not equal to 4.
@@ -900,13 +905,14 @@ class ResizeBilinear(Cell):
         (1, 1, 5, 5)
     """
 
-    def __init__(self):
+    def __init__(self, half_pixel_centers=False):
         """Initialize ResizeBilinear."""
         super(ResizeBilinear, self).__init__()
+        self.half_pixel_centers = half_pixel_centers
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):
         shape = bilinear(x.shape, size, scale_factor, align_corners, self.cls_name)
-        resize_bilinear = P.ResizeBilinear(shape, align_corners)
+        resize_bilinear = P.ResizeBilinear(shape, align_corners, self.half_pixel_centers)
         return resize_bilinear(x)
 
 

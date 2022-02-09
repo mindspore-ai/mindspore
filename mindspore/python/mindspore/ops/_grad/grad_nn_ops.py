@@ -829,7 +829,7 @@ def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
 @bprop_getters.register(P.ResizeBilinear)
 def get_bprop_resize_bilinear(self):
     """Grad definition for `ResizeBilinear` operation."""
-    resize_grad = G.ResizeBilinearGrad(self.align_corners)
+    resize_grad = G.ResizeBilinearGrad(self.align_corners, self.half_pixel_centers)
 
     def bprop(x, out, dout):
         dx = resize_grad(dout, x)
