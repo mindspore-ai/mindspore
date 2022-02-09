@@ -163,17 +163,17 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \brief Get shape dimensions.
   ///
   /// \return Shape dimensions.
-  const ShapeVector &shape() { return shape_; }
+  const ShapeVector &shape() const { return shape_; }
 
   /// \brief Get minimum shape dimensions.
   ///
   /// \return Minimum shape dimensions.
-  const ShapeVector &min_shape() { return min_shape_; }
+  const ShapeVector &min_shape() const { return min_shape_; }
 
   /// \brief Get maximum shape dimensions.
   ///
   /// \return Maximum shape dimensions.
-  const ShapeVector &max_shape() { return max_shape_; }
+  const ShapeVector &max_shape() const { return max_shape_; }
 
   bool IsDynamic() const override {
     return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < 0; });

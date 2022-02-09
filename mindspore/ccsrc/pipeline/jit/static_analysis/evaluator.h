@@ -73,7 +73,7 @@ class Evaluator : public Base {
       return nullptr;
     }
 
-    auto is_abstract = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](auto &arg) {
+    auto is_abstract = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](auto &arg) -> bool {
       if (arg->BuildType()->type_id() == kObjectTypeUndeterminedType) {
         return true;
       }
@@ -94,7 +94,6 @@ class Evaluator : public Base {
 
   EvaluatorCacheMgrPtr evaluator_cache_mgr() const { return evaluator_cache_mgr_; }
   EvaluatorAttrCachePtr attr_cache() const { return attr_cache_; }
-
   const std::recursive_timed_mutex &eval_lock() const { return eval_lock_; }
 
  protected:

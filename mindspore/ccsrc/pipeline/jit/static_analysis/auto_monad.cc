@@ -616,7 +616,6 @@ class SideEffectFinder {
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
       if (tuple_indexes->empty()) {
         MS_LOG(EXCEPTION) << "Unexpected make_tuple: " << cnode->DebugString(2);
-        return {EffectInfo::kDetected, false, false, false};
       }
       // Pop out tuple index.
       auto top_index = tuple_indexes->top();

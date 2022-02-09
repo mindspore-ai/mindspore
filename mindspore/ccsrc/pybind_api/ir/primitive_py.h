@@ -71,7 +71,7 @@ class PrimitivePy : public Primitive {
   py::dict RunInfer(const py::tuple &args);
   void RunCheck(const py::tuple &args);
   py::object RunInferValue(const py::tuple &args);
-  bool HasPyObj() { return python_obj_.operator bool(); }
+  bool HasPyObj() const { return python_obj_.operator bool(); }
   PrimitivePtr Clone() override;
   PrimitivePyAdapterPtr adapter() const { return adapter_; }
   void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
@@ -102,7 +102,7 @@ class PrimitivePyAdapter {
   void set_hook(const py::function &hook);
   void set_instance_name(const std::string &s);
   void set_attached_primitive(const PrimitivePyPtr &prim);
-  PrimitivePyPtr attached_primitive() { return attached_primitive_.lock(); }
+  PrimitivePyPtr attached_primitive() const { return attached_primitive_.lock(); }
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   const bool parse_info_ = true;

@@ -26,58 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-namespace {
-int64_t Log2Ceil(int64_t length) {
-  if (length == 0) {
-    return -1;
-  }
-  int64_t floor = 0;
-  for (int64_t i = 4; i >= 0; --i) {
-    const int64_t shift = static_cast<int64_t>(1UL << static_cast<unsigned>(i));
-    int64_t tmp = SizeToLong(static_cast<uint64_t>(length) >> static_cast<uint64_t>(shift));
-    if (tmp != 0) {
-      length = tmp;
-      floor += shift;
-    }
-  }
-  return length == (length & ~(unsigned int)(length - 1)) ? floor : floor + 1;
-}
-
-int64_t GetFftLength(int64_t length) {
-  int64_t shift = Log2Ceil(length);
-  return SizeToLong(1UL << LongToSize(shift));
-}
-
-abstract::ShapePtr AudioSpectrogramInferShape(const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (input_shape.size() != 2) {
-    MS_LOG(ERROR) << "input shape is error, which need to be 2 dimensions";
-  }
-  auto window_size = GetValue<int64_t>(primitive->GetAttr(kWindowSize));
-  if (window_size < 2) {
-    MS_LOG(ERROR) << "window size is too short, now is " << window_size;
-  }
-  auto stride_size = GetValue<int64_t>(primitive->GetAttr(kStride));
-  if (stride_size < 1) {
-    MS_LOG(ERROR) << "stride must be positive, now is " << stride_size;
-  }
-  std::vector<int64_t> infer_shape;
-  infer_shape.push_back(input_shape[1]);
-  int64_t sample_sub_window = input_shape[0] - window_size;
-  infer_shape.push_back(sample_sub_window < 0 ? 0 : 1 + sample_sub_window / stride_size);
-  int64_t fft_length = GetFftLength(window_size);
-  infer_shape.push_back(fft_length / 2 + 1);
-  MS_LOG(ERROR) << infer_shape;
-  return std::make_shared<abstract::Shape>(infer_shape);
-}
-
-TypePtr AudioSpectrogramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const size_t x_index = 0;
-  return CheckAndConvertUtils::GetTensorInputType(prim->name(), input_args, x_index);
-}
-}  // namespace
-
 void AudioSpectrogram::set_window_size(const int64_t window_size) {
   (void)this->AddAttr(kWindowSize, MakeValue(window_size));
 }
@@ -101,15 +49,6 @@ void AudioSpectrogram::Init(const int64_t window_size, const int64_t stride, con
   this->set_window_size(window_size);
   this->set_stride(stride);
   this->set_mag_square(mag_square);
-}
-
-AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(AudioSpectrogramInferType(primitive, input_args),
-                                                    AudioSpectrogramInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameAudioSpectrogram, AudioSpectrogram);
 }  // namespace ops

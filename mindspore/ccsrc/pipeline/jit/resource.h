@@ -84,9 +84,9 @@ class Resource : public ResourceBase {
     loop_size_ = size;
   }
   void set_is_load(bool flag) { is_load_ = flag; }
-  bool is_load() { return is_load_; }
-  bool vm_loop_flag() { return vm_loop_flag_; }
-  int64_t loop_size() { return loop_size_; }
+  bool is_load() const { return is_load_; }
+  bool vm_loop_flag() const { return vm_loop_flag_; }
+  int64_t loop_size() const { return loop_size_; }
 
   void set_layout_map(const LayoutMap &layout_map) { layout_map_ = layout_map; }
   const LayoutMap &get_layout_map() const { return layout_map_; }

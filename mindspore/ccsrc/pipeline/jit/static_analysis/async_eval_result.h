@@ -294,7 +294,7 @@ class AsyncInferTask {
   static AsyncInferTaskPtr MakeShared(const AsyncAbstractPtr &abstract, const std::string &thread = "") {
     std::string thread_id = thread;
     if (thread_id == "") {
-      thread_id = AnalysisSchedule::GetInstance().thread_id();
+      thread_id = AnalysisSchedule::thread_id();
     }
     MS_EXCEPTION_IF_NULL(abstract);
     auto ret = std::make_shared<AsyncInferTask>(thread_id, abstract);
@@ -387,10 +387,10 @@ class EvaluatorCacheMgr {
   ~EvaluatorCacheMgr() = default;
 
   void Clear() { eval_result_cache_.clear(); }
-  const EvalResultCache &GetCache() { return eval_result_cache_; }
+  const EvalResultCache &GetCache() const { return eval_result_cache_; }
   EvalResultPtr GetValue(const AbstractBasePtrList &key) { return eval_result_cache_.get(key); }
   void SetValue(const AbstractBasePtrList &key, const EvalResultPtr &arg) { eval_result_cache_.set(key, arg); }
-  size_t GetSize() { return eval_result_cache_.size(); }
+  size_t GetSize() const { return eval_result_cache_.size(); }
 
  private:
   EvalResultCache eval_result_cache_;

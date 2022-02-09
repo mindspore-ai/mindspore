@@ -134,7 +134,7 @@ void FinalVM::Popsp() {
   int64_t sp = retsp_.top();
   MS_LOG(DEBUG) << "Current sp:" << sp_ << ", before sp:" << sp << ", " << sp_ - sp;
   if (sp_ >= sp) {
-    Pop(sp_ - sp + 1);
+    Pop((sp_ - sp) + 1);
     retsp_.pop();
   } else {
     MS_LOG(EXCEPTION) << "Stack point sp_:" << sp << " must be bigger than sp:" << sp_;
