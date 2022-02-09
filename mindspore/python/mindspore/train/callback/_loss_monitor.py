@@ -28,10 +28,13 @@ class LossMonitor(Callback):
 
     Note:
         If per_print_times is 0, do not print loss.
+        Parameter `has_trained_epoch` use for failure recovery scenarios.
 
     Args:
         per_print_times (int): How many steps to print once loss. During sink mode, it will print loss in the
                                nearest step. Default: 1.
+        has_trained_epoch (int): How many epochs has trained. If this parameter is set, LossMonitor will monitor the
+                                 loss after has_trained_epoch's epoch. Default: 0.
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
@@ -49,13 +52,17 @@ class LossMonitor(Callback):
         >>> model.train(10, dataset, callbacks=loss_monitor)
     """
 
-    def __init__(self, per_print_times=1):
+    def __init__(self, per_print_times=1, has_trained_epoch=0):
         super(LossMonitor, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
             raise ValueError("The argument 'per_print_times' must be int and >= 0, "
                              "but got {}".format(per_print_times))
+        if not isinstance(has_trained_epoch, int) or has_trained_epoch < 0:
+            raise ValueError("The argument 'has_trained_epoch' must be int and >= 0, "
+                             "but got {}".format(has_trained_epoch))
         self._per_print_times = per_print_times
         self._last_print_time = 0
+        self._has_trained_epoch = has_trained_epoch
 
     def step_end(self, run_context):
         """
@@ -78,7 +85,8 @@ class LossMonitor(Callback):
 
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
-                cb_params.cur_epoch_num, cur_step_in_epoch))
+                cb_params.cur_epoch_num, cur_step_in_epoch + self._has_trained_epoch))
         if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
             self._last_print_time = cb_params.cur_step_num
-            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)
+            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num + self._has_trained_epoch,
+                                                      cur_step_in_epoch, loss), flush=True)
