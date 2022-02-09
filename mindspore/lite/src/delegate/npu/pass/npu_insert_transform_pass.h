@@ -20,6 +20,7 @@
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/pass/npu_base_pass.h"
 namespace mindspore {
+enum class InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 class NPUInsertTransformPass : public NPUBasePass {
  public:
   NPUInsertTransformPass() { name_ = "NPUInsertTransformPass"; }
@@ -27,7 +28,7 @@ class NPUInsertTransformPass : public NPUBasePass {
   int Run(NPUGraph *subgraph) override;
 
  private:
-  int GetInsertState(NPUOp *op);
+  InsertState GetInsertState(NPUOp *op);
   int InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops);
   int InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops);
   int InsertTransNode(NPUOp *op, NPUOp *post_op, const mindspore::MSTensor &trans_in_tensor,

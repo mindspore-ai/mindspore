@@ -24,7 +24,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore {
-enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 std::set<mindspore::schema::PrimitiveType> insert_nodes = {
   schema::PrimitiveType_Concat,       schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
   schema::PrimitiveType_Activation,   schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
@@ -48,10 +47,10 @@ std::set<mindspore::schema::PrimitiveType> insert_nodes = {
 // so we won't insert nc2nh or nh2nc when op's in ops and out ops contains no nc2nh or nh2nc.
 // This pass should be run after npu_transform_pass, which insert transpose for nchw-input-limited op like conv2d.
 
-int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
+InsertState NPUInsertTransformPass::GetInsertState(NPUOp *op) {
   // filter out irrelevant op
   if (insert_nodes.find(op->type()) == insert_nodes.end()) {
-    return InsertNone;
+    return InsertState::InsertNone;
   }
   // current op is target op
   // Use out ops to count the out lines from current op since a single tensor can be used by multiple out ops. Besides,
@@ -104,11 +103,12 @@ int NPUInsertTransformPass::GetInsertState(NPUOp *op) {
   size_t connected_in_out_tensor_num = in_out_tensor_num - graph_output_num - graph_input_num;
   if (transpose_tensor_num == 0 || transpose_tensor_num * 2 < connected_in_out_tensor_num ||
       transpose_tensor_num == in_out_tensor_num) {
-    return InsertNone;
+    return InsertState::InsertNone;
   }
   InsertState ret = (need_pre_insert && need_post_insert)
-                      ? BothInsert
-                      : (need_pre_insert ? PreInsert : (need_post_insert ? PostInsert : InsertNone));
+                      ? InsertState::BothInsert
+                      : (need_pre_insert ? InsertState::PreInsert
+                                         : (need_post_insert ? InsertState::PostInsert : InsertState::InsertNone));
 
   return ret;
 }
@@ -264,7 +264,7 @@ int NPUInsertTransformPass::Run(NPUGraph *subgraph) {
       // If the every output op is nhwc2nchw, insert
       // modify loop index add post_ops.size() to the next op in the origin vector
       switch (insert_state) {
-        case PreInsert: {
+        case InsertState::PreInsert: {
           auto ret = InsertPreNodes(op, &insert_ops);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw op and nchw2nhwc op before op " << op->name() << " failed.";
@@ -274,7 +274,7 @@ int NPUInsertTransformPass::Run(NPUGraph *subgraph) {
           i += insert_ops.size();
           break;
         }
-        case PostInsert: {
+        case InsertState::PostInsert: {
           auto ret = InsertPostNodes(op, &insert_ops);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw op and nchw2nhwc op after op " << op->name() << " failed.";
@@ -284,7 +284,7 @@ int NPUInsertTransformPass::Run(NPUGraph *subgraph) {
           i += insert_ops.size();
           break;
         }
-        case BothInsert: {
+        case InsertState::BothInsert: {
           auto ret = InsertPreNodes(op, &insert_ops);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "Insert nhwc2nchw op and nchw2nhwc op before op " << op->name() << " failed.";

@@ -16,14 +16,12 @@
 
 #include "src/delegate/npu/npu_manager.h"
 #include <sys/system_properties.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
 #include "include/hiai_ir_build.h"
 #include "include/HiAiModelManagerService.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {
-#define MAX_MODEL_NUM 20
+constexpr int MAX_MODEL_NUM = 20;
 int NPUManager::CompareVersion(const string &version1, const string &version2) {
   std::istringstream iss1(version1);
   std::istringstream iss2(version2);

@@ -19,7 +19,6 @@
 #include "src/delegate/npu/op/npu_op.h"
 #include "nnacl/fp32/pack_fp32.h"
 namespace mindspore {
-#define C8NUM 8
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
   int hw8 = plane / C8NUM * C8NUM;
   int batch = plane * channel;
