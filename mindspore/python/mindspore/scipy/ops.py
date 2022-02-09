@@ -114,7 +114,6 @@ class Cholesky(PrimitiveWithInfer):
         super().__init__("Cholesky")
         self.init_prim_io_names(inputs=['a'], outputs=['l'])
         self.clean = validator.check_value_type("clean", clean, [bool], self.name)
-        self.clean = clean
         self.add_prim_attr('clean', self.clean)
 
     def __infer__(self, a):
