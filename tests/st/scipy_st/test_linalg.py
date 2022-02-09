@@ -181,8 +181,8 @@ def test_solve_triangular_error_type(dtype, argname, argtype, wrong_argvalue, wr
     kwargs = {argname: wrong_argvalue}
     with pytest.raises(TypeError) as err:
         solve_triangular(Tensor(a), Tensor(b), **kwargs)
-    msg = f"For 'solve_triangular', the type of `{argname}` should be '{argtype}', " \
-          f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
+    msg = f"For 'solve_triangular', the type of `{argname}` should be {argtype}, " \
+          f"but got '{wrong_argvalue}' with type {wrong_argtype}."
     assert str(err.value) == msg
 
 
@@ -203,8 +203,8 @@ def test_solve_triangular_error_type_trans(dtype, wrong_argvalue, wrong_argtype)
 
     with pytest.raises(TypeError) as err:
         solve_triangular(Tensor(a), Tensor(b), trans=wrong_argvalue)
-    msg = f"For 'solve_triangular', the type of `trans` should be one of '['int', 'str']', " \
-          f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
+    msg = f"For 'solve_triangular', the type of `trans` should be one of ['int', 'str'], " \
+          f"but got '{wrong_argvalue}' with type {wrong_argtype}."
     assert str(err.value) == msg
 
 
@@ -459,8 +459,8 @@ def test_eigh_error_type(dtype, argname, argtype, wrong_argvalue, wrong_argtype)
     kwargs = {argname: wrong_argvalue}
     with pytest.raises(TypeError) as err:
         msp.linalg.eigh(Tensor(a), Tensor(b), **kwargs)
-    assert str(err.value) == f"For 'eigh', the type of `{argname}` should be '{argtype}', " \
-                             f"but got '{wrong_argvalue}' with type '{wrong_argtype}'."
+    assert str(err.value) == f"For 'eigh', the type of `{argname}` should be {argtype}, " \
+                             f"but got '{wrong_argvalue}' with type {wrong_argtype}."
 
 
 @pytest.mark.level0
