@@ -54,6 +54,7 @@ SET(DE_UT_SRCS
         c_api_dataset_semeion_test.cc
         c_api_dataset_sogou_news_test.cc
         c_api_dataset_speech_commands_test.cc
+        c_api_dataset_squad_test.cc
         c_api_dataset_stl10_test.cc
         c_api_dataset_tedlium_test.cc
         c_api_dataset_textfile_test.cc
