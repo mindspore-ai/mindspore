@@ -25,8 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kDefaultKernelSpinCount = 3000;
-
 void CpuDynamicKernel::UpdateArgs() {
   if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
     return;
@@ -176,7 +174,6 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
     thread_pool = actor_manager->GetActorThreadPool();
     MS_EXCEPTION_IF_NULL(thread_pool);
   }
-  thread_pool->SetKernelThreadMaxSpinCount(kDefaultKernelSpinCount);
   return thread_pool;
 }
 

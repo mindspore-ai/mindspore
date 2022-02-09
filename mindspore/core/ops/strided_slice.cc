@@ -354,6 +354,10 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   }
   if (!slice_dynamic) {
     ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape->shape());
+    bool has_zero_shape = std::any_of(ret_in_shape.begin(), ret_in_shape.end(), [](int64_t i) { return i == 0; });
+    if (has_zero_shape) {
+      MS_LOG(EXCEPTION) << "StridedSlice haven't support zero shape yet, now the out shape is " << ret_in_shape;
+    }
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
   ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape->shape(), begin_len);
