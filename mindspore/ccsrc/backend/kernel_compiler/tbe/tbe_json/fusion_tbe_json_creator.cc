@@ -100,7 +100,7 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
-      MS_LOG(WARNING) << "Fusion Error: fusion compute node must be cnode, but the node is " << cnode->DebugString();
+      MS_LOG(WARNING) << "Fusion Error: fusion compute node must be cnode, but the node is " << node->DebugString();
       return false;
     }
     for (size_t i = 1; i < cnode->inputs().size(); ++i) {
