@@ -87,7 +87,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
   }
   // Train API
   int Train() override {
-    InnerKernel::Train();
+    (void)InnerKernel::Train();
     return conv_kernel_->Train();
   }
   void SetTrainable(bool trainable) override {
@@ -95,7 +95,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
     return conv_kernel_->SetTrainable(trainable);
   }
   size_t workspace_size() override {
-    InnerKernel::workspace_size();
+    (void)InnerKernel::workspace_size();
     return conv_kernel_->workspace_size();
   }
 
