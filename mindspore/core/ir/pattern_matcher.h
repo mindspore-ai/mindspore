@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@
 #include <tuple>
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 #include "base/core_ops.h"
 #include "ir/visitor.h"
+#include "ir/func_graph.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
@@ -48,17 +50,12 @@ class PBase {
 
   template <typename TN>
   bool TryCapture(const TN &value) const {
-    get_object().Reset();
-    return get_object().TryCapture_(value);
+    const auto &self = get_object();
+    self.Reset();
+    return self.TryCapture_(value);
   }
 
   using Internal = T;
-};
-
-template <typename T>
-class PIsEqual {
- public:
-  bool operator()(const T &lhs, const T &rhs) const { return lhs == rhs; }
 };
 
 template <typename T = AnfNodePtr>
@@ -78,7 +75,7 @@ class PatternNode : public PBase<PatternNode<T> > {
       captured_ = true;
       return true;
     }
-    return PIsEqual<T>()(captured_node_, node);
+    return captured_node_ == node;
   }
 
   void Reset() const { captured_ = false; }
@@ -99,31 +96,38 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
     AnfNodePtr lhs = x_.GetNode(node);
     AnfNodePtr rhs = y_.GetNode(node);
-    AnfNodePtrList list = {NewValueNode(prim_), lhs, rhs};
-    return NewCNode(list, node->func_graph());
+    AnfNodePtrList inputs{NewValueNode(prim_), lhs, rhs};
+    return NewCNode(std::move(inputs), node->func_graph());
   }
 
   bool TryCapture_(const AnfNodePtr &node) const {
-    if (IsPrimitiveCNode(node, prim_)) {
-      auto cnode = node->cast<CNodePtr>();
-      auto inputs = cnode->inputs();
-      if (inputs.size() == 3) {
-        // Binary Prim assumes only two inputs
-        if (!x_.TryCapture(inputs[1]) || !y_.TryCapture(inputs[2])) {
-          // If the operation is commutative, then check with inversed operands
-          if (is_commutative_) {
-            Reset();
-            if (!x_.TryCapture(inputs[2]) || !y_.TryCapture(inputs[1])) {
-              return false;
-            }
-            captured_binop_node_ = node;
-            return true;
-          }
-          return false;
-        }
-        captured_binop_node_ = node;
-        return true;
-      }
+    if (!IsPrimitiveCNode(node, prim_)) {
+      return false;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    // Binary Prim assumes only two inputs.
+    constexpr size_t bin_op_input_size = 3;
+    if (inputs.size() != bin_op_input_size) {
+      return false;
+    }
+    constexpr size_t bin_op_lhs_input = 1;
+    constexpr size_t bin_op_rhs_input = 2;
+    const auto &input1 = inputs[bin_op_lhs_input];
+    const auto &input2 = inputs[bin_op_rhs_input];
+    // Try capture inputs.
+    if (x_.TryCapture(input1) && y_.TryCapture(input2)) {
+      captured_binop_node_ = node;
+      return true;
+    }
+    if (!is_commutative_) {
+      return false;
+    }
+    // If the operation is commutative, then check with inversed operands.
+    Reset();
+    if (x_.TryCapture(input2) && y_.TryCapture(input1)) {
+      captured_binop_node_ = node;
+      return true;
     }
     return false;
   }
@@ -134,7 +138,6 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
     if (captured_binop_node_ == nullptr) {
       MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get it.";
     }
-
     return captured_binop_node_;
   }
 
@@ -155,67 +158,46 @@ class PBinOperation : public PBase<PBinOperation<T, T2> > {
 };
 
 ///
-/// Helper functions to apply a pattern function on all elements of a tuple
+/// Helper functions to apply a pattern function on all elements of a tuple.
 ///
 namespace tuple_utils {
-template <bool stop, size_t Index, typename Func>
-struct apply_func_tuple_item {
-  template <typename TTuple>
-  static void apply(Func *func, const TTuple &tuple) {
-    (*func)(Index, std::get<Index>(tuple));
-    apply_func_tuple_item<(Index + 1) == std::tuple_size<TTuple>::value, (Index + 1), Func>::apply(func, tuple);
+template <size_t Index = 0, typename TTuple, typename Func>
+inline constexpr void ForEach(const TTuple &tuple, Func &&func) {
+  if constexpr (Index < std::tuple_size<TTuple>::value) {
+    func(std::get<Index>(tuple));
+    ForEach<Index + 1, TTuple, Func>(tuple, std::forward<Func>(func));
   }
-};
-
-template <size_t Index, typename Func>
-struct apply_func_tuple_item<true, Index, Func> {
-  template <typename TTuple>
-  static void apply(Func *, const TTuple &) {}
-};
-
-template <typename Func, typename TTuple>
-inline void apply_func_tuple(Func *func, const TTuple &tuple) {
-  apply_func_tuple_item<std::tuple_size<TTuple>::value == 0, 0, Func>::apply(func, tuple);
 }
 
-struct PTupleResetCapture {
-  template <typename T>
-  void operator()(size_t, const T &pattern) const {
-    pattern.Reset();
-  }
-};
+template <typename TTuple>
+inline void ResetAll(const TTuple &tuple) {
+  ForEach(tuple, [](auto &arg) { arg.Reset(); });
+}
 
-struct PTupleCapture {
-  explicit PTupleCapture(const AnfNodePtrList tuple) : tuple_(tuple) {}
-
-  template <typename TPattern>
-  void operator()(size_t i, const TPattern &pattern) {
-    // Check if the first node is a Primitive
-    if (i == 0 && tuple_[i]->isa<Primitive>()) {
-      auto prim = tuple_[i]->cast<PrimitivePtr>();
-      if (tuple_[i] != pattern.GetNode(tuple_[i])) {
-        captured_ = false;
+template <bool First = true, size_t Index = 0, typename TTuple, typename Iter>
+inline bool CaptureAll(const TTuple &tuple, Iter iter) {
+  if constexpr (Index < std::tuple_size<TTuple>::value) {
+    const auto &input = *iter;
+    const auto &pattern = std::get<Index>(tuple);
+    if constexpr (First) {
+      // Check if the first node is a Primitive.
+      if (input->template isa<Primitive>()) {
+        if (input != pattern.GetNode(input)) {
+          return false;
+        }
+      } else if (!pattern.TryCapture_(input)) {
+        return false;
       }
     } else {
-      captured_ = captured_ && pattern.TryCapture_(tuple_[i]);
+      if (!pattern.TryCapture_(input)) {
+        return false;
+      }
     }
+    return CaptureAll<false, Index + 1, TTuple, Iter>(tuple, ++iter);
+  } else {
+    return true;
   }
-
-  const AnfNodePtrList tuple_;
-  bool captured_{true};
-};
-
-struct PTupleGetNode {
-  explicit PTupleGetNode(const AnfNodePtr &node) : node_(node) {}
-
-  template <typename TPattern>
-  void operator()(size_t, const TPattern &pattern) {
-    args_.push_back(pattern.GetNode(node_));
-  }
-
-  const AnfNodePtr &node_;
-  std::vector<AnfNodePtr> args_;
-};
+}
 }  // namespace tuple_utils
 
 template <typename... TArgs>
@@ -225,56 +207,51 @@ class PCNode : public PBase<PCNode<TArgs...> > {
   virtual ~PCNode() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
-    tuple_utils::PTupleGetNode get_node(node);
-    tuple_utils::apply_func_tuple(&get_node, args_);
-    auto prim_cnode = get_node.args_;
-    // In case this PCNode has captured extra nodes
-    if (extra_nodes_.size() > 0) {
-      prim_cnode.insert(prim_cnode.begin(), extra_nodes_.begin(), extra_nodes_.end());
+    constexpr auto n_args = sizeof...(TArgs);
+    const auto n_extra_nodes = extra_nodes_.size();
+    std::vector<AnfNodePtr> inputs;
+    inputs.reserve(n_args + n_extra_nodes);
+    // Get nodes from input patterns.
+    tuple_utils::ForEach(args_, [&inputs, &node](auto &arg) { (void)inputs.emplace_back(arg.GetNode(node)); });
+    if (n_extra_nodes > 0) {
+      // In case this PCNode has captured extra nodes.
+      inputs.insert(inputs.begin(), extra_nodes_.begin(), extra_nodes_.end());
     }
-    return NewCNode(prim_cnode, node->func_graph());
+    return NewCNode(std::move(inputs), node->func_graph());
   }
 
   bool TryCapture_(const AnfNodePtr &node) const {
-    if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
-      auto inputs = cnode->inputs();
-
-      auto pattern_arg_len = sizeof...(TArgs);
-      // There aren't enough inputs in Node to fill up the Pattern
-      if (inputs.size() < pattern_arg_len) {
-        return false;
-      }
-
-      // Pattern must exactly match the number of Node inputs.
-      if (!has_min_extra_nodes_) {
-        // Inputs in Node perfectly match number of tokens in Pattern.
-        if (inputs.size() == pattern_arg_len) {
-          AnfNodePtrList tokens(inputs.begin(), inputs.end());
-          tuple_utils::PTupleCapture capture_func(tokens);
-          tuple_utils::apply_func_tuple(&capture_func, args_);
-          return capture_func.captured_;
-        }
-        return false;
-      }
-
-      // Pattern may accept extra (non specified) nodes at the end of the CNode
-      // There must be at least `min_extra_nodes` additional nodes in the inputs.
-      if (inputs.size() >= pattern_arg_len + min_extra_nodes_) {
-        AnfNodePtrList tokens(inputs.begin(), inputs.begin() + SizeToLong(pattern_arg_len));
-        tuple_utils::PTupleCapture capture_func(tokens);
-        tuple_utils::apply_func_tuple(&capture_func, args_);
-        // If it could capture the initial set of nodes specified in the Pattern
-        // and there are enough extra inputs to add
-        if (capture_func.captured_ && inputs.size() > pattern_arg_len) {
-          (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + SizeToLong(pattern_arg_len), inputs.end());
-          return true;
-        }
-        return capture_func.captured_;
-      }
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode == nullptr) {
       return false;
     }
-    return false;
+    const auto &inputs = cnode->inputs();
+    const auto inputs_size = inputs.size();
+    constexpr auto pattern_arg_len = sizeof...(TArgs);
+    // There aren't enough inputs in Node to fill up the Pattern.
+    if (inputs_size < pattern_arg_len) {
+      return false;
+    }
+    // Pattern must exactly match the number of Node inputs.
+    if (!has_min_extra_nodes_) {
+      // Inputs in Node should perfectly match number of tokens in Pattern.
+      if (inputs_size != pattern_arg_len) {
+        return false;
+      }
+      return tuple_utils::CaptureAll(args_, inputs.begin());
+    }
+    // Pattern may accept extra (non specified) nodes at the end of the CNode,
+    // There must be at least `min_extra_nodes` additional nodes in the inputs.
+    if (inputs_size < pattern_arg_len + min_extra_nodes_) {
+      return false;
+    }
+    auto captured = tuple_utils::CaptureAll(args_, inputs.begin());
+    // If it could capture the initial set of nodes specified in the Pattern
+    // and there are enough extra inputs to add.
+    if (captured && inputs_size > pattern_arg_len) {
+      (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + pattern_arg_len, inputs.end());
+    }
+    return captured;
   }
 
   /// This function sets the PCNode object to capture at least `min_extra_nodes_` nodes after the last one
@@ -289,8 +266,7 @@ class PCNode : public PBase<PCNode<TArgs...> > {
   using Internal = const PCNode<TArgs...> &;
 
   void Reset() const {
-    tuple_utils::PTupleResetCapture reset;
-    tuple_utils::apply_func_tuple(&reset, args_);
+    tuple_utils::ResetAll(args_);
     extra_nodes_.clear();
   }
 
@@ -308,64 +284,61 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
   virtual ~PPrimitive() = default;
 
   AnfNodePtr GetNode(const AnfNodePtr &node) const {
-    tuple_utils::PTupleGetNode get_node(node);
-    tuple_utils::apply_func_tuple(&get_node, args_);
-    auto prim_cnode = get_node.args_;
-    prim_cnode.insert(prim_cnode.begin(), NewValueNode(prim_));
-
-    // In case this PPrimitive has captured extra nodes
-    if (extra_nodes_.size() > 0) {
-      prim_cnode.insert(prim_cnode.begin(), extra_nodes_.begin(), extra_nodes_.end());
+    std::vector<AnfNodePtr> inputs;
+    constexpr auto n_args = sizeof...(TArgs);
+    const auto n_extra_nodes = extra_nodes_.size();
+    inputs.reserve(1 + n_args + n_extra_nodes);
+    // The first input is the value of primitive.
+    inputs.emplace_back(NewValueNode(prim_));
+    // Get nodes from input patterns.
+    tuple_utils::ForEach(args_, [&inputs, &node](auto &arg) { (void)inputs.emplace_back(arg.GetNode(node)); });
+    if (n_extra_nodes > 0) {
+      // In case this PPrimitive has captured extra nodes.
+      inputs.insert(inputs.begin(), extra_nodes_.begin(), extra_nodes_.end());
     }
-    return NewCNode(prim_cnode, node->func_graph());
+    return NewCNode(std::move(inputs), node->func_graph());
   }
 
   bool TryCapture_(const AnfNodePtr &node) const {
-    if (IsPrimitiveCNode(node, prim_)) {
-      auto cnode = node->cast<CNodePtr>();
-      auto inputs = cnode->inputs();
-      // Number of arguments in Primitive Pattern (not including the Primitive node)
-      auto pattern_arg_len = sizeof...(TArgs);
-      // There aren't enough inputs in Node to fill up the Pattern
-      if ((inputs.size() - 1) < pattern_arg_len) {
-        return false;
-      }
-
-      // Pattern must exactly match the number of Node inputs.
-      if (!has_min_extra_nodes_) {
-        // Inputs in Node perfectly match number of tokens in Pattern.
-        if ((inputs.size() - 1) == pattern_arg_len) {
-          AnfNodePtrList tokens(inputs.begin() + 1, inputs.end());
-          tuple_utils::PTupleCapture capture_func(tokens);
-          tuple_utils::apply_func_tuple(&capture_func, args_);
-          if (capture_func.captured_) {
-            captured_prim_node_ = node;
-          }
-          return capture_func.captured_;
-        }
-        return false;
-      }
-
-      // Pattern may accept extra (non specified) nodes at the end of the Primitive
-      // There must be at least `min_extra_nodes` additional nodes in the inputs.
-      if ((inputs.size() - 1) >= pattern_arg_len + min_extra_nodes_) {
-        AnfNodePtrList tokens(inputs.begin() + 1, inputs.begin() + 1 + SizeToLong(pattern_arg_len));
-        tuple_utils::PTupleCapture capture_func(tokens);
-        tuple_utils::apply_func_tuple(&capture_func, args_);
-        // If it could capture the initial set of nodes specified in the Pattern
-        // and there are enough extra inputs to add
-        if (capture_func.captured_) {
-          captured_prim_node_ = node;
-          if (inputs.size() > pattern_arg_len + 1) {
-            (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + SizeToLong(pattern_arg_len),
-                                      inputs.end());
-          }
-        }
-        return capture_func.captured_;
-      }
+    if (!IsPrimitiveCNode(node, prim_)) {
       return false;
     }
-    return false;
+    auto cnode = node->cast<CNodePtr>();
+    const auto &inputs = cnode->inputs();
+    const auto inputs_size = inputs.size();
+    // Number of arguments in Primitive Pattern (not including the Primitive node).
+    constexpr auto pattern_arg_len = sizeof...(TArgs);
+    // There aren't enough inputs in Node to fill up the Pattern.
+    if (inputs_size < (pattern_arg_len + 1)) {
+      return false;
+    }
+    // Pattern must exactly match the number of Node inputs.
+    if (!has_min_extra_nodes_) {
+      if (inputs_size != (pattern_arg_len + 1)) {
+        return false;
+      }
+      // Inputs in Node perfectly match number of tokens in Pattern.
+      auto captured = tuple_utils::CaptureAll<false>(args_, inputs.begin() + 1);
+      if (captured) {
+        captured_prim_node_ = node;
+      }
+      return captured;
+    }
+    // Pattern may accept extra (non specified) nodes at the end of the Primitive,
+    // There must be at least `min_extra_nodes` additional nodes in the inputs.
+    if (inputs_size < (pattern_arg_len + 1 + min_extra_nodes_)) {
+      return false;
+    }
+    auto captured = tuple_utils::CaptureAll<false>(args_, inputs.begin() + 1);
+    // If it could capture the initial set of nodes specified in the Pattern
+    // and there are enough extra inputs to add.
+    if (captured) {
+      captured_prim_node_ = node;
+      if (inputs_size > pattern_arg_len + 1) {
+        (void)extra_nodes_.insert(extra_nodes_.end(), inputs.begin() + 1 + pattern_arg_len, inputs.end());
+      }
+    }
+    return captured;
   }
 
   /// This function sets the PPrimitive object to capture at least `min_extra_nodes_` nodes after the last one
@@ -385,7 +358,6 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     if (captured_prim_node_ == nullptr) {
       MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get its FuncGraph.";
     }
-
     return captured_prim_node_->func_graph();
   }
 
@@ -395,13 +367,11 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
     if (captured_prim_node_ == nullptr) {
       MS_EXCEPTION(ValueError) << "A Node wasn't captured for this Pattern before attempting to get it.";
     }
-
     return captured_prim_node_;
   }
 
   void Reset() const {
-    tuple_utils::PTupleResetCapture reset;
-    tuple_utils::apply_func_tuple(&reset, args_);
+    tuple_utils::ResetAll(args_);
     extra_nodes_.clear();
     captured_prim_node_ = nullptr;
   }
@@ -499,27 +469,27 @@ class PConstant : public PBase<PConstant<T> > {
   }
 
   bool TryCapture_(const AnfNodePtr &node) const {
-    if (node->isa<ValueNode>()) {
-      // If any_value_ is set don't check for the node's value. Just capture it.
-      if (any_value_) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
-
-      auto value = node->cast<ValueNodePtr>()->value();
-      if ((is_scalar_ && IsTensorScalarConstant(value)) || (!is_scalar_ && IsTensorConstant(value))) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
-
-      auto value_node_ = MakeValue(check_value_);
-      if (*GetValueNode(node) == *value_node_) {
-        captured_node_ = node;
-        captured_ = true;
-        return true;
-      }
+    if (!node->isa<ValueNode>()) {
+      return false;
+    }
+    // If any_value_ is set don't check for the node's value. Just capture it.
+    if (any_value_) {
+      captured_node_ = node;
+      captured_ = true;
+      return true;
+    }
+    // Check value.
+    auto value = node->cast<ValueNodePtr>()->value();
+    if ((is_scalar_ && IsTensorScalarConstant(value)) || (!is_scalar_ && IsTensorConstant(value))) {
+      captured_node_ = node;
+      captured_ = true;
+      return true;
+    }
+    auto value_node_ = MakeValue(check_value_);
+    if (*GetValueNode(node) == *value_node_) {
+      captured_node_ = node;
+      captured_ = true;
+      return true;
     }
     return false;
   }
