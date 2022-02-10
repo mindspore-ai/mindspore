@@ -38,9 +38,9 @@ class E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;
-  static void DumpSetup(const session::KernelGraph *graph);
-
   static void UpdateIterMindRTDump();
+
+  static void UpdateIterOldRTDump(const session::KernelGraph *graph);
 
   static void DumpRunIter(const KernelGraphPtr &graph_ptr, uint32_t rank_id = 0);
 
@@ -51,12 +51,10 @@ class E2eDump {
 
   static void DumpConstantData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger = nullptr);
 
-  static bool DumpParametersData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger);
+  static void DumpParametersData(uint32_t rank_id, const Debugger *debugger);
 
   static bool DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id,
                                  const Debugger *debugger = nullptr);
-
-  static bool isDatasetGraph(const session::KernelGraph *graph);
 
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
@@ -91,7 +89,8 @@ class E2eDump {
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, const Debugger *debugger);
 
-  static void UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode);
+  static void DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::string &dump_path, bool trans_flag,
+                                      const Debugger *debugger);
 
 #ifdef ENABLE_D
   static nlohmann::json ParseOverflowInfo(char *data_ptr);

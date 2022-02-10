@@ -43,8 +43,10 @@ class DebugActor : public ActorBase {
                      OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
   // The debug on step begin.
-  void DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
-                        OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+  void DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
+                        const std::vector<AnfNodePtr> &origin_parameters_order,
+                        std::vector<DeviceContext *> device_contexts, OpContext<DeviceTensor> *const op_context,
+                        const AID *from_aid);
 
   // The debug on step end.
   void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);

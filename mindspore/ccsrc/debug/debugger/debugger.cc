@@ -38,6 +38,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
+#include "runtime/framework/device_tensor_store.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
 #else
@@ -56,6 +57,7 @@ using debugger::WatchCondition_Condition_nan;
 using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
+using mindspore::runtime::DeviceTensorStore;
 
 namespace mindspore {
 
@@ -287,6 +289,8 @@ void Debugger::Reset() {
   graph_proto_list_.clear();
   graph_ptr_list_.clear();
   graph_ptr_step_vec_.clear();
+  parameters_mindRT_.clear();
+  visited_root_graph_ids_.clear();
   MS_LOG(INFO) << "Release Debugger resource.";
 }
 
@@ -297,13 +301,15 @@ void Debugger::Reset() {
  * Description: Sets root_graph_id for all the graphs in the compiled graph list. Sets cur_root_graph_id_ and
  * prev_root_graph_id_ and calls PreExecute function for all the graphs.
  */
-void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs) {
+void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs,
+                                       const std::vector<AnfNodePtr> &origin_parameters_order) {
   // MindRTBackend for GPU and Ascend
   if (device_target_ == kCPUDevice) {
     return;
   }
   // Store graphs that are run in one step.
   graph_ptr_step_vec_ = graphs;
+  parameters_mindRT_ = origin_parameters_order;
   prev_root_graph_id_ = cur_root_graph_id_;
   // set first run graph as the root graph
   cur_root_graph_id_ = graph_ptr_step_vec_[0]->graph_id();
@@ -474,21 +480,31 @@ uint32_t Debugger::GetRankID() {
  * Feature group: Dump.
  * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
- * Description: Dumps graph history and parameters for GPU and Ascend kernel-by-kernel MindRT. DumpConstantData for GPU.
+ * Description: When dump is enabled, this function: 1) Dumps parameters for the current root_graph_id to the
+ * root_graph's directory. 2) Dumps constant data once for each graph. 3) Dumps graph run history for each graph.
  */
-void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
-  if (!(ascend_kernel_by_kernel_ || device_target_ == kGPUDevice)) {
+void Debugger::DumpParamsAndConstAndHistory() {
+  if (!CheckDebuggerDumpEnabled()) {
     return;
   }
-  uint32_t rank_id = GetRankID();
-  E2eDump::DumpRunIter(kernel_graph, rank_id);
-  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
-    MS_EXCEPTION_IF_NULL(kernel_graph);
-    (void)E2eDump::DumpParametersData(kernel_graph.get(), rank_id, debugger_.get());
-    // Dump constant data for GPU mindRT.
-    E2eDump::DumpConstantData(kernel_graph.get(), rank_id, debugger_.get());
-  } else {
-    DumpJsonParser::GetInstance().UpdateDumpIter();
+  LoadParametersAllGraphs();
+  (void)E2eDump::DumpParametersData(GetRankID(), debugger_.get());
+  // Whether constant data was already dumped for the current root graph.
+  bool cur_root_graph_checked = std::find(visited_root_graph_ids_.begin(), visited_root_graph_ids_.end(),
+                                          cur_root_graph_id_) != visited_root_graph_ids_.end();
+  for (auto graph : graph_ptr_step_vec_) {
+    if (!cur_root_graph_checked) {
+      LoadConstsForGraph(graph);
+      // Dump constant data for GPU.
+      E2eDump::DumpConstantData(graph.get(), GetRankID(), debugger_.get());
+      // Dump constant data for Ascend.
+      DumpConstantDataAscend(graph);
+    }
+    // Dump graph run hisotry for each graph.
+    E2eDump::DumpRunIter(graph, GetRankID());
+  }
+  if (!cur_root_graph_checked) {
+    visited_root_graph_ids_.push_back(cur_root_graph_id_);
   }
 }
 
@@ -556,29 +572,15 @@ void Debugger::PostExecuteGraphDebugger() {
     DumpJsonParser::GetInstance().UpdateDumpIter();
     return;
   }
-  // LoadParametersAndConst for all the graphs that have been run in the current step
-  if (debugger_ && device_target_ == kGPUDevice) {
-    for (auto graph : graph_ptr_step_vec_) {
-      debugger_->LoadParametersAndConst(graph);
-    }
-  }
+  DumpParamsAndConstAndHistory();
   // debug used for dump
-  if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
-    // Dump Parameters and consts
-    for (auto graph : graph_ptr_step_vec_) {
-      debugger_->Dump(graph);
-      DumpConstantDataAscend(graph);
-      if (!debugger_->debugger_enabled()) {
-        debugger_->ClearCurrentData();
-      }
-    }
+  if (CheckDebuggerDumpEnabled() && !debugger_enabled()) {
+    ClearCurrentData();
   }
   if (debugger_) {
     debugger_->PostExecute();
   }
-  if (ascend_kernel_by_kernel_ || device_target_ == kGPUDevice) {
-    E2eDump::UpdateIterMindRTDump();
-  }
+  E2eDump::UpdateIterMindRTDump();
 }
 
 /*
@@ -1341,7 +1343,10 @@ bool Debugger::DumpTensorToFile(const std::string &tensor_name, bool trans_flag,
 }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
-  return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
+  if (debug_services_ != nullptr) {
+    return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
+  }
+  return false;
 }
 
 bool Debugger::debugger_enabled() const { return debugger_enabled_; }
@@ -1543,6 +1548,37 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   }
 }
 
+void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto root_graph_id = cur_root_graph_id_;
+  // This function is only  for loading parameters mindRT.
+  std::string node_name = GetKernelNodeName(node);
+  GetFileKernelName(NOT_NULL(&node_name));
+  TypeId type;
+  TypeId device_type;
+  ShapeVector int_shapes;
+  auto device_addr = GetParameterInfo(node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
+  if (device_addr == nullptr) {
+    MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
+    return;
+  }
+  if (!IsTypeDebuggerSupported(type)) {
+    return;
+  }
+  auto format = kOpFormat_DEFAULT;
+  string tensor_name = node_name + ':' + "0";
+  if (debug_services_ != nullptr) {
+    debug_services_->MoveTensorCurrentToPrev(tensor_name);
+  }
+  // Keep_prev is True for parameters.
+  bool ret = device_addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id);
+
+  if (!ret) {
+    MS_LOG(ERROR) << "LoadMemToHost:"
+                  << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";
+  }
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
@@ -1587,6 +1623,43 @@ void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   // load value nodes
   // get all constant values from the graph
   MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id() << ".";
+  const auto value_nodes = graph->graph_value_nodes();
+  for (auto &item : value_nodes) {
+    LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX, root_graph_id);
+  }
+}
+
+/*
+ * Feature group: Dump.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: This function is for loading parameters' data from device to host into tensor_list_map_ for GPU dump.
+ * Ascend does not use tensor_map_list_ for dump so it is not needed for ascend dump.
+ */
+void Debugger::LoadParametersAllGraphs() {
+  if (!(device_target_ == kGPUDevice && CheckDebuggerDumpEnabled())) {
+    return;
+  }
+  for (auto &node : parameters_mindRT_) {
+    LoadSingleParameterMindRT(node);
+  }
+}
+
+/*
+ * Feature group: Dump.
+ * Target device group: GPU.
+ * Runtime category: MindRT.
+ * Description: This function is for loading constant data from device to host into tensor_list_map_ for GPU dump.
+ * Ascend does not use tensor_map_list_ for dump so it is not needed for ascend dump.
+ */
+void Debugger::LoadConstsForGraph(const KernelGraphPtr &graph) {
+  if (!(device_target_ == kGPUDevice && CheckDebuggerDumpEnabled())) {
+    return;
+  }
+  // load value nodes
+  // get all constant values from the graph
+  MS_LOG(INFO) << "Start to load value nodes for graph " << graph->graph_id() << ".";
+  auto root_graph_id = graph->root_graph_id();
   const auto value_nodes = graph->graph_value_nodes();
   for (auto &item : value_nodes) {
     LoadSingleAnfnode(item, VALUE_NODE_OUTPUT_INDEX, root_graph_id);
@@ -1683,7 +1756,10 @@ void Debugger::ClearCurrentData() {
 }
 
 bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
-  return debug_services_->TensorExistsInCurrent(tensor_name);
+  if (debug_services_ != nullptr) {
+    return debug_services_->TensorExistsInCurrent(tensor_name);
+  }
+  return false;
 }
 
 #ifdef ENABLE_D
