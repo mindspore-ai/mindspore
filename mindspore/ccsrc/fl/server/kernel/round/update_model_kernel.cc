@@ -100,9 +100,8 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
     }
     MS_LOG(INFO) << "verify signature passed!";
   }
-
-  PBMetadata device_metas = DistributedMetadataStore::GetInstance().GetMetadata(kCtxDeviceMetas);
-  result_code = VerifyUpdateModel(update_model_req, fbb, device_metas);
+  DeviceMeta device_meta;
+  result_code = VerifyUpdateModel(update_model_req, fbb, &device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
     GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
@@ -115,7 +114,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
     return ConvertResultCode(result_code);
   }
 
-  result_code = UpdateModel(update_model_req, fbb, device_metas);
+  result_code = UpdateModel(update_model_req, fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
     GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
@@ -171,8 +170,9 @@ ResultCode UpdateModelKernel::ReachThresholdForUpdateModel(const std::shared_ptr
 }
 
 ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel *update_model_req,
-                                                const std::shared_ptr<FBBuilder> &fbb, const PBMetadata &device_metas) {
+                                                const std::shared_ptr<FBBuilder> &fbb, DeviceMeta *device_meta) {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
+  MS_ERROR_IF_NULL_W_RET_VAL(device_meta, ResultCode::kSuccessAndReturn);
   size_t iteration = IntToSize(update_model_req->iteration());
   if (iteration != LocalMetaStore::GetInstance().curr_iter_num()) {
     auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
@@ -184,11 +184,11 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     return ResultCode::kSuccessAndReturn;
   }
 
-  const auto &fl_id_to_meta = device_metas.device_metas().fl_id_to_meta();
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
 
-  if (fl_id_to_meta.count(update_model_fl_id) == 0) {
+  bool found = DistributedMetadataStore::GetInstance().GetOneDeviceMeta(update_model_fl_id, device_meta);
+  if (!found) {
     std::string reason = "devices_meta for " + update_model_fl_id + " is not set. Please retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
@@ -216,12 +216,11 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
 }
 
 ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *update_model_req,
-                                          const std::shared_ptr<FBBuilder> &fbb, const PBMetadata &device_metas) {
+                                          const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kSuccessAndReturn);
-  const auto &fl_id_to_meta = device_metas.device_metas().fl_id_to_meta();
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->fl_id(), ResultCode::kSuccessAndReturn);
   std::string update_model_fl_id = update_model_req->fl_id()->str();
-  size_t data_size = fl_id_to_meta.at(update_model_fl_id).data_size();
+  size_t data_size = device_meta.data_size();
   const auto &feature_map = ParseFeatureMap(update_model_req);
   if (feature_map.empty()) {
     std::string reason = "Feature map is empty.";

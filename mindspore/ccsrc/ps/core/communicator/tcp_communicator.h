@@ -44,6 +44,7 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kResetCount, "resetCnt"},
   {TcpUserCommand::kGetMetadata, "getMetadata"},
   {TcpUserCommand::kUpdateMetadata, "updateMetadata"},
+  {TcpUserCommand::kGetOneDeviceMeta, "getOneDeviceMeta"},
   {TcpUserCommand::kCounterEvent, "counterEvent"},
   {TcpUserCommand::kPullWeight, "pullWeight"},
   {TcpUserCommand::kPushWeight, "pushWeight"},
