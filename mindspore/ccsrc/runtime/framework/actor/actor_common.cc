@@ -143,15 +143,15 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
                     << ", output size:" << dst_device_tensor->GetSize();
   }
 
-  // Exist the size alignment in some device, so get the min device size.
-  size_t copy_size = std::min(src_device_tensor->GetSize(), dst_device_tensor->GetSize());
-
   if (src_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
     // CPU device tensor copy to other device tensor.
-    return dst_device_tensor->SyncHostToDevice(copy_size, src_device_tensor->GetPtr());
+    return dst_device_tensor->SyncHostToDevice(src_device_tensor->host_shape(), src_device_tensor->GetSize(),
+                                               src_device_tensor->type_id(), src_device_tensor->GetPtr(),
+                                               src_device_tensor->format());
   } else if (dst_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
     // Other device tensor copy to CPU device tensor.
-    return src_device_tensor->SyncDeviceToHost(copy_size, dst_device_tensor->GetMutablePtr());
+    return src_device_tensor->SyncDeviceToHost(dst_device_tensor->host_shape(), dst_device_tensor->GetSize(),
+                                               dst_device_tensor->type_id(), dst_device_tensor->GetMutablePtr());
   } else if (dst_device_tensor->DeviceType() == src_device_tensor->DeviceType()) {
     return dst_device_tensor->SyncDeviceToDevice(src_device_tensor);
   } else {
