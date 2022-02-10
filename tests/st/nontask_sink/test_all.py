@@ -16,11 +16,17 @@ import os
 import pytest
 from mindspore import context
 
-@pytest.mark.level1
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 def test_hccl_allreduce():
+    """
+    Feature: mpi run 8P case
+    Description: mpi run 8P case
+    Expectation: success
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_allreduce.py")
     assert return_code == 0
