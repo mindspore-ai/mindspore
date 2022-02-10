@@ -618,6 +618,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   // make fprob second result, maketuple's backward function.
   FuncGraphPtr b = std::make_shared<FuncGraph>();
 
+  ss.str(std::string());
   ss.clear();
   ss << "◀make_tuple_" << tuple_size;
   b->debug_info()->set_name(ss.str());
@@ -659,6 +660,7 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   // make fprob second result, maketuple's backward function.
   FuncGraphPtr b = std::make_shared<FuncGraph>();
 
+  ss.str(std::string());
   ss.clear();
   ss << "◀make_list_" << list_size;
   b->debug_info()->set_name(ss.str());
