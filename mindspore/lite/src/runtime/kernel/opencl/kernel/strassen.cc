@@ -26,6 +26,10 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
+namespace {
+const int half = 2;
+}
+
 int StrassenOpenCLKernel::Prepare() {
   const std::string kernel_name = "MatMul_Strassen_NHWC4_2d";
   std::string source = strassen_source;
@@ -54,7 +58,12 @@ int StrassenOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  ret = SetGlobalLocal();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetGlobalLocal failed.";
+    return ret;
+  }
+
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -140,7 +149,7 @@ int StrassenOpenCLKernel::InitWeights() {
   auto originWeightFp32 = reinterpret_cast<float *>(weight_tensor_data);
   auto originWeightFp16 = reinterpret_cast<float16_t *>(weight_tensor_data);
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
-  if (AllocatorMemoryForStrassen(NumA / 2, NumB / 2) != RET_OK) {
+  if (AllocatorMemoryForStrassen(NumA / half, NumB / half) != RET_OK) {
     MS_LOG(ERROR) << "AllocatorMemoryForStrassen failed.";
     return RET_ERROR;
   }
@@ -190,7 +199,7 @@ int StrassenOpenCLKernel::InitWeights() {
   auto weight_tensor_data = in_tensors_.at(kWeightIndex)->data();
   MS_ASSERT(weight_tensor_data);
   auto originWeightFp32 = reinterpret_cast<float *>(weight_tensor_data);
-  if (AllocatorMemoryForStrassen(NumA / 2, NumB / 2) != RET_OK) {
+  if (AllocatorMemoryForStrassen(NumA / half, NumB / half) != RET_OK) {
     MS_LOG(ERROR) << "AllocatorMemoryForStrassen failed.";
     return RET_ERROR;
   }
@@ -206,9 +215,9 @@ int StrassenOpenCLKernel::InitWeights() {
 
 void AlignStrassenGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local,
                               cl::NDRange *global_range, cl::NDRange *local_range) {
-  *local_range = cl::NDRange(local[0], local[1], local[2]);
-  *global_range =
-    cl::NDRange(UP_ROUND(global[0], local[0]), UP_ROUND(global[1], local[1]), UP_ROUND(global[2], local[2]));
+  *local_range = cl::NDRange(local[kNHWC_N], local[kNHWC_H], local[kNHWC_W]);
+  *global_range = cl::NDRange(UP_ROUND(global[kNHWC_N], local[kNHWC_N]), UP_ROUND(global[kNHWC_H], local[kNHWC_H]),
+                              UP_ROUND(global[kNHWC_W], local[kNHWC_W]));
 }
 
 // 0 : global_size_, 1: global_size_add_sub
@@ -225,26 +234,27 @@ int StrassenOpenCLKernel::StrassenSetGlobalLocal(size_t strassen_size, int type_
   return RET_OK;
 }
 
-void StrassenOpenCLKernel::SetGlobalLocal() {
+int StrassenOpenCLKernel::SetGlobalLocal() {
   // local size should be less than MAX_GROUP_SIZE
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
-  size_t strassen_size = outShape[3] / 2;
-  int ret = StrassenSetGlobalLocal(strassen_size, 0);  // set global_ and local
+  size_t strassen_size = outShape[kNHWC_C] / half;
+  int ret = StrassenSetGlobalLocal(strassen_size, CLARGSINDEX0);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StrassenSetGlobalLocal 0 failed.";
-    return;
+    return ret;
   }
-  ret = StrassenSetGlobalLocal(strassen_size, 1);  // set global_size_add_sub
+  ret = StrassenSetGlobalLocal(strassen_size, CLARGSINDEX1);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StrassenSetGlobalLocal 1 failed.";
-    return;
+    return ret;
   }
-  ret = StrassenSetGlobalLocal(strassen_size, 2);  // set global_size_weights
+  ret = StrassenSetGlobalLocal(strassen_size, CLARGSINDEX2);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StrassenSetGlobalLocal 2 failed.";
-    return;
+    return ret;
   }
+  return RET_OK;
 }
 
 int StrassenOpenCLKernel::StrassenSetConstArgs(cl::Kernel *kernel, int index, int strassen_size,
@@ -263,9 +273,9 @@ int StrassenOpenCLKernel::StrassenSetConstArgs(cl::Kernel *kernel, int index, in
 }
 
 int StrassenOpenCLKernel::SetConstArgs() {
-  int strassen_size = inShape[3] / 2;
-  StrassenSetConstArgs(&kernel_IMG_add_sub_2, 3, strassen_size, false);
-  StrassenSetConstArgs(&kernel_BUF_add_sub_2, 2, strassen_size, false);
+  int strassen_size = inShape[kNHWC_C] / half;
+  StrassenSetConstArgs(&kernel_IMG_add_sub_2, CLARGSINDEX3, strassen_size, false);
+  StrassenSetConstArgs(&kernel_BUF_add_sub_2, CLARGSINDEX2, strassen_size, false);
   return RET_OK;
 }
 
@@ -276,26 +286,26 @@ int StrassenOpenCLKernel::StrassenDataFilled(cl::Kernel *kernel, void *input, vo
     return RET_ERROR;
   }
   if (mem_type == lite::opencl::MemType::IMG) {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX0, input) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX1, output) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX0, input, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX1, output, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   }
-  StrassenSetConstArgs(kernel, 2, size, false);
-  if (ocl_runtime_->SetKernelArg(*kernel, 3, offset) != CL_SUCCESS) {
+  StrassenSetConstArgs(kernel, CLARGSINDEX2, size, false);
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX3, offset) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -313,30 +323,30 @@ int StrassenOpenCLKernel::StrassenAddSub(cl::Kernel *kernel, void *input, void *
     return RET_ERROR;
   }
   if (mem_type == lite::opencl::MemType::IMG) {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX0, input) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX1, output) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(*kernel, 0, input, true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX0, input, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
-    if (ocl_runtime_->SetKernelArg(*kernel, 1, output, true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX1, output, true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   }
-  StrassenSetConstArgs(kernel, 2, size, false);
-  if (ocl_runtime_->SetKernelArg(*kernel, 3, offset) != CL_SUCCESS) {
+  StrassenSetConstArgs(kernel, CLARGSINDEX2, size, false);
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX3, offset) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 4, flag) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX4, flag) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -354,39 +364,39 @@ int StrassenOpenCLKernel::StrassenBackResult(cl::Kernel *kernel, void *input1, v
     MS_LOG(ERROR) << "StrassenBackResult input or output can not nullptr";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 0, input1) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX0, input1) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 1, input2) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX1, input2) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 2, input3) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX2, input3) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 3, input4) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX3, input4) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 4, input5) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX4, input5) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 5, input6) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX5, input6) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 6, input7) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX6, input7) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(*kernel, 7, output) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(*kernel, CLARGSINDEX7, output) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  StrassenSetConstArgs(kernel, 8, size, false);
+  StrassenSetConstArgs(kernel, CLARGSINDEX8, size, false);
   if (ocl_runtime_->RunKernel(*kernel, global_add_sub_, local_add_sub_, nullptr, &event_) != RET_OK) {
     MS_LOG(ERROR) << "RunKernel failed.";
     return RET_ERROR;
@@ -399,20 +409,20 @@ int StrassenOpenCLKernel::StrassenRunMmatmul(void *input, void *weight, void *ou
     MS_LOG(ERROR) << "StrassenRunMmatmul input ,weight or output can not nullptr";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, input) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX0, input) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, output) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX1, output) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 2, weight, true) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX2, weight, true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  StrassenSetConstArgs(&kernel_, 3, size, true);
-  StrassenSetConstArgs(&kernel_, 4, size, true);
+  StrassenSetConstArgs(&kernel_, CLARGSINDEX3, size, true);
+  StrassenSetConstArgs(&kernel_, CLARGSINDEX4, size, true);
   if (ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != RET_OK) {
     MS_LOG(ERROR) << "RunKernel failed.";
     return RET_ERROR;
@@ -422,7 +432,7 @@ int StrassenOpenCLKernel::StrassenRunMmatmul(void *input, void *weight, void *ou
 
 int StrassenOpenCLKernel::DoStrassen(void *data, void *weight, void *result, const int size, const int depth,
                                      const int threshold) {
-  const int size_2 = size / 2;
+  const int size_2 = size / half;
   int C4 = UP_DIV(size_2, C4NUM);
   if (size <= threshold) {
     //   run matmul;
@@ -498,7 +508,7 @@ int StrassenOpenCLKernel::Run() {
   const int up_bound = 1024;
   const int down_bound = 256;
   if (in_tensors_.at(0)->shape()[0] >= up_bound) {
-    threshold = UP_DIV(in_tensors_.at(0)->shape()[0], C4NUM) / 2;
+    threshold = UP_DIV(in_tensors_.at(0)->shape()[0], C4NUM) / half;
   } else if (in_tensors_.at(0)->shape()[0] <= down_bound) {
     threshold = in_tensors_.at(0)->shape()[0];
   } else {

@@ -151,13 +151,15 @@ int PReluOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void PReluOpenCLKernel::SetGlobalLocal() {
+int PReluOpenCLKernel::SetGlobalLocal() {
   std::vector<size_t> local = {4, 4, 1};
   OH = out_shape_.s[0] * out_shape_.s[1];
   OW = out_shape_.s[2];
   OC = out_shape_.s[3];
   std::vector<size_t> global = {OH, OW, OC};
   AlignGlobalLocal(global, local);
+
+  return RET_OK;
 }
 
 int PReluOpenCLKernel::Prepare() {
@@ -194,7 +196,7 @@ int PReluOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 

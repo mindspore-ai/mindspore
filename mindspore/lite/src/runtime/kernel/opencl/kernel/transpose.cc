@@ -49,7 +49,7 @@ int TransposeOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int TransposeOpenCLKernel::Prepare() {
+void TransposeOpenCLKernel::BroadCastPerm() {
   tensor_size_ = GpuTensorInfo(out_tensors_.front());
   auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
   int num_axes = in_tensors_.at(1)->shape().at(0);
@@ -80,8 +80,12 @@ int TransposeOpenCLKernel::Prepare() {
     perm_4d_[2] = 2;
     perm_4d_[3] = 3;
   }
-  std::string kernel_name = "transpose";
+}
 
+int TransposeOpenCLKernel::Prepare() {
+  BroadCastPerm();
+
+  std::string kernel_name = "transpose";
   if (tensor_size_.N == 1 && perm_4d_[0] == 0 && perm_4d_[1] == 3 && perm_4d_[2] == 1 && perm_4d_[3] == 2) {
     type_ = TransposeType::AXIS0312;
     kernel_name += "_0312";
@@ -118,7 +122,7 @@ int TransposeOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -155,7 +159,7 @@ int TransposeOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void TransposeOpenCLKernel::SetGlobalLocal() {
+int TransposeOpenCLKernel::SetGlobalLocal() {
   size_t n = tensor_size_.N;
   size_t h = tensor_size_.H;
   size_t w = tensor_size_.W;
@@ -170,6 +174,8 @@ void TransposeOpenCLKernel::SetGlobalLocal() {
     global_size_ = {n * h, w, c4};
   }
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int TransposeOpenCLKernel::Run() {

@@ -103,12 +103,12 @@ int SoftmaxOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return lite::RET_OK;
 }
 
-void SoftmaxOpenCLKernel::SetGlobalLocal() {
+int SoftmaxOpenCLKernel::SetGlobalLocal() {
   if (onexone_flag_) {
     if (out_shape_.Slice <= SOFTMAX1x1_32_MAX_C4_NUM) {
       local_size_ = {1, 1};
@@ -136,6 +136,8 @@ void SoftmaxOpenCLKernel::SetGlobalLocal() {
     local_size_ = {};
   }
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int SoftmaxOpenCLKernel::Tune() {

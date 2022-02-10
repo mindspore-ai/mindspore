@@ -204,7 +204,7 @@ class OpenCLKernel : public InnerKernel {
   virtual int CheckSpecsWithoutShape() { return RET_OK; }
   virtual int InitWeights() { return RET_OK; }
   virtual int SetConstArgs() { return RET_OK; }
-  virtual void SetGlobalLocal() {}
+  virtual int SetGlobalLocal() { return RET_OK; }
   virtual int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) { return RET_ERROR; }
   virtual int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) {
     return RET_ERROR;

@@ -33,7 +33,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
   int InitBias();
   int StoreConstData() override;

@@ -106,7 +106,7 @@ int MatMulOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -347,7 +347,7 @@ int MatMulOpenCLKernel::InitBias() {
 }
 #endif
 
-void MatMulOpenCLKernel::SetGlobalLocal() {
+int MatMulOpenCLKernel::SetGlobalLocal() {
   // local size should be less than MAX_GROUP_SIZE
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
@@ -355,6 +355,8 @@ void MatMulOpenCLKernel::SetGlobalLocal() {
                   4 * static_cast<size_t>(outShape[0]) * static_cast<size_t>(outShape[1]),
                   static_cast<size_t>(outShape[2])};
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int MatMulOpenCLKernel::SetConstArgs() {

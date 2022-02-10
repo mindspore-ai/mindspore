@@ -293,10 +293,12 @@ int WinogradOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void WinogradOpenCLKernel::SetGlobalLocal() {
+int WinogradOpenCLKernel::SetGlobalLocal() {
   Align({TILE_HW_, 6, CI_SLICES_}, {8, 6, 4}, &global_4x4to36_, &local_4x4to36_);
   Align({UP_DIV(TILE_HW_, 2), 36, UP_DIV(CO_SLICES_, 2)}, {8, 3, 8}, &global_range_, &local_range_);
   Align({TILE_HW_, 4, CO_SLICES_}, {4, 4, 8}, &global_36to4x4_, &local_36to4x4_);
+
+  return RET_OK;
 }
 
 int WinogradOpenCLKernel::Run() {

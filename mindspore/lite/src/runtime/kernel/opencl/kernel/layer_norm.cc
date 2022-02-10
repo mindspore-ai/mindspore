@@ -51,33 +51,38 @@ int LayerNormOpenCLKernel::CheckSpecs() {
   if (normalized_axis_ < 0) {
     normalized_axis_ += input->shape().size();
   }
-  if (normalized_axis_ != 3) {
+  if (normalized_axis_ != DIMENSION_3D) {
     MS_LOG(WARNING) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-void LayerNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
+int LayerNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
   int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
-  MS_ASSERT(x);
+  CHECK_EQUAL_RETURN(x, 0);
   int yz = max_size / x;
-  int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
-  MS_ASSERT(y);
-  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
+  int y = std::min(std::min(GetMaxDivisorStrategy1(global[kNHWC_H], max_divider), yz), max_y);
+  CHECK_EQUAL_RETURN(y, 0);
+  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[kNHWC_W], C2NUM)));
 
   local->clear();
   local->push_back(x);
   local->push_back(y);
   local->push_back(z);
+
+  return RET_OK;
 }
 
 int LayerNormOpenCLKernel::SetConstArgs() {
   int arg_cn = 6;
   GpuTensorInfo img_info(in_tensors_.at(0));
-  in_shape_.s[0] = img_info.N, in_shape_.s[1] = img_info.H, in_shape_.s[2] = img_info.W, in_shape_.s[3] = img_info.C;
+  in_shape_.s[kNHWC_N] = img_info.N;
+  in_shape_.s[kNHWC_H] = img_info.H;
+  in_shape_.s[kNHWC_W] = img_info.W;
+  in_shape_.s[kNHWC_C] = img_info.C;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
@@ -90,11 +95,11 @@ int LayerNormOpenCLKernel::SetConstArgs() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 3, in_shape_) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 3, in_shape_) != CL_SUCCESS) {  // kernel arg index 3
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 4, normalized_shape_size_) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, 4, normalized_shape_size_) != CL_SUCCESS) {  // kernel arg index 4
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -103,22 +108,27 @@ int LayerNormOpenCLKernel::SetConstArgs() {
 
 void AlignMeanVarGlobalLocal(const std::vector<int> &global, const std::vector<int> &local, cl::NDRange *global_range,
                              cl::NDRange *local_range) {
-  *local_range = cl::NDRange(local[0], local[1], local[2]);
-  *global_range =
-    cl::NDRange(UP_ROUND(global[0], local[0]), UP_ROUND(global[1], local[1]), UP_ROUND(global[2], local[2]));
+  *local_range = cl::NDRange(local[kNHWC_N], local[kNHWC_H], local[kNHWC_W]);
+  *global_range = cl::NDRange(UP_ROUND(global[kNHWC_N], local[kNHWC_N]), UP_ROUND(global[kNHWC_H], local[kNHWC_H]),
+                              UP_ROUND(global[kNHWC_W], local[kNHWC_W]));
 }
 
-void LayerNormOpenCLKernel::SetGlobalLocal() {
-  size_t OH = in_shape_.s[0] * in_shape_.s[1];
-  size_t OW = in_shape_.s[2];
-  size_t OC = UP_DIV(in_shape_.s[3], C4NUM);
+int LayerNormOpenCLKernel::SetGlobalLocal() {
+  size_t OH = in_shape_.s[kNHWC_N] * in_shape_.s[kNHWC_H];
+  size_t OW = in_shape_.s[kNHWC_W];
+  size_t OC = UP_DIV(in_shape_.s[kNHWC_C], C4NUM);
   local_size_ = {1, 1, 1};  // init local
   global_size_ = {OH, OW, OC};
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
-  LayerNormGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  auto ret = LayerNormGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LayerNorm Get Work Group failed.";
+    return ret;
+  }
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
   AlignMeanVarGlobalLocal({static_cast<int>(OH), static_cast<int>(OW), 1}, {1, 1, 1}, &global_mean_var_,
                           &local_mean_var_);
+  return RET_OK;
 }
 
 #ifdef ENABLE_FP16
@@ -150,19 +160,19 @@ int LayerNormOpenCLKernel::Initweight() {
   }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
-  CHECK_NULL_RETURN(in_tensors_.at(1)->data());
-  CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_NULL_RETURN(in_tensors_.at(2)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_H)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_W));
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_W)->data());
 
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
-      memcpy(gamma_, in_tensors_.at(1)->data(), weight_size);
-      memcpy(beta_, in_tensors_.at(2)->data(), weight_size);
+      memcpy(gamma_, in_tensors_.at(kNHWC_H)->data(), weight_size);
+      memcpy(beta_, in_tensors_.at(kNHWC_W)->data(), weight_size);
     } else {
       auto gamma_fp32 = reinterpret_cast<float *>(gamma_);
       auto beta_fp32 = reinterpret_cast<float *>(beta_);
-      auto origin_gamma_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
-      auto origin_beta_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
+      auto origin_gamma_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNHWC_H)->data());
+      auto origin_beta_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kNHWC_W)->data());
 
       for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp32[i] = static_cast<float>(origin_gamma_fp16[i]);
@@ -173,16 +183,16 @@ int LayerNormOpenCLKernel::Initweight() {
     if (use_fp16_enable_) {
       auto gamma_fp16 = reinterpret_cast<float16_t *>(gamma_);
       auto beta_fp16 = reinterpret_cast<float16_t *>(beta_);
-      auto origin_gamma_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data());
-      auto origin_beta_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data());
+      auto origin_gamma_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNHWC_H)->data());
+      auto origin_beta_fp32 = reinterpret_cast<float *>(in_tensors_.at(kNHWC_W)->data());
 
       for (size_t i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp16[i] = static_cast<float16_t>(origin_gamma_fp32[i]);
         beta_fp16[i] = static_cast<float16_t>(origin_beta_fp32[i]);
       }
     } else {
-      memcpy(gamma_, in_tensors_.at(1)->data(), weight_size);
-      memcpy(beta_, in_tensors_.at(2)->data(), weight_size);
+      memcpy(gamma_, in_tensors_.at(kNHWC_H)->data(), weight_size);
+      memcpy(beta_, in_tensors_.at(kNHWC_W)->data(), weight_size);
     }
   }
   if (allocator->UnmapBuffer(gamma_) != RET_OK) {
@@ -224,11 +234,11 @@ int LayerNormOpenCLKernel::Initweight() {
   }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
-  CHECK_NULL_RETURN(in_tensors_.at(1)->data());
-  CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_NULL_RETURN(in_tensors_.at(2)->data());
-  memcpy(gamma_, in_tensors_.at(1)->data(), weight_size);
-  memcpy(beta_, in_tensors_.at(2)->data(), weight_size);
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_H)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_W));
+  CHECK_NULL_RETURN(in_tensors_.at(kNHWC_W)->data());
+  memcpy(gamma_, in_tensors_.at(kNHWC_H)->data(), weight_size);
+  memcpy(beta_, in_tensors_.at(kNHWC_W)->data(), weight_size);
 
   if (allocator->UnmapBuffer(gamma_) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
@@ -303,7 +313,11 @@ int LayerNormOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  ret = SetGlobalLocal();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set global local failed.";
+    return ret;
+  }
 
   return RET_OK;
 }

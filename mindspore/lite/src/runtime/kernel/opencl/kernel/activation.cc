@@ -81,7 +81,8 @@ int ActivationOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
+
   MS_LOG(DEBUG) << kernel_name << " init Done!";
   return RET_OK;
 }
@@ -114,10 +115,11 @@ int ActivationOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ActivationOpenCLKernel::SetGlobalLocal() {
+int ActivationOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
   global_size_ = {outShape.width, outShape.height};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int ActivationOpenCLKernel::Run() {

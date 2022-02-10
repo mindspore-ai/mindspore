@@ -54,7 +54,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int Run() override;
 
   int StoreConstData() override;
