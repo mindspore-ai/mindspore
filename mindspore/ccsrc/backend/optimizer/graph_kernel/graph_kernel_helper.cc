@@ -35,13 +35,6 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "pipeline/jit/action.h"
 #include "utils/context/graph_kernel_flags.h"
-#if ENABLE_D
-#include "runtime/device/ascend/kernel_select_ascend.h"
-#elif ENABLE_GPU
-#include "runtime/device/gpu/kernel_info_setter.h"
-#elif ENABLE_CPU
-#include "runtime/device/cpu/kernel_select_cpu.h"
-#endif
 
 namespace mindspore::graphkernel {
 namespace {
@@ -277,20 +270,6 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc) {
     return nullptr;
   }
   return fg;
-}
-
-void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-#if ENABLE_D
-  device::ascend::SetKernelInfo(cnode, kernel_type);
-#elif ENABLE_GPU
-  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-  device::gpu::SetKernelInfo(cnode, kernel_type);
-#elif ENABLE_CPU
-  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-  device::cpu::SetKernelInfo(cnode);
-#endif
 }
 
 std::string GetFormat(const AnfNodePtr &node) { return AnfAlgo::GetOutputFormat(node, 0); }

@@ -128,4 +128,6 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {}
 void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) {}
 
 void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {}
+
+void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {}
 }  // namespace mindspore::graphkernel

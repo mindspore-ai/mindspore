@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -516,20 +516,8 @@ std::string AnfRuntimeAlgorithm::GetNodeDebugString(const AnfNodePtr &node) {
 }
 
 void AnfRuntimeAlgorithm::SetNodeAttr(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString() << trace::DumpSourceLines(node);
-  }
-  // single op cnode.
-  auto primitive = AnfAlgo::GetCNodePrimitive(node);
-  if (primitive != nullptr) {
-    primitive->set_attr(key, value);
-    return;
-  }
-  // graph kernel cnode.
-  auto fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
-  MS_EXCEPTION_IF_NULL(fg);
-  fg->set_attr(key, value);
+  // this function was moved to AnfUtils.
+  return AnfUtils::SetNodeAttr(key, value, node);
 }
 
 void AnfRuntimeAlgorithm::CopyNodeAttr(const std::string &key, const AnfNodePtr &from, const AnfNodePtr &to) {
