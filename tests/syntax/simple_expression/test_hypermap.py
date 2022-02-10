@@ -38,7 +38,7 @@ def test_hypermap_noleaf_tuple_list_mix():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="The types of arguments in HyperMap must be consistent"):
+    with pytest.raises(Exception, match="the types of arguments in HyperMap must be consistent"):
         main_noleaf((tensor1, 1), [tensor2, 2])
 
 
@@ -74,7 +74,7 @@ def test_hypermap_noleaf_list_tuple():
     """
     tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
     tensor2 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
-    with pytest.raises(Exception, match="The types of arguments in HyperMap must be consistent"):
+    with pytest.raises(Exception, match="the types of arguments in HyperMap must be consistent"):
         main_noleaf([tensor1], (tensor2, tensor2))
 
 
@@ -87,14 +87,14 @@ def test_tuple_slice_stop_index():
     class TupleSliceNet(Cell):
         def __init__(self):
             super(TupleSliceNet, self).__init__()
-            self.addN = P.AddN()
+            self.addn = P.AddN()
             self.index_0 = Tensor(3)
 
         def construct(self, tensor_tuple):
             tensor_tuple_slice0 = tensor_tuple[:]
             tensor_tuple_slice1 = tensor_tuple[self.index_0:"str"]  # slice should be Scalar or None, rather than string
-            sum0 = self.addN(tensor_tuple_slice0)
-            sum1 = self.addN(tensor_tuple_slice1)
+            sum0 = self.addn(tensor_tuple_slice0)
+            sum1 = self.addn(tensor_tuple_slice1)
             ret = sum0 + sum1
             return ret
 
@@ -120,7 +120,7 @@ def test_tuple_slice_start_index():
     class TupleSliceNet(Cell):
         def __init__(self):
             super(TupleSliceNet, self).__init__()
-            self.addN = P.AddN()
+            self.addn = P.AddN()
             self.index_0 = Tensor(3)
             self.index_1 = Tensor([5])
             self.index_3 = Tensor([True])
@@ -130,10 +130,10 @@ def test_tuple_slice_start_index():
             tensor_tuple_slice1 = tensor_tuple["str":self.index_0]
             tensor_tuple_slice2 = tensor_tuple[self.index_3:]
             tensor_tuple_slice3 = tensor_tuple[2:self.index_1:]
-            sum0 = self.addN(tensor_tuple_slice0)
-            sum1 = self.addN(tensor_tuple_slice1)
-            sum2 = self.addN(tensor_tuple_slice2)
-            sum3 = self.addN(tensor_tuple_slice3)
+            sum0 = self.addn(tensor_tuple_slice0)
+            sum1 = self.addn(tensor_tuple_slice1)
+            sum2 = self.addn(tensor_tuple_slice2)
+            sum3 = self.addn(tensor_tuple_slice3)
             ret = sum0 + sum1 + sum2 + sum3
             return ret
 
@@ -159,7 +159,7 @@ def test_tuple_slice_step():
     class TupleSliceNet(Cell):
         def __init__(self):
             super(TupleSliceNet, self).__init__()
-            self.addN = P.AddN()
+            self.addn = P.AddN()
             self.index_0 = Tensor(3)
             self.index_1 = Tensor([5])
             self.index_3 = Tensor([True])
@@ -169,10 +169,10 @@ def test_tuple_slice_step():
             tensor_tuple_slice1 = tensor_tuple[:self.index_0]
             tensor_tuple_slice2 = tensor_tuple[self.index_3:]
             tensor_tuple_slice3 = tensor_tuple[2:self.index_1:0]
-            sum0 = self.addN(tensor_tuple_slice0)
-            sum1 = self.addN(tensor_tuple_slice1)
-            sum2 = self.addN(tensor_tuple_slice2)
-            sum3 = self.addN(tensor_tuple_slice3)
+            sum0 = self.addn(tensor_tuple_slice0)
+            sum1 = self.addn(tensor_tuple_slice1)
+            sum2 = self.addn(tensor_tuple_slice2)
+            sum3 = self.addn(tensor_tuple_slice3)
             ret = sum0 + sum1 + sum2 + sum3
             return ret
 

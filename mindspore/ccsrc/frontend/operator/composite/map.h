@@ -39,7 +39,7 @@ class Map : public MetaFuncGraph {
         fn_leaf_(fn_leaf),
         reverse_(reverse),
         broadcast_(false),
-        nonleaf_({kObjectTypeList, kObjectTypeTuple, kObjectTypeClass}) {
+        nonleaf_({kObjectTypeList, kObjectTypeTuple}) {
     Init();
   }
   Map(const Map &map)
@@ -74,8 +74,6 @@ class Map : public MetaFuncGraph {
   AnfNodePtr FullMakeList(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                           const ArgsPairList &arg_pairs);
   AnfNodePtr FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                           const ArgsPairList &arg_pairs);
-  AnfNodePtr FullMakeClass(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                            const ArgsPairList &arg_pairs);
   AnfNodePtr Make(const FuncGraphPtr &graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs);
   std::pair<std::string, std::string> GetMapInputIndex(size_t num);

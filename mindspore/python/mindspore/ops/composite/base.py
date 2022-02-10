@@ -614,6 +614,9 @@ class HyperMap(HyperMap_):
 
           If `ops` is `None`, the first input is the operation, and the others are inputs.
 
+    Note:
+        Except for the operation input, the number of inputs should be equal to the number of inputs to `ops`.
+
     Outputs:
         Sequence or nested sequence, the sequence of output after applying the function.
         e.g. `operation(args[0][i], args[1][i])`.

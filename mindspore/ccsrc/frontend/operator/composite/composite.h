@@ -56,7 +56,6 @@ class HyperMap : public MetaFuncGraph {
     if (this != &h) {
       fn_leaf_ = h.fn_leaf_;
       reverse_ = h.reverse_;
-      broadcast_ = h.broadcast_;
       nonleaf_ = h.nonleaf_;
       if (fn_leaf_) {
         name_ = "hyper_map[" + fn_leaf_->name() + "]";
@@ -77,15 +76,11 @@ class HyperMap : public MetaFuncGraph {
                       const ArgsPairList &arg_map);
   AnfNodePtr FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                       const ArgsPairList &arg_map);
-  AnfNodePtr FullMake(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
-                      const ArgsPairList &arg_map);
   AnfNodePtr Make(const FuncGraphPtr &graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map);
-  ArgsPairList Harmonize(const FuncGraphPtr &graph, const ArgsPairList &args_spec_list);
   std::pair<std::string, std::string> GetHyperMapInputIndex(size_t num);
 
   MultitypeFuncGraphPtr fn_leaf_;
   bool reverse_;
-  bool broadcast_;
   std::set<TypeId> nonleaf_;
 };
 using HyperMapPtr = std::shared_ptr<HyperMap>;
