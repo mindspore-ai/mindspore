@@ -764,10 +764,6 @@ class DataType:
     r"""
     Various combinations of dtype and format of Ascend ops.
 
-    The current list below may be incomplete.
-
-    Please add it if necessary.
-
     current support:
 
     .. code-block::
@@ -933,6 +929,9 @@ class DataType:
         F64_HWCN = ("float64", "HWCN")
         F64_NDHWC = ("float64", "NDHWC")
         F64_ChannelLast = ("float64", "ChannelLast")
+
+        C64_Default = ("complex64", "DefaultFormat")
+        C128_Default = ("complex128", "DefaultFormat")
     """
 
     None_None = ("", "")

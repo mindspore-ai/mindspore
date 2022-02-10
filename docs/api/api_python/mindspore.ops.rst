@@ -75,3 +75,34 @@ Random类型算子
 
     mindspore.ops.Gamma
     mindspore.ops.UniformReal
+
+
+原语
+----
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.constexpr
+    mindspore.ops.prim_attr_register
+    mindspore.ops.Primitive
+    mindspore.ops.PrimitiveWithCheck
+    mindspore.ops.PrimitiveWithInfer
+
+
+函数实现注册
+--------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.get_vm_impl_fn
+
+
+算子信息注册
+--------------
+
+.. cnmsplatformautosummary::
+    :toctree: ops
+
+    mindspore.ops.DataType
