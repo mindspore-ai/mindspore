@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 #include "mindapi/ir/abstract.h"
 #include "mindapi/src/helper.h"
 #include "abstract/abstract_value.h"
+#include "abstract/dshape.h"
 #include "ir/dtype.h"
 
 namespace mindspore::api {
 using TypeImpl = mindspore::Type;
 using ValueImpl = mindspore::Value;
+using ShapeImpl = mindspore::abstract::Shape;
 using AbstractBaseImpl = mindspore::abstract::AbstractBase;
 
 MIND_API_BASE_IMPL(AbstractBase, AbstractBaseImpl, Base);
@@ -41,6 +43,11 @@ ValuePtr AbstractBase::value() const {
   return ToWrapper<Value>(v);
 }
 
+ShapePtr AbstractBase::shape() const {
+  auto s = ToRef<AbstractBaseImpl>(impl_).GetShapeTrack();
+  return ToWrapper<Shape>(s);
+}
+
 void AbstractBase::set_type(const TypePtr &type) {
   auto type_impl = ToImpl<TypeImpl>(type);
   ToRef<AbstractBaseImpl>(impl_).set_type(type_impl);
@@ -49,6 +56,11 @@ void AbstractBase::set_type(const TypePtr &type) {
 void AbstractBase::set_value(const ValuePtr &value) {
   auto value_impl = ToImpl<ValueImpl>(value);
   ToRef<AbstractBaseImpl>(impl_).set_value(value_impl);
+}
+
+void AbstractBase::set_shape(const ShapePtr &shape) {
+  auto shape_impl = ToImpl<ShapeImpl>(shape);
+  ToRef<AbstractBaseImpl>(impl_).set_shape(shape_impl);
 }
 
 using AbstractScalarImpl = mindspore::abstract::AbstractScalar;
@@ -84,11 +96,6 @@ AbstractBasePtr AbstractTensor::element() const {
   return ToWrapper<AbstractBase>(abs);
 }
 
-ShapePtr AbstractTensor::shape() const {
-  auto s = ToRef<AbstractTensorImpl>(impl_).shape();
-  return ToWrapper<Shape>(s);
-}
-
 using AbstractSequenceImpl = mindspore::abstract::AbstractSequence;
 
 MIND_API_BASE_IMPL(AbstractSequence, AbstractSequenceImpl, AbstractBase);
@@ -101,4 +108,7 @@ AbstractBasePtrList AbstractSequence::elements() const {
 using AbstractTupleImpl = mindspore::abstract::AbstractTuple;
 
 MIND_API_BASE_IMPL(AbstractTuple, AbstractTupleImpl, AbstractSequence);
+
+AbstractTuple::AbstractTuple(const AbstractBasePtrList &elements)
+    : AbstractSequence(std::make_shared<AbstractTupleImpl>(ToImplVector<AbstractBaseImpl>(elements))) {}
 }  // namespace mindspore::api

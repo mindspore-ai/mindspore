@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ namespace mindspore::api {
 using ShapeImpl = mindspore::abstract::Shape;
 
 MIND_API_BASE_IMPL(Shape, ShapeImpl, Base);
+
+Shape::Shape(const ShapeVector &shape) : Base(std::make_shared<ShapeImpl>(shape)) {}
 
 const ShapeVector &Shape::shape() const { return ToRef<ShapeImpl>(impl_).shape(); }
 }  // namespace mindspore::api

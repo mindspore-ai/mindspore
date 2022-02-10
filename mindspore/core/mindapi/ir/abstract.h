@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,11 @@ class MIND_API AbstractBase : public Base {
   /// \return A pointer to the Value.
   ValuePtr value() const;
 
+  /// \brief Get the shape of the abstract.
+  ///
+  /// \return A pointer to the shape.
+  ShapePtr shape() const;
+
   /// \brief Set the type for this abstract.
   ///
   /// \param[in] type The type to be set.
@@ -55,6 +60,11 @@ class MIND_API AbstractBase : public Base {
   ///
   /// \param[in] value The value to be set.
   void set_value(const ValuePtr &value);
+
+  /// \brief Set the shape for this abstract.
+  ///
+  /// \param[in] shape The shape to be set.
+  void set_shape(const ShapePtr &shape);
 };
 
 /// \brief AbstractScalar describes a scalar's type and value.
@@ -116,11 +126,6 @@ class MIND_API AbstractTensor : public AbstractBase {
   ///
   /// \return A pointer to the element abstract.
   AbstractBasePtr element() const;
-
-  /// \brief Get the shape of the abstract.
-  ///
-  /// \return A pointer to the shape.
-  ShapePtr shape() const;
 };
 
 using AbstractTensorPtr = SharedPtr<AbstractTensor>;
@@ -142,6 +147,11 @@ using AbstractSequencePtr = SharedPtr<AbstractSequence>;
 class MIND_API AbstractTuple : public AbstractSequence {
  public:
   MIND_API_BASE_MEMBER(AbstractTuple);
+
+  /// \brief Create AbstractTuple from a list of element abstracts.
+  ///
+  /// \param[in] elements A list of abstracts.
+  explicit AbstractTuple(const AbstractBasePtrList &elements);
 };
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CORE_MINDAPI_IR_ABSTRACT_H_
