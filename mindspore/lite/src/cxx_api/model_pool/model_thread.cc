@@ -30,16 +30,27 @@ void ModelThread::Run() {
     auto status = Predict(*inputs, outputs, before, after);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model predict failed.";
-      return;
+      task->ready = true;
+      PredictTaskQueue::GetInstance()->ActiveTask();
+      continue;
     }
-    auto output_size = outputs->size();
-    for (size_t i = 0; i < output_size; i++) {
-      auto copy_tensor =
-        mindspore::MSTensor::CreateTensor(outputs->at(i).Name(), outputs->at(i).DataType(), outputs->at(i).Shape(),
-                                          outputs->at(i).MutableData(), outputs->at(i).DataSize());
-      outputs->erase(outputs->begin());
-      outputs->push_back(*copy_tensor);
+    if (is_copy_output_) {
+      auto output_size = outputs->size();
+      for (size_t i = 0; i < output_size; i++) {
+        auto copy_tensor =
+          mindspore::MSTensor::CreateTensor(outputs->at(i).Name(), outputs->at(i).DataType(), outputs->at(i).Shape(),
+                                            outputs->at(i).MutableData(), outputs->at(i).DataSize());
+        if (copy_tensor == nullptr) {
+          MS_LOG(ERROR) << "model thread copy output tensor failed.";
+          task->ready = true;
+          PredictTaskQueue::GetInstance()->ActiveTask();
+          continue;
+        }
+        outputs->erase(outputs->begin());
+        outputs->push_back(*copy_tensor);
+      }
     }
+    task->ready = true;
     PredictTaskQueue::GetInstance()->ActiveTask();
   }
 }
@@ -105,6 +116,15 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool resize failed.";
       return kLiteError;
+    }
+  }
+  auto model_output = model_->GetOutputs();
+  for (size_t i = 0; i < outputs->size(); i++) {
+    if (outputs->at(i).MutableData() != nullptr) {
+      /* user set graph-output-tensor from outside */
+      model_output[i].SetData(outputs->at(i).MutableData());
+      model_output[i].SetAllocator(nullptr);
+      is_copy_output_ = false;
     }
   }
   auto status = model_->Predict(inputs, outputs, before, after);

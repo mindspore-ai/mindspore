@@ -21,9 +21,9 @@ PredictTaskQueue::~PredictTaskQueue() {
   task_push_cond_.notify_all();
 }
 
-void PredictTaskQueue::WaitUntilPredictActive(std::vector<MSTensor> *outputs) {
+void PredictTaskQueue::WaitUntilPredictActive(std::shared_ptr<PredictTask> task) {
   std::unique_lock<std::mutex> result_lock(mtx_predict_task_);
-  while (outputs->empty()) {
+  while (!task->ready) {
     task_pop_cond_.wait(result_lock);
   }
   return;
