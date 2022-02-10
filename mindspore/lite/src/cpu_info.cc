@@ -30,20 +30,29 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include "TargetConditionals.h"
+// define missing cpu model for old sdk
 #ifndef CPUFAMILY_ARM_HURRICANE
 #define CPUFAMILY_ARM_HURRICANE 0x67ceee93
 #endif
+// A11
 #ifndef CPUFAMILY_ARM_MONSOON_MISTRAL
 #define CPUFAMILY_ARM_MONSOON_MISTRAL 0xe81e7ef6
 #endif
+// A12
 #ifndef CPUFAMILY_ARM_VORTEX_TEMPEST
 #define CPUFAMILY_ARM_VORTEX_TEMPEST 0x07d34b9f
 #endif
+// A13
 #ifndef CPUFAMILY_ARM_LIGHTNING_THUNDER
 #define CPUFAMILY_ARM_LIGHTNING_THUNDER 0x462504d2
 #endif
+// A14
 #ifndef CPUFAMILY_ARM_FIRESTORM_ICESTORM
 #define CPUFAMILY_ARM_FIRESTORM_ICESTORM 0x1b588bb3
+#endif
+// A15
+#ifndef CPUFAMILY_ARM_AVALANCHE_BLIZZARD
+#define CPUFAMILY_ARM_AVALANCHE_BLIZZARD 0xda33d83d
 #endif
 #endif
 namespace mindspore::lite {
@@ -58,6 +67,8 @@ uint32_t CpuInfo::MidrSetImplementer(uint32_t implementer) {
 
 uint32_t CpuInfo::StringToDigit(const std::string &str) {
   // hex string to digit
+  constexpr size_t base_16 = 16;
+  constexpr size_t base_10 = 10;
   // verify hex prefix '0' and 'x'
   if (str[0] != '0' || str[1] != 'x') {
     return 0;
@@ -70,21 +81,23 @@ uint32_t CpuInfo::StringToDigit(const std::string &str) {
     if (tmp_char >= '0' && tmp_char <= '9') {
       digit = tmp_char - '0';
     } else if ((uint32_t)(tmp_char - 'A') < 6) {
-      digit = 10 + (tmp_char - 'A');
+      digit = base_10 + (tmp_char - 'A');
     } else if ((uint32_t)(tmp_char - 'a') < 6) {
-      digit = 10 + (tmp_char - 'a');
+      digit = base_10 + (tmp_char - 'a');
     } else {
       return 0;
     }
-    str_digit = (str_digit << 4) + digit;
+    str_digit = str_digit * base_16 + digit;
   }
   return str_digit;
 }
 
 uint32_t CpuInfo::ParseArmCpuPart(const std::string &cpu_part) {
   // cpu_part string length is in [3, 5]
+  constexpr size_t cpu_part_min_len = 3;
+  constexpr size_t cpu_part_max_len = 5;
   auto cpu_part_length = cpu_part.length();
-  if (cpu_part_length < 3 || cpu_part_length > 5) {
+  if (cpu_part_length < cpu_part_min_len || cpu_part_length > cpu_part_max_len) {
     return 0;
   }
   return StringToDigit(cpu_part);
@@ -133,7 +146,8 @@ bool CpuInfo::ArmIsSupportFp16() {
   size_t len = sizeof(value);
   sysctlbyname("hw.cpufamily", &value, &len, NULL, 0);
   if (value == CPUFAMILY_ARM_MONSOON_MISTRAL || value == CPUFAMILY_ARM_VORTEX_TEMPEST ||
-      value == CPUFAMILY_ARM_LIGHTNING_THUNDER || value == CPUFAMILY_ARM_FIRESTORM_ICESTORM) {
+      value == CPUFAMILY_ARM_LIGHTNING_THUNDER || value == CPUFAMILY_ARM_FIRESTORM_ICESTORM ||
+      CPUFAMILY_ARM_AVALANCHE_BLIZZARD) {
     return true;
   }
   return false;
