@@ -25,14 +25,13 @@
 
 namespace mindspore {
 namespace dataset {
-
 class ProjectNode : public DatasetNode {
  public:
   /// \brief Constructor
   explicit ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns);
 
   /// \brief Destructor
-  ~ProjectNode() = default;
+  ~ProjectNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -74,7 +73,6 @@ class ProjectNode : public DatasetNode {
  private:
   std::vector<std::string> columns_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_

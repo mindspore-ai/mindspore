@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \class TextFileNode
 /// \brief A Dataset derived class to represent TextFile dataset
 class TextFileNode : public NonMappableSourceNode {
@@ -35,7 +34,7 @@ class TextFileNode : public NonMappableSourceNode {
                int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~TextFileNode() = default;
+  ~TextFileNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -112,7 +111,6 @@ class TextFileNode : public NonMappableSourceNode {
   int32_t shard_id_;
   ShuffleMode shuffle_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TEXT_FILE_NODE_H_

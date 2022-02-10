@@ -33,7 +33,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -41,7 +40,7 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
  public:
   SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
-  ~SubsetRandomSamplerObj();
+  ~SubsetRandomSamplerObj() override;
 
   Status to_json(nlohmann::json *const out_json) override;
 
@@ -59,7 +58,6 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
 
  private:
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SUBSET_RANDOM_SAMPLER_IR_H_

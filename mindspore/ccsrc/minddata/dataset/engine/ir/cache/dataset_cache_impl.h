@@ -75,7 +75,7 @@ class DatasetCacheImpl : public DatasetCache {
 
   Status to_json(nlohmann::json *out_json) override;
 
-  ~DatasetCacheImpl() = default;
+  ~DatasetCacheImpl() override = default;
 
  private:
   std::shared_ptr<CacheClient> cache_client_;

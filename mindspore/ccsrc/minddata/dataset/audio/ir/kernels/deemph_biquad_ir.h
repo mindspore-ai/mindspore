@@ -35,7 +35,7 @@ class DeemphBiquadOperation : public TensorOperation {
  public:
   explicit DeemphBiquadOperation(int32_t sample_rate);
 
-  ~DeemphBiquadOperation() = default;
+  ~DeemphBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

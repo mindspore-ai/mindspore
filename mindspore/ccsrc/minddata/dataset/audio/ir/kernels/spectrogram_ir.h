@@ -33,7 +33,7 @@ class SpectrogramOperation : public TensorOperation {
   SpectrogramOperation(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
                        float power, bool normalized, bool center, BorderType pad_mode, bool onesided);
 
-  ~SpectrogramOperation() = default;
+  ~SpectrogramOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

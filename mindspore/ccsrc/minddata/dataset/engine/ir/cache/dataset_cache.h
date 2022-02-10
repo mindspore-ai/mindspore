@@ -23,17 +23,23 @@
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore::dataset {
-
 class DatasetCache {
  public:
+  virtual ~DatasetCache() = default;
+
   virtual Status Build() = 0;
+
   virtual Status ValidateParams() = 0;
+
   virtual Status CreateCacheOp(int32_t num_workers, int32_t connector_queue_size, std::shared_ptr<SamplerObj> sampler,
                                std::shared_ptr<DatasetOp> *ds) = 0;
+
   virtual Status CreateCacheLookupOp(int32_t num_workers, int32_t connector_queue_size,
                                      std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetOp> *ds) = 0;
+
   virtual Status CreateCacheMergeOp(int32_t num_workers, int32_t connector_queue_size,
                                     std::shared_ptr<DatasetOp> *ds) = 0;
+
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 
 #ifndef ENABLE_ANDROID
@@ -41,5 +47,4 @@ class DatasetCache {
 #endif
 };
 }  // namespace mindspore::dataset
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_CACHE_DATASET_CACHE_H_

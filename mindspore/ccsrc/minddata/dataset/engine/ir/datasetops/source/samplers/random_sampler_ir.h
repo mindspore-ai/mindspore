@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -40,7 +39,7 @@ class RandomSamplerObj : public SamplerObj {
  public:
   RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch = true);
 
-  ~RandomSamplerObj();
+  ~RandomSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -71,7 +70,6 @@ class RandomSamplerObj : public SamplerObj {
   int64_t num_samples_;
   bool reshuffle_each_epoch_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_RANDOM_SAMPLER_IR_H_

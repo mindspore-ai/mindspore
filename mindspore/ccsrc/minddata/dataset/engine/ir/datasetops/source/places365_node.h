@@ -32,7 +32,7 @@ class Places365Node : public MappableSourceNode {
                 std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~Places365Node() = default;
+  ~Places365Node() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

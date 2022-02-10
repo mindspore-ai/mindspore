@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 std::shared_ptr<DatasetNode> RandomNode::Copy() {
   std::shared_ptr<RandomNode> node;
   if (schema_ != nullptr) {

@@ -32,7 +32,7 @@ class TimeStretchOperation : public TensorOperation {
  public:
   TimeStretchOperation(float hop_length, int n_freq, float fixed_rate);
 
-  ~TimeStretchOperation();
+  ~TimeStretchOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

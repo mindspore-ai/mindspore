@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TransferNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -33,7 +32,7 @@ class TransferNode : public DatasetNode {
                bool send_epoch_end, int32_t total_batch, bool create_data_info_queue);
 
   /// \brief Destructor
-  ~TransferNode() = default;
+  ~TransferNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -99,7 +98,6 @@ class TransferNode : public DatasetNode {
   int32_t total_batch_;
   bool create_data_info_queue_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TRANSFER_NODE_H_

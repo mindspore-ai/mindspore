@@ -36,7 +36,7 @@ class LFilterOperation : public TensorOperation {
  public:
   LFilterOperation(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp);
 
-  ~LFilterOperation() = default;
+  ~LFilterOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

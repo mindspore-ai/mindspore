@@ -34,7 +34,7 @@ class MagphaseOperation : public TensorOperation {
  public:
   explicit MagphaseOperation(float power);
 
-  ~MagphaseOperation() = default;
+  ~MagphaseOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

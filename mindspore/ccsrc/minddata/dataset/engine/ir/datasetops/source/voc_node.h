@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class VOCNode : public MappableSourceNode {
  public:
   /// \brief Constructor
@@ -35,7 +34,7 @@ class VOCNode : public MappableSourceNode {
           std::shared_ptr<DatasetCache> cache, bool extra_metadata = false);
 
   /// \brief Destructor
-  ~VOCNode() = default;
+  ~VOCNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -114,7 +113,6 @@ class VOCNode : public MappableSourceNode {
   std::shared_ptr<SamplerObj> sampler_;
   bool extra_metadata_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_VOC_NODE_H_

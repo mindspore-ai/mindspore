@@ -31,18 +31,18 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
 class PreBuiltSamplerObj : public SamplerObj {
  public:
   explicit PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler);
+
 #ifndef ENABLE_ANDROID
   explicit PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator> sampler);
 #endif
 
-  ~PreBuiltSamplerObj();
+  ~PreBuiltSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *const sampler) override;
 
@@ -62,7 +62,6 @@ class PreBuiltSamplerObj : public SamplerObj {
   std::shared_ptr<mindrecord::ShardOperator> sp_minddataset_;
 #endif
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_PREBUILT_SAMPLER_IR_H_

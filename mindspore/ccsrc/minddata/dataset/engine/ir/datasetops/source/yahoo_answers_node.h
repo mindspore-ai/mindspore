@@ -33,7 +33,7 @@ class YahooAnswersNode : public NonMappableSourceNode {
                    int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~YahooAnswersNode() = default;
+  ~YahooAnswersNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

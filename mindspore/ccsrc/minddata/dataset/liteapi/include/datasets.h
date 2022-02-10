@@ -72,7 +72,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   Dataset();
 
   /// \brief Destructor
-  ~Dataset() = default;
+  virtual ~Dataset() = default;
 
   /// \brief Gets the dataset size
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
@@ -493,7 +493,7 @@ class MS_API BatchDataset : public Dataset {
  public:
   BatchDataset(const std::shared_ptr<Dataset> &input, int32_t batch_size, bool drop_remainder = false);
 
-  ~BatchDataset() = default;
+  ~BatchDataset() override = default;
 };
 
 class MS_API MapDataset : public Dataset {
@@ -503,21 +503,21 @@ class MS_API MapDataset : public Dataset {
              const std::vector<std::vector<char>> &project_columns, const std::shared_ptr<DatasetCache> &cache,
              const std::vector<std::shared_ptr<DSCallback>> &callbacks);
 
-  ~MapDataset() = default;
+  ~MapDataset() override = default;
 };
 
 class MS_API ProjectDataset : public Dataset {
  public:
   ProjectDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &columns);
 
-  ~ProjectDataset() = default;
+  ~ProjectDataset() override = default;
 };
 
 class MS_API ShuffleDataset : public Dataset {
  public:
   ShuffleDataset(const std::shared_ptr<Dataset> &input, int32_t buffer_size);
 
-  ~ShuffleDataset() = default;
+  ~ShuffleDataset() override = default;
 };
 
 /// \brief Function to create a SchemaObj.
@@ -572,7 +572,7 @@ class MS_API AlbumDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AlbumDataset.
-  ~AlbumDataset() = default;
+  ~AlbumDataset() override = default;
 };
 
 /// \brief Function to create an AlbumDataset
@@ -609,6 +609,7 @@ Album(const std::string &dataset_dir, const std::string &data_schema, const std:
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
+
 /// \brief Function to create an AlbumDataset
 /// \notes The generated dataset is specified through setting a schema
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
@@ -625,6 +626,7 @@ inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
+
 /// \brief Function to create an AlbumDataset
 /// \notes The generated dataset is specified through setting a schema
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
@@ -670,7 +672,7 @@ class MS_API MnistDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of MnistDataset.
-  ~MnistDataset() = default;
+  ~MnistDataset() override = default;
 };
 
 /// \brief Function to create a MnistDataset

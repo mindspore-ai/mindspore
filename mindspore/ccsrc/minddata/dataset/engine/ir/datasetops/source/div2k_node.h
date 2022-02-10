@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class DIV2KNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
@@ -33,7 +32,7 @@ class DIV2KNode : public MappableSourceNode {
             bool decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~DIV2KNode() = default;
+  ~DIV2KNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

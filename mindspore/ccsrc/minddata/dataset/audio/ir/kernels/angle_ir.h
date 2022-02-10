@@ -36,7 +36,7 @@ class AngleOperation : public TensorOperation {
  public:
   AngleOperation();
 
-  ~AngleOperation() = default;
+  ~AngleOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

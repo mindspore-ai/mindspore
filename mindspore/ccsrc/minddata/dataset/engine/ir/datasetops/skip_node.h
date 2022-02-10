@@ -25,14 +25,13 @@
 
 namespace mindspore {
 namespace dataset {
-
 class SkipNode : public DatasetNode {
  public:
   /// \brief Constructor
   explicit SkipNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
-  ~SkipNode() = default;
+  ~SkipNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -57,7 +56,7 @@ class SkipNode : public DatasetNode {
 
   /// \brief Getter
   /// \return Number of rows to skip
-  const int32_t Count() const { return skip_count_; }
+  int32_t Count() const { return skip_count_; }
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
@@ -99,7 +98,6 @@ class SkipNode : public DatasetNode {
  private:
   int32_t skip_count_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SKIP_NODE_H_

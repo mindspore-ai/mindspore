@@ -36,7 +36,7 @@ class HighpassBiquadOperation : public TensorOperation {
  public:
   HighpassBiquadOperation(int32_t sample_rate, float cutoff_freq, float Q);
 
-  ~HighpassBiquadOperation() = default;
+  ~HighpassBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

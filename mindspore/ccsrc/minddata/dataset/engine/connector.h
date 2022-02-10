@@ -195,7 +195,7 @@ class Connector {
   int32_t expect_consumer_;
 
   // The index to the queues_ where the next data should be popped.
-  int32_t pop_from_;
+  size_t pop_from_;
 
   int32_t num_producers_;
   int32_t num_consumers_;

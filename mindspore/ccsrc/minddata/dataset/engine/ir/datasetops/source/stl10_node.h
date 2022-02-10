@@ -32,7 +32,7 @@ class STL10Node : public MappableSourceNode {
             std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~STL10Node() = default;
+  ~STL10Node() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node

@@ -32,7 +32,7 @@ class FrequencyMaskingOperation : public TensorOperation {
  public:
   FrequencyMaskingOperation(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value);
 
-  ~FrequencyMaskingOperation();
+  ~FrequencyMaskingOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -43,9 +43,9 @@ class FrequencyMaskingOperation : public TensorOperation {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
+  bool iid_masks_;
   int32_t frequency_mask_param_;
   int32_t mask_start_;
-  bool iid_masks_;
   float mask_value_;
 };  // class FrequencyMaskingOperation
 }  // namespace audio

@@ -33,7 +33,7 @@ class FadeOperation : public TensorOperation {
  public:
   FadeOperation(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape);
 
-  ~FadeOperation() = default;
+  ~FadeOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

@@ -92,7 +92,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   Dataset();
 
   /// \brief Destructor
-  ~Dataset() = default;
+  virtual ~Dataset() = default;
 
   /// \brief Get the dataset size
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
@@ -547,6 +547,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<RepeatDataset> Repeat(int32_t count = -1) {
     return std::make_shared<RepeatDataset>(shared_from_this(), count);
   }
+
   /// \brief Function to create a Shuffle Dataset.
   /// \note Randomly shuffles the rows of this dataset.
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
@@ -776,7 +777,7 @@ class MS_API BatchDataset : public Dataset {
   BatchDataset(const std::shared_ptr<Dataset> &input, int32_t batch_size, bool drop_remainder = false);
 
   /// \brief Destructor of BatchDataset.
-  ~BatchDataset() = default;
+  ~BatchDataset() override = default;
 };
 
 /// \class BucketBatchByLengthDataset
@@ -817,7 +818,7 @@ class MS_API BucketBatchByLengthDataset : public Dataset {
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
   /// \brief Destructor of BucketBatchByLengthDataset.
-  ~BucketBatchByLengthDataset() = default;
+  ~BucketBatchByLengthDataset() override = default;
 };
 
 /// \class ConcatDataset
@@ -830,7 +831,7 @@ class MS_API ConcatDataset : public Dataset {
   explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &input);
 
   /// \brief Destructor of ConcatDataset.
-  ~ConcatDataset() = default;
+  ~ConcatDataset() override = default;
 };
 
 /// \class FilterDataset
@@ -846,7 +847,7 @@ class MS_API FilterDataset : public Dataset {
                 const std::vector<std::vector<char>> &input_columns);
 
   /// \brief Destructor of FilterDataset.
-  ~FilterDataset() = default;
+  ~FilterDataset() override = default;
 };
 
 /// \class MapDataset
@@ -876,7 +877,7 @@ class MS_API MapDataset : public Dataset {
              const std::vector<std::shared_ptr<DSCallback>> &callbacks);
 
   /// \brief Destructor of MapDataset.
-  ~MapDataset() = default;
+  ~MapDataset() override = default;
 };
 
 /// \class ProjectDataset
@@ -890,7 +891,7 @@ class MS_API ProjectDataset : public Dataset {
   ProjectDataset(const std::shared_ptr<Dataset> &input, const std::vector<std::vector<char>> &columns);
 
   /// \brief Destructor of ProjectDataset.
-  ~ProjectDataset() = default;
+  ~ProjectDataset() override = default;
 };
 
 /// \class RenameDataset
@@ -906,7 +907,7 @@ class MS_API RenameDataset : public Dataset {
                 const std::vector<std::vector<char>> &output_columns);
 
   /// \brief Destructor of RenameDataset.
-  ~RenameDataset() = default;
+  ~RenameDataset() override = default;
 };
 
 /// \class RepeatDataset
@@ -920,7 +921,7 @@ class MS_API RepeatDataset : public Dataset {
   RepeatDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of RepeatDataset.
-  ~RepeatDataset() = default;
+  ~RepeatDataset() override = default;
 };
 
 /// \class ShuffleDataset
@@ -934,7 +935,7 @@ class MS_API ShuffleDataset : public Dataset {
   ShuffleDataset(const std::shared_ptr<Dataset> &input, int32_t buffer_size);
 
   /// \brief Destructor of ShuffleDataset.
-  ~ShuffleDataset() = default;
+  ~ShuffleDataset() override = default;
 };
 
 /// \class SkipDataset
@@ -948,7 +949,7 @@ class MS_API SkipDataset : public Dataset {
   SkipDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of SkipDataset.
-  ~SkipDataset() = default;
+  ~SkipDataset() override = default;
 };
 
 /// \class TakeDataset
@@ -962,7 +963,7 @@ class MS_API TakeDataset : public Dataset {
   TakeDataset(const std::shared_ptr<Dataset> &input, int32_t count);
 
   /// \brief Destructor of TakeDataset.
-  ~TakeDataset() = default;
+  ~TakeDataset() override = default;
 };
 
 /// \class ZipDataset
@@ -975,7 +976,7 @@ class MS_API ZipDataset : public Dataset {
   explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &inputs);
 
   /// \brief Destructor of ZipDataset.
-  ~ZipDataset() = default;
+  ~ZipDataset() override = default;
 };
 
 /// \brief Function to create a SchemaObj.
@@ -1013,7 +1014,7 @@ class MS_API AGNewsDataset : public Dataset {
                 ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AGNewsDataset.
-  ~AGNewsDataset() = default;
+  ~AGNewsDataset() override = default;
 };
 
 /// \brief Function to create a AGNewsDataset.
@@ -1082,7 +1083,7 @@ class MS_API AlbumDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AlbumDataset.
-  ~AlbumDataset() = default;
+  ~AlbumDataset() override = default;
 };
 
 /// \brief Function to create an AlbumDataset.
@@ -1119,6 +1120,7 @@ Album(const std::string &dataset_dir, const std::string &data_schema, const std:
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
+
 /// \brief Function to create an AlbumDataset.
 /// \note The generated dataset is specified through setting a schema.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -1135,6 +1137,7 @@ inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir
   return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
+
 /// \brief Function to create an AlbumDataset.
 /// \note The generated dataset is specified through setting a schema.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -1174,7 +1177,7 @@ class MS_API AmazonReviewDataset : public Dataset {
                       const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of AmazonReviewDataset.
-  ~AmazonReviewDataset() = default;
+  ~AmazonReviewDataset() override = default;
 };
 
 /// \brief Function to create a AmazonReviewDataset.
@@ -1247,7 +1250,7 @@ class MS_API Caltech256Dataset : public Dataset {
                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Caltech256Dataset.
-  ~Caltech256Dataset() = default;
+  ~Caltech256Dataset() override = default;
 };
 
 /// \brief Function to create a Caltech256Dataset.
@@ -1343,7 +1346,7 @@ class MS_API CelebADataset : public Dataset {
                 const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CelebADataset.
-  ~CelebADataset() = default;
+  ~CelebADataset() override = default;
 };
 
 /// \brief Function to create a CelebADataset.
@@ -1445,7 +1448,7 @@ class MS_API Cifar10Dataset : public Dataset {
                  const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar10Dataset.
-  ~Cifar10Dataset() = default;
+  ~Cifar10Dataset() override = default;
 };
 
 /// \brief Function to create a Cifar10 Dataset.
@@ -1533,7 +1536,7 @@ class MS_API Cifar100Dataset : public Dataset {
                   const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar100Dataset.
-  ~Cifar100Dataset() = default;
+  ~Cifar100Dataset() override = default;
 };
 
 /// \brief Function to create a Cifar100 Dataset.
@@ -1642,7 +1645,7 @@ class MS_API CityscapesDataset : public Dataset {
                     const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CityscapesDataset.
-  ~CityscapesDataset() = default;
+  ~CityscapesDataset() override = default;
 };
 
 /// \brief Function to create a CityscapesDataset.
@@ -1748,7 +1751,7 @@ class MS_API CLUEDataset : public Dataset {
               int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CLUEDataset.
-  ~CLUEDataset() = default;
+  ~CLUEDataset() override = default;
 };
 
 /// \brief Function to create a CLUEDataset.
@@ -1928,7 +1931,7 @@ class MS_API CocoDataset : public Dataset {
               const std::shared_ptr<DatasetCache> &cache, const bool &extra_metadata);
 
   /// \brief Constructor of CocoDataset.
-  ~CocoDataset() = default;
+  ~CocoDataset() override = default;
 };
 
 /// \brief Function to create a CocoDataset.
@@ -2051,7 +2054,7 @@ class MS_API CoNLL2000Dataset : public Dataset {
                    const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CoNLL2000Dataset.
-  ~CoNLL2000Dataset() = default;
+  ~CoNLL2000Dataset() override = default;
 };
 
 /// \brief Function to create a CoNLL2000Dataset.
@@ -2122,7 +2125,7 @@ class MS_API CSVDataset : public Dataset {
              int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CSVDataset.
-  ~CSVDataset() = default;
+  ~CSVDataset() override = default;
 };
 
 /// \brief Function to create a CSVDataset.
@@ -2193,7 +2196,7 @@ class MS_API DBpediaDataset : public Dataset {
                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of DBpediaDataset.
-  ~DBpediaDataset() = default;
+  ~DBpediaDataset() override = default;
 };
 
 /// \brief Function to create a DBpediaDataset.
@@ -2265,7 +2268,7 @@ class MS_API DIV2KDataset : public Dataset {
                const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of DIV2KDataset.
-  ~DIV2KDataset() = default;
+  ~DIV2KDataset() override = default;
 };
 
 /// \brief Function to create a DIV2KDataset.
@@ -2376,7 +2379,7 @@ class MS_API EMnistDataset : public Dataset {
                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of EMnistDataset.
-  ~EMnistDataset() = default;
+  ~EMnistDataset() override = default;
 };
 
 /// \brief Function to create a EMnistDataset.
@@ -2461,7 +2464,7 @@ class MS_API EnWik9Dataset : public Dataset {
                 int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of EnWik9Dataset.
-  ~EnWik9Dataset() = default;
+  ~EnWik9Dataset() override = default;
 };
 
 /// \brief Function to create a EnWik9Dataset.
@@ -2522,7 +2525,7 @@ class MS_API FakeImageDataset : public Dataset {
                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of FakeImageDataset.
-  ~FakeImageDataset() = default;
+  ~FakeImageDataset() override = default;
 };
 
 /// \brief Function to create a FakeImageDataset.
@@ -2605,7 +2608,7 @@ class MS_API FashionMnistDataset : public Dataset {
                       const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of FashionMnistDataset.
-  ~FashionMnistDataset() = default;
+  ~FashionMnistDataset() override = default;
 };
 
 /// \brief Function to create a FashionMnistDataset.
@@ -2683,7 +2686,7 @@ class MS_API FlickrDataset : public Dataset {
                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of FlickrDataset.
-  ~FlickrDataset() = default;
+  ~FlickrDataset() override = default;
 };
 
 /// \brief Function to create a FlickrDataset
@@ -2877,7 +2880,7 @@ class MS_API ImageFolderDataset : public Dataset {
                      const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of ImageFolderDataset.
-  ~ImageFolderDataset() = default;
+  ~ImageFolderDataset() override = default;
 };
 
 /// \brief Function to create an ImageFolderDataset.
@@ -2984,7 +2987,7 @@ class MS_API IMDBDataset : public Dataset {
               const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of IMDBDataset.
-  ~IMDBDataset() = default;
+  ~IMDBDataset() override = default;
 };
 
 /// \brief A source dataset for reading and parsing IMDB dataset.
@@ -3070,7 +3073,7 @@ class MS_API IWSLT2016Dataset : public Dataset {
                    int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of IWSLT2016Dataset.
-  ~IWSLT2016Dataset() = default;
+  ~IWSLT2016Dataset() override = default;
 };
 
 /// \brief Function to create a IWSLT2016Dataset.
@@ -3127,7 +3130,7 @@ class MS_API IWSLT2017Dataset : public Dataset {
                    int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of IWSLT2017Dataset.
-  ~IWSLT2017Dataset() = default;
+  ~IWSLT2017Dataset() override = default;
 };
 
 /// \brief Function to create a IWSLT2017Dataset.
@@ -3192,7 +3195,7 @@ class MS_API KMnistDataset : public Dataset {
                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of KMnistDataset.
-  ~KMnistDataset() = default;
+  ~KMnistDataset() override = default;
 };
 
 /// \brief Function to create a KMnistDataset.
@@ -3360,7 +3363,7 @@ class MS_API LJSpeechDataset : public Dataset {
                   const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of LJSpeechDataset.
-  ~LJSpeechDataset() = default;
+  ~LJSpeechDataset() override = default;
 };
 
 /// \brief Function to create a LJSpeech Dataset.
@@ -3445,7 +3448,7 @@ class MS_API ManifestDataset : public Dataset {
                   const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of ManifestDataset.
-  ~ManifestDataset() = default;
+  ~ManifestDataset() override = default;
 };
 
 /// \brief Function to create a ManifestDataset.
@@ -3646,7 +3649,7 @@ class MS_API MindDataDataset : public Dataset {
                   const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Destructor of MindDataDataset.
-  ~MindDataDataset() = default;
+  ~MindDataDataset() override = default;
 };
 
 /// \brief Function to create a MindDataDataset.
@@ -3863,7 +3866,7 @@ class MS_API MnistDataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of MnistDataset.
-  ~MnistDataset() = default;
+  ~MnistDataset() override = default;
 };
 
 /// \brief Function to create a MnistDataset.
@@ -4012,7 +4015,7 @@ class MS_API PennTreebankDataset : public Dataset {
                       const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of PennTreebankDataset.
-  ~PennTreebankDataset() = default;
+  ~PennTreebankDataset() override = default;
 };
 
 /// \brief Function to create a PennTreebank Dataset.
@@ -4078,7 +4081,7 @@ class MS_API PhotoTourDataset : public Dataset {
                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of PhotoTourDataset.
-  ~PhotoTourDataset() = default;
+  ~PhotoTourDataset() override = default;
 };
 
 /// \brief Function to create a PhotoTourDataset.
@@ -4172,7 +4175,7 @@ class MS_API Places365Dataset : public Dataset {
                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Places365Dataset.
-  ~Places365Dataset() = default;
+  ~Places365Dataset() override = default;
 };
 
 /// \brief Function to create a Places365Dataset.
@@ -4264,7 +4267,7 @@ class MS_API QMnistDataset : public Dataset {
                 const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of QMnistDataset.
-  ~QMnistDataset() = default;
+  ~QMnistDataset() override = default;
 };
 
 /// \brief Function to create a QMnistDataset.
@@ -4357,7 +4360,7 @@ class MS_API RandomDataDataset : public Dataset {
                     const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of RandomDataDataset.
-  ~RandomDataDataset() = default;
+  ~RandomDataDataset() override = default;
 };
 
 /// \brief Function to create a RandomDataset.
@@ -4427,7 +4430,7 @@ class MS_API SBUDataset : public Dataset {
              const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of SBUDataset.
-  ~SBUDataset() = default;
+  ~SBUDataset() override = default;
 };
 
 /// \brief Function to create a SBUDataset.
@@ -4510,7 +4513,7 @@ class MS_API SemeionDataset : public Dataset {
                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of SemeionDataset.
-  ~SemeionDataset() = default;
+  ~SemeionDataset() override = default;
 };
 
 /// \brief Function to create a Semeion Dataset.
@@ -4585,7 +4588,7 @@ class MS_API SogouNewsDataset : public Dataset {
                    const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of SogouNewsDataset.
-  ~SogouNewsDataset() = default;
+  ~SogouNewsDataset() override = default;
 };
 
 /// \brief Function to create a SogouNewsDataset.
@@ -4643,7 +4646,7 @@ class MS_API SpeechCommandsDataset : public Dataset {
                         const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of SpeechCommandsDataset.
-  ~SpeechCommandsDataset() = default;
+  ~SpeechCommandsDataset() override = default;
 };
 
 /// \brief Function to create a SpeechCommands Dataset.
@@ -4783,7 +4786,7 @@ class MS_API STL10Dataset : public Dataset {
                const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of STL10Dataset.
-  ~STL10Dataset() = default;
+  ~STL10Dataset() override = default;
 };
 
 /// \brief Function to create a STL10 Dataset.
@@ -4869,7 +4872,7 @@ class MS_API TedliumDataset : public Dataset {
                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of TedliumDataset.
-  ~TedliumDataset() = default;
+  ~TedliumDataset() override = default;
 };
 
 /// \brief Function to create a TedliumDataset.
@@ -4952,7 +4955,7 @@ class MS_API TextFileDataset : public Dataset {
                   int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of TextFileDataset.
-  ~TextFileDataset() = default;
+  ~TextFileDataset() override = default;
 };
 
 /// \brief Function to create a TextFileDataset.
@@ -5052,7 +5055,7 @@ class MS_API TFRecordDataset : public Dataset {
                   const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of TFRecordDataset.
-  ~TFRecordDataset() = default;
+  ~TFRecordDataset() override = default;
 };
 
 /// \brief Function to create a TFRecordDataset.
@@ -5110,7 +5113,7 @@ std::shared_ptr<TFRecordDataset> MS_API TFRecord(const std::vector<std::string> 
   } else {
     std::string schema_path = schema;
     if (!schema_path.empty()) {
-      struct stat sb;
+      struct stat sb {};
       int rc = stat(schema_path.c_str(), &sb);
       if (rc != 0) {
         return nullptr;
@@ -5144,7 +5147,7 @@ class MS_API UDPOSDataset : public Dataset {
                ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of UDPOSDataset.
-  ~UDPOSDataset() = default;
+  ~UDPOSDataset() override = default;
 };
 
 /// \brief Function to create a UDPOSDataset.
@@ -5206,7 +5209,7 @@ class MS_API USPSDataset : public Dataset {
               ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of USPSDataset.
-  ~USPSDataset() = default;
+  ~USPSDataset() override = default;
 };
 
 /// \brief Function to create a USPSDataset.
@@ -5293,7 +5296,7 @@ class MS_API VOCDataset : public Dataset {
              bool extra_metadata);
 
   /// \brief Destructor of VOCDataset.
-  ~VOCDataset() = default;
+  ~VOCDataset() override = default;
 };
 
 /// \brief Function to create a VOCDataset.
@@ -5419,7 +5422,7 @@ class MS_API WIDERFaceDataset : public Dataset {
                    const std::reference_wrapper<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of WIDERFaceDataset.
-  ~WIDERFaceDataset() = default;
+  ~WIDERFaceDataset() override = default;
 };
 
 /// \brief Function to create a WIDERFace Dataset.
@@ -5513,7 +5516,7 @@ class MS_API WikiTextDataset : public Dataset {
                   const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of WikiTextDataset.
-  ~WikiTextDataset() = default;
+  ~WikiTextDataset() override = default;
 };
 
 /// \brief Function to create a WikiText Dataset.
@@ -5577,7 +5580,7 @@ class MS_API YahooAnswersDataset : public Dataset {
                       const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of YahooAnswers.
-  ~YahooAnswersDataset() = default;
+  ~YahooAnswersDataset() override = default;
 };
 
 /// \brief Function to create a YahooAnswersDataset.
@@ -5641,7 +5644,7 @@ class MS_API YelpReviewDataset : public Dataset {
                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of YelpReviewDataset.
-  ~YelpReviewDataset() = default;
+  ~YelpReviewDataset() override = default;
 };
 
 /// \brief Function to create a YelpReviewDataset.
@@ -5697,7 +5700,7 @@ class MS_API YesNoDataset : public Dataset {
                const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of YesNoDataset.
-  ~YesNoDataset() = default;
+  ~YesNoDataset() override = default;
 };
 
 /// \brief Function to create a YesNo Dataset.
@@ -5776,7 +5779,7 @@ std::shared_ptr<DatasetCache> MS_API CreateDatasetCacheCharIF(
 ///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
 /// \endcode
 inline std::shared_ptr<DatasetCache> MS_API CreateDatasetCache(
-  session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::string> hostname = std::nullopt,
+  session_id_type id, uint64_t mem_sz, bool spill, const std::optional<std::string> &hostname = std::nullopt,
   const std::optional<int32_t> &port = std::nullopt, const std::optional<int32_t> &num_connections = std::nullopt,
   const std::optional<int32_t> &prefetch_sz = std::nullopt) {
   std::optional<std::vector<char>> hostname_c = std::nullopt;
