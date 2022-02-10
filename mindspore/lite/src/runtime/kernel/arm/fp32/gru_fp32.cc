@@ -246,7 +246,7 @@ int GruCPUKernel::Run() {
   auto output_hidden_state = out_tensors_.at(1);
   CHECK_NULL_RETURN(output_hidden_state->data());
   CHECK_NULL_RETURN(hidden_state->data());
-  memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float));
+  (void)memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float));
   int check_seq_len = gru_param_->seq_len_;
 
   if (in_tensors_.size() == 6) {

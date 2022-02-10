@@ -67,7 +67,7 @@ class Collected {
     if (future.IsError()) {
       promise->SetFailed(future.GetErrorCode());
     } else if (future.IsOK()) {
-      ready.fetch_add(1);
+      (void)ready.fetch_add(1);
       if (ready.load() == futures.size()) {
         std::list<T> values;
         auto iter = futures.begin();
@@ -94,11 +94,11 @@ inline Future<std::list<T>> Collect(const std::list<Future<T>> &futures) {
   std::shared_ptr<Collected<T>> collect = std::make_shared<Collected<T>>(futures, promise);
 
   for (auto iter = futures.begin(); iter != futures.end(); ++iter) {
-    iter->OnComplete(Defer(collect, &Collected<T>::Waited, std::placeholders::_1));
+    (void)iter->OnComplete(Defer(collect, &Collected<T>::Waited, std::placeholders::_1));
   }
 
   Future<std::list<T>> future = promise->GetFuture();
-  future.OnComplete(Defer(collect, &Collected<T>::Discarded));
+  (void)future.OnComplete(Defer(collect, &Collected<T>::Discarded));
 
   return future;
 }
