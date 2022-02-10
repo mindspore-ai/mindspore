@@ -41,7 +41,7 @@ import mindspore._c_dataengine as cde
 from mindspore.common import Tensor
 from mindspore import log as logger
 
-from .datasets import UnionBaseDataset, MappableDataset, Schema, to_list, _watch_dog, _check_shm_usage
+from .datasets import UnionBaseDataset, MappableDataset, Schema, to_list, _PythonMultiprocessing, _check_shm_usage
 from . import samplers
 from .queue import _SharedQueue
 from .validators import check_generatordataset, check_numpyslicesdataset, check_paddeddataset
@@ -202,7 +202,8 @@ class SamplerFn:
             self.workers.append(worker)
         if multi_process is True and platform.system().lower() != 'windows':
             self.eot = threading.Event()
-            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.workers))
+            self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
+                                              args=(self.eot, self.workers))
             self.watch_dog.daemon = True
             self.watch_dog.start()
 
