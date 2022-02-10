@@ -78,6 +78,13 @@ set(JNI_SRC
         ${NEW_NATIVE_DIR}/version.cpp
   )
 
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    set(JNI_TRAIN_SRC
+            ${NEW_NATIVE_DIR}/runner_config.cpp
+            ${NEW_NATIVE_DIR}/model_parallel_runner.cpp
+            )
+endif()
+
 set(LITE_SO_NAME mindspore-lite)
 
 add_library(mindspore-lite-jni SHARED ${JNI_SRC})
