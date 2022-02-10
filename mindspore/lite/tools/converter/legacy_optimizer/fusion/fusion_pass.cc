@@ -228,7 +228,7 @@ bool FusionPass::CheckMatch(const schema::MetaGraphT &graph, const std::shared_p
 
 bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                            std::vector<size_t> *sinkIdes, std::vector<size_t> *pathSinkIdes) {
-  MS_ASSERT(nodeIdx < graph->nodes.size());
+  MS_ASSERT(nodeIdx < graph.nodes.size());
   // check the func params
   if (!CheckMatchParams(graph, nodeIdx, target, *sinkIdes, *pathSinkIdes)) {
     return false;
@@ -253,7 +253,7 @@ bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, cons
     return true;
   }
   for (auto preNodeIdx : preNodeIdxes) {
-    MS_ASSERT(graph->nodes.size() > preNodeIdx);
+    MS_ASSERT(graph.nodes.size() > preNodeIdx);
     // Case of multiple outputs is not supported.
     constexpr int inputs_limits = 2;
     if (GetInputNodeIdx(graph, preNodeIdx).size() > inputs_limits || GetOutputNodeIdx(graph, preNodeIdx).size() > 1) {
@@ -273,7 +273,7 @@ bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, cons
       if (preNodeIdxInner == preNodeIdx) {
         continue;
       }
-      MS_ASSERT(graph->nodes.size() > preNodeIdxInner);
+      MS_ASSERT(graph.nodes.size() > preNodeIdxInner);
       if (MatchTree(graph, preNodeIdxInner, target->right, sinkIdes, pathSinkIdes)) {
         return true;  // ignore follow match, pick the first match
       }

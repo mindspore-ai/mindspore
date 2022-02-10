@@ -145,8 +145,9 @@ void SubGraphKernel::InitInputOutputTensorInitRefCount() {
     input->set_init_ref_count(input_init_refcount);
   }
   for (auto &output : this->out_tensors()) {
-    int output_init_refcount = output->init_ref_count();
-    output->set_init_ref_count(output_init_refcount + 1);
+    if (output->init_ref_count() == 0) {
+      output->set_init_ref_count(1);
+    }
   }
 }
 
