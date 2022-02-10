@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,5 +417,32 @@ TEST_F(TestMindApi, test_api_logging) {
   } catch (...) {
   }
   ASSERT_TRUE(true);
+}
+
+/// Feature: MindAPI
+/// Description: test AbstractSequence API.
+/// Expectation: AbstractSequence work as expected.
+TEST_F(TestMindApi, test_abstract_sequence) {
+  AbstractBasePtrList abs_list;
+  abs_list.emplace_back(MakeShared<AbstractScalar>(int64_t(1)));
+  abs_list.emplace_back(MakeShared<AbstractScalar>(float(1.2f)));
+  abs_list.emplace_back(MakeShared<AbstractScalar>(true));
+  abs_list.emplace_back(MakeShared<AbstractScalar>(std::string("hello")));
+  ShapeVector shape{1, 2, 3};
+  abs_list.emplace_back(MakeShared<AbstractTensor>(TypeId::kNumberTypeFloat32, shape));
+  auto abs_tuple = MakeShared<AbstractTuple>(abs_list);
+  ASSERT_EQ(abs_tuple->elements().size(), abs_list.size());
+  ASSERT_EQ(GetValue<int64_t>(abs_tuple->elements()[0]->value()), 1);
+  ASSERT_TRUE(abs_tuple->elements()[1]->value()->isa<FP32Imm>());
+  ASSERT_TRUE(GetValue<bool>(abs_tuple->elements()[2]->value()));
+  ASSERT_EQ(GetValue<std::string>(abs_tuple->elements()[3]->value()), "hello");
+  ASSERT_TRUE(abs_tuple->elements()[4]->isa<AbstractTensor>());
+  ASSERT_EQ(abs_tuple->elements()[4]->type()->type_id(), TypeId::kObjectTypeTensorType);
+  ASSERT_EQ(abs_tuple->elements()[4]->shape()->shape(), shape);
+  ASSERT_EQ(abs_tuple->elements()[4]->cast<AbstractTensorPtr>()->element()->type()->type_id(),
+            TypeId::kNumberTypeFloat32);
+  ShapeVector shape2{2, 3, 4};
+  abs_tuple->elements()[4]->set_shape(MakeShared<Shape>(shape2));
+  ASSERT_EQ(abs_tuple->elements()[4]->shape()->shape(), shape2);
 }
 }  // namespace mindspore::api
