@@ -42,13 +42,10 @@ class ConnectionPool {
   ConnectionPool() : double_link_(false) {}
   ~ConnectionPool();
 
-  // Get the singleton instance of ConnectionPool.
-  static ConnectionPool *GetConnectionPool();
-
   /*
    * Operations for ConnectionInfo.
    */
-  void AddConnInfo(int socket_fd, const AID &sAid, const AID &dAid, DeleteCallBack delcb);
+  void AddConnInfo(int socket_fd, const std::string &dst_url, DeleteCallBack delcb);
   bool ReverseConnInfo(int from_socket_fd, int to_socket_fd);
 
   /*
@@ -58,19 +55,14 @@ class ConnectionPool {
   void AddConnection(Connection *conn);
 
   // Find connection.
-  Connection *ExactFindConnection(const std::string &to, bool remoteLink);
-  Connection *FindConnection(const std::string &to, bool remoteLink);
-  Connection *FindConnection(const std::string &to, bool remoteLink, bool exactNotRemote);
-  Connection *FindMaxConnection();
-  Connection *FindFastConnection();
+  Connection *FindConnection(const std::string &dst_url);
 
   // Delete connection.
-  void ExactDeleteConnection(const std::string &to, bool remoteLink);
+  void DeleteConnection(const std::string &dst_url);
   void DeleteAllConnections(std::map<std::string, Connection *> *alllinks);
 
   // Close connection.
   void CloseConnection(Connection *conn);
-  void SetConnPriority(const std::string &to, bool remoteLink, ConnectionPriority pri);
 
   // Single link or double link.
   void SetLinkPattern(bool linkPattern);
@@ -78,7 +70,7 @@ class ConnectionPool {
   void ResetAllConnMetrics();
 
  private:
-  ConnectionInfo *FindConnInfo(int socket_fd, const AID &sAid, const AID &dAid);
+  ConnectionInfo *FindConnInfo(int socket_fd, const std::string &dst_url);
 
   void DeleteConnInfo(int socket_fd);
   void DeleteConnInfo(const std::string &to, int socket_fd);
@@ -92,10 +84,11 @@ class ConnectionPool {
   // Maintains the remote connections by remote server addresses.
   std::map<std::string, Connection *> remote_conns_;
 
+  // Maintains the connections by remote server addresses.
+  std::map<std::string, Connection *> connections_;
+
   // each to_url has two fds at most, and each fd has multiple linkinfos
   std::map<int, std::set<ConnectionInfo *>> conn_infos_;
-
-  static ConnectionPool *conn_pool;
 
   friend class Connection;
   friend class TCPComm;

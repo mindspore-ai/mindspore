@@ -90,7 +90,7 @@ int SocketOperation::SetSocketOptions(int sock_fd) {
   return 0;
 }
 
-int SocketOperation::CreateServerSocket(sa_family_t family) {
+int SocketOperation::CreateSocket(sa_family_t family) {
   int ret = 0;
   int fd = 0;
 
@@ -292,7 +292,7 @@ int SocketOperation::Listen(const std::string &url) {
   }
 
   // create server socket
-  listenFd = CreateServerSocket(addr.sa.sa_family);
+  listenFd = CreateSocket(addr.sa.sa_family);
   if (listenFd < 0) {
     MS_LOG(ERROR) << "Failed to create socket, url: " << url.c_str();
     return -1;

@@ -48,8 +48,8 @@ class SocketOperation {
   // Get socket address of the url.
   static bool GetSockAddr(const std::string &url, SocketAddress *addr);
 
-  // Create a server socket.
-  static int CreateServerSocket(sa_family_t family);
+  // Create a socket.
+  static int CreateSocket(sa_family_t family);
 
   // Set socket options.
   static int SetSocketOptions(int sock_fd);
