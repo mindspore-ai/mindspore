@@ -16,7 +16,6 @@
 
 #include "utils/summary/event_writer.h"
 #include <string>
-#include <memory>
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 
@@ -37,7 +36,9 @@ EventWriter::EventWriter(const std::string &file_full_name) : filename_(file_ful
   status_ = true;
 }
 
-EventWriter::~EventWriter() {
+EventWriter::~EventWriter() { CloseFile(); }
+
+void EventWriter::CloseFile() noexcept {
   if (event_file_ != nullptr) {
     bool result = Close();
     if (!result) {

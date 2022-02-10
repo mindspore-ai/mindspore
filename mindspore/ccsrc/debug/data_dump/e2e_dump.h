@@ -18,7 +18,6 @@
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_E_2_E_DUMP_H_
 
 #include <dirent.h>
-#include <stdlib.h>
 #include <map>
 #include <string>
 

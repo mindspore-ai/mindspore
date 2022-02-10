@@ -675,7 +675,7 @@ void Debugger::SendHeartbeat(int32_t period) {
   while (enable_heartbeat_) {
     MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
-    if (reply.status() != reply.OK) {
+    if (reply.status() != EventReply::OK) {
       MS_LOG(ERROR) << "Error: SendHeartbeat failed";
       num_heartbeat_fail++;
       if (num_heartbeat_fail >= max_num_heartbeat_fail) {
@@ -706,7 +706,7 @@ void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   // send graph to MindInsight server
   MS_EXCEPTION_IF_NULL(grpc_client_);
   EventReply reply = grpc_client_->SendGraph(graph_proto);
-  if (reply.status() != reply.OK) {
+  if (reply.status() != EventReply::OK) {
     MS_LOG(ERROR) << "Error: SendGraph failed";
   }
   // enter command loop, wait and process commands
@@ -732,7 +732,7 @@ bool Debugger::SendMetadata(bool version_check) {
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
 
   bool ret = false;
-  if (reply_metadata.status() == reply_metadata.OK) {
+  if (reply_metadata.status() == EventReply::OK) {
     if (version_check) {
       // get type of the command in meta data reply, it should be version matched
       DebuggerCommand cmd = GetCommand(reply_metadata);
@@ -790,7 +790,7 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
     }
   }
   EventReply reply = grpc_client_->SendMultiGraphs(chunked_graph_proto_list);
-  if (reply.status() != reply.OK) {
+  if (reply.status() != EventReply::OK) {
     MS_LOG(ERROR) << "Error: SendGraph failed";
   }
   // enter command loop, wait and process commands
@@ -828,7 +828,7 @@ void Debugger::CommandLoop() {
     // wait for command
     MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->WaitForCommand(metadata);
-    if (reply.status() != reply.OK) {
+    if (reply.status() != EventReply::OK) {
       MS_LOG(ERROR) << "Error: WaitForCommand failed";
       num_wait_fail++;
       if (num_wait_fail > max_num_wait_fail) {
@@ -1232,7 +1232,7 @@ void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   if (!points.empty()) {
     MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->SendWatchpointHits(points);
-    if (reply.status() != reply.OK) {
+    if (reply.status() != EventReply::OK) {
       MS_LOG(ERROR) << "Error: SendWatchpointHits failed";
     }
   }

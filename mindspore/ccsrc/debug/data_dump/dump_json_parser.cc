@@ -469,7 +469,7 @@ void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kInputOutput);
   input_output_ = content;
   const uint32_t max_inout_num = 2;
-  if (input_output_ < 0 || input_output_ > max_inout_num) {
+  if (input_output_ > max_inout_num) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. input_output should be 0, 1, 2";
   }
 }
@@ -514,7 +514,7 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
   const size_t max_mode = 3;
-  if (op_debug_mode_ < 0 || op_debug_mode_ > max_mode) {
+  if (op_debug_mode_ > max_mode) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
   }
 }
