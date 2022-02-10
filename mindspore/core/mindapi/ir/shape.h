@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ namespace mindspore::api {
 class MIND_API Shape : public Base {
  public:
   MIND_API_BASE_MEMBER(Shape);
+
+  /// \brief Create Shape with the given shape dimensions.
+  ///
+  /// \param[in] shape The shape dimensions.
+  explicit Shape(const ShapeVector &shape);
 
   /// \brief Get the shape dimensions.
   ///
