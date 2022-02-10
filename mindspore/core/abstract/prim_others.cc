@@ -81,6 +81,12 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
   (void)expected->Join(dflt);
+  // If expected is AbstractRef, return it's AbstractTensor as Value type other than Reference type.
+  if (expected->isa<AbstractRef>()) {
+    const auto &abs_ref = expected->cast<AbstractRefPtr>();
+    MS_EXCEPTION_IF_NULL(abs_ref);
+    return abs_ref->CloneAsTensor();
+  }
   return expected;
 }
 
