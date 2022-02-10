@@ -28,6 +28,9 @@
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
 #include "src/tensor.h"
+#ifdef SERVER_INFERENCE
+#include "src/pack_weight_manager.h"
+#endif
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
 #endif
@@ -105,6 +108,9 @@ int LiteModel::ConvertAttrToTensors() {
 #endif
 
 void LiteModel::Free() {
+#ifdef SERVER_INFERENCE
+  lite::PackWeightManager::GetInstance()->DeleteSavedModelPtr(this);
+#endif
   if (this->buf != nullptr) {
     delete[](this->buf);
     this->buf = nullptr;
@@ -592,7 +598,9 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;
   }
-
+#ifdef SERVER_INFERENCE
+  lite::PackWeightManager::GetInstance()->StoreLiteModel(model_buf, model);
+#endif
   auto status = model->ConstructModel(model_buf, size, take_buf);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "construct model failed.";

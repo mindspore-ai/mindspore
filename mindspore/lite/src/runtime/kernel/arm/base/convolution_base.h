@@ -27,6 +27,9 @@
 #include <android/log.h>
 #endif
 #endif
+#ifdef SERVER_INFERENCE
+#include "src/pack_weight_manager.h"
+#endif
 #include "src/inner_kernel.h"
 #include "include/context.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
@@ -79,6 +82,9 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   bool IsRepack() const { return is_repack_; }
   std::unordered_map<uintptr_t, void *> addr_map;
   void *packed_weight_ = nullptr;
+#ifdef SERVER_INFERENCE
+  lite::PackStatus weight_is_packed_ = lite::MALLOC;
+#endif
   void *bias_data_ = nullptr;
   const InnerContext *ctx_ = nullptr;
   ConvParameter *conv_param_ = nullptr;
