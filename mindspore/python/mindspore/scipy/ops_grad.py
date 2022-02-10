@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
+from .. import numpy as mnp
 from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
 from .ops_wrapper import matrix_set_diag
 from .utils_const import _raise_value_error
@@ -46,11 +47,19 @@ def _matrix_solve(a, b):
     return a + b
 
 
+def _batch_eyes(a):
+    num_row = F.shape(a)[-1]
+    batch_shape = F.shape(a)[:-2]
+    shape = batch_shape + (num_row, num_row)
+    eye = F.eye(num_row, num_row, a.dtype)
+    return mnp.broadcast_to(eye, shape)
+
+
 @bprop_getters.register(Cholesky)
 def get_bprop_cholesky(self):
     """Grad definition for `Cholesky` operation."""
-    inverse = P.MatrixInverse()
     matmul = P.MatMul()
+    solve_triangular = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
     clean = self.clean
     if not clean:
         _raise_value_error(
@@ -58,7 +67,8 @@ def get_bprop_cholesky(self):
 
     def bprop(a, out, dout):
         l = out
-        l_inverse = inverse(l)
+        eyes = _batch_eyes(l)
+        l_inverse = solve_triangular(l, eyes)
         dout_middle = matmul(_adjoint(l), dout)
         middle_diag = 0.5 * dout_middle.diagonal(0, -2, -1)
         dout_middle = matrix_set_diag(dout_middle, middle_diag)
