@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-void TransposeFp16CPUKernel::GetNchwToNhwcFunc(TypeId dtype) { NHNCTransposeFunc_ = PackNCHWToNHWCFp16; }
-
-void TransposeFp16CPUKernel::GetNhwcToNchwFunc(TypeId dtype) { NHNCTransposeFunc_ = PackNHWCToNCHWFp16; }
+void TransposeFp16CPUKernel::SetOptTransposeFunc() { optTransposeFunc_ = PackNHWCToNCHWFp16; }
 
 int TransposeFp16CPUKernel::TransposeDim2to6() {
   return DoTransposeFp16(static_cast<const float16_t *>(in_data_), static_cast<float16_t *>(out_data_), out_shape_,

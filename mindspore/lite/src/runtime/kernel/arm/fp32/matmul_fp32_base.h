@@ -51,12 +51,14 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
 
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512) || defined(ENABLE_ARM64)
+  int ParallelRunByRow(int task_id) const;
+#endif
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
   ParallelRun parallel_fun_ = nullptr;
-  bool is_pack_ = true;
 
  protected:
   int InitBufferA();
@@ -74,7 +76,9 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   void FreeResizeBufB();
   int CalBroadCastBiasDataElements();
   int InitTmpOutBuffer();
-  void GetThreadCuttingPolicy();
+  int GetThreadCuttingPolicy();
+  bool CheckThreadCuttingByRow();
+  void GetThreadCuttingInfoByRow();
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -92,7 +96,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
  private:
   int col_tile_ = 0;
   int row_tile_ = 0;
-  int oc_res_ = 0;
   int batch_stride_ = 0;
   int oc_stride_ = 0;
   int thread_count_ = 0;
@@ -107,6 +110,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
   bool batch_split_ = false;
+  bool is_pack_ = true;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
@@ -114,6 +118,8 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   GemvFun gemvCalFun = nullptr;
 #endif
   GemmIsNotPackFun gemmIsNotPackFun = nullptr;
+  int row_num_;
+  std::vector<int> row_split_points_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_

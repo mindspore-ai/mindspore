@@ -39,7 +39,7 @@ int MatmulRun(const void *cdata, int task_id, float, float) {
 MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
   FreeResizeBufA();
   FreeResizeBufB();
-  if (is_pack_ && out_need_aligned_ && oc_res_ != 0 && output_data_ != nullptr) {
+  if (out_need_aligned_ && output_data_ != nullptr) {
     free(output_data_);
     output_data_ = nullptr;
   }
@@ -287,6 +287,34 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   return RET_OK;
 }
 
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512) || defined(ENABLE_ARM64)
+int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
+  int start_row = row_split_points_[task_id];
+  int end_row = row_num_;
+  if (task_id < (thread_count_ - 1)) {
+    end_row = row_split_points_[task_id + 1];
+  }
+  int row_num = end_row - start_row;
+  if (row_num <= 0) {
+    return RET_OK;
+  }
+#if defined(ENABLE_AVX512)
+  const float *input = a_pack_ptr_ + start_row * params_->deep_;
+  float *output = output_data_ + start_row * params_->col_align_;
+  MatMulAvx512Fp32(input, b_pack_ptr_, output, bias_ptr_, params_->act_type_, params_->deep_, params_->col_align_,
+                   params_->col_align_, row_num);
+#elif defined(ENABLE_AVX)
+  const float *input = a_pack_ptr_ + start_row * params_->deep_;
+  float *output = output_data_ + start_row * params_->col_align_;
+  MatMulAvxFp32(input, b_pack_ptr_, output, bias_ptr_, params_->act_type_, params_->deep_, params_->col_align_,
+                params_->col_align_, row_num);
+#elif defined(ENABLE_ARM64)
+  GemmIsNotPackByRow(a_pack_ptr_, b_pack_ptr_, output_data_, bias_ptr_, start_row, end_row, params_->deep_);
+#endif
+  return RET_OK;
+}
+#endif
+
 int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
@@ -295,8 +323,8 @@ int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
     bias = bias_ptr_[0];
   }
   for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = a_pack_ptr_ + index * params_->row_ * params_->deep_;
-    const float *b = b_pack_ptr_ + index * params_->deep_ * params_->col_;
+    const float *a = a_pack_ptr_ + a_offset_[index] * params_->row_ * params_->deep_;
+    const float *b = b_pack_ptr_ + b_offset_[index] * params_->deep_ * params_->col_;
     float *c = output_data_ + index * params_->row_ * params_->col_;
     gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_);
   }
@@ -375,28 +403,28 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
+  if (params_->col_ == 1 && !params_->a_const_) {
+    is_pack_ = false;
+    out_need_aligned_ = false;
+    row_tile_ = 1;
+    col_tile_ = 1;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+  }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
+  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
+  matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
   col_step_ = params_->col_align_;
 #else
   // need not aligned
   col_step_ = params_->col_;
 #endif
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
-  if (params_->col_ == 1 && params_->b_const_) {
-    is_pack_ = false;
-    matrix_a_pack_size_ = a_batch_ * params_->row_ * params_->deep_;
-    matrix_b_pack_size_ = b_batch_ * params_->col_ * params_->deep_;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-  } else {
-    matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
-    matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
-  }
   return RET_OK;
 }
 
@@ -455,6 +483,8 @@ int MatmulFp32BaseCPUKernel::Prepare() {
 
 int MatmulFp32BaseCPUKernel::ReSize() {
   ResizeParameter();
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(a_batch_, params_->row_), RET_ERROR);
+  row_num_ = a_batch_ * params_->row_;
   matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
   matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
   if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
@@ -465,8 +495,12 @@ int MatmulFp32BaseCPUKernel::ReSize() {
   if (op_parameter_->is_train_session_) {
     set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * static_cast<int>(sizeof(float)));
   }
-  GetThreadCuttingPolicy();
-  auto ret = InitTmpOutBuffer();
+  auto ret = GetThreadCuttingPolicy();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ThreadCuttingPolicy error!";
+    return ret;
+  }
+  ret = InitTmpOutBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitTmpOutBuffer error!";
     return ret;
@@ -483,11 +517,11 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
     vec_matmul_ = false;
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
-  oc_res_ = params_->col_ % col_tile_;
+  out_need_aligned_ = (out_need_aligned_ && ((params_->col_ % col_tile_) != 0));
 }
 
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
-  if (is_pack_ && out_need_aligned_ && oc_res_ != 0) {
+  if (out_need_aligned_) {
     if (output_data_ != nullptr) {
       free(output_data_);
     }
@@ -505,12 +539,22 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   return RET_OK;
 }
 
-void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && params_->b_const_)) {
+int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
+  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && !params_->a_const_)) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
     batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
+  } else if (CheckThreadCuttingByRow()) {
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+    is_pack_ = !params_->b_const_;
+    batch_split_ = true;
+    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
+    GetThreadCuttingInfoByRow();
+#else
+    MS_LOG(ERROR) << "current branch only support avx.";
+    return RET_ERROR;
+#endif
   } else {
     thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_align_, col_tile_));
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)  // thread tile by col_tile * C4NUM
@@ -521,21 +565,57 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
     batch_split_ = false;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
-  if (params_->col_ == 1 && params_->b_const_) {
+  if (params_->col_ == 1 && !params_->a_const_) {
     is_pack_ = false;
+    batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
     if (params_->deep_ == 1) {
       gemmIsNotPackFun = GemmIsNotPack;
     } else {
       gemmIsNotPackFun = GemmIsNotPackOptimize;
+#ifdef ENABLE_ARM64
+      if (b_batch_ == 1) {
+        parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
+        GetThreadCuttingInfoByRow();
+      }
+#endif
     }
   }
+  return RET_OK;
+}
+
+bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
+  if (b_batch_ != C1NUM) {
+    return false;
+  }
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+  if (row_num_ >= op_parameter_->thread_num_) {
+    return true;
+  }
+#endif
+  return false;
+}
+
+void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
+  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, C64NUM);
+  int row_remaining = MSMAX(row_num_ - row_step * op_parameter_->thread_num_, 0);
+  row_split_points_.resize(op_parameter_->thread_num_);
+  for (size_t i = 0; i < row_split_points_.size(); ++i) {
+    if (i == 0) {
+      row_split_points_[i] = 0;
+      continue;
+    }
+    row_split_points_[i] =
+      MSMIN(row_split_points_[i - 1] + row_step + (static_cast<int>(i) < row_remaining ? 1 : 0), row_num_);
+  }
+  int unused_thread_num = std::count(row_split_points_.begin(), row_split_points_.end(), row_num_);
+  thread_count_ = op_parameter_->thread_num_ - unused_thread_num;
 }
 
 int MatmulFp32BaseCPUKernel::Run() {
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(out_data);
-  if (!is_pack_ || !out_need_aligned_ || oc_res_ == 0) {
+  if (!out_need_aligned_) {
     output_data_ = out_data;
   }
   if (!params_->b_const_) {
@@ -557,9 +637,7 @@ int MatmulFp32BaseCPUKernel::Run() {
   if (!params_->a_const_) {
     auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
     CHECK_NULL_RETURN(a_ptr);
-    if (!is_pack_) {
-      a_pack_ptr_ = a_ptr;
-    } else {
+    if (is_pack_ || (params_->a_transpose_ && params_->deep_ != 1)) {
       if (InitBufferA() != RET_OK) {
         return RET_ERROR;
       }
@@ -568,10 +646,12 @@ int MatmulFp32BaseCPUKernel::Run() {
         MS_LOG(ERROR) << "InitMatrixA failed!";
         return ret;
       }
+    } else {
+      a_pack_ptr_ = a_ptr;
     }
   }
 
-  if (batch_split_ || !is_pack_) {
+  if (batch_split_) {
     auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulRun failed in split by batch";
@@ -590,11 +670,13 @@ int MatmulFp32BaseCPUKernel::Run() {
     }
   }
 
-  if (oc_res_ != 0 && out_need_aligned_ && is_pack_) {
+  if (out_need_aligned_) {
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);
+  } else {
+    output_data_ = nullptr;
   }
   if (!params_->a_const_) {
-    if (is_pack_) {
+    if (is_pack_ || (params_->a_transpose_ && params_->deep_ != 1)) {
       FreeResizeBufA();
     } else {
       a_pack_ptr_ = nullptr;

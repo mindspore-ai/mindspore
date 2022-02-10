@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ class TransposeFp16CPUKernel : public TransposeCPUKernel {
   ~TransposeFp16CPUKernel() = default;
 
  private:
-  void GetNchwToNhwcFunc(TypeId dtype) override;
-  void GetNhwcToNchwFunc(TypeId dtype) override;
+  void SetOptTransposeFunc() override;
   int TransposeDim2to6() override;
   int TransposeDimGreaterThan6(int task_id) override;
 };
