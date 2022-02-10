@@ -52,6 +52,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_recompute.h"
 #include "backend/optimizer/graph_kernel/reduce_fake_out_mem.h"
 #include "backend/optimizer/graph_kernel/depend_elimination.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 using opt::CommonSubexpressionElimination;
@@ -235,11 +236,8 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   optimizer->AddPassManager(Combine());
   optimizer->AddPassManager(PostProcess());
 
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
-  }
+  auto mng = GkUtils::GetFuncGraphManager(kernel_graph);
+  GkUtils::UpdateFuncGraphManager(mng, kernel_graph);
   (void)optimizer->Optimize(kernel_graph);
 }
 
