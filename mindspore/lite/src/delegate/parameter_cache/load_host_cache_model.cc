@@ -32,7 +32,6 @@ namespace cache {
 HostCacheModel::~HostCacheModel() {
   if (cache_model_ != nullptr) {
     delete cache_model_;
-    MS_LOG(ERROR) << "delete cache_model_";
     cache_model_ = nullptr;
   }
 }
