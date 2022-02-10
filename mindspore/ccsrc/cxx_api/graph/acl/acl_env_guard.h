@@ -29,7 +29,7 @@ class __attribute__((visibility("default"))) AclEnvGuard {
   static std::shared_ptr<AclEnvGuard> GetAclEnv();
 
  private:
-  static std::shared_ptr<AclEnvGuard> global_acl_env_;
+  static std::weak_ptr<AclEnvGuard> global_acl_env_;
   static std::mutex global_acl_env_mutex_;
 
   aclError errno_;
