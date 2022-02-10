@@ -69,7 +69,7 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
 fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_onnx" || $backend == "x86_tf" || \
-      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" || $backend == "linux_arm64_tflite" ]]; then
     sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -p $fail_not_return
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
