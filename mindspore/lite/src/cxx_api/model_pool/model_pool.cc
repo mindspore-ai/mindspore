@@ -85,7 +85,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
       MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
       return nullptr;
     }
-    if (device->GetDeviceType() != kGPU) {
+    if (device->GetDeviceType() == kGPU) {
       num_models_ = 1;
     }
     auto cpu_context = device->Cast<CPUDeviceInfo>();
@@ -101,7 +101,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     model_context->SetEnableParallel(false);
     model_context->SetThreadAffinity(lite::NO_BIND);
     auto &device_list = model_context->MutableDeviceInfo();
-    auto device_info = std::shared_ptr<CPUDeviceInfo>();
+    auto device_info = std::make_shared<CPUDeviceInfo>();
     device_info->SetEnableFP16(false);
     device_list.push_back(device_info);
   }
@@ -303,8 +303,12 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  if (PredictTaskQueue::GetInstance()->GetTaskNum() == 0 &&
+  mtx_split_task_.lock();
+  auto batch = inputs[0].Shape()[0];
+  if (batch % batch_split_num_ == 0 && PredictTaskQueue::GetInstance()->GetTaskNum() == 0 &&
       batch_split_num_ <= static_cast<size_t>(PredictTaskQueue::GetInstance()->GetWaitModelNum())) {
+    batch_split_num_ = PredictTaskQueue::GetInstance()->GetWaitModelNum();
+    PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(batch_split_num_);
     std::vector<std::vector<MSTensor>> new_inputs;
     std::vector<std::vector<MSTensor>> new_outputs;
     auto status = SplitTensorByBatch(inputs, outputs, &new_inputs);
@@ -322,6 +326,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
       tasks.push_back(predict_task);
     }
+    mtx_split_task_.unlock();
     for (size_t i = 0; i < batch_split_num_; i++) {
       PredictTaskQueue::GetInstance()->WaitUntilPredictActive(tasks[i]);
     }
@@ -333,6 +338,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   } else {
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     PredictTaskQueue::GetInstance()->PushPredictTask(predict_task);
+    mtx_split_task_.unlock();
     PredictTaskQueue::GetInstance()->WaitUntilPredictActive(predict_task);
   }
   return kSuccess;

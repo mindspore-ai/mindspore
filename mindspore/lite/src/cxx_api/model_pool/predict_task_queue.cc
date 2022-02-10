@@ -48,7 +48,6 @@ std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask() {
     waite_model_num_++;
     task_push_cond_.wait(task_lock);
   }
-  waite_model_num_--;
   if (predict_task_done_) {
     return nullptr;
   }
