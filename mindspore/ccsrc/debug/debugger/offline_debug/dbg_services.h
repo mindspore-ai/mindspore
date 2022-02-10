@@ -32,6 +32,7 @@
 namespace py = pybind11;
 namespace common = mindspore::common;
 
+namespace mindspore {
 struct parameter_t {
   parameter_t(const std::string &name, bool disabled, double value, bool hit, double actual_value)
       : name(name), disabled(disabled), value(value), hit(hit), actual_value(actual_value) {}
@@ -157,13 +158,13 @@ struct TensorStatData {
   const double max_value() const { return max_value_; }
   const double min_value() const { return min_value_; }
   const double avg_value() const { return avg_value_; }
-  const int count() const { return count_; }
-  const int neg_zero_count() const { return neg_zero_count_; }
-  const int pos_zero_count() const { return pos_zero_count_; }
-  const int nan_count() const { return nan_count_; }
-  const int neg_inf_count() const { return neg_inf_count_; }
-  const int pos_inf_count() const { return pos_inf_count_; }
-  const int zero_count() const { return zero_count_; }
+  const uint64_t count() const { return count_; }
+  const uint64_t neg_zero_count() const { return neg_zero_count_; }
+  const uint64_t pos_zero_count() const { return pos_zero_count_; }
+  const uint64_t nan_count() const { return nan_count_; }
+  const uint64_t neg_inf_count() const { return neg_inf_count_; }
+  const uint64_t pos_inf_count() const { return pos_inf_count_; }
+  const uint64_t zero_count() const { return zero_count_; }
 
   uint64_t data_size_;
   int dtype_;
@@ -172,13 +173,13 @@ struct TensorStatData {
   double max_value_;
   double min_value_;
   double avg_value_;
-  int count_;
-  int neg_zero_count_;
-  int pos_zero_count_;
-  int nan_count_;
-  int neg_inf_count_;
-  int pos_inf_count_;
-  int zero_count_;
+  uint64_t count_;
+  uint64_t neg_zero_count_;
+  uint64_t pos_zero_count_;
+  uint64_t nan_count_;
+  uint64_t neg_inf_count_;
+  uint64_t pos_inf_count_;
+  uint64_t zero_count_;
 };
 
 class DbgServices {
@@ -195,7 +196,7 @@ class DbgServices {
                      uint64_t max_mem_usage);
 
   int32_t AddWatchpoint(
-    unsigned int id, unsigned int watch_condition,
+    unsigned int id, int watch_condition,
     std::map<std::string, std::map<std::string, std::variant<bool, std::vector<std::string>>>> check_nodes,
     std::vector<parameter_t> parameter_list);
 
@@ -215,6 +216,7 @@ class DbgServices {
 
  private:
   std::shared_ptr<DebugServices> debug_services_ = nullptr;
+  void ClearData() noexcept;
 };
-
+}  // namespace mindspore
 #endif  // DEBUG_DBG_SERVICES_H_

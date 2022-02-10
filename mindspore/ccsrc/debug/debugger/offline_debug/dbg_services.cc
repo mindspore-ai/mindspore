@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <chrono>
 
+namespace mindspore {
 DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
 
 DbgServices::DbgServices(const DbgServices &other) {
@@ -34,16 +35,18 @@ DbgServices &DbgServices::operator=(const DbgServices &other) {
 }
 
 #if !defined(__APPLE__)
-DbgServices::~DbgServices() noexcept {
-  MS_LOG(INFO) << "cpp DbgServices object is deleted";
-  debug_services_ = nullptr;
-}
+DbgServices::~DbgServices() { ClearData(); }
 #else
 DbgServices::~DbgServices() {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
   debug_services_ = nullptr;
 }
 #endif
+
+void DbgServices::ClearData() noexcept {
+  MS_LOG(INFO) << "cpp DbgServices object is deleted";
+  debug_services_ = nullptr;
+}
 
 std::string DbgServices::GetVersion() const {
   MS_LOG(INFO) << "get version is called";
@@ -74,7 +77,7 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
 }
 
 int32_t DbgServices::AddWatchpoint(
-  unsigned int id, unsigned int watch_condition,
+  unsigned int id, int watch_condition,
   std::map<std::string, std::map<std::string, std::variant<bool, std::vector<std::string>>>> check_nodes,
   std::vector<parameter_t> parameter_list) {
   MS_EXCEPTION_IF_NULL(debug_services_);
@@ -93,7 +96,7 @@ int32_t DbgServices::AddWatchpoint(
     std::vector<std::uint32_t> rank_id;
     (void)std::transform(
       rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
-      [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
+      [](const std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
     MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint rank_id: ";
     for (auto const &i : rank_id) {
       MS_LOG(DEBUG) << i << " ";
@@ -103,7 +106,7 @@ int32_t DbgServices::AddWatchpoint(
     std::vector<std::uint32_t> root_graph_id;
     (void)std::transform(
       root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
-      [](std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
+      [](const std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
     MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint root_graph_id: ";
     for (auto const &j : root_graph_id) {
       MS_LOG(DEBUG) << j << " ";
@@ -293,7 +296,8 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(const std::vector<tensor_inf
   result_list = ReadTensorsUtil(info);
   for (auto result : result_list) {
     MS_EXCEPTION_IF_NULL(result);
-    tensor_data_t tensor_data_item(result->GetDataPtr(), result->GetByteSize(), result->GetType(), result->GetShape());
+    tensor_data_t tensor_data_item(result->GetDataPtr(), result->GetByteSize(), static_cast<int>(result->GetType()),
+                                   result->GetShape());
     tensors_read.push_back(tensor_data_item);
   }
   return tensors_read;
@@ -310,7 +314,7 @@ std::vector<TensorBaseData> DbgServices::ReadTensorsBase(const std::vector<tenso
       tensors_read_base.push_back(tensor_data_item);
       continue;
     }
-    TensorBaseData tensor_data_item(result->GetByteSize(), result->GetType(), result->GetShape());
+    TensorBaseData tensor_data_item(result->GetByteSize(), static_cast<int>(result->GetType()), result->GetShape());
     tensors_read_base.push_back(tensor_data_item);
   }
   return tensors_read_base;
@@ -346,3 +350,4 @@ std::vector<TensorStatData> DbgServices::ReadTensorsStat(const std::vector<tenso
 
   return tensors_read_stat;
 }
+}  // namespace mindspore

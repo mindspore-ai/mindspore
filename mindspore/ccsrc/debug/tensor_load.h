@@ -40,7 +40,7 @@ class TensorLoader {
 
   ~TensorLoader() { EmptyTensor(); }
 
-  void MoveTensorCurrentToPrev(std::string tensor_name) {
+  void MoveTensorCurrentToPrev(const std::string &tensor_name) {
     auto handle = tensor_list_map_.extract(tensor_name);
     if (!handle.empty()) {
       MS_LOG(INFO) << "Moving " << tensor_name << " from current map to previous map";
@@ -50,12 +50,14 @@ class TensorLoader {
 
   void SwapCurrentPrev() { tensor_list_map_.swap(prev_tensor_list_map_); }
 
-  bool TensorExistsInCurrent(std::string tensor_name) const {
+  bool TensorExistsInCurrent(const std::string &tensor_name) const {
     return tensor_list_map_.find(tensor_name) != tensor_list_map_.end();
   }
 
   // only parameters will return true
-  bool PrevTensorExistsInCurrent(std::string tensor_name) const { return TensorExistsInCurrent(tensor_name + ":prev"); }
+  bool PrevTensorExistsInCurrent(const std::string &tensor_name) const {
+    return TensorExistsInCurrent(tensor_name + ":prev");
+  }
 
   void MoveParametersCurrentToPrev() {
     MS_LOG(INFO) << "Moving parameters from current map to previous map";
@@ -85,7 +87,7 @@ class TensorLoader {
    * Description: Load new tensor into tensor_list_map_ (debugger backend cache). In offline debugger, add ":prev" to
    * the previous tensor's name to avoid segfault caused by wrongly evicting the tensor when memory limit is enabled.
    */
-  bool LoadNewTensor(std::shared_ptr<TensorData> tensor, bool keep_prev) {
+  bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
     lock_.lock();
     auto tensor_name = tensor->GetName();
     if (keep_prev) {
@@ -98,8 +100,9 @@ class TensorLoader {
     }
     std::string key_name = tensor_name;
 #ifdef OFFLINE_DBG_MODE
+    std::string output_type = tensor->GetIsOutput() ? "1" : "0";
     key_name += (":" + std::to_string(tensor->GetDeviceId()) + ":" + std::to_string(tensor->GetRootGraphId()) + ":" +
-                 std::to_string(tensor->GetIsOutput()) + ":" + std::to_string(tensor->GetSlot()));
+                 output_type + ":" + std::to_string(tensor->GetSlot()));
     if (tensor_list_map_.find(key_name) != tensor_list_map_.end() &&
         tensor->GetIteration() == tensor_list_map_[key_name]->GetPrevIteration()) {
       key_name += ":prev";
@@ -151,7 +154,7 @@ class TensorLoader {
     }
   }
 
-  void EmptyTensor() {
+  void EmptyTensor() noexcept {
     std::lock_guard<std::mutex> lg(lock_);
     prev_tensor_list_map_.clear();
     tensor_list_map_.swap(prev_tensor_list_map_);
@@ -159,7 +162,7 @@ class TensorLoader {
 
   void EmptyCurrentTensor() { tensor_list_map_.clear(); }
 
-  bool EnableMemoryControl() { return mem_total_ > 0; }
+  bool EnableMemoryControl() const { return mem_total_ > 0; }
 
   /*
    * Feature group: Offline debugger.
@@ -210,7 +213,7 @@ class TensorLoader {
     std::unique_lock<std::mutex> lk(mem_lock_);
     while (data_size > mem_total_ - mem_usage_) {
       // wait until there is any not-in-use candidate to be evicted from cache
-      evict_cond.wait(lk, [&] { return !cache_evict_queue_.empty(); });
+      evict_cond.wait(lk, [this] { return !cache_evict_queue_.empty(); });
       candidate_name = cache_evict_queue_.front();
       cache_evict_queue_.pop_front();
       // evict candidate tensor
