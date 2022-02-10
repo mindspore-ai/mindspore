@@ -56,7 +56,7 @@ float *ConvolutionDelegateCPUKernel::CopyData(const lite::Tensor *tensor) {
     return nullptr;
   }
   MS_ASSERT(tensor->data() != nullptr);
-  memcpy(data, tensor->data(), tensor->Size());
+  (void)memcpy(data, tensor->data(), tensor->Size());
   return data;
 }
 
