@@ -1484,7 +1484,7 @@ class AutoMonadConverter {
 
     auto update_state = NewValueNode(prim::kPrimUpdateState);
     auto update_state_cnode = func_graph_->NewCNode({update_state, state, attach});
-    update_state_cnode->set_abstract(state->abstract()->Broaden());
+    update_state_cnode->set_abstract(state->abstract());
     return update_state_cnode;
   }
 
