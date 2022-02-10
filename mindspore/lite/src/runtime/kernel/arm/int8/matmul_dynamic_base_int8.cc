@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/matmul_dynamic_base_int8.h"
+#include "nnacl/int8/dynamic_matmul_int8.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -117,6 +118,14 @@ void MatmulDynamicBaseInt8CPUKernel::FreeTmpBuffer() {
     free(pack_b_ptr_);
     pack_b_ptr_ = nullptr;
   }
+  if (input_sums_ != nullptr) {
+    free(input_sums_);
+    input_sums_ = nullptr;
+  }
+  if (weight_sums_ != nullptr) {
+    free(weight_sums_);
+    weight_sums_ = nullptr;
+  }
   return;
 }
 
@@ -139,11 +148,14 @@ int MatmulDynamicBaseInt8CPUKernel::TransferB() {
   for (int i = 0; i < param_->batch; i++) {
     auto current_weight = weight_data + i * param_->deep_ * param_->col_;
     auto current_b_pack = pack_b_ptr_ + i * param_->col_align_ * param_->deep_align_;
+    auto current_sums = weight_sums_ + i * param_->col_align_;
     CHECK_NULL_RETURN(b_pack_func_);
     if (param_->b_transpose_) {
       b_pack_func_(current_weight, current_b_pack, param_->col_, param_->deep_);
+      CalcWeightSums(current_weight, param_->deep_, param_->col_, current_sums, ColMajor);
     } else {
       b_pack_func_(current_weight, current_b_pack, param_->deep_, param_->col_);
+      CalcWeightSums(current_weight, param_->deep_, param_->col_, current_sums, RowMajor);
     }
   }
   return RET_OK;
@@ -161,8 +173,20 @@ int MatmulDynamicBaseInt8CPUKernel::InitTmpBuffer() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
+  input_sums_ = reinterpret_cast<int *>(malloc(param_->row_align_ * sizeof(int)));
+  if (input_sums_ == nullptr) {
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+  weight_sums_ = reinterpret_cast<int *>(malloc(param_->batch * param_->col_align_ * sizeof(int)));
+  if (weight_sums_ == nullptr) {
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
   memset(pack_a_ptr_, 0, param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
   memset(pack_b_ptr_, 0, param_->batch * param_->col_align_ * param_->deep_align_ * sizeof(int8_t));
+  memset(input_sums_, 0, param_->row_align_ * sizeof(int));
+  memset(weight_sums_, 0, param_->batch * param_->col_align_ * sizeof(int));
   return RET_OK;
 }
 

@@ -36,6 +36,9 @@ class MatMulDynamicSdotInt8Kernel : public MatmulDynamicBaseInt8CPUKernel {
 
  private:
   void InitParameter() override;
+
+ private:
+  int *batch_sums_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

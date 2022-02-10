@@ -58,8 +58,6 @@ class MatmulDynamicBaseInt8CPUKernel : public InnerKernel {
  protected:
   MatMulParameter *param_ = nullptr;
   MatmulDynamicQuantParameter *quant_param_ = nullptr;
-  int thread_count_ = 1;
-  int thread_stride_ = 0;
   int8_t *pack_a_ptr_ = nullptr;
   int8_t *pack_b_ptr_ = nullptr;
   float *fp32_bias_ptr_ = nullptr;
@@ -68,11 +66,15 @@ class MatmulDynamicBaseInt8CPUKernel : public InnerKernel {
   int8_t *batch_weight_ptr_ = nullptr;
   int8_t *batch_b_ptr_ = nullptr;
   float *batch_c_ptr_ = nullptr;
+  int *input_sums_ = nullptr;
+  int *weight_sums_ = nullptr;
   int row_tile_ = C4NUM;
   int col_tile_ = C4NUM;
   int deep_tile_ = C16NUM;
   int channel_num_ = 0;
-  PackFunc b_pack_func_{nullptr};
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
+  PackFunc b_pack_func_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

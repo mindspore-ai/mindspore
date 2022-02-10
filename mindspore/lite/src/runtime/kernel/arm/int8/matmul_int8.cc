@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/int8/matmul_int8.h"
 #include "src/runtime/kernel/arm/int8/matmul_dynamic_int8.h"
+#include "src/runtime/kernel/arm/int8/matmul_dynamic_sdot_int8.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/common_func.h"
 #include "include/errorcode.h"
@@ -49,15 +50,18 @@ int MatmulInt8CPUKernel::ReSize() {
   int batch = 1;
   auto x_shape = in_tensors_.at(0)->shape();
   auto o_shape = out_tensors_.at(0)->shape();
-  MS_ASSERT(x_shape.size() >= 2);
-  for (size_t i = 0; i < x_shape.size() - 2; ++i) {
+  const size_t min_size = 2;
+  MS_ASSERT(x_shape.size() >= min_size);
+  for (size_t i = 0; i < x_shape.size() - min_size; ++i) {
     batch *= x_shape[i];
   }
   param_->batch = batch;
-  MS_ASSERT(o_shape.size() >= 2);
-  param_->row_ = o_shape[o_shape.size() - 2];
-  param_->col_ = o_shape[o_shape.size() - 1];
-  param_->deep_ = param_->a_transpose_ ? x_shape[x_shape.size() - 2] : x_shape[x_shape.size() - 1];
+  MS_ASSERT(o_shape.size() >= min_size);
+  const size_t row_offset = 2;
+  const size_t col_offset = 1;
+  param_->row_ = o_shape[o_shape.size() - row_offset];
+  param_->col_ = o_shape[o_shape.size() - col_offset];
+  param_->deep_ = param_->a_transpose_ ? x_shape[x_shape.size() - row_offset] : x_shape[x_shape.size() - col_offset];
 
   auto ret = MatmulBaseInt8CPUKernel::ReSize();
   if (ret != RET_OK) {
@@ -84,8 +88,13 @@ kernel::InnerKernel *MatmulInt8CPUKernelCreator(const std::vector<lite::Tensor *
       MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported A is const.";
       return nullptr;
     }
-    kernel = new (std::nothrow)
-      MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    if (lite::IsSupportSDot()) {
+      kernel = new (std::nothrow)
+        MatMulDynamicSdotInt8Kernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    } else {
+      kernel = new (std::nothrow)
+        MatmulDynamicInt8CPUKernel(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
+    }
   } else {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << " is unsupported quant type:" << parameter->quant_type_;
     free(parameter);

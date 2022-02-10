@@ -59,12 +59,20 @@ void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias
       int r4div = r / C4NUM, r4mod = r % C4NUM;
       int c4div = c / C4NUM, c4mod = c % C4NUM;
       int32_t value = 0;
+      int32_t s0 = 0;
+      int32_t s1 = 0;
+      int32_t s2 = 0;
+      int32_t s3 = 0;
       for (int d = 0; d < deep; d++) {
         int d16div = d / C16NUM, d16mod = d % C16NUM;
         size_t ai = r4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
         size_t bi = c4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
-        value += (a[ai] - input_zp) * (b[bi] - filter_zp);
+        s0 += a[ai] * b[bi];
+        s1 += filter_zp * a[ai];
+        s2 += input_zp * b[bi];
+        s3 += input_zp * filter_zp;
       }
+      value = s0 - s1 - s2 + s3;
       int filter_quant_index = filter_per_channel ? c : 0;
       double multi_scale = input_scale * filter_scale[filter_quant_index];
       size_t ci = r * stride + c;
@@ -310,4 +318,44 @@ void PackInput2Col4x4(const int8_t *src_input, int8_t *packed_input, int row, in
       packed_ic[c * row_tile + r] = src_ic[r * row_stride + c];
     }
   }
+}
+
+void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder order) {
+  int sum = 0;
+  if (order == RowMajor) {
+    for (int c = 0; c < col; ++c) {
+      for (int r = 0; r < row; ++r) {
+        sum += weight[r * col + c];
+      }
+      dst[c] = sum;
+    }
+  } else {
+    for (int c = 0; c < col; ++c) {
+      for (int r = 0; r < row; ++r) {
+        sum += weight[c * row + r];
+      }
+      dst[c] = sum;
+    }
+  }
+  return;
+}
+
+void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int *dst, DataOrder order) {
+  int sum = 0;
+  if (order == RowMajor) {
+    for (int c = 0; c < cur_col; ++c) {
+      for (int r = 0; r < row; ++r) {
+        sum += weight[r * stride + c];
+      }
+      dst[c] = sum;
+    }
+  } else {
+    for (int c = 0; c < cur_col; ++c) {
+      for (int r = 0; r < row; ++r) {
+        sum += weight[c * row + r];
+      }
+      dst[c] = sum;
+    }
+  }
+  return;
 }
