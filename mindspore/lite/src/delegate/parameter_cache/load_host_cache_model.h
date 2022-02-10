@@ -30,7 +30,8 @@ namespace mindspore {
 namespace cache {
 class HostCacheModel {
  public:
-  HostCacheModel() {}
+  HostCacheModel() = default;
+  ~HostCacheModel();
   Status LoadCache(const std::string &model_path);
   Status LoadCache(DelegateModel<schema::Primitive> *model);
   bool CheckIsCacheKernel(kernel::Kernel *kernel);

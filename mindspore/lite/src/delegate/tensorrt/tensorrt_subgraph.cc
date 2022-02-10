@@ -88,9 +88,6 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
   if (GetInt8DynamicRange() != RET_OK) {
     MS_LOG(WARNING) << "get tensorrt dynamic range failed.";
   }
-  if (SetDeviceConfig(stream) != RET_OK) {
-    MS_LOG(WARNING) << "set tensorrt config failed.";
-  }
   return RET_OK;
 }
 
@@ -157,11 +154,14 @@ int TensorRTSubGraph::BuildEngine() {
 }
 
 int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
-  this->config_ = runtime_->GetBuilder()->createBuilderConfig();
-  if (this->config_ == nullptr) {
-    MS_LOG(ERROR) << "create builder config failed.";
-    return RET_ERROR;
+  if (config_ == nullptr) {
+    this->config_ = runtime_->GetBuilder()->createBuilderConfig();
+    if (this->config_ == nullptr) {
+      MS_LOG(ERROR) << "create builder config failed.";
+      return RET_ERROR;
+    }
   }
+
   // set fp16
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
     MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";

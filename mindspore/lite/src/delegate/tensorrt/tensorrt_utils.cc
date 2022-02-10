@@ -44,7 +44,7 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
     return dims;
   }
   dims.nbDims = size;
-  const int *dims_data = reinterpret_cast<const int *>(data);
+  const int *dims_data = static_cast<const int *>(data);
   for (int i = 0; i < size; i++) {
     dims.d[i] = *(dims_data + i);
   }
