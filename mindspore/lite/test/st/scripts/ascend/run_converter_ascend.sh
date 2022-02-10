@@ -3,8 +3,8 @@
 # Run converter for ascend x86 platform:
 function Run_Converter() {
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+    tar -zxf mindspore-lite-${version}-linux-${arch}.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-${arch}/ || exit 1
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/
 
@@ -25,13 +25,14 @@ export PYTHONPATH=${TBE_IMPL_PATH}:${PYTHONPATH}
 
 backend=$1
 device_id=$2
+arch=$3
 user_name=${USER}
 echo "Current user is ${USER}"
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
 echo "Benchmark test path is ${benchmark_test}"
 
 x86_path=${benchmark_test}
-file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
+file_name=$(ls ${x86_path}/*-linux-${arch}.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 
@@ -66,6 +67,6 @@ else
 fi
 
 # Run Benchmark
-source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id
+source ${benchmark_test}/run_benchmark_ascend.sh -v $version -b $backend -d $device_id -a ${arch}
 Run_Benchmark_status=$?
 exit ${Run_Benchmark_status}

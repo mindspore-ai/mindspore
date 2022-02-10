@@ -10,7 +10,7 @@ function PrePareLocal() {
   cp ./scripts/ascend/run_converter_ascend.sh ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/run_benchmark_ascend.sh ${benchmark_test_path} || exit 1
   cp ./../config/models_ascend.cfg ${benchmark_test_path} || exit 1
-  cp ${release_path}/centos_x86/ascend/*-linux-x64.tar.gz ${benchmark_test_path} || exit 1
+  cp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${benchmark_test_path} || exit 1
   echo "Copy file success"
 }
 
@@ -22,16 +22,16 @@ function PrePareRemote() {
   scp ./scripts/ascend/run_benchmark_ascend.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./../config/models_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
-  scp ${release_path}/centos_x86/ascend/*-linux-x64.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp ${release_path}/centos_x86/ascend/*-linux-${arch}.tar.gz ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   echo "Copy file success"
 }
 
 function Run_Ascend() {
   if [ ${is_local} = 0 ]; then
     cd ${benchmark_test_path} || exit 1
-    sh run_converter_ascend.sh ${backend} ${device_id}
+    sh run_converter_ascend.sh ${backend} ${device_id} ${arch}
   else
-    ssh ${user_name}@${device_ip} "cd ${benchmark_test_path}; sh run_converter_ascend.sh ${backend} ${device_id}"
+    ssh ${user_name}@${device_ip} "cd ${benchmark_test_path}; sh run_converter_ascend.sh ${backend} ${device_id} ${arch}"
   fi
   if [[ $? = 0 ]]; then
     run_result="run in ${backend} pass"; echo ${run_result} >> ${run_ascend_result_file};
@@ -64,6 +64,12 @@ while getopts "r:m:d:e:" opt; do
         exit 1;;
     esac
 done
+
+if [[ ${backend} =~ "x86" ]]; then
+  arch="x64"
+elif [[ ${backend} =~ "arm" ]]; then
+  arch="aarch64"
+fi
 
 user_name=${USER}
 echo "Current user name is ${user_name}"

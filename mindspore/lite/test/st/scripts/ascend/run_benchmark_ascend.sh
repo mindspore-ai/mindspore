@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Example:sh run_remote_ascend.sh -v version -b backend
-while getopts "v:b:d:" opt; do
+while getopts "v:b:d:a:" opt; do
     case ${opt} in
         v)
             version=${OPTARG}
@@ -15,6 +15,10 @@ while getopts "v:b:d:" opt; do
             device_id=${OPTARG}
             echo "device id is ${device_id}"
             ;;
+        a)
+            arch=${OPTARG}
+            echo "arch is ${arch}"
+            ;;
         ?)
         echo "unknown para"
         exit 1;;
@@ -25,7 +29,7 @@ export ASCEND_DEVICE_ID=${device_id}
 
 # Run Benchmark in Ascend platform:
 function Run_Benchmark() {
-    cd ${benchmark_test}/mindspore-lite-${version}-linux-x64 || exit 1
+    cd ${benchmark_test}/mindspore-lite-${version}-linux-${arch} || exit 1
     cp tools/benchmark/benchmark ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./runtime/lib
 
