@@ -24,7 +24,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 namespace {
 constexpr int kNumInput2 = 2;
-}
+constexpr int kMeanInput = 1;
+constexpr int kVarInput = 2;
+}  // namespace
 namespace mindspore::kernel {
 int BatchnormCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
@@ -57,38 +59,54 @@ void BatchnormCPUKernel::FreeMeanAndVariance() {
   }
 }
 
-void BatchnormCPUKernel::FillParam() {
+int BatchnormCPUKernel::FillParam() {
   auto input_shapes = in_tensors_.at(0)->shape();
-  auto n_dim = input_shapes.size();
+  auto in_n_dim = input_shapes.size();
+  CHECK_LESS_RETURN(in_n_dim, 1);
+  auto in_channel = input_shapes[in_n_dim - 1];
+
+  auto mean_shapes = in_tensors_.at(kMeanInput)->shape();
+  auto mean_n_dim = mean_shapes.size();
+  CHECK_LESS_RETURN(mean_n_dim, 1);
+  auto mean_channel = mean_shapes[mean_n_dim - 1];
+  CHECK_NOT_EQUAL_RETURN(in_channel, mean_channel);
+
+  auto var_shapes = in_tensors_.at(kVarInput)->shape();
+  auto var_n_dim = var_shapes.size();
+  CHECK_LESS_RETURN(var_n_dim, 1);
+  auto var_channel = var_shapes[var_n_dim - 1];
+  CHECK_NOT_EQUAL_RETURN(in_channel, var_channel);
+
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  param->channel_ = input_shapes[n_dim - 1];
+  param->channel_ = input_shapes[in_n_dim - 1];
   param->unit_ = 1;
-  for (size_t i = 0; i < n_dim - 1; i++) {
+  for (size_t i = 0; i < in_n_dim - 1; i++) {
     param->unit_ *= input_shapes[i];
   }
   if (default_momentum_ < 0.0f) {
     default_momentum_ = param->momentum_;
   }
+  return RET_OK;
 }
 
 int BatchnormCPUKernel::InitConstTensor() {
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(1)->Size());
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(kNumInput2)->Size());
-  mean_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
-  variance_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
+  mean_ = malloc(in_tensors_.at(kMeanInput)->Size());
+  variance_ = malloc(in_tensors_.at(kVarInput)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  auto in_tensor_mean_data = in_tensors_.at(SECOND_INPUT)->MutableData();
-  auto in_tensor_var_data = in_tensors_.at(THIRD_INPUT)->MutableData();
+  auto in_tensor_mean_data = in_tensors_.at(kMeanInput)->MutableData();
+  auto in_tensor_var_data = in_tensors_.at(kVarInput)->MutableData();
   if (in_tensor_mean_data == nullptr || in_tensor_var_data == nullptr) {
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(SECOND_INPUT)->Size());
-  memcpy(variance_, in_tensor_var_data, in_tensors_.at(THIRD_INPUT)->Size());
+  memcpy(mean_, in_tensor_mean_data, in_tensors_.at(kMeanInput)->Size());
+  memcpy(variance_, in_tensor_var_data, in_tensors_.at(kVarInput)->Size());
   return RET_OK;
 }
 
