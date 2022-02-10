@@ -540,7 +540,9 @@ class Broadcast(PrimitiveWithInfer):
 
     Examples:
         >>> # This example should be run with multiple processes.
-        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
+        >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
+        >>> # Variables, Calling the Collective Communication Library, Running The Script.
         >>> from mindspore import Tensor
         >>> from mindspore import context
         >>> from mindspore.communication import init

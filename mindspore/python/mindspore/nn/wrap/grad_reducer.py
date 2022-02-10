@@ -306,8 +306,9 @@ class DistributedGradReducer(Cell):
 
     Examples:
         >>> # This example should be run with multiple processes.
-        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
-        >>> # Focus on the contents of these three parts: 配置分布式环境变量, 调用集合通信库, 运行脚本.
+        >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
+        >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
+        >>> # Variables, Calling the Collective Communication Library, Running The Script.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import ops
