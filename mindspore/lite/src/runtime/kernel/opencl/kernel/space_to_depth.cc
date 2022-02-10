@@ -67,7 +67,7 @@ int SpaceToDepthOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -105,10 +105,12 @@ int SpaceToDepthOpenCLKernel::SetConstArgs() {
   }
   return RET_OK;
 }
-void SpaceToDepthOpenCLKernel::SetGlobalLocal() {
+int SpaceToDepthOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
   global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int SpaceToDepthOpenCLKernel::Run() {

@@ -108,7 +108,7 @@ int StridedSliceOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 
@@ -232,7 +232,7 @@ int StridedSliceOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void StridedSliceOpenCLKernel::SetGlobalLocal() {
+int StridedSliceOpenCLKernel::SetGlobalLocal() {
   auto output_info = GpuTensorInfo(out_tensors_.front());
   global_size_ = {output_info.N * output_info.H, output_info.W, output_info.Slice};
 
@@ -245,6 +245,7 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
   size_t local_w = std::min(local_hw / local_h, global_size_[1]);
   local_size_ = {local_h, local_w, local_c};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int StridedSliceOpenCLKernel::Run() {

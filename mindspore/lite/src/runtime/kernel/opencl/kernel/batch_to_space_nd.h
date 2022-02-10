@@ -33,7 +33,7 @@ class BatchToSpaceNDOpenCLKernel : public OpenCLKernel {
 
   int CheckSpecs() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
 
  private:

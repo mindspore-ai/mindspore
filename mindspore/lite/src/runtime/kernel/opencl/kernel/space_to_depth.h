@@ -33,7 +33,7 @@ class SpaceToDepthOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
  private:
   GpuTensorInfo in_shape_;

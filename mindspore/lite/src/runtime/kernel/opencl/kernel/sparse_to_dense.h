@@ -32,7 +32,7 @@ class SparseToDenseOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int CheckSpecs() override;
 
  private:

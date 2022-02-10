@@ -34,7 +34,7 @@ class StrassenOpenCLKernel : public MatMulOpenCLKernel {
   int Prepare() override;
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
   // strassen
  private:

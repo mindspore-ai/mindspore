@@ -56,7 +56,7 @@ int ToFormatOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ToFormatOpenCLKernel::SetGlobalLocal() {
+int ToFormatOpenCLKernel::SetGlobalLocal() {
   global_size_ = {N_ * H_, W_, UP_DIV(C_, C4NUM)};
   local_size_ = {8, 16, 3};
   size_t max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
@@ -64,6 +64,8 @@ void ToFormatOpenCLKernel::SetGlobalLocal() {
     local_size_[2] = 1;
   }
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int ToFormatOpenCLKernel::Prepare() {
@@ -95,7 +97,7 @@ int ToFormatOpenCLKernel::Prepare() {
   W_ = output.W;
   C_ = output.C;
 
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

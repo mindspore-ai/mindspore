@@ -168,7 +168,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ConcatOpenCLKernel::SetGlobalLocal() {
+int ConcatOpenCLKernel::SetGlobalLocal() {
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   if (axis_ == 3 && !Align_) {
     OH = out_shape_.s[0] * out_shape_.s[1];
@@ -184,6 +184,8 @@ void ConcatOpenCLKernel::SetGlobalLocal() {
   }
   ConcatGetWorkGroup(global_size_, &local_size_, max_global[0]);
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int ConcatOpenCLKernel::ConvertWeightToTensor() {
@@ -283,7 +285,7 @@ int ConcatOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 

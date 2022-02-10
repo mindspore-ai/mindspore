@@ -65,7 +65,7 @@ void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<s
   local->push_back(z);
 }
 
-void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
+int ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
   auto output_shape = out_tensors_[0]->shape();
   uint32_t OH = 1, OW = 1, OC = 1;
   if (output_shape.size() == DIMENSION_4D) {
@@ -84,6 +84,7 @@ void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
   global_size_ = {OH, OW, OC};
   ArithmeticSelfGetWorkGroup(global_size_, &local_size_, max_global[0]);
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int ArithmeticSelfOpenCLKernel::Prepare() {
@@ -105,7 +106,7 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

@@ -103,11 +103,11 @@ int PoolingOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 
-void PoolingOpenCLKernel::SetGlobalLocal() {
+int PoolingOpenCLKernel::SetGlobalLocal() {
   if (is_use_local_) {
     local_size_ = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
     global_size_ = {static_cast<size_t>(input_tensor_.Slice), 1, 1};
@@ -120,6 +120,7 @@ void PoolingOpenCLKernel::SetGlobalLocal() {
     local_size_ = {};
     AlignGlobalLocal(global_size_, local_size_);
   }
+  return RET_OK;
 }
 
 int PoolingOpenCLKernel::SetGlobalConstArgs() {

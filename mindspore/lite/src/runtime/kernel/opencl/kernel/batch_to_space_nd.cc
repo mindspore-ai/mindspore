@@ -85,13 +85,14 @@ int BatchToSpaceNDOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void BatchToSpaceNDOpenCLKernel::SetGlobalLocal() {
+int BatchToSpaceNDOpenCLKernel::SetGlobalLocal() {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<int> out_shape = out_tensors_[0]->shape();
   cl_int4 dst_size = {(cl_int)CO4, out_shape[2], out_shape[1], out_shape[0]};
   local_size_ = {1, 1, 1};
   global_size_ = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int BatchToSpaceNDOpenCLKernel::Prepare() {
@@ -108,7 +109,7 @@ int BatchToSpaceNDOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

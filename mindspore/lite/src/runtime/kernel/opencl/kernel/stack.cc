@@ -139,7 +139,7 @@ int StackOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void StackOpenCLKernel::SetGlobalLocal() {
+int StackOpenCLKernel::SetGlobalLocal() {
   if (((in_tensors_[0]->shape().size() == DIMENSION_2D || in_tensors_[0]->shape().size() == DIMENSION_3D) &&
        axis_ == 1) ||
       (in_tensors_[0]->shape().size() == DIMENSION_3D && axis_ == 2)) {
@@ -158,6 +158,8 @@ void StackOpenCLKernel::SetGlobalLocal() {
   std::vector<size_t> global = {OH_, OW_, OC_};
   StackGetWorkGroup(global, &local, max_global[0]);
   OpenCLKernel::AlignGlobalLocal(global, local);
+
+  return RET_OK;
 }
 
 int StackOpenCLKernel::Prepare() {
@@ -196,7 +198,7 @@ int StackOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
 
   return RET_OK;
 }
