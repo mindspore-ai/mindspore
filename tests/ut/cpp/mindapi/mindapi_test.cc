@@ -407,10 +407,14 @@ TEST_F(TestMindApi, test_api_utils) {
 /// Description: test logging API.
 /// Expectation: logging work as expected.
 TEST_F(TestMindApi, test_api_logging) {
+  std::string name = "mindspore";
   MS_LOG(DEBUG) << "hello debug";
   MS_LOG(INFO) << "hello info";
   MS_LOG(WARNING) << "hello warning";
   MS_LOG(ERROR) << "hello error";
+  MS_LOG(ERROR) << name;
+  MS_LOG(ERROR) << "hello " << name;
+  MS_LOG(ERROR) << name << " hello";
   try {
     MS_LOG(EXCEPTION) << "hello exception";
     ASSERT_TRUE(false);
