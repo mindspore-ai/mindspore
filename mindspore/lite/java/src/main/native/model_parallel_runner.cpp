@@ -33,6 +33,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
     auto runner_config = std::make_shared<mindspore::RunnerConfig>();
     if (runner_config == nullptr) {
+      delete runner;
       MS_LOGE("Make RunnerConfig failed");
       return (jlong) nullptr;
     }
