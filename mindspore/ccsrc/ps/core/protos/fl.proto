@@ -55,6 +55,15 @@ message GetMetadataResponse {
   bytes value = 1;
 }
 
+message GetOneDeviceMetaRequest {
+  string fl_id = 1;
+}
+
+message GetOneDeviceMetaResponse {
+  DeviceMeta device_meta = 1;
+  bool found = 2;
+}
+
 enum CounterEventType {
   FIRST_CNT = 0;
   LAST_CNT = 1;

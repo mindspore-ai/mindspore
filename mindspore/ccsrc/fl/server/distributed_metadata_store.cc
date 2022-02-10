@@ -38,6 +38,9 @@ void DistributedMetadataStore::RegisterMessageCallback(const std::shared_ptr<ps:
     "updateMetadata", std::bind(&DistributedMetadataStore::HandleUpdateMetadataRequest, this, std::placeholders::_1));
   communicator_->RegisterMsgCallBack(
     "getMetadata", std::bind(&DistributedMetadataStore::HandleGetMetadataRequest, this, std::placeholders::_1));
+  communicator_->RegisterMsgCallBack(
+    "getOneDeviceMeta",
+    std::bind(&DistributedMetadataStore::HandleGetOneDeviceMetaRequest, this, std::placeholders::_1));
   return;
 }
 
@@ -148,6 +151,42 @@ PBMetadata DistributedMetadataStore::GetMetadata(const std::string &name) {
   }
 }
 
+bool DistributedMetadataStore::GetOneDeviceMeta(const std::string &fl_id, DeviceMeta *device_meta) {
+  if (router_ == nullptr) {
+    MS_LOG(WARNING) << "The consistent hash ring is not initialized yet.";
+    return false;
+  }
+  const auto &name = kCtxDeviceMetas;
+  uint32_t stored_rank = router_->Find(name);
+  MS_LOG(DEBUG) << "Rank " << local_rank_ << " get metadata for " << name << " which is stored in rank " << stored_rank;
+  if (local_rank_ == stored_rank) {
+    return DoGetOneDeviceMeta(fl_id, device_meta);
+  } else {
+    GetOneDeviceMetaRequest get_metadata_req;
+    get_metadata_req.set_fl_id(fl_id);
+
+    std::shared_ptr<std::vector<unsigned char>> get_meta_rsp_msg = nullptr;
+    if (!communicator_->SendPbRequest(get_metadata_req, stored_rank, ps::core::TcpUserCommand::kGetOneDeviceMeta,
+                                      &get_meta_rsp_msg)) {
+      MS_LOG(WARNING) << "Sending getting one client metadata message to server " << stored_rank << " failed.";
+      return false;
+    }
+    MS_ERROR_IF_NULL_W_RET_VAL(get_meta_rsp_msg, false);
+    GetOneDeviceMetaResponse get_metadata_rsp;
+    auto ret = get_metadata_rsp.ParseFromArray(get_meta_rsp_msg->data(), SizeToInt(get_meta_rsp_msg->size()));
+    if (!ret) {
+      MS_LOG(WARNING) << "Parse response of getting one client metadata message to server " << stored_rank
+                      << " failed.";
+      return false;
+    }
+    if (!get_metadata_rsp.found()) {
+      return false;
+    }
+    *device_meta = get_metadata_rsp.device_meta();
+    return true;
+  }
+}
+
 bool DistributedMetadataStore::ReInitForScaling() {
   // If DistributedMetadataStore is not initialized yet but the scaling event is triggered, do not throw exception.
   if (server_node_ == nullptr) {
@@ -219,6 +258,28 @@ void DistributedMetadataStore::HandleGetMetadataRequest(const std::shared_ptr<ps
     return;
   }
   return;
+}
+
+void DistributedMetadataStore::HandleGetOneDeviceMetaRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+  GetOneDeviceMetaRequest get_one_metadata_req;
+  GetOneDeviceMetaResponse response;
+  auto ret = get_one_metadata_req.ParseFromArray(message->data(), SizeToInt(message->len()));
+  if (!ret) {
+    MS_LOG(WARNING) << "Parse GetOneDeviceMetaRequest failed.";
+    response.set_found(false);
+  } else {
+    const std::string &fl_id = get_one_metadata_req.fl_id();
+    MS_LOG(DEBUG) << "Getting one client metadata for " << fl_id;
+
+    auto found = DoGetOneDeviceMeta(fl_id, response.mutable_device_meta());
+    response.set_found(found);
+  }
+  std::string getting_meta_rsp_msg = response.SerializeAsString();
+  if (!communicator_->SendResponse(getting_meta_rsp_msg.data(), getting_meta_rsp_msg.size(), message)) {
+    MS_LOG(WARNING) << "Sending response of GetOneDeviceMetaRequest failed.";
+    return;
+  }
 }
 
 bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const PBMetadata &meta) {
@@ -309,6 +370,27 @@ bool DistributedMetadataStore::DoUpdateEncryptMetadata(const std::string &name, 
                     << " failed: The Protobuffer of this value is not defined.";
     return false;
   }
+  return true;
+}
+
+bool DistributedMetadataStore::DoGetOneDeviceMeta(const std::string &fl_id, DeviceMeta *device_meta) {
+  if (device_meta == nullptr) {
+    return false;
+  }
+  const auto &name = kCtxDeviceMetas;
+  std::unique_lock<std::mutex> lock(mutex_[name]);
+  auto meta_it = metadata_.find(name);
+  if (meta_it == metadata_.end()) {
+    MS_LOG(WARNING) << "The metadata of " << name << " is not registered.";
+    return false;
+  }
+  auto &stored_meta = meta_it->second;
+  const auto &fl_id_to_meta = stored_meta.device_metas().fl_id_to_meta();
+  auto fl_it = fl_id_to_meta.find(fl_id);
+  if (fl_it == fl_id_to_meta.end()) {
+    return false;
+  }
+  *device_meta = fl_it->second;
   return true;
 }
 
