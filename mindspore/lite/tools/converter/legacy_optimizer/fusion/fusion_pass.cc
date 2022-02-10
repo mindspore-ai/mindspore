@@ -74,7 +74,7 @@ STATUS FusionPass::MatchPatterns(const schema::MetaGraphT &graph) {
   STATUS status;
   for (auto pattern : patterns) {
     MS_CHECK_TRUE_MSG(pattern != nullptr, RET_NULL_PTR, "pattern is nullptr");
-    status = MatchOnePattern(graph, pattern);
+    status = MatchOnePattern(graph, *pattern);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "MatchOnePatternInSubGraph failed: " << status;
       return status;
@@ -111,9 +111,8 @@ STATUS FusionPass::MatchPatterns(const schema::MetaGraphT &graph) {
 
 // assume that all nodes have only one output. if node has multi-outputs,
 // some errors may happen
-STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT &graph, FusionPattern *pattern) {
-  MS_ASSERT(pattern != nullptr);
-  auto outputOp = pattern->GetPatternOp(pattern->GetOutput());
+STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT &graph, const FusionPattern &pattern) {
+  auto outputOp = pattern.GetPatternOp(pattern.GetOutput());
   if (outputOp == nullptr) {
     MS_LOG(ERROR) << "Can not find the output of the pattern";
     return RET_NULL_PTR;
@@ -169,13 +168,12 @@ STATUS FusionPass::MatchOnePattern(const schema::MetaGraphT &graph, FusionPatter
       paths.emplace_back(path);
     }
   }
-  auto patternName = pattern->GetName();
+  auto patternName = pattern.GetName();
   this->matchedPaths.insert(std::make_pair(patternName, paths));
   return RET_OK;
 }
 
 bool FusionPass::CheckMatch(const schema::MetaGraphT &graph, const std::shared_ptr<PatternOp> &patternOp) {
-  MS_ASSERT(graph != nullptr);
   MS_ASSERT(patternOp != nullptr);
   // find included nodes
   std::queue<std::shared_ptr<PatternOp>> opQueue;
@@ -230,7 +228,6 @@ bool FusionPass::CheckMatch(const schema::MetaGraphT &graph, const std::shared_p
 
 bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                            std::vector<size_t> *sinkIdes, std::vector<size_t> *pathSinkIdes) {
-  MS_ASSERT(graph != nullptr);
   MS_ASSERT(nodeIdx < graph->nodes.size());
   // check the func params
   if (!CheckMatchParams(graph, nodeIdx, target, *sinkIdes, *pathSinkIdes)) {
@@ -258,9 +255,10 @@ bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, cons
   for (auto preNodeIdx : preNodeIdxes) {
     MS_ASSERT(graph->nodes.size() > preNodeIdx);
     // Case of multiple outputs is not supported.
-    if (GetInputNodeIdx(graph, preNodeIdx).size() > 2 || GetOutputNodeIdx(graph, preNodeIdx).size() > 1) {
-      sinkIdes->erase((sinkIdes->end() - 1));
-      pathSinkIdes->erase((pathSinkIdes->end() - 1));
+    constexpr int inputs_limits = 2;
+    if (GetInputNodeIdx(graph, preNodeIdx).size() > inputs_limits || GetOutputNodeIdx(graph, preNodeIdx).size() > 1) {
+      (void)sinkIdes->erase((sinkIdes->end() - 1));
+      (void)pathSinkIdes->erase((pathSinkIdes->end() - 1));
       target->UnSetPath();
       return false;
     }
@@ -281,8 +279,8 @@ bool FusionPass::MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, cons
       }
     }
   }
-  sinkIdes->erase((sinkIdes->end() - 1));
-  pathSinkIdes->erase((pathSinkIdes->end() - 1));
+  (void)sinkIdes->erase((sinkIdes->end() - 1));
+  (void)pathSinkIdes->erase((pathSinkIdes->end() - 1));
   target->UnSetPath();
   return false;
 }

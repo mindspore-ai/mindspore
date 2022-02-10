@@ -41,6 +41,7 @@ class QuantCastFusionPass : public FusionPass {
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
+ protected:
   STATUS DoFusion(schema::MetaGraphT *graph, const std::string &patternName,
                   const std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) override;
 };

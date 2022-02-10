@@ -43,7 +43,7 @@ class FusionPass : public GraphPass {
 
   STATUS MatchPatterns(const schema::MetaGraphT &graph);
 
-  STATUS MatchOnePattern(const schema::MetaGraphT &graph, FusionPattern *pattern);
+  STATUS MatchOnePattern(const schema::MetaGraphT &graph, const FusionPattern &pattern);
 
   bool MatchTree(const schema::MetaGraphT &graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                  std::vector<size_t> *sinkIdes, std::vector<size_t> *pathSinkIdes);

@@ -53,7 +53,7 @@ class NotSupportOp {
     return &not_support_op;
   }
   void set_fmk_type(const std::string &fmk_type) { fmk_type_ = fmk_type; }
-  void InsertOp(const std::string &op_name) { not_support_ops_.insert(op_name); }
+  void InsertOp(const std::string &op_name) { (void)not_support_ops_.insert(op_name); }
   void PrintOps() const {
     if (!not_support_ops_.empty()) {
       MS_LOG(ERROR) << "===========================================";

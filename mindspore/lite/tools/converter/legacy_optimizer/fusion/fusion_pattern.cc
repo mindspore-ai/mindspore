@@ -154,6 +154,6 @@ FusionPattern &FusionPattern::Finish() {
   return *this;
 }
 
-std::string FusionPattern::GetName() { return this->name; }
+std::string FusionPattern::GetName() const { return this->name; }
 }  // namespace lite
 }  // namespace mindspore
