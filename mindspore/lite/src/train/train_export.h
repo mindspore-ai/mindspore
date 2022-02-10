@@ -54,6 +54,7 @@ class TrainExport {
   int LoadModel(void *buf, size_t buf_size);
   int AddTransformNode();
   int TrainModelFusion();
+  int TrainModelDrop();
 
  protected:
   virtual std::vector<uint8_t> CreateData(const mindspore::lite::Tensor *tensor);
