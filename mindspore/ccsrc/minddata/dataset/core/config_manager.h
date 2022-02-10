@@ -63,7 +63,7 @@ class ConfigManager {
 
   // Another debug print helper.  Converts the print info to a string for you.
   // @return The string version of the debug print
-  std::string ToString() {
+  std::string ToString() const {
     std::stringstream ss;
     ss << *this;
     return ss.str();
@@ -178,7 +178,7 @@ class ConfigManager {
 
   // getter function
   // @return The interval of monitor sampling
-  int32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
+  uint32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
 
   // setter function
   // @param auto_num_workers - whether assign threads to each op automatically
@@ -200,13 +200,13 @@ class ConfigManager {
 
   // getter function
   // @return The timeout DSWaitedCallback would wait for before raising an error
-  int32_t callback_timeout() const { return callback_timout_; }
+  uint32_t callback_timeout() const { return callback_timout_; }
 
   // getter function
   // E.g. 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.
   // please refer to AutoWorkerPass for detail on what each option is.
   // @return The experimental config used by AutoNumWorker, each 1 refers to a different setup configuration
-  uint8_t get_auto_worker_config() { return auto_worker_config_; }
+  uint8_t get_auto_worker_config() const { return auto_worker_config_; }
 
   // setter function
   // E.g. set the value of 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.
@@ -220,7 +220,7 @@ class ConfigManager {
 
   // getter function
   // @return - Flag to indicate whether shared memory for multi-processing is enabled
-  bool enable_shared_mem() { return enable_shared_mem_; }
+  bool enable_shared_mem() const { return enable_shared_mem_; }
 
   // setter function
   // @param offload - To enable automatic offloading of dataset ops
@@ -228,7 +228,7 @@ class ConfigManager {
 
   // getter function
   // @return - Flag to indicate whether automatic offloading is enabled for the dataset
-  bool get_auto_offload() { return auto_offload_; }
+  bool get_auto_offload() const { return auto_offload_; }
 
   // setter function
   // @param enable - To enable autotune
@@ -236,11 +236,11 @@ class ConfigManager {
 
   // getter function
   // @return - Flag to indicate whether autotune is enabled
-  bool enable_autotune() { return enable_autotune_; }
+  bool enable_autotune() const { return enable_autotune_; }
 
   // getter function
   // @return - autotune interval in steps
-  int64_t autotune_interval() { return autotune_interval_; }
+  int64_t autotune_interval() const { return autotune_interval_; }
 
   // setter function
   // @param interval - autotune interval in steps
@@ -277,5 +277,4 @@ class ConfigManager {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONFIG_MANAGER_H_

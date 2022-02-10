@@ -68,7 +68,7 @@ Status TimeStretchOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
     std::vector<dsize_t> s_vec = s.AsVector();
     s_vec.pop_back();
     s_vec.pop_back();
-    s_vec.push_back(std::ceil(s[-2] / fixed_rate_));
+    s_vec.push_back(std::ceil(s[-2] / static_cast<dsize_t>(fixed_rate_)));
     // push back complex
     s_vec.push_back(2);
     outputs.emplace_back(TensorShape(s_vec));

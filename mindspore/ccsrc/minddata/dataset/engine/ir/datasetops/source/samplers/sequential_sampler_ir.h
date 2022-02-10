@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -40,7 +39,7 @@ class SequentialSamplerObj : public SamplerObj {
  public:
   SequentialSamplerObj(int64_t start_index, int64_t num_samples);
 
-  ~SequentialSamplerObj();
+  ~SequentialSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -70,7 +69,6 @@ class SequentialSamplerObj : public SamplerObj {
   int64_t start_index_;
   int64_t num_samples_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_

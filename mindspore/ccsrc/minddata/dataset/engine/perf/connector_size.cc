@@ -31,10 +31,12 @@ using Qrow = std::vector<int>;
 
 // Sample action
 Status ConnectorSize::Sample() {
-  if (active_ == false) return Status::OK();
+  if (!active_) {
+    return Status::OK();
+  }
   Qrow cur_row;
   (void)std::transform(tree_->begin(), tree_->end(), std::back_inserter(cur_row),
-                       [](DatasetOp &op) { return op.ConnectorSize(); });
+                       [](const DatasetOp &op) { return op.ConnectorSize(); });
   // Tree Iterator is in PostOrder (leaf first, e.g., 3,2,1)
   // reverse the order of the vector to get the root first.
   std::reverse(cur_row.begin(), cur_row.end());

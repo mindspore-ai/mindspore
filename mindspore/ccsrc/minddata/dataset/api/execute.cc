@@ -673,7 +673,8 @@ Status Execute::Run(const std::vector<std::shared_ptr<dataset::Execute>> &data_g
 extern "C" {
 // ExecuteRun_C has C-linkage specified, but returns user-defined type 'mindspore::Status' which is incompatible with C
 void ExecuteRun_C(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
-                  std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs, Status *s) {
+                  const std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs,
+                  Status *s) {
   Status ret = Execute::Run(data_graph, inputs, outputs);
   if (s == nullptr) {
     return;

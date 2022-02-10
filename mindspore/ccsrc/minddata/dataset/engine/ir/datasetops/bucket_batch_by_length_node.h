@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class BucketBatchByLengthNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -38,7 +37,7 @@ class BucketBatchByLengthNode : public DatasetNode {
                           bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 
   /// \brief Destructor
-  ~BucketBatchByLengthNode() = default;
+  ~BucketBatchByLengthNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -81,7 +80,6 @@ class BucketBatchByLengthNode : public DatasetNode {
   bool pad_to_bucket_boundary_;
   bool drop_remainder_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUCKET_BATCH_BY_LENGTH_NODE_H_

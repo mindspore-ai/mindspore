@@ -33,7 +33,7 @@ namespace dataset {
 /// \param[out] output - Tensor has n points with linearly space. The spacing between the points is (end-start)/(n-1).
 /// \return Status return code.
 template <typename T>
-Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
+Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int32_t n) {
   RETURN_IF_NOT_OK(ValidateNoGreaterThan("Linspace", "start", start, "end", end));
   n = std::isnan(n) ? 100 : n;
   TensorShape out_shape({n});
@@ -61,7 +61,7 @@ Status ComplexAngle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
   std::vector<T> phase(input_shape[0] * input_shape[1] * input_shape[2]);
-  int ind = 0;
+  size_t ind = 0;
 
   for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
     auto x = (*itr);
@@ -89,7 +89,7 @@ Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
   TensorShape input_shape = input->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2]});
   std::vector<T> abs(input_shape[0] * input_shape[1] * input_shape[2]);
-  int ind = 0;
+  size_t ind = 0;
   for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
     T x = (*itr);
     itr++;
@@ -121,7 +121,7 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
   TensorShape input_shape = abs->shape();
   TensorShape out_shape({input_shape[0], input_shape[1], input_shape[2], 2});
   std::vector<T> complex_vec(input_shape[0] * input_shape[1] * input_shape[2] * 2);
-  int ind = 0;
+  size_t ind = 0;
   auto itr_abs = abs->begin<T>();
   auto itr_angle = angle->begin<T>();
 
@@ -143,7 +143,7 @@ Status Polar(const std::shared_ptr<Tensor> &abs, const std::shared_ptr<Tensor> &
 /// \param[out] output - Complex tensor, <channel, freq, time, complex=2>.
 /// \return Status return code.
 template <typename T>
-Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int length, int dim) {
+Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int length, size_t dim) {
   TensorShape input_shape = input->shape();
   std::vector<int64_t> pad_shape_vec = {input_shape[0], input_shape[1], input_shape[2], input_shape[3]};
   pad_shape_vec[dim] += static_cast<int64_t>(length);
@@ -153,7 +153,7 @@ Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   auto itr_input = input->begin<T>();
   int64_t input_cnt = 0;
   /*lint -e{446} ind is modified in the body of the for loop */
-  for (int ind = 0; ind < static_cast<int>(in_vect.size()); ind++) {
+  for (auto ind = 0; ind < static_cast<int>(in_vect.size()); ind++) {
     in_vect[ind] = (*itr_input);
     input_cnt = (input_cnt + 1) % (input_shape[2] * input_shape[3]);
     itr_input++;
@@ -199,7 +199,7 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   }
 
   // concat phase time 0
-  int64_t ind = 0;
+  size_t ind = 0;
   auto itr_p0 = phase_time0->begin<T>();
   (void)phase.insert(phase.begin(), (*itr_p0));
   itr_p0++;
@@ -235,7 +235,7 @@ Status Mag(const std::shared_ptr<Tensor> &abs_0, const std::shared_ptr<Tensor> &
   std::vector<T> mag(mag_shape[0] * mag_shape[1] * mag_shape[2]);
   auto itr_abs_0 = abs_0->begin<T>();
   auto itr_abs_1 = abs_1->begin<T>();
-  for (int ind = 0; itr_abs_0 != abs_0->end<T>(); itr_abs_0++, itr_abs_1++, ind++) {
+  for (auto ind = 0; itr_abs_0 != abs_0->end<T>(); itr_abs_0++, itr_abs_1++, ind++) {
     mag[ind] = alphas[ind % mag_shape[2]] * (*itr_abs_1) + (1 - alphas[ind % mag_shape[2]]) * (*itr_abs_0);
   }
   std::shared_ptr<Tensor> mag_tensor;
@@ -246,7 +246,7 @@ Status Mag(const std::shared_ptr<Tensor> &abs_0, const std::shared_ptr<Tensor> &
 
 template <typename T>
 Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate,
-                   std::shared_ptr<Tensor> phase_advance) {
+                   const std::shared_ptr<Tensor> &phase_advance) {
   // pack <..., freq, time, complex>
   TensorShape input_shape = input->shape();
   TensorShape toShape({input->Size() / (input_shape[-1] * input_shape[-2] * input_shape[-3]), input_shape[-3],
@@ -260,11 +260,11 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   std::vector<dsize_t> time_steps_0, time_steps_1;
   std::vector<T> alphas;
   for (int ind = 0;; ind++) {
-    auto val = ind * rate;
+    T val = static_cast<float>(ind) * rate;
     if (val >= input_shape[-2]) {
       break;
     }
-    int val_int = static_cast<int>(val);
+    auto val_int = static_cast<dsize_t>(val);
     time_steps_0.push_back(val_int);
     time_steps_1.push_back(val_int + 1);
     alphas.push_back(fmod(val, 1));
@@ -319,7 +319,7 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
 }
 
 Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
-                   float n_freq) {
+                   int32_t n_freq) {
   std::shared_ptr<Tensor> phase_advance;
   switch (input->type().value()) {
     case DataType::DE_FLOAT32:
@@ -340,15 +340,15 @@ Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode nor
   TensorShape dct_shape({n_mels, n_mfcc});
   Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output);
   auto iter = (*output)->begin<float>();
-  const float sqrt_2 = 1 / sqrt(2);
-  float sqrt_2_n_mels = sqrt(2.0 / n_mels);
+  const float sqrt_2 = 1 / sqrt(2.0f);
+  auto sqrt_2_n_mels = static_cast<float>(sqrt(2.0 / n_mels));
   for (int i = 0; i < n_mels; i++) {
     for (int j = 0; j < n_mfcc; j++) {
       // calculate temp:
       // 1. while norm = None, use 2*cos(PI*(i+0.5)*j/n_mels)
       // 2. while norm = Ortho, divide the first row by sqrt(2),
       //    then using sqrt(2.0 / n_mels)*cos(PI*(i+0.5)*j/n_mels)
-      float temp = PI / n_mels * (i + 0.5) * j;
+      auto temp = static_cast<float>(PI / n_mels * (i + 0.5) * j);
       temp = cos(temp);
       if (norm == NormMode::kOrtho) {
         if (j == 0) {
@@ -400,11 +400,11 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
       std::to_string(input_shape[check_dim_ind]));
 
-  int32_t cell_size = input->type().SizeInBytes();
+  size_t cell_size = input->type().SizeInBytes();
 
   if (axis == 1) {
     // freq
-    for (int ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
+    for (auto ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
       int block_num = ind / (mask_width * input_shape[-1]);
       auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
                        input_shape[-1] * input_shape[-2] * block_num;
@@ -448,7 +448,7 @@ template <typename T>
 Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
   // calculate the output dimension
   auto input_size = input->shape().AsVector();
-  int32_t dim_back = static_cast<int32_t>(input_size.back());
+  auto dim_back = input_size.back();
   RETURN_IF_NOT_OK(
     ValidateTensorShape("ComplexNorm", input->IsComplex(), "<..., complex=2>", std::to_string(dim_back)));
   input_size.pop_back();
@@ -489,8 +489,8 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 }
 
 template <typename T>
-float sgn(T val) {
-  return static_cast<float>(static_cast<T>(0) < val) - static_cast<float>(val < static_cast<T>(0));
+inline float sgn(T val) {
+  return (val > 0) ? 1 : ((val < 0) ? -1 : 0);
 }
 
 template <typename T>
@@ -642,10 +642,10 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
             int32_t fade_out_len, FadeShape fade_shape) {
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   const TensorShape input_shape = input->shape();
-  int32_t waveform_length = static_cast<int32_t>(input_shape[-1]);
+  auto waveform_length = static_cast<int32_t>(input_shape[-1]);
   RETURN_IF_NOT_OK(ValidateNoGreaterThan("Fade", "fade_in_len", fade_in_len, "length of waveform", waveform_length));
   RETURN_IF_NOT_OK(ValidateNoGreaterThan("Fade", "fade_out_len", fade_out_len, "length of waveform", waveform_length));
-  int32_t num_waveform = static_cast<int32_t>(input->Size() / waveform_length);
+  auto num_waveform = static_cast<int32_t>(input->Size() / waveform_length);
   TensorShape toShape = TensorShape({num_waveform, waveform_length});
   RETURN_IF_NOT_OK((*output)->Reshape(toShape));
   TensorPtr fade_in;
@@ -792,7 +792,7 @@ Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, 
   RETURN_UNEXPECTED_IF_NULL(output);
   CHECK_FAIL_RETURN_UNEXPECTED(table_size > 0,
                                "table_size must be more than 0, but got: " + std::to_string(table_size));
-  int32_t phase_offset = static_cast<int32_t>(phase / PI / 2 * table_size + 0.5);
+  auto phase_offset = static_cast<int32_t>(phase / PI / 2 * table_size + 0.5);
   // get the offset of the i-th
   std::vector<int32_t> point;
   for (auto i = 0; i < table_size; i++) {
@@ -814,7 +814,7 @@ Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, 
       // change phase
       *iter = point[i] * 2.0 / table_size;
       // get complete offset
-      int32_t value = static_cast<int>(4 * point[i] / table_size);
+      auto value = static_cast<int>(4 * point[i] / table_size);
       // change the value of the square wave according to the number of complete offsets
       if (value == 0) {
         *iter = *iter + 0.5;
@@ -859,7 +859,7 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   std::ifstream in(file_path.ToString(), std::ios::in | std::ios::binary);
   CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open waveform file: " + file_path.ToString() +
                                                ", make sure the file not damaged or permission denied.");
-  WavHeader *header = new WavHeader();
+  auto *header = new WavHeader();
   in.read(reinterpret_cast<char *>(header), sizeof(WavHeader));
   *sample_rate = header->sample_rate;
   float bytes_per_sample = header->bits_per_sample / 8;
@@ -1012,7 +1012,7 @@ Status SlidingWindowCmnHelper(const std::shared_ptr<Tensor> &input, std::shared_
   RETURN_IF_NOT_OK(
     input->Reshape(TensorShape({static_cast<int>(first_index / (num_frames * num_feats)), num_frames, num_feats})));
 
-  int32_t num_channels = static_cast<int32_t>(input->shape()[0]);
+  auto num_channels = static_cast<int32_t>(input->shape()[0]);
   TensorPtr cmn_waveform;
   RETURN_IF_NOT_OK(
     Tensor::CreateEmpty(TensorShape({num_channels, num_frames, num_feats}), input->type(), &cmn_waveform));
@@ -1059,7 +1059,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   RETURN_IF_NOT_OK(ValidateNonNegative("Pad", "pad_right", pad_right));
   TensorShape input_shape = input->shape();
   int32_t wave_length = input_shape[-1];
-  int32_t num_wavs = static_cast<int32_t>(input->Size() / wave_length);
+  auto num_wavs = static_cast<int32_t>(input->Size() / wave_length);
   TensorShape to_shape = TensorShape({num_wavs, wave_length});
   RETURN_IF_NOT_OK(input->Reshape(to_shape));
   int32_t pad_length = wave_length + pad_left + pad_right;
@@ -1553,7 +1553,7 @@ Status SpectralCentroidImpl(const std::shared_ptr<Tensor> &input, std::shared_pt
       }
     }
     specgram.push_back(tmp);
-    specgram_sum.push_back(specgram[k].colwise().sum());
+    specgram_sum.emplace_back(specgram[k].colwise().sum());
   }
   for (int k = 0; k < k_num; k++) {
     for (int i = 0; i < channals; ++i) {
@@ -1561,7 +1561,7 @@ Status SpectralCentroidImpl(const std::shared_ptr<Tensor> &input, std::shared_pt
         tmp(i, j) = freqs_r(i, 0) * specgram[k](i, j);
       }
     }
-    specgram_result.push_back((tmp).colwise().sum());
+    specgram_result.emplace_back((tmp).colwise().sum());
   }
   auto itr_output = output_tensor->begin<T>();
   for (int k = 0; k < k_num; k++) {

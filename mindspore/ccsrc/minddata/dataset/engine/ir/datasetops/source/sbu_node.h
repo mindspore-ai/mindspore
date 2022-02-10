@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class SBUNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
@@ -33,7 +32,7 @@ class SBUNode : public MappableSourceNode {
           const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
-  ~SBUNode() = default;
+  ~SBUNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
@@ -91,7 +90,6 @@ class SBUNode : public MappableSourceNode {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SBU_NODE_H_

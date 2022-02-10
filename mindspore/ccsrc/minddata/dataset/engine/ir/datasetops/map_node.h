@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class MapNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -36,7 +35,7 @@ class MapNode : public DatasetNode {
           ManualOffloadMode offload = ManualOffloadMode::kUnspecified);
 
   /// \brief Destructor
-  ~MapNode() = default;
+  ~MapNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -127,7 +126,6 @@ class MapNode : public DatasetNode {
   /// \brief ManualOffloadMode to indicate manual_offload status
   ManualOffloadMode offload_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_MAP_NODE_H_

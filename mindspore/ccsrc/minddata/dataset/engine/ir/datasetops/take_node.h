@@ -25,14 +25,13 @@
 
 namespace mindspore {
 namespace dataset {
-
 class TakeNode : public DatasetNode {
  public:
   /// \brief Constructor
   explicit TakeNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
-  ~TakeNode() = default;
+  ~TakeNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -57,7 +56,7 @@ class TakeNode : public DatasetNode {
 
   /// \brief Getter
   /// \return Number of rows to output
-  const int32_t Count() const { return take_count_; }
+  int32_t Count() const { return take_count_; }
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
@@ -99,7 +98,6 @@ class TakeNode : public DatasetNode {
  private:
   int32_t take_count_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_TAKE_NODE_H_

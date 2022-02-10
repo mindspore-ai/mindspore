@@ -33,7 +33,7 @@ class VolOperation : public TensorOperation {
  public:
   VolOperation(float gain, GainType gain_type);
 
-  ~VolOperation();
+  ~VolOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

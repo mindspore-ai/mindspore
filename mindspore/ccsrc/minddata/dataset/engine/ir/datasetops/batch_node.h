@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class BatchNode : public DatasetNode {
  public:
 #ifdef ENABLE_PYTHON
@@ -43,7 +42,7 @@ class BatchNode : public DatasetNode {
   BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder);
 
   /// \brief Destructor
-  ~BatchNode() = default;
+  ~BatchNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -126,7 +125,6 @@ class BatchNode : public DatasetNode {
 #endif
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BATCH_NODE_H_

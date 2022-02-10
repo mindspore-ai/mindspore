@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -40,7 +39,7 @@ class PKSamplerObj : public SamplerObj {
  public:
   PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples);
 
-  ~PKSamplerObj();
+  ~PKSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -71,7 +70,6 @@ class PKSamplerObj : public SamplerObj {
   bool shuffle_;
   int64_t num_samples_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_PK_SAMPLER_IR_H_

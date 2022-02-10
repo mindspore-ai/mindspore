@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class BuildSentenceVocabNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -37,7 +36,7 @@ class BuildSentenceVocabNode : public DatasetNode {
                          SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params);
 
   /// \brief Destructor
-  ~BuildSentenceVocabNode() = default;
+  ~BuildSentenceVocabNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -88,7 +87,6 @@ class BuildSentenceVocabNode : public DatasetNode {
   SentencePieceModel model_type_;
   std::unordered_map<std::string, std::string> params_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUILD_SENTENCE_PIECE_VOCAB_NODE_H_

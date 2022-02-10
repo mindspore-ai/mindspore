@@ -37,7 +37,7 @@ class LowpassBiquadOperation : public TensorOperation {
  public:
   LowpassBiquadOperation(int32_t sample_rate, float cutoff_freq, float Q);
 
-  ~LowpassBiquadOperation() = default;
+  ~LowpassBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

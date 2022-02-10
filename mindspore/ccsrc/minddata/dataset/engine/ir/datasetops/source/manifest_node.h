@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class ManifestNode : public MappableSourceNode {
  public:
   /// \brief Constructor
@@ -34,7 +33,7 @@ class ManifestNode : public MappableSourceNode {
                const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~ManifestNode() = default;
+  ~ManifestNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -104,7 +103,6 @@ class ManifestNode : public MappableSourceNode {
   std::map<std::string, int32_t> class_index_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_MANIFEST_NODE_H_

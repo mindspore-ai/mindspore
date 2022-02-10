@@ -32,7 +32,7 @@ class DeviceTensor : public Tensor {
  public:
   DeviceTensor(const TensorShape &shape, const DataType &type);
 
-  ~DeviceTensor() {}
+  ~DeviceTensor() override = default;
 
   Status SetAttributes(uint8_t *data_ptr, const uint32_t &dataSize, const uint32_t &width, const uint32_t &widthStride,
                        const uint32_t &height, const uint32_t &heightStride);

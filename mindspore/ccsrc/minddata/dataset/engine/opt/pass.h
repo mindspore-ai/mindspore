@@ -125,7 +125,7 @@ class IRNodePass : public IRPass {
   // Default DFS traversal
   explicit IRNodePass(Order order = Order::DFS) { traversalOrder_ = order; }
 
-  ~IRNodePass() = default;
+  ~IRNodePass() override = default;
 
   /// \brief Run the transformation pass against the IR tree
   /// \param[in,out] root_ir Pointer to the IR tree to be transformed

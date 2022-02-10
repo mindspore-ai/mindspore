@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class FakeImageNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
@@ -33,7 +32,7 @@ class FakeImageNode : public MappableSourceNode {
                 std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~FakeImageNode() = default;
+  ~FakeImageNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
@@ -95,7 +94,6 @@ class FakeImageNode : public MappableSourceNode {
   int32_t base_seed_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_FAKE_IMAGE_NODE_H_

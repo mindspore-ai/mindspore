@@ -36,7 +36,7 @@ class BiquadOperation : public TensorOperation {
  public:
   BiquadOperation(float b0, float b1, float b2, float a0, float a1, float a2);
 
-  ~BiquadOperation() = default;
+  ~BiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

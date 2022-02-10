@@ -33,7 +33,7 @@ class WIDERFaceNode : public MappableSourceNode {
                 const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
-  ~WIDERFaceNode() = default;
+  ~WIDERFaceNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

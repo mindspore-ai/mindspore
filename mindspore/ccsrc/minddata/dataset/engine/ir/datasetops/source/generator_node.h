@@ -42,7 +42,7 @@ class GeneratorNode : public MappableSourceNode {
                 std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers);
 
   /// \brief Destructor
-  ~GeneratorNode() = default;
+  ~GeneratorNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -123,7 +123,6 @@ class GeneratorNode : public MappableSourceNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *p, bool *const modified) override;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_GENERATOR_NODE_H_

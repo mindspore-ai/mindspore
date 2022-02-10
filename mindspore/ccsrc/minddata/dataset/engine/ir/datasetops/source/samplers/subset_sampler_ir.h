@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -40,7 +39,7 @@ class SubsetSamplerObj : public SamplerObj {
  public:
   SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
-  ~SubsetSamplerObj();
+  ~SubsetSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -70,7 +69,6 @@ class SubsetSamplerObj : public SamplerObj {
   const std::vector<int64_t> indices_;
   int64_t num_samples_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SUBSET_SAMPLER_IR_H_

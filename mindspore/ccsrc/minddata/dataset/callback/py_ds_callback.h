@@ -42,7 +42,7 @@ class PyDSCallback : public DSCallback {
         epoch_end_needed_(false),
         step_end_needed_(false) {}
 
-  ~PyDSCallback() = default;
+  ~PyDSCallback() override = default;
 
   void SetBegin(const py::function &f);
   void SetEnd(const py::function &f);
@@ -128,5 +128,4 @@ class PyDSCallback : public DSCallback {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_PY_DS_CALLBACK_H

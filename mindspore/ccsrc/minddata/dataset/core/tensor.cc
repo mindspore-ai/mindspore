@@ -85,10 +85,12 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     data_ = other.GetMutableBuffer();
     data_end_ = other.data_end_;
     data_allocator_ = std::move(other.data_allocator_);
+    yuv_shape_ = other.yuv_shape_;
     other.Invalidate();
   }
   return *this;
 }
+
 Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, TensorPtr *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Invalid shape.");
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Invalid data type.");
@@ -111,6 +113,7 @@ Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, Tenso
   }
   return Status::OK();
 }
+
 Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, TensorPtr *out) {
   RETURN_IF_NOT_OK(CreateEmpty(shape, type, out));
   if (src != nullptr && out != nullptr) {
@@ -680,7 +683,7 @@ Status Tensor::to_json(nlohmann::json *out_json) {
     RETURN_IF_NOT_OK(to_json_convert<double>(&args));
   } else if (type_ == DataType::DE_STRING) {
     std::vector<std::string> data_out;
-    for (auto it = this->begin<std::string_view>(); it != this->end<std::string_view>(); it++) {
+    for (auto it = this->begin<std::string_view>(); it != this->end<std::string_view>(); ++it) {
       data_out.emplace_back(*it);
     }
     args["data"] = data_out;
@@ -739,7 +742,8 @@ Status Tensor::from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tens
 }
 
 template <typename T>
-Status Tensor::from_json_convert(nlohmann::json json_data, TensorShape shape, std::shared_ptr<Tensor> *tensor) {
+Status Tensor::from_json_convert(const nlohmann::json &json_data, const TensorShape &shape,
+                                 std::shared_ptr<Tensor> *tensor) {
   std::vector<T> data = json_data;
   RETURN_IF_NOT_OK(CreateFromVector(data, shape, tensor));
   return Status::OK();

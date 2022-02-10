@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \class ImageFolderNode
 /// \brief A Dataset derived class to represent ImageFolder dataset
 class ImageFolderNode : public MappableSourceNode {
@@ -39,7 +38,7 @@ class ImageFolderNode : public MappableSourceNode {
                   std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~ImageFolderNode() = default;
+  ~ImageFolderNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -110,7 +109,6 @@ class ImageFolderNode : public MappableSourceNode {
   std::map<std::string, int32_t> class_indexing_;
   std::set<std::string> exts_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_IMAGE_FOLDER_NODE_H_

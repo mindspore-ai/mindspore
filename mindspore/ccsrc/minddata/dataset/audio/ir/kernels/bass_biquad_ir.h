@@ -36,7 +36,7 @@ class BassBiquadOperation : public TensorOperation {
  public:
   BassBiquadOperation(int32_t sample_rate, float gain, float central_freq, float Q);
 
-  ~BassBiquadOperation() = default;
+  ~BassBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

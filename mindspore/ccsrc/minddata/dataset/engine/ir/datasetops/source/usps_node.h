@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class USPSNode : public NonMappableSourceNode {
  public:
   /// \brief Constructor.
@@ -33,7 +32,7 @@ class USPSNode : public NonMappableSourceNode {
            int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~USPSNode() = default;
+  ~USPSNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
@@ -116,7 +115,6 @@ class USPSNode : public NonMappableSourceNode {
   int32_t num_shards_;
   int32_t shard_id_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_USPS_NODE_H_

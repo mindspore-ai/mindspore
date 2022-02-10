@@ -56,8 +56,8 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   RETURN_IF_NOT_OK(input->Reshape(to_shape));
 
   std::vector<T> max_val;
-  int step = to_shape[-3] * input_shape[-2] * input_shape[-1];
-  int cnt = 0;
+  uint64_t step = to_shape[-3] * input_shape[-2] * input_shape[-1];
+  uint64_t cnt = 0;
   T temp_max = std::numeric_limits<T>::lowest();
   for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
     // do clamp
@@ -73,10 +73,10 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   }
 
   if (!std::isnan(top_db)) {
-    int ind = 0;
+    uint64_t ind = 0;
     for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
-      float lower_bound = max_val[ind / step] - top_db;
-      *itr = std::max((*itr), static_cast<T>(lower_bound));
+      T lower_bound = max_val[ind / step] - top_db;
+      *itr = std::max((*itr), lower_bound);
     }
   }
   RETURN_IF_NOT_OK(input->Reshape(input_shape));
@@ -147,10 +147,9 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, input->type(), &out));
   auto itr_out = out->begin<T>();
   for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
-    T temp1, temp2 = 0;
     // PI / 2 is half of the constant PI
-    temp1 = static_cast<T>(*itr_in) * (PI / TWO);
-    temp2 = enhancement_amount_value * std::sin(temp1 * 4);
+    T temp1 = static_cast<T>(*itr_in) * (PI / TWO);
+    T temp2 = enhancement_amount_value * std::sin(temp1 * 4);
     *itr_out = std::sin(temp1 + temp2);
     itr_out++;
   }
@@ -242,8 +241,8 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   TensorShape input_shape = input->shape();
   TensorShape toShape({input->Size() / input_shape[-1], input_shape[-1]});
   input->Reshape(toShape);
-  auto shape_0 = input->shape()[0];
-  auto shape_1 = input->shape()[1];
+  auto shape_0 = static_cast<size_t>(input->shape()[0]);
+  auto shape_1 = static_cast<size_t>(input->shape()[1]);
   std::vector<T> signal;
   std::shared_ptr<Tensor> out;
   std::vector<T> out_vect(shape_0 * shape_1);
@@ -355,7 +354,7 @@ Status SpectralCentroid(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 /// \param output: Tensor after stretch in time domain.
 /// \return Status code.
 Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
-                   float n_freq);
+                   int32_t n_freq);
 
 /// \brief Apply a mask along axis.
 /// \param input: Tensor of shape <..., freq, time>.

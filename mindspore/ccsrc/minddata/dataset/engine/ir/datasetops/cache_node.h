@@ -31,7 +31,7 @@ class CacheNode : public DatasetNode {
             std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~CacheNode() = default;
+  ~CacheNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -71,5 +71,4 @@ class CacheNode : public DatasetNode {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_CACHE_NODE_H_

@@ -28,7 +28,6 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 using EdgeType = int8_t;
-using EdgeIdType = int32_t;
 
 class Edge {
  public:
@@ -38,7 +37,8 @@ class Edge {
   // @param WeightType weight - edge weight
   // @param std::shared_ptr<Node> src_node - source node
   // @param std::shared_ptr<Node> dst_node - destination node
-  Edge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node, std::shared_ptr<Node> dst_node)
+  Edge(EdgeIdType id, EdgeType type, WeightType weight, const std::shared_ptr<Node> &src_node,
+       const std::shared_ptr<Node> &dst_node)
       : id_(id), type_(type), weight_(weight), src_node_(src_node), dst_node_(dst_node) {}
 
   virtual ~Edge() = default;

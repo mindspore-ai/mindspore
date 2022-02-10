@@ -37,7 +37,7 @@ class PreBuiltDatasetCache : public DatasetCacheImpl {
     cache_client_ = std::move(cc);
   }
 
-  ~PreBuiltDatasetCache() = default;
+  ~PreBuiltDatasetCache() override = default;
 
   /// Method to initialize the DatasetCache by creating an instance of a CacheClient
   /// \return Status Error code
@@ -45,5 +45,4 @@ class PreBuiltDatasetCache : public DatasetCacheImpl {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_CACHE_PRE_BUILT_DATASET_CACHE_H_

@@ -40,7 +40,7 @@ class EnWik9Node : public NonMappableSourceNode {
              int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
-  ~EnWik9Node() = default;
+  ~EnWik9Node() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

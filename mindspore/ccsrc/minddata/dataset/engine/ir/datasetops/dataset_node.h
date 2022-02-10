@@ -181,7 +181,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   explicit DatasetNode(const std::shared_ptr<DatasetCache> &dataset_cache);
 
   /// \brief Destructor
-  ~DatasetNode() = default;
+  virtual ~DatasetNode() = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -286,7 +286,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
   /// \brief Check if this node is an orphan node
   /// \return True if this node isn't nullptr nor does it have any children and a parent
-  static bool IsOrphanNode(std::shared_ptr<DatasetNode> node) {
+  static bool IsOrphanNode(const std::shared_ptr<DatasetNode> &node) {
     return node != nullptr && node->parent_ == nullptr && node->Children().empty();
   }
 
@@ -294,7 +294,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   void HasCacheAbove() { descendant_of_cache_ = true; }
 
   /// \brief Getter of the number of workers
-  int32_t NumWorkers() { return num_workers_; }
+  int32_t NumWorkers() const { return num_workers_; }
 
   /// \brief Getter of dataset cache
   std::shared_ptr<DatasetCache> GetDatasetCache() { return cache_; }
@@ -346,7 +346,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   void SetTotalRepeats(int32_t total_repeats) { total_repeats_ = total_repeats; }
 
   /// \brief Setter function, set the number of epochs for the operator
-  void SetNumEpochs(int32_t num_epochs) { num_epochs_ = num_epochs; }
+  virtual void SetNumEpochs(int32_t num_epochs) { num_epochs_ = num_epochs; }
 
   /// \brief Getter function
   /// \return The number of required repeats for the operator
@@ -399,7 +399,7 @@ class MappableSourceNode : public DatasetNode {
   Status Accept(IRNodePass *const p, bool *const modified) override;
 
   /// \brief Destructor
-  ~MappableSourceNode() = default;
+  virtual ~MappableSourceNode() = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -430,7 +430,7 @@ class NonMappableSourceNode : public DatasetNode {
   Status Accept(IRNodePass *const p, bool *const modified) override;
 
   /// \brief Destructor
-  ~NonMappableSourceNode() = default;
+  virtual ~NonMappableSourceNode() = default;
 
   /// \brief Node name getter
   /// \return Name of the current node

@@ -17,13 +17,13 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_GNN_GRAPH_DATA_CLIENT_H_
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "proto/gnn_graph_data.grpc.pb.h"
@@ -48,7 +48,7 @@ class GraphDataClient : public GraphData {
   // @param int32_t num_workers - number of parallel threads
   GraphDataClient(const std::string &dataset_file, const std::string &hostname, int32_t port);
 
-  ~GraphDataClient();
+  ~GraphDataClient() override;
 
   Status Init() override;
 
