@@ -33,7 +33,11 @@ int FusedBatchnormCPUKernel::Prepare() {
 }
 
 int FusedBatchnormCPUKernel::ReSize() {
-  FillParam();
+  auto ret = FillParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fill param failed.";
+    return ret;
+  }
   FreeMeanAndVariance();
   FreeScaleAndOffset();
   return InitConstTensor();
@@ -139,10 +143,10 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
   variance_ = malloc(in_tensors_.at(FIFTH_INPUT)->Size());
   CHECK_NULL_RETURN(variance_);
 
-  memcpy(scale_, scale->data(), scale->Size());
-  memcpy(offset_, offset->data(), offset->Size());
-  memcpy(mean_, mean->data(), mean->Size());
-  memcpy(variance_, variance->data(), variance->Size());
+  (void)memcpy(scale_, scale->data(), scale->Size());
+  (void)memcpy(offset_, offset->data(), offset->Size());
+  (void)memcpy(mean_, mean->data(), mean->Size());
+  (void)memcpy(variance_, variance->data(), variance->Size());
   return RET_OK;
 }
 
@@ -171,14 +175,14 @@ int FusedBatchnormCPUKernel::Run() {
     CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT)->data());
     CHECK_NULL_RETURN(out_tensors_.at(FOURTH_INPUT)->data());
     CHECK_NULL_RETURN(out_tensors_.at(FIFTH_INPUT)->data());
-    memcpy(out_tensors_.at(SECOND_INPUT)->data(), scale, out_tensors_.at(SECOND_INPUT)->Size());
-    memcpy(out_tensors_.at(THIRD_INPUT)->data(), offset, out_tensors_.at(THIRD_INPUT)->Size());
-    memcpy(out_tensors_.at(FOURTH_INPUT)->data(), current_mean, out_tensors_.at(FOURTH_INPUT)->Size());
-    memcpy(out_tensors_.at(FIFTH_INPUT)->data(), current_var, out_tensors_.at(FIFTH_INPUT)->Size());
+    (void)memcpy(out_tensors_.at(SECOND_INPUT)->data(), scale, out_tensors_.at(SECOND_INPUT)->Size());
+    (void)memcpy(out_tensors_.at(THIRD_INPUT)->data(), offset, out_tensors_.at(THIRD_INPUT)->Size());
+    (void)memcpy(out_tensors_.at(FOURTH_INPUT)->data(), current_mean, out_tensors_.at(FOURTH_INPUT)->Size());
+    (void)memcpy(out_tensors_.at(FIFTH_INPUT)->data(), current_var, out_tensors_.at(FIFTH_INPUT)->Size());
 
     // Copy to local variables
-    memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
-    memcpy(offset_, offset, in_tensors_.at(THIRD_INPUT)->Size());
+    (void)memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
+    (void)memcpy(offset_, offset, in_tensors_.at(THIRD_INPUT)->Size());
 
     trained_ = true;  // trained at least once
   }
@@ -190,7 +194,11 @@ int FusedBatchnormCPUKernel::Run() {
 }
 
 int FusedBatchnormCPUKernel::Eval() {
-  InnerKernel::Eval();
+  auto ret = InnerKernel::Eval();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Inner kernel eval error.";
+    return ret;
+  }
   if (trained_) {
     float *save_mean = static_cast<float *>(in_tensors_.at(FOURTH_INPUT)->data());
     float *save_var = static_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data());
@@ -202,10 +210,10 @@ int FusedBatchnormCPUKernel::Eval() {
     CHECK_NULL_RETURN(bias);
 
     // Copy to local variables
-    memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
-    memcpy(offset_, bias, in_tensors_.at(THIRD_INPUT)->Size());
-    memcpy(mean_, save_mean, in_tensors_.at(FOURTH_INPUT)->Size());
-    memcpy(variance_, save_var, in_tensors_.at(FIFTH_INPUT)->Size());
+    (void)memcpy(scale_, scale, in_tensors_.at(SECOND_INPUT)->Size());
+    (void)memcpy(offset_, bias, in_tensors_.at(THIRD_INPUT)->Size());
+    (void)memcpy(mean_, save_mean, in_tensors_.at(FOURTH_INPUT)->Size());
+    (void)memcpy(variance_, save_var, in_tensors_.at(FIFTH_INPUT)->Size());
   }
   return RET_OK;
 }
