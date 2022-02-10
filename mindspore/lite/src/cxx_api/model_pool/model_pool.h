@@ -57,6 +57,7 @@ class ModelPool {
   std::vector<MSTensor> model_outputs_;
   size_t num_models_ = 10;
   size_t batch_split_num_ = 4;
+  std::mutex mtx_split_task_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H

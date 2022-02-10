@@ -47,6 +47,7 @@ class PredictTaskQueue {
   bool IsPredictTaskDone() { return predict_task_done_; }
   int GetTaskNum();
   int GetWaitModelNum() { return waite_model_num_; }
+  void DecreaseWaitModelNum(int num) { waite_model_num_ -= num; }
 
  private:
   PredictTaskQueue() = default;
