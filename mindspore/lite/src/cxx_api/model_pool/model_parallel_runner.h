@@ -50,6 +50,11 @@ class MS_API ModelParallelRunner {
   /// \return The vector that includes all input tensors.
   std::vector<MSTensor> GetInputs();
 
+  /// \brief Obtains all output tensors of the model.
+  ///
+  /// \return The vector that includes all output tensors.
+  std::vector<MSTensor> GetOutputs();
+
   /// \brief Inference ModelPoolManager.
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.

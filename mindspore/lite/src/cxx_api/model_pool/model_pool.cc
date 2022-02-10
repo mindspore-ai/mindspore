@@ -150,6 +150,14 @@ std::vector<MSTensor> ModelPool::GetInputs() {
   return model_inputs_;
 }
 
+std::vector<MSTensor> ModelPool::GetOutputs() {
+  if (model_outputs_.empty()) {
+    MS_LOG(ERROR) << "model output is empty.";
+    return {};
+  }
+  return model_outputs_;
+}
+
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config,
                        const Key &dec_key, const std::string &dec_mode) {
   auto model_pool_context = CreateModelContext(runner_config);
@@ -157,13 +165,15 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
     return kLiteError;
   }
+  std::shared_ptr<ModelThread> model_thread = nullptr;
   for (size_t i = 0; i < num_models_; i++) {
-    auto model_thread = std::make_shared<ModelThread>();
+    model_thread = std::make_shared<ModelThread>();
     auto status = model_thread->Init(model_path, model_pool_context[i], dec_key, dec_mode);
-    if (model_inputs_.empty()) {
-      model_inputs_ = model_thread->GetInputs();
-    }
     model_thread_vec_.push_back(std::thread(&ModelThread::Run, model_thread));
+  }
+  if (model_thread != nullptr) {
+    model_inputs_ = model_thread->GetInputs();
+    model_outputs_ = model_thread->GetOutputs();
   }
   return kSuccess;
 }

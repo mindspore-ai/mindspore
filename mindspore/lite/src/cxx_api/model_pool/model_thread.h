@@ -40,6 +40,8 @@ class ModelThread {
 
   std::vector<MSTensor> GetInputs();
 
+  std::vector<MSTensor> GetOutputs();
+
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
