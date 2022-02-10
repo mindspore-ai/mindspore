@@ -139,6 +139,12 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+#ifdef SERVER_INFERENCE
+    AddFlag(&BenchmarkFlags::model_pool_, "modelPool", "use model pool", false);
+    AddFlag(&BenchmarkFlags::num_require_, "numRequire", "require num", 1);
+    AddFlag(&BenchmarkFlags::num_model_, "numModel", "build model num", 1);
+    AddFlag(&BenchmarkFlags::num_split_, "numSplit", "split for batch", 1);
+#endif
 #ifdef ENABLE_OPENGL_TEXTURE
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
 #endif
@@ -152,6 +158,12 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
 
  public:
   // common
+#ifdef SERVER_INFERENCE
+  bool model_pool_ = false;
+  int num_require_ = 1;
+  int num_model_ = 1;
+  int num_split_ = 1;
+#endif
   std::string model_file_;
   std::string in_data_file_;
   std::string config_file_;

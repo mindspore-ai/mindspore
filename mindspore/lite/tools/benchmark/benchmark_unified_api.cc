@@ -41,7 +41,9 @@
 #include "include/mpi_sys.h"
 #include "include/mpi_vb.h"
 #endif
-
+#ifdef SERVER_INFERENCE
+#include "src/cxx_api/model_pool/model_pool.h"
+#endif
 namespace mindspore {
 constexpr size_t kDataToStringMaxNum = 40;
 constexpr int kPrintDataNum = 20;
@@ -217,6 +219,39 @@ int BenchmarkUnifiedApi::LoadInput() {
 }
 
 int BenchmarkUnifiedApi::GenerateInputData() {
+#ifdef SERVER_INFERENCE
+  if (flags_->model_pool_) {
+    std::vector<MSTensor> inputs;
+    for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
+      auto tensor_name = ms_inputs_for_api_[i].Name();
+      size_t size;
+      if (ms_inputs_for_api_[i].DataType() == static_cast<enum DataType>(kNumberTypeFloat32)) {
+        size = sizeof(float);
+      } else if (ms_inputs_for_api_[i].DataType() == static_cast<enum DataType>(kNumberTypeInt32)) {
+        size = sizeof(int32_t);
+      } else {
+        MS_LOG(ERROR) << "not support in model pool.";
+        return RET_ERROR;
+      }
+      std::vector<int64_t> shape;
+      for (size_t j = 0; j < flags_->resize_dims_[i].size(); j++) {
+        size *= flags_->resize_dims_[i][j];
+        shape.push_back(flags_->resize_dims_[i][j]);
+      }
+      void *input_data = malloc(size);
+      int status = GenerateRandomData(size, input_data, static_cast<int>(ms_inputs_for_api_[i].DataType()));
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
+        return status;
+      }
+      auto new_tensor =
+        mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
+      inputs.push_back(*new_tensor);
+    }
+    all_inputs_.push_back(inputs);
+    return RET_OK;
+  }
+#endif
   for (auto &tensor : ms_inputs_for_api_) {
     if (static_cast<int>(tensor.DataType()) == kObjectTypeString) {
       MSTensor *input = MSTensor::StringsToTensor(tensor.Name(), {"you're the best."});
@@ -260,6 +295,40 @@ void BenchmarkUnifiedApi::UpdateConfigInfo() {
 }
 
 int BenchmarkUnifiedApi::ReadInputFile() {
+#ifdef SERVER_INFERENCE
+  if (flags_->model_pool_) {
+    std::vector<MSTensor> inputs;
+    for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
+      size_t size;
+      char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
+      if (bin_buf == nullptr) {
+        MS_LOG(ERROR) << "ReadFile return nullptr";
+        return RET_ERROR;
+      }
+      auto tensor_name = ms_inputs_for_api_[i].Name();
+      std::vector<int64_t> shape;
+      for (size_t j = 0; j < flags_->resize_dims_[i].size(); j++) {
+        shape.push_back(flags_->resize_dims_[i][j]);
+      }
+      if (size > MAX_MALLOC_SIZE) {
+        MS_LOG(ERROR) << "malloc size is wrong.";
+        return RET_ERROR;
+      }
+      void *input_data = malloc(size);
+      if (input_data == nullptr) {
+        MS_LOG(ERROR) << "malloc failed.";
+        return RET_ERROR;
+      }
+      memcpy(input_data, bin_buf, size);
+      delete[] bin_buf;
+      auto new_tensor =
+        mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
+      inputs.push_back(*new_tensor);
+    }
+    all_inputs_.push_back(inputs);
+    return RET_OK;
+  }
+#endif
   if (ms_inputs_for_api_.empty()) {
     return RET_OK;
   }
@@ -413,6 +482,49 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
 
   return RET_OK;
 }
+#ifdef SERVER_INFERENCE
+int BenchmarkUnifiedApi::CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs) {
+  if (outputs->empty()) {
+    MS_LOG(ERROR) << "outputs is empty.";
+    return RET_ERROR;
+  }
+  std::cout << "================ Comparing Output data ================" << std::endl;
+  float total_bias = 0;
+  int total_size = 0;
+  // check the output tensor name.
+  for (size_t i = 0; i < outputs->size(); i++) {
+    std::string tensor_name = outputs->at(i).Name();
+    mindspore::MSTensor tensor = outputs->at(i);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
+      return RET_ERROR;
+    }
+    int ret = CompareDataGetTotalBiasAndSize(tensor_name, &tensor, &total_bias, &total_size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Error in CompareData";
+      std::cerr << "Error in CompareData" << std::endl;
+      std::cout << "=======================================================" << std::endl << std::endl;
+      return ret;
+    }
+  }
+  float mean_bias;
+  if (total_size != 0) {
+    mean_bias = ((total_bias / float_t(total_size)) * kPercentageDivisor);
+  } else {
+    mean_bias = 0;
+  }
+
+  std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%" << std::endl;
+  std::cout << "=======================================================" << std::endl << std::endl;
+
+  if (mean_bias > this->flags_->accuracy_threshold_) {
+    MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
+    std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+#endif
 
 int BenchmarkUnifiedApi::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
@@ -781,7 +893,16 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
 
 int BenchmarkUnifiedApi::PrintInputData() {
   for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
-    auto input = ms_inputs_for_api_[i];
+    mindspore::MSTensor input;
+#ifdef SERVER_INFERENCE
+    if (flags_->model_pool_) {
+      input = all_inputs_[0][i];
+    } else {
+      input = ms_inputs_for_api_[i];
+    }
+#else
+    input = ms_inputs_for_api_[i];
+#endif
     MS_ASSERT(input != nullptr);
     auto tensor_data_type = static_cast<int>(input.DataType());
 
@@ -823,6 +944,81 @@ int BenchmarkUnifiedApi::PrintInputData() {
   }
   return RET_OK;
 }
+#ifdef SERVER_INFERENCE
+int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
+  // model pool init
+  ModelParallelRunner model_pool;
+  auto runner_config = std::make_shared<RunnerConfig>(context, flags_->num_model_);
+  auto model_init_start = GetTimeUs();
+  auto ret = model_pool.Init(flags_->model_file_, runner_config);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "model pool init failed.";
+    return RET_ERROR;
+  }
+  auto model_init_end = GetTimeUs();
+  // load data
+  ms_inputs_for_api_ = model_pool.GetInputs();
+  for (int i = 0; i < flags_->num_require_ + flags_->warm_up_loop_count_; i++) {
+    auto status = LoadInput();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Generate input data error";
+      return status;
+    }
+    std::vector<MSTensor> output;
+    all_outputs_.push_back(output);
+  }
+  if (!flags_->benchmark_data_file_.empty()) {
+    auto status = PrintInputData();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "PrintInputData error " << status;
+      return status;
+    }
+    status = ReadCalibData();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "ReadCalibData error " << status;
+      return status;
+    }
+  }
+  // model pool predict
+  auto model_pool_run = [&](int num) {
+    auto input = all_inputs_[num];
+    auto output = all_outputs_[num];
+    auto predict_start = GetTimeUs();
+    auto ret = model_pool.Predict(input, &output);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "model pool predict failed.";
+    }
+    auto predict_end = GetTimeUs();
+    MS_LOG(ERROR) << "run predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms";
+    if (!flags_->benchmark_data_file_.empty()) {
+      auto status = CompareOutputForModelPool(&output);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Compare output error " << status;
+      }
+    }
+  };
+  std::vector<std::thread> model_thread_warm_up;
+  for (int i = 0; i < flags_->warm_up_loop_count_; i++) {
+    model_thread_warm_up.push_back(std::thread(model_pool_run, i));
+  }
+  for (auto &warm_up_thread : model_thread_warm_up) {
+    warm_up_thread.join();
+  }
+  MS_LOG(DEBUG) << "================ end warm up ================";
+  auto all_start = GetTimeUs();
+  std::vector<std::thread> model_thread_run;
+  for (int i = 0; i < flags_->num_require_; i++) {
+    model_thread_run.push_back(std::thread(model_pool_run, i + flags_->warm_up_loop_count_));
+  }
+  for (auto &run_thread : model_thread_run) {
+    run_thread.join();
+  }
+  auto all_end = GetTimeUs();
+  std::cout << "model pool init time: " << (model_init_end - model_init_start) / kFloatMSEC << " ms\n";
+  std::cout << "model pool all run time: " << (all_end - all_start) / kFloatMSEC << " ms\n";
+  return RET_OK;
+}
+#endif
 
 int BenchmarkUnifiedApi::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
@@ -867,6 +1063,16 @@ int BenchmarkUnifiedApi::RunBenchmark() {
   }
 
   UpdateConfigInfo();
+#ifdef SERVER_INFERENCE
+  if (flags_->model_pool_) {
+    status = RunModelPool(context);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "run model pool failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+#endif
 
   auto ret = ms_model_.Build(flags_->model_file_, model_type, context);
   if (ret != kSuccess) {
