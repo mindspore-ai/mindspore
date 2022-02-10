@@ -216,9 +216,13 @@ int32_t Tensor::Width() const {
 
 size_t Tensor::Size() const {
   size_t element_size = DataTypeSize(this->data_type_);
+  if (element_size == 0) {
+    MS_LOG(INFO) << "Unexpected data type: " << data_type_;
+    return 0;
+  }
   auto element_num = (format_ == mindspore::NC4HW4 || format_ == mindspore::NHWC4) ? ElementsC4Num() : ElementsNum();
-  if (element_num < 0) {
-    MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num;
+  if (element_num <= 0) {
+    MS_LOG(INFO) << "Element number of tensor should large than 0 : " << element_num << ", shape: " << shape_;
     return 0;
   }
   return element_size * element_num;
@@ -310,8 +314,16 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
   if (allocator != nullptr) {
     allocator_ = allocator;
   }
+  size_t element_size = DataTypeSize(this->data_type_);
+  if (element_size == 0) {
+    MS_LOG(ERROR) << "Unexpected data type: " << data_type_;
+    return RET_ERROR;
+  }
   auto data_size = this->Size();
-
+  if (data_size <= 0) {
+    MS_LOG(INFO) << "Data size=" << data_size << " bytes";
+    // expect return, currently not return for case (0,xx) shape tensor (where_fp32)
+  }
   if (data_size > GetMaxMallocSize()) {
     MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
     return RET_ERROR;
