@@ -292,8 +292,12 @@ std::string Common::GetUserDefineCachePath() {
 
 std::string Common::GetCompilerCachePath() {
   static const std::string user_defined_path = GetUserDefineCachePath();
-  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
-  static const std::string compile_cache_dir = user_defined_path + "rank_" + std::to_string(rank_id) + "/";
+  std::string rank_id_str = common::GetEnv(kRankID);
+  if (rank_id_str.empty()) {
+    MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+    rank_id_str = "0";
+  }
+  const std::string compile_cache_dir = user_defined_path + "rank_" + rank_id_str + "/";
   return compile_cache_dir;
 }
 
