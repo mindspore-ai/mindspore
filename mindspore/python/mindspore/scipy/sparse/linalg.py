@@ -18,7 +18,7 @@ from ... import numpy as mnp
 from ...ops import functional as F
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _INT_ZERO, _INT_NEG_ONE, _normalize_matvec, _to_tensor, _safe_normalize, _eps, float_types, _norm
+from ..utils import _normalize_matvec, _to_tensor, _to_scalar, _safe_normalize, _eps, float_types, _norm
 from ..utils_const import _raise_value_error, _raise_type_error
 
 
@@ -71,6 +71,9 @@ class BatchedGmres(nn.Cell):
         self.M = M
 
     def construct(self, b, x0=None, tol=1e-5, atol=0.0, restart=20, maxiter=None):
+        # Constant tensor which avoids loop unrolling
+        _INT_ZERO = _to_tensor(0)
+
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
         dtype = b.dtype
@@ -101,7 +104,8 @@ class BatchedGmres(nn.Cell):
             residual = b - A(x)
             unit_residual, residual_norm = _safe_normalize(residual)
             k += 1
-        return x
+
+        return x, F.select(residual_norm > atol, k, _INT_ZERO)
 
 
 class IterativeGmres(nn.Cell):
@@ -117,6 +121,9 @@ class IterativeGmres(nn.Cell):
         self.M = M
 
     def construct(self, b, x0, tol, atol, restart, maxiter):
+        # Constant tensor which avoids loop unrolling
+        _INT_ZERO = _to_tensor(0)
+
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
 
@@ -176,7 +183,7 @@ class IterativeGmres(nn.Cell):
             x0 = x
             iters += 1
 
-        return x0
+        return x0, F.select(r_norm > atol, iters, _INT_ZERO)
 
 
 def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
@@ -192,9 +199,6 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
     convergence is often slow for nearly symmetric operators.
 
     Note:
-        In the future, MindSpore will report the number of iterations when convergence
-        is not achieved, like SciPy. Currently it is None, as a Placeholder.
-
         - `gmres` is not supported on Windows platform yet.
 
     Args:
@@ -236,7 +240,8 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - None, placeholder for convergence information.
+        - int, placeholder for convergence information: 0 : successful exit.
+          >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -267,15 +272,13 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
         M = lambda x: x
 
     if solve_method == 'incremental':
-        x = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
+        x, info = IterativeGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     elif solve_method == 'batched':
-        x = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
+        x, info = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     else:
         _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got {}."
                            .format(solve_method))
-    _, x_norm = _safe_normalize(x)
-    info = mnp.where(mnp.isnan(x_norm), _INT_NEG_ONE, _INT_ZERO)
-    return x, info
+    return x, _to_scalar(info)
 
 
 class CG(nn.Cell):
@@ -289,6 +292,9 @@ class CG(nn.Cell):
         self.M = M
 
     def construct(self, b, x0, tol, atol, maxiter):
+        # Constant tensor which avoids loop unrolling
+        _INT_ZERO = _to_tensor(0)
+
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
 
@@ -330,9 +336,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     They will be accurate only if both solves converge.
 
     Note:
-        - In the future, MindSpore will report the number of iterations when convergence
-          is not achieved, like SciPy. Currently it is None, as a Placeholder.
-          Input `A` must represent a hermitian, positive definite matrix. If not,
+        - Input `A` must represent a hermitian, positive definite matrix. If not,
           the output is wrong and inconsistent with scipy.
 
         - `cg` is not supported on Windows platform yet.
@@ -357,8 +361,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - None, placeholder for convergence information.
-
+        - int, placeholder for convergence information: 0 : successful exit.
+          >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
     Raises:
         ValueError: If `x0` and `b` don't have the same structure.
         TypeError: If `A`, `x0` and `b` don't have the same float types(`mstype.float32` or `mstype.float64`).
@@ -372,9 +376,11 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         >>> from mindspore.scipy.sparse.linalg import cg
         >>> A = Tensor(onp.array([[1, 2], [2, 1]], dtype='float32'))
         >>> b = Tensor(onp.array([1, -1], dtype='float32'))
-        >>> result, _ = cg(A, b)
+        >>> result, info = cg(A, b)
         >>> print(result)
         [-1.  1.]
+        >>> print(info)
+        0
     """
     if x0 is None:
         x0 = mnp.zeros_like(b)
@@ -393,7 +399,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         _raise_type_error('Input A, x0 and b must have same float types')
 
     x, info = CG(A, M)(b, x0, tol, atol, maxiter)
-    return x, info
+    return x, _to_scalar(info)
 
 
 class BiCGStab(nn.Cell):
@@ -407,6 +413,10 @@ class BiCGStab(nn.Cell):
         self.M = M
 
     def construct(self, b, x0, tol, atol, maxiter):
+        # Constant tensors which avoid loop unrolling
+        _INT_ZERO = _to_tensor(0)
+        _INT_NEG_ONE = _to_tensor(-1)
+
         A = _normalize_matvec(self.A)
         M = _normalize_matvec(self.M)
 
@@ -459,9 +469,6 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
     both solves converge.
 
     Note:
-        - In the future, MindSpore will report the number of iterations when convergence
-          is not achieved, like SciPy. Currently it is None, as a Placeholder.
-
         - `bicgstab` is not supported on Windows platform yet.
 
     Args:
@@ -484,7 +491,8 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     Returns:
         - Tensor, the converged solution. Has the same structure as `b`.
-        - None, placeholder for convergence information.
+        - int, placeholder for convergence information: 0 : successful exit.
+          >0 : convergence to tolerance not achieved, number of iterations. <0 : illegal input or breakdown.
 
     Raises:
         ValueError: If `x0` and `b` don't have the same structure.
@@ -499,9 +507,11 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         >>> from mindspore.scipy.sparse.linalg import bicgstab
         >>> A = Tensor(onp.array([[1, 2], [2, 1]], dtype='float32'))
         >>> b = Tensor(onp.array([1, -1], dtype='float32'))
-        >>> result, _ = bicgstab(A, b)
+        >>> result, info = bicgstab(A, b)
         >>> print(result)
         [-1.  1.]
+        >>> print(info)
+        0
     """
     if x0 is None:
         x0 = mnp.zeros_like(b)
@@ -520,4 +530,4 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         _raise_type_error('Input A, x0 and b must have same float types')
 
     x, info = BiCGStab(A, M)(b, x0, tol, atol, maxiter)
-    return x, info
+    return x, _to_scalar(info)

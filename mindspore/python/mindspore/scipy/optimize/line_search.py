@@ -20,8 +20,7 @@ from ... import numpy as mnp
 from ...common import dtype as mstype
 from ...common import Tensor
 
-from ..utils import _to_scalar, grad
-from ..utils import _to_tensor, _INT_ZERO, _INT_ONE, _BOOL_FALSE
+from ..utils import _to_scalar, _to_tensor, grad
 
 
 class _LineSearchResults(NamedTuple):
@@ -92,7 +91,10 @@ def _zoom(fn, a_low, phi_low, dphi_low, a_high, phi_high, dphi_high, phi_0, g_0,
     Algorithm 3.6 from Wright and Nocedal, 'Numerical Optimization', 1999, pg. 59-61.
     Tries cubic, quadratic, and bisection methods of zooming.
     """
+    # Constant tensors which avoid loop unrolling
     _FLOAT_ONE = _to_tensor(1., dtype=a_low.dtype)
+    _BOOL_FALSE = _to_tensor(False)
+    _INT_ZERO = _to_tensor(0)
     state = {
         "done": _BOOL_FALSE,
         "failed": _BOOL_FALSE,
@@ -200,8 +202,12 @@ class LineSearch(nn.Cell):
             gkk = grad(self.func)(xkk)
             return fkk, gkk, mnp.dot(gkk, pk)
 
+        # Constant tensors which avoid loop unrolling
         _FLOAT_ZERO = _to_tensor(0., dtype=xk.dtype)
         _FLOAT_ONE = _to_tensor(1., dtype=xk.dtype)
+        _BOOL_FALSE = _to_tensor(False)
+        _INT_ZERO = _to_tensor(0)
+        _INT_ONE = _to_tensor(1)
 
         if old_fval is None or gfk is None:
             nfev, ngev = _INT_ONE, _INT_ONE
@@ -257,7 +263,7 @@ class LineSearch(nn.Cell):
             state["g_star"] = mnp.where(cond1, zoom1["g_star"], state["g_star"])
             state["dphi_star"] = mnp.where(cond1, zoom1["dphi_star"], state["dphi_star"])
 
-            # curvature condition
+            # Curvature condition
             cond2 = mnp.logical_not(cond1) and mnp.abs(dphi_i) <= -c2 * dphi_0
             state["done"] = state["done"] or cond2
             state["a_star"] = mnp.where(cond2, a_i, state["a_star"])
@@ -265,7 +271,7 @@ class LineSearch(nn.Cell):
             state["g_star"] = mnp.where(cond2, g_i, state["g_star"])
             state["dphi_star"] = mnp.where(cond2, dphi_i, state["dphi_star"])
 
-            # satisfying the strong wolf conditions
+            # Satisfying the strong wolf conditions
             cond3 = mnp.logical_not(cond1) and mnp.logical_not(cond2) and dphi_i >= 0.
             zoom2 = _zoom(fval_and_grad, a_i, phi_i, dphi_i, state["a_i"], state["phi_i"],
                           state["dphi_i"], phi_0, g_0, dphi_0, c1, c2, cond3)
