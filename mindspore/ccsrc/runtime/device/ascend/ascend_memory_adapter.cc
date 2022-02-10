@@ -27,37 +27,48 @@ namespace device {
 namespace ascend {
 constexpr float kMSMemoryRatio = 0.9375;        // 15/16
 constexpr float kReservedMemoryRatio = 0.0625;  // 1/16
+constexpr float kHalfRatio = 0.5;
 
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
     return true;
   }
-  size_t free_hbm_size = 0;
-  rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &free_hbm_size, &device_hbm_size_);
-  if (ret != RT_ERROR_NONE || device_hbm_size_ == 0) {
+
+  rtError_t ret = rtMemGetInfoEx(RT_MEMORYINFO_HBM, &device_hbm_free_size_, &device_hbm_total_size_);
+  if (ret != RT_ERROR_NONE || device_hbm_total_size_ == 0) {
     MS_LOG(EXCEPTION) << "Internal Error: Get Device HBM memory size failed, ret = " << ret
-                      << ", total HBM size :" << device_hbm_size_;
+                      << ", total HBM size :" << device_hbm_total_size_;
+  }
+
+  if (device_hbm_free_size_ < FloatToSize(device_hbm_total_size_ * kHalfRatio)) {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    MS_LOG(EXCEPTION) << "Malloc device memory failed, free memory size is less than half of total memory size."
+                      << "Device " << device_id << " Device HBM total size:" << device_hbm_total_size_
+                      << " Device HBM free size:" << device_hbm_free_size_
+                      << " may be other processes occupying this card, check as: ps -ef|grep python";
   }
 
   // get user define max backend memory
   auto user_define_ms_size = GetDeviceMemSizeFromContext();
-  auto recommend_mem_size_for_others = FloatToSize(device_hbm_size_ * kReservedMemoryRatio);
+  auto recommend_mem_size_for_others = FloatToSize(device_hbm_free_size_ * kReservedMemoryRatio);
   size_t reserved_mem_size_for_others;
   if (user_define_ms_size == 0) {
-    ms_used_hbm_size_ = FloatToSize(device_hbm_size_ * kMSMemoryRatio);
-    reserved_mem_size_for_others = device_hbm_size_ - user_define_ms_size;
+    ms_used_hbm_size_ = FloatToSize(device_hbm_free_size_ * kMSMemoryRatio);
+    reserved_mem_size_for_others = device_hbm_free_size_ - ms_used_hbm_size_;
   } else {
-    if (user_define_ms_size >= device_hbm_size_) {
+    if (user_define_ms_size >= device_hbm_free_size_) {
       MS_LOG(EXCEPTION)
-        << "The Total Device Memory Size is " << (SizeToFloat(device_hbm_size_) / kGBToByte)
+        << "The Free Device Memory Size is " << (SizeToFloat(device_hbm_free_size_) / kGBToByte)
         << " GB, variable_memory_max_size/max_device_memory should be in range (0-"
-        << (SizeToFloat(device_hbm_size_) / kGBToByte) << "]GB, but got "
-        << (SizeToFloat(user_define_ms_size) / kGBToByte)
-        << "GB, please set the context key 'variable_memory_max_size'/'max_device_memory' in valid range.";
+        << (SizeToFloat(device_hbm_free_size_) / kMBToByte) << "]MB, but got "
+        << (SizeToFloat(user_define_ms_size) / kMBToByte)
+        << "MB, please set the context key 'variable_memory_max_size'/'max_device_memory' in valid range.";
     }
     ms_used_hbm_size_ = user_define_ms_size;
 
-    reserved_mem_size_for_others = device_hbm_size_ - ms_used_hbm_size_;
+    reserved_mem_size_for_others = device_hbm_total_size_ - ms_used_hbm_size_;
     if (reserved_mem_size_for_others < recommend_mem_size_for_others) {
       MS_LOG(WARNING) << "Reserved memory size for other components(" << reserved_mem_size_for_others
                       << ") is less than recommend size(" << recommend_mem_size_for_others
@@ -66,7 +77,8 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
-  MS_LOG(INFO) << "Device HBM Size:" << device_hbm_size_ / kMBToByte
+  MS_LOG(INFO) << "Device HBM Size:" << device_hbm_total_size_ / kMBToByte
+               << "M, Device free HBM Size:" << device_hbm_free_size_ / kMBToByte
                << "M, Reserved HBM size for Other Components(HCCL/rts/etc.):"
                << reserved_mem_size_for_others / kMBToByte
                << "M, Recommend Reserved HBM size for Other Components:" << recommend_mem_size_for_others / kMBToByte
@@ -90,7 +102,8 @@ bool AscendMemAdapter::DeInitialize() {
 
   auto ret = FreeToRts(device_mem_base_addr_);
   if (ret) {
-    device_hbm_size_ = 0;
+    device_hbm_total_size_ = 0;
+    device_hbm_free_size_ = 0;
     max_available_ms_hbm_size_ = 0;
     device_mem_base_addr_ = nullptr;
     ms_used_hbm_size_ = 0;
@@ -147,7 +160,7 @@ void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }
 
 std::string AscendMemAdapter::DevMemStatistics() {
   std::ostringstream oss;
-  oss << "\nDevice HBM memory size: " << device_hbm_size_ / kMBToByte << "M";
+  oss << "\nDevice HBM memory size: " << device_hbm_total_size_ / kMBToByte << "M";
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
   oss << "\nMindSpore memory base address: " << reinterpret_cast<void *>(device_mem_base_addr_);
   oss << "\nTotal Static Memory size: " << (ms_used_hbm_size_ - static_mem_offset_) / kMBToByte << "M";
