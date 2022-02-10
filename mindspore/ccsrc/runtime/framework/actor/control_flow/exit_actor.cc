@@ -55,6 +55,14 @@ void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
 void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  // Before the exit actor sends output, it is necessary to ensure that all reference count calculations in the
+  // graph are completed, otherwise the device tensor in the free memory list will be overwritten the next time
+  // it is executed, resulting in multiple releases of ptr.
+  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
+}
+
+void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
 
   // 1.Send output in base class.
   ControlActor::SendOutput(context);

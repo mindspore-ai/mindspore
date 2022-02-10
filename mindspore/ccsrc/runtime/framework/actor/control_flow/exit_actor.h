@@ -56,6 +56,7 @@ class ExitActor : public ControlActor {
   void FetchInput(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;
   void IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) override;
+  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class ControlNodeScheduler;
