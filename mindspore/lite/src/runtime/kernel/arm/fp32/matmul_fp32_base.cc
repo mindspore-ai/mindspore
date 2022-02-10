@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -598,7 +598,28 @@ bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
 }
 
 void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
-  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, C64NUM);
+#if defined(ENABLE_ARM64)
+  int row_threshold = C4NUM;
+#elif defined(ENABLE_AVX512)
+  int row_threshold = C6NUM;
+  if (col_step_ < C48NUM) {
+    row_threshold = C12NUM;
+  } else if (col_step_ < C64NUM) {
+    row_threshold = C8NUM;
+  }
+#elif defined(ENABLE_AVX)
+  int row_threshold = C3NUM;
+  if (col_step_ < C16NUM) {
+    row_threshold = C8NUM;
+  } else if (col_step_ < C24NUM) {
+    row_threshold = C6NUM;
+  } else if (col_step_ < C32NUM) {
+    row_threshold = C4NUM;
+  }
+#else
+  int row_threshold = 1;
+#endif
+  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, row_threshold);
   int row_remaining = MSMAX(row_num_ - row_step * op_parameter_->thread_num_, 0);
   row_split_points_.resize(op_parameter_->thread_num_);
   for (size_t i = 0; i < row_split_points_.size(); ++i) {
