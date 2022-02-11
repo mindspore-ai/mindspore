@@ -189,18 +189,23 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
 Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                                      std::vector<std::vector<MSTensor>> *new_inputs) {
   auto batch = inputs[0].Shape()[0];
-  if (batch % batch_split_num_ != 0) {
-    MS_LOG(DEBUG) << "Can not split input tensor.";
-    return kLiteSuccessExit;
+  std::vector<size_t> split_batch;
+  size_t batch_sum = 0;
+  size_t per_batch = batch / batch_split_num_;
+  for (size_t i = 0; i < batch_split_num_ - 1; i++) {
+    split_batch.push_back(per_batch);
+    batch_sum += per_batch;
   }
+  split_batch.push_back(batch - batch_sum);
   std::vector<std::vector<std::vector<int64_t>>> all_input_shape;
+  std::vector<size_t> input_data_split_size(inputs.size(), 0);
   for (size_t k = 0; k < batch_split_num_; k++) {  // do for batch
     std::vector<std::vector<int64_t>> inputs_shape;
     std::vector<MSTensor> new_inputs_tensor;
     for (size_t i = 0; i < inputs.size(); i++) {  // do for input
       std::vector<int64_t> shape;
-      size_t input_size = batch / batch_split_num_;
-      shape.push_back(batch / batch_split_num_);
+      size_t input_size = split_batch[k];
+      shape.push_back(split_batch[k]);
       for (size_t j = 1; j < inputs[i].Shape().size(); j++) {  // do for dims
         shape.push_back(inputs[i].Shape()[j]);
         input_size *= inputs[i].Shape()[j];
@@ -217,7 +222,7 @@ Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::v
           return kLiteError;
         }
         memcpy(reinterpret_cast<float *>(data),
-               reinterpret_cast<float *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_size * k,
+               reinterpret_cast<float *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i],
                input_size * sizeof(float));
         auto new_tensor = mindspore::MSTensor::CreateTensor(
           inputs[i].Name(), static_cast<enum DataType>(kNumberTypeFloat32), shape, data, input_size * sizeof(float));
@@ -227,6 +232,7 @@ Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::v
         }
         new_inputs_tensor.push_back(*new_tensor);
         free(data);
+        input_data_split_size[i] += input_size;
       } else if (inputs[i].DataType() == static_cast<enum DataType>(kNumberTypeInt32)) {
         if (input_size * sizeof(int32_t) > MAX_MALLOC_SIZE) {
           MS_LOG(ERROR) << "malloc size is wrong.";
@@ -238,7 +244,7 @@ Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::v
           return kLiteError;
         }
         memcpy(reinterpret_cast<int32_t *>(data),
-               reinterpret_cast<int32_t *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_size * k,
+               reinterpret_cast<int32_t *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i],
                input_size * sizeof(int32_t));
         auto new_tensor = mindspore::MSTensor::CreateTensor(
           inputs[i].Name(), static_cast<enum DataType>(kNumberTypeInt32), shape, data, input_size * sizeof(int32_t));
@@ -248,6 +254,7 @@ Status ModelPool::SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::v
         }
         new_inputs_tensor.push_back(*new_tensor);
         free(data);
+        input_data_split_size[i] += input_size;
       } else {
         MS_LOG(ERROR) << "not support data type in split batch.";
         return kLiteError;
@@ -270,12 +277,20 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
       MS_LOG(ERROR) << "output_tensor_shape is empty";
       return kLiteError;
     }
-    output_tensor_shape[0] *= batch_split_num_;
+    size_t all_data_size = 0;
+    size_t all_batch_size = 0;
+    std::vector<size_t> per_bacth_data_size;
+    for (size_t batch = 0; batch < outputs->size(); batch++) {
+      per_bacth_data_size.push_back(all_data_size);
+      all_data_size += outputs->at(batch).at(i).DataSize();
+      all_batch_size += outputs->at(batch).at(i).Shape().front();
+    }
+    output_tensor_shape[0] = all_batch_size;
     if (all_out_data != nullptr) {
       free(all_out_data);
       all_out_data = nullptr;
     }
-    all_out_data = malloc(outputs->at(0).at(i).DataSize() * batch_split_num_);
+    all_out_data = malloc(all_data_size);
     if (all_out_data == nullptr) {
       MS_LOG(ERROR) << "all_out_data is nullptr.";
       return kLiteError;
@@ -286,12 +301,11 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
         MS_LOG(ERROR) << "output data is nullptr.";
         return kLiteError;
       }
-      memcpy(reinterpret_cast<float *>(all_out_data) + outputs->at(j)[i].ElementNum() * j,
+      memcpy(reinterpret_cast<float *>(all_out_data) + per_bacth_data_size[j] / sizeof(float),
              reinterpret_cast<float *>(out_data), outputs->at(j)[i].DataSize());
     }
-    auto new_tensor =
-      mindspore::MSTensor::CreateTensor(outputs->at(0)[i].Name(), outputs->at(i)[0].DataType(), output_tensor_shape,
-                                        all_out_data, outputs->at(0)[i].DataSize() * batch_split_num_);
+    auto new_tensor = mindspore::MSTensor::CreateTensor(outputs->at(0)[i].Name(), outputs->at(0)[i].DataType(),
+                                                        output_tensor_shape, all_out_data, all_data_size);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return kLiteError;
@@ -304,9 +318,7 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   mtx_split_task_.lock();
-  auto batch = inputs[0].Shape()[0];
-  if (batch % batch_split_num_ == 0 && PredictTaskQueue::GetInstance()->GetTaskNum() == 0 &&
-      batch_split_num_ <= static_cast<size_t>(PredictTaskQueue::GetInstance()->GetWaitModelNum())) {
+  if (PredictTaskQueue::GetInstance()->GetTaskNum() == 0 && PredictTaskQueue::GetInstance()->GetWaitModelNum() > 1) {
     batch_split_num_ = PredictTaskQueue::GetInstance()->GetWaitModelNum();
     PredictTaskQueue::GetInstance()->DecreaseWaitModelNum(batch_split_num_);
     std::vector<std::vector<MSTensor>> new_inputs;
