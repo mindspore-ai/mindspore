@@ -129,3 +129,6 @@ mindspore.common.initializer
 
     - **TypeError** - 参数 `init` 的类型不正确。
     - **ValueError** - 当 `init` 传入Tensor对象时， `init` 的shape与形参 `shape` 内的数值不一致。
+
+.. automodule:: mindspore.common.initializer
+    :members:

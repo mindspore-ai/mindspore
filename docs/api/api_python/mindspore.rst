@@ -118,3 +118,24 @@ MindData数据集处理
     :toctree: mindspore
 
     mindspore.run_check
+
+调试
+------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.set_dump
+
+内存回收
+----------
+
+.. cnmsautosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ms_memory_recycle
+    

@@ -1,7 +1,7 @@
 mindspore.ops.get_vm_impl_fn
 ============================
 
-.. py:function:: mindspore.ops.get_vm_impl_fn(prim):
+.. py:function:: mindspore.ops.get_vm_impl_fn(prim)
 
     通过Primitive对象或Primitive名称，获取虚拟实现函数。
 

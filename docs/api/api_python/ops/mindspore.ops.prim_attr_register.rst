@@ -1,7 +1,7 @@
 mindspore.ops.prim_attr_register
 ================================
 
-.. py:function:: mindspore.ops.prim_attr_register(fn):
+.. py:function:: mindspore.ops.prim_attr_register(fn)
 
     Primitive属性的注册器。
 

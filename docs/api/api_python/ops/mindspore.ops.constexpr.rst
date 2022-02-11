@@ -1,7 +1,7 @@
 mindspore.ops.constexpr
 =======================
 
-.. py:function:: mindspore.ops.constexpr(fn=None, get_instance=True, name=None):
+.. py:function:: mindspore.ops.constexpr(fn=None, get_instance=True, name=None)
 
     创建PrimiveWithInfer算子，用于在编译时推断值。可以用它定义函数，从而使用构造函数中的常量计算出常量值。
 

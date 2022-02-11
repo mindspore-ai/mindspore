@@ -1,7 +1,7 @@
 mindspore.ops.DataType
 ======================
 
-.. py:class:: mindspore.ops.DataType:
+.. py:class:: mindspore.ops.DataType
 
     Ascend算子的dtype和format的多种组合。
 

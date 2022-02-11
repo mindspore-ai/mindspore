@@ -27,6 +27,9 @@ mindspore.train.callback
 
 .. include:: train/mindspore.train.callback.LearningRateScheduler.rst
 
+.. automodule:: mindspore.train.callback
+    :members:
+
 mindspore.train.train_thor
 --------------------------
 
