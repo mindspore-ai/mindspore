@@ -159,12 +159,18 @@ bool CheckReadData(const CNodePtr &cnode) {
   return read_data;
 }
 
+bool IsDeviceTargetGPU() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice;
+}
+
 /*
  * Feature group: Dump, Online debugger.
- * Target device group: GPU.
+ * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
  * Description: Load inputs and outputs of the given node if needed and dump them if dump is enabled, then it performs
- * PostExecuteNode function on the given node.
+ * PostExecuteNode function on the given node for GPU.
  */
 void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
                      const DeviceContext *device_context) {
@@ -194,9 +200,11 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
       debugger->ClearCurrentData();
     }
   }
-  // check if the node is last kernel
-  bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
-  debugger->PostExecuteNode(cnode, last_kernel);
+  if (IsDeviceTargetGPU()) {
+    // check if the node is last kernel
+    bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
+    debugger->PostExecuteNode(cnode, last_kernel);
+  }
 }
 
 /*
@@ -210,10 +218,7 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   std::string error_info = "";
   bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
   auto debugger = Debugger::GetInstance();
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  if (debugger->CheckDebuggerDumpEnabled() && sink_mode && is_gpu) {
+  if (debugger->CheckDebuggerDumpEnabled() && sink_mode && IsDeviceTargetGPU()) {
     error_info = "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
   }
   if (debugger->CheckDebuggerEnabled() && sink_mode) {
@@ -250,17 +255,9 @@ void LoadDataForDebugger(const KernelGraphPtr &graph_ptr) {
 #endif
 }
 
-void DumpSetup(const KernelGraphPtr &graph) {
-  MS_LOG(DEBUG) << "Start!";
-  MS_EXCEPTION_IF_NULL(graph);
-  E2eDump::DumpSetup(graph.get());
-  MS_LOG(DEBUG) << "Finish!";
-}
-
 void Dump(const KernelGraphPtr &graph, uint32_t rank_id) {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(graph);
-  E2eDump::DumpRunIter(graph, rank_id);
   E2eDump::DumpData(graph.get(), rank_id);
   MS_LOG(DEBUG) << "Finish!";
 }
@@ -280,7 +277,6 @@ uint32_t GetRankID() {
 void SuperKernelE2eDump(const KernelGraphPtr &graph) {
 #ifndef ENABLE_SECURITY
   Dump(graph, GetRankID());
-  DumpSetup(graph);
 #endif
 }
 

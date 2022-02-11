@@ -305,7 +305,6 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
     dump_name = node_name.substr(cst_prefix.length());
     trans_flag = false;
   }
-
   // check if output address exists, if not, return;
   if (!AnfAlgo::OutputAddrExist(anf_node, output_index)) {
     return;
@@ -324,6 +323,49 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   if (IsDeviceTargetGPU()) {
     if (dump_json_parser.IsStatisticDump()) {
       TensorStatDump stat_dump("Parameter", dump_name, task_id, stream_id, timestamp, false, 0, 0);
+      stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
+    }
+    if (dump_json_parser.IsTensorDump()) {
+      DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
+    }
+  } else {
+    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+  }
+}
+
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: This function is similar to DumpSingleAnfNode function but it is only for dumping parameters in mindRT.
+ * This function uses GetParameterInfo to get dump info for the parameter node.
+ */
+void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::string &dump_path, bool trans_flag,
+                                      const Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  std::string node_name = GetKernelNodeName(anf_node);
+  if (!anf_node->isa<Parameter>() || !dump_json_parser.NeedDump(node_name)) {
+    return;
+  }
+  DumpJsonParser::GetInstance().MatchKernel(node_name);
+  GetFileKernelName(NOT_NULL(&node_name));
+  ShapeVector int_shapes;
+  TypeId type;
+  TypeId device_type;
+  auto addr = GetParameterInfo(anf_node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
+  if (addr == nullptr) {
+    MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
+    return;
+  }
+  uint64_t timestamp = GetTimeStamp();
+  uint32_t task_id = 0;
+  uint32_t stream_id = 0;
+  std::string file_path = dump_path + "/Parameter." + node_name + '.' + std::to_string(task_id) + '.' +
+                          std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output.0";
+  if (IsDeviceTargetGPU()) {
+    if (dump_json_parser.IsStatisticDump()) {
+      TensorStatDump stat_dump("Parameter", node_name, task_id, stream_id, timestamp, false, 0, 0);
       stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
@@ -380,9 +422,16 @@ void E2eDump::DumpConstantData(const session::KernelGraph *graph, const std::str
   }
 }
 
-void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode) {
-  uint32_t graph_id = graph->graph_id();
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: Old runtime.
+ * Description: This function is for updating dump iteration for GPU and ascend old runtime.
+ */
+void E2eDump::UpdateIterOldRTDump(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
+  uint32_t graph_id = graph->graph_id();
   if (IsDeviceTargetGPU()) {
     if (starting_graph_id == INT32_MAX) {
       starting_graph_id = graph_id;
@@ -394,7 +443,7 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
     return;
   }
   // If device target is Ascend
-  if (sink_mode && graph->IsDatasetGraph()) {
+  if (graph->IsDatasetGraph()) {
     MS_LOG(INFO) << "No need to update iteration for dataset graph.";
     return;
   }
@@ -406,26 +455,20 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
 /*
  * Feature group: Dump.
  * Target device group: Ascend, GPU.
- * Runtime category: Old runtime, MindRT.
- * Description: This function is for updating dump iteration for GPU and ascend old runtime and ascend super
- * kernel MindRT.
- */
-void E2eDump::DumpSetup(const session::KernelGraph *graph) {
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
-
-  if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
-    UpdateIterDumpSetup(graph, sink_mode);
-  }
-}
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
- * Description: This function is for updating dump iteration for GPU and kernel by kernel ascend MindRT dump.
+ * Description: This function is for updating dump iteration for GPU and ascend MindRT dump. Please note that dump with
+ * dataset_sink_mode = True is not supported for GPU.
  */
 void E2eDump::UpdateIterMindRTDump() {
+  auto debugger = Debugger::GetInstance();
+  // Dataset graph is always the first graph in the list when dataset_sink_mode is true.
+  auto graph = (debugger->GetStepGraphPtrList())[0];
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && graph->IsDatasetGraph()) {
+    MS_LOG(INFO) << "No need to update iteration for dataset graph.";
+    return;
+  }
   // update dump iter for GPU and kernel by kernel ascend dump.
   DumpJsonParser::GetInstance().UpdateDumpIter();
 }
@@ -464,7 +507,7 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     MS_LOG(WARNING) << "Open file for saving graph global execution order failed.";
     return;
   }
-  if (sink_mode && json_parser.async_dump_enabled()) {
+  if (sink_mode && json_parser.async_dump_enabled() && !Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
     // for async dump when sink_mode = true, cur_dump_iter() = current_epoch
     // dump history for all iterations in the epoch
     Debugger::GetInstance()->UpdateGraphIterMap(graph->graph_id(), iter_num);
@@ -501,16 +544,16 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
-    std::string cst_path = GenerateDumpPath(graph_id, rank_id, true);
-
     if (dump_json_parser.IsStatisticDump()) {
       TensorStatDump::OpenStatisticsFile(dump_path);
     }
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
-    DumpParameters(graph, dump_path, debugger);
-    if (IsDeviceTargetGPU() && dump_json_parser.e2e_dump_enabled()) {
-      DumpConstantData(graph, cst_path, debugger);
+    if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+      // Dump parameters for old runtime. For mindRT it is done in PostExecuteGraphDebugger.
+      DumpParameters(graph, dump_path, debugger);
+      // DumpConstantData for GPU old runtime.
+      DumpConstantData(graph, rank_id, debugger);
     }
     if (dump_json_parser.IsStatisticDump()) {
       CsvWriter::GetInstance().CloseFile();
@@ -543,29 +586,29 @@ bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32
   return success;
 }
 
-bool E2eDump::DumpParametersData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
-  bool success = false;
-  uint32_t graph_id = graph->graph_id();
+/*
+ * Feature group: Dump.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: This function is for dumping all the parameters in the current root graph for GPU, Ascend superkernel
+ * (e2e dump) and Ascend kernel-by-kernel (e2e and async dump).
+ */
+void E2eDump::DumpParametersData(uint32_t rank_id, const Debugger *debugger) {
+  uint32_t root_graph_id = debugger->GetCurrentRootGraphId();
   auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (dump_json_parser.async_dump_enabled() && !debugger->GetAscendKernelByKernelFlag()) {
+    // Dump parameters for mindRT in async dump only for kernel by kernel mode.
+    return;
+  }
   if (dump_json_parser.DumpEnabledForIter()) {
     MS_LOG(INFO) << "DumpParameters. Current iteration is " << dump_json_parser.cur_dump_iter();
-    MS_LOG(INFO) << "Current graph id is " << graph_id;
-    std::string dump_path = GenerateDumpPath(graph_id, rank_id);
-    DumpParameters(graph, dump_path, debugger);
-    success = true;
-  }
-  return success;
-}
-bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
-  // check if there is GetNext or InitDataSetQueue node
-  const auto &nodes = graph->execution_order();
-  for (const auto &node : nodes) {
-    auto node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == prim::kPrimGetNext->name() || node_name == prim::kPrimInitDataSetQueue->name()) {
-      return true;
+    MS_LOG(INFO) << "Current root graph id is " << root_graph_id;
+    std::string dump_path = GenerateDumpPath(root_graph_id, rank_id);
+    bool trans_flag = dump_json_parser.trans_flag();
+    for (auto &item : debugger->GetParametersMindRT()) {
+      DumpSingleParameterNode(item, dump_path, trans_flag, debugger);
     }
   }
-  return false;
 }
 
 #ifdef ENABLE_D

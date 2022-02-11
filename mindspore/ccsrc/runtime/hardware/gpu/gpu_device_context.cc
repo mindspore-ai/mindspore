@@ -153,7 +153,10 @@ void GPUDeviceContext::Destroy() {
   auto debugger = Debugger::GetInstance();
   if (debugger && debugger->debugger_enabled()) {
     debugger->SetTrainingDone(true);
-    debugger->SendMetadata(false);
+    bool ret = debugger->SendMetadata(false);
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed to SendMetadata when finalize";
+    }
   }
 #endif
 

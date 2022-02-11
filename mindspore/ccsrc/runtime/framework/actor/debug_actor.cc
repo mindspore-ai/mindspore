@@ -128,7 +128,9 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
  * Runtime category: MindRT.
  * Description: Checks dataset_sink_mode and generates the related error if any exist and calls PreExecuteGraphDebugger.
  */
-void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
+void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
+                                  const std::vector<AnfNodePtr> &origin_parameters_order,
+                                  std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
@@ -144,7 +146,7 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
   }
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr && debugger->DebuggerBackendEnabled()) {
-    debugger->PreExecuteGraphDebugger(graphs);
+    debugger->PreExecuteGraphDebugger(graphs, origin_parameters_order);
   }
 #endif
 

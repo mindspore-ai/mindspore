@@ -518,7 +518,7 @@ void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
     debugger_->PreExecute(kernel_graph);
   }
 
-  DumpSetup(kernel_graph);
+  E2eDump::UpdateIterOldRTDump(kernel_graph.get());
 #endif
 
 #if ENABLE_CPU && ENABLE_GPU
@@ -725,12 +725,6 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 }
 
 #ifdef ENABLE_DEBUGGER
-void GPUSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get());
-  MS_LOG(INFO) << "Finish!";
-}
 
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   // Dump graph and graph history file if e2e_dump is enabled and update cur_dump_iter for GPU old runtime.

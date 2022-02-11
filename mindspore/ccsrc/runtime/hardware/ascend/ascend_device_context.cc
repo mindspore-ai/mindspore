@@ -278,6 +278,16 @@ bool AscendDeviceContext::IsGraphMode() {
 }
 
 void AscendDeviceContext::Destroy() {
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger && debugger->debugger_enabled()) {
+    debugger->SetTrainingDone(true);
+    bool ret = debugger->SendMetadata(false);
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed to SendMetadata when finalize";
+    }
+  }
+#endif
   MS_LOG(INFO) << "Status record: Enter Destroy...";
   if (!initialized_) {
     return;

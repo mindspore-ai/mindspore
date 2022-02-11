@@ -644,7 +644,7 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
   }
 #endif
 #ifndef ENABLE_SECURITY
-  DumpSetup(kernel_graph);
+  E2eDump::UpdateIterOldRTDump(kernel_graph.get());
 #endif
 }
 
@@ -1401,13 +1401,6 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 }
 
 #ifndef ENABLE_SECURITY
-void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(DEBUG) << "Start!";
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get());
-  MS_LOG(DEBUG) << "Finish!";
-}
-
 void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);

@@ -26,6 +26,9 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/utils.h"
 #include "debug/common.h"
+#include "runtime/framework/device_tensor_store.h"
+
+using mindspore::runtime::DeviceTensorStore;
 
 namespace mindspore {
 uint32_t ConvertPhysicalDeviceId(uint32_t device_id) {
@@ -88,6 +91,24 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(*int_shapes),
                          [](size_t inner_item) { return SizeToInt(inner_item); });
   }
+}
+
+const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVector *> int_shapes,
+                                       NotNull<TypeId *> host_type, NotNull<TypeId *> device_type) {
+  const auto &device_tensors = DeviceTensorStore::GetInstance().Fetch(node.get());
+  if (device_tensors.size() < 1) {
+    return nullptr;
+  }
+  auto device_addr = device_tensors[0];
+  MS_EXCEPTION_IF_NULL(device_addr);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  bool trans_flag = dump_json_parser.trans_flag();
+  auto ref_node = device_addr->GetNodeIndex().first;
+  MS_EXCEPTION_IF_NULL(ref_node);
+  GetDumpIntShape(ref_node, PARAMETER_OUTPUT_INDEX, int_shapes, trans_flag);
+  *host_type = AnfAlgo::GetOutputInferDataType(ref_node, PARAMETER_OUTPUT_INDEX);
+  *device_type = AnfAlgo::GetOutputDeviceDataType(ref_node, PARAMETER_OUTPUT_INDEX);
+  return device_addr;
 }
 
 /*

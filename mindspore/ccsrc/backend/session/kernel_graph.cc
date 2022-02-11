@@ -1421,6 +1421,10 @@ void KernelGraph::SetOptimizerFlag() {
 bool KernelGraph::IsDatasetGraph() const {
   // check if there is InitDataSetQueue node
   const auto &nodes = execution_order_;
+  // The size of execution_order for the dataset graph is equal to 1.
+  if (execution_order_.size() > 1) {
+    return false;
+  }
   for (const auto &node : nodes) {
     auto node_name = AnfAlgo::GetCNodeName(node);
     if (node_name == prim::kPrimInitDataSetQueue->name()) {
