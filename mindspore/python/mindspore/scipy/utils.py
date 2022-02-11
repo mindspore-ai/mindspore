@@ -93,9 +93,6 @@ class _SafeNormalize(nn.Cell):
 
 _safe_normalize = _SafeNormalize()
 
-valid_data_types = (mstype.int32, mstype.int64, mstype.float32, mstype.float64)
-float_types = (mstype.float32, mstype.float64)
-
 
 def _normalize_matvec(f):
     """Normalize an argument for computing matrix-vector products."""

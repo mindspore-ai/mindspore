@@ -16,9 +16,10 @@
 from ... import nn, ms_function
 from ... import numpy as mnp
 from ...ops import functional as F
+from ...common import dtype as mstype
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _normalize_matvec, _to_tensor, _to_scalar, _safe_normalize, _eps, float_types, _norm
+from ..utils import _normalize_matvec, _to_tensor, _to_scalar, _safe_normalize, _eps, _norm
 from ..utils_const import _raise_value_error, _raise_type_error
 
 
@@ -395,7 +396,8 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         _raise_value_error(
             'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
 
-    if (F.dtype(b) not in float_types) or (F.dtype(b) != F.dtype(x0)) or (F.dtype(b) != F.dtype(A)):
+    if (F.dtype(b) not in (mstype.float32, mstype.float64)) or (F.dtype(b) != F.dtype(x0)) or (
+            F.dtype(b) != F.dtype(A)):
         _raise_type_error('Input A, x0 and b must have same float types')
 
     x, info = CG(A, M)(b, x0, tol, atol, maxiter)
@@ -526,7 +528,8 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
         _raise_value_error(
             'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
 
-    if (F.dtype(b) not in float_types) or (F.dtype(b) != F.dtype(x0)) or (F.dtype(b) != F.dtype(A)):
+    if (F.dtype(b) not in (mstype.float32, mstype.float64)) or (F.dtype(b) != F.dtype(x0)) or (
+            F.dtype(b) != F.dtype(A)):
         _raise_type_error('Input A, x0 and b must have same float types')
 
     x, info = BiCGStab(A, M)(b, x0, tol, atol, maxiter)
