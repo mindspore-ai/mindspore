@@ -80,8 +80,8 @@ bool SparseToDenseCpuKernelMod<I, T>::Launch(const std::vector<kernel::AddressPt
       int index = indices_addr[i * rank + j];
       if (index >= SizeToInt(output_shape_[j]) || index < 0) {
         MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the " << i << "th value in " << j
-                                 << "th dimension index: " << index << " out of bounds: [0, " << output_shape_[j]
-                                 << ")";
+                                 << "th dimension index: " << index << " of 'output' out of bounds: [0, "
+                                 << output_shape_[j] << ")";
       }
       size_t count = 1;
       for (size_t k = j + 1; k < rank; k++) {
