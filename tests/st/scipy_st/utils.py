@@ -78,13 +78,11 @@ def create_full_rank_matrix(shape, dtype):
 
 
 def create_random_rank_matrix(shape, dtype):
-    if len(shape) < 2:
-        raise ValueError(
-            'random rank matrix must shape bigger than two dims, but has shape: ', shape)
-
     if dtype in [onp.complex64, onp.complex128]:
         random_data = onp.random.uniform(low=-1.0, high=1.0, size=shape).astype(dtype)
         random_data += 1j * onp.random.uniform(low=-1.0, high=1.0, size=shape).astype(dtype)
+    elif dtype in [onp.int32, onp.int64]:
+        random_data = onp.random.randint(10000, size=shape).astype(dtype)
     else:
         random_data = onp.random.random(shape).astype(dtype)
     return random_data
@@ -147,10 +145,9 @@ def gradient_check(x, net, epsilon=1e-3):
     return difference
 
 
-def match_runtime_exception(err, expected_str):
+def match_exception_info(err, expected_str):
     err_str = str(err.value)
-    err_str = err_str[err_str.find("]") + 2:]
-    return err_str == expected_str
+    return expected_str in err_str
 
 
 def compare_eigen_decomposition(src_res, tgt_res, compute_v, rtol, atol):
