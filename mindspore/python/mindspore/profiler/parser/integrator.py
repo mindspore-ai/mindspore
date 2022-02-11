@@ -1539,6 +1539,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 class CpuTimelineGenerator(GpuTimelineGenerator):
     """Generate cpu Timeline data from file."""
     _output_op_execute_time_file_path = "cpu_op_execute_timestamp_{}.txt"
+    _display_filename = 'cpu_timeline_display_{}.json'
+    _timeline_summary_filename = 'cpu_timeline_summary_{}.json'
 
     def _get_and_validate_path(self, file_name):
         """Generate op or activity file path from file name, and validate this path."""
@@ -1575,3 +1577,53 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
             time_item[self._duration_idx] = float(time_item[self._duration_idx]) / factor_us_to_ms
 
         return timeline_list
+
+    def _load_timeline_data(self):
+        """Load timeline data from file."""
+        timeline_list = self.load_cpu_op_data()
+
+        timeline_list.sort(key=lambda x: float(x[2]))
+        self._max_scope_name_num = self._get_max_scope_name_num(timeline_list)
+        self._timeline_summary['max_scope_name_num'] = self._max_scope_name_num
+
+        # Generate step time.
+        factor_start_time_uint_to_duration = 1e-3
+        self._set_step_start_and_end_op_name(timeline_list)
+
+        step_time_list = self._get_step_time_list(timeline_list, factor_start_time_uint_to_duration)
+
+        # Add Scope Name.
+        default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default",
+                                                                      factor_start_time_uint_to_duration)
+        gradient_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Gradients",
+                                                                       factor_start_time_uint_to_duration)
+        recompute_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "recompute_Default",
+                                                                        factor_start_time_uint_to_duration)
+        timeline_list.extend(default_scope_name_time_list)
+        timeline_list.extend(gradient_scope_name_time_list)
+        timeline_list.extend(recompute_scope_name_time_list)
+        timeline_list.extend(step_time_list)
+
+        timeline_list.sort(key=lambda x: (float(x[self._start_time_idx]), x[self._tid_idx]))
+        timeline_list.sort(key=lambda x: float(x[2]))
+
+        return timeline_list
+
+    def init_timeline(self):
+        """Init timeline metadata, adding all collected info."""
+        timeline_list = self._load_timeline_data()
+
+        # Init a dict for counting the num of streams.
+        stream_count_dict = {}
+        for timeline in timeline_list:
+            self._parse_timeline_data(timeline, 0)
+            # Updating the collection of streams.
+            if len(timeline) == 4:
+                self._update_num_of_streams(timeline, stream_count_dict)
+
+        # Add format thread meta data.
+        self._format_meta_data_list.extend(self._timeline_meta)
+        self._timeline_meta = self._format_meta_data_list
+
+        # Update timeline summary info
+        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())

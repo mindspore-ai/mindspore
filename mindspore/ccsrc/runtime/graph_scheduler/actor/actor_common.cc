@@ -30,7 +30,7 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread
   const size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
   auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
   size_t runtime_num_threads_min = std::min(runtime_num_threads, cpu_core_num);
-  const float kActorUsage = 0.2;
+  const float kActorUsage = 0.18;
   const size_t kActorThreadMinNum = 2;
   size_t actor_thread_max_num =
     std::max(static_cast<size_t>(std::floor(runtime_num_threads_min * kActorUsage)), kActorThreadMinNum);
