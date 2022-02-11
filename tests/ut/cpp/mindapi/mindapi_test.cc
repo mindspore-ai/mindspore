@@ -20,6 +20,7 @@
 #include "common/common_test.h"
 #include "mindapi/base/logging.h"
 #include "mindapi/ir/func_graph.h"
+#include "mindapi/ir/primitive.h"
 #include "mindapi/ir/tensor.h"
 #include "mindapi/ir/utils.h"
 
@@ -150,6 +151,21 @@ TEST_F(TestMindApi, test_values) {
   ASSERT_EQ(uint8_values[0], 5);
   ASSERT_EQ(uint8_values[1], 6);
   ASSERT_EQ(uint8_values[2], 7);
+
+  auto seq_bool = MakeValue(std::vector<bool>{true, false, true});
+  auto seq_bool_ptr = seq_bool->cast<ValueSequencePtr>();
+  ASSERT_TRUE(seq_bool_ptr != nullptr);
+  ASSERT_EQ(seq_bool_ptr->size(), 3);
+  ASSERT_EQ(seq_bool_ptr->value().size(), 3);
+  ASSERT_TRUE(seq_bool_ptr->value()[0]->isa<BoolImm>());
+  ASSERT_TRUE(GetValue<bool>(seq_bool_ptr->value()[0]));
+  ASSERT_FALSE(GetValue<bool>(seq_bool_ptr->value()[1]));
+  ASSERT_TRUE(GetValue<bool>(seq_bool_ptr->value()[2]));
+
+  auto prim = MakeShared<Primitive>("myprim");
+  auto node = NewValueNode(prim);
+  ASSERT_TRUE(node != nullptr);
+  ASSERT_EQ(node->value(), prim);
 }
 
 /// Feature: MindAPI
