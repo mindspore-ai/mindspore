@@ -175,6 +175,8 @@ class KernelGraph : public FuncGraph {
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   // ref output is in map
   bool IsInRefOutputMap(const AnfWithOutIndex &pair) const;
+  // Whether the value corresponds to ref output.
+  bool IsRefOutputMapValue(const AnfWithOutIndex &pair) const;
   // get ref correspond pairs
   AnfWithOutIndex GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const;
   // add ref correspond pairs

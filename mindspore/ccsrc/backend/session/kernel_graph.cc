@@ -901,6 +901,11 @@ void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)gr
 
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 
+bool KernelGraph::IsRefOutputMapValue(const AnfWithOutIndex &pair) const {
+  return std::any_of(ref_out_in_map_.cbegin(), ref_out_in_map_.cend(),
+                     [&pair](const auto &iter) { return iter.second == pair; });
+}
+
 AnfWithOutIndex KernelGraph::GetRefCorrespondOutput(const AnfWithOutIndex &out_pair) const {
   if (!IsInRefOutputMap(out_pair)) {
     MS_LOG(EXCEPTION) << "Out_pair is not in RefOutputMap, node is " << out_pair.first->DebugString() << ", index is "

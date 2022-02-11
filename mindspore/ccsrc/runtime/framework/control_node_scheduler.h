@@ -110,7 +110,8 @@ class ControlNodeScheduler {
   bool IsNoInputActor(const ControlActor *control_actor) const;
 
   // Fill the device tensors of backend input nodes corresponding to ref formal parameters.
-  void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node);
+  void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node,
+                                      const KernelGraphPtr &graph);
 
   // The id of memory manager actor.
   AID memory_manager_aid_;
