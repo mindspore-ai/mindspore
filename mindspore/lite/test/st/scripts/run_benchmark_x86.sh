@@ -100,6 +100,19 @@ function Run_x86_avx() {
     Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86_avx' 'CPU' '' $x86_fail_not_return
 }
 
+# Run on x86 avx512 platform:
+function Run_x86_avx512() {
+    cd ${x86_path}/avx512 || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/avx512/mindspore-lite-${version}-linux-x64 || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    cp tools/benchmark/benchmark ./ || exit 1
+
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
+    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx512_log_file $run_benchmark_result_file 'x86_avx512' 'CPU' '' $x86_fail_not_return
+}
+
 # Run on x86 java platform:
 function Run_x86_java() {
     cd ${x86_path} || exit 1
@@ -220,9 +233,11 @@ while getopts "r:m:e:p:" opt; do
 done
 
 x86_path=${release_path}/centos_x86
-file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
+cd ${x86_path}
+file_name=$(ls *-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
+cd -
 
 # Set models config filepath
 models_tflite_parallel_split_config=${basepath}/../config/models_parallel_split.cfg
@@ -244,19 +259,21 @@ models_process_only_config=${basepath}/../config/models_process_only.cfg
 
 # Prepare the config file list
 x86_cfg_file_list=()
-if [[ $backend == "x86_tflite" ]]; then
+if [[ $backend == "x86_tflite" || $backend == "x86_avx512_tflite" ]]; then
   x86_cfg_file_list=("$models_tflite_config")
-elif [[ $backend == "x86_tf" ]]; then
+elif [[ $backend == "x86_tf" || $backend == "x86_avx512_tf" ]]; then
   x86_cfg_file_list=("$models_tf_config")
-elif [[ $backend == "x86_caffe" ]]; then
+elif [[ $backend == "x86_caffe" || $backend == "x86_avx512_caffe" ]]; then
   x86_cfg_file_list=("$models_caffe_config")
-elif [[ $backend == "x86_onnx" ]]; then
+elif [[ $backend == "x86_onnx" || $backend == "x86_avx512_onnx" ]]; then
   x86_cfg_file_list=("$models_onnx_config")
 elif [[ $backend == "x86_mindir" ]]; then
   x86_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
                      "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                      "$models_weightquant_0bit_auto_tune_config" "$models_weightquant_8bit_debug_config"\
                      "$models_weightquant_9bit_config" "$models_process_only_config" "$models_mindspore_config")
+elif [[ $backend == "x86_avx512_mindir" ]]; then
+  x86_cfg_file_list=("$models_mindspore_config")
 else
   x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
                      "$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
@@ -306,6 +323,8 @@ run_x86_java_log_file=${basepath}/run_x86_java_log.txt
 echo 'run x86 java logs: ' > ${run_x86_java_log_file}
 run_x86_parallel_split_log_file=${basepath}/run_x86_parallel_split_log.txt
 echo 'run x86 java logs: ' > ${run_x86_parallel_split_log_file}
+run_x86_avx512_log_file=${basepath}/run_x86_avx512_log.txt
+echo 'run x86 avx512 logs: ' > ${run_x86_avx512_log_file}
 
 backend=${backend:-"all"}
 isFailed=0
@@ -324,6 +343,14 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx" || $ba
     echo "start Run avx $backend..."
     Run_x86_avx &
     Run_x86_avx_PID=$!
+    sleep 1
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx512" || $backend == "x86_avx512_onnx" || $backend == "x86_avx512_tf" || \
+      $backend == "x86_avx512_tflite" || $backend == "x86_avx512_caffe" || $backend == "x86_avx512_mindir" ]]; then
+    # Run on x86_avx512
+    echo "start Run avx512 $backend..."
+    Run_x86_avx512 &
+    Run_x86_avx512_PID=$!
     sleep 1
 fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_sse" || $backend == "x86_onnx" || $backend == "x86_tf" || \
@@ -370,6 +397,16 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx" || $ba
         isFailed=1
     fi
 fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx512" || $backend == "x86_avx512_onnx" || $backend == "x86_avx512_tf" || \
+      $backend == "x86_avx512_tflite" || $backend == "x86_avx512_caffe" || $backend == "x86_avx512_mindir" ]]; then
+    wait ${Run_x86_avx512_PID}
+    Run_x86_avx512_status=$?
+    if [[ ${Run_x86_avx512_status} != 0 ]];then
+        echo "Run_x86 avx512 failed"
+        cat ${run_x86_avx512_log_file}
+        isFailed=1
+    fi
+fi
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_sse" || $backend == "x86_onnx" || $backend == "x86_tf" || \
       $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
     wait ${Run_x86_sse_PID}
@@ -399,6 +436,6 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_parallel_sp
     fi
 fi
 
-echo "Run_x86 and Run_x86_sse and Run_x86_avx and is ended"
+echo "Run_x86 and Run_x86_sse and Run_x86_avx and Run_x86-avx512 is ended"
 Print_Benchmark_Result $run_benchmark_result_file
 exit ${isFailed}
