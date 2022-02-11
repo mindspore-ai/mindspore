@@ -74,11 +74,17 @@ int TopKCPUKernel::Run() {
   if (in_tensors_.front()->data_type() == kNumberTypeFloat32) {
     Topk(static_cast<float *>(input_data), static_cast<float *>(output_data), output_index,
          reinterpret_cast<TopkParameter *>(op_parameter_));
-  } else {
 #ifdef ENABLE_FP16
+  } else if (in_tensors_.front()->data_type() == kNumberTypeFloat16) {
     TopkFp16(static_cast<float16_t *>(input_data), static_cast<float16_t *>(output_data), output_index,
              reinterpret_cast<TopkParameter *>(op_parameter_));
 #endif
+  } else if (in_tensors_.front()->data_type() == kNumberTypeInt32) {
+    TopkInt(static_cast<int *>(input_data), static_cast<int *>(output_data), output_index,
+            reinterpret_cast<TopkParameter *>(op_parameter_));
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type: " << in_tensors_.front()->data_type();
+    return RET_ERROR;
   }
   ms_context_->allocator->Free(topk_param_->topk_node_list_);
   topk_param_->topk_node_list_ = nullptr;
@@ -86,6 +92,7 @@ int TopKCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TopKFusion, LiteKernelCreator<TopKCPUKernel>)
 #endif
