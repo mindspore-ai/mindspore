@@ -137,7 +137,7 @@ class WeightDecoder {
 
   static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
-  static int GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims,
+  static int GetPreferredDim(const OpParameter *op_parameter, int index, const std::vector<int> &dims,
                              const std::string &model_version);
 
   template <typename ST, typename DT = float>
@@ -244,6 +244,7 @@ class WeightDecoder {
 
   static int GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
   static int GetDeConvPreferredDim(const OpParameter *op_parameter, const std::vector<int> &dims);
+  static int GetGatherPreferredDim(const OpParameter *op_parameter);
   static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename T1, typename T2>

@@ -25,7 +25,7 @@ int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   flags_.commonQuantParam.min_quant_weight_size = 0;
   auto quantizer = WeightQuantizer(flags_);
   const std::set<PrimitivePtr> support_weight_quant_nodes = {prim::kPrimMatMulFusion, prim::kPrimGather};
-  const std::set<PrimitivePtr> symmetric_nodes = {};
+  const std::set<PrimitivePtr> symmetric_nodes = {prim::kPrimMatMulFusion};
   auto ret = quantizer.WeightQuant(func_graph, support_weight_quant_nodes, {}, symmetric_nodes);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight Quant failed.";
