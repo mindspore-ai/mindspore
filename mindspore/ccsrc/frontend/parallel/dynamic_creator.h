@@ -213,6 +213,8 @@ REGISTER(CumSumInfo);
 REGISTER(BoundingBoxEncodeInfo);
 REGISTER(IOUInfo);
 REGISTER(RandomChoiceWithMaskInfo);
+REGISTER(CropAndResizeInfo);
+REGISTER(ROIAlignInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

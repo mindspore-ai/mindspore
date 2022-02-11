@@ -39,6 +39,7 @@ ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_nam
 
 AnfNodePtr CreatTypeInt(int64_t value);
 AnfNodePtr CreatInt64Imm(int64_t value);
+AnfNodePtr CreateFP32Imm(float value);
 AnfNodePtr CreateInt32Tensor(int64_t value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);

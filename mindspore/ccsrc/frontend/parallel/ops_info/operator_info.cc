@@ -1929,5 +1929,11 @@ AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple) {
   auto value_node = NewValueNode(value_ptr);
   return value_node->cast<AnfNodePtr>();
 }
+
+AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple) {
+  auto tensor_ptr = MakeValue(tensor_tuple)->cast<ValueTuplePtr>();
+  auto tensor_node = NewValueNode(tensor_ptr);
+  return tensor_node->cast<AnfNodePtr>();
+}
 }  // namespace parallel
 }  // namespace mindspore

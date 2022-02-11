@@ -798,13 +798,8 @@ Status GatherInfo::InferForwardCommunication() {
     return SUCCESS;
   }
   // split axis
-  OperatorName operator_name;
-  if (InferGroup() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Infer Group failed.";
-    return FAILED;
-  }
   Attr attr_group;
-
+  OperatorName operator_name;
   if (axis_split_forward_allreduce_) {
     operator_name = ALL_REDUCE;
   } else {

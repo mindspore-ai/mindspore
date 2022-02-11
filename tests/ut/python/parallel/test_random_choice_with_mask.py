@@ -67,3 +67,4 @@ def test_random_choice_with_mask_wrong_strategy():
     net = Net(strategy)
     with pytest.raises(RuntimeError):
         compile_net(net, _input_x)
+    context.reset_auto_parallel_context()

@@ -826,6 +826,14 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
     } else {
       appear_count = 1;
     }
+    auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
+    size_t inputs_size = replace_input_cnode->inputs().size();
+    while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
+      ++appear_count;
+    }
+    if (IntToSize(appear_count) >= inputs_size) {
+      MS_LOG(EXCEPTION) << "No replaceable virtual_input_node";
+    }
     input_map[replace_input.first] = appear_count;
     manager->SetEdge(replace_input.first, appear_count, pre_node);
   }

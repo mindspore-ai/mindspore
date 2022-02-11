@@ -1800,5 +1800,188 @@ void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
     (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
   std::fill(is_inputs_should_in_memory_.begin(), is_inputs_should_in_memory_.end(), keep_mem);
 }
+
+double CropAndResizeCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
+                                             const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  double result = 0.0;
+  if (outputs_type_lengths_.size() != outputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
+  }
+
+  // don't split the batch
+  if (strategy_[0] == 1) {
+    return result;
+  }
+
+  // split batch
+  auto x_shape = inputs[0].slice_shape();
+  auto box_shape = inputs[0].slice_shape();
+  Shape reduce_sum_shape = {box_shape[0], crop_size_[0], crop_size_[1], x_shape[3]};
+  result += ListProduct(reduce_sum_shape) * static_cast<double>(outputs_type_lengths_[0]);
+  return result;
+}
+
+double CropAndResizeCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
+                                              const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  double result = 0.0;
+  CheckGlobalDeviceManager();
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (is_parameter_[i]) {
+      continue;
+    }
+    TensorInfo input_tensor_info = inputs[i];
+    Shape input_shape = input_tensor_info.shape();
+    Shape input_slice_shape = input_tensor_info.slice_shape();
+    int64_t used_device_num = 1;
+    for (size_t j = 0; j < input_shape.size(); ++j) {
+      used_device_num *= input_shape[j] / input_slice_shape[j];
+    }
+    if (total_device_num != LongToSize(used_device_num)) {
+      result += ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
+  }
+  return result;
+}
+
+double CropAndResizeCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                    const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
+  }
+
+  Shape input0_slice_shape = inputs.at(0).slice_shape();
+  Shape input1_slice_shape = inputs.at(1).slice_shape();
+  Shape input2_slice_shape = inputs.at(2).slice_shape();
+  double result = 0.0;
+  // don't split batch
+  if (strategy_[0] == 1) {
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) +
+              ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[2]);
+  } else {
+    // split batch
+    result +=
+      ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * CROP_AND_RESIZE_COST_WEIGHT0 +
+      ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * CROP_AND_RESIZE_COST_WEIGHT1 +
+      ListProduct(input2_slice_shape) * static_cast<double>(inputs_type_lengths_[2]) * CROP_AND_RESIZE_COST_WEIGHT2;
+  }
+
+  return result;
+}
+
+double CropAndResizeCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                     const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  Shape output0_slice_shape = outputs[0].slice_shape();
+  double result = 0.0;
+  // don't split batch
+  if (strategy_.at(0) == 1) {
+    result += ListProduct(output0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  } else {
+    // split batch
+    result +=
+      ListProduct(output0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * CROP_AND_RESIZE_COST_WEIGHT3;
+  }
+
+  return result;
+}
+
+// Not taking account of output
+void CropAndResizeCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Taking account of input
+void CropAndResizeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  for (size_t i = 0; i < CROP_AND_RESIZE_INPUTS_SIZE; ++i) {
+    is_inputs_should_in_memory_[i] = is_parameter_[i];
+  }
+
+  // When calculating 'dx', taking account of 'y' and 'z'
+  if (is_parameter_[0] || is_parameter_involve_[0]) {
+    if (prev_output_in_mem.find(1) == prev_output_in_mem.end() || !prev_output_in_mem.at(1)) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if (prev_output_in_mem.find(CROP_AND_RESIZE_INPUTS_SIZE - 1) == prev_output_in_mem.end() ||
+        !prev_output_in_mem.at(CROP_AND_RESIZE_INPUTS_SIZE - 1)) {
+      is_inputs_should_in_memory_[CROP_AND_RESIZE_INPUTS_SIZE - 1] = true;
+    }
+  }
+}
+
+double ROIAlignCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                        int64_t stage_id) const {
+  double result = 0.0;
+  if (outputs_type_lengths_.size() != outputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
+  }
+
+  // don't split the batch
+  if (strategy_[0] == 1) {
+    return result;
+  }
+
+  // split batch
+  auto features_shape = inputs[0].slice_shape();
+  auto rois_shape = inputs[0].slice_shape();
+  Shape reduce_sum_shape = {rois_shape[0], features_shape[1], pooled_shape_[0], pooled_shape_[1]};
+  result += ListProduct(reduce_sum_shape) * static_cast<double>(outputs_type_lengths_[0]);
+  return result;
+}
+
+double ROIAlignCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                               const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for CropAndResize cost.";
+  }
+
+  Shape input0_slice_shape = inputs.at(0).slice_shape();
+  Shape input1_slice_shape = inputs.at(1).slice_shape();
+  double result = 0.0;
+  // don't split batch
+  if (strategy_[0] == 1) {
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+  } else {
+    // split batch
+    result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * ROI_ALIGN_COST_WEIGHT0 +
+              ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]) * ROI_ALIGN_COST_WEIGHT1;
+  }
+
+  return result;
+}
+
+double ROIAlignCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+  Shape output0_slice_shape = outputs[0].slice_shape();
+  double result = 0.0;
+  // don't split batch
+  if (strategy_.at(0) == 1) {
+    result += ListProduct(output0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  } else {
+    // split batch
+    result += ListProduct(output0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * ROI_ALIGN_COST_WEIGHT2;
+  }
+
+  return result;
+}
+
+// Taking account of output
+void ROIAlignCost::CalculateOutputInMemory() { is_output_should_in_memory_ = true; }
+
+// Taking account of input
+void ROIAlignCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  for (size_t i = 0; i < ROI_ALIGN_INPUTS_SIZE; ++i) {
+    is_inputs_should_in_memory_[i] = is_parameter_[i];
+  }
+
+  // When calculating 'dx', taking account of 'y' and 'z'
+  if (is_parameter_[0] || is_parameter_involve_[0]) {
+    if (prev_output_in_mem.find(ROI_ALIGN_INPUTS_SIZE - 1) == prev_output_in_mem.end() ||
+        !prev_output_in_mem.at(ROI_ALIGN_INPUTS_SIZE - 1)) {
+      is_inputs_should_in_memory_[ROI_ALIGN_INPUTS_SIZE - 1] = true;
+    }
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore

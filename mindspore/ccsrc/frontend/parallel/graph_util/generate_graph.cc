@@ -100,6 +100,11 @@ AnfNodePtr CreatInt64Imm(int64_t value) {
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
+AnfNodePtr CreateFP32Imm(float value) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<FP32Imm>(value));
+  return ValuePtrToAnfNodePtr(value_ptr);
+}
+
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple) {
   std::vector<ValuePtr> value_list;
   (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(value_list),
