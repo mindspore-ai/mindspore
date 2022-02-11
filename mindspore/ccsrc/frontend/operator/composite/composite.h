@@ -188,15 +188,40 @@ class TupleAdd : public MetaFuncGraph {
 };
 using TupleAddPtr = std::shared_ptr<TupleAdd>;
 
-class TupleSlice : public MetaFuncGraph {
+class SequenceSlice : public MetaFuncGraph {
  public:
-  explicit TupleSlice(const std::string &name) : MetaFuncGraph(name) {}
-  ~TupleSlice() override = default;
-  MS_DECLARE_PARENT(TupleSlice, MetaFuncGraph)
+  explicit SequenceSlice(const std::string &name, const PrimitivePtr &prim, const PrimitivePtr &get_item)
+      : MetaFuncGraph(name), prim_(prim), get_item_(get_item) {}
+  ~SequenceSlice() override = default;
+  MS_DECLARE_PARENT(SequenceSlice, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  friend bool operator==(const TupleSlice &lhs, const TupleSlice &rhs) { return lhs.name_ == rhs.name_; }
+  friend bool operator==(const SequenceSlice &lhs, const SequenceSlice &rhs) { return lhs.name_ == rhs.name_; }
+  virtual std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
+    const AbstractBasePtrList &args_spec_list) = 0;
+
+ private:
+  PrimitivePtr prim_;
+  PrimitivePtr get_item_;
+};
+
+class TupleSlice : public SequenceSlice {
+ public:
+  explicit TupleSlice(const std::string &name) : SequenceSlice(name, prim::kPrimMakeTuple, prim::kPrimTupleGetItem) {}
+  ~TupleSlice() override = default;
+  MS_DECLARE_PARENT(TupleSlice, SequenceSlice)
+  std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
+    const AbstractBasePtrList &args_spec_list) override;
 };
 using TupleSlicePtr = std::shared_ptr<TupleSlice>;
+
+class ListSlice : public SequenceSlice {
+ public:
+  explicit ListSlice(const std::string &name) : SequenceSlice(name, prim::kPrimMakeList, prim::kPrimListGetItem) {}
+  ~ListSlice() override = default;
+  MS_DECLARE_PARENT(ListSlice, SequenceSlice)
+  std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
+    const AbstractBasePtrList &args_spec_list) override;
+};
 
 class TupleGetItemTensor : public MetaFuncGraph {
  public:
