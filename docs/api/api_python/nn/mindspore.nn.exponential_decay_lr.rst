@@ -27,7 +27,7 @@ mindspore.nn.exponential_decay_lr
 
     **异常：**
 
-    - **TypeError:** `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
-    - **TypeError:** `is_stair` 不是bool。
-    - **TypeError:** `learning_rate` 或 `decay_rate` 不是float。
-    - **ValueError:** `learning_rate` 或 `decay_rate` 小于等于0。
+    - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+    - **TypeError** - `is_stair` 不是bool。
+    - **TypeError** - `learning_rate` 或 `decay_rate` 不是float。
+    - **ValueError** - `learning_rate` 或 `decay_rate` 小于等于0。

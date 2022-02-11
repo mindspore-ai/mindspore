@@ -43,7 +43,7 @@ mindspore.nn.polynomial_decay_lr
 
     **异常：**
 
-    - **TypeError:** `learning_rate` 或 `end_learning_rate` 或 `power` 不是float。
-    - **TypeError:** `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
-    - **TypeError:** `update_decay_epoch` 不是bool。
-    - **ValueError:** `learning_rate` 或 `power` 小于等于0。
+    - **TypeError** - `learning_rate` 或 `end_learning_rate` 或 `power` 不是float。
+    - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+    - **TypeError** - `update_decay_epoch` 不是bool。
+    - **ValueError** - `learning_rate` 或 `power` 小于等于0。

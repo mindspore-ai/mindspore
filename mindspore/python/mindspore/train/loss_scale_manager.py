@@ -110,8 +110,8 @@ class FixedLossScaleManager(LossScaleManager):
         will do nothing.
 
         Returns:
-            None or :class:`mindspore.FixedLossScaleUpdateCell`. Instance of
-            :class:`mindspore.FixedLossScaleUpdateCell` when `drop_overflow_update` is True. None when
+            None or :class:`mindspore.nn.FixedLossScaleUpdateCell`. Instance of
+            :class:`mindspore.nn.FixedLossScaleUpdateCell` when `drop_overflow_update` is True. None when
             `drop_overflow_update` is False.
         """
         if not self._drop_overflow_update:
@@ -203,6 +203,6 @@ class DynamicLossScaleManager(LossScaleManager):
         :class:`mindspore.nn.TrainOneStepWithLossScaleCell`.
 
         Returns:
-            :class:`mindspore.DynamicLossScaleUpdateCell`.
+            :class:`mindspore.nn.DynamicLossScaleUpdateCell`.
         """
         return nn.DynamicLossScaleUpdateCell(self.loss_scale, self.scale_factor, self.scale_window)

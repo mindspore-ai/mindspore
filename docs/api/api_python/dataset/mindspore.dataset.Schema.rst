@@ -58,9 +58,9 @@ mindspore.dataset.Schema
 
         **异常：**
 
-        - **RuntimeError:** 解析列失败。
-        - **RuntimeError:** 列name字段缺失。
-        - **RuntimeError:** 列type字段缺失。
+        - **RuntimeError** - 解析列失败。
+        - **RuntimeError** - 列name字段缺失。
+        - **RuntimeError** - 列type字段缺失。
 
     .. py:method:: to_json()
 

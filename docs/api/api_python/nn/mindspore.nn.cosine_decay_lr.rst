@@ -27,8 +27,8 @@ mindspore.nn.cosine_decay_lr
 
     **异常：**
 
-    - **TypeError:** `min_lr` 或 `max_lr` 不是float。
-    - **TypeError:** `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
-    - **ValueError:** `max_lr` 不大于0或 `min_lr` 小于0。
-    - **ValueError:** `total_step` 或 `step_per_epoch` 或 `decay_epoch` 小于0。
-    - **ValueError:** `max_lr` 大于或等于 `min_lr`。
+    - **TypeError** - `min_lr` 或 `max_lr` 不是float。
+    - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+    - **ValueError** - `max_lr` 不大于0或 `min_lr` 小于0。
+    - **ValueError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 小于0。
+    - **ValueError** - `max_lr` 大于或等于 `min_lr`。

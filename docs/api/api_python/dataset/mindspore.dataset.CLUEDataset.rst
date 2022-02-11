@@ -175,7 +175,7 @@ mindspore.dataset.CLUEDataset
     - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
-    - **ValueError:** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
+    - **ValueError** - `shard_id` 参数错误（小于0或者大于等于 `num_shards` ）。
 
     **关于CLUE数据集：**
 

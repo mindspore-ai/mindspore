@@ -22,12 +22,12 @@ mindspore.dataset.GraphData
 
     **异常：**
       
-    - **ValueError:** - `dataset_file` 路径下数据文件不存在或无效。
-    - **ValueError:** - `num_parallel_workers` 参数超过系统最大线程数。
+    - **ValueError** - `dataset_file` 路径下数据文件不存在或无效。
+    - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **ValueError** - `working_mode` 参数取值不为'local', 'client' 或 'server'。
-    - **TypeError:** - `hostname` 参数类型错误。
-    - **ValueError:** - `port` 参数不在范围[1024, 65535]内。
-    - **ValueError:** - `num_client` 参数不在范围[1, 255]内。
+    - **TypeError** - `hostname` 参数类型错误。
+    - **ValueError** - `port` 参数不在范围[1024, 65535]内。
+    - **ValueError** - `num_client` 参数不在范围[1, 255]内。
 
     .. py:method:: get_all_edges(edge_type)
 

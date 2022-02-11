@@ -268,7 +268,7 @@
 
        * - 'dataset'类型
          - 'mindrecord'类型
-         - 详细
+         - 说明
        * - bool
          - None
          - 不支持

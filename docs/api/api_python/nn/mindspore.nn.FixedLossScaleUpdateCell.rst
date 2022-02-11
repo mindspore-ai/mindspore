@@ -5,7 +5,7 @@ mindspore.nn.FixedLossScaleUpdateCell
 
     固定损失缩放系数的神经元。
 
-    该类是 :class:`mindspore.nn.FixedLossScaleManager` 的 `get_update_cell` 方法的返回值。训练过程中，类 :class:`mindspore.TrainOneStepWithLossScaleCell` 会调用该Cell。
+    该类是 :class:`mindspore.FixedLossScaleManager` 的 `get_update_cell` 方法的返回值。训练过程中，类 :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该Cell。
 
     **参数：**
 

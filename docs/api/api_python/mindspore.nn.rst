@@ -52,7 +52,9 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 .. cnmsplatformautosummary::
     :toctree: nn
 
+    mindspore.nn.ELU
     mindspore.nn.FastGelu
+    mindspore.nn.GELU
     mindspore.nn.HShrink
     mindspore.nn.HSigmoid
     mindspore.nn.HSwish
@@ -60,8 +62,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.LogSigmoid
     mindspore.nn.LogSoftmax
     mindspore.nn.ReLU
-    mindspore.nn.ELU
-    mindspore.nn.GELU
     mindspore.nn.Sigmoid
     mindspore.nn.Softmax
     mindspore.nn.Tanh
@@ -91,16 +91,16 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 .. cnmsplatformautosummary::
     :toctree: nn
 
-    mindspore.nn.Optimizer
     mindspore.nn.Adagrad
     mindspore.nn.Adam
     mindspore.nn.AdamOffload
     mindspore.nn.AdamWeightDecay
     mindspore.nn.FTRL
-    mindspore.nn.LARS
     mindspore.nn.Lamb
+    mindspore.nn.LARS
     mindspore.nn.LazyAdam
     mindspore.nn.Momentum
+    mindspore.nn.Optimizer
     mindspore.nn.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.SGD
@@ -139,18 +139,18 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Accuracy
     mindspore.nn.F1
     mindspore.nn.Fbeta
+    mindspore.nn.get_metric_fn
     mindspore.nn.Loss
     mindspore.nn.MAE
-    mindspore.nn.MSE
     mindspore.nn.Metric
+    mindspore.nn.MSE
+    mindspore.nn.names
     mindspore.nn.Precision
     mindspore.nn.Recall
+    mindspore.nn.rearrange_inputs
     mindspore.nn.Top1CategoricalAccuracy
     mindspore.nn.Top5CategoricalAccuracy
     mindspore.nn.TopKCategoricalAccuracy
-    mindspore.nn.get_metric_fn
-    mindspore.nn.names
-    mindspore.nn.rearrange_inputs
 
 动态学习率
 -----------

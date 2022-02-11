@@ -31,7 +31,7 @@ operations中的Primitive算子在使用前需要实例化。
     mindspore.ops.Sigmoid
 
 Math类型算子
-------------
+^^^^^^^^^^^^
 
 .. cnmsplatformautosummary::
     :toctree: ops
@@ -51,7 +51,7 @@ Math类型算子
     mindspore.ops.Sub
 
 Array类型算子
---------------
+^^^^^^^^^^^^^^
 
 .. cnmsplatformautosummary::
     :toctree: ops
@@ -68,7 +68,7 @@ Array类型算子
 
 
 Random类型算子
---------------
+^^^^^^^^^^^^^^^
 
 .. cnmsplatformautosummary::
     :toctree: ops
