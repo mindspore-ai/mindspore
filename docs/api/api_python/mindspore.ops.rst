@@ -1,13 +1,13 @@
 mindspore.ops
 =============
 
-算子可用于Cell的构造函数。
+可用于Cell的构造函数的算子。
 
 .. code-block::
 
     import mindspore.ops as ops
 
-MindSpore中 `mindspore.ops` 算子与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_。
+MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_。
 
 operations
 ----------

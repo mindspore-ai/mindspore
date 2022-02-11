@@ -3,7 +3,7 @@ mindspore.nn.WarmUpLR
 
 .. py:class:: mindspore.nn.WarmUpLR(learning_rate, warmup_steps)
 
-    学习率热身。
+    预热学习率。
 
     对于当前step，计算学习率的公式为：
 
