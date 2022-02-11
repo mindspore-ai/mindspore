@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class LogStream {
   /// \param[in] value The object to be written.
   template <typename T>
   LogStream &operator<<(T &&value) noexcept {
-    (void)stream_.operator<<(std::forward<T>(value));
+    stream_ << (std::forward<T>(value));
     return *this;
   }
 
