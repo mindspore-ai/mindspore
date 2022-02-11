@@ -27,11 +27,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_create
   }
   auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
   if (c_context_ptr == nullptr) {
+    delete runner_config;
     MS_LOGE("Context pointer from java is nullptr");
     return (jlong) nullptr;
   }
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
+    delete runner_config;
     MS_LOGE("Make context failed");
     return (jlong) nullptr;
   }
