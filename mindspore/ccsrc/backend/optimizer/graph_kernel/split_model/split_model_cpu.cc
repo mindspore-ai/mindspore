@@ -169,29 +169,35 @@ class FuseElemwiseBroadcastBwd : public FusePattern {
     return dom->size() <= size_limit_;
   }
   bool Match(const AreaPtr &dom) override {
+    // this pattern is to fuse ALL users of dom area,
+    // since the broadcast node should not be an output when it fuse nodes in backward.
     for (auto &[a, r] : dom->users_with_relation()) {
       if (fuse_type_ == FuseType::kDepth && a->input_num() != 1) {
-        continue;
+        return false;
       }
       if (a->pattern() > NodePattern::REDUCE) {
-        continue;
+        return false;
       }
       if (fuse_type_ == FuseType::kWidth) {
         if (!fused_areas_.empty() && fused_areas_[0]->dom()->shape != a->dom()->shape) {
-          continue;
+          return false;
         }
-        if (HasCircle(dom, a)) continue;
+        if (HasCircle(dom, a)) {
+          return false;
+        }
       }
       if (a->pattern() == NodePattern::REDUCE) {
         // elemwise + reduce
         if (dom->pattern() == NodePattern::ELEMWISE && r == EdgeRelation::INJECTIVE) {
           (void)fused_areas_.emplace_back(a);
+        } else {
+          return false;
         }
       } else {  // a->pattern() < NodePattern::REDUCE
         (void)fused_areas_.emplace_back(a);
       }
     }
-    return !fused_areas_.empty();
+    return fused_areas_.size() == dom->user_num();
   }
 
   FuseType fuse_type_;
