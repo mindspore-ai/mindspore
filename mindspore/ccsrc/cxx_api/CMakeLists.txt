@@ -54,7 +54,12 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${API_MS_INFER_SRC}
               ${API_ACL_SRC}
               ${API_OPS_SRC}
-              ${LOAD_MINDIR_SRC})
+              )
+
+if(NOT ENABLE_TESTCASES)
+    # users of shared_lib cannot find symbols in indirect dependency
+    set(MSLIB_SRC ${MSLIB_SRC} ${CMAKE_SOURCE_DIR}/mindspore/core/utils/status.cc)
+endif()
 
 if(BUILD_LITE)
     list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc")
