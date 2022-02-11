@@ -19,7 +19,7 @@ from .ops import EighNet
 from .ops import LU
 from .ops import LUSolver
 from .ops import SolveTriangular
-from .utils import _nd_transpose, float_types, valid_data_types
+from .utils import _nd_transpose
 from .utils_const import _raise_value_error, _raise_type_error, _type_check
 from .. import numpy as mnp
 from .. import ops
@@ -233,11 +233,11 @@ def inv(a, overwrite_a=False, check_finite=True):
     """
     _type_check('overwrite_a', overwrite_a, [bool], 'inv')
     _type_check('check_finite', check_finite, [bool], 'inv')
-    if F.dtype(a) not in valid_data_types:
+    if F.dtype(a) not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.inv only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
 
     matrix_inverse = P.MatrixInverse(adjoint=False)
@@ -299,11 +299,11 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     _type_check('check_finite', check_finite, [bool], 'cho_factor')
     _type_check('lower', lower, [bool], 'cho_factor')
     a_type = F.dtype(a)
-    if a_type not in valid_data_types:
+    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.cho_factor only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if a_type not in float_types:
+    if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
     if a.ndim < 2:
@@ -363,11 +363,11 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     _type_check('check_finite', check_finite, [bool], 'cholesky')
     _type_check('lower', lower, [bool], 'cholesky')
     a_type = F.dtype(a)
-    if a_type not in valid_data_types:
+    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.cholesky only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if a_type not in float_types:
+    if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
     if a.ndim < 2:
@@ -422,11 +422,11 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     _type_check('check_finite', check_finite, [bool], 'cho_solve')
     (c, lower) = c_and_lower
     c_type = F.dtype(c)
-    if c_type not in valid_data_types:
+    if c_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.cho_solve only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if c_type not in float_types:
+    if c_type not in (mstype.float32, mstype.float64):
         c = F.cast(c, mstype.float64)
     cholesky_solve_net = CholeskySolve(lower=lower)
     x = cholesky_solve_net(c, b)
@@ -651,11 +651,11 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     a_type = F.dtype(a)
     if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
         _raise_value_error("input matrix of lu_factor must be square.")
-    if a_type not in valid_data_types:
+    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.lu_factor only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if a_type not in float_types:
+    if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     msp_lu = LU()
     m_lu, pivots, _ = msp_lu(a)
@@ -731,11 +731,11 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     a_type = F.dtype(a)
     if len(a.shape) < 2:
         _raise_value_error("input matrix dimension of lu must larger than 2D.")
-    if a_type not in valid_data_types:
+    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.lu only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if a_type not in float_types:
+    if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     msp_lu = LU()
     m_lu, _, p = msp_lu(a)
@@ -800,11 +800,11 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     m_lu_type = F.dtype(m_lu)
     if len(m_lu.shape) < 2:
         _raise_value_error("input matrix dimension of lu_solve must larger than 2D.")
-    if m_lu_type not in valid_data_types:
+    if m_lu_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.lu_solve only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if m_lu_type not in float_types:
+    if m_lu_type not in (mstype.float32, mstype.float64):
         m_lu = F.cast(m_lu, mstype.float64)
     # 1. check shape
     check_lu_shape(m_lu, b)
@@ -885,11 +885,11 @@ def det(a, overwrite_a=False, check_finite=True):
         _raise_value_error("Arguments to det must be [..., n, n], but got shape {}.".format(a.shape))
 
     a_type = F.dtype(a)
-    if a_type not in valid_data_types:
+    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.det only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
-    if a_type not in float_types:
+    if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     lu_matrix, pivot = lu_factor(a)
     diag = lu_matrix.diagonal(axis1=-2, axis2=-1)
