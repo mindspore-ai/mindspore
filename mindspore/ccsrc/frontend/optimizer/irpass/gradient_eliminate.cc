@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,20 +36,6 @@ AnfNodePtr ExpandJPrimitive(const ValueNodePtr &vnode, const pipeline::ResourceB
   return nullptr;
 }
 
-bool CheckIfEmbedJ(const CNodePtr &j_node) {
-  auto &value_node = j_node->input(1);
-  if (IsValueNode<Primitive>(value_node)) {
-    return false;
-  }
-  auto func_graph = GetValueNode<FuncGraphPtr>(value_node);
-  if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Unexpected J node, input func graph should not be null, node: " << j_node->DebugString();
-  }
-  auto func_graph_manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(func_graph_manager);
-  return func_graph_manager->func_graph_j_total(func_graph);
-}
-
 bool IsSideEffectOp(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
@@ -78,25 +64,17 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const OptimizerPtr &optimizer) {
 }  // namespace internal
 
 bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-  // Search all j nodes.
-  GetJPrim(func_graph);
-  // Get j nodes that don't have embed j nodes.
-  std::vector<CNodePtr> todo;
-  // If graph also contains J(FuncGraph) or J(Primitive), then ignore this graph.
-  // ExpandJ innermost graph or primitive first.
-  std::copy_if(j_nodes_.begin(), j_nodes_.end(), std::back_inserter(todo),
-               [](const CNodePtr &j_node) { return !internal::CheckIfEmbedJ(j_node); });
   // Check whether need to eliminate forward cnodes in pynative mode.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     auto pynative_exec = pynative::PynativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();
     bool eliminate_forward = grad_exec->eliminate_forward();
-    grad_exec->set_eliminate_forward(eliminate_forward && todo.empty());
+    grad_exec->set_eliminate_forward(eliminate_forward && prim_nodes_.empty());
   }
   // Expand j nodes that don't have embed j nodes.
   bool change = false;
   auto manager = optimizer->manager();
-  for (auto &j_node : todo) {
+  for (auto &j_node : prim_nodes_) {
     auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer);
     manager->Replace(j_node, expanded_j);
     if (j_node->func_graph()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
@@ -106,18 +84,6 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
     change = true;
   }
   return change;
-}
-
-void ExpandJPrim::GetJPrim(const FuncGraphPtr &func_graph) {
-  j_nodes_.clear();
-  AnfNodePtr ret = func_graph->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
-  for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-      j_nodes_.push_back(node->cast<CNodePtr>());
-    }
-  }
 }
 }  // namespace irpass
 }  // namespace opt

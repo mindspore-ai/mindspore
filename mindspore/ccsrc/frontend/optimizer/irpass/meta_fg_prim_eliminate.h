@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_PRIM_ELIMINATE_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_PRIM_ELIMINATE_H_
 
 #include <vector>
 #include <algorithm>
@@ -27,20 +27,26 @@
 #include "utils/ms_utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/grad.h"
-#include "frontend/optimizer/irpass/meta_fg_prim_eliminate.h"
 
 namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimJ, C}
-class ExpandJPrim : public ExpandMetaFGPrim {
+class ExpandMetaFGPrim {
  public:
-  ExpandJPrim() { prim_ = prim::kPrimJ; }
-  virtual ~ExpandJPrim() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
+  ExpandMetaFGPrim() = default;
+  virtual ~ExpandMetaFGPrim() = default;
+  bool CheckIfEmbedMetaFGPrim(const CNodePtr &node) const;
+  const std::vector<CNodePtr> &prim_nodes() const { return prim_nodes_; }
+  virtual bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) = 0;
+  void GetMetaFGPrim(const std::vector<AnfNodePtr> &all_nodes);
+
+ protected:
+  std::vector<CNodePtr> prim_nodes_;
+  PrimitivePtr prim_{nullptr};
 };
-using ExpandJPrimPtr = std::shared_ptr<ExpandJPrim>;
+using ExpandMetaFGPrimPtr = std::shared_ptr<ExpandMetaFGPrim>;
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GRADIENT_ELIMINATE_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_PRIM_ELIMINATE_H_
