@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ def _raise_type_error(info):
         info(str): info string to display
     """
     raise TypeError(info)
+
 
 @constexpr
 def _type_check(arg_name, arg_value, valid_types, prim_name=None):
