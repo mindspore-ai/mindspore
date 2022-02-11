@@ -66,7 +66,7 @@ static inline MS_FLOAT32X4 simd_exp128_f32(MS_FLOAT32X4 input) {
 #if defined(ENABLE_AVX512)
 static inline void simd_exp512(MS_FLOAT32X16 input, float *dst) {
   static MS_FLOAT32X16 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f,
-                               88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+                               98.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
   static MS_FLOAT32X16 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f,
                                -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
   static MS_FLOAT32X16 param[] = {
@@ -92,7 +92,7 @@ static inline void simd_exp512(MS_FLOAT32X16 input, float *dst) {
 
 static inline MS_FLOAT32X16 simd_exp512_f32(MS_FLOAT32X16 input) {
   static MS_FLOAT32X16 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f,
-                               88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+                               98.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
   static MS_FLOAT32X16 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f,
                                -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
   static MS_FLOAT32X16 param[] = {
