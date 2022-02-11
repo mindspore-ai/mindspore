@@ -106,6 +106,7 @@ int CastCPUKernel::CastToFp16(const lite::Tensor *input, lite::Tensor *output, i
     case kNumberTypeInt64:
       Int64ToFp16(reinterpret_cast<const int64_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
+      break;
     case kNumberTypeInt32:
       Int32ToFp16(reinterpret_cast<const int32_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
