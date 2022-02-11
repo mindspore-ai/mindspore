@@ -37,7 +37,7 @@ mindspore.nn.ExponentialDecayLR
 
     **异常：**
 
-    - **TypeError:** `learning_rate` 或  `decay_rate` 不是float。
-    - **TypeError:** `decay_steps` 不是int或 `is_stair` 不是bool。
-    - **ValueError:** `decay_steps` 小于1。
-    - **ValueError:** `learning_rate` 或  `decay_rate` 小于或等于0。
+    - **TypeError** - `learning_rate` 或  `decay_rate` 不是float。
+    - **TypeError** - `decay_steps` 不是int或 `is_stair` 不是bool。
+    - **ValueError** - `decay_steps` 小于1。
+    - **ValueError** - `learning_rate` 或  `decay_rate` 小于或等于0。

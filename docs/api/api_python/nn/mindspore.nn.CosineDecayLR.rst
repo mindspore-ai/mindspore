@@ -28,7 +28,7 @@ mindspore.nn.CosineDecayLR
 
     **异常：**
 
-    - **TypeError:** `min_lr` 或  `max_lr` 不是float。
-    - **TypeError:** `decay_steps` 不是整数。
-    - **ValueError:** `min_lr` 小于0或 `decay_steps` 小于1。
-    - **ValueError:** `max_lr` 小于或等于0。
+    - **TypeError** - `min_lr` 或  `max_lr` 不是float。
+    - **TypeError** - `decay_steps` 不是整数。
+    - **ValueError** - `min_lr` 小于0或 `decay_steps` 小于1。
+    - **ValueError** - `max_lr` 小于或等于0。

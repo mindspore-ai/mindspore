@@ -19,4 +19,4 @@ mindspore.dataset.deserialize
 
     **异常：**
 
-    - **OSError:** -  `json_filepath` 不为None且JSON文件解析失败时。
+    - **OSError** -  `json_filepath` 不为None且JSON文件解析失败时。

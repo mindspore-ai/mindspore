@@ -22,11 +22,3 @@ mindspore.ops.L2Loss
 
     - **TypeError** - `input_x` 不是Tensor。
     - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
-
-    **样例:**
-
-    >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
-    >>> l2_loss = ops.L2Loss()
-    >>> output = l2_loss(input_x)
-    >>> print(output)
-    7.0

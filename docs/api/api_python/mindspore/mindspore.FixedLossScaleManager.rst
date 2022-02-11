@@ -28,11 +28,11 @@ mindspore.FixedLossScaleManager
 
     .. py:method:: get_update_cell()
 
-        返回用于更新 `loss_scale` 值的 `Cell` 实例， :class:`mindspore.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
+        返回用于更新 `loss_scale` 值的 `Cell` 实例， :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该实例。该类使用固定的梯度放大系数，因此该实例不执行任何操作。
 
         **返回：**
 
-        None或 `Cell` 。当 `drop_overflow_update` 为True时，返回 :class:`mindspore.FixedLossScaleUpdateCell` 实例，当 `drop_overflow_update` 为False时，返回None。
+        None或 `Cell` 。当 `drop_overflow_update` 为True时，返回 :class:`mindspore.nn.FixedLossScaleUpdateCell` 实例，当 `drop_overflow_update` 为False时，返回None。
 
     .. py:method:: update_loss_scale(overflow)
 

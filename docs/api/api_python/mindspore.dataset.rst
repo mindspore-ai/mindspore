@@ -31,12 +31,13 @@ mindspore.dataset
     :toctree: dataset
 
     mindspore.dataset.CelebADataset
+    mindspore.dataset.Cifar10Dataset
+    mindspore.dataset.Cifar100Dataset
     mindspore.dataset.CocoDataset
     mindspore.dataset.ImageFolderDataset
+    mindspore.dataset.ManifestDataset
     mindspore.dataset.MnistDataset
     mindspore.dataset.VOCDataset
-    mindspore.dataset.Cifar100Dataset
-    mindspore.dataset.Cifar10Dataset
 
 文本
 ----
@@ -45,15 +46,17 @@ mindspore.dataset
     :toctree: dataset
 
     mindspore.dataset.CLUEDataset
+    mindspore.dataset.TextFileDataset
 
-图
----
+标准格式
+--------
 
 .. cnmsautosummary::
     :toctree: dataset
-    
-    mindspore.dataset.GraphData
 
+    mindspore.dataset.CSVDataset
+    mindspore.dataset.MindDataset
+    mindspore.dataset.TFRecordDataset
 
 用户自定义
 ----------
@@ -64,6 +67,15 @@ mindspore.dataset
     mindspore.dataset.GeneratorDataset
     mindspore.dataset.NumpySlicesDataset
     mindspore.dataset.PaddedDataset
+
+图
+---
+
+.. cnmsautosummary::
+    :toctree: dataset
+    
+    mindspore.dataset.GraphData
+
 
 采样器
 -------
@@ -79,17 +91,6 @@ mindspore.dataset
     mindspore.dataset.SubsetSampler
     mindspore.dataset.WeightedRandomSampler
 
-标准格式
---------
-
-.. cnmsautosummary::
-    :toctree: dataset
-
-    mindspore.dataset.CSVDataset
-    mindspore.dataset.ManifestDataset
-    mindspore.dataset.MindDataset
-    mindspore.dataset.TFRecordDataset
-    mindspore.dataset.TextFileDataset
 
 其他
 -----
@@ -97,8 +98,8 @@ mindspore.dataset
 .. cnmsautosummary::
     :toctree: dataset
 
-    mindspore.dataset.DSCallback
     mindspore.dataset.DatasetCache
+    mindspore.dataset.DSCallback
     mindspore.dataset.Schema
     mindspore.dataset.WaitedDSCallback
     mindspore.dataset.compare

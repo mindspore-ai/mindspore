@@ -22,6 +22,6 @@ mindspore.nn.piecewise_constant_lr
 
     **异常：**
 
-    - **TypeError:** `milestone` 或 `learning_rates` 既不是tuple也不是list。
-    - **ValueError:** `milestone` 和 `learning_rates` 的长度不相等。
-    - **ValueError:** `milestone` 中的不是单调递增的。
+    - **TypeError** - `milestone` 或 `learning_rates` 既不是tuple也不是list。
+    - **ValueError** - `milestone` 和 `learning_rates` 的长度不相等。
+    - **ValueError** - `milestone` 中的不是单调递增的。
