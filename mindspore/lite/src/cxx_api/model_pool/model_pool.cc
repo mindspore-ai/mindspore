@@ -69,12 +69,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     return nullptr;
   }
   if (runner_config != nullptr) {
-    model_context = runner_config->model_ctx;
-    if (runner_config->num_model == 0) {
-      MS_LOG(ERROR) << "num of model is zero.";
-      return nullptr;
-    }
-    num_models_ = runner_config->num_model;
+    model_context = runner_config->context;
     auto device_list = model_context->MutableDeviceInfo();
     if (device_list.size() != 1) {
       MS_LOG(ERROR) << "model pool only support device num 1.";
@@ -94,6 +89,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
       MS_LOG(ERROR) << "model pool not support enable fp16.";
       return nullptr;
     }
+    num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
   } else {
     MS_LOG(DEBUG) << "use default config.";
     num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());

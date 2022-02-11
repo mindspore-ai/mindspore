@@ -41,14 +41,3 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_create
   runner_config->model_ctx = context;
   return (jlong)runner_config;
 }
-
-extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setNumModel(JNIEnv *env, jobject thiz,
-                                                                                     jstring runner_config_ptr,
-                                                                                     jint num_model) {
-  auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
-  if (pointer == nullptr) {
-    MS_LOGE("runner config pointer from java is nullptr");
-    return;
-  }
-  pointer->num_model = num_model;
-}
