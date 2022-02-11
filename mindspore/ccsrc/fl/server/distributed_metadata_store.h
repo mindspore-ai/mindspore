@@ -61,6 +61,8 @@ class DistributedMetadataStore {
   // Get the metadata for the name.
   PBMetadata GetMetadata(const std::string &name);
 
+  bool GetOneDeviceMeta(const std::string &fl_id, DeviceMeta *device_meta);
+
   // Reinitialize the consistency hash ring and clear metadata after scaling operations are done.
   bool ReInitForScaling();
 
@@ -85,11 +87,16 @@ class DistributedMetadataStore {
   // Callback for getting metadata request sent to the server.
   void HandleGetMetadataRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
+  // Callback for getting metadata item request sent to the server.
+  void HandleGetOneDeviceMetaRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
   // Do updating metadata in the server where the metadata for the name is stored.
   bool DoUpdateMetadata(const std::string &name, const PBMetadata &meta);
 
   // Do updating metadata about pairwise-encryption in the server where the metadata for the name is stored.
   bool DoUpdateEncryptMetadata(const std::string &name, const PBMetadata &meta);
+
+  bool DoGetOneDeviceMeta(const std::string &fl_id, DeviceMeta *device_meta);
 
   // Update client keys stored in server
   bool UpdatePairClientKeys(const std::string &name, const PBMetadata &meta);
