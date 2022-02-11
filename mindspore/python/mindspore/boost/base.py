@@ -19,6 +19,7 @@ import math
 import copy
 import numpy as np
 from scipy import linalg as la
+from mindspore.context import ParallelMode
 import mindspore.nn as nn
 from mindspore.nn.optim import LARS
 from mindspore import log as logger
@@ -26,6 +27,7 @@ from mindspore.common import Parameter
 from mindspore.communication.management import get_group_size
 from mindspore.train.serialization import load_checkpoint
 from mindspore.parallel._utils import _get_global_rank
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from .less_batch_normalization import CommonHeadLastFN
 
 
@@ -328,9 +330,9 @@ def _load_weights(weight_load_dir, network):
         weight_load_dir (str): The weight(ckpt) file directory to be load.
         network (Cell): The network.
     """
-    param_requires_grad_dict = {}
+    param_requires_grad_list = []
     for param in network.trainable_params():
-        param_requires_grad_dict[param.name] = param.requires_grad
+        param_requires_grad_list.append(param.name)
 
     param_mat_tuple = ()
     weight_file_list = os.listdir(weight_load_dir)
@@ -341,7 +343,7 @@ def _load_weights(weight_load_dir, network):
         param_dict = load_checkpoint(file_path)
         param_tuple = ()
         for key, value in param_dict.items():
-            if param_requires_grad_dict[key]:
+            if key in param_requires_grad_list:
                 param_tuple += (value.asnumpy().reshape((1, -1)),)
         param = np.concatenate(param_tuple, axis=1)
         param_mat_tuple += (param,)
@@ -473,7 +475,8 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
         full_pca_mat_path (str): the path of full pca mat.
         n_component (int): pca component.
     """
-    rank_size = get_group_size()
+    parallel_mode = auto_parallel_context().get_parallel_mode()
+    rank_size = 1 if parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
     local_dim = math.ceil(n_component / rank_size)
     for rank_id in range(rank_size):
         start_index = rank_id * local_dim
