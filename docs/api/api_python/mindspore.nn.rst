@@ -7,8 +7,8 @@ mindspore.nn
 
 MindSpore中 `mindspore.nn` 算子与上一版本相比，新增、删除和支持平台的变化信息请参考 `API Updates <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates.md>`_。
 
-Cell
-----
+基本构成单元
+------------
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -37,8 +37,8 @@ Cell
     mindspore.nn.Conv3d
     mindspore.nn.Conv3dTranspose
 
-Gradient
----------
+梯度
+-----
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -47,7 +47,7 @@ Gradient
     mindspore.nn.Vjp
 
 非线性激活函数
-----------------------
+--------------
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -66,8 +66,8 @@ Gradient
     mindspore.nn.Softmax
     mindspore.nn.Tanh
 
-Utilities
----------
+工具
+-----
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -76,7 +76,7 @@ Utilities
     mindspore.nn.Tril
 
 损失函数
---------------
+--------
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -85,8 +85,8 @@ Utilities
     mindspore.nn.MSELoss
     mindspore.nn.SmoothL1Loss
 
-Optimizer Functions
--------------------
+优化器
+-------
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -106,8 +106,8 @@ Optimizer Functions
     mindspore.nn.SGD
     mindspore.nn.thor
 
-Wrapper Functions
------------------
+封装函数
+---------
 
 .. cnmsplatformautosummary::
     :toctree: nn
@@ -122,15 +122,15 @@ Wrapper Functions
     mindspore.nn.WithEvalCell
     mindspore.nn.WithLossCell
 
-Math Functions
------------------
+数学函数
+--------
 
 .. cnmsplatformautosummary::
     :toctree: nn
 
     mindspore.nn.Moments
 
-Metrics
+评估指标
 --------
 
 .. cnmsautosummary::
@@ -152,11 +152,11 @@ Metrics
     mindspore.nn.names
     mindspore.nn.rearrange_inputs
 
-Dynamic Learning Rate
----------------------
+动态学习率
+-----------
 
-LearningRateSchedule
-^^^^^^^^^^^^^^^^^^^^^
+LearningRateSchedule类
+^^^^^^^^^^^^^^^^^^^^^^^
 
 本模块中的动态学习率都是LearningRateSchedule的子类，将LearningRateSchedule的实例传递给优化器。在训练过程中，优化器以当前step为输入调用该实例，得到当前的学习率。
 
@@ -182,8 +182,8 @@ LearningRateSchedule
     mindspore.nn.PolynomialDecayLR
     mindspore.nn.WarmUpLR
 
-Dynamic LR
-^^^^^^^^^^
+Dynamic LR函数
+^^^^^^^^^^^^^^
 
 本模块中的动态学习率都是function，调用function并将结果传递给优化器。在训练过程中，优化器将result[current step]作为当前学习率。
 

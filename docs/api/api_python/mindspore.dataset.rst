@@ -24,8 +24,8 @@ mindspore.dataset
 - MappableDataset，一个抽象类，表示支持随机访问的源数据集。
 - Iterator，用于枚举元素的数据集迭代器的基类。
 
-Vision
--------
+视觉
+-----
 
 .. cnmsautosummary::
     :toctree: dataset
@@ -38,7 +38,7 @@ Vision
     mindspore.dataset.Cifar100Dataset
     mindspore.dataset.Cifar10Dataset
 
-Text
+文本
 ----
 
 .. cnmsautosummary::
@@ -46,8 +46,8 @@ Text
 
     mindspore.dataset.CLUEDataset
 
-Graph
------
+图
+---
 
 .. cnmsautosummary::
     :toctree: dataset
@@ -55,8 +55,8 @@ Graph
     mindspore.dataset.GraphData
 
 
-User Defined
-------------
+用户自定义
+----------
 
 .. cnmsautosummary::
     :toctree: dataset
@@ -65,7 +65,7 @@ User Defined
     mindspore.dataset.NumpySlicesDataset
     mindspore.dataset.PaddedDataset
 
-Sampler
+采样器
 -------
 
 .. cnmsautosummary::
@@ -79,8 +79,8 @@ Sampler
     mindspore.dataset.SubsetSampler
     mindspore.dataset.WeightedRandomSampler
 
-Standard Format
----------------
+标准格式
+--------
 
 .. cnmsautosummary::
     :toctree: dataset
@@ -91,8 +91,8 @@ Standard Format
     mindspore.dataset.TFRecordDataset
     mindspore.dataset.TextFileDataset
 
-Others
-------
+其他
+-----
 
 .. cnmsautosummary::
     :toctree: dataset

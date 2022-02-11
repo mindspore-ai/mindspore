@@ -1,7 +1,7 @@
 mindspore
 =========
 
-Tensor
+张量
 ------
 
 .. cnmsautosummary::
@@ -11,7 +11,7 @@ Tensor
     mindspore.RowTensor
     mindspore.SparseTensor
 
-Parameter
+参数
 ---------
 
 .. cnmsautosummary::
@@ -20,7 +20,7 @@ Parameter
     mindspore.Parameter
     mindspore.ParameterTuple
 
-DataType
+数据类型
 --------
 
 .. cnmsautosummary::
@@ -33,7 +33,7 @@ DataType
     mindspore.issubclass_
     mindspore.pytype_to_dtype
 
-Seed
+种子
 ----
 
 .. cnmsautosummary::
@@ -42,7 +42,7 @@ Seed
     mindspore.get_seed
     mindspore.set_seed
 
-Model
+模型
 -----
 
 .. cnmsautosummary::
@@ -50,8 +50,8 @@ Model
 
     mindspore.Model
 
-Dataset Helper
----------------
+MindData数据集处理
+-------------------
 
 .. cnmsautosummary::
     :toctree: mindspore
@@ -59,8 +59,8 @@ Dataset Helper
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-Loss Scale Manager
-------------------
+损失函数管理
+------------
 
 .. cnmsautosummary::
     :toctree: mindspore
@@ -69,8 +69,8 @@ Loss Scale Manager
     mindspore.FixedLossScaleManager
     mindspore.LossScaleManager
 
-Serialization
---------------
+序列化
+-------
 
 .. cnmsautosummary::
     :toctree: mindspore
@@ -86,16 +86,16 @@ Serialization
     mindspore.save_checkpoint
     mindspore.async_ckpt_thread_status
 
-JIT
----
+即时编译
+--------
 
 .. cnmsautosummary::
     :toctree: mindspore
 
     mindspore.ms_function
 
-Log
----
+日志
+----
 
 .. cnmsautosummary::
     :toctree: mindspore
@@ -103,16 +103,16 @@ Log
     mindspore.get_level
     mindspore.get_log_config
 
-Automatic Mixed Precision
----------------------------
+自动混合精度
+------------
 
 .. cnmsautosummary::
     :toctree: mindspore
 
     mindspore.build_train_network
 
-Installation Verification
---------------------------
+安装验证
+--------
 
 .. cnmsautosummary::
     :toctree: mindspore

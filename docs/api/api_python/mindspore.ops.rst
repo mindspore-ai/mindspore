@@ -12,8 +12,8 @@ MindSpore中 `mindspore.ops` 算子与上一版本相比，新增、删除和支
 operations
 ----------
 
-Neural Network Operators
-^^^^^^^^^^^^^^^^^^^^^^^^
+神经网络算子
+^^^^^^^^^^^^
 
 operations中的Primitive算子在使用前需要实例化。
 
@@ -30,8 +30,8 @@ operations中的Primitive算子在使用前需要实例化。
     mindspore.ops.SeLU
     mindspore.ops.Sigmoid
 
-Math Operators
---------------
+Math类型算子
+------------
 
 .. cnmsplatformautosummary::
     :toctree: ops
@@ -50,8 +50,8 @@ Math Operators
     mindspore.ops.Pow
     mindspore.ops.Sub
 
-Array Operators
-----------------
+Array类型算子
+--------------
 
 .. cnmsplatformautosummary::
     :toctree: ops
@@ -67,8 +67,8 @@ Array Operators
     mindspore.ops.ZerosLike
 
 
-Random Operators
-----------------
+Random类型算子
+--------------
 
 .. cnmsplatformautosummary::
     :toctree: ops
