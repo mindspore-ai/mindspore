@@ -243,21 +243,21 @@ def test_solve_triangular_error_tensor_type():
     b = create_random_rank_matrix((10,), onp.float32)
     with pytest.raises(TypeError) as err:
         solve_triangular(a, Tensor(b))
-    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got String."
+    msg = "For Primitive[DType], the input argument[input_x] must be a Tensor or CSRTensor but got String."
     match_exception_info(err, msg)
 
     a = [1, 2, 3]
     b = create_random_rank_matrix((10,), onp.float32)
     with pytest.raises(TypeError) as err:
         solve_triangular(a, Tensor(b))
-    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got List[Int64*3]."
+    msg = "For Primitive[DType], the input argument[input_x] must be a Tensor or CSRTensor but got List[Int64*3]."
     match_exception_info(err, msg)
 
     a = (1, 2, 3)
     b = create_random_rank_matrix((10,), onp.float32)
     with pytest.raises(TypeError) as err:
         solve_triangular(a, Tensor(b))
-    msg = "For Primitive[DType], the input argument[infer type]must be a Tensor or CSRTensor but got Tuple[Int64*3]."
+    msg = "For Primitive[DType], the input argument[input_x] must be a Tensor or CSRTensor but got Tuple[Int64*3]."
     match_exception_info(err, msg)
 
 
