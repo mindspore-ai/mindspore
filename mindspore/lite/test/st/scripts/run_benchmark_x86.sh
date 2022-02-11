@@ -5,9 +5,11 @@ source ./scripts/base_functions.sh
 function Run_Converter() {
     # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
-    tar -zxf ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+    if [[ $backend != "linux_arm64_tflite" ]]; then
+      tar -zxf ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    fi
+    tar -zxf mindspore-lite-${version}-linux-*.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-*/ || exit 1
 
     cp tools/converter/converter/converter_lite ./ || exit 1
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
@@ -65,8 +67,8 @@ function Run_Converter() {
 # Run on x86 platform:
 function Run_x86() {
     # $1:framework;
-    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
+    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-*' >> "${run_x86_log_file}"
+    cd ${x86_path}/mindspore-lite-${version}-linux-*/ || exit 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
     # Run converted models:
@@ -152,8 +154,8 @@ function Run_x86_java() {
 }
 
 function Run_x86_parallel_split() {
-    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
+    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-*' >> "${run_x86_log_file}"
+    cd ${x86_path}/mindspore-lite-${version}-linux-* || exit 1
     rm -rf parallel_split
     mkdir parallel_split
     cd parallel_split || exit 1
@@ -232,9 +234,13 @@ while getopts "r:m:e:p:" opt; do
     esac
 done
 
-x86_path=${release_path}/centos_x86
+if [[ $backend == "linux_arm64_tflite" ]]; then
+  x86_path=${release_path}/linux_aarch64/
+else
+  x86_path=${release_path}/centos_x86
+fi
 cd ${x86_path}
-file_name=$(ls *-linux-x64.tar.gz)
+file_name=$(ls *-linux-*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 cd -
@@ -259,7 +265,7 @@ models_process_only_config=${basepath}/../config/models_process_only.cfg
 
 # Prepare the config file list
 x86_cfg_file_list=()
-if [[ $backend == "x86_tflite" || $backend == "x86_avx512_tflite" ]]; then
+if [[ $backend == "x86_tflite" || $backend == "x86_avx512_tflite" || $backend == "linux_arm64_tflite" ]]; then
   x86_cfg_file_list=("$models_tflite_config")
 elif [[ $backend == "x86_tf" || $backend == "x86_avx512_tf" ]]; then
   x86_cfg_file_list=("$models_tf_config")
@@ -330,7 +336,7 @@ backend=${backend:-"all"}
 isFailed=0
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86_onnx" || $backend == "x86_tf" || \
-      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" || $backend == "linux_arm64_tflite" ]]; then
     # Run on x86
     echo "start Run x86 $backend..."
     Run_x86 &
@@ -377,7 +383,7 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_parallel_sp
 fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86_onnx" || $backend == "x86_tf" || \
-      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" || $backend == "linux_arm64_tflite" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
     # Check benchmark result and return value
