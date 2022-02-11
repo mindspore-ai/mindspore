@@ -381,8 +381,8 @@ class Primitive(Primitive_):
 
 class PrimitiveWithCheck(Primitive):
     """
-    PrimitiveWithCheck is the base class of primitives in python defines functions for checking operator
-    input arguments but used the infer method registered in c++ source codes.
+    PrimitiveWithCheck is the base class of primitives in python, which defines functions to check the input arguments
+    of operators, but uses the infer method registered in c++ source codes.
 
     There are three methods can be overridden to define the check logic of the primitive: __check__(), check_shape(),
     check_dtype(). If __check__() is defined in primitive, the __check__() has the highest priority to be called.
