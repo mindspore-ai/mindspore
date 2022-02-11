@@ -938,7 +938,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
   int ret;
 #ifndef WEIGHT_DECODE_CLIP
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type);
+  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
@@ -988,7 +988,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   int ret;
 #ifndef WEIGHT_DECODE_CLIP
   // weight dequant
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32, src_model_->version_);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
