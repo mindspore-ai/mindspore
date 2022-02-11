@@ -239,7 +239,7 @@ public abstract class Client {
             }
         }
         long endTime = System.currentTimeMillis();
-        logger.info(Common.addTag("total train time:" + (endTime - startTime) + "ms"));
+        logger.info(Common.addTag("total run time:" + (endTime - startTime) + "ms"));
         return Status.SUCCESS;
     }
 
@@ -277,7 +277,8 @@ public abstract class Client {
             }
             trainSession = LiteSession.createSession(msConfig);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
+                        "disk space is enough"));
                 msConfig.free();
                 model.free();
                 return Optional.empty();
@@ -295,7 +296,8 @@ public abstract class Client {
         } else {
             trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
+                        "disk space is enough"));
                 return Optional.empty();
             }
             return Optional.of(trainSession);
