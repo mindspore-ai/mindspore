@@ -84,9 +84,6 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
       input_hw_index_ = -1;
     }
   }
-  if (SetDeviceConfig(stream) != RET_OK) {
-    MS_LOG(WARNING) << "set tensorrt config failed.";
-  }
   return RET_OK;
 }
 
@@ -114,10 +111,12 @@ int TensorRTSubGraph::BuildEngine() {
 }
 
 int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
-  this->config_ = runtime_->GetBuilder()->createBuilderConfig();
-  if (this->config_ == nullptr) {
-    MS_LOG(ERROR) << "create builder config failed.";
-    return RET_ERROR;
+  if (config_ == nullptr) {
+    this->config_ = runtime_->GetBuilder()->createBuilderConfig();
+    if (this->config_ == nullptr) {
+      MS_LOG(ERROR) << "create builder config failed.";
+      return RET_ERROR;
+    }
   }
   // set fp16
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {

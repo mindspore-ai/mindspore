@@ -34,7 +34,7 @@ int FullyConnectedTensorRT::IsSupport(const mindspore::schema::Primitive *primit
 }
 
 int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  int axis;
+  int axis = -1;
   if (type_ == schema::PrimitiveType_FullConnection) {
     auto primitive = this->GetPrimitive()->value_as_FullConnection();
     if (primitive == nullptr) {
@@ -43,6 +43,10 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_ = primitive->activation_type();
     axis = primitive->axis();
+  }
+  if (axis < 0 || axis >= out_tensors_[0].Shape().size()) {
+    MS_LOG(ERROR) << "axis: " << axis << " is invalid for " << op_name_;
+    return RET_ERROR;
   }
   ITensorHelper fc_input;
   auto ret = PreprocessInputs(network, &fc_input);

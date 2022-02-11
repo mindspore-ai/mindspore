@@ -32,6 +32,7 @@ nvinfer1::ICudaEngine *TensorRTSerializer::GetSerializedEngine() {
   }
   nvinfer1::IRuntime *runtime = nvinfer1::createInferRuntime(logger_);
   if (runtime == nullptr) {
+    delete[] trt_model_stream;
     MS_LOG(ERROR) << "createInferRuntime failed.";
     return nullptr;
   }
