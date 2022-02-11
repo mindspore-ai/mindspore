@@ -76,7 +76,7 @@ void Bucket::AllocateAllReduceMemory() {
     DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
     MS_EXCEPTION_IF_NULL(device_address);
     auto origin_size = device_address->GetSize();
-    auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
+    auto align_size = GetAlignSize(origin_size);
     origin_size_list.emplace_back(origin_size);
     align_size_list_.emplace_back(align_size);
     total_size += align_size;
