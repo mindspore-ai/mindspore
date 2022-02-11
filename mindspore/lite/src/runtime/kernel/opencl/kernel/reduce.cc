@@ -259,7 +259,7 @@ int ReduceOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -284,7 +284,7 @@ int ReduceOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ReduceOpenCLKernel::SetGlobalLocal() {
+int ReduceOpenCLKernel::SetGlobalLocal() {
   int h = inShape.H;
   int w = inShape.W;
   int c4 = inShape.Slice;
@@ -309,6 +309,8 @@ void ReduceOpenCLKernel::SetGlobalLocal() {
   }
 
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int ReduceOpenCLKernel::Tune() {

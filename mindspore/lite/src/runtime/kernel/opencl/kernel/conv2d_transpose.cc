@@ -75,7 +75,7 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
@@ -84,7 +84,7 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
+int Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   auto *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int co = out_tensors_[0]->shape()[3];
   int co4 = UP_DIV(co, C4NUM);
@@ -97,6 +97,8 @@ void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   global_size_ = {(size_t)UP_ROUND(UP_DIV(oh, 2), stride_h), (size_t)UP_ROUND(UP_DIV(ow, 2), stride_w),
                   (size_t)co4 * (size_t)n};
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int Conv2dTransposeOpenCLKernel::SetConstArgs() {

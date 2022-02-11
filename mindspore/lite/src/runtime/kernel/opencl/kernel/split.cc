@@ -179,7 +179,7 @@ int SplitOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   return RET_OK;
 }
 
@@ -224,7 +224,7 @@ int SplitOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void SplitOpenCLKernel::SetGlobalLocal() {
+int SplitOpenCLKernel::SetGlobalLocal() {
   OH = in_shape_.s[0] * in_shape_.s[1];
   OW = in_shape_.s[2];
   if (Align_) {
@@ -233,7 +233,7 @@ void SplitOpenCLKernel::SetGlobalLocal() {
   global_size_ = {OH, OW, OC};
   local_size_ = {1, 1, 1};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
-  return;
+  return RET_OK;
 }
 
 int SplitOpenCLKernel::Run() {

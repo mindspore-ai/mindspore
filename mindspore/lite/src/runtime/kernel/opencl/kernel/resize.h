@@ -32,7 +32,7 @@ class ResizeOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int PreProcess() override;
 
  private:

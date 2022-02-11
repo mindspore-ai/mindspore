@@ -77,7 +77,7 @@ int FillOpenCLKernel::RunShape() {
 
 int FillOpenCLKernel::SetConstArgs() { return RET_OK; }
 
-void FillOpenCLKernel::SetGlobalLocal() {}
+int FillOpenCLKernel::SetGlobalLocal() { return RET_OK; }
 
 int FillOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {

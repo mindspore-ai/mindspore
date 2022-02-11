@@ -90,13 +90,15 @@ int SpaceToBatchNDOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void SpaceToBatchNDOpenCLKernel::SetGlobalLocal() {
+int SpaceToBatchNDOpenCLKernel::SetGlobalLocal() {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width(), out_tensors_[0]->Height(), out_tensors_[0]->Batch()};
   local_size_ = {1, 1, 1};
   global_size_ = {(size_t)dst_size.s[0], (size_t)dst_size.s[1],
                   (size_t)dst_size.s[2] * (size_t)(in_tensors_[0]->Batch())};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int SpaceToBatchNDOpenCLKernel::Prepare() {
@@ -113,7 +115,7 @@ int SpaceToBatchNDOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "Build kernel failed.";
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

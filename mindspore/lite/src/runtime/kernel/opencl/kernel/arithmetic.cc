@@ -76,13 +76,14 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-void ArithmeticOpenCLKernel::SetGlobalLocal() {
+int ArithmeticOpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
     global_size_ = {out_shape_.width, out_shape_.height};
   } else {
     global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
   }
   AlignGlobalLocal(global_size_, {});
+  return RET_OK;
 }
 
 void SwitchGpuTensorInfoNWDim(GpuTensorInfo *gpuTensorInfo) {
@@ -242,7 +243,7 @@ int ArithmeticOpenCLKernel::Prepare() {
     return error_code;
   }
 
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   // BiasAdd InitWeight will be called in opencl_subgraph prepare
   if (type() != PrimitiveType_BiasAdd) {
     InitWeights();

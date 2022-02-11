@@ -110,11 +110,12 @@ int GatherOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void GatherOpenCLKernel::SetGlobalLocal() {
+int GatherOpenCLKernel::SetGlobalLocal() {
   auto output = GpuTensorInfo(out_tensors_.front());
   local_size_ = {1, 1, 1};
   global_size_ = {output.W, output.N * output.H, output.Slice};
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int GatherOpenCLKernel::Prepare() {
@@ -148,7 +149,7 @@ int GatherOpenCLKernel::Prepare() {
       return ret;
     }
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

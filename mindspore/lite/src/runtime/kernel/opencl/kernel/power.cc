@@ -108,7 +108,7 @@ int PowerOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void PowerOpenCLKernel::SetGlobalLocal() {
+int PowerOpenCLKernel::SetGlobalLocal() {
   cl_int4 output_shape = {};
   for (size_t i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
     output_shape.s[i] = out_tensors_.at(0)->shape()[i];
@@ -122,6 +122,8 @@ void PowerOpenCLKernel::SetGlobalLocal() {
   std::vector<size_t> global_size_ = {OH, OW, OC};
   PowerGetWorkGroup(global_size_, &local_size_, max_global[0]);
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int PowerOpenCLKernel::Prepare() {
@@ -150,7 +152,7 @@ int PowerOpenCLKernel::Prepare() {
     return ret;
   }
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;

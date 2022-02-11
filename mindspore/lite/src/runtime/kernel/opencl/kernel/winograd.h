@@ -33,7 +33,7 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
   ~WinogradOpenCLKernel() override = default;
 
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
   int Run() override;
 
   std::vector<BaseTuningParameter> GenerateTuningParam() override { return {}; }

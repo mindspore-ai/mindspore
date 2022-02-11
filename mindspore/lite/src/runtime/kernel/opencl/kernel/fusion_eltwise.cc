@@ -148,8 +148,8 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
     auto shape = in_tensor->shape();
     bool is_scalar = shape.empty() || (shape.size() == DIMENSION_1D && shape.front() == 1);
     bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output_info.C);
-    bool _111C = shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 &&
-                 shape[3] == static_cast<int>(output_info.C);
+    bool _111C = shape.size() == DIMENSION_4D && shape[kNHWC_N] == 1 && shape[kNHWC_H] == 1 && shape[kNHWC_W] == 1 &&
+                 shape[kNHWC_C] == static_cast<int>(output_info.C);
     bool same_with_out = shape == output_shape;
     if (!(is_scalar || is_vector || _111C || same_with_out)) {
       return false;
@@ -188,7 +188,7 @@ int FusionEltwiseOpenCLKernel::Prepare() {
     MS_LOG(ERROR) << "InitWeights failed.";
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
@@ -295,11 +295,12 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
 }
 #endif
 
-void FusionEltwiseOpenCLKernel::SetGlobalLocal() {
+int FusionEltwiseOpenCLKernel::SetGlobalLocal() {
   auto output = GpuTensorInfo(out_tensors_.front());
   global_size_ = {output.N * output.H, output.W, output.Slice};
   local_size_ = {};
   AlignGlobalLocal(global_size_, local_size_);
+  return RET_OK;
 }
 
 int FusionEltwiseOpenCLKernel::SetConstArgs() {
@@ -410,8 +411,8 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
     auto shape = in_tensors_[i]->shape();
     bool is_scalar = IsScalar(shape);
     bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output.C);
-    bool _111C = shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 &&
-                 shape[3] == static_cast<int>(output.C);
+    bool _111C = shape.size() == DIMENSION_4D && shape[kNHWC_N] == 1 && shape[kNHWC_H] == 1 && shape[kNHWC_W] == 1 &&
+                 shape[kNHWC_C] == static_cast<int>(output.C);
     if (tensor->IsConst()) {
       if (!is_scalar) {
         code << "  FLT4 in" << i << " = input" << i << "[";
@@ -445,8 +446,8 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
 std::string FusionEltwiseOpenCLKernel::CodegenCore(FusionEltwiseParameter *param, const std::string &out_name,
                                                    int degree) {
   std::stringstream code;
-  std::string log_prefix(degree * 2, ' ');
-  std::string cl_prefix((degree + 1) * 2, ' ');
+  std::string log_prefix(degree * 2, ' ');       // double : 2
+  std::string cl_prefix((degree + 1) * 2, ' ');  // double : 2
 
   std::vector<std::string> input_names;
   MS_ASSERT(param);
@@ -477,7 +478,7 @@ std::string FusionEltwiseOpenCLKernel::CodegenCore(FusionEltwiseParameter *param
     code << cl_prefix << "FLT4 " << out_name << " = -" << var0 << ";\n";
   } else if (param->operator_ == Operator_Scale) {
     const std::string &var1 = input_names.at(1);
-    const std::string &var2 = input_names.at(2);
+    const std::string &var2 = input_names.at(2);  // 2 : second input
     code << cl_prefix << "FLT4 " << out_name << " = " << var0 << " * " << var1 << " + " << var2 << ";\n";
   } else {
     if (param->operator_ == Operator_Act_NO_ACTIVATION) {

@@ -34,7 +34,7 @@ class ArithmeticInt8OpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   int InitWeights() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
  private:
   bool element_flag_{true};

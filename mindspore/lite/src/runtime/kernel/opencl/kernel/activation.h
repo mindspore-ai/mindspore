@@ -36,7 +36,7 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int SetConstArgs() override;
-  void SetGlobalLocal() override;
+  int SetGlobalLocal() override;
 
  private:
   static std::string GetActTypeString(int act_type);

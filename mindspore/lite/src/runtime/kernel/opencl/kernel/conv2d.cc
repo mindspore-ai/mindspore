@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ int Conv2DOpenCLKernel::Prepare() {
   if (ret != RET_OK) {
     return ret;
   }
-  SetGlobalLocal();
+  (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
     MS_LOG(ERROR) << "SeConstArgs failed.";
     return RET_ERROR;
@@ -158,18 +158,18 @@ int Conv2DOpenCLKernel::InitAttrs() {
   auto output_shape = out_tensors_.front()->shape();
   CHECK_LESS_RETURN(input_shape.size(), C4NUM);
   batch_size_ = input_shape[0];
-  IH_ = input_shape[1];
-  IW_ = input_shape[2];
-  CI_ = input_shape[3];
+  IH_ = input_shape[kNHWC_H];
+  IW_ = input_shape[kNHWC_W];
+  CI_ = input_shape[kNHWC_C];
   // for fusion Conv2D and Reshape(N11C->NC)
-  if (output_shape.size() == 2) {
+  if (output_shape.size() == kNHWC_W) {
     OH_ = 1;
     OW_ = 1;
-    CO_ = output_shape[1];
-  } else {  // output_shape.size()==4
-    OH_ = output_shape[1];
-    OW_ = output_shape[2];
-    CO_ = output_shape[3];
+    CO_ = output_shape[kNHWC_H];
+  } else {  // output_shape.size() == C4NUM
+    OH_ = output_shape[kNHWC_H];
+    OW_ = output_shape[kNHWC_W];
+    CO_ = output_shape[kNHWC_C];
   }
   CI_SLICES_ = UP_DIV(CI_, CI_TILE);
   CO_SLICES_ = UP_DIV(CO_, CO_TILE);
@@ -177,7 +177,7 @@ int Conv2DOpenCLKernel::InitAttrs() {
   KH_ = param_->kernel_h_;
   KW_ = param_->kernel_w_;
   // note: TILE_HW_ is only used when use_winograd_=true
-  TILE_HW_ = UP_DIV(OW_, 4) * UP_DIV(OH_, 4);
+  TILE_HW_ = UP_DIV(OW_, C4NUM) * UP_DIV(OH_, C4NUM);
   return RET_OK;
 }
 
@@ -234,25 +234,25 @@ void Conv2DOpenCLKernel::SetBlockSize() {
 
 void Conv2DOpenCLKernel::SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
   int block_size;
-  if (task_size_per_cu <= 256) {
-    block_size = 1;
-  } else if (task_size_per_cu <= 256 * 4) {
-    block_size = 2;
+  if (task_size_per_cu <= C256NUM) {
+    block_size = C1NUM;
+  } else if (task_size_per_cu <= C256NUM * C4NUM) {
+    block_size = C2NUM;
   } else if (task_size_per_cu <= FLT_MAX) {
-    block_size = 4;
+    block_size = C4NUM;
   } else {
-    block_size = 8;
+    block_size = C8NUM;
   }
 
   if (!w_kernel_is_1 || !h_kernel_is_1) {
-    block_size = std::min(block_size, 4);
+    block_size = std::min(block_size, C4NUM);
   }
 
-  if (block_size == 8) {
+  if (block_size == C8NUM) {
     block_size_ = {2, 2, 2};
-  } else if (block_size == 4) {
+  } else if (block_size == C4NUM) {
     block_size_ = {2, 2, 1};
-  } else if (block_size == 2) {
+  } else if (block_size == C2NUM) {
     block_size_ = {2, 1, 1};
   } else {
     block_size_ = {1, 1, 1};
@@ -260,29 +260,29 @@ void Conv2DOpenCLKernel::SetMaliFp32BlockSize(int task_size_per_cu, bool w_kerne
 }
 void Conv2DOpenCLKernel::SetMaliFp16BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
   int block_size;
-  if (task_size_per_cu <= 256) {
-    block_size = 1;
-  } else if (task_size_per_cu <= 256 * 4) {
-    block_size = 2;
-  } else if (task_size_per_cu <= 256 * 8) {
-    block_size = 4;
+  if (task_size_per_cu <= C256NUM) {
+    block_size = C1NUM;
+  } else if (task_size_per_cu <= C256NUM * C4NUM) {
+    block_size = C2NUM;
+  } else if (task_size_per_cu <= C256NUM * C8NUM) {
+    block_size = C4NUM;
   } else {
-    block_size = 8;
+    block_size = C8NUM;
   }
 
   if (!w_kernel_is_1 || !h_kernel_is_1) {
-    block_size = std::min(block_size, 4);
+    block_size = std::min(block_size, C4NUM);
   }
 
-  if (CO_SLICES_ >= 128 && OH_ >= 10 && OW_ >= 10) {
-    block_size = 8;
+  if (CO_SLICES_ >= C128NUM && OH_ >= 10 && OW_ >= 10) {  // out hw > 10x10
+    block_size = C8NUM;
   }
 
-  if (block_size == 8) {
+  if (block_size == C8NUM) {
     block_size_ = {2, 2, 2};
-  } else if (block_size == 4) {
+  } else if (block_size == C4NUM) {
     block_size_ = {2, 1, 2};
-  } else if (block_size == 2) {
+  } else if (block_size == C2NUM) {
     block_size_ = {2, 1, 1};
   } else {
     block_size_ = {1, 1, 1};
@@ -322,10 +322,10 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
     for (size_t kh = 0; kh < KH; ++kh) {
       for (size_t kw = 0; kw < KW; ++kw) {
         for (size_t ci = 0; ci < CI; ++ci, ++src_idx) {
-          size_t dst_idx = 0;
-          size_t co_inner = co % CO_TILE;
           size_t ci_slice = ci / CI_TILE;
           size_t ci_inner = ci % CI_TILE;
+          size_t dst_idx = 0;
+          size_t co_inner = co % CO_TILE;
           if (dst_format == OHWIOgroupI4O4) {
             size_t co_slice = co / (CO_TILE * OGroup);
             size_t group_idx = co % (CO_TILE * OGroup) / CO_TILE;
@@ -333,7 +333,7 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
               (((((co_slice * KH + kh) * KW + kw) * CI_SLICES + ci_slice) * OGroup + group_idx) * CI_TILE + ci_inner) *
                 CO_TILE +
               co_inner;
-          } else {  // if(dst_format==HWII4OO4)
+          } else {  // if (dst_format == HWII4OO4)
             size_t co_slice = co / CO_TILE;
             dst_idx =
               ((((kh * KW + kw) * CI_SLICES + ci_slice) * CI_TILE + ci_inner) * CO_SLICES + co_slice) * CO_TILE +
@@ -463,7 +463,7 @@ int Conv2DOpenCLKernel::InitBias() {
   }
   memset(packed_bias_, 0x00, packed_bias_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
-    auto bias_tensor = in_tensors_.at(2);
+    auto bias_tensor = in_tensors_.at(DIMENSION_2D);
     void *src_data = stored_bias_ == nullptr ? bias_tensor->data() : stored_bias_;
     MS_ASSERT(src_data);
 
@@ -551,13 +551,13 @@ int Conv2DOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void Conv2DOpenCLKernel::SetGlobalLocal() {
+int Conv2DOpenCLKernel::SetGlobalLocal() {
   size_t global_h = batch_size_ * UP_DIV(OH_, block_size_.H);
   size_t global_w = UP_DIV(OW_, block_size_.W);
   size_t global_c = UP_DIV(CO_SLICES_, block_size_.C);
-  int local_max = filter_type_ == MemType::IMG ? 64 : 128;
-  if (ocl_runtime_->DeviceComputeUnits() > 16) {
-    local_max = 256;
+  int local_max = filter_type_ == MemType::IMG ? C64NUM : C128NUM;
+  if (ocl_runtime_->DeviceComputeUnits() > C16NUM) {
+    local_max = C256NUM;
   }
   const int local_c_max = 16;
   const int OH_threshold = 100;
@@ -578,6 +578,8 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
   global_size_ = {global_h, global_w, global_c};
   local_size_ = {local_h, local_w, local_c};
   AlignGlobalLocal(global_size_, local_size_);
+
+  return RET_OK;
 }
 
 int Conv2DOpenCLKernel::Run() {
@@ -612,10 +614,10 @@ std::vector<BaseTuningParameter> Conv2DOpenCLKernel::GenerateTuningParam() {
     if (x <= max_work_items[0]) {
       for (auto y : candidate_y) {
         if (y <= max_work_items[1]) {
-          auto group_size = x * y * local_size_[2];
+          auto group_size = x * y * local_size_[DIMENSION_2D];
           if (group_size <= max_workgroup_size) {
             BaseTuningParameter tuning_param = BaseTuningParameter();
-            tuning_param.local_size = {x, y, local_size_[2]};
+            tuning_param.local_size = {x, y, local_size_[DIMENSION_2D]};
             tuning_params.push_back(tuning_param);
           }
         }
@@ -651,8 +653,8 @@ bool UseFcReplaceConv(const std::vector<lite::Tensor *> &inputs, const std::vect
   auto input_shape = inputs.front()->shape();
   auto output_shape = inputs.front()->shape();
   // IH=1 IW=1 OH=1 OW=1
-  bool hw_is_1 = input_shape.size() == 4 && input_shape[1] == 1 && input_shape[2] == 1 && output_shape.size() == 4 &&
-                 output_shape[1] == 1 && output_shape[2] == 1;
+  bool hw_is_1 = input_shape.size() == DIMENSION_4D && input_shape[kNHWC_H] == 1 && input_shape[kNHWC_W] == 1 &&
+                 output_shape.size() == DIMENSION_4D && output_shape[kNHWC_H] == 1 && output_shape[kNHWC_W] == 1;
   bool attr_valid = param->kernel_h_ == 1 && param->kernel_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
                     param->pad_u_ == 0 && param->pad_d_ == 0 && param->pad_l_ == 0 && param->pad_r_ == 0 &&
                     param->dilation_h_ == 1 && param->dilation_w_ == 1;
@@ -669,45 +671,47 @@ OpParameter *CreateFcParam(const ConvParameter *conv_param, const std::vector<li
   fc_param->a_transpose_ = false;
   fc_param->b_transpose_ = true;
   fc_param->act_type_ = conv_param->act_type_;
-  fc_param->has_bias_ = inputs.size() == 3;
+  fc_param->has_bias_ = inputs.size() == DIMENSION_3D;
   return reinterpret_cast<OpParameter *>(fc_param);
 }
 
 bool UseWinograd4x4To6x6(const ConvParameter *param, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs) {
-  if (!(inputs.size() == 2 || inputs.size() == 3) || outputs.empty()) {
+  if (!(inputs.size() == DIMENSION_2D || inputs.size() == DIMENSION_3D) || outputs.empty()) {
     return false;
   }
   auto input_shape = inputs.front()->shape();
   auto output_shape = outputs.front()->shape();
-  if (input_shape.size() != 4 || (output_shape.size() != 2 && output_shape.size() != 4)) {
+  if (input_shape.size() != DIMENSION_4D ||
+      (output_shape.size() != DIMENSION_2D && output_shape.size() != DIMENSION_4D)) {
     return false;
   }
-  int batch_size = input_shape[0];
-  int IH = input_shape[1];
-  int IW = input_shape[2];
-  int CI = input_shape[3];
-  int OH = output_shape.size() == 2 ? 1 : output_shape[1];
-  int OW = output_shape.size() == 2 ? 1 : output_shape[2];
-  int CO = output_shape.size() == 2 ? output_shape[1] : output_shape[3];
+  int batch_size = input_shape[kNHWC_N];
+  int IH = input_shape[kNHWC_H];
+  int IW = input_shape[kNHWC_W];
+  int CI = input_shape[kNHWC_C];
+  int OH = output_shape.size() == DIMENSION_2D ? 1 : output_shape[kNHWC_H];
+  int OW = output_shape.size() == DIMENSION_2D ? 1 : output_shape[kNHWC_W];
+  int CO = output_shape.size() == DIMENSION_2D ? output_shape[kNHWC_H] : output_shape[kNHWC_C];
   int CI_SLICES = UP_DIV(CI, CI_TILE);
   int CO_SLICES = UP_DIV(CO, CO_TILE);
-  int TILE_HW_ = UP_DIV(OH, 4) * UP_DIV(OW, 4);
+  int TILE_HW_ = UP_DIV(OH, C4NUM) * UP_DIV(OW, C4NUM);
 
   bool pad_is_all_0 = param->pad_u_ == 0 && param->pad_d_ == 0 && param->pad_l_ == 0 && param->pad_r_ == 0;
   bool pad_is_all_1 = param->pad_u_ == 1 && param->pad_d_ == 1 && param->pad_l_ == 1 && param->pad_r_ == 1;
-  bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
-                    param->dilation_h_ == 1 && param->dilation_w_ == 1 && (pad_is_all_0 || pad_is_all_1);
+  bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 &&  // kernel 3x3
+                    param->stride_w_ == 1 && param->dilation_h_ == 1 && param->dilation_w_ == 1 &&
+                    (pad_is_all_0 || pad_is_all_1);
 
   bool shape_valid = false;
   if (pad_is_all_1) {
     shape_valid = batch_size == 1 && IH == OH && IW == OW;
   } else if (pad_is_all_0) {
-    shape_valid = batch_size == 1 && IH - 2 == OH && IW - 2 == OW;
+    shape_valid = batch_size == 1 && IH - 2 == OH && IW - 2 == OW;  // 2 : left 1 + right 1, top 1 + button 1
   }
 
-  bool channel_good = CI_SLICES >= 8 && CO_SLICES >= 8;
-  bool hw_good = TILE_HW_ >= 16;
+  bool channel_good = CI_SLICES >= C8NUM && CO_SLICES >= C8NUM;
+  bool hw_good = TILE_HW_ >= C16NUM;
   return attr_valid && shape_valid && channel_good && hw_good;
 }
 
