@@ -166,7 +166,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             alpha = auto_boost.alpha
             sigma = auto_boost.sigma
             _rank = _get_global_rank()
-            _rank_size = get_group_size()
+            _rank_size = 1 if self.parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
             _device_number = auto_boost.device_number
             n_components = auto_boost.n_components
             timeout = auto_boost.timeout
