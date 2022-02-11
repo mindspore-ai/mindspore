@@ -53,8 +53,10 @@ class BatchNormInfo : public OperatorInfo {
   float epsilon_ = 0.00001;
   float momentum_ = 0.1;
   bool input_is_4d_ = true;
+  int64_t group_size_ = -1;  // config the allreduce group size for SyncBatchnorm, it only support that sharding n dim
   std::string format_;
   std::vector<Group> forward_allreduce_group_;
+  Status InferAllReduceGroupBySize();
 };
 }  // namespace parallel
 }  // namespace mindspore
