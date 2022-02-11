@@ -16,6 +16,7 @@
 
 package com.mindspore.flclient;
 
+import static com.mindspore.flclient.FLParameter.MAX_WAIT_TRY_TIME;
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 import static com.mindspore.flclient.LocalFLParameter.I_VEC_LEN;
 import static com.mindspore.flclient.LocalFLParameter.SALT_SIZE;
@@ -105,6 +106,7 @@ public class CipherClient {
     private ReconstructSecretReq reconstructSecretReq = new ReconstructSecretReq();
     private int retCode;
     private Map<String, X509Certificate[]> certificateList = new HashMap<String, X509Certificate[]>();
+    private int waitTryTime = 0;
 
     /**
      * Construct function of cipherClient
@@ -507,8 +509,7 @@ public class CipherClient {
                 LOGGER.info(Common.addTag("[requestExchangeKeys] the server is not ready now, need wait some time and" +
                         " " +
                         "request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
@@ -589,8 +590,7 @@ public class CipherClient {
             if (!Common.isSeverReady(responseData)) {
                 LOGGER.info(Common.addTag("[getExchangeKeys] the server is not ready now, need wait some time and " +
                         "request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
@@ -840,8 +840,7 @@ public class CipherClient {
                 if (!Common.isSeverReady(responseData)) {
                     LOGGER.info(Common.addTag("[requestShareSecrets] the server is not ready now, need wait some time" +
                             " and request again"));
-                    Common.sleep(SLEEP_TIME);
-                    nextRequestTime = "";
+                    nextRequestTime = Common.getNextReqTime();
                     retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
@@ -920,8 +919,7 @@ public class CipherClient {
             if (!Common.isSeverReady(responseData)) {
                 LOGGER.info(Common.addTag("[getShareSecrets] the server is not ready now, need wait some time and " +
                         "request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
@@ -993,7 +991,13 @@ public class CipherClient {
         // RequestExchangeKeys
         FLClientStatus curStatus;
         curStatus = requestExchangeKeys();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = requestExchangeKeys();
         }
@@ -1003,7 +1007,13 @@ public class CipherClient {
 
         // GetExchangeKeys
         curStatus = getExchangeKeys();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = getExchangeKeys();
         }
@@ -1021,7 +1031,13 @@ public class CipherClient {
         FLClientStatus curStatus;
         // RequestShareSecrets
         curStatus = requestShareSecrets();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = requestShareSecrets();
         }
@@ -1031,7 +1047,13 @@ public class CipherClient {
 
         // GetShareSecrets
         curStatus = getShareSecrets();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = getShareSecrets();
         }
@@ -1050,7 +1072,13 @@ public class CipherClient {
         // GetClientList
         curStatus = clientListReq.getClientList(iteration, u3ClientList, decryptShareSecretsList, returnShareList,
                 cUVKeys);
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = clientListReq.getClientList(iteration, u3ClientList, decryptShareSecretsList, returnShareList
                     , cUVKeys);
@@ -1067,7 +1095,13 @@ public class CipherClient {
         if (flParameter.isPkiVerify()) {
             LOGGER.info(Common.addTag("[PairWiseMask] The mode is pkiVerify mode, start clientList check ..."));
             curStatus = clientListCheck();
+            waitTryTime = 0;
             while (curStatus == FLClientStatus.WAIT) {
+                waitTryTime += 1;
+                if (ifWaitTryTimeExceedsLimit()) {
+                    curStatus = FLClientStatus.FAILED;
+                    break;
+                }
                 Common.sleep(SLEEP_TIME);
                 curStatus = clientListCheck();
             }
@@ -1078,7 +1112,13 @@ public class CipherClient {
 
         // SendReconstructSecret
         curStatus = reconstructSecretReq.sendReconstructSecret(decryptShareSecretsList, u3ClientList, iteration);
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = reconstructSecretReq.sendReconstructSecret(decryptShareSecretsList, u3ClientList, iteration);
         }
@@ -1149,7 +1189,13 @@ public class CipherClient {
         // send signed clientList
 
         curStatus = sendClientListSign();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = sendClientListSign();
         }
@@ -1160,7 +1206,13 @@ public class CipherClient {
         // get signed clientList
 
         curStatus = getAllClientListSign();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             Common.sleep(SLEEP_TIME);
             curStatus = getAllClientListSign();
         }
@@ -1216,8 +1268,7 @@ public class CipherClient {
             if (!Common.isSeverReady(responseData)) {
                 LOGGER.info(Common.addTag("[sendClientListSign] the server is not ready now, need wait some time and " +
                         "request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
@@ -1287,8 +1338,7 @@ public class CipherClient {
             if (!Common.isSeverReady(responseData)) {
                 LOGGER.info(Common.addTag("[getAllClientListSign] the server is not ready now, need wait some time " +
                         "and request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
@@ -1423,5 +1473,14 @@ public class CipherClient {
             pemCerts[i] = pemCert;
         }
         return pemCerts;
+    }
+
+    private Boolean ifWaitTryTimeExceedsLimit() {
+        if (waitTryTime > MAX_WAIT_TRY_TIME) {
+            LOGGER.severe(Common.addTag("[ifWaitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
+            return true;
+        }
+        return false;
     }
 }

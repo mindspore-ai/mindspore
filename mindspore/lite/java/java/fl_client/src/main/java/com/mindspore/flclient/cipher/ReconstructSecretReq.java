@@ -137,8 +137,7 @@ public class ReconstructSecretReq {
                 if (!Common.isSeverReady(responseData)) {
                     LOGGER.info(Common.addTag("[sendReconstructSecret] the server is not ready now, need wait some " +
                             "time and request again"));
-                    Common.sleep(SLEEP_TIME);
-                    nextRequestTime = "";
+                    nextRequestTime = Common.getNextReqTime();
                     retCode = ResponseCode.OutOfTime;
                     return FLClientStatus.RESTART;
                 }
