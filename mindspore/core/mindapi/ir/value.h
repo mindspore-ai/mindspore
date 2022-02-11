@@ -240,7 +240,7 @@ template <typename T, typename = typename std::enable_if_t<is_vector<T>::value, 
 inline ValuePtr MakeValue(const T &values) {
   std::vector<ValuePtr> value_vector;
   value_vector.reserve(values.size());
-  for (auto &value : values) {
+  for (auto value : values) {
     value_vector.emplace_back(MakeValue(value));
   }
   return MakeShared<ValueTuple>(value_vector);
