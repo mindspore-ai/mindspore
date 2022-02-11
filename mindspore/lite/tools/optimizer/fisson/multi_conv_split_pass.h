@@ -40,13 +40,12 @@ class MultiConvSplitPass : public PatternProcessPass {
         fmk_type_(fmk_type),
         num_(num) {}
   ~MultiConvSplitPass() override = default;
-
- private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  std::string IsMultiParallelConvNode(const AnfNodePtr &node) const;
 
  private:
+  std::string IsMultiParallelConvNode(const AnfNodePtr &node) const;
+
   std::unordered_map<std::string, SplitStrategy> strategys_{};
   PrimitiveType primitive_type_{schema::PrimitiveType_NONE};
   int32_t fmk_type_{-1};

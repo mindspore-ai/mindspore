@@ -27,7 +27,7 @@ class ToNHWCFormat : public ToFormatBase {
       : ToFormatBase(fmk_type, train_flag, "ToNHWCFormat") {}
   ~ToNHWCFormat() = default;
 
- private:
+ protected:
   STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) override;
   STATUS DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode, schema::Format *src_format,
                                          schema::Format *dst_format) override;

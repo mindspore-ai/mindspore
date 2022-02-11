@@ -61,10 +61,10 @@ bool GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
                                  std::vector<AnfNodePtr> *outputs);
 
 AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
-                                 const std::vector<AnfNodePtr> &conv_outputs, SplitInfo *split_info,
+                                 const std::vector<AnfNodePtr> &conv_outputs, const SplitInfo &split_info,
                                  const std::string &node_name);
 bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
-                                     std::vector<AnfNodePtr> *split_outputs, SplitInfo *split_info,
+                                     std::vector<AnfNodePtr> *split_outputs, const SplitInfo &split_info,
                                      const std::string &node_name);
 bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_size, int split_dim_size);
 }  // namespace opt
