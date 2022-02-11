@@ -2829,7 +2829,10 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
       std::string cst_file_dir = GenerateDumpPath(graph->root_graph_id(), rank_id, true);
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
-      DumpConstantInfo(graph, cst_file_dir);
+      if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+        // Dump constant data for old runtime ascend.
+        DumpConstantInfo(graph, cst_file_dir);
+      }
       DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
       DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
                         graph->execution_order());

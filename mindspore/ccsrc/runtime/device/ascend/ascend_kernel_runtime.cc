@@ -472,7 +472,10 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
   }
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph.graph_id();
 #ifndef ENABLE_SECURITY
-  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(graph);
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    // Update needed dump kernels for old runtime.
+    DumpJsonParser::GetInstance().UpdateNeedDumpKernels(graph);
+  }
 #endif
 #ifdef MEM_REUSE_DEBUG
   if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {

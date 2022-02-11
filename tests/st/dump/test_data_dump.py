@@ -101,7 +101,7 @@ def run_e2e_dump():
         add = Net()
         add(Tensor(x), Tensor(y))
         if context.get_context("device_target") == "Ascend":
-            assert len(os.listdir(dump_file_path)) == 5
+            assert len(os.listdir(dump_file_path)) == 3
             output_name = "Add.Add-op*.0.0.*.output.0.DefaultFormat.npy"
         elif context.get_context("device_target") == "CPU":
             assert len(os.listdir(dump_file_path)) == 5
@@ -271,7 +271,7 @@ def test_dump_with_diagnostic_path():
             shutil.rmtree(diagnose_path)
         add = Net()
         add(Tensor(x), Tensor(y))
-        assert len(os.listdir(dump_file_path)) == 5
+        assert len(os.listdir(dump_file_path)) == 3
         del os.environ['MINDSPORE_DUMP_CONFIG']
         del os.environ['MS_DIAGNOSTIC_DATA_PATH']
 

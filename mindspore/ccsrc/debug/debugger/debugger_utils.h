@@ -19,28 +19,29 @@
 #include <string>
 #include "debug/debugger/debugger.h"
 #include "backend/kernel_compiler/kernel.h"
+#include "runtime/hardware/device_context.h"
 #ifdef ENABLE_D
 #include "toolchain/adx_datadump_callback.h"
 
 using Adx::DumpChunk;
 #endif
+using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchInfo;
 
 namespace mindspore {
 
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
-                uint32_t root_graph_id);
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
+                const DeviceContext *device_context);
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_,
-                 uint32_t root_graph_id);
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+                 uint32_t root_graph_id, const DeviceContext *device_context);
 
 bool CheckReadData(const CNodePtr &cnode);
 
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
-
-void ReadDataAndDumpAscend(const CNodePtr &cnode, uint32_t exec_order_);
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+                     const DeviceContext *device_context);
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
