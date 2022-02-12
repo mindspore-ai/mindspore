@@ -13,6 +13,7 @@ if(ENABLE_CPU)
         "rl/*.cc"
         "custom/*.cc"
         "environ/*.cc"
+        "rpc/*.cc"
     )
 
     if(NOT ENABLE_MPI)
