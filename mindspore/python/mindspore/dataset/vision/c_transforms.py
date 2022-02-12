@@ -1627,8 +1627,7 @@ class RandomPosterize(ImageTensorOperation):
 
 class RandomResizedCrop(ImageTensorOperation):
     """
-    Crop the input image to a random size and aspect ratio. This operator will crop the input image randomly, and
-    resize the cropped image using a selected interpolation mode.
+    This operator will crop the input image randomly, and resize the cropped image using a selected interpolation mode.
 
     Note:
         If the input image is more than one, then make sure that the image size is the same.
