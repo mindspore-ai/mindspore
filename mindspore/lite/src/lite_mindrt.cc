@@ -158,6 +158,7 @@ int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor 
     auto src_tensor = map.second;
     for (size_t i = 0; i < inputs.size(); i++) {
       if (src_tensor == inputs[i]) {
+        isolate_tensor->FreeData();
         isolate_tensor->set_shape(dims[i]);
       }
     }
