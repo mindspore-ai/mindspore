@@ -84,8 +84,9 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (output_shape_[(output_shape_.size() - 2)] > max_height ||
       output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the 'paddings' should be not too high for input Tensor on 1 or more dimensions";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the output.shape[-1] and output.shape[-2] cannot be greater "
+                      << "than input_x.shape[-1], but got output.shape: " << output_shape_
+                      << ", input_x.shape: " << input_shape_;
   }
 }
 

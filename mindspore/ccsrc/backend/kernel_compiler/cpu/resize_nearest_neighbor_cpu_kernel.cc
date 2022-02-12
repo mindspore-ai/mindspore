@@ -40,7 +40,7 @@ void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   }
 
   if (output_size.size() != kResizeNearestNeighborAttrSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'size' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'size' should be "
                       << kResizeNearestNeighborAttrSize << ", but got " << output_size.size();
   }
 
