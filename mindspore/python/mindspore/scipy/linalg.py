@@ -111,9 +111,8 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
           `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        a (Tensor): A non-singular triangular matrix of shape :math:`(..., M, M)`.
-        b (Tensor): A Tensor of shape :math:`(..., M,)` or :math:`(..., M, N)`.
-            Right-hand side matrix in :math:`a x = b`.
+        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
+        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`a x = b`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
         trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
 
@@ -133,15 +132,16 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.
 
     Returns:
-        Tensor of shape :math:`(..., M,)` or :math:`(..., M, N)`,
+        Tensor of shape :math:`(M,)` or :math:`(M, N)`,
         which is the solution to the system :math:`a x = b`.
         Shape of :math:`x` matches :math:`b`.
 
     Raises:
         TypeError: If `a` is not Tensor.
+        ValueError: If `a` is not 2 dimension.
         TypeError: If `b` is not Tensor.
+        ValueError: If `b` is not 1 or 2 dimension.
         TypeError: If dtype of `a` and `b` are not the same.
-        ValueError: If batch dimensions of `a` and `b` are not the same.
         ValueError: If the shape of `a` and `b` are not matched.
         TypeError: If `trans` is not int or str.
         ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
@@ -180,12 +180,24 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
     _type_check('overwrite_b', overwrite_b, [bool], 'solve_triangular')
     _type_check('check_finite', check_finite, [bool], 'solve_triangular')
     if debug is not None:
-        _raise_value_error("Currently only case debug=None of solve_triangular Implemented.")
+        _raise_value_error("For 'solve_triangular', currently only case debug=None of solve_triangular Implemented.")
     if F.dtype(a) == F.dtype(b) and F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
         b = F.cast(b, mstype.float64)
+    if a.ndim != 2:
+        _raise_value_error("For 'solve_triangular', the dimension of `a` should be 2, but got {}.".format(a.ndim))
+    if b.ndim != 1 and b.ndim != 2:
+        _raise_value_error("For 'solve_triangular', the dimension of `b` should be 1 or 2, but got {}.".format(b.ndim))
+    if a.shape[0] != a.shape[1]:
+        _raise_value_error("For 'solve_triangular', the matrix `a` should be a square matrix like (N, N), "
+                           "but got {}.".format(a.shape))
+    if a.shape[1] != b.shape[0]:
+        _raise_value_error("For 'solve_triangular', the last two dimensions of `a` and `b` should be matched, "
+                           "but got shape of {} and {}. Please make sure that the shape of `a` and `b` be like "
+                           "(N, N) X (N, M) or (N, N) X (N).".format(a.shape, b.shape))
     if trans not in (0, 1, 2, 'N', 'T', 'C'):
-        _raise_value_error("The value of trans should be one of (0, 1, 2, 'N', 'T', 'C'), but got " + str(trans))
+        _raise_value_error("For 'solve_triangular', the value of `trans` should be one of (0, 1, 2, 'N', 'T', 'C'), "
+                           "but got {}.".format(trans))
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]

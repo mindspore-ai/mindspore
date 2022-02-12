@@ -147,7 +147,7 @@ def gradient_check(x, net, epsilon=1e-3):
 
 def match_exception_info(err, expected_str):
     err_str = str(err.value)
-    return expected_str in err_str
+    assert expected_str in err_str
 
 
 def compare_eigen_decomposition(src_res, tgt_res, compute_v, rtol, atol):
