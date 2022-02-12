@@ -31,6 +31,9 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
     int min_value = MSMIN(a_shape[i], b_shape[i]);
     int max_value = MSMAX(a_shape[i], b_shape[i]);
+    if (min_value == 0) {
+      return NNACL_ERR;
+    }
     if (max_value % min_value != 0) {
       return NNACL_INPUT_TENSOR_ERROR;
     }
