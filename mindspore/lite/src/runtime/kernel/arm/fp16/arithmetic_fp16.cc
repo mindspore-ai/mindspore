@@ -63,36 +63,6 @@ int ArithmeticFP16CPUKernel::CheckDataType() {
   return RET_OK;
 }
 
-bool ArithmeticFP16CPUKernel::IsScalarClac() {  // 2 32 240 240, 1 1 1 1
-  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && (arithmetic_opt_func_ != nullptr)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-bool ArithmeticFP16CPUKernel::IsBatchScalarCalc() {
-  if (arithmetic_opt_func_ == nullptr) {
-    return false;
-  }
-  size_t break_axis = 0;
-  for (size_t i = 0; i < param_->ndim_; i++) {
-    if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
-      break_axis = i;
-      break;
-    }
-  }
-  if (break_axis < param_->ndim_) {
-    for (size_t i = break_axis; i < param_->ndim_; i++) {
-      if (param_->in_shape1_[i] != 1) {
-        return false;
-      }
-    }
-  }
-  break_pos_ = break_axis;
-  return true;
-}
-
 void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
   ARITHMETIC_FUNC_INFO_FP16 fun_table[] = {
     {PrimitiveType_MulFusion, schema::ActivationType_RELU, ElementMulReluFp16, ElementOptMulReluFp16},
@@ -171,6 +141,7 @@ int ArithmeticFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "ArithmeticFP16CPUKernel check dataType failed.";
     return RET_ERROR;
   }
+
   if (!input0_broadcast_) {
     input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), static_cast<const lite::InnerContext *>(this->ms_context_));
   }
@@ -183,10 +154,16 @@ int ArithmeticFP16CPUKernel::Run() {
     FreeFp16Buffer();
     return RET_ERROR;
   }
+
+  batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_);
+  batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_);
+  batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticsRun failed, ret : " << ret;
+    return RET_ERROR;
   }
+
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->data()),
                      output_tensor->ElementsNum());

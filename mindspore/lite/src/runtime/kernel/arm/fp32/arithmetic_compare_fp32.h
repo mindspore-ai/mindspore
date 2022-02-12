@@ -21,53 +21,38 @@
 #include "nnacl/fp32/arithmetic_compare_fp32.h"
 
 namespace mindspore::kernel {
-typedef int (*ArithmeticCompareFp32Func)(const float *input0, const float *input1, uint8_t *output, int element_size);
-typedef int (*ArithmeticCompareIntFunc)(const int *input0, const int *input1, uint8_t *output, int element_size);
 class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
+  typedef int (*ArithmeticCompareFp32Func)(const float *input0, const float *input1, uint8_t *output, int element_size);
+  typedef int (*ArithmeticCompareIntFunc)(const int *input0, const int *input1, uint8_t *output, int element_size);
+  typedef int (*ArithmeticOptCompareFp32Func)(const float *input0, const float *input1, uint8_t *output,
+                                              int element_size, const ArithmeticParameter *param);
+  typedef int (*ArithmeticOptCompareIntFunc)(const int *input0, const int *input1, uint8_t *output, int element_size,
+                                             const ArithmeticParameter *param);
+  typedef struct {
+    int primitive_type_;
+    ArithmeticCompareFp32Func func_;
+    ArithmeticCompareIntFunc int_func_;
+    ArithmeticOptCompareFp32Func opt_func_;
+    ArithmeticOptCompareIntFunc opt_int_func_;
+  } ARITHMETIC_COMEPARE_FUNC_INFO_FP32;
+
  public:
   explicit ArithmeticCompareCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {
-    switch (parameter->type_) {
-      case PrimitiveType_Equal:
-        func_fp32_ = ElementEqualFp32;
-        func_int32_ = ElementEqualInt32;
-        break;
-      case PrimitiveType_NotEqual:
-        func_fp32_ = ElementNotEqualFp32;
-        func_int32_ = ElementNotEqualInt32;
-        break;
-      case PrimitiveType_Less:
-        func_fp32_ = ElementLessFp32;
-        func_int32_ = ElementLessInt32;
-        break;
-      case PrimitiveType_LessEqual:
-        func_fp32_ = ElementLessEqualFp32;
-        func_int32_ = ElementLessEqualInt32;
-        break;
-      case PrimitiveType_Greater:
-        func_fp32_ = ElementGreaterFp32;
-        func_int32_ = ElementGreaterInt32;
-        break;
-      case PrimitiveType_GreaterEqual:
-        func_fp32_ = ElementGreaterEqualFp32;
-        func_int32_ = ElementGreaterEqualInt32;
-        break;
-      default:
-        MS_LOG(ERROR) << "Error Operator type " << parameter->type_;
-        func_fp32_ = nullptr;
-        func_int32_ = nullptr;
-        break;
-    }
-  }
+      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticCompareCPUKernel() override = default;
-
   int DoArithmetic(int task_id) override;
-  int BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count, int out_thread_stride) override;
+
+ protected:
+  void InitRunFunction(int primitive_type) override;
+  int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) override;
+  int CalcArithmeticByBatch(int task_id) override;
 
  private:
   ArithmeticCompareFp32Func func_fp32_ = nullptr;
   ArithmeticCompareIntFunc func_int32_ = nullptr;
+  ArithmeticOptCompareFp32Func opt_func_fp32_ = nullptr;
+  ArithmeticOptCompareIntFunc opt_func_int32_ = nullptr;
 };
 int ArithmeticCompareRun(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel

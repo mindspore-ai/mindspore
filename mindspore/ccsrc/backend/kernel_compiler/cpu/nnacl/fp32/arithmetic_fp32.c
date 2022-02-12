@@ -26,12 +26,46 @@ int ElementFloorMod(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+int ElementOptFloorMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < size; i++) {
+      out[i] = in0[0] - floorf(in0[0] / in1[i]) * in1[i];
+    }
+  } else {
+    for (; i < size; i++) {
+      out[i] = in0[i] - floorf(in0[i] / in1[0]) * in1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementFloorModInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
     NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
     int remainder = in0[i] - (in0[i] / in1[i]) * in1[i];
     out[i] = (remainder != 0) && ((in0[i] > 0) != (in1[i] > 0)) ? remainder + in1[i] : remainder;
   }
+  return NNACL_OK;
+}
+
+int ElementOptFloorModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < size; i++) {
+      NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
+      int remainder = in0[0] - (in0[0] / in1[i]) * in1[i];
+      out[i] = (remainder != 0) && ((in0[0] > 0) != (in1[i] > 0)) ? remainder + in1[i] : remainder;
+    }
+  } else {
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[0]);
+    for (; i < size; i++) {
+      int remainder = in0[i] - (in0[i] / in1[0]) * in1[0];
+      out[i] = (remainder != 0) && ((in0[i] > 0) != (in1[0] > 0)) ? remainder + in1[0] : remainder;
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -42,23 +76,24 @@ int ElementMod(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementModInt(const int *in0, const int *in1, int *out, int size) {
-  for (int i = 0; i < size; i++) {
-    NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
-    out[i] = in0[i] % in1[i];
+int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = fmodf(in0[0], in1[index]);
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = fmodf(in0[index], in1[0]);
+    }
   }
   return NNACL_OK;
 }
 
-int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-  if (param->in_elements_num0_ == 1) {
-    for (int index = 0; index < size; index++) {
-      out[index] = fmodf(in0[0], in1[index]);
-    }
-  } else {
-    for (int index = 0; index < size; index++) {
-      out[index] = fmodf(in0[index], in1[0]);
-    }
+int ElementModInt(const int *in0, const int *in1, int *out, int size) {
+  for (int i = 0; i < size; i++) {
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
+    out[i] = in0[i] % in1[i];
   }
   return NNACL_OK;
 }
@@ -85,11 +120,43 @@ int ElementFloorDiv(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+int ElementOptFloorDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < size; i++) {
+      out[i] = floorf(in0[0] / in1[i]);
+    }
+  } else {
+    for (; i < size; i++) {
+      out[i] = floorf(in0[i] / in1[0]);
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementFloorDivInt(const int *in0, const int *in1, int *out, int size) {
   for (int i = 0; i < size; i++) {
     NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
     out[i] = in0[i] / in1[i];
   }
+  return NNACL_OK;
+}
+
+int ElementOptFloorDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+  int i = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; i < size; i++) {
+      NNACL_CHECK_ZERO_RETURN_ERR(in1[i]);
+      out[i] = in0[0] / in1[i];
+    }
+  } else {
+    NNACL_CHECK_ZERO_RETURN_ERR(in1[0]);
+    for (; i < size; i++) {
+      out[i] = in0[i] / in1[0];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -113,6 +180,21 @@ int ElementLogicalAnd(const float *in0, const float *in1, float *out, int size) 
   return NNACL_OK;
 }
 
+int ElementOptLogicalAnd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = (float)((bool)(in0[0]) & (bool)(in1[index]));
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = (float)((bool)(in0[index]) & (bool)(in1[0]));
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementLogicalAndInt(const int *in0, const int *in1, int *out, int size) {
   int index = 0;
   for (; index < size; index++) {
@@ -121,11 +203,42 @@ int ElementLogicalAndInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
+int ElementOptLogicalAndInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = (int)((unsigned int)(in0[0]) & (unsigned int)(in1[index]));
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = (int)((unsigned int)(in0[index]) & (unsigned int)(in1[0]));
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size) {
   int index = 0;
   for (; index < size; index++) {
     out[index] = (bool)((unsigned int)(in0[index]) & (unsigned int)(in1[index]));
   }
+
+  return NNACL_OK;
+}
+
+int ElementOptLogicalAndBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = (bool)((unsigned int)(in0[0]) & (unsigned int)(in1[index]));
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = (bool)((unsigned int)(in0[index]) & (unsigned int)(in1[0]));
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -149,11 +262,41 @@ int ElementLogicalOr(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+int ElementOptLogicalOr(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = (float)((bool)(in0[0]) | (bool)(in1[index]));
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = (float)((bool)(in0[index]) | (bool)(in1[0]));
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size) {
   int index = 0;
   for (; index < size; index++) {
     out[index] = (bool)(in0[index] | in1[index]);
   }
+  return NNACL_OK;
+}
+
+int ElementOptLogicalOrBool(const bool *in0, const bool *in1, bool *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = (bool)(in0[0] | in1[index]);
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = (bool)(in0[index] | in1[0]);
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -173,6 +316,22 @@ int ElementMaximum(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
+int ElementOptMaximum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = in0[0] > in1[index] ? in0[0] : in1[index];
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = in0[index] > in1[0] ? in0[index] : in1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
 int ElementMaximumInt(const int *in0, const int *in1, int *out, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
@@ -189,19 +348,50 @@ int ElementMaximumInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementMinimumInt(const int *input0, const int *input1, int *output, const int element_size) {
+int ElementOptMaximumInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = in0[0] > in1[index] ? in0[0] : in1[index];
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = in0[index] > in1[0] ? in0[index] : in1[0];
+    }
+  }
+
+  return NNACL_OK;
+}
+
+int ElementMinimumInt(const int *input0, const int *input1, int *output, int size) {
   int index = 0;
 #ifdef ENABLE_NEON
-  for (; index <= element_size - 4; index += C4NUM) {
+  for (; index <= size - 4; index += C4NUM) {
     int32x4_t vin0 = vld1q_s32(input0 + index);
     int32x4_t vin1 = vld1q_s32(input1 + index);
     int32x4_t vout = vminq_s32(vin0, vin1);
     vst1q_s32(output + index, vout);
   }
 #endif
-  for (; index < element_size; index++) {
+  for (; index < size; index++) {
     output[index] = input0[index] > input1[index] ? input1[index] : input0[index];
   }
+  return NNACL_OK;
+}
+
+int ElementOptMinimumInt(const int *input0, const int *input1, int *output, int size,
+                         const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      output[index] = input0[0] > input1[index] ? input1[index] : input0[0];
+    }
+  } else {
+    for (; index < size; index++) {
+      output[index] = input0[index] > input1[0] ? input1[0] : input0[index];
+    }
+  }
+
   return NNACL_OK;
 }
 
@@ -218,6 +408,21 @@ int ElementMinimum(const float *in0, const float *in1, float *out, int size) {
   for (; index < size; index++) {
     out[index] = in0[index] > in1[index] ? in1[index] : in0[index];
   }
+  return NNACL_OK;
+}
+
+int ElementOptMinimum(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+    for (; index < size; index++) {
+      out[index] = in0[0] > in1[index] ? in1[index] : in0[0];
+    }
+  } else {
+    for (; index < size; index++) {
+      out[index] = in0[index] > in1[0] ? in1[0] : in0[index];
+    }
+  }
+
   return NNACL_OK;
 }
 
