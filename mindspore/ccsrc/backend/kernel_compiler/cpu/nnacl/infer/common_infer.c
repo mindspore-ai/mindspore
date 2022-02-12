@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use tensor file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {
@@ -374,6 +374,21 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   return NNACL_OK;
 }
 
+int CommonGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                         OpParameter *parameter) {
+  int ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 2);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+  SetDataTypeFormat(outputs[0], inputs[0]);
+  if (!InferFlag(inputs, inputs_size)) {
+    return NNACL_INFER_INVALID;
+  }
+  MS_CHECK_TRUE_RET(inputs[0]->shape_size_ == inputs[1]->shape_size_, NNACL_ERR);
+  SetShapeTensor(outputs[0], inputs[0]);
+  return NNACL_OK;
+}
+
 int CommonInferShapeWithOneInput(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
   int ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 1);
@@ -474,12 +489,11 @@ bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
 }
 
 REG_INFER(Abs, PrimType_Abs, CommonInferShape)
-REG_INFER(AbsGrad, PrimType_AbsGrad, CommonInferShape)
+REG_INFER(AbsGrad, PrimType_AbsGrad, CommonGradInferShape)
 REG_INFER(Activation, PrimType_Activation, CommonInferShape)
-REG_INFER(ActivationGrad, PrimType_ActivationGrad, CommonInferShape)
+REG_INFER(ActivationGrad, PrimType_ActivationGrad, CommonGradInferShape)
 REG_INFER(BatchNorm, PrimType_BatchNorm, CommonInferShape)
 REG_INFER(BinaryCrossEntropyGrad, PrimType_BinaryCrossEntropyGrad, CommonInferShape)
-REG_INFER(BiasAdd, PrimType_BiasAdd, CommonInferShape)
 REG_INFER(Ceil, PrimType_Ceil, CommonInferShape)
 REG_INFER(Clip, PrimType_Clip, CommonInferShape)
 REG_INFER(Cos, PrimType_Cos, CommonInferShape)
@@ -492,13 +506,13 @@ REG_INFER(Floor, PrimType_Floor, CommonInferShapeWithOneInput)
 REG_INFER(IsFinite, PrimType_IsFinite, CommonInferShape)
 REG_INFER(LeakyRelu, PrimType_LeakyRelu, CommonInferShape)
 REG_INFER(Log, PrimType_Log, CommonInferShape)
-REG_INFER(LogGrad, PrimType_LogGrad, CommonInferShape)
+REG_INFER(LogGrad, PrimType_LogGrad, CommonGradInferShape)
 REG_INFER(LogicalNot, PrimType_LogicalNot, CommonInferShape)
 REG_INFER(LRN, PrimType_LRN, CommonInferShapeWithNHWC)
 REG_INFER(L2Normalize, PrimType_L2NormalizeFusion, CommonInferShape)
 REG_INFER(Neg, PrimType_Neg, CommonInferShape)
-REG_INFER(NegGrad, PrimType_NegGrad, CommonInferShape)
-REG_INFER(PowerGrad, PrimType_PowerGrad, CommonInferShape)
+REG_INFER(NegGrad, PrimType_NegGrad, CommonGradInferShape)
+REG_INFER(PowerGrad, PrimType_PowerGrad, CommonGradInferShape)
 REG_INFER(PReLU, PrimType_PReLUFusion, CommonInferShape)
 REG_INFER(Reciprocal, PrimType_Reciprocal, CommonInferShape)
 REG_INFER(ReverseSequence, PrimType_ReverseSequence, CommonInferShape)
