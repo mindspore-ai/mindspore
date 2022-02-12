@@ -250,6 +250,12 @@ class MS_API MSTensor {
 
   /// \brief Set the data for the MSTensor. Only valid for Lite.
   ///
+  /// \note Deprecated, this interface will be removed in the next iteration
+  ///
+  /// \note A pointer to the data should be created by malloc interface
+  ///
+  /// \note The memory pointed to origin data pointer of MSTensor needs to be managed by the user
+  ///
   /// \param[in] A pointer to the data of the MSTensor.
   void SetData(void *data);
 

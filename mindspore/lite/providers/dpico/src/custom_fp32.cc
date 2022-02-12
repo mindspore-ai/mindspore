@@ -173,7 +173,7 @@ Result CustomCPUKernel::InitInputsLinkMap() {
       }
       MS_LOG(INFO) << "om bottom name is below:";
       auto om_inputs_num = svp_acl_mdl_get_num_inputs(model_desc_);
-      for (size_t j = 0; j < om_inputs_num; i++) {
+      for (size_t j = 0; j < om_inputs_num; j++) {
         std::string om_bottom_name = svp_acl_mdl_get_input_name_by_index(model_desc_, j);
         MS_LOG(INFO) << "    om bottom index: " << static_cast<int>(j)
                      << ", om bottom name: " << om_bottom_name.c_str();
