@@ -41,6 +41,9 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.mindspore.flclient.FLParameter.MAX_SLEEP_TIME;
+import static com.mindspore.flclient.FLParameter.MAX_WAIT_TRY_TIME;
+import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
@@ -218,14 +221,21 @@ public class Common {
      * @param millis the waiting time (ms).
      */
     public static void sleep(long millis) {
-        if (millis > 0) {
-            try {
-                synchronized (STOP_OBJECT) {
-                    STOP_OBJECT.wait(millis);  // 1000 milliseconds is one second.
-                }
-            } catch (InterruptedException ex) {
-                LOGGER.severe(addTag("[sleep] catch InterruptedException: " + ex.getMessage()));
+        if (millis <= 0) {
+            LOGGER.severe(addTag("[sleep] the millis is not valid(<= 0), will not do any thing, and stop the task"));
+            throw new IllegalArgumentException();
+        }
+        if (millis > MAX_SLEEP_TIME) {
+            LOGGER.severe(addTag("[sleep] the sleep time: " + millis + " exceed MAX_SLEEP_TIME: " + MAX_SLEEP_TIME
+                    + "(unit: ms), will only sleep 30 minutes."));
+            millis = MAX_SLEEP_TIME;
+        }
+        try {
+            synchronized (STOP_OBJECT) {
+                STOP_OBJECT.wait(millis);  // 1000 milliseconds is one second.
             }
+        } catch (InterruptedException ex) {
+            LOGGER.severe(addTag("[sleep] catch InterruptedException: " + ex.getMessage()));
         }
     }
 
@@ -249,7 +259,12 @@ public class Common {
         long currentTime = date.getTime();
         long waitTime = 0L;
         if (!(nextRequestTime == null || nextRequestTime.isEmpty())) {
-            waitTime = Math.max(0, Long.valueOf(nextRequestTime) - currentTime);
+            waitTime = Long.valueOf(nextRequestTime) - currentTime;
+        }
+        if (waitTime <= 0L) {
+            LOGGER.severe(addTag("[getWaitTime] waitTime: " + waitTime + " is not valid (should be > 0), the reasons " +
+                    "may be: the nextRequestTime <= currentTime, or the nextRequestTime is null, will stop the task"));
+            throw new IllegalArgumentException();
         }
         LOGGER.info(addTag("[getWaitTime] next request time stamp: " + nextRequestTime + " current time stamp: " +
                 currentTime));
@@ -597,5 +612,24 @@ public class Common {
             TrainLenet trainLenet = TrainLenet.getInstance();
             SessionUtil.free(trainLenet.getTrainSession());
         }
+    }
+
+    /**
+     * Initialization session.
+     *
+     * @return the status code in client.
+     */
+    public static String getNextReqTime() {
+        FLParameter flParameter = FLParameter.getInstance();
+        long millis;
+        if (flParameter.getSleepTime() != 0) {
+            millis = flParameter.getSleepTime();
+        } else {
+            millis = SLEEP_TIME;
+        }
+        Date curDate = new Date();
+        long currentTime = curDate.getTime();
+        String nextRequestTime = Long.toString(currentTime + millis);
+        return nextRequestTime;
     }
 }

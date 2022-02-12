@@ -40,14 +40,30 @@ public class FLParameter {
     private static final Logger LOGGER = Logger.getLogger(FLParameter.class.toString());
 
     /**
-     * The timeout interval for communication on the device.
+     * The timeout interval for communication on the device, time unit: seconds.
      */
     public static final int TIME_OUT = 100;
 
     /**
-     * The waiting time of repeated requests.
+     * The waiting time of repeated requests, time unit: milliseconds.
      */
-    public static final int SLEEP_TIME = 1000;
+    public static final int SLEEP_TIME = 10000;
+
+    /**
+     * The max waiting time when call sleeping, time unit: milliseconds.
+     */
+    public static final int MAX_SLEEP_TIME = 1800000;
+
+    /**
+     * Maximum number of times to repeat RESTART
+     */
+    public static final int RESTART_TIME_PER_ITER = 1;
+
+    /**
+     * Maximum number of times to wait some time and then repeat the same request.
+     */
+    public static final int MAX_WAIT_TRY_TIME = 18;
+
     private static volatile FLParameter flParameter;
 
     private String deployEnv;

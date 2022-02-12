@@ -268,8 +268,7 @@ public class FLLiteClient {
                 LOGGER.info(Common.addTag("[startFLJob] the server is not ready now, need wait some time and request " +
                         "again"));
                 status = FLClientStatus.RESTART;
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return status;
             }
@@ -387,8 +386,7 @@ public class FLLiteClient {
                 LOGGER.info(Common.addTag("[updateModel] the server is not ready now, need wait some time and request" +
                         " again"));
                 status = FLClientStatus.RESTART;
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return status;
             }
