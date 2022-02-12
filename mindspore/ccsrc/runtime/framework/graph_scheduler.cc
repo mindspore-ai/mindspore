@@ -251,6 +251,13 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   }
 
   control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
+
+  // At the end of the step, the op data sent to the stack actor in each actor should be clear.
+  auto total_actors = CollectActors(actor_set);
+  for (auto &actor : total_actors) {
+    MS_EXCEPTION_IF_NULL(actor);
+    actor->to_stack_data_.clear();
+  }
 }
 
 using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, AbstractActor *const, const KernelWithIndex &,

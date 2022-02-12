@@ -109,7 +109,15 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(output_data);
     UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
-    ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+    if (output_data->op_id_.Name().find(kStackActorNameSuffix) != std::string::npos) {
+      // Create a new op data for stack actor.
+      auto to_stack_data =
+        std::make_shared<OpData<DeviceTensor>>(output_data->op_id_, output_data->data_, output_data->index_);
+      to_stack_data_.emplace_back(to_stack_data);
+      ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, to_stack_data.get(), context);
+    } else {
+      ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+    }
     ++output_data_arrow_index;
   }
 
