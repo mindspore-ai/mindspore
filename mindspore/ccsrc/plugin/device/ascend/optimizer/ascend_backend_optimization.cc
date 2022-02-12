@@ -580,9 +580,6 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::StridedSliceGradUpdateInputNames>());
   unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());

@@ -527,6 +527,7 @@ constexpr auto kAttrPlaceHolderIndex = "placeholder_index";
 constexpr auto kAttrMicro = "micro";
 constexpr auto kAttrJsonFileName = "json_file_name";
 constexpr auto kAttrNeedDropInput = "need_drop_input";
+constexpr auto kAttrNeedConvertToValueNode = "need_convert_to_value_node";
 constexpr auto kAttrSendSrcNodeName = "send_src_node_name";
 constexpr auto kAttrSendDstNodeName = "send_dst_node_name";
 constexpr auto kAttrSendDstRanks = "send_dst_ranks";
@@ -772,6 +773,8 @@ const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFor
 const std::set<std::string> DynamicShapeConstInputToAttr = {kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName,
                                                             kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
                                                             kReduceAllOpName, kReduceAnyOpName,  kConcatOpName};
+
+const std::set<std::string> NeedConvertToValueNodeSet = {kStridedSliceGradOpName};
 
 const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
   kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,

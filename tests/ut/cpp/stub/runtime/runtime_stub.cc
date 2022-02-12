@@ -185,6 +185,8 @@ RTS_API rtError_t rtModelGetId(rtModel_t model, uint32_t *modelId) { return RT_E
 
 RTS_API rtError_t rtLabelCreateEx(rtLabel_t *label, rtStream_t stream) { return RT_ERROR_NONE; }
 
+RTS_API rtError_t rtLabelCreateExV2(rtLabel_t *lbl, rtModel_t mdl, rtStream_t stm) { return RT_ERROR_NONE; }
+
 RTS_API rtError_t rtCpuKernelLaunchWithFlag(const void *soName, const void *kernelName, uint32_t blockDim,
                                             const void *args, uint32_t argsSize, rtSmDesc_t *smDesc, rtStream_t stream,
                                             uint32_t flags) {

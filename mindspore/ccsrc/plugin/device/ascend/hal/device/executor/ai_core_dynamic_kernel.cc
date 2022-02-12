@@ -94,8 +94,7 @@ void AiCoreDynamicKernel::Execute() {
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtime_args_.size());
   if (handle_ != nullptr) {
-    const auto dev_func =
-      origin_key_.find("kernel0") != origin_key_.npos ? origin_key_ : origin_key_ + "_" + std::to_string(tiling_key_);
+    const auto dev_func = std::to_string(tiling_key_);
     const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
     if (RT_ERROR_NONE != rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtime_args_.data(),
                                                   args_size, l2ctrl, stream_, kernel_info.c_str())) {

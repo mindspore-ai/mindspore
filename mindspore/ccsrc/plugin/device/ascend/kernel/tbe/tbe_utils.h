@@ -104,8 +104,7 @@ class KernelManager {
  private:
   KernelManager() = default;
   ~KernelManager() = default;
-  static int BinaryRegister(const FlexArray &kernel_buffer, void **module, const string &magic,
-                            const bool dynamic_flag);
+  static int BinaryRegister(const FlexArray &kernel_buffer, void **module, const string &magic, bool has_kernel_list);
   static std::unordered_map<string, KernelMetaPtr> info_table_;
   static std::atomic<uintptr_t> kernel_stub_gen_;
   static std::mutex info_table_mutex_;

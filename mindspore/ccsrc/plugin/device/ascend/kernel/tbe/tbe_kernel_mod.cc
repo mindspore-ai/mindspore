@@ -165,7 +165,7 @@ device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_pt
   std::string origin_key;
   void *handle = nullptr;
   auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, dynamic_flag, &handle, &origin_key);
-  if (dynamic_flag) {
+  if (kernel_json_info.has_kernel_list) {
     if (func_stub != 1) {
       MS_LOG(EXCEPTION) << "GenFuncStub failed.";
     }

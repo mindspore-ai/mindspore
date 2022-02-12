@@ -102,10 +102,17 @@ void DynamicTbeKernelMod::InitOp() {
   }
 
   // gen FuncStub
-  if (handle_ == nullptr) {
+  if (func_stub_ == nullptr || handle_ == nullptr) {
     auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, true, &handle_, &origin_key_);
-    if (func_stub != 1) {
-      MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+    if (kernel_pack_->kernel_json_info().has_kernel_list) {
+      if (func_stub != 1) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+    } else {
+      if (func_stub == 0) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+      func_stub_ = reinterpret_cast<void *>(func_stub);
     }
   }
 
@@ -286,16 +293,25 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   rtL2Ctrl_t *l2ctrl = nullptr;
   auto args_size = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
   auto node_info = cnode->fullname_with_scope();
-  const auto dev_func =
-    origin_key_.find("kernel0") != origin_key_.npos ? origin_key_ : origin_key_ + "_" + std::to_string(tiling_key_);
-  const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
-  auto ret = rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtimeargs.data(), args_size, l2ctrl,
-                                      stream_ptr, kernel_info.c_str());
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call runtime rtKernelLaunchWithHandle error. Node info: " << node_info;
-    return false;
+  if (kernel_pack_->kernel_json_info().has_kernel_list) {
+    const auto dev_func = std::to_string(tiling_key_);
+    const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime();
+    auto ret = rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtimeargs.data(), args_size, l2ctrl,
+                                        stream_ptr, kernel_info.c_str());
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime rtKernelLaunchWithHandle error. Node info: " << node_info;
+      return false;
+    }
+  } else {
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime();
+    auto ret = rtKernelLaunch(func_stub_, block_dim_, runtimeargs.data(), args_size, l2ctrl, stream_ptr);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime rtKernelLaunch error. Node info: " << node_info;
+      return false;
+    }
   }
 
   return true;
