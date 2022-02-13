@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 #include "runtime/device/device_address.h"
 
 using DeviceTensor = mindspore::device::DeviceAddress;

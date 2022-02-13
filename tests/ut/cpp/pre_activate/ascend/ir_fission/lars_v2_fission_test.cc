@@ -16,7 +16,7 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/optimizer/ascend/ir_fission/lars_v2_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/lars_v2_fission.h"
 
 namespace mindspore {
 namespace opt {

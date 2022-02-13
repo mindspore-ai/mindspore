@@ -15,8 +15,8 @@
  */
 #include <memory>
 #include "common/common_test.h"
-#include "runtime/hccl_adapter/all_to_all_v_calc_param.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore::hccl {

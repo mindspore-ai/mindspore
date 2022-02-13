@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/power_grad.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

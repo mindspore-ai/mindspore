@@ -26,13 +26,13 @@
 #include <numeric>
 #include <optional>
 #include "ir/dtype.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
-#include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"

@@ -15,14 +15,14 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/utils.h"
-#include "backend/kernel_compiler/kernel_build_info.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "mindspore/ccsrc/backend/optimizer/ascend/enhancer/getnext_tensor_move_elimination.h"
+#include "kernel/kernel_build_info.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 
 namespace mindspore {
 namespace opt {

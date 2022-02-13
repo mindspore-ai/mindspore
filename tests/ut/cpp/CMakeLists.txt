@@ -31,7 +31,7 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/proto/graphengine_protos)
 include_directories(${CMAKE_BINARY_DIR}/proto/metadef_protos)
 include_directories(${CUDA_INCLUDE_DIRS})
-include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
 link_directories(${MS_CCSRC_BUILD_PATH})
@@ -112,7 +112,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         # dont remove the 4 lines above
         "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
-        "../../../mindspore/ccsrc/runtime/hccl_adapter/all_to_all_v_calc_param.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_scheduler.cc"
@@ -121,56 +121,59 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/kernel_info.cc"
         "../../../mindspore/ccsrc/runtime/device/bucket.cc"
         "../../../mindspore/ccsrc/runtime/device/launch_kernel.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/profiling/*.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ge_runtime/*.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/kernel_select_ascend.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_kernel.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_mul.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_atomic_clean.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_launch_transdata.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/kernel_select_graph_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_runtime/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_mul.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_atomic_clean.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_launch_transdata.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_graph_kernel.cc"
         "../../../mindspore/ccsrc/runtime/device/convert_tensor_utils.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_bucket.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_event.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/kernel_build_ascend.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_kernel_runtime.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_adapter.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_manager.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_device_address.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_pool.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/lic_manager.cc"
-        "../../../mindspore/ccsrc/runtime/hardware/ascend/ascend_device_context.cc"
-        "../../../mindspore/ccsrc/runtime/hardware/ascend/ascend_graph_optimization.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/cpu_kernel_factory.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_adam_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_ftrl_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_lazy_adam_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/sparse_apply_proximal_adagrad_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/unique_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/unique_with_pad_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/adam_delta_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/fused_ada_factor_cpu_kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/akg/*.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/rts/*.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/hccl/*.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/kernel_query.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_attr_to_input_registry.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_kernel_metadata.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/rts/rt_kernel_info.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/*.cc"
-        "../../../mindspore/ccsrc/backend/optimizer/ascend/*.cc"
-        "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/*.cc"
-        "../../../mindspore/ccsrc/backend/session/anf_runtime_algorithm.cc"
-        "../../../mindspore/ccsrc/backend/session/ascend_session.cc"
-        "../../../mindspore/ccsrc/backend/session/ascend_auto_monad.cc"
-        "../../../mindspore/ccsrc/backend/session/ascend_control_parser.cc"
-        "../../../mindspore/ccsrc/backend/session/kernel_graph.cc"
-        "../../../mindspore/ccsrc/backend/session/session_basic.cc"
-        "../../../mindspore/ccsrc/backend/session/executor.cc"
-        "../../../mindspore/ccsrc/backend/session/executor_manager.cc"
-        "../../../mindspore/ccsrc/backend/session/session_factory.cc"
-        "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_bucket.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_event.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_build_ascend.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_kernel_runtime.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_manager.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_address.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_pool.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/lic_manager.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_device_context.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/hardware/ascend_graph_optimization.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/cpu_kernel_factory.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_adam_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_ftrl_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_lazy_adam_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/sparse_apply_proximal_adagrad_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/unique_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/unique_with_pad_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/adam_delta_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/fused_ada_factor_cpu_kernel.cc"
+        "../../../mindspore/ccsrc/kernel/akg/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/akg/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/gpu/kernel/akg/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/hccl/*.cc"
+        "../../../mindspore/ccsrc/kernel/kernel_query.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/rt_kernel_info.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/optimizer/*.cc"
+        "../../../mindspore/ccsrc/common/graph_kernel/*.cc"
+        "../../../mindspore/ccsrc/backend/common/session/anf_runtime_algorithm.cc"
+        "../../../mindspore/ccsrc/backend/common/session/ascend_session.cc"
+        "../../../mindspore/ccsrc/backend/common/session/ascend_auto_monad.cc"
+        "../../../mindspore/ccsrc/backend/common/session/ascend_control_parser.cc"
+        "../../../mindspore/ccsrc/backend/common/session/kernel_graph.cc"
+        "../../../mindspore/ccsrc/backend/common/session/session_basic.cc"
+        "../../../mindspore/ccsrc/backend/common/session/executor.cc"
+        "../../../mindspore/ccsrc/backend/common/session/executor_manager.cc"
+        "../../../mindspore/ccsrc/backend/common/session/session_factory.cc"
+        "../../../mindspore/ccsrc/backend/common/session/kernel_build_client.cc"
         "../../../mindspore/ccsrc/transform/graph_ir/*.cc"
         "../../../mindspore/ccsrc/transform/graph_ir/op_declare/*.cc"
         "../../../mindspore/ccsrc/ps/*.cc"
@@ -179,14 +182,14 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
         "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"
         "../../../mindspore/ccsrc/profiler/device/profiling.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/fp32/adam_fp32.c"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/kernel.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/ascend_kernel_mod.cc"
-        "../../../mindspore/ccsrc/backend/optimizer/common/helper.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/executor/tiling/op_tiling_adapter.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/executor/aicpu_ext_info_handle.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/ge_types_convert.cc"
-        "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_util.cc"
+        "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
+        "../../../mindspore/ccsrc/kernel/kernel.cc"
+        "../../../mindspore/ccsrc/kernel/ascend_kernel_mod.cc"
+        "../../../mindspore/ccsrc/backend/common/optimizer/helper.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_types_convert.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
 
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
@@ -202,21 +205,25 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/ps_cache/ascend
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/ps_cache/ps_cache_manager.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/fl/server/kernel/sgd_kernel.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/fl/server/kernel/apply_momentum_kernel.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_add_relu_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/post_batch_norm_add_relu_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_add_relu_grad_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_grad_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/akg_build.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/callback_impl.cc")
+        "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_add_relu_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/graph_kernel_optimization.cc")
+        "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/post_batch_norm_add_relu_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/backend/optimizer/graph_kernel/lite_adapter/graph_kernel_pass_manager.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/tbe_kernel_compile.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/akg/cpu/akg_cpu_kernel_mod.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/akg/cpu/akg_cpu_kernel_build.cc")
+        "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_add_relu_grad_fusion.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_relu_fusion.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+        "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_relu_grad_fusion.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/akg_build.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/callback_impl.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/graph_kernel_optimization.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/graph_kernel_pass_manager.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tbe_kernel_compile.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.cc")
 if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/memory_profiling.cc")
@@ -238,13 +245,13 @@ if(ENABLE_MINDDATA)
 endif()
 add_executable(ut_tests ${ut_objects})
 
-include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
+include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
 file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/proto/*.proto")
+    "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/proto/*.proto")
 ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
 
 file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "../../../mindspore/ccsrc/runtime/device/ascend/dump/proto/*.proto")
+    "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/dump/proto/*.proto")
 ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
 list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})

@@ -15,8 +15,8 @@
  */
 
 #include "profiler/device/gpu/gpu_profiling_utils.h"
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "kernel/kernel.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 #include "utils/utils.h"

@@ -22,16 +22,16 @@
 #include <vector>
 #include <utility>
 
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "utils/ms_device_shape_transfer.h"
 #include "utils/config_manager.h"
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/kernel_build_info.h"
+#include "kernel/kernel_build_info.h"
 #include "utils/utils.h"
-#include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "runtime/base.h"
-#include "runtime/device/ascend/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "utils/shape_utils.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"

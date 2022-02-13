@@ -55,11 +55,11 @@
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
-#include "backend/session/session_factory.h"
-#include "backend/optimizer/common/const_input_to_attr_registry.h"
-#include "backend/optimizer/common/helper.h"
+#include "backend/common/session/session_factory.h"
+#include "backend/common/optimizer/const_input_to_attr_registry.h"
+#include "backend/common/optimizer/helper.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "vm/transform.h"
+#include "backend/graph_compiler/transform.h"
 
 using mindspore::tensor::TensorPy;
 

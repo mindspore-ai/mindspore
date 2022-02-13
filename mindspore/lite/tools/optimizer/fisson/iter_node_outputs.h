@@ -15,7 +15,7 @@
  */
 
 #include "ir/anf.h"
-#include "mindspore/ccsrc/backend/optimizer/common/node_pass.h"
+#include "mindspore/ccsrc/backend/common/optimizer/node_pass.h"
 
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ITER_NODE_OUTPUTS_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FISSON_ITER_NODE_OUTPUTS_H_

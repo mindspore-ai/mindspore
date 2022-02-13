@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 #include "runtime/device/device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/dump_utils.h"

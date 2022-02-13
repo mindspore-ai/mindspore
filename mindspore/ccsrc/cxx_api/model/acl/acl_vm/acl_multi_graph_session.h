@@ -22,7 +22,7 @@
 #include <memory>
 #include "include/api/types.h"
 #include "include/api/cell.h"
-#include "backend/session/session_basic.h"
+#include "backend/common/session/session_basic.h"
 
 namespace mindspore {
 class AclModelOptions;

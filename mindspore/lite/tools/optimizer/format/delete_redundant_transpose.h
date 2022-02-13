@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FORMAT_DELETE_REDUNDANT_TRANSPOSE_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FORMAT_DELETE_REDUNDANT_TRANSPOSE_H_
 
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

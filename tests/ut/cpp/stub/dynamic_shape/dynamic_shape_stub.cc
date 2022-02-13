@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
-#include "runtime/device/ascend/executor/rts/memcpy_rts_dynamic_kernel.h"
-#include "runtime/device/ascend/executor/rts/profiling_rts_dynamic_kernel.h"
-#include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
-#include "backend/kernel_compiler/host/host_kernel_metadata.h"
-#include "backend/kernel_compiler/host/host_kernel_build.h"
+#include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
+#include "plugin/device/ascend/hal/device/executor/rts/memcpy_rts_dynamic_kernel.h"
+#include "plugin/device/ascend/hal/device/executor/rts/profiling_rts_dynamic_kernel.h"
+#include "plugin/device/ascend/hal/device/executor/ai_core_dynamic_kernel.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_build.h"
 
 namespace mindspore {
 namespace device {

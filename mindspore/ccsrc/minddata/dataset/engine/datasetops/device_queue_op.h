@@ -40,7 +40,7 @@
 #ifdef ENABLE_GPUQUE
 #include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/util/circular_pool.h"
-#include "runtime/device/gpu/gpu_buffer_mgr.h"
+#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::GpuBufferMgr;

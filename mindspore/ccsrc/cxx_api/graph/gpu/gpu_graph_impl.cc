@@ -20,10 +20,10 @@
 #include "cxx_api/akg_kernel_register.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
-#include "backend/session/session_factory.h"
-#include "backend/session/executor_manager.h"
+#include "backend/common/session/session_factory.h"
+#include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "runtime/device/gpu/cuda_driver.h"
+#include "plugin/device/gpu/hal/device/cuda_driver.h"
 
 namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, GPUGraphImpl);

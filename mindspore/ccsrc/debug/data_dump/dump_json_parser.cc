@@ -19,7 +19,7 @@
 #include "debug/common.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "debug/data_dump/npy_header.h"
 #include "debug/anf_ir_utils.h"
 #include "utils/comm_manager.h"

@@ -17,7 +17,7 @@
 #define TESTS_UT_CPP_COMMON_UT_BACKEND_COMMON_H_
 #include "common/common_test.h"
 #include "utils/ms_context.h"
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
 class BackendCommon : public UT::Common {

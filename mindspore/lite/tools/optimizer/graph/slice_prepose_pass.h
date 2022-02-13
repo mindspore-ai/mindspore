@@ -21,7 +21,7 @@
 #include <utility>
 #include <string>
 #include "tools/converter/converter_flags.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "include/errorcode.h"
 #include "mindspore/core/ir/manager.h"
 

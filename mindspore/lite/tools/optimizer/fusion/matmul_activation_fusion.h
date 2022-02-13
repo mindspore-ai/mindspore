@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ACTIVATION_FUSION_H_
 
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
 
 namespace mindspore {

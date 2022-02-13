@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 #include <functional>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "fl/server/common.h"
 #include "fl/server/collective_ops_impl.h"
 #include "fl/server/distributed_count_service.h"

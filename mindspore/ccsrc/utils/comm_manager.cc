@@ -21,13 +21,13 @@
 #include "frontend/parallel/group_manager.h"
 
 #ifndef NO_DLIB
-#include "runtime/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "hccl/hcom.h"
-#include "runtime/device/ascend/distribute/ascend_collective.h"
+#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #endif
 
 #if defined(ENABLE_GPU)
-#include "runtime/device/gpu/distribution/collective_init.h"
+#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 using CollectiveInitializer = mindspore::device::gpu::CollectiveInitializer;
 using CreateCommGroupFunc = mindspore::device::gpu::CreateCommGroupFunc;
 using GetRankIDByGroupFunc = mindspore::device::gpu::GetRankIDByGroupFunc;

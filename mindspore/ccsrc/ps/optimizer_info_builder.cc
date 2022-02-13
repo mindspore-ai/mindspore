@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
-#include "backend/kernel_compiler/cpu/ps/sparse_apply_ftrl_ps_kernel.h"
+#include "plugin/device/cpu/kernel/ps/sparse_apply_ftrl_ps_kernel.h"
 
 namespace mindspore {
 namespace ps {

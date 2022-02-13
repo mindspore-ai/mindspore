@@ -24,7 +24,7 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 namespace mindspore {
 class DumpJsonParser {
  public:

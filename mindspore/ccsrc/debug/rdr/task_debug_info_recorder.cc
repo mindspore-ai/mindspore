@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "debug/rdr/task_debug_info_recorder.h"
-#include "runtime/device/ascend/tasksink/task_generator.h"
+#include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 
 namespace mindspore {
 void TaskDebugInfoRecorder::Export() {

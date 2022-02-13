@@ -20,7 +20,7 @@
 #include <set>
 #include <vector>
 #include <map>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"

@@ -22,7 +22,7 @@
 #include "ops/return.h"
 #include "ir/func_graph.h"
 #include "ops/fusion/conv2d_fusion.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

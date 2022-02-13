@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/device/ascend/distribute/ascend_collective.h"
+#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 
 namespace mindspore {
 namespace device {

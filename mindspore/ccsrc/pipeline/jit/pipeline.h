@@ -31,8 +31,8 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/action.h"
-#include "vm/segment_runner.h"
-#include "vm/transform.h"
+#include "backend/graph_compiler/segment_runner.h"
+#include "backend/graph_compiler/transform.h"
 #include "pipeline/jit/base.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 
 #include "runtime/device/memory_manager.h"
 #include <string>
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "debug/common.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/optimizer/ascend/ir_fusion/momentum_lossscale_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/momentum_lossscale_fusion.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 

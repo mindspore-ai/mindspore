@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt {
 class ScaleScaleFusion : public PatternProcessPass {

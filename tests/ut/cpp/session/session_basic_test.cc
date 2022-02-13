@@ -16,9 +16,9 @@
 
 #include "common/common_test.h"
 #include "frontend/operator/ops.h"
-#include "backend/session/ascend_session.h"
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/ascend_session.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 
 namespace mindspore {

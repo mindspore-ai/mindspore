@@ -16,10 +16,10 @@
 
 #include "ps/ps_cache/gpu/gpu_ps_cache.h"
 #include "ps/ps_cache/ps_cache_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/hash_impl.cuh"
-#include "runtime/device/gpu/gpu_common.h"
-#include "runtime/device/gpu/cuda_driver.h"
-#include "runtime/device/gpu/gpu_memory_allocator.h"
+#include "plugin/device/gpu/kernel/cuda_impl/hash_impl.cuh"
+#include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/hal/device/cuda_driver.h"
+#include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

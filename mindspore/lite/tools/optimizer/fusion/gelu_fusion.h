@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 

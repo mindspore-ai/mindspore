@@ -21,7 +21,7 @@
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
 #include "profiler/device/ascend/memory_profiling.h"
-#include "runtime/device/ascend/profiling/profiling_manager.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "profiler/device/ascend/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
 

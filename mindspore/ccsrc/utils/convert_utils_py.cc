@@ -37,7 +37,7 @@
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);

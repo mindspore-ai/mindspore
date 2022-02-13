@@ -17,7 +17,7 @@
 #include "utils/signal_util.h"
 #include <csignal>
 #include "utils/log_adapter.h"
-#include "backend/session/kernel_build_client.h"
+#include "backend/common/session/kernel_build_client.h"
 
 namespace mindspore {
 SignalGuard::SignalGuard(IntHandlerFunc IntHandler) { RegisterHandlers(IntHandler); }

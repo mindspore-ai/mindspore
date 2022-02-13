@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

@@ -19,7 +19,7 @@
 #include "include/registry/register_kernel_interface.h"
 #include "common/log_adapter.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {

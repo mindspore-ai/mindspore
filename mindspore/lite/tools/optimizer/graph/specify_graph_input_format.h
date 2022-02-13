@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_SPECIFY_GRAPH_INPUT_FORMAT_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_SPECIFY_GRAPH_INPUT_FORMAT_H_
 
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

@@ -15,8 +15,8 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/pass/optimize_dependence.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/pass/optimize_dependence.h"
 
 namespace mindspore {
 namespace opt {

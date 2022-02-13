@@ -16,7 +16,7 @@
 
 #include "runtime/device/launch_mul.h"
 #include "abstract/utils.h"
-#include "backend/session/single_kernel_graph.h"
+#include "backend/common/session/single_kernel_graph.h"
 #include "frontend/parallel/context.h"
 
 namespace mindspore::device {

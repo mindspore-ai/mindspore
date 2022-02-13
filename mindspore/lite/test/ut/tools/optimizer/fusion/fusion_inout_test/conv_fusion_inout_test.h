@@ -20,9 +20,9 @@
 #include <string>
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
 #include "ir/anf.h"
-#include "backend/optimizer/common/pass.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/common/pass_manager.h"
+#include "backend/common/optimizer/pass.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass_manager.h"
 
 namespace mindspore {
 class ConvFusionInoutTest : public FusionInoutTest {

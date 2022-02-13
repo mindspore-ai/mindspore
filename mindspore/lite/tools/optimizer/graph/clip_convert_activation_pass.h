@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CLIP_CONVERT_ACTIVATION_PASS_H_
 #include <string>
 #include "tools/converter/converter_flags.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 
 using mindspore::converter::FmkType;
 using mindspore::schema::QuantType;

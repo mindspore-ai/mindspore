@@ -18,7 +18,7 @@
 
 #include <set>
 #include <string>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "mindspore/lite/include/errorcode.h"
 

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "ops/fusion/scale_fusion.h"

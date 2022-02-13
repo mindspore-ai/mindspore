@@ -18,7 +18,7 @@
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/matmul_fusion_inout_test.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/transpose.h"
 #include "ops/mat_mul.h"
 

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
 #include <string>
 #include <set>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/fetch_content.h"

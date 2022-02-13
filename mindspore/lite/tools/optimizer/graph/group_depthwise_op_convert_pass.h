@@ -17,7 +17,7 @@
 #define LITE_GROUP_DEPTHWISE_OP_CONVERT_PASS_H
 #include <string>
 #include "tools/converter/converter_flags.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 
 namespace mindspore::opt {
 class GroupDepthwiseOpConvertPass : public Pass {

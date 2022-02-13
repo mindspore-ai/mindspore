@@ -76,6 +76,7 @@ if(ENABLE_CACHE)
         _c_dataengine
         _c_mindrecord
         mindspore
+        proto_input
         mindspore_core
         mindspore::protobuf
         ${CUDNN_LIBRARY_PATH}

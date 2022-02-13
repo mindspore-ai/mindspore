@@ -21,9 +21,9 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
-#include "backend/optimizer/common/node_pass.h"
-#include "backend/optimizer/common/pattern_engine.h"
-#include "backend/optimizer/common/helper.h"
+#include "backend/common/optimizer/node_pass.h"
+#include "backend/common/optimizer/pattern_engine.h"
+#include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {

@@ -20,8 +20,8 @@
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/primitive_infer_map.h"
-#include "backend/optimizer/common/const_input_to_attr_registry.h"
-#include "backend/optimizer/common/helper.h"
+#include "backend/common/optimizer/const_input_to_attr_registry.h"
+#include "backend/common/optimizer/helper.h"
 #include "common/common_test.h"
 namespace mindspore {
 namespace opt {

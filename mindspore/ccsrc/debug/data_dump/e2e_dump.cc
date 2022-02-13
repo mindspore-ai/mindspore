@@ -28,7 +28,7 @@
 #include "utils/ms_device_shape_transfer.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ELIMINATE_CONCAT_SPLIT_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ELIMINATE_CONCAT_SPLIT_H_
 
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 
 namespace mindspore {

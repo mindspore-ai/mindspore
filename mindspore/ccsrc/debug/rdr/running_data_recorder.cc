@@ -23,9 +23,9 @@
 #include "debug/rdr/mem_address_recorder.h"
 #include "mindspore/core/ir/func_graph.h"
 #include "mindspore/core/ir/anf.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #ifdef ENABLE_D
-#include "runtime/device/ascend/tasksink/task_generator.h"
+#include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 #include "debug/rdr/task_debug_info_recorder.h"
 #endif  // ENABLE_D
 namespace mindspore {

@@ -17,9 +17,9 @@
 #include <memory>
 #include <deque>
 #include <vector>
-#include "backend/session/session_factory.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
+#include "backend/common/session/session_factory.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "cxx_api/model/acl/acl_vm/ms_tensor_ref.h"

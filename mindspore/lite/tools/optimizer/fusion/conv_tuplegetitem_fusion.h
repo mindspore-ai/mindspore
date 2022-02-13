@@ -16,7 +16,7 @@
 #ifndef LITE_MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TUPLEGETITEM_FUSION_H_
 #define LITE_MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_TUPLEGETITEM_FUSION_H_
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 namespace mindspore::opt {
 class ConvTupleGetItemFusion : public PatternProcessPass {
  public:

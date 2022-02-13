@@ -25,7 +25,7 @@
 #include "ir/device_event.h"
 #include "runtime/device/launch_kernel.h"
 #include "runtime/device/device_address.h"
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::device {
 class Bucket {

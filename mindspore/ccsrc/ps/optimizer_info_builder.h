@@ -20,8 +20,8 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/cpu/ps/pserver_kernel.h"
+#include "kernel/kernel.h"
+#include "plugin/device/cpu/kernel/ps/pserver_kernel.h"
 #include "ps/optimizer_info.h"
 
 namespace mindspore {

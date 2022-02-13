@@ -16,7 +16,7 @@
 #include "debug/rdr/graph_recorder.h"
 #include "mindspore/core/base/base.h"
 #include "mindspore/core/ir/func_graph.h"
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"

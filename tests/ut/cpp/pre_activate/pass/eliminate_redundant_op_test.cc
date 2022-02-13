@@ -15,26 +15,26 @@
  */
 
 #include "common/backend_common_test.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
 // #include "runtime/device/optimizer/pass/insert_trans_op.h"
-#include "backend/optimizer/ascend/format_type/insert_cast.h"
-#include "backend/optimizer/pass/eliminate_redundant_op.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/common/pass_manager.h"
+#include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
+#include "backend/common/pass/eliminate_redundant_op.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass_manager.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 
 #define private public
 #define protected public
-#include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #undef private
 #undef protected
 

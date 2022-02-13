@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

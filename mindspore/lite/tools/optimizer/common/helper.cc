@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/optimizer/common/helper.h"
+#include "backend/common/optimizer/helper.h"
 #include <memory>
 #include <vector>
 #include "tools/optimizer/common/gllo_utils.h"

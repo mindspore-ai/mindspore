@@ -22,7 +22,7 @@
 #include <utility>
 #include <string>
 #include "pipeline/jit/resource.h"
-#include "vm/segment_runner.h"
+#include "backend/graph_compiler/segment_runner.h"
 
 namespace mindspore {
 extern const char kMsConvert[];

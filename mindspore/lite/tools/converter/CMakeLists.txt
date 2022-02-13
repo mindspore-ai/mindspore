@@ -5,12 +5,12 @@ set(USE_GLOG on)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
 set(CCSRC_SRC
-        ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
-        ${CCSRC_DIR}/backend/optimizer/common/visit.cc
-        ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
+        ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
+        ${CCSRC_DIR}/backend/common/optimizer/visit.cc
+        ${CCSRC_DIR}/backend/common/optimizer/optimizer.cc
         )
 
-include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
+include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL)
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")

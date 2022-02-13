@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "runtime/device/ascend/tasksink/task_generator.h"
+#include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 #ifndef ENABLE_SECURITY
-#include "runtime/device/ascend/dump/data_dumper.h"
+#include "plugin/device/ascend/hal/device/dump/data_dumper.h"
 #endif
 
 namespace mindspore {

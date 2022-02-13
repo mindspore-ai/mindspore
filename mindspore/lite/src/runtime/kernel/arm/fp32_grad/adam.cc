@@ -20,7 +20,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

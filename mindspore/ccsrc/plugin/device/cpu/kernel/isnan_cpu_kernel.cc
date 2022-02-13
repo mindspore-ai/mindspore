@@ -1,0 +1,91 @@
+/**
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/cpu/kernel/isnan_cpu_kernel.h"
+#include <cmath>
+#include "abstract/utils.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+
+namespace mindspore {
+namespace kernel {
+namespace {
+constexpr size_t kIsNanInputsNum = 1;
+constexpr size_t kIsNanOutputsNum = 1;
+}  // namespace
+
+void IsNanCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dtype of 'x' should be bool, int, float, or uint, but got: " << input_dtype_;
+  }
+}
+
+bool IsNanCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                               const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsNanInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsNanOutputsNum, kernel_name_);
+  if (input_dtype_ == kNumberTypeFloat16) {
+    LaunchKernelFloat16(inputs, outputs);
+  } else if (input_dtype_ == kNumberTypeFloat32) {
+    LaunchKernelFloat<float>(inputs, outputs);
+  } else if (input_dtype_ == kNumberTypeFloat64) {
+    LaunchKernelFloat<double>(inputs, outputs);
+  } else {
+    LaunchKernelOther(inputs, outputs);
+  }
+  return true;
+}
+
+void IsNanCpuKernelMod::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
+  const auto *input = reinterpret_cast<float16 *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
+
+  size_t elem_num = inputs[0]->size / sizeof(float16);
+
+  for (size_t i = 0; i < elem_num; i++) {
+    float temp_num = static_cast<float>(input[i]);
+    output[i] = std::isnan(temp_num);
+  }
+}
+
+template <typename T>
+void IsNanCpuKernelMod::LaunchKernelFloat(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+
+  size_t elem_num = inputs[0]->size / sizeof(T);
+
+  for (size_t i = 0; i < elem_num; i++) {
+    output[i] = std::isnan(input[i]);
+  }
+}
+
+void IsNanCpuKernelMod::LaunchKernelOther(const std::vector<AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
+  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  auto type_iter = dtype_map_.find(input_dtype_);
+  size_t elem_num = inputs[0]->size / (type_iter->second);
+  for (size_t i = 0; i < elem_num; i++) {
+    output[i] = false;
+  }
+}
+}  // namespace kernel
+}  // namespace mindspore

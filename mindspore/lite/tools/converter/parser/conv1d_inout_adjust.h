@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CONV1D_INOUT_ADJUST_PASS_H_
 #include <string>
 #include <vector>
-#include "backend/optimizer/common/pass.h"
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/pass.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite {

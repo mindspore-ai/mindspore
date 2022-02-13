@@ -23,7 +23,7 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 
 namespace mindspore::opt {
 class ControlFlowPass : public Pass {

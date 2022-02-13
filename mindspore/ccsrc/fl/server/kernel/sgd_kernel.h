@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "backend/kernel_compiler/cpu/sgd_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/sgd_cpu_kernel.h"
 #include "fl/server/kernel/optimizer_kernel.h"
 #include "fl/server/kernel/optimizer_kernel_factory.h"
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
-#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 
 namespace mindspore {
 namespace kernel {
