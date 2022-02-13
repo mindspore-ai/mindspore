@@ -786,7 +786,7 @@ std::vector<std::vector<AnfNodePtrList>> GetParallelGroupsByBfs(const OrderedMap
       auto node = node_que.front();
       node_que.pop();
       if (exclude.count(node) == 0 && Parallelizable(node)) {
-        group.push_back({node});
+        (void)group.emplace_back(AnfNodePtrList({node}));
       }
       --total_node_num;
       auto iter = node_rels.find(node);

@@ -155,6 +155,10 @@ class CallbackImplRegister {
  public:
   explicit CallbackImplRegister(std::function<Callback *()> fn) { Callback::RegImpl(fn()); }
   ~CallbackImplRegister() = default;
+
+ protected:
+  // for pclint-plus
+  bool rev_{false};
 };
 
 #define GRAPH_KERNEL_CALLBACK_REGISTER(cls) \

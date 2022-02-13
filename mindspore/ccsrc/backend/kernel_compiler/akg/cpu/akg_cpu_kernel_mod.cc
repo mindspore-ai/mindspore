@@ -33,7 +33,7 @@ namespace kernel {
 class AkgParallelLaunch {
  public:
   using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
-  static int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
+  static int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int) {
     auto nthreads = omp_get_max_threads();
 #pragma omp parallel num_threads(nthreads)
     { flambda(omp_get_thread_num(), nthreads, cdata); }
@@ -121,7 +121,7 @@ CpuKernelMod::CpuKernelMod(const KernelPackPtr &kp) {
 }
 
 bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+                          const std::vector<AddressPtr> &outputs, void *) {
   if (launch_func_ == nullptr) {
     MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;
@@ -131,7 +131,7 @@ bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) { return output->addr; });
-  static AkgCallBack akg_callback;
+  static AkgCallBack akg_callback = AkgCallBack();
   (void)runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   using AkgCpuKernelFunction = void (*)(void *);
   reinterpret_cast<AkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
