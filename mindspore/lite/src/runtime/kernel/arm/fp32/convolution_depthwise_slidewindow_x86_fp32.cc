@@ -76,7 +76,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Prepare() {
   }
 
   auto ret = InitConvWeightBias();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitConvWeightBias failed.";
     return RET_ERROR;
   }
@@ -110,7 +110,7 @@ int ConvDwSWAvxRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ConvolutionDepthwiseSWCPUKernelX86::Run() {
   auto ret = InitPackedInputOutput();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise x86 fp32 InitPackedInputOutput failed.";
     FreePackedInputOutput();
     return RET_ERROR;

@@ -32,13 +32,13 @@ int CropInt8CPUKernel::Prepare() {
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
-  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty!");
   crop_para_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   crop_para_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
-  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty.");
+  MS_CHECK_TRUE_MSG(!out_quant_args.empty(), RET_ERROR, "Output quant param cannot be empty!");
   crop_para_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   crop_para_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
 

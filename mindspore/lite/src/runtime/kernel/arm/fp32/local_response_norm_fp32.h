@@ -26,15 +26,19 @@ class LocalResponseNormCPUKernel : public InnerKernel {
  public:
   LocalResponseNormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
+      : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
+    lrn_param_ = reinterpret_cast<LocalResponseNormParameter *>(parameter);
+  }
   ~LocalResponseNormCPUKernel() override = default;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  bool CheckParamsValid() const override;
   int DoLocalResponseNorm(int task_id) const;
 
  private:
+  LocalResponseNormParameter *lrn_param_ = nullptr;
   int thread_count_;
 };
 }  // namespace mindspore::kernel

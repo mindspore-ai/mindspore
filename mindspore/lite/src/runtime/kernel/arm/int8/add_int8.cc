@@ -49,9 +49,6 @@ int QuantizedAddCPUKernel::Prepare() {
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
 
-  CHECK_NULL_RETURN(input0);
-  CHECK_NULL_RETURN(input1);
-  CHECK_NULL_RETURN(output);
   const auto &input0_params = input0->quant_params();
   const auto &input1_params = input1->quant_params();
   const auto &output_params = output->quant_params();

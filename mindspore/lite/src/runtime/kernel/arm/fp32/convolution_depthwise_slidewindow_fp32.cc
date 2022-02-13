@@ -67,7 +67,7 @@ int ConvolutionDepthwiseSWCPUKernel::Prepare() {
     set_workspace_size(pack_weight_size * sizeof(float));
   }
   auto ret = InitConvWeightBias();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitConvWeightBias failed.";
     return RET_ERROR;
   }
@@ -110,7 +110,7 @@ int ConvDwSWRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ConvolutionDepthwiseSWCPUKernel::Run() {
   auto ret = InitPackedInputOutput();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp32 InitPackedInputOutput failed.";
     FreePackedInputOutput();
     return RET_ERROR;

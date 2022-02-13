@@ -27,6 +27,10 @@ using mindspore::schema::PrimitiveType_PowFusion;
 namespace mindspore::kernel {
 int PowerCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  auto exp_datatype = in_tensors_.at(1)->data_type();
+  MS_CHECK_TRUE_MSG((exp_datatype == kNumberTypeFloat32 || exp_datatype == kNumberTypeFloat ||
+                     exp_datatype == kNumberTypeInt32 || exp_datatype == kNumberTypeInt),
+                    RET_ERROR, "unsupported datatype of exponent for Power op.");
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   return RET_OK;
 }

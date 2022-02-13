@@ -52,7 +52,6 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 
 int ConvolutionInt8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  CHECK_NULL_RETURN(filter_tensor);
   auto input_channel = filter_tensor->Channel();
   if (input_channel <= 0) {
     MS_LOG(ERROR) << "get channel from filter tensor failed.";

@@ -1881,8 +1881,10 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
-    delete model;
     MS_LOG(ERROR) << "Compile model failed";
+    delete[] model_buf;
+    model->buf = nullptr;
+    delete model;
     return RET_ERROR;
   }
   set_model(model);

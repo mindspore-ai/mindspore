@@ -17,6 +17,31 @@
 #include "nnacl/infer/split_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+int SetSplitOutputShape(const TensorC *input, TensorC **outputs, SplitParameter *param) {
+  for (int i = 0; i < param->num_split_; ++i) {
+    int output_shape[MAX_SHAPE_SIZE];
+    size_t output_shape_size = 0;
+    ShapeSet(output_shape, &output_shape_size, input->shape_, input->shape_size_);
+    int split_dim_i = input->shape_[param->split_dim_];
+    if (i == param->num_split_ - 1 && param->split_sizes_[i] == -1) {
+      if (param->num_split_ - 1 < 0) {
+        return NNACL_ERR;
+      }
+      for (int j = 0; j < param->num_split_ - 1; ++j) {
+        split_dim_i -= param->split_sizes_[j];
+      }
+      param->split_sizes_[i] = split_dim_i;
+    } else {
+      split_dim_i = param->split_sizes_[i];
+    }
+    MS_CHECK_TRUE_RET(split_dim_i >= 0 && split_dim_i <= input->shape_[param->split_dim_], NNACL_ERR);
+    output_shape[param->split_dim_] = split_dim_i;
+    SetShapeArray(outputs[i], output_shape, output_shape_size);
+    SetDataTypeFormat(outputs[i], input);
+  }
+  return NNACL_OK;
+}
+
 int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
   int check_ret = CheckAugmentWithMinSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
@@ -31,11 +56,11 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
 
   SplitParameter *param = (SplitParameter *)parameter;
 
-  int num_split_ = param->num_split_ == 0 ? (int)(outputs_size) : param->num_split_;
-  if (num_split_ == 0) {
+  int num_split = param->num_split_ == 0 ? (int)(outputs_size) : param->num_split_;
+  if (num_split == 0) {
     return NNACL_ERR;
   }
-  param->num_split_ = num_split_;
+  param->num_split_ = num_split;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
@@ -44,40 +69,24 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
   int split_dim = param->split_dim_ < 0 ? ((int)(input->shape_size_)) + param->split_dim_ : param->split_dim_;
-  if (split_dim >= (int)(input->shape_size_)) {
+  if (split_dim >= (int)(input->shape_size_) || split_dim < 0) {
     return NNACL_ERR;
   }
-  if ((int)(outputs_size) != num_split_) {
+  param->split_dim_ = split_dim;
+  if ((int)(outputs_size) != num_split) {
     return NNACL_ERR;
   }
   if (param->split_count_ == 0) {
-    if (input->shape_[split_dim] % num_split_ != 0) {
+    if (input->shape_[split_dim] % num_split != 0) {
       return NNACL_ERR;
     }
-    for (int i = 0; i < num_split_; ++i) {
-      param->split_sizes_[i] = input->shape_[split_dim] / num_split_;
+    for (int i = 0; i < num_split; ++i) {
+      param->split_sizes_[i] = input->shape_[split_dim] / num_split;
     }
   }
-  for (int i = 0; i < num_split_; ++i) {
-    int output_shape[MAX_SHAPE_SIZE];
-    size_t output_shape_size = 0;
-    ShapeSet(output_shape, &output_shape_size, input->shape_, input->shape_size_);
-    int split_dim_i = input->shape_[split_dim];
-    if (i == num_split_ - 1 && param->split_sizes_[i] == -1) {
-      if (param->num_split_ - 1 < 0) {
-        return NNACL_ERR;
-      }
-      for (int j = 0; j < param->num_split_ - 1; ++j) {
-        split_dim_i -= param->split_sizes_[j];
-      }
-      param->split_sizes_[i] = split_dim_i;
-    } else {
-      split_dim_i = param->split_sizes_[i];
-    }
-    MS_CHECK_TRUE_RET(split_dim_i >= 0 && split_dim_i <= input->shape_[split_dim], NNACL_ERR);
-    output_shape[split_dim] = split_dim_i;
-    SetShapeArray(outputs[i], output_shape, output_shape_size);
-    SetDataTypeFormat(outputs[i], input);
+  int ret = SetSplitOutputShape(input, outputs, param);
+  if (ret != NNACL_OK) {
+    return ret;
   }
   return NNACL_OK;
 }
