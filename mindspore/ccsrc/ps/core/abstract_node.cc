@@ -201,8 +201,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
                         int command, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    return false;
   }
 
   auto message_meta = std::make_shared<MessageMeta>();
@@ -226,8 +227,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   }
   for (size_t it = 0; it < rank_ids.size(); ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
-      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                        << ", the server num:" << server_num_ << ", the rank id:" << rank_ids.at(it);
+      MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                    << ", the server num:" << server_num_ << ", the rank id:" << rank_ids.at(it);
+      return false;
     }
 
     auto message_meta = std::make_shared<MessageMeta>();
@@ -256,8 +258,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    return false;
   }
 
   uint64_t request_id = AddMessageTrack(1);
@@ -311,8 +314,9 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
 
   for (size_t it = 0; it < size; ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it), worker_num_, server_num_)) {
-      MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                        << ", the server num:" << server_num_ << ", the rank id:" << rank_ids.at(it);
+      MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                    << ", the server num:" << server_num_ << ", the rank id:" << rank_ids.at(it);
+      return false;
     }
 
     auto message_meta = std::make_shared<MessageMeta>();
@@ -341,8 +345,9 @@ uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint
                                            size_t size) {
   MS_EXCEPTION_IF_NULL(data);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    return 0;
   }
 
   std::shared_ptr<MessageMeta> message_meta = std::make_shared<MessageMeta>();
@@ -360,8 +365,9 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const NodeRol
                                                                    VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
-    MS_LOG(EXCEPTION) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    return std::make_pair(0, 0);
   }
 
   receive_callbacks_mutex_.lock();
@@ -681,6 +687,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
   send_meta_message.ParseFromArray(data, SizeToInt(size));
   worker_num_ = send_meta_message.worker_num();
   server_num_ = send_meta_message.server_num();
+
   if (send_meta_message.rank_id() < 0) {
     MS_LOG(EXCEPTION) << "The rank id is wrong.";
   }

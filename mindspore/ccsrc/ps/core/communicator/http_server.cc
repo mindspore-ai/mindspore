@@ -48,14 +48,6 @@ HttpServer::~HttpServer() {
 }
 
 bool HttpServer::InitServer() {
-  if (server_address_ == "") {
-    MS_LOG(WARNING) << "The server address is empty.";
-    std::string interface;
-    std::string server_ip;
-    CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
-    server_address_ = server_ip;
-  }
-
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(ERROR) << "The http server ip:" << server_address_ << " is illegal!";
     return false;
@@ -133,7 +125,16 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   if (!function || !(*function)) {
     return false;
   }
-  MS_LOG(INFO) << "request handler url is: " << url;
+  std::string http_url = "";
+  if (ps::PSContext::instance()->enable_ssl()) {
+    http_url = "https://" + server_address_ + ":" + std::to_string(server_port_) + url;
+  } else {
+    http_url = "http://" + server_address_ + ":" + std::to_string(server_port_) + url;
+  }
+  if (!CommUtil::CheckHttpUrl(http_url)) {
+    MS_LOG(EXCEPTION) << "The http url:" << http_url << " is illegal!";
+  }
+  MS_LOG(INFO) << "request handler http url is: " << http_url;
   request_handlers_[url] = function;
   return true;
 }

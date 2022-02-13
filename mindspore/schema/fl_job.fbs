@@ -91,6 +91,7 @@ table RequestUpdateModel{
   feature_map:[FeatureMap];
   timestamp:string;
   signature:[ubyte];
+  upload_loss:float;
 }
 
 table ResponseUpdateModel{

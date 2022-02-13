@@ -103,6 +103,12 @@ class RoundKernel : virtual public CPUKernel {
 
   void InitClientVisitedNum();
 
+  void InitClientUploadLoss();
+
+  void UpdateClientUploadLoss(const float upload_loss);
+
+  float upload_loss() const;
+
  protected:
   // Generating response data of this round. The data is allocated on the heap to ensure it's not released before sent
   // back to worker.
@@ -138,6 +144,8 @@ class RoundKernel : virtual public CPUKernel {
 
   std::atomic<size_t> total_client_num_;
   std::atomic<size_t> accept_client_num_;
+
+  std::atomic<float> upload_loss_;
 };
 }  // namespace kernel
 }  // namespace server

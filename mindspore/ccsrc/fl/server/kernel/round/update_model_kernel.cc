@@ -31,6 +31,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
   InitClientVisitedNum();
+  InitClientUploadLoss();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -263,7 +264,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
     MS_LOG(WARNING) << reason;
     return update_reason == kNetworkError ? ResultCode::kFail : ResultCode::kSuccessAndReturn;
   }
-
+  UpdateClientUploadLoss(update_model_req->upload_loss());
   BuildUpdateModelRsp(fbb, schema::ResponseCode_SUCCEED, "success not ready",
                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
   return ResultCode::kSuccess;

@@ -66,8 +66,6 @@ class Node {
   std::string node_id() const;
   uint32_t rank_id() const;
   NodeRole role() const;
-  uint16_t BoundPort() const;
-  std::string BoundIp() const;
 
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 

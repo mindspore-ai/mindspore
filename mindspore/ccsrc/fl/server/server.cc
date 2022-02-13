@@ -28,6 +28,7 @@
 #include "fl/server/distributed_metadata_store.h"
 #include "fl/server/distributed_count_service.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace fl {
@@ -185,7 +186,10 @@ bool Server::InitCommunicatorWithWorker() {
     communicators_with_worker_.push_back(tcp_comm);
   }
   if (use_http_) {
-    auto http_comm = server_node_->GetOrCreateHttpComm(server_node_->BoundIp(), http_port_, task_executor_);
+    std::string server_ip = "";
+    std::string interface = "";
+    ps::core::CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
+    auto http_comm = server_node_->GetOrCreateHttpComm(server_ip, http_port_, task_executor_);
     MS_EXCEPTION_IF_NULL(http_comm);
     communicators_with_worker_.push_back(http_comm);
   }
@@ -450,6 +454,7 @@ void Server::StartCommunicator() {
   if (!communicator_with_server_->Start()) {
     MS_LOG(EXCEPTION) << "Starting communicator with server failed.";
   }
+
   DistributedMetadataStore::GetInstance().Initialize(server_node_);
   CollectiveOpsImpl::GetInstance().Initialize(server_node_);
   DistributedCountService::GetInstance().Initialize(server_node_, kLeaderServerRank);

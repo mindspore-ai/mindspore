@@ -99,6 +99,7 @@ bool SchedulerRecovery::Recover() {
   if (scheduler_recovery_storage_->Exists(kRecoveryRegisteredNodesInfos)) {
     auto node_ids = scheduler_recovery_storage_->GetVector(kRecoveryRegisteredNodesInfos);
     std::unordered_map<std::string, NodeInfo> nodes_infos;
+    uint32_t recovery_server_num = 0;
     for (auto elem : node_ids) {
       std::string port = elem.at("port");
       std::string rank_id = elem.at("rank_id");
@@ -112,6 +113,13 @@ bool SchedulerRecovery::Recover() {
       node_info.node_role_ = CommUtil::StringToNodeRole(elem.at("role"));
 
       nodes_infos[node_info.node_id_] = node_info;
+      if (elem.at("role") == "SERVER") {
+        recovery_server_num += 1;
+      }
+    }
+    if (recovery_server_num != clusterConfig.initial_server_num) {
+      MS_LOG(EXCEPTION) << "Server nodes list size is not equal with initial server num. server nodes list size is:"
+                        << recovery_server_num << " initial server num is:" << clusterConfig.initial_server_num;
     }
     clusterConfig.initial_registered_nodes_infos = nodes_infos;
   }
