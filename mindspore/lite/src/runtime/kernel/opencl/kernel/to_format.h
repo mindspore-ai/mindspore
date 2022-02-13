@@ -35,12 +35,14 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
   int SetConstArgs() override;
   int SetGlobalLocal() override;
   int InferShape() override;
 
  private:
   size_t N_{1};
+  size_t D_{1};
   size_t H_{1};
   size_t W_{1};
   size_t C_{1};

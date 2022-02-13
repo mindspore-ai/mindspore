@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_
 
 #include <vector>
+#include <memory>
 #include <set>
 #include <string>
 #include <cfloat>
@@ -35,7 +36,8 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
-  void InitGpuTensorInfoShape();
+  int CheckSpecsWithoutShape() override;
+  int InitGpuTensorInfoShape();
   int InitWeights() override;
   int SetConstArgs() override;
   int SetGlobalLocal() override;
@@ -44,10 +46,10 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   bool element_flag_{true};
   float activation_min_{-FLT_MAX};
   float activation_max_{FLT_MAX};
-  GpuTensorInfo in0_shape_;
-  GpuTensorInfo in1_shape_;
+  std::unique_ptr<GpuTensorInfo> in0_shape_;
+  std::unique_ptr<GpuTensorInfo> in1_shape_;
   bool in1_shape_switch_flag_{false};
-  GpuTensorInfo out_shape_;
+  std::unique_ptr<GpuTensorInfo> out_shape_;
   std::vector<void *> weight_ptrs_;
   std::string kernel_name_;
 };

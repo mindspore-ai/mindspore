@@ -113,7 +113,7 @@ int PowerOpenCLKernel::SetGlobalLocal() {
   for (size_t i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
     output_shape.s[i] = out_tensors_.at(0)->shape()[i];
   }
-  Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);
+  Broadcast2GpuShape(output_shape.s, out_tensors_.at(0)->shape().size(), out_shape_.s, DIMENSION_4D, 1);
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   std::vector<size_t> local_size_ = {1, 1, 1};
   uint32_t OH = out_shape_.s[0] * out_shape_.s[1];

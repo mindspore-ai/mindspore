@@ -63,7 +63,7 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
   if (idx >= out_tensors_.size()) {
     return RET_ERROR;
   }
-  auto img_info = GpuTensorInfo(out_tensors_[idx]);
+  auto img_info = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_[idx]);
   size_t img_dtype = CL_FLOAT;
   switch (out_tensors_[idx]->data_type()) {
     case kNumberTypeFloat32: {
@@ -87,7 +87,7 @@ int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
       return RET_ERROR;
     }
   }
-  *img_size = {img_info.width, img_info.height, img_dtype};
+  *img_size = {img_info->width, img_info->height, img_dtype};
   return RET_OK;
 }
 
@@ -114,8 +114,8 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
     return;
   }
 
-  GpuTensorInfo img_info(tensor);
-  auto size = mem_type == lite::opencl::MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
+  auto img_info = GpuTensorInfo::CreateGpuTensorInfo(tensor);
+  auto size = mem_type == lite::opencl::MemType::BUF ? img_info->OriginSize : img_info->Image2DSize;
   std::vector<char> data(size);
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeInnerWrapper();
   auto runtime = runtime_wrapper.GetInstance();
@@ -127,7 +127,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
     if (allocator->MapBuffer(tensor->data(), CL_MAP_READ, nullptr, true) == nullptr) {
       MS_LOG(ERROR) << "Map Buffer failed.";
     }
-    memcpy(data.data(), tensor->data(), img_info.OriginSize);
+    memcpy(data.data(), tensor->data(), img_info->OriginSize);
     if (allocator->UnmapBuffer(tensor->data()) != RET_OK) {
       MS_LOG(ERROR) << "UnmapBuffer failed.";
     }
@@ -137,7 +137,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
 
   PrintShape(tensor);
 
-  auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
+  auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info->ElementsNum : img_info->ElementsC4Num;
   for (int i = 0; i < print_num && i < static_cast<int>(total_num); ++i) {
 #ifdef ENABLE_FP16
     if (tensor->data_type() == kNumberTypeInt32) {
@@ -353,7 +353,7 @@ std::set<size_t> OpenCLKernel::GenerateLocalByGlobal(size_t global_i) {
 
 int OpenCLKernel::CheckSpecs() {
   if (out_mem_type_ == lite::opencl::MemType::IMG) {
-    if (!GpuTensorInfo(out_tensors_[0]).IsImageSizeValid()) {
+    if (!GpuTensorInfo::CreateGpuTensorInfo(out_tensors_[0])->IsImageSizeValid()) {
       return RET_ERROR;
     }
   }

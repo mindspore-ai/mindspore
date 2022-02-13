@@ -47,8 +47,9 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
   int SetConstArgs() override {
-    if (ocl_runtime_->SetKernelArg(kernel_, 2, output_shape_) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX2, output_shape_) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
