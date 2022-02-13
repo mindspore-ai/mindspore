@@ -122,8 +122,7 @@ public class ClientListReq {
             if (!Common.isSeverReady(responseData)) {
                 LOGGER.info(Common.addTag("[getClientList] the server is not ready now, need wait some time and " +
                         "request again"));
-                Common.sleep(SLEEP_TIME);
-                nextRequestTime = "";
+                nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }

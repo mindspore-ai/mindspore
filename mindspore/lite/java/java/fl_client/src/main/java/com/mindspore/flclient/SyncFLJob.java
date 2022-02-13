@@ -16,6 +16,8 @@
 
 package com.mindspore.flclient;
 
+import static com.mindspore.flclient.FLParameter.MAX_WAIT_TRY_TIME;
+import static com.mindspore.flclient.FLParameter.RESTART_TIME_PER_ITER;
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.ANDROID;
@@ -56,6 +58,9 @@ public class SyncFLJob {
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private IFLJobResultCallback flJobResultCallback;
     private FLClientStatus curStatus;
+    private int tryTimePerIter = 0;
+    private int lastIteration = -1;
+    private int waitTryTime = 0;
 
     private void initFlIDForPkiVerify() {
         if (flParameter.isPkiVerify()) {
@@ -80,7 +85,8 @@ public class SyncFLJob {
                 LOGGER.info(Common.addTag("the flName: " + flParameter.getFlName()));
                 Class.forName(flParameter.getFlName());
             } catch (ClassNotFoundException e) {
-                LOGGER.severe(Common.addTag("catch ClassNotFoundException error, the set flName does not exist, please " +
+                LOGGER.severe(Common.addTag("catch ClassNotFoundException error, the set flName does not exist, " +
+                        "please " +
                         "check: " + e.getMessage()));
                 throw new IllegalArgumentException();
             }
@@ -104,8 +110,18 @@ public class SyncFLJob {
         FLLiteClient flLiteClient = new FLLiteClient();
         LOGGER.info(Common.addTag("recovery StopJobFlag to false in the start of fl job"));
         localFLParameter.setStopJobFlag(false);
+        InitialParameters();
+        LOGGER.info(Common.addTag("flJobRun start"));
+        flRunLoop(flLiteClient);
+        LOGGER.info(Common.addTag("flJobRun finish"));
+        flJobResultCallback.onFlJobFinished(flParameter.getFlName(), flLiteClient.getIterations(),
+                flLiteClient.getRetCode());
+        return curStatus;
+    }
+
+    private void flRunLoop(FLLiteClient flLiteClient) {
         do {
-            if (checkStopJobFlag()) {
+            if (ifTryTimeExceedsLimit() || checkStopJobFlag()) {
                 break;
             }
             LOGGER.info(Common.addTag("flName: " + flParameter.getFlName()));
@@ -119,8 +135,9 @@ public class SyncFLJob {
             flLiteClient.setTrainDataSize(trainDataSize);
 
             // startFLJob
-            curStatus = startFLJob(flLiteClient);
+            curStatus = flLiteClient.startFLJob();
             if (curStatus == FLClientStatus.RESTART) {
+                tryTimePerIter += 1;
                 restart("[startFLJob]", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
             } else if (curStatus == FLClientStatus.FAILED) {
@@ -128,6 +145,7 @@ public class SyncFLJob {
                 break;
             }
             LOGGER.info(Common.addTag("[startFLJob] startFLJob succeed, curIteration: " + flLiteClient.getIteration()));
+            updateTryTimePerIter(flLiteClient);
 
             // create mask
             curStatus = flLiteClient.getFeatureMask();
@@ -148,7 +166,7 @@ public class SyncFLJob {
             LOGGER.info(Common.addTag("[train] train succeed"));
 
             // updateModel
-            curStatus = updateModel(flLiteClient);
+            curStatus = flLiteClient.updateModel();
             if (curStatus == FLClientStatus.RESTART) {
                 restart("[updateModel]", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
@@ -199,41 +217,54 @@ public class SyncFLJob {
                     flLiteClient.getRetCode());
             Common.freeSession();
         } while (flLiteClient.getIteration() < flLiteClient.getIterations());
-        LOGGER.info(Common.addTag("flJobRun finish"));
-        flJobResultCallback.onFlJobFinished(flParameter.getFlName(), flLiteClient.getIterations(),
-                flLiteClient.getRetCode());
-        return curStatus;
     }
 
-    private FLClientStatus startFLJob(FLLiteClient flLiteClient) {
-        FLClientStatus curStatus = flLiteClient.startFLJob();
-        while (curStatus == FLClientStatus.WAIT) {
-            if (checkStopJobFlag()) {
-                curStatus = FLClientStatus.FAILED;
-                break;
-            }
-            waitSomeTime();
-            curStatus = flLiteClient.startFLJob();
-        }
-        return curStatus;
+
+    private void InitialParameters() {
+        tryTimePerIter = 0;
+        lastIteration = -1;
+        waitTryTime = 0;
     }
 
-    private FLClientStatus updateModel(FLLiteClient flLiteClient) {
-        FLClientStatus curStatus = flLiteClient.updateModel();
-        while (curStatus == FLClientStatus.WAIT) {
-            if (checkStopJobFlag()) {
-                curStatus = FLClientStatus.FAILED;
-                break;
-            }
-            waitSomeTime();
-            curStatus = flLiteClient.updateModel();
+    private Boolean ifTryTimeExceedsLimit() {
+        if (tryTimePerIter > RESTART_TIME_PER_ITER) {
+            LOGGER.severe(Common.addTag("[ifTryTimeExceedsLimit] the repeated request time exceeds the limit, current" +
+                    " repeated" +
+                    " request time is: " + tryTimePerIter + " the limited time is: " + RESTART_TIME_PER_ITER));
+            curStatus = FLClientStatus.FAILED;
+            return true;
         }
-        return curStatus;
+        return false;
+    }
+
+    private void updateTryTimePerIter(FLLiteClient flLiteClient) {
+        if (lastIteration != -1 && lastIteration == flLiteClient.getIteration()) {
+            tryTimePerIter += 1;
+        } else {
+            tryTimePerIter = 1;
+            lastIteration = flLiteClient.getIteration();
+        }
+    }
+
+    private Boolean ifWaitTryTimeExceedsLimit() {
+        if (waitTryTime > MAX_WAIT_TRY_TIME) {
+            LOGGER.severe(Common.addTag("[ifWaitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
+            curStatus = FLClientStatus.FAILED;
+            return true;
+        }
+        return false;
     }
 
     private FLClientStatus getModel(FLLiteClient flLiteClient) {
         FLClientStatus curStatus = flLiteClient.getModel();
+        waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
+            waitTryTime += 1;
+            if (ifWaitTryTimeExceedsLimit()) {
+                curStatus = FLClientStatus.FAILED;
+                break;
+            }
             if (checkStopJobFlag()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
@@ -241,6 +272,7 @@ public class SyncFLJob {
             waitSomeTime();
             curStatus = flLiteClient.getModel();
         }
+        waitTryTime = 0;
         return curStatus;
     }
 
@@ -303,7 +335,8 @@ public class SyncFLJob {
             client.free();
             return null;
         }
-        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
+        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(),
+                flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe(Common.addTag("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
                     " status is: " + tag));
