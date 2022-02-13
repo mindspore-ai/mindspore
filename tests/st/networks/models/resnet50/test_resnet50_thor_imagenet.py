@@ -26,18 +26,17 @@ from mindspore.common.tensor import Tensor
 from mindspore.communication.management import init
 from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback
+from mindspore.train.model import Model
+from mindspore.train.train_thor import ConvertModelUtils
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.nn.optim import thor
 import mindspore.dataset as ds
 
-from tests.st.networks.models.resnet50.src.dataset import create_dataset
 from tests.st.networks.models.resnet50.src.metric import DistAccuracy, ClassifyCorrectCell
 from tests.st.networks.models.resnet50.src.CrossEntropySmooth import CrossEntropySmooth
 from tests.st.networks.models.resnet50.src_thor.config import config as thor_config
-from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset as create_dataset_thor
-from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
-from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
-
+from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset2 as create_dataset_thor
+from tests.st.networks.models.resnet50.src.resnet import resnet50
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 dataset_path = "/home/workspace/mindspore_dataset/imagenet/imagenet_original/train"
@@ -89,11 +88,12 @@ class LossGet(Callback):
         self._per_print_times = per_print_times
         self._loss = 0.0
         self.data_size = data_size
+        self._epoch = 0
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs
-
+        self._epoch = cb_params.cur_epoch_num
         if isinstance(loss, (tuple, list)):
             if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
                 loss = loss[0]
@@ -106,8 +106,11 @@ class LossGet(Callback):
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training."
                              .format(cb_params.cur_epoch_num, cur_step_in_epoch))
+        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             self._loss = loss
+            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num,
+                                                      cur_step_in_epoch, loss), flush=True)
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
@@ -121,6 +124,9 @@ class LossGet(Callback):
 
     def get_per_step_time(self):
         return self._per_step_mseconds
+
+    def get_epoch(self):
+        return self._epoch
 
 
 def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
@@ -137,7 +143,7 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
         init()
 
     # network
-    net = resnet50_thor(thor_config.class_num)
+    net = resnet50(thor_config.class_num)
 
     if not thor_config.label_smooth:
         thor_config.label_smooth_factor = 0.0
@@ -148,14 +154,10 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 
     # train dataset
     dataset = create_dataset_thor(dataset_path=dataset_path, do_train=True,
-                                  repeat_num=1, batch_size=thor_config.batch_size)
-
+                                  batch_size=thor_config.batch_size, train_image_size=thor_config.train_image_size,
+                                  eval_image_size=thor_config.eval_image_size, target="Ascend",
+                                  distribute=True)
     step_size = dataset.get_dataset_size()
-    eval_interval = thor_config.eval_interval
-
-    # evaluation dataset
-    eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
-                                  repeat_num=1, batch_size=thor_config.eval_batch_size)
 
     # loss scale
     loss_scale = FixedLossScaleManager(thor_config.loss_scale, drop_overflow_update=False)
@@ -171,90 +173,30 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     # evaluation network
     dist_eval_network = ClassifyCorrectCell(net)
     # model
-    model = THOR_Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, amp_level="O2",
-                       keep_batchnorm_fp32=False,
-                       metrics={'acc': DistAccuracy(batch_size=thor_config.eval_batch_size, device_num=device_num)},
-                       eval_network=dist_eval_network, frequency=thor_config.frequency)
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale,
+                  metrics={'acc': DistAccuracy(batch_size=thor_config.eval_batch_size, device_num=device_num)},
+                  amp_level="O2", keep_batchnorm_fp32=False,
+                  eval_network=dist_eval_network)
 
-    # model init
-    print("init_start", device_id)
-    model.init(dataset, eval_dataset)
-    print("init_stop", device_id)
+    model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+                                                      loss_scale_manager=loss_scale, metrics={'acc'},
+                                                      amp_level="O2", keep_batchnorm_fp32=False)
 
     # callbacks
     loss_cb = LossGet(1, step_size)
 
     # train and eval
-    acc = 0.0
-    time_cost = 0.0
     print("run_start", device_id)
-    for epoch_idx in range(0, int(epoch_size / eval_interval)):
-        model.train(eval_interval, dataset, callbacks=loss_cb)
-        eval_start = time.time()
-        output = model.eval(eval_dataset)
-        eval_cost = (time.time() - eval_start) * 1000
-        acc = float(output["acc"])
-        time_cost = loss_cb.get_per_step_time()
-        loss = loss_cb.get_loss()
-        print("the {} epoch's resnet result:\n "
-              "device{}, training loss {}, acc {}, "
-              "training per step cost {:.2f} ms, eval cost {:.2f} ms, total_cost {:.2f} ms".format(
-                  epoch_idx, device_id, loss, acc, time_cost, eval_cost, time_cost * step_size + eval_cost))
-    q.put({'acc': acc, 'cost': time_cost})
-
-
-def test_resnet_thor_imagenet_8p_0():
-    """
-    Feature: Resnet50 thor network
-    Description: Train and evaluate resnet50 thor network on imagenet dataset
-    Expectation: accuracy > 0.28, time cost < 25.
-    """
-    context.set_context(enable_graph_kernel=False, enable_sparse=False)
-    context.reset_auto_parallel_context()
-    context.reset_ps_context()
-
-    q = Queue()
-
-    # resnet50_thor
-    device_num = 8
-    epoch_size = 1
-    enable_hccl = True
-    process = []
-    for i in range(device_num):
-        device_id = i
-        process.append(Process(target=train_process_thor,
-                               args=(q, device_id, epoch_size, device_num, enable_hccl)))
-
-    cpu_count = os.cpu_count()
-    each_cpu_count = cpu_count // device_num
-    for i in range(device_num):
-        process[i].start()
-        if each_cpu_count > 1:
-            cpu_start = each_cpu_count * i
-            cpu_end = each_cpu_count * (i + 1)
-            process_cpu = [x for x in range(cpu_start, cpu_end)]
-            pid = process[i].pid
-            os.sched_setaffinity(pid, set(process_cpu))
-
-    print("Waiting for all subprocesses done...")
-
-    for i in range(device_num):
-        process[i].join()
-
-    # THOR
-    thor_acc = 0.0
-    thor_cost = 0.0
-    for i in range(device_num):
-        output = q.get()
-        thor_acc += output['acc']
-        thor_cost += output['cost']
-    thor_acc = thor_acc / device_num
-    thor_cost = thor_cost / device_num
-
-    for i in range(0, device_num):
-        os.system("rm -rf " + str(i))
-    print("End training...")
-    assert thor_acc > 0.25
+    model.train(2, dataset, callbacks=loss_cb,
+                sink_size=dataset.get_dataset_size(), dataset_sink_mode=True)
+    time_cost = loss_cb.get_per_step_time()
+    loss = loss_cb.get_loss()
+    epoch_idx = loss_cb.get_epoch()
+    print("the {} epoch's resnet result:\n "
+          "device{}, training loss {}, "
+          "training per step cost {:.2f} ms, total_cost {:.2f} ms".format(epoch_idx, device_id,
+                                                                          loss, time_cost, time_cost * step_size))
+    q.put({'loss': loss, 'cost': time_cost})
 
 
 @pytest.mark.level1
@@ -275,7 +217,7 @@ def test_resnet_thor_imagenet_8p_1():
 
     # resnet50_thor
     device_num = 8
-    epoch_size = 1
+    epoch_size = 2
     enable_hccl = True
     process = []
     for i in range(device_num):
@@ -300,19 +242,17 @@ def test_resnet_thor_imagenet_8p_1():
         process[i].join()
 
     # THOR
-    thor_acc = 0.0
+    thor_loss = 0.0
     thor_cost = 0.0
     for i in range(device_num):
         output = q.get()
-        thor_acc += output['acc']
+        thor_loss += output['loss']
         thor_cost += output['cost']
-    thor_acc = thor_acc / device_num
+    thor_loss = thor_loss / device_num
     thor_cost = thor_cost / device_num
 
     for i in range(0, device_num):
         os.system("rm -rf " + str(i))
     print("End training...")
-    print('thor acc: ', thor_acc)
-    print('thor cost: ', thor_cost)
-    #assert thor_acc > 0.25
-    #assert thor_cost < 30
+    assert thor_loss < 7
+    assert thor_cost < 30
