@@ -22,8 +22,8 @@
 #include <atomic>
 #include <utility>
 #include <map>
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/tensor_array.h"
 
 namespace mindspore {

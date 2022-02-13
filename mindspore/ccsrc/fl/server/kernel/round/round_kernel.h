@@ -27,8 +27,8 @@
 #include <chrono>
 #include <thread>
 #include <unordered_map>
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "fl/server/common.h"
 #include "fl/server/local_meta_store.h"
 #include "fl/server/distributed_count_service.h"

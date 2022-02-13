@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
 
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {

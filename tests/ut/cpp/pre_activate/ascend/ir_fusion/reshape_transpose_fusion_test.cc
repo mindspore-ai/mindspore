@@ -17,8 +17,8 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/ascend/ir_fusion/reshape_transpose_fusion.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/reshape_transpose_fusion.h"
 
 namespace mindspore {
 namespace opt {

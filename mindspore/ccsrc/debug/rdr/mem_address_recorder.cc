@@ -17,7 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <utility>
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace {

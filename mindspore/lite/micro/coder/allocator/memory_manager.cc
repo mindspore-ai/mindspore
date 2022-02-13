@@ -16,7 +16,7 @@
 
 #include "coder/allocator/memory_manager.h"
 #include <vector>
-#include "mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {

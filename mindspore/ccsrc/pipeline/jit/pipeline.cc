@@ -55,8 +55,8 @@
 #include "debug/draw.h"
 #include "debug/common.h"
 #include "load_mindir/load_model.h"
-#include "vm/segment_runner.h"
-#include "backend/session/executor_manager.h"
+#include "backend/graph_compiler/segment_runner.h"
+#include "backend/common/session/executor_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
@@ -82,8 +82,8 @@
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter_map.h"
-#include "runtime/device/ascend/profiling/profiling_manager.h"
-#include "runtime/device/ascend/distribute/ascend_collective.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #endif
 
 #ifdef ENABLE_DUMP_IR

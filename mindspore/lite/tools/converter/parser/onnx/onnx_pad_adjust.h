@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_PAD_ADJUST_H_
 #include <string>
 #include <vector>
-#include "backend/optimizer/common/pass.h"
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/pass.h"
+#include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::lite {
 class OnnxPadAdjust {

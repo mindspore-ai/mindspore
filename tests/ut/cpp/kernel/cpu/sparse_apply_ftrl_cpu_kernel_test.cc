@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #define private public
 #define protected public
-#include "backend/kernel_compiler/cpu/sparse_apply_ftrl_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/sparse_apply_ftrl_cpu_kernel.h"
 #undef private
 #undef protected
 

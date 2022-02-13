@@ -4,7 +4,7 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
-include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
+include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 include(${TOP_DIR}/cmake/external_libs/gtest.cmake)
 

@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <thread>
 #include <string>
-#include "runtime/device/gpu/distribution/collective_wrapper.h"
+#include "plugin/device/gpu/hal/device/distribution/collective_wrapper.h"
 #include "src/delegate/tensorrt/distribution/distribution_utils.h"
 #include "src/delegate/tensorrt/distribution/distribution_base.h"
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "backend/session/kernel_graph.h"
+#include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::device {
 class LaunchKernel {

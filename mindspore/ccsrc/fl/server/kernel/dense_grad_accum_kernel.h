@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "fl/server/kernel/aggregation_kernel.h"
 #include "fl/server/kernel/aggregation_kernel_factory.h"
 

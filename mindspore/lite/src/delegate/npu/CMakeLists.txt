@@ -1,5 +1,5 @@
 include_directories(${DDK_PATH})
-include_directories($(CCSRC_DIR)/backend/kernel_compiler/cpu)
+include_directories($(CCSRC_DIR)/plugin/device/cpu/kernel)
 file(GLOB_RECURSE NPU_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc

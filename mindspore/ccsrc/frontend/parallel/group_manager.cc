@@ -19,7 +19,7 @@
 #include <vector>
 #include <utility>
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
-#include "backend/session/executor_manager.h"
+#include "backend/common/session/executor_manager.h"
 #else
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 #endif

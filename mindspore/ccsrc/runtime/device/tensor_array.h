@@ -20,9 +20,9 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace device {

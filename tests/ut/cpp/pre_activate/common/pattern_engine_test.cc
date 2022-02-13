@@ -21,9 +21,9 @@
 #include <algorithm>
 
 #include "common/common_test.h"
-#include "backend/optimizer/common/pattern_engine.h"
-#include "backend/optimizer/common/visit.h"
-#include "backend/optimizer/common/helper.h"
+#include "backend/common/optimizer/pattern_engine.h"
+#include "backend/common/optimizer/visit.h"
+#include "backend/common/optimizer/helper.h"
 #include "base/base_ref.h"
 #include "base/core_ops.h"
 #include "ir/anf.h"

@@ -20,8 +20,8 @@
 #include <vector>
 #include <memory>
 #include "ps/ps_cache/ps_cache_factory.h"
-#include "runtime/device/ascend/ascend_memory_pool.h"
-#include "backend/kernel_compiler/aicpu/aicpu_kernel_mod.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
 #include "utils/ms_context.h"
 #include "proto/tensor.pb.h"
 #include "proto/tensor_shape.pb.h"

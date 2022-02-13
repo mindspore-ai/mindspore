@@ -2,7 +2,7 @@ add_compile_definitions(USE_ANDROID_LOG)
 if(MSLITE_ENABLE_V0)
     add_definitions(-DENABLE_V0)
 endif()
-include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
+include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tools)
 

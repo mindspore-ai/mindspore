@@ -24,7 +24,7 @@
 #include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "runtime/device/gpu/blocking_queue.h"
+#include "plugin/device/gpu/hal/device/blocking_queue.h"
 
 using mindspore::device::DataItemGpu;
 

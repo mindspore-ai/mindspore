@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/common/node_pass.h"
+#include "backend/common/optimizer/node_pass.h"
 #include <unordered_set>
 #include <deque>
 #include <algorithm>

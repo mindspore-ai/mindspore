@@ -14,8 +14,8 @@ set(FBS_FILES
 ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
 
 if(ENABLE_D)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/backend/kernel_compiler/aicpu/aicpu_ops)
-    add_subdirectory(backend/kernel_compiler/aicpu/aicpu_ops)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/ascend/kernel/aicpu/aicpu_ops)
+    add_subdirectory(plugin/device/ascend/kernel/aicpu/aicpu_ops)
 endif()
 
 if(ENABLE_CPU)
@@ -27,8 +27,8 @@ if(ENABLE_CPU)
     elseif("${X86_64_SIMD}" STREQUAL "off" AND NOT ${ENABLE_ASAN})
         set(X86_64_SIMD "avx")
     endif()
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/backend/kernel_compiler/cpu)
-    add_subdirectory(backend/kernel_compiler/cpu/nnacl)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/cpu/kernel)
+    add_subdirectory(plugin/device/cpu/kernel/nnacl)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -109,18 +109,19 @@ if(ENABLE_GPU)
     include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
 
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "runtime/device/gpu/*.cc"
-            "runtime/device/gpu/*.cu"
-            "backend/kernel_compiler/gpu/*.cu"
+            "plugin/device/gpu/hal/device/*.cc"
+            "plugin/device/gpu/hal/device/*.cu"
+            "plugin/device/gpu/kernel/*.cu"
             )
 
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
-    list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/blocking_queue.cc" "runtime/device/gpu/gpu_buffer_mgr.cc")
-    list(REMOVE_ITEM GPU_SRC_LIST "runtime/device/gpu/mpi/mpi_initializer.cc"
-                                  "runtime/device/gpu/distribution/collective_wrapper.cc"
-                                  "runtime/device/gpu/distribution/mpi_wrapper.cc"
-                                  "runtime/device/gpu/distribution/nccl_wrapper.cc"
-                                  "runtime/device/gpu/trt_loader.cc")
+    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/blocking_queue.cc"
+            "plugin/device/gpu/hal/device/gpu_buffer_mgr.cc")
+    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/mpi/mpi_initializer.cc"
+                                  "plugin/device/gpu/hal/device/distribution/collective_wrapper.cc"
+                                  "plugin/device/gpu/hal/device/distribution/mpi_wrapper.cc"
+                                  "plugin/device/gpu/hal/device/distribution/nccl_wrapper.cc"
+                                  "plugin/device/gpu/hal/device/trt_loader.cc")
 
     if(NOT ${TENSORRT_HOME} STREQUAL "")
         find_path(TENSORRT_HOME_INCLUDE NvInfer.h HINTS ${TENSORRT_HOME}/include)
@@ -131,7 +132,7 @@ if(ENABLE_GPU)
         set(ENABLE_GPU_INFER TRUE)
         add_compile_definitions(ENABLE_GPU_INFER)
         include_directories(${TENSORRT_HOME_INCLUDE})
-        list(APPEND GPU_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/runtime/device/gpu/trt_loader.cc)
+        list(APPEND GPU_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/gpu/hal/device/trt_loader.cc)
     endif()
 
     set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -199,11 +200,12 @@ if(ENABLE_DUMP_PROTO)
 endif()
 
 if(MODE_ASCEND_ALL)
-    include_directories("${CMAKE_BINARY_DIR}/backend/kernel_compiler/aicpu")
-    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "backend/kernel_compiler/aicpu/proto/*.proto")
+    include_directories("${CMAKE_BINARY_DIR}/plugin/device/ascend/kernel/aicpu")
+    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "plugin/device/ascend/kernel/aicpu/proto/*.proto")
     ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
 
-    file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "runtime/device/ascend/dump/proto/*.proto")
+    file(GLOB_RECURSE PROTO_DUMP RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "plugin/device/ascend/hal/device/dump/proto/*.proto")
     ms_protobuf_generate(DUMP_PROTOSRCS PROTOHDRS ${PROTO_DUMP})
 
     list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})
@@ -227,20 +229,38 @@ endif()
 set(SUB_COMP
         transform/graph_ir
         transform/express_ir
-        backend/optimizer
-        backend/kernel_compiler
-        backend/session
-        runtime/device
-        runtime/framework
-        runtime/hardware
-        runtime/op_builder
-        runtime/hccl_adapter
         frontend/optimizer
         frontend/parallel
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug pybind_api utils vm profiler ps fl distributed
+        debug pybind_api utils profiler ps fl distributed
+        kernel
+        common
+        common/mem_reuse
+        backend/common/optimizer
+        backend/common/pass
+        backend/common/session
+        backend/common/somas
+        backend/graph_compiler
+        runtime/collective
+        runtime/device
+        runtime/graph_scheduler
+        runtime/hardware
+        runtime/op_builder
+        plugin/device/ascend/hal/device
+        plugin/device/ascend/hal/hardware
+        plugin/device/ascend/hal/hccl_adapter
+        plugin/device/ascend/kernel
+        plugin/device/ascend/optimizer
+        plugin/device/cpu/hal/device
+        plugin/device/cpu/hal/hardware
+        plugin/device/cpu/kernel
+        plugin/device/cpu/optimizer
+        plugin/device/gpu/hal/device
+        plugin/device/gpu/hal/hardware
+        plugin/device/gpu/kernel
+        plugin/device/gpu/optimizer
 )
 
 foreach(_comp ${SUB_COMP})

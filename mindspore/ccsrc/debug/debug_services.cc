@@ -32,7 +32,7 @@
 #include "debug/common.h"
 #include "debug/debugger/debugger.h"
 #include "debug/anf_ir_utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #endif
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"

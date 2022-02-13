@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "vm/vm.h"
+#include "backend/graph_compiler/vm.h"
 #include "common/common_test.h"
 #include "frontend/operator/ops.h"
-#include "vm/backend.h"
+#include "backend/graph_compiler/backend.h"
 
 namespace mindspore {
 namespace compile {

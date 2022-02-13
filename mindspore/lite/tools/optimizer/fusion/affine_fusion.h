@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_AFFINE_FUSION_H_
 
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {

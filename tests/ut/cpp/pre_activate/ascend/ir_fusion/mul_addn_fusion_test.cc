@@ -15,7 +15,7 @@
  */
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "mindspore/ccsrc/backend/optimizer/ascend/ir_fusion/mul_addn_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/mul_addn_fusion.h"
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore {

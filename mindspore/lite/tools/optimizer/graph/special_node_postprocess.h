@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_SPECIAL_NODE_POSTPROCESS_H_
 #define MINDSPORE_LITE_SRC_PASS_SPECIAL_NODE_POSTPROCESS_H_
 
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

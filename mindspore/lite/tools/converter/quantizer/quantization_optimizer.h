@@ -19,7 +19,7 @@
 #include <utility>
 #include <map>
 #include <vector>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite::quant {

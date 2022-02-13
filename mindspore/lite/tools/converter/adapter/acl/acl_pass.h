@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_PASS_H
 
 #include <memory>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 
 namespace mindspore {

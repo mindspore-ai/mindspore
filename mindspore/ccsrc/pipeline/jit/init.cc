@@ -15,7 +15,7 @@
  */
 
 #include <pybind11/operators.h>
-#include "backend/kernel_compiler/oplib/oplib.h"
+#include "kernel/oplib/oplib.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -32,9 +32,9 @@
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #ifdef ENABLE_GPU_COLLECTIVE
-#include "runtime/device/gpu/distribution/collective_init.h"
+#include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #else
-#include "runtime/device/gpu/distribution/collective_fake_init.h"
+#include "plugin/device/gpu/hal/device/distribution/collective_fake_init.h"
 #endif
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"

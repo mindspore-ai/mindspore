@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_
 
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_flags.h"
 
 using mindspore::converter::FmkType;

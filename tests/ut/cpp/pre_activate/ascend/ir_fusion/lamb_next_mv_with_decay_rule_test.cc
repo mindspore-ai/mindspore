@@ -16,7 +16,7 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_with_decay_rule.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_mv_with_decay_rule.h"
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore {

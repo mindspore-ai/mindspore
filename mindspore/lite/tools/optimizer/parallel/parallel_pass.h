@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "ir/anf.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "backend/optimizer/common/node_pass.h"
+#include "backend/common/optimizer/node_pass.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/operator_info.h"
 

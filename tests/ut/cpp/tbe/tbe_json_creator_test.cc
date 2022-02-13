@@ -18,13 +18,13 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #include "runtime/device/kernel_info.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/ascend/buffer_fusion/ub_pattern_fusion.h"
-#include "backend/kernel_compiler/tbe/tbe_json/single_tbe_json_creator.h"
-#include "backend/kernel_compiler/tbe/tbe_json/fusion_tbe_json_creator.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_json/fusion_tbe_json_creator.h"
 
 namespace mindspore::kernel {
 

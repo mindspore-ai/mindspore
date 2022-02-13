@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include <string>
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/ascend/dynamic_shape/ascend_dynamic_shape_helper.h"
-#include "backend/optimizer/ascend/ascend_backend_optimization.h"
-#include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "plugin/device/ascend/optimizer/dynamic_shape/ascend_dynamic_shape_helper.h"
+#include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "common/backend_common_test.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"

@@ -21,16 +21,16 @@
 #include <string>
 #include "debug/anf_ir_utils.h"
 #include "debug/debugger/debugger.h"
-#include "runtime/device/gpu/gpu_device_address.h"
+#include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_D
 #include "debug/dump_data_builder.h"
 #endif
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "kernel/kernel.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "utils/config_manager.h"
-#include "backend/session/session_basic.h"
+#include "backend/common/session/session_basic.h"
 
 constexpr int kFailure = 1;
 

@@ -82,7 +82,7 @@ if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 elseif(ENABLE_ACL AND NOT ENABLE_D)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
-            $<TARGET_OBJECTS:_mindspore_vm_obj>)
+            $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>)
 endif()
 if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)

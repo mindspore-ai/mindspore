@@ -16,7 +16,7 @@
 
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include <map>
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 

@@ -21,9 +21,9 @@
 #include <vector>
 #include "common/common_test.h"
 #include "ir/anf.h"
-#include "backend/optimizer/common/pass.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/common/pass_manager.h"
+#include "backend/common/optimizer/pass.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass_manager.h"
 
 namespace mindspore {
 class FusionInoutTest : public mindspore::CommonTest {

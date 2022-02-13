@@ -28,7 +28,7 @@
 #include "ir/anf.h"
 #include "utils/utils.h"
 #include "ir/dtype/type_id.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
 #include "ps/ps_context.h"

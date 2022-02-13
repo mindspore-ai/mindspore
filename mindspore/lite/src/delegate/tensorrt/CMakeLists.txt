@@ -1,6 +1,6 @@
 include_directories(${TENSORRT_PATH}/include)
 include_directories(${CUDA_PATH}/include)
-include_directories($(CCSRC_DIR)/backend/kernel_compiler/cpu)
+include_directories($(CCSRC_DIR)/plugin/device/cpu/kernel)
 
 if(DEFINED ENV{MS_ENABLE_CUDA_DISTRIBUTION})
     set(MS_ENABLE_CUDA_DISTRIBUTION $ENV{MS_ENABLE_CUDA_DISTRIBUTION})
@@ -18,9 +18,9 @@ if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
     message("enable cuda gpu distribution collective")
     file(GLOB NCCL_MPI_SRC LIST_DIRECTORIES false
         ${CMAKE_CURRENT_SOURCE_DIR}/distribution/*.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/collective_wrapper.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/mpi_wrapper.cc
-        ${CCSRC_DIR}/runtime/device/gpu/distribution/nccl_wrapper.cc
+        ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/collective_wrapper.cc
+        ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/mpi_wrapper.cc
+        ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/nccl_wrapper.cc
     )
     list(REMOVE_ITEM NCCL_MPI_SRC ${NCCL_MPI_SRC_STUB})
 

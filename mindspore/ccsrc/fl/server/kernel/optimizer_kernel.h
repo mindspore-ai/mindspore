@@ -21,8 +21,8 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "fl/server/common.h"
 #include "fl/server/memory_register.h"
 #include "fl/server/kernel/params_info.h"

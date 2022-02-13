@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 #include "nlohmann/json.hpp"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "debug/rdr/base_recorder.h"
 
 using json = nlohmann::json;

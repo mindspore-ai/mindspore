@@ -26,7 +26,7 @@
 #include <memory>
 #include <condition_variable>
 #include "utils/ms_context.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #include "utils/shape_utils.h"
 #include "ir/tensor.h"
 #include "ps/constants.h"

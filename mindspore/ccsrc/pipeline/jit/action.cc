@@ -48,7 +48,7 @@
 #include "utils/ms_context.h"
 #include "utils/func_graph_analyzer.h"
 #include "utils/ms_utils.h"
-#include "vm/transform.h"
+#include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/parameter_server.h"

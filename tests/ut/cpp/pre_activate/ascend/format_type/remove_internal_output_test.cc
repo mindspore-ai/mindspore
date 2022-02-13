@@ -16,11 +16,11 @@
 #include "common/backend_common_test.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/optimizer/ascend/format_type/remove_internal_output.h"
+#include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
 
 #define private public
 #define protected public
-#include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #undef private
 #undef protected
 

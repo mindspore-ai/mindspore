@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include "schema/model_generated.h"
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/optimizer/fisson/fisson_util.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/multi_node_split.h"

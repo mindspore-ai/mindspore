@@ -28,9 +28,9 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "kernel/kernel.h"
 #include "utils/ms_context.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/memory_scheduler.h"

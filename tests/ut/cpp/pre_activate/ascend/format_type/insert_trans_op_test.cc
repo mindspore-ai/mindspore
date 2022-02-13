@@ -17,15 +17,15 @@
 #include "frontend/operator/ops.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/common/pass_manager.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass_manager.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 
 #define private public
 #define protected public
-#include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #undef private
 #undef protected
 

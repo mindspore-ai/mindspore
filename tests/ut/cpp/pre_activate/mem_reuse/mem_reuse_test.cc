@@ -16,18 +16,18 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/session/kernel_graph.h"
-#include "backend/session/session_basic.h"
-#include "backend/session/ascend_session.h"
-#include "backend/optimizer/mem_reuse/kernel_refcount.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/session_basic.h"
+#include "backend/common/session/ascend_session.h"
+#include "common/mem_reuse/kernel_refcount.h"
 #include "runtime/device/kernel_info.h"
-#include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_utils.h"
 #include "pipeline/jit/resource.h"
-#include "backend/optimizer/mem_reuse/mem_reuse.h"
+#include "common/mem_reuse/mem_reuse.h"
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"

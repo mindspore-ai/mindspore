@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_TRANSPOSE_MATMUL_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_TRANSPOSE_MATMUL_FUSION_H_
 
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {

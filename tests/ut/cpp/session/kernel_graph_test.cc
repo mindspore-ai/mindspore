@@ -17,8 +17,8 @@
 #include "common/common_test.h"
 #include "ir/param_info.h"
 #include "frontend/operator/ops.h"
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "mindspore/ccsrc/runtime/device/kernel_info.h"
 #include "utils/utils.h"
 

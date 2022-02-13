@@ -23,15 +23,15 @@
 #include <vector>
 #include <unordered_set>
 #include "ir/anf.h"
-#include "backend/session/kernel_graph.h"
-#include "backend/kernel_compiler/kernel_build_info.h"
-#include "backend/session/session_context.h"
+#include "backend/common/session/kernel_graph.h"
+#include "kernel/kernel_build_info.h"
+#include "backend/common/session/session_context.h"
 #include "ir/tensor.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
 #ifndef ENABLE_SECURITY
-#include "runtime/device/ascend/profiling/profiling_utils.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 using mindspore::device::ascend::ProfilingTraceInfo;
 using mindspore::device::ascend::ProfilingUtils;
 #endif

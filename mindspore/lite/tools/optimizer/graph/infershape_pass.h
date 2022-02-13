@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "backend/optimizer/common/pass.h"
+#include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/graph/node_infershape.h"
 
 namespace mindspore {

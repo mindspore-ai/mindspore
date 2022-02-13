@@ -23,11 +23,11 @@
 #include <map>
 #include "runtime/device/device_address.h"
 #include "runtime/device/bucket.h"
-#include "runtime/hardware/collective/collective_communication_lib.h"
-#include "runtime/hardware/collective/collective_comm_lib_loader.h"
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/common/common_backend_optimization.h"
+#include "runtime/collective/collective_communication_lib.h"
+#include "runtime/collective/collective_comm_lib_loader.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/common_backend_optimization.h"
 
 namespace mindspore {
 namespace device {

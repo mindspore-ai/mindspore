@@ -17,7 +17,7 @@
 #include "ps/ps_context.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"

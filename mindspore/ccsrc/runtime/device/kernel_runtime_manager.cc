@@ -19,7 +19,7 @@
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
-#include "backend/session/pynative_task_manager.h"
+#include "backend/common/session/pynative_task_manager.h"
 
 namespace mindspore {
 namespace device {

@@ -16,8 +16,8 @@
 
 #ifndef LITE_ONNX_NONZERO_ADJUST_H
 #define LITE_ONNX_NONZERO_ADJUST_H
-#include "backend/optimizer/common/pass.h"
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/pass.h"
+#include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::lite {
 class OnnxNonZeroAdjust {

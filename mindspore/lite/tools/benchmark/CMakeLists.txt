@@ -44,13 +44,13 @@ else()
     endif()
 endif()
 
-include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
+include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_common.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../../ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_common.c
         )
 
 if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)

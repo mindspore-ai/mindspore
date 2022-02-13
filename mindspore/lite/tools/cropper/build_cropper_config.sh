@@ -48,7 +48,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${FLATBUFFERS}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
--I${MINDSPORE_HOME}/mindspore/ccsrc/backend/kernel_compiler/cpu
+-I${MINDSPORE_HOME}/mindspore/ccsrc/plugin/device/cpu/kernel
 -I${MINDSPORE_HOME}/mindspore/ccsrc/minddata/dataset"
 
 REMOVE_LISTS_STR=""
@@ -158,18 +158,18 @@ getCommonFile() {
   while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/src/train/*.h)
   others_files_h=(
     mindspore/lite/src/runtime/infer_manager.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.h
     mindspore/lite/src/ops/populate/populate_register.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/op_base.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h
     mindspore/core/ir/dtype/type_id.h
     mindspore/core/utils/overload.h
     mindspore/lite/tools/common/option.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/intrinsics/ms_simd_instructions_fp16.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/tensor_c.h
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/errorcode.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions_fp16.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.h
   )
   all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}"
                "${runtime_files_h[@]}" "${others_files_h[@]}"
@@ -202,12 +202,12 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/runtime/*.cc)
   # sava all assembly files
   assembly_files=()
-  while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/assembly/*/*.S)
+  while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/assembly/*/*.S)
   others_files_c=(
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/nnacl_utils.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.c
     mindspore/lite/src/runtime/infer_manager.cc
     mindspore/lite/src/ops/populate/populate_register.cc
-    mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer/infer_register.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.c
     mindspore/core/utils/status.cc
   )
   # save train files
@@ -298,7 +298,7 @@ wait
 sleep 1
 # get src/ops
 getOpsFile "REG_POPULATE\(PrimitiveType_" "mindspore/lite/src/ops/populate" "prototype" &
-getOpsFile "REG_INFER\(.*?, PrimType_" "mindspore/ccsrc/backend/kernel_compiler/cpu/nnacl/infer" "prototype" &
+getOpsFile "REG_INFER\(.*?, PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer" "prototype" &
 # support for cpu
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &

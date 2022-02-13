@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_FUSION_BN_TO_SCALE_FUSION_H_
 
 #include <vector>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt {
 class BatchNormToScaleFusion : public Pass {

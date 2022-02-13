@@ -23,7 +23,7 @@
 #include <memory>
 #include <map>
 
-#include "backend/session/session_basic.h"
+#include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
 #include "include/api/status.h"
 #include "cxx_api/model/model_impl.h"

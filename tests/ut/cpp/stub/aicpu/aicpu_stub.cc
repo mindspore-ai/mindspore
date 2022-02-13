@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/aicpu/aicpu_kernel_load.h"
+#include "kernel/kernel.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 
 namespace mindspore {
 namespace kernel {

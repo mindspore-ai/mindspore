@@ -18,7 +18,7 @@
 #include "common/common_test.h"
 #define private public
 #define protected public
-#include "backend/kernel_compiler/cpu/adam_delta_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/adam_delta_cpu_kernel.h"
 #undef private
 #undef protected
 

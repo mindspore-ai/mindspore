@@ -28,7 +28,7 @@
 #include "debug/debugger/debugger.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "pipeline/jit/pipeline.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "debug/data_dump/e2e_dump.h"
@@ -38,7 +38,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
-#include "runtime/framework/device_tensor_store.h"
+#include "runtime/graph_scheduler/device_tensor_store.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/proto_exporter.h"
 #else

@@ -19,7 +19,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "schema/inner/model_generated.h"

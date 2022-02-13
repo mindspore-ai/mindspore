@@ -21,8 +21,8 @@
 #include <vector>
 #include <map>
 #include <queue>
-#include "backend/optimizer/mem_reuse/mem_reuse.h"
-#include "backend/optimizer/somas/somas.h"
+#include "common/mem_reuse/mem_reuse.h"
+#include "backend/common/somas/somas.h"
 #include "runtime/device/memory_scheduler.h"
 namespace mindspore {
 namespace device {

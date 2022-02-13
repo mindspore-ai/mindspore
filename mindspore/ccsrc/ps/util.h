@@ -24,9 +24,9 @@
 #include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "frontend/optimizer/optimizer.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/kernel_compiler/common_utils.h"
-#include "backend/kernel_compiler/cpu/sparse_optimizer_cpu_kernel.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
 
 namespace mindspore {
 namespace ps {

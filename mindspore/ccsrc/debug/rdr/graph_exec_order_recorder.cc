@@ -18,7 +18,7 @@
 #include <fstream>
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 
 namespace mindspore {

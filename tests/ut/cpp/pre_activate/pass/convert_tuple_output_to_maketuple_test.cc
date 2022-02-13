@@ -18,10 +18,10 @@
 #include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
 #include "common/py_func_graph_fetcher.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/common/pass_manager.h"
-#include "backend/optimizer/pass/convert_tuple_output_to_maketuple.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/optimizer.h"
+#include "backend/common/optimizer/pass_manager.h"
+#include "backend/common/pass/convert_tuple_output_to_maketuple.h"
 #include "utils/utils.h"
 
 namespace mindspore {

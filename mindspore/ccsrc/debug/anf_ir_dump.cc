@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "runtime/device/kernel_info.h"
 #include "ir/graph_utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
 #include "debug/trace.h"

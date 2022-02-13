@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/common/pass_manager.h"
+#include "backend/common/optimizer/pass_manager.h"
 #ifndef _MSC_VER
 #include <sys/time.h>
 #endif

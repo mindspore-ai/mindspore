@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 #include "debug/debugger/debugger.h"
-#include "backend/kernel_compiler/kernel.h"
+#include "kernel/kernel.h"
 #include "runtime/hardware/device_context.h"
 #ifdef ENABLE_D
 #include "toolchain/adx_datadump_callback.h"

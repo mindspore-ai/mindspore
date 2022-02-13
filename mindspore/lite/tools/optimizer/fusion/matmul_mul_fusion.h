@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MATMUL_MUL_FUSION_H_
 
 #include <string>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore::opt {
 class MatMulMulFusion : public PatternProcessPass {

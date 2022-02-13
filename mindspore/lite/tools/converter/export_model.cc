@@ -21,7 +21,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "include/errorcode.h"
 #include "include/version.h"
 #include "ir/func_graph.h"

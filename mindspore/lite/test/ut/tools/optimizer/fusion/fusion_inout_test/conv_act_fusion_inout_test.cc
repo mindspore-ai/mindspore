@@ -17,7 +17,7 @@
 #include <memory>
 #include "tools/optimizer/fusion/conv_activation_fusion.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
-#include "backend/kernel_compiler/cpu/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/fusion/activation.h"
 
 namespace mindspore {

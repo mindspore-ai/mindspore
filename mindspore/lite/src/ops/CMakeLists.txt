@@ -1,5 +1,5 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
-include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
+include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 if(APPLE)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
         -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \

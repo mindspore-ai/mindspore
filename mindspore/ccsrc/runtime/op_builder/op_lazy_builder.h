@@ -23,10 +23,10 @@
 #include <map>
 #include <string>
 #include <utility>
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/hardware/device_context.h"
-#include "runtime/framework/graph_scheduler.h"
+#include "runtime/graph_scheduler/graph_scheduler.h"
 
 namespace mindspore::runtime {
 class OpLazyBuilderContext {

@@ -22,7 +22,7 @@
 #include "common/common_test.h"
 #define private public
 #define protected public
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #undef private
 #undef protected
 
@@ -30,7 +30,7 @@
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "utils/utils.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {

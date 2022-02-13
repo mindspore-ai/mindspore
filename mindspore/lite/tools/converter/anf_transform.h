@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "backend/optimizer/common/optimizer.h"
+#include "backend/common/optimizer/optimizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "tools/converter/converter_flags.h"

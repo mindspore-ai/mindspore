@@ -22,11 +22,11 @@
 #include "utils/ms_context.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/utils.h"
 #include "debug/common.h"
-#include "runtime/framework/device_tensor_store.h"
+#include "runtime/graph_scheduler/device_tensor_store.h"
 
 using mindspore::runtime::DeviceTensorStore;
 
