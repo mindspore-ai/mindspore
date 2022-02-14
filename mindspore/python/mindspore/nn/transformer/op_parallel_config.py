@@ -39,6 +39,57 @@ class _Config:
         return info
 
 
+class MoEParallelConfig(_Config):
+    r"""
+        MoEParallelConfig for MoE structure, which includes setting data parallel, model parallel and expert parallel.
+
+        Args:
+            data_parallel (int): The data parallel way. Default: 1
+            model_parallel (int): The model parallel way. Default: 1
+            expert_parallel (int): The expert parallel way. Default: 1
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+    """
+
+    def __init__(self, data_parallel=1, model_parallel=1, expert_parallel=1):
+        Validator.check_positive_int(data_parallel, "data_parallel")
+        Validator.check_positive_int(model_parallel, "model_parallel")
+        Validator.check_positive_int(expert_parallel, "expert_parallel")
+        self._dpmp = OpParallelConfig(data_parallel=data_parallel, model_parallel=model_parallel)
+        self.expert_parallel = expert_parallel
+
+    @property
+    def data_parallel(self):
+        return self._dpmp.data_parallel
+
+    @data_parallel.setter
+    def data_parallel(self, value):
+        Validator.check_positive_int(value, "data_parallel")
+        self._dpmp.data_parallel = value
+
+    @property
+    def model_parallel(self):
+        return self._dpmp.model_parallel
+
+    @model_parallel.setter
+    def model_parallel(self, value):
+        Validator.check_positive_int(value, "model_parallel")
+        self._dpmp.model_parallel = value
+
+    @property
+    def expert_parallel(self):
+        return self._expert_parallel
+
+    @expert_parallel.setter
+    def expert_parallel(self, value):
+        Validator.check_positive_int(value, "expert_parallel")
+        self._expert_parallel = value
+
+    @property
+    def dpmp(self):
+        return self._dpmp
+
+
 class OpParallelConfig(_Config):
     r"""
         OpParallelConfig for the setting data parallel and model parallel.
@@ -121,6 +172,7 @@ class _PipeLineConfig(_Config):
 
 # In case the user doesn't pass a config as args.
 default_dpmp_config = OpParallelConfig()
+default_moeparallel_config = MoEParallelConfig()
 
 
 def _check_config(config):

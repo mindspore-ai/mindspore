@@ -23,7 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore.nn.loss.loss import _check_is_tensor
 from .layers import _check_input_dtype, _check_input_shape
-from .op_parallel_config import default_dpmp_config, OpParallelConfig
+from .op_parallel_config import default_dpmp_config, OpParallelConfig, MoEParallelConfig
 
 __all__ = ["CrossEntropyLoss"]
 
@@ -33,8 +33,8 @@ class CrossEntropyLoss(Cell):
     Calculate the cross entropy loss.
 
     Args:
-        parallel_config (OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
-                                           an instance of `OpParallelConfig` with default args.
+        parallel_config (OpParallelConfig, MoEParallelConfig): The parallel configure. Default `default_dpmp_config`,
+            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. The output logits of
@@ -65,13 +65,16 @@ class CrossEntropyLoss(Cell):
 
     def __init__(self, parallel_config=default_dpmp_config):
         super(CrossEntropyLoss, self).__init__()
-        if not isinstance(parallel_config, OpParallelConfig):
-            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig, "
-                            "but got the type: {}.".format(type(parallel_config)))
+        if not isinstance(parallel_config, OpParallelConfig) and not isinstance(parallel_config, MoEParallelConfig):
+            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                            " or MoEParallelConfig, but got the type: {}.".format(type(parallel_config)))
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
         self.sum = P.ReduceSum().shard(((dp, mp),))
-        self.onehot = P.OneHot().shard(((dp, mp), (), ()))
+        if isinstance(parallel_config, MoEParallelConfig):
+            self.onehot = P.OneHot().shard(((dp, mp*parallel_config.expert_parallel), (), ()))
+        else:
+            self.onehot = P.OneHot().shard(((dp, mp), (), ()))
         # on/off value for onehot, for smooth labeling, modify the off_value
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)

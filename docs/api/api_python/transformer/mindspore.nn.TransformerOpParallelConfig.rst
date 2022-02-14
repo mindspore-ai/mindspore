@@ -10,6 +10,7 @@
 
     - **data_parallel** (int) - 表示数据并行数。默认值：1。
     - **model_parallel** (int) - 表示模型并行数。默认值：1。
+    - **expert_parallel** (int) - 表示专家并行数，只有在应用混合专家结构（MoE，Mixture of Experts）时才会生效。默认值：1.
     - **pipeline_stage** (int) - 表示将Transformer切分成的stage数目。其值应为正数。默认值：1。
     - **micro_batch_num** (int) - 表示用于pipeline训练的batch的微型大小。默认值：1。
     - **optimizer_shard** (bool) - 表示是否使能优化器切分。默认值：False。

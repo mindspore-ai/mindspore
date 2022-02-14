@@ -300,6 +300,8 @@ class _Linear(Cell):
             eg. 'ReLU'.Default: None.
         expert_num (int): The number of experts used in this Linear. Here, for the case expert_num > 1, BatchMatMul is
             used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
+        outer_batch (int): The replication number of experts. The replication is effective only when MoE is applied.
+            Default: 1.
         compute_dtype (dtype.Number): The computation type. Default: mstype.float16
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -328,6 +330,7 @@ class _Linear(Cell):
                                 activation=_valid_type_checks([type(None), str], "Linear"),
                                 transpose_b=Validator.check_bool,
                                 expert_num=Validator.check_positive_int,
+                                outer_batch=Validator.check_positive_int,
                                 param_init_type=_valid_value_checks([mstype.float32, mstype.float16],
                                                                     "Linear"),
                                 compute_dtype=_valid_value_checks([mstype.float32, mstype.float16],
@@ -341,6 +344,7 @@ class _Linear(Cell):
                  activation=None,
                  transpose_b=True,
                  expert_num=1,
+                 outer_batch=1,
                  param_init_type=mstype.float32,
                  compute_dtype=mstype.float16):
         super(_Linear, self).__init__()
@@ -351,6 +355,7 @@ class _Linear(Cell):
             raise ValueError("The shape of parameter 'weight_init' is error, please check shape of 'weight_init'.")
         weight_shape = [out_channels, in_channels] if transpose_b else [in_channels, out_channels]
         self.expert_num = expert_num
+        self.outer_batch = outer_batch
         if self.expert_num > 1:
             self.expert_flag = True
             self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape, param_init_type),
@@ -377,7 +382,7 @@ class _Linear(Cell):
         out_shape = P.Shape()(x)[:-1] + (self.out_channels,)
         x = P.Reshape()(x, (-1, self.in_channels))
         if self.expert_flag:
-            x = P.Reshape()(x, (self.expert_num, -1, self.in_channels))
+            x = P.Reshape()(x, (self.outer_batch, self.expert_num, -1, self.in_channels))
         weight = self.cast(self.weight, self.dtype)
         x = self.matmul(x, weight)
         if self.has_bias:
