@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,22 +23,22 @@ def set_dump(target, enabled=True):
     """
     Enable or disable dump for the target and its contents.
 
-    Target should be an instance of Cell or Primitive. The default enabled
-    status for a cell or primitive is False. Please note that this API takes
-    effect only when the dump_mode field in dump config file is 2. See the
-    `dump document <https://mindspore.cn/docs/programming_guide/zh-CN/master/dump_in_graph_mode.html>`_
-    for details.
+    Target should be an instance of Cell or Primitive. Please note that this API takes
+    effect only when Asynchronous Dump is enabled and the dump_mode field in dump config file is 2. See the
+    `dump document <https://mindspore.cn/docs/programming_guide/en/master/dump_in_graph_mode.html>`_
+    for details. The default enabled status for a cell or primitive is False.
 
     .. warning::
         This is an experimental prototype that is subject to change or deletion.
 
     Note:
         1. This API is only effective for GRAPH_MODE with Ascend backend.
-        2. When target is a cell and enabled is True, this API will the enable
+        2. When target is a cell and enabled is True, this API will enable
            dump for the primitive operator members of the cell instance and
            its child cell instances recursively. If an operator is not a
            member of the cell instance, the dump flag will not be set for
-           this operator (e.g. functional operators used directly in
+           this operator (e.g. `functional operators
+           <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.ops.html#functional>`_ used directly in
            construct method). To make this API effective, please use
            self.some_op = SomeOp() in your cell's __init__ method.
         3. After using set_dump(cell, True), operators in forward computation
@@ -47,15 +47,16 @@ def set_dump(target, enabled=True):
            However, due to the graph optimization, a few backward computation
            data will still be dumped. You can ignore the backward computation
            data which contains "Gradients" in their filenames.
-        4. This API is not designed to use in the middle of training process.
-           If you call this API in the middle of training, it only takes effect
-           for the later compiled graphs. If there is no new graph compilation,
-           you will see no effect.
-        5. For operator SparseSoftmaxCrossEntropyWithLogits, the forward
+        4. This API only supports being called before training starts.
+           If you call this API during training, it may not be effective.
+        5. For `nn.SparseSoftmaxCrossEntropyWithLogits
+           <https://www.mindspore.cn/docs/api/en/master/api_python/nn/
+           mindspore.nn.SoftmaxCrossEntropyWithLogits.html#mindspore.nn
+           .SoftmaxCrossEntropyWithLogits>`_ layer, the forward
            computation and backward computation use the same set of
            operators. So you can only see dump data from backward computation.
-           Please note that operator SoftmaxCrossEntropyWithLogits will also use
-           the above operator internally when initialized with sparse=True and
+           Please note that nn.SoftmaxCrossEntropyWithLogits layer will also use
+           the above operators internally when initialized with sparse=True and
            reduction="mean".
 
     Args:
@@ -93,7 +94,7 @@ def set_dump(target, enabled=True):
         >>> net = MyNet()
         >>> set_dump(net.conv1)
         >>> input_tensor = Tensor(np.ones([1, 5, 10, 10], dtype=np.float32))
-        >>> net(input_tensor)
+        >>> output = net(input_tensor)
     """
     if security.enable_security():
         raise ValueError('The set_dump API is not supported, please recompile '
