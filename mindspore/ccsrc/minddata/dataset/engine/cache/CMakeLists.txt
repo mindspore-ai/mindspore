@@ -87,10 +87,10 @@ if(ENABLE_CACHE)
         mindspore::grpc++)
   else()
     target_link_libraries(cache_server
+        mindspore
         engine-cache-server
         _c_dataengine
         _c_mindrecord
-        mindspore
         mindspore_core
         mindspore::protobuf
         ${PYTHON_LIBRARIES}
