@@ -12,7 +12,7 @@ mindspore.nn.WarmUpLR
 
     其中，
 
-    .. math:
+    .. math::
         tmp\_step=min(current\_step, warmup\_steps)
 
     **参数：**
@@ -22,7 +22,7 @@ mindspore.nn.WarmUpLR
 
     **输入：**
 
-    - **global_step** (Tensor) - 当前step数。
+    - **global_step** (Tensor) - 当前step数，即current_step。
 
     **输出：**
 
