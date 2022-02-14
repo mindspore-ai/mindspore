@@ -24,18 +24,11 @@
 
 namespace mindspore {
 namespace opt {
-class MatMulAddFusion : public MultiplePatternProcessPass {
+class MatMulAddFusion : public Pass {
  public:
-  explicit MatMulAddFusion(const std::string &name = "MatMulAddFusion", bool multigraph = true)
-      : MultiplePatternProcessPass(name, multigraph) {}
+  MatMulAddFusion() : Pass("MatMulAddFusion") {}
   ~MatMulAddFusion() override = default;
-
- private:
-  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
-  VectorRef DefineMatmulAddFusionPattern() const;
-  VectorRef DefineMatmulBiasAddPattern() const;
-  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &func_graph, const AnfNodePtr &,
-                     const EquivPtr &) const override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore
