@@ -377,9 +377,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   GraphId graph_id;
   if (run_in_pynative) {
     MS_EXCEPTION_IF_NULL(session_);
-    // Graphkernel not support pynative mode now, so when users open graphkernel in pynative mode
-    // should print a warning log to reminder users by using GetInstance func.
-    (void)graphkernel::GraphKernelFlags::GetInstance();
+    // Graphkernel does not support pynative mode now, print a warning here.
+    graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
     session_->InitAllBucket(graph, device_context);
     graph_id = graph->graph_id();
   } else {
