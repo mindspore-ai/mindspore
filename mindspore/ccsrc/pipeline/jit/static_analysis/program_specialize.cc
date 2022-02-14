@@ -464,21 +464,23 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
   // we just set 'new_node' as 'old_abs' sequence node here.
   if (IsValueNode<ValueTuple>(new_node) || IsValueNode<ValueList>(new_node)) {
     // Just find a valid sequence node.
-    std::shared_ptr<std::vector<bool>> flags = nullptr;
     for (auto &weak_node : *old_sequence_abs->sequence_nodes()) {
       auto sequence_node = weak_node.lock();
       if (sequence_node == nullptr) {
         continue;
       }
-      flags = GetSequenceNodeElementsUseFlags(sequence_node);
-    }
-
-    // Copy the flags to new node, and set new node to sequence abstract.
-    // Actually, here we needn't require unique sequence nodes pointer between abstract any more.
-    if (flags != nullptr) {
+      auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
+      if (flags == nullptr) {
+        continue;
+      }
+      // Copy the flags to new node, and set new node to sequence abstract.
+      // Actually, here we needn't require unique sequence nodes pointer between abstract any more.
       SetSequenceNodeElementsUseFlags(new_node, flags);
       old_sequence_abs->InsertSequenceNode(new_node);
+      return;
     }
+    MS_LOG(ERROR) << "Not found any valid sequence node, " << old_node->DebugString() << " --> "
+                  << new_node->DebugString();
     return;
   }
 
