@@ -60,8 +60,14 @@ int TensorArrayCPUKernel::Prepare() {
   this->tensor_list_ = std::make_unique<lite::TensorList>(shape, element_shape_v);
   CHECK_NULL_RETURN(this->tensor_list_);
   std::vector<std::vector<int>> tensor_shape(shape.front(), element_shape_v);
-  this->tensor_list_->MallocTensorListData(TypeId::kNumberTypeFloat32, tensor_shape);
-  this->tensor_list_->MallocData();
+  if (this->tensor_list_->MallocTensorListData(TypeId::kNumberTypeFloat32, tensor_shape) != RET_OK) {
+    MS_LOG(ERROR) << "malloc tensor list data failed.";
+    return RET_ERROR;
+  }
+  if (this->tensor_list_->MallocData() != RET_OK) {
+    MS_LOG(ERROR) << "malloc data failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -115,14 +121,23 @@ int TensorArrayReadCPUKernel::Prepare() {
     return RET_ERROR;
   }
   // check index_tensor
-  TensorArrayBaseCPUKernel::Prepare();
+  if (TensorArrayBaseCPUKernel::Prepare() != RET_OK) {
+    MS_LOG(ERROR) << "TensorArrayBaseCPUKernel prepare failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int TensorArrayReadCPUKernel::Run() {
-  TensorArrayBaseCPUKernel::Run();
+  if (TensorArrayBaseCPUKernel::Run() != RET_OK) {
+    MS_LOG(ERROR) << "TensorArrayBaseCPUKernel run failed.";
+    return RET_ERROR;
+  }
   lite::Tensor *output = out_tensors_.at(kOutputIndex);
-  lite::Tensor::CopyTensorData(*(TensorArrayBaseCPUKernel::handle_), output);
+  if (lite::Tensor::CopyTensorData(*(TensorArrayBaseCPUKernel::handle_), output) != RET_OK) {
+    MS_LOG(ERROR) << "copy tensor data failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -132,14 +147,23 @@ int TensorArrayWriteCPUKernel::Prepare() {
     MS_LOG(ERROR) << "invalid input numbers of TensorArrayWriteCPUKernel";
     return RET_ERROR;
   }
-  TensorArrayBaseCPUKernel::Prepare();
+  if (TensorArrayBaseCPUKernel::Prepare() != RET_OK) {
+    MS_LOG(ERROR) << "TensorArrayBaseCPUKernel prepare failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int TensorArrayWriteCPUKernel::Run() {
-  TensorArrayBaseCPUKernel::Run();
+  if (TensorArrayBaseCPUKernel::Run() != RET_OK) {
+    MS_LOG(ERROR) << "TensorArrayBaseCPUKernel run failed.";
+    return RET_ERROR;
+  }
   lite::Tensor *value = in_tensors_.at(kValueIndex);
-  lite::Tensor::CopyTensorData(*value, TensorArrayBaseCPUKernel::handle_);
+  if (lite::Tensor::CopyTensorData(*value, TensorArrayBaseCPUKernel::handle_) != RET_OK) {
+    MS_LOG(ERROR) << "copy tensor data failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel
