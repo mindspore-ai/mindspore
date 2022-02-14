@@ -47,14 +47,6 @@ public class RunnerConfig {
         return this.runnerConfigPtr != 0L;
     }
 
-    /**
-     * Set num models
-     *
-     * @param numModel The number of parallel models.
-     */
-    public void setNumModel(int numModel) {
-        setNumModel(runnerConfigPtr, numModel);
-    }
 
     /**
      * Get RunnerConfig pointer.
@@ -66,7 +58,5 @@ public class RunnerConfig {
     }
 
     private native long createRunnerConfig(long msContextPtr);
-
-    private native void setNumModel(long runnerConfigPtr, int numModel);
 
 }

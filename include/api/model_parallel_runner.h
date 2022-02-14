@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
-#define MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
+#ifndef MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H
+#define MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H
 #include <vector>
 #include <memory>
 #include <utility>
@@ -22,20 +22,18 @@
 #include "include/api/status.h"
 #include "include/api/context.h"
 namespace mindspore {
-class ModelPool;
-
 struct RunnerConfig {
-  std::shared_ptr<Context> model_ctx = nullptr;
-  int num_model = 0;
+  std::shared_ptr<Context> context = nullptr;
 };
 
-/// \brief The ModelRunner class is used to define a MindSpore ModelPoolManager, facilitating Model management.
+/// \brief The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model
+/// management.
 class MS_API ModelParallelRunner {
  public:
   ModelParallelRunner() = default;
   ~ModelParallelRunner() = default;
 
-  /// \brief build a model runner from model path so that it can run on a device. Only valid for Lite.
+  /// \brief build a model parallel runner from model path so that it can run on a device. Only valid for Lite.
   ///
   /// \param[in] model_path Define the model path.
   /// \param[in] runner_config Define the config used to store options during model pool init.
@@ -68,4 +66,4 @@ class MS_API ModelParallelRunner {
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_API_MODEL_RUNNER_H
+#endif  // MINDSPORE_INCLUDE_API_MODEL_PARALLEL_RUNNER_H
