@@ -249,7 +249,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
   }
   if (!data_pre_process_str.resize_height.empty()) {
     if (!ConvertIntNum(data_pre_process_str.resize_height, &image_pre_process->resize_height)) {
-      MS_LOG(ERROR) << "resize_width should be a valid number.";
+      MS_LOG(ERROR) << "resize_height should be a valid number.";
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->resize_height <= kMinSize || image_pre_process->resize_height > kMaxSize) {
