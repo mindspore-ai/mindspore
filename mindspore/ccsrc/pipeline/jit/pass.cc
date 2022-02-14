@@ -195,6 +195,12 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   (void)TransformTopGraphPass(res);
 
+  auto func_graph = res->func_graph();
+  // Pynative dynamic shape need add those pass, like convert make_list to make_tuple
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE)) {
+    (void)OptPassAGroup(res);
+    (void)CleanAfterOptAPass(res);
+  }
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
     irpass.inline_,
@@ -226,7 +232,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   }
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
-  FuncGraphPtr func_graph = res->func_graph();
+  func_graph = res->func_graph();
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };

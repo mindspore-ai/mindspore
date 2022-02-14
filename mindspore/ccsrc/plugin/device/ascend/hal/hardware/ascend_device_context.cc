@@ -374,13 +374,15 @@ void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_gr
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph) const {
+void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
+                                                const std::map<CNodePtr, std::vector<CNodePtr>> &atomics_node) const {
   // don't clear node_atomics_ in the end, since atomic_clean_nodes_ in kernel.h is weakptr
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = graph->execution_order();
   for (const auto &node : nodes) {
-    if (node_atomics_.find(node) != node_atomics_.end()) {
-      auto atomics = node_atomics_[node];
+    auto it = atomics_node.find(node);
+    if (it != atomics_node.end()) {
+      const auto &atomics = it->second;
       auto kernel_mod = AnfAlgo::GetKernelMod(node);
       auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
       if (ascend_kernel_mod != nullptr) {
@@ -412,7 +414,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
       AssignOutputNopNodeDeviceAddress(graph);
     } else if (graph->is_dynamic_shape() && IsGraphMode()) {
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
-      SetAtomicCleanToNodes(graph);  // graph mode may can do it too, instead of update execorder
+      SetAtomicCleanToNodes(graph, node_atomics_);  // graph mode may can do it too, instead of update execorder
       opt::DynamicShapeConvertPass(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       AssignOutputNopNodeDeviceAddress(graph);
@@ -728,6 +730,7 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     }
   }
 
+  SetAtomicCleanToNodes(graph, node_atomics_persistent_cache_);
   CreateKernel(atomic_nodes);
   LaunchDeviceLibrary();
 }
@@ -869,7 +872,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
-
     auto stream = GetKernelStream(kernel);
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();

@@ -307,23 +307,6 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   return true;
 }
 
-bool MallocForKernelWorkspace(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
-                              const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(runtime_info);
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto workspace_size = runtime_info->GetWorkspaceSize();
-  for (size_t i = 0; i < workspace_size; ++i) {
-    auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (device_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
-      MS_LOG(ERROR) << "Allocate workspace memory failed";
-      return false;
-    }
-  }
-  return true;
-}
-
 kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   auto input_size = runtime_info->GetInputSize();
@@ -337,13 +320,58 @@ kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeI
   return inputs;
 }
 
-kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info) {
+kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                    const device::DeviceContext *device_context, const CNodePtr &kernel,
+                                                    bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   auto workspace_size = runtime_info->GetWorkspaceSize();
-  kernel::AddressPtrList workspaces;
-  for (size_t i = 0; i < workspace_size; ++i) {
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+
+  std::vector<device::DeviceAddressPtr> add_workspaces;
+  if (is_dynamic_shape) {
+    // Resize of workspaces, because of the dynamic size of workspace.
+    if (workspace_size < workspace_sizes.size()) {
+      for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
+        auto device_address =
+          device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
+        MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
+                      << " addr:" << device_address;
+        AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());  // set to kernel_info
+        MS_EXCEPTION_IF_NULL(device_address);
+        add_workspaces.emplace_back(device_address);
+      }
+    }
+  }
+
+  // Set workspace address new size
+  for (size_t i = 0; i < workspace_size && i < workspace_sizes.size(); ++i) {
     auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
+    device_address->SetSize(workspace_sizes[i]);
+  }
+
+  kernel::AddressPtrList workspaces;
+  for (size_t i = 0; i < workspace_size && i < workspace_sizes.size(); ++i) {
+    auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
+    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_address->GetPtr() == nullptr &&
+        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+    }
+    workspaces.emplace_back(
+      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
+    MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
+  }
+
+  for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
+    auto device_address = add_workspaces[i];
+    MS_EXCEPTION_IF_NULL(device_address);
+    if (device_address->GetPtr() == nullptr &&
+        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
+      MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
+    }
     workspaces.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
@@ -370,6 +398,20 @@ void CopyDataToDevice(const KernelGraphPtr &graph, const std::vector<tensor::Ten
   CopyParameterDataToDevice(graph->input_nodes(), input_tensors, device_context);
 }
 
+// Change input node dynamic shape abstract to actual shape abstract
+void ChangeInputDynamicAbsToActualAbs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
+    auto real_input = input_node_with_index.first;
+    if (real_input->has_user_data(kActualAbstract)) {
+      const auto &actual_abs = real_input->user_data<abstract::AbstractTensor>(kActualAbstract);
+      real_input->set_abstract(actual_abs);
+    }
+  }
+}
+
 // kernel_mode launch
 void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -390,14 +432,11 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     auto inputs = CreateKernelInputAddress(runtime_info);
 
     if (is_dynamic_shape) {
+      ChangeInputDynamicAbsToActualAbs(node);
       device_context->UpdateDynamicShape(node);
     }
 
-    if (!MallocForKernelWorkspace(runtime_info, device_context)) {
-      MS_LOG(EXCEPTION) << "Malloc for kernel workspace failed, Memory isn't enough, node:"
-                        << node->fullname_with_scope();
-    }
-    auto workspaces = CreateKernelWorkspaceAddress(runtime_info);
+    auto workspaces = CreateKernelWorkspaceAddress(runtime_info, device_context, node, is_dynamic_shape);
 
     if (!MallocForKernelOutput(runtime_info, node, device_context)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();

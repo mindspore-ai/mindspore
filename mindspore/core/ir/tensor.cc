@@ -736,8 +736,13 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
-  auto tensor_shape = tens->shape();
-  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
+  abstract::AbstractTensorPtr abs_tensor = nullptr;
+  if (base_shape_ptr_ == nullptr) {
+    auto tensor_shape = tens->shape();
+    abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
+  } else {
+    abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, base_shape_ptr_);
+  }
   // if is parameter always no value.
   if (is_parameter_) {
     auto param_name = param_info_->name();

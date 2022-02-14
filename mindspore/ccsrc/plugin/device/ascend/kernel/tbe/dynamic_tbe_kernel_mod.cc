@@ -223,7 +223,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   }
 
   if (!atomic_clean_nodes_.empty()) {
-    for (auto atomic_clean_node : atomic_clean_nodes_) {
+    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
       KernelLaunchInfo kernel_launch_info;
       auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node.lock());
       MS_EXCEPTION_IF_NULL(kernel_mod);

@@ -19,6 +19,7 @@
 #include <map>
 #include <utility>
 #include <algorithm>
+#include <functional>
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/device_address.h"
@@ -378,6 +379,27 @@ void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_wit
     device_address->ResetRefCount();
   }
 }
+
+void SetGraphInputNodeActualAbstract(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!op_run_info.output_is_dynamic_shape && !op_run_info.input_is_dynamic_shape) {
+    return;
+  }
+  const auto &tensor_mask = op_run_info.tensor_mask;
+  const auto &input_tensors = op_run_info.input_tensors;
+  auto &graph_inputs = graph->inputs();
+  for (size_t i = 0, j = 0; i < op_run_info.input_tensors.size() && j < graph_inputs.size(); ++i) {
+    if (tensor_mask[i] == kValueNodeTensorMask) {
+      continue;
+    }
+    if (input_tensors[i]->base_shape_ptr() != nullptr) {
+      const auto &shape_of_tensor = input_tensors[i]->shape();
+      auto actual_abstract = std::make_shared<abstract::AbstractTensor>(input_tensors[i]->Dtype(), shape_of_tensor);
+      graph_inputs[j]->set_user_data(kActualAbstract, actual_abstract);
+    }
+    ++j;
+  }
+}
 }  // namespace
 
 GraphCompilerInfo::~GraphCompilerInfo() {
@@ -556,6 +578,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   if (iter != run_op_graphs_.end() && op_executor.BuildQueueEmpty()) {
     const auto &graph = iter->second;
     MS_EXCEPTION_IF_NULL(graph);
+    SetGraphInputNodeActualAbstract(op_run_info, graph);
     *single_op_cache_hit = true;
     return graph->graph_id();
   }
@@ -566,12 +589,16 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
     session_->ConstructSingleOpGraph(op_run_info, op_run_info.input_tensors, op_run_info.tensor_mask,
                                      device_context->GetDeviceAddressType() == device::DeviceAddressType::kAscend);
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
 
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
   device_context->UnifyMindIR(graph);
 
-  MS_EXCEPTION_IF_NULL(device_context);
+  // Select kernel and optimize
   device_context->OptimizeSingleOpGraph(graph);
+
+  // Set dynamic shape actual abstract
+  SetGraphInputNodeActualAbstract(op_run_info, graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info.is_gradient_out);
@@ -599,7 +626,7 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
     const auto &nodes = graph->execution_order();
     std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   }
-
+  // Kernel build
   device_context->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
@@ -702,7 +729,7 @@ void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const
                                                    GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(graph_info);
-  *graph_info = session_->GetSingleOpGraphInfo(kernel, tensor_info.input_tensors);
+  session_->GetSingleOpGraphInfo(kernel, tensor_info, graph_info);
   *run_info = session_->GetSingleOpRunInfo(kernel, *graph_info, tensor_info, graph_output_info);
 }
 

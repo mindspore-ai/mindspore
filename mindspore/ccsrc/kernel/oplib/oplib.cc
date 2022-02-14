@@ -376,6 +376,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
     return nullptr;
   }
   std::string target_processor = is_gpu ? kCUDA : (is_cpu ? kCpu : kAiCore);
+  std::vector<std::shared_ptr<OpInfo>> op_info_list;
   for (auto [iter, end] = op_info_.equal_range(op_name); iter != end; ++iter) {
     auto &op_info = (*iter).second;
     MS_EXCEPTION_IF_NULL(op_info);
@@ -385,10 +386,22 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
     if (imply_type == kAKG && op_info->processor() != target_processor) {
       continue;
     }
-    if (is_dynamic_shape && !op_info->dynamic_shape()) {
-      continue;
+    // The dynamic shape operator is preferred
+    if (is_dynamic_shape && op_info->dynamic_shape()) {
+      MS_LOG(DEBUG) << "Find dynamic opinfo " << op_name;
+      return op_info;
     }
-    return op_info;
+    // If not dynamic shape, get opinfo immediately
+    if (!is_dynamic_shape) {
+      MS_LOG(DEBUG) << "Find static opinfo " << op_name;
+      return op_info;
+    }
+    op_info_list.emplace_back(op_info);
+  }
+  // If is_dynamic_shape is true, but op_info have no dynamic shape, use first opinfo
+  if (!op_info_list.empty()) {
+    MS_LOG(DEBUG) << op_name << " get op info size " << op_info_list.size() << ", select first opinfo";
+    return op_info_list.front();
   }
   MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
                << ", current op num: " << op_info_.size() << " is_dynamic_shape:" << is_dynamic_shape;

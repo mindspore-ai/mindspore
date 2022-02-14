@@ -21,12 +21,50 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include "utils/ms_context.h"
+#include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
 namespace tbe {
+namespace {
+void ChangeDynamicAbsToActualAbs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // Only support for PyNative
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    return;
+  }
+  MS_LOG(INFO) << "CNode is dynamic shape, but have no dynamic shape op, use static op instead";
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
+
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs.";
+  }
+  AbstractBasePtrList args_spec_list;
+  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
+  // Get actual abs
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
+    auto real_input = input_node_with_index.first;
+    if (real_input->has_user_data(kActualAbstract)) {
+      const auto &actual_abs = real_input->user_data<abstract::AbstractTensor>(kActualAbstract);
+      real_input->set_abstract(actual_abs);
+    }
+    common::AnfAlgo::AddArgList(&args_spec_list, real_input, input_node_with_index.second);
+  }
+  // Infer real abstract
+  auto eval_result = mindspore::opt::CppInferShape(primitive, args_spec_list);
+  cnode->set_abstract(eval_result);
+}
+}  // namespace
+
 bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<CNode>()) {
@@ -56,7 +94,12 @@ std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, 
 std::shared_ptr<OpInfo> TbeDynamicShapeUtil::FindOp(const std::string &op_name, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto is_dynamic_shape = GetDynamicShapeAttr(cnode);
-  return mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE, is_dynamic_shape);
+  auto op_info = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE, is_dynamic_shape);
+  // If have no dynamic shape op, get static shape op
+  if (op_info != nullptr && !op_info->dynamic_shape() && is_dynamic_shape) {
+    ChangeDynamicAbsToActualAbs(cnode);
+  }
+  return op_info;
 }
 
 RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index,

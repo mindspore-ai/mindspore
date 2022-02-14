@@ -64,7 +64,8 @@ struct OpRunInfo {
   std::string op_name;
   Primitive *primitive;
   AbstractBasePtr abstract;
-  bool is_dynamic_shape = false;
+  bool input_is_dynamic_shape = false;
+  bool output_is_dynamic_shape = false;
   bool is_auto_mixed_precision = false;
   bool lazy_build = false;
   std::string next_op_name;
@@ -305,7 +306,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph);
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // Generate graph info for a single op graph
-  GraphInfo GetSingleOpGraphInfo(const CNodePtr &kernel, const std::vector<tensor::TensorPtr> &input_tensors);
+  void GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, GraphInfo *graph_info);
   OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info,
                                GraphOutputInfo *const graph_output_info);
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index);

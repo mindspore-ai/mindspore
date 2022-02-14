@@ -368,7 +368,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, const std:
     (void)BackPropagate(!build_formal_param);
   }
   // Return the gradient;
-  if (grad_position.size() == 0) {
+  if (grad_position.empty()) {
     MS_LOG(EXCEPTION) << "grad_position in F.grad is empty!";
   }
   SetOutput(weights, grad_position, grad_inputs, grad_weights);

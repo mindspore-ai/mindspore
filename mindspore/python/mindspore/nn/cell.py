@@ -87,12 +87,10 @@ class Cell(Cell_):
         def __enter__(self):
             """Enter cell and increase recursion depth count."""
             _pynative_executor.set_lazy_build(True)
-            _pynative_executor.enter_cell()
 
         def __exit__(self, exc_type, exc_val, exc_tb):
             """Exit cell and decrease recursion depth count."""
-            _pynative_executor.exit_cell()
-            if _pynative_executor.is_top_cell():
+            if _pynative_executor.is_first_cell():
                 _pynative_executor.set_lazy_build(False)
 
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
@@ -587,7 +585,7 @@ class Cell(Cell_):
             return out
 
         # Run in PyNative mode.
-        if _pynative_executor.is_top_cell():
+        if _pynative_executor.is_first_cell():
             _pynative_executor.set_lazy_build(True)
             _pynative_executor._optimizer = getattr(self, "optimizer", None)
             _pynative_executor._top_cell = self
@@ -601,22 +599,22 @@ class Cell(Cell_):
                 raise TypeError("For 'Cell', inputs should not be numpy array.")
         if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
-        _pynative_executor.new_graph(self, *args, **kwargs)
         cast_inputs = self.auto_cast_inputs(args)
 
         with self._CellGuard():
             try:
+                _pynative_executor.new_graph(self, *args, **kwargs)
                 output = self._run_construct(cast_inputs, kwargs)
+                _pynative_executor.end_graph(self, output, *args, **kwargs)
             except Exception as err:
                 _pynative_executor.clear_res()
                 raise err
 
-        if _pynative_executor.is_top_cell():
+        if _pynative_executor.is_first_cell():
             _pynative_executor.execute_lazy_task()
 
         if isinstance(output, Parameter):
             output = output.data
-        _pynative_executor.end_graph(self, output, *args, **kwargs)
         return output
 
     def _add_attr(self, name, value):

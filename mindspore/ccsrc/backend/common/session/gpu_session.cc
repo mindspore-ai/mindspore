@@ -712,7 +712,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   UpdateOutputs(kernel_graph, outputs, *input_tensors, &tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->is_dynamic_shape) {
+  if (op_run_info->output_is_dynamic_shape) {
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   RunOpClearMemory(kernel_graph.get());

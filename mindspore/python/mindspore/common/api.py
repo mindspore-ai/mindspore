@@ -877,32 +877,27 @@ class _PynativeExecutor:
         """
         self._executor.set_grad_flag(flag)
 
-    def enter_cell(self):
+    def set_dynamic_input(self, *args):
         """
-        The flag of enter cell instance.
+        Set dynamic shape tensor of input arguments.
+
+        Args:
+            args (tuple): Function or cell dynamic input arguments.
 
         Return:
-            None.
+            None
         """
-        self._executor.enter_cell()
+        self._executor.set_dynamic_input(*args)
 
-    def exit_cell(self):
+    def is_first_cell(self):
         """
-        The flag of exit cell instance.
-
-        Return:
-            None.
-        """
-        self._executor.exit_cell()
-
-    def is_top_cell(self):
-        """
-        The flag of top cell instance.
+        The flag of first cell instance.
 
         Return:
-            bool, specifies whether is the top cell.
+            bool, specifies whether is the first cell.
         """
-        return self._executor.is_top_cell()
+
+        return self._executor.is_first_cell()
 
     def set_hook_changed(self, cell):
         """
@@ -934,7 +929,7 @@ class _PynativeExecutor:
         """
         return self._top_cell
 
-    def __call__(self, obj, *args, **kwargs):
+    def __call__(self, sens_param, obj, *args, **kwargs):
         """
         PyNative executor run grad graph.
 
@@ -947,7 +942,7 @@ class _PynativeExecutor:
             The return object after running grad graph.
         """
         args = args + tuple(kwargs.values())
-        return self._executor(obj, args)
+        return self._executor(sens_param, obj, args)
 
 
 class _CellGraphExecutor:

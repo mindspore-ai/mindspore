@@ -457,6 +457,16 @@ class MS_CORE_API Tensor final : public MetaTensor {
     cache_tensor_ptr_ = cache_tensor_ptr;
   }
 
+  /// \brief Get tensor's BaseShape.
+  ///
+  /// \return The BaseShape of this tensor.
+  const BaseShapePtr &base_shape_ptr() const { return base_shape_ptr_; }
+
+  /// \brief Set tensor's BaseShape.
+  ///
+  /// \param[in] BaseShapePtr The tensor's BaseShape.
+  void set_base_shape(const BaseShapePtr &base_shape) { base_shape_ptr_ = base_shape; }
+
   /// \brief Set whether the event needs to wait.
   ///
   /// \param[in] need_wait Whether the event needs to wait.
@@ -595,6 +605,8 @@ class MS_CORE_API Tensor final : public MetaTensor {
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};
+  // Tensor base shape which contain dynamic shape info.
+  BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   std::string padding_type_{""};

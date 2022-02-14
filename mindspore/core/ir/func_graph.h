@@ -91,6 +91,7 @@ const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 const char FUNC_GRAPH_OUTPUT_NO_RECOMPUTE[] = "output_no_recompute";
 const char FUNC_GRAPH_FLAG_FORCE_INLINE[] = "force_inline";
 const char FUNC_GRAPH_FLAG_DUMP[] = "dump";
+const char FUNC_GRAPH_FLAG_DYNAMIC_SHAPE[] = "dynamic_shape";
 
 const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";

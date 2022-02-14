@@ -70,6 +70,18 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto x_max_shape = x_shape_map[kMaxShape];
   auto y_min_shape = y_shape_map[kMinShape];
   auto y_max_shape = y_shape_map[kMaxShape];
+  if (x_min_shape.empty()) {
+    x_min_shape = x_shape;
+  }
+  if (x_max_shape.empty()) {
+    x_max_shape = x_shape;
+  }
+  if (y_min_shape.empty()) {
+    y_min_shape = y_shape;
+  }
+  if (y_max_shape.empty()) {
+    y_max_shape = y_shape;
+  }
   if (x_shape == y_shape) {
     return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
   }

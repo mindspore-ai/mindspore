@@ -49,14 +49,23 @@ using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<Anf
 py::object RealRunOp(const py::args &args);
 
 struct GraphInfo {
+  GraphInfo() = default;
+  ~GraphInfo() = default;
   std::string cell_id;
   AnfNodePtr output;
   OrderedMap<std::string, ParameterPtr> params;  // hold input parameters and cell weights
   mindspore::HashMap<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
-  GraphInfo() = default;
   explicit GraphInfo(std::string id) : cell_id(std::move((id))) {}
 };
 using GraphInfoPtr = std::shared_ptr<GraphInfo>;
+
+struct DynamicShapeInfo {
+  py::object dynamic_input = py::none();  // Used in feed mode
+  bool HasUserDynamicInput() const { return !py::isinstance<py::none>(dynamic_input); }
+  OrderedMap<std::string, abstract::AbstractBasePtr> obj_id_with_dynamic_output_abs;
+  void reset() { obj_id_with_dynamic_output_abs.clear(); }
+};
+using DynamicShapeInfoPtr = std::shared_ptr<DynamicShapeInfo>;
 
 class TopCellInfo {
  public:
@@ -77,8 +86,10 @@ class TopCellInfo {
   bool is_topest() const { return is_topest_; }
   size_t grad_order() const { return grad_order_; }
   void set_grad_order(size_t grad_order) { grad_order_ = grad_order; }
-  bool is_dynamic() const { return is_dynamic_; }
-  void set_is_dynamic(bool is_dynamic) { is_dynamic_ = is_dynamic; }
+  bool dynamic_graph_structure() const { return dynamic_graph_structure_; }
+  void set_dynamic_graph_structure(bool dynamic_graph_structure) { dynamic_graph_structure_ = dynamic_graph_structure; }
+  bool dynamic_shape() const { return dynamic_shape_; }
+  void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
   bool hook_changed() const { return hook_changed_; }
   void set_hook_changed(bool hook_changed) { hook_changed_ = hook_changed; }
   void set_sub_cell_hook_changed(const std::string &sub_cell) { sub_cell_hook_changed_.emplace(sub_cell); }
@@ -129,7 +140,8 @@ class TopCellInfo {
 
  private:
   bool is_topest_{false};
-  bool is_dynamic_{false};
+  bool dynamic_graph_structure_{false};
+  bool dynamic_shape_{false};
   bool vm_compiled_{false};
   bool hook_changed_{false};
   bool ms_function_flag_{false};
@@ -194,10 +206,11 @@ class GradExecutor {
                    std::forward<decltype(PH4)>(PH4), std::forward<decltype(PH5)>(PH5),
                    std::forward<decltype(PH6)>(PH6));
     };
-  std::function<void(py::object *, const py::object &, const py::tuple &)> RunGraph = [this](auto &&PH1, auto &&PH2,
-                                                                                             auto &&PH3) {
-    RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
-  };
+  std::function<void(py::object *, const py::object &, const py::object &sens_param, const py::tuple &)> RunGraph =
+    [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
+      RunGradGraph(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
+                   std::forward<decltype(PH4)>(PH4));
+    };
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
@@ -216,9 +229,11 @@ class GradExecutor {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
-  std::set<std::string> &forward_op_output_id() { return top_cell()->forward_op_output_id(); }
+  bool GradFirstCell() const { return grad_cell_count_ == 0; }
+  std::set<std::string> &forward_op_output_id() const { return top_cell()->forward_op_output_id(); }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
-  std::string GetCellId(const py::object &obj, const py::args &args);
+  std::string GetCellInputArgsId(const py::object &cell, const py::args &args);
+  std::string GetCellId(const py::object &cell, const py::args &args);
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   // Construct grad graph for ms_function
@@ -238,7 +253,7 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  void RunGradGraph(py::object *ret, const py::object &cell, const py::tuple &args);
+  void RunGradGraph(py::object *ret, const py::object &cell, const py::object &sens_param, const py::tuple &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
   void ClearGrad(const py::object &cell, const py::args &args);
@@ -307,6 +322,8 @@ class GradExecutor {
     graph_info->node_map[id] = std::make_pair(node, index);
   }
   void MarkMsFunctionNodes(const pipeline::ResourcePtr &resource);
+  void IncreaseCellCount() { ++grad_cell_count_; }
+  void DecreaseCellCount() { --grad_cell_count_; }
 
  private:
   bool grad_flag_{false};
@@ -318,6 +335,7 @@ class GradExecutor {
   size_t cell_order_{0};
   size_t grad_order_{0};
   size_t top_cell_switch_counts_{0};
+  size_t grad_cell_count_{0};  // Record numbers of cell need grad
 
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
@@ -360,6 +378,11 @@ class ForwardExecutor {
   // Replace input hook node with its input node when not in its own cell scope.
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node);
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
+  void SetDynamicInput(const py::object &dynamic_input);
+  DynamicShapeInfoPtr dynamic_shape_info_ptr();
+  bool IsFirstCell() const { return cell_depth_ == 0; }
+  void IncreaseCellDepth() { ++cell_depth_; }
+  void DecreaseCellDepth() { --cell_depth_; }
 
  private:
   GradExecutorPtr grad() const;
@@ -370,6 +393,9 @@ class ForwardExecutor {
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info);
   void SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i, const std::string &id);
+  AbstractBasePtr GetTupleInputAbstract(const OpExecInfoPtr &op_exec_info, const py::object &obj, const std::string &id,
+                                        size_t input_index);
+  AbstractBasePtr GetInputObjAbstract(const OpExecInfoPtr &op_exec_info, size_t i, const py::object &obj);
   void GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info, abstract::AbstractBasePtrList *args_spec_list);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                            bool *prim_cache_hit);
@@ -388,14 +414,19 @@ class ForwardExecutor {
   void DoSignatureCast(const PrimitivePyPtr &prim, const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
+  bool HasDynamicInput(const OpExecInfoPtr &op_exec_info);
+  void SaveOutputDynamicShape(const OpExecInfoPtr &op_exec_info, const AbstractBasePtr &real_abs,
+                              const py::object &obj);
 
  private:
+  uint32_t cell_depth_{0};
   GradExecutorWeakPtr grad_executor_;
   PrimAbsCache prim_abs_list_;
   ImplicitCastCache implicit_cast_map_;
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> node_abs_map_;
   bool lazy_build_{false};
   std::string last_target_{"Unknown"};
+  DynamicShapeInfoPtr dynamic_shape_info_ptr_{nullptr};
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
@@ -418,6 +449,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   bool grad_flag() const;
   void set_grad_flag(bool flag);
+  void SetDynamicInput(const py::object &dynamic_input);
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
@@ -430,7 +462,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
   void set_grad_position(const prim::GradOperationPtr &grad, const py::object &grad_position);
-  py::object Run(const py::object &cell, const py::tuple &args);
+  py::object Run(const py::object &cell, const py::object &sens_param, const py::tuple &args);
 
   // Used by graph clean
   // Cell destruct will call
@@ -442,9 +474,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void Sync();
   void SetLazyBuild(bool enable);
   void ExecuteLazyTask();
-  void EnterCell();
-  void ExitCell();
-  bool IsTopCell() const;
+  bool IsFirstCell();
 
  private:
   PynativeExecutor() = default;
@@ -453,10 +483,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;
   static GradExecutorPtr grad_executor_;
-  uint32_t cell_depth_{0};
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
 }  // namespace mindspore::pynative
-
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_EXECUTE_H_

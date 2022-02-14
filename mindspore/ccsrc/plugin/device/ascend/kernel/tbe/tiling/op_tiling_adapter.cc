@@ -59,6 +59,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
     {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
     {"CeLU", "CeluV2"},
+    {"TransposeNOD", "Transpose"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
