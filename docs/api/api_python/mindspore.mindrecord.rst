@@ -1,9 +1,25 @@
 mindspore.mindrecord
 ====================
 
-Introduction of MindRecord.
+.. include:: mindrecord/mindspore.mindrecord.rst
 
-MindRecord is a module to implement reading, writing, searching and converting for MindSpore format dataset. Users could use the FileWriter API to generate MindRecord data and use the MindDataset API to load MindRecord data. Users could also convert other format datasets to mindrecord data through corresponding sub-module.
+.. include:: mindrecord/mindspore.mindrecord.Cifar100ToMR.rst
+
+.. include:: mindrecord/mindspore.mindrecord.Cifar10ToMR.rst
+
+.. include:: mindrecord/mindspore.mindrecord.CsvToMR.rst
+
+.. include:: mindrecord/mindspore.mindrecord.FileReader.rst
+
+.. include:: mindrecord/mindspore.mindrecord.FileWriter.rst
+
+.. include:: mindrecord/mindspore.mindrecord.ImageNetToMR.rst
+
+.. include:: mindrecord/mindspore.mindrecord.MindPage.rst
+
+.. include:: mindrecord/mindspore.mindrecord.MnistToMR.rst
+
+.. include:: mindrecord/mindspore.mindrecord.TFRecordToMR.rst
 
 .. automodule:: mindspore.mindrecord
     :members:

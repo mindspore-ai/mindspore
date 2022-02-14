@@ -1,0 +1,5 @@
+MindRecord是MindSpore开发的一种高效数据格式，此模块提供了一些方法帮助用户将不同数据集转换为MindRecord格式，
+也提供了一些操作MindRecord数据文件的方法如读取、写入、检索等。
+用户可以使用FileWriter API生成MindRecord格式数据集，并使用MindDataset API加载MindRecord格式数据集。
+
+用户还可以通过相应的子模块将其他格式数据集转换为MindRecord格式数据集。
