@@ -162,7 +162,7 @@ bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
     auto ccompute_node = compute_node->cast<CNodePtr>();
     if (ccompute_node == nullptr) {
       MS_LOG(WARNING) << "Fusion error: fusion compute node must be cnode, but the node is "
-                      << ccompute_node->DebugString();
+                      << compute_node->DebugString();
       return false;
     }
     for (size_t i = 1; i < ccompute_node->inputs().size(); ++i) {

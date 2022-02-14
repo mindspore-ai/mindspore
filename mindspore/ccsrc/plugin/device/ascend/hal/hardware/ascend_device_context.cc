@@ -390,7 +390,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     }
   } catch (const std::exception &e) {
     ReportErrorMessage();
-    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id();
+    MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id() << ", error msg: " << e.what();
   }
 
   PROF_END(preprocess_before_run_graph);
