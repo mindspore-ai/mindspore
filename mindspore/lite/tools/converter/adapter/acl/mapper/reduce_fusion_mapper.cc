@@ -62,7 +62,7 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
 
 STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode) {
   if (cnode->size() != kNameReduceInputNum) {
-    MS_LOG(ERROR) << "Input size of reduce must be three, real size: " << cnode->size();
+    MS_LOG(ERROR) << "Input size of reduce must be " << kNameReduceInputNum << ", real size: " << cnode->size();
     return lite::RET_ERROR;
   }
   auto axes_input = cnode->input(kNameReduceInputNum - 1);

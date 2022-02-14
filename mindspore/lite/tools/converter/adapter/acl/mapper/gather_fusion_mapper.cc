@@ -30,7 +30,7 @@ STATUS GatherMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   if (cnode->size() != kNameGatherInputNum) {
-    MS_LOG(ERROR) << "Input size of gather must be four.";
+    MS_LOG(ERROR) << "Input size of gather must be " << kNameGatherInputNum << ", real size: " << cnode->size();
     return lite::RET_ERROR;
   }
   // convert last parameter to const value node

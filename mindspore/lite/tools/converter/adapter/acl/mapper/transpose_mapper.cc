@@ -32,7 +32,7 @@ STATUS TransposeMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   if (cnode->size() != kCommonInputNum) {
-    MS_LOG(ERROR) << "Input size of gather must be two.";
+    MS_LOG(ERROR) << "Input size of transpose must be " << kCommonInputNum << ", real size: " << cnode->size();
     return lite::RET_ERROR;
   }
   // convert last parameter to const value node
