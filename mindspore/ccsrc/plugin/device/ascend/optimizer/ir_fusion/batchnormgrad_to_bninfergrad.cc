@@ -29,6 +29,7 @@ namespace {
 CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnormgrad);
+  MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(kBNInferGradOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
   constexpr size_t kDBatchMean = 1;

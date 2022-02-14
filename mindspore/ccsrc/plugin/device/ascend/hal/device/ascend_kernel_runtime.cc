@@ -555,7 +555,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
-    MS_LOG(EXCEPTION) << "Distribute Task Failed, error: " << e.what();
+    MS_LOG(EXCEPTION) << "Distribute Task Failed, \nerror msg: " << e.what();
   }
 
 #ifndef ENABLE_SECURITY

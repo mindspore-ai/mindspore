@@ -44,9 +44,11 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
       if (users.size() > 1 && !first_flag) {
         return nullptr;
       }
+      MS_EXCEPTION_IF_NULL(trans_road);
       trans_road->push_back(cnode);
       first_flag = false;
       auto next_node = AnfAlgo::GetInputNode(cnode, 0);
+      MS_EXCEPTION_IF_NULL(next_node);
       if (next_node->isa<Parameter>() || next_node->isa<ValueNode>()) {
         return next_node;
       }

@@ -48,6 +48,7 @@ const BaseRef ReshapeTransposeFusion::DefinePattern() const {
 const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
   auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(transpose_cnode);
