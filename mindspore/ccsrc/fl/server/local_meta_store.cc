@@ -40,6 +40,29 @@ const size_t LocalMetaStore::curr_iter_num() {
   std::unique_lock<std::mutex> lock(mtx_);
   return curr_iter_num_;
 }
+
+const void LocalMetaStore::put_feature_map(const std::string &name, const size_t &size) { feature_map_[name] = size; }
+
+std::unordered_map<std::string, size_t> &LocalMetaStore::feature_map() { return feature_map_; }
+
+bool LocalMetaStore::verifyFeatureMap(const std::unordered_map<std::string, size_t> &model) {
+  // feature map size in Hybrid training is not equal with upload model size
+  if (model.size() > feature_map_.size()) {
+    return false;
+  }
+
+  for (const auto &weight : model) {
+    std::string weight_name = weight.first;
+    size_t weight_size = weight.second;
+    if (feature_map_.count(weight_name) == 0) {
+      return false;
+    }
+    if (weight_size != feature_map_[weight_name]) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore

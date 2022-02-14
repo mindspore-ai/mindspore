@@ -70,6 +70,12 @@ class LocalMetaStore {
   void set_curr_iter_num(size_t num);
   const size_t curr_iter_num();
 
+  const void put_feature_map(const std::string &name, const size_t &size);
+
+  std::unordered_map<std::string, size_t> &feature_map();
+
+  bool verifyFeatureMap(const std::unordered_map<std::string, size_t> &model);
+
  private:
   LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}
   ~LocalMetaStore() = default;
@@ -81,6 +87,9 @@ class LocalMetaStore {
   // This mutex makes sure that the operations on key_to_meta_ is threadsafe.
   std::mutex mtx_;
   size_t curr_iter_num_{0};
+
+  // feature_map_ stores model meta data with weight name and size.
+  std::unordered_map<std::string, size_t> feature_map_;
 };
 }  // namespace server
 }  // namespace fl

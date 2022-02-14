@@ -76,6 +76,7 @@ class FedAvgKernel : public AggregationKernelMod {
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
 
+    LocalMetaStore::GetInstance().put_feature_map(weight_node->fullname_with_scope(), weight_size);
     MS_LOG(INFO) << "Aggregate Weight full name is " << weight_node->fullname_with_scope() << ", weight byte size is "
                  << weight_size;
     GenerateReuseKernelNodeInfo();

@@ -135,8 +135,6 @@ void SSLWrapper::InitSSL() {
   StartCheckCertTime(*config_, cert, ca_path);
 
   EVP_PKEY_free(pkey);
-  X509_free(caCert);
-  X509_free(cert);
   (void)BIO_free(ca_bio);
 }
 

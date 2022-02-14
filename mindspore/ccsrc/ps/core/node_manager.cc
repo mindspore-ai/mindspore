@@ -117,8 +117,9 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.port_ = port;
     node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
-    MS_LOG(INFO) << "The server node id:" << node_id << ",node ip: " << node_info.ip_ << ",node port:" << port
-                 << " assign rank id:" << rank_id;
+    MS_LOG(INFO) << "The server node id:" << node_id << ", node ip: " << node_info.ip_ << ", node port:" << port
+                 << " assign rank id:" << rank_id << ", " << (meta_data_->server_num - next_server_rank_id_)
+                 << " servers still need to be registered.";
   } else if (register_message.role() == NodeRole::WORKER) {
     const std::string &ip = register_message.ip();
     uint32_t port = register_message.port();
@@ -159,7 +160,8 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
     node_info.is_alive = true;
     registered_nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The worker node id:" << node_id << ", node ip: " << node_info.ip_ << ", node port:" << port
-                 << " assign rank id:" << rank_id;
+                 << " assign rank id:" << rank_id << ", " << (meta_data_->worker_num - next_worker_rank_id_)
+                 << " workers still need to be registered.";
   }
   return rank_id;
 }

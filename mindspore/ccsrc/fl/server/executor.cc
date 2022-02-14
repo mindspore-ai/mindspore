@@ -25,6 +25,7 @@ namespace fl {
 namespace server {
 void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_count) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(INFO) << "Start Initialize Executor.";
   if (aggregation_count == 0) {
     MS_LOG(EXCEPTION) << "Server aggregation count must be greater than 0";
     return;
