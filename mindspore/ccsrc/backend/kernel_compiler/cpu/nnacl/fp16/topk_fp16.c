@@ -37,14 +37,14 @@ int TopkFp16IndexSortCmp(const void *a, const void *b) {
   }
 }
 
-void TopkFp16(float16_t *input_data, float16_t *output_data, int32_t *output_index, TopkParameter *parameter) {
+void TopkFp16(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter) {
   int last_dim_size = parameter->last_dim_size_;
   int loop_num = parameter->loop_num_;
   int k = parameter->k_;
   TopkFp16Node *top_map = (TopkFp16Node *)parameter->topk_node_list_;
 
-  float16_t *cur_input_data = input_data;
-  float16_t *cur_output_data = output_data;
+  float16_t *cur_input_data = (float16_t *)input_data;
+  float16_t *cur_output_data = (float16_t *)output_data;
   int32_t *cur_output_index = output_index;
   for (int i = 0; i < loop_num; i++) {
     for (int j = 0; j < last_dim_size; j++) {
