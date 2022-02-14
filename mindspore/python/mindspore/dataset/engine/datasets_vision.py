@@ -110,9 +110,9 @@ class Caltech101Dataset(GeneratorDataset):
     A source dataset that reads and parses Caltech101 dataset.
 
     The columns of the generated dataset depend on the value of `target_type`.
-    When `target_type` is `category`, the columns are :py:obj:`[image, category]`.
-    When `target_type` is `annotation`, the columns are :py:obj:`[image, annotation]`.
-    When `target_type` is `all`, the columns are :py:obj:`[image, category, annotation]`.
+    When `target_type` is 'category', the columns are :py:obj:`[image, category]`.
+    When `target_type` is 'annotation', the columns are :py:obj:`[image, annotation]`.
+    When `target_type` is 'all', the columns are :py:obj:`[image, category, annotation]`.
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`category` is of the uint32 type.
     The tensor of column :py:obj:`annotation` is a 2-dimensional ndarray that stores the contour of the image
@@ -141,8 +141,8 @@ class Caltech101Dataset(GeneratorDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If target_type is not set correctly.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If target_type is not set correctly.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -302,7 +302,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -855,7 +855,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir is invalid or does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -1268,7 +1268,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Raises:
         RuntimeError: If dataset_dir is invalid or does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If num_parallel_workers exceeds the max thread numbers.
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
@@ -1388,6 +1388,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
                   ├── 0001x8.png
                   ├── 0002x8.png
                   ├── ...
+
     Citation:
 
     .. code-block::

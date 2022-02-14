@@ -12,10 +12,10 @@ mindspore.dataset.SequentialSampler
 
     **异常：**
 
-    - **TypeError：** `start_index` 不是整数值。
-    - **TypeError：** `num_samples` 不是整数值。
-    - **RuntimeError：** `start_index` 为负值。
-    - **ValueError：** `num_samples` 为负值。
+    - **TypeError** `start_index` 不是整数值。
+    - **TypeError** `num_samples` 不是整数值。
+    - **RuntimeError** `start_index` 为负值。
+    - **ValueError** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
 

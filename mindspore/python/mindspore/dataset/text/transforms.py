@@ -104,6 +104,15 @@ class JiebaTokenizer(TextTensorOperation):
             - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
         with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
+    Raises:
+        ValueError: If path of HMMSegment dict is not provided.
+        ValueError: If path of MPSegment dict is not provided.
+        TypeError: If `hmm_path` or `mp_path` is not of type string.
+        TypeError: If `with_offsets` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.text import JiebaMode
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -265,6 +274,14 @@ class Lookup(TextTensorOperation):
         data_type (mindspore.dtype, optional): The data type that lookup operation maps
             string to(default=mindspore.int32).
 
+    Raises:
+        TypeError: If `vocab` is not of type text.Vocab.
+        TypeError: If `unknown_token` is not of type string.
+        TypeError: If `data_type` is not of type mindspore.dtype.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # Load vocabulary from list
         >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
@@ -304,6 +321,16 @@ class Ngram(TextTensorOperation):
             ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
             (default=" ", which will use whitespace as separator).
 
+    Raises:
+        TypeError: If values of `n` not positive is not of type int.
+        ValueError: If values of `n` not positive.
+        ValueError: If `left_pad` is not a tuple of length 2.
+        ValueError: If `right_pad` is not a tuple of length 2.
+        TypeError: If `separator` is not of type string.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> ngram_op = text.Ngram(3, separator="-")
         >>> output = ngram_op(["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"])
@@ -337,6 +364,13 @@ class SentencePieceTokenizer(TextTensorOperation):
             - SPieceTokenizerOutType.STRING, means output type of SentencePice Tokenizer is string.
             - SPieceTokenizerOutType.INT, means output type of SentencePice Tokenizer is int.
 
+    Raises:
+        TypeError: If `mode` is not of type string or SentencePieceVocab.
+        TypError: If `out_type` is not of type SPieceTokenizerOutType.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
         >>> sentence_piece_vocab_file = "/path/to/sentence/piece/vocab/file"
@@ -363,6 +397,14 @@ class SlidingWindow(TextTensorOperation):
     Args:
         width (int): The width of the window. It must be an integer and greater than zero.
         axis (int, optional): The axis along which the sliding window is computed (default=0).
+
+    Raises:
+        TypeError: If `width` is not of type int.
+        ValueError: If value of `width` is not positive.
+        TypError: If `axis` is not of type int.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> dataset = ds.NumpySlicesDataset(data=[[1, 2, 3, 4, 5]], column_names="col1")
@@ -403,7 +445,11 @@ class ToNumber(TextTensorOperation):
         data_type (mindspore.dtype): Type to be cast to. Must be a numeric type in mindspore.dtype.
 
     Raises:
+        TypeError: If `data_type` is not of type mindspore.dtype.
         RuntimeError: If strings are invalid to cast, or are out of range after being cast.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -461,6 +507,12 @@ class TruncateSequencePair(TextTensorOperation):
     Args:
         max_length (int): Maximum length required.
 
+    Raises:
+        TypeError: If `max_length` is not of type int.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> dataset = ds.NumpySlicesDataset(data={"col1": [[1, 2, 3]], "col2": [[4, 5]]})
         >>> # Data before
@@ -491,6 +543,12 @@ class UnicodeCharTokenizer(TextTensorOperation):
 
     Args:
         with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+
+    Raises:
+        TypeError: If `with_offsets` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
@@ -523,6 +581,17 @@ class WordpieceTokenizer(TextTensorOperation):
         unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
             return the token directly, else return 'unknown_token' (default='[UNK]').
         with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+
+    Raises:
+        TypeError: If `vocab` is not of type text.Vocab.
+        TypeError: If `suffix_indicator` is not of type string.
+        TypeError: If `max_bytes_per_token` is not of type int.
+        TypeError: If `unknown_token` is not of type string.
+        TypeError: If `with_offsets` is not of type bool.
+        ValueError: If value of `max_bytes_per_token` is negative.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
@@ -560,6 +629,12 @@ class PythonTokenizer:
 
     Args:
         tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
+
+    Raises:
+        TypeError: If `tokenizer` is not a callable Python function.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> def my_tokenizer(line):
@@ -749,6 +824,9 @@ if platform.system().lower() != 'windows':
         Note:
             CaseFold is not supported on Windows platform yet.
 
+        Supported Platforms:
+            ``CPU``
+
         Examples:
             >>> case_op = text.CaseFold()
             >>> text_file_dataset = text_file_dataset.map(operations=case_op)
@@ -793,6 +871,12 @@ if platform.system().lower() != 'windows':
                 - NormalizeForm.NFD, normalize with Normalization Form D.
                 - NormalizeForm.NFKD, normalize with Normalization Form KD.
 
+        Raises:
+            TypeError: If `normalize_form` is not of type NormalizeForm.
+
+        Supported Platforms:
+            ``CPU``
+
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
             >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
@@ -824,6 +908,14 @@ if platform.system().lower() != 'windows':
             replace (str): the string to replace matched element.
             replace_all (bool, optional): If False, only replace first matched element;
                 if True, replace all matched elements (default=True).
+
+        Raises:
+            TypeError: If `pattern` is not of type string.
+            TypeError: If `replace` is not of type string.
+            TypeError: If `replace_all` not of type bool.
+
+        Supported Platforms:
+            ``CPU``
 
         Examples:
             >>> pattern = 'Canada'
@@ -858,6 +950,14 @@ if platform.system().lower() != 'windows':
                 if it can be matched by 'keep_delim_pattern'. The default value is an empty str
                 which means that delimiters will not be kept as an output token (default='').
             with_offsets (bool, optional): Whether or not output offsets of tokens(default=False).
+
+        Raises:
+            TypeError: If `delim_pattern` is not of type string.
+            TypeError: If `keep_delim_pattern` is not of type string.
+            TypeError: If `with_offsets` not of type bool.
+
+        Supported Platforms:
+            ``CPU``
 
         Examples:
             >>> # If with_offsets=False, default output is one column {["text", dtype=str]}
@@ -896,6 +996,13 @@ if platform.system().lower() != 'windows':
             keep_whitespace (bool, optional): Whether or not emit whitespace tokens (default=False).
             with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
+        Raises:
+            TypeError: If `keep_whitespace` is not of type bool.
+            TypeError: If `with_offsets` is not of type bool.
+
+        Supported Platforms:
+            ``CPU``
+
         Examples:
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
@@ -930,6 +1037,12 @@ if platform.system().lower() != 'windows':
 
         Args:
             with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
+
+        Raises:
+            TypeError: If `with_offsets` is not of type bool.
+
+        Supported Platforms:
+            ``CPU``
 
         Examples:
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}

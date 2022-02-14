@@ -12,9 +12,9 @@ mindspore.dataset.RandomSampler
 
     **异常：**
 
-    - **TypeError：** `replacement` 不是bool值。
-    - **TypeError：** `num_samples` 不是整数值。
-    - **ValueError：** `num_samples` 为负值。
+    - **TypeError** `replacement` 不是bool值。
+    - **TypeError** `num_samples` 不是整数值。
+    - **ValueError** `num_samples` 为负值。
 
     .. include:: mindspore.dataset.BuiltinSampler.rst
 

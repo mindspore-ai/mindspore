@@ -96,6 +96,14 @@ class OneHotOp(PyTensorOperation):
         smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
             (Default=0.0 means no smoothing is applied.)
 
+    Raises:
+        TypeError: `num_classes` is not of type int.
+        TypeError: `smoothing_rate` is not of type float.
+        ValueError: `prob` is not in range [0.0, 1.0]。
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> transforms_list = [py_transforms.OneHotOp(num_classes=10, smoothing_rate=0.1)]
@@ -135,6 +143,14 @@ class Compose(PyTensorOperation):
 
     Args:
         transforms (list): List of transformations to be applied.
+
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        ValueError: If `transforms` is empty.
+        TypeError: If transformations in `transforms` are not Python callable objects.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
@@ -239,6 +255,17 @@ class RandomApply(PyTensorOperation):
         transforms (list): List of transformations to apply.
         prob (float, optional): The probability to apply the transformation list (default=0.5).
 
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        ValueError: If `transforms` is empty.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        TypeError: If `prob` is not of type bool.
+        ValueError: If `prob` is not in range [0.0, 1.0].
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
@@ -275,6 +302,15 @@ class RandomChoice(PyTensorOperation):
     Args:
          transforms (list): List of transformations to be chosen from to apply.
 
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        ValueError: If `transforms` is empty.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
@@ -309,6 +345,15 @@ class RandomOrder(PyTensorOperation):
 
     Args:
         transforms (list): List of the transformations to apply.
+
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.py_transforms.PyTensorOperation` .
+        ValueError: If `transforms` is empty.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
