@@ -127,10 +127,21 @@ Status ModelThread::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       is_copy_output_ = false;
     }
   }
-  auto status = model_->Predict(inputs, outputs, before, after);
+  auto status = model_->Predict(inputs, &model_output, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
     return status;
+  }
+  if (is_copy_output_) {
+    outputs->clear();
+    outputs->insert(outputs->end(), model_output.begin(), model_output.end());
+  } else {
+    model_output = model_->GetOutputs();
+    for (size_t i = 0; i < outputs->size(); i++) {
+      outputs->at(i).SetShape(model_output[i].Shape());
+      model_output[i].SetData(nullptr);
+      model_output[i].SetAllocator(nullptr);
+    }
   }
   return kSuccess;
 }

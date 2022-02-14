@@ -47,17 +47,18 @@ class ModelPool {
   void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num);
   ModelPoolContex CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
-  Status SplitTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                            std::vector<std::vector<MSTensor>> *new_inputs);
+  Status SplitInputTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<std::vector<MSTensor>> *new_inputs,
+                                 size_t batch_split_num);
+  Status SplitOutputTensorByBatch(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs,
+                                  size_t batch_split_num);
   Status ConcatPredictOutput(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs);
 
-  void *all_out_data = nullptr;
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
   size_t num_models_ = 10;
-  size_t batch_split_num_ = 4;
   std::mutex mtx_split_task_;
+  bool is_user_data_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_POOL_MODEL_POOL_H
