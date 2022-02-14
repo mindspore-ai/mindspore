@@ -40,15 +40,17 @@ void PSContext::SetPSEnable(bool enabled) {
   ps_enabled_ = enabled;
   if (ps_enabled_) {
     std::string ms_role = common::GetEnv(kEnvRole);
+    if (ms_role == "") {
+      ms_role = this->ms_role();
+    }
     MS_LOG(INFO) << "PS mode is enabled. MS_ROLE is " << ms_role;
+
     if (ms_role == kEnvRoleOfWorker) {
       is_worker_ = true;
     } else if (ms_role == kEnvRoleOfPServer) {
       is_pserver_ = true;
     } else if (ms_role == kEnvRoleOfScheduler) {
       is_sched_ = true;
-    } else {
-      MS_LOG(INFO) << "MS_ROLE is " << ms_role;
     }
 
     worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, kBase);
@@ -330,6 +332,7 @@ void PSContext::set_ms_role(const std::string &role) {
     MS_LOG(EXCEPTION) << "ms_role " << role << " is invalid.";
     return;
   }
+  MS_LOG(INFO) << "MS_ROLE of this node is " << role;
   role_ = role;
 }
 
