@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,8 +196,6 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
                                                                                         const AnfNodePtr &node,
                                                                                         size_t output_index);
 bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
-
-void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs);
 
 bool AnfEqual(const BaseRef &a, const BaseRef &b);
 

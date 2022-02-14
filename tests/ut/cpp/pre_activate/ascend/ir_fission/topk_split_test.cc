@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "runtime/device/kernel_info.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

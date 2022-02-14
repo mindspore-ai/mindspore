@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include "utils/ms_context.h"
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
-#include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 
 namespace mindspore {
 namespace opt {

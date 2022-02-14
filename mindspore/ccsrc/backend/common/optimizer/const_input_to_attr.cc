@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/optimizer/const_input_to_attr_registry.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 
+#include <vector>
+#include "utils/anf_utils.h"
 #include "utils/utils.h"
 #include "utils/log_adapter.h"
 #include "base/core_ops.h"
@@ -119,6 +121,55 @@ bool ConstInputToAttrInfoRegistry::GetRegisterByOpName(const std::string &op_nam
     return true;
   }
   return false;
+}
+
+void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> new_inputs;
+  auto primitive = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  primitive = primitive->Clone();
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
+    return;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  auto inputs = cnode->inputs();
+  new_inputs.push_back(inputs[0]);
+  bool need_update = false;
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (IsPrimitiveCNode(input_node, prim::kPrimDepend)) {
+      input_node = AnfUtils::VisitKernel(input_node, 0).first;
+    }
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
+      if (i >= input_names_vec.size()) {
+        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+      }
+      auto value = value_node->value();
+      if (value->isa<tensor::Tensor>()) {
+        auto tensor = value->cast<tensor::TensorPtr>();
+        if (tensor->data().const_data() == nullptr) {
+          need_update = false;
+          break;
+        }
+      }
+      primitive->set_attr(input_names_vec[i], value);
+      need_update = true;
+    } else {
+      new_inputs.push_back(inputs[i + 1]);
+    }
+  }
+  if (need_update) {
+    // Update cnode's inputs
+    new_inputs[0] = NewValueNode(primitive);
+    cnode->set_inputs(new_inputs);
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

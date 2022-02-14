@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
 #include "backend/common/session/session_factory.h"
-#include "backend/common/optimizer/const_input_to_attr_registry.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "backend/graph_compiler/transform.h"

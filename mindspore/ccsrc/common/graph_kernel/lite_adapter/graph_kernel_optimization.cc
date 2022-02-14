@@ -28,11 +28,18 @@
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
+#include "common/graph_kernel/lite_adapter/convert_const_input_to_attr.h"
 #include "common/graph_kernel/lite_adapter/graph_kernel_pass_manager.h"
 
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
 using opt::GraphOptimizer;
+
+PassManagerPtr GraphKernelOptimizer::PreProcess() const {
+  auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+  pm->AddPass(std::make_shared<ConvertConstInputToAttr>(), OptLevel_1);
+  return pm;
+}
 
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "cluster");
@@ -71,6 +78,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
 
 void GraphKernelOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
+  optimizer->AddPassManager(PreProcess());
   optimizer->AddPassManager(Cluster());
   optimizer->AddPassManager(Split());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_REGISTRY_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_REGISTRY_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_H_
 #include <string>
 
+#include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/ms_utils.h"
@@ -66,6 +67,8 @@ struct ConstInputToAttrInfoReceiver {
     ConstInputToAttrInfoRegistry::Instance().Register(reg);
   }
 };
+
+void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs);
 }  // namespace opt
 
 #define REG_CONST_INPUT_TO_ATTR(op_name) REG_CONST_INPUT_TO_ATTR_UNIQ_HELPER(__COUNTER__, op_name)
@@ -75,4 +78,4 @@ struct ConstInputToAttrInfoReceiver {
     ::mindspore::opt::ConstInputToAttrInfoRegister(op_name)
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_REGISTRY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_CONST_INPUT_TO_ATTR_H_
