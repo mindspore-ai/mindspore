@@ -65,9 +65,9 @@ def control_flow_single_if(input_net, x, y, expect1, expect2):
 
     forward_net = input_net()
     graph_forward_res = forward_net(x, y)
-    graph_backward_res = grad_net(x, y)
-
     assert graph_forward_res == expect1
+
+    graph_backward_res = grad_net(x, y)
     assert graph_backward_res == expect2
 
 
@@ -79,9 +79,9 @@ def control_flow_single_if(input_net, x, y, expect1, expect2):
 def test_single_if():
     x = Tensor(2, mstype.int32)
     y = Tensor(5, mstype.int32)
-    expect1 = Tensor(26, mstype.int32)
-    expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
-    control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
+    expect1 = Tensor(13, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32), Tensor(1, mstype.int32))
+    control_flow_single_if(SingleIfNet, x, y, expect1, expect2)
 
 
 @pytest.mark.level1
