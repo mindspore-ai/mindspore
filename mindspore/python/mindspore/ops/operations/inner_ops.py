@@ -649,3 +649,22 @@ class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
                     learning_rate_type, grad_type, param_type, exp_avg_type, exp_avg_sq_row_type,
                     exp_avg_sq_col_type, exp_avg_sq_type, global_norm_type):
         return param_type
+
+
+class ScaleGrad(PrimitiveWithInfer):
+    """
+    Scale the input grad according to the loss scale.
+
+    Inputs:
+        - **gradients** (list of Tensor or tupe of Tensor).
+
+    Outputs:
+        tuple[Tensor], the shape of each output tensor is the same to the input gradient.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScaleGrad"""
