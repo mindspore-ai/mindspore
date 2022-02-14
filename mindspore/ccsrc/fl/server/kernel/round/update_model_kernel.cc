@@ -25,7 +25,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-constexpr uint32_t kRetryCountOfWaitWeightAggregation = 30;
+constexpr uint32_t kRetryCountOfWaitWeightAggregation = 15 * 60;
 void UpdateModelKernel::InitKernel(size_t threshold_count) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
@@ -150,7 +150,11 @@ void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::Message
       MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
                    << total_data_size;
       if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
-        FinishIteration();
+        if (executor_->IsAllWeightAggregationDone()) {
+          FinishIteration(true);
+        } else {
+          FinishIteration(false);
+        }
       }
     });
     last_count_thread_->detach();
@@ -184,6 +188,27 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     return ResultCode::kSuccessAndReturn;
   }
 
+  std::unordered_map<std::string, size_t> feature_map;
+  auto upload_feature_map = update_model_req->feature_map();
+  MS_ERROR_IF_NULL_W_RET_VAL(upload_feature_map, ResultCode::kSuccessAndReturn);
+  for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
+    const auto &item = upload_feature_map->Get(i);
+    MS_ERROR_IF_NULL_W_RET_VAL(item, ResultCode::kSuccessAndReturn);
+    MS_ERROR_IF_NULL_W_RET_VAL(item->weight_fullname(), ResultCode::kSuccessAndReturn);
+    MS_ERROR_IF_NULL_W_RET_VAL(item->data(), ResultCode::kSuccessAndReturn);
+
+    std::string weight_full_name = item->weight_fullname()->str();
+    size_t weight_size = item->data()->size() * sizeof(float);
+    feature_map[weight_full_name] = weight_size;
+  }
+
+  if (!LocalMetaStore::GetInstance().verifyFeatureMap(feature_map)) {
+    auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
+    std::string reason = "Verify model feature map failed, retry later at time: " + std::to_string(next_req_time);
+    BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));
+    MS_LOG(WARNING) << reason;
+    return ResultCode::kSuccessAndReturn;
+  }
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   MS_LOG(DEBUG) << "UpdateModel for fl id " << update_model_fl_id;
 
