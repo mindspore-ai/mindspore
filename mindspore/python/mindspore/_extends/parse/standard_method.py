@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 
-from mindspore import Tensor, Parameter
+from mindspore import Tensor, Parameter, CSRTensor, COOTensor
 from mindspore import dtype as mstype
 
 from ..._checkparam import Validator as validator
@@ -1571,6 +1571,32 @@ def while_cond(x):
         if is_cond:
             return F.cast(x, mstype.bool_)
     return x
+
+
+def coo_to_csr(x):
+    row_indices = x.indices[:, 0]
+    col_indices = x.indices[:, 1]
+    idx_dtype = x.indices.dtype
+    row_indices, sort_idx = F.sort(row_indices.astype(mstype.float32))
+    row_indices = row_indices.astype(idx_dtype)
+    col_indices = col_indices[sort_idx]
+    values = x.values[sort_idx]
+    indptr = F.coo2csr(row_indices, x.shape[0])
+    return CSRTensor(indptr, col_indices, values, x.shape)
+
+
+def coo_to_dense(x):
+    zeros_tensor = F.zeros(x.shape, x.values.dtype)
+    return F.tensor_scatter_update(zeros_tensor, x.indices, x.values)
+
+def csr_to_coo(x):
+    row_indices = F.csr2coo(x.indptr, x.values.shape[0])
+    coo_indices = P.Stack(1)((row_indices, x.indices))
+    return COOTensor(coo_indices, x.values, x.shape)
+
+def csr_to_dense(x):
+    coo_tensor = x.to_coo()
+    return coo_tensor.to_dense()
 
 
 @constexpr

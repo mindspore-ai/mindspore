@@ -191,7 +191,6 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
     }
     auto new_node = cnode->func_graph()->NewCNode(new_inputs);
     new_node->set_abstract(node->abstract());
-    AnfAlgo::SetNodeAttr("is_csr", MakeValue(true), new_node);
     return new_node;
   }
 

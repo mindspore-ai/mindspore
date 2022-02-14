@@ -164,6 +164,9 @@ constexpr auto kCSRDenseMul = "CSRDenseMul";
 constexpr auto kCSRReduceSum = "CSRReduceSum";
 constexpr auto kCSRMV = "CSRMV";
 constexpr auto kCSRMul = "CSRMul";
+constexpr auto kCSRGather = "CSRGather";
+constexpr auto kCSR2COO = "CSR2COO";
+constexpr auto kCOO2CSR = "COO2CSR";
 
 // Meta Function Graph
 constexpr auto kJ = "J";
@@ -606,6 +609,9 @@ GVAR_DEF(PrimitivePtr, kPrimCSRDenseMul, std::make_shared<Primitive>(kCSRDenseMu
 GVAR_DEF(PrimitivePtr, kPrimCSRReduceSum, std::make_shared<Primitive>(kCSRReduceSum));
 GVAR_DEF(PrimitivePtr, kPrimCSRMV, std::make_shared<Primitive>(kCSRMV));
 GVAR_DEF(PrimitivePtr, kPrimCSRMul, std::make_shared<Primitive>(kCSRMul));
+GVAR_DEF(PrimitivePtr, kPrimCSRGather, std::make_shared<Primitive>(kCSRGather));
+GVAR_DEF(PrimitivePtr, kPrimCSR2COO, std::make_shared<Primitive>(kCSR2COO));
+GVAR_DEF(PrimitivePtr, kPrimCOO2CSR, std::make_shared<Primitive>(kCOO2CSR));
 
 // TensorList
 GVAR_DEF(PrimitivePtr, kPrimTensorListFromTensor, std::make_shared<Primitive>("TensorListFromTensor"));

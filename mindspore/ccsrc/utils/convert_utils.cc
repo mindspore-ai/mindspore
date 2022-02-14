@@ -320,7 +320,8 @@ size_t CountValueNum(const ValueTuplePtr &value_tuple) {
 
 bool IsCustomCSROP(const AnfNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  const PrimitiveSet prims{prim::kPrimCSRReduceSum, prim::kPrimCSRMul, prim::kPrimCSRMV};
+  const PrimitiveSet prims{prim::kPrimCSRReduceSum, prim::kPrimCSRMul,  prim::kPrimCSRMV,
+                           prim::kPrimCSRGather,    prim::kPrimCSR2COO, prim::kPrimCOO2CSR};
   return IsOneOfPrimitiveCNode(cnode, prims);
 }
 }  // namespace mindspore

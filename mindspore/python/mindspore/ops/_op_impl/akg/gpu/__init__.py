@@ -25,4 +25,7 @@ from .notequal import _notequal_akg
 from .csr_reduce_sum import _csr_reduce_sum_akg
 from .csr_mv import _csr_mv_akg
 from .csr_mul import _csr_mul_akg
+from .csr_gather import _csr_gather_akg
+from .csr2coo import _csr2coo_akg
+from .coo2csr import _coo2csr_akg
 # Please insert op register in lexicographical order of the filename.

@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""CSRMV op"""
+"""COO2CSR op"""
 from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
 
-csr_mv_op_info = AkgGpuRegOp("CSRMV") \
+coo2csr_op_info = AkgGpuRegOp("COO2CSR") \
     .fusion_type("OPAQUE") \
-    .input(0, "indptr") \
-    .input(1, "indices") \
-    .input(2, "values") \
-    .input(4, "dense_tensor") \
+    .input(0, "row_indices") \
     .output(0, "output") \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.F32_Default, \
-                  DataType.F32_Default, \
-                  DataType.F32_Default) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 
-@op_info_register(csr_mv_op_info)
-def _csr_mv_akg():
-    """CSRMV AutoDiff register"""
+@op_info_register(coo2csr_op_info)
+def _coo2csr_akg():
+    """COO2CSR AutoDiff register"""
     return

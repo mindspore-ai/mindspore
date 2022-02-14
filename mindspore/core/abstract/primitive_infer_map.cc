@@ -236,6 +236,9 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCSRMul, R{InferImplCSRMul, nullptr, true}},
     {prim::kPrimCSRMV, R{InferImplCSRMV, nullptr, true}},
     {prim::kPrimCSRReduceSum, R{InferImplCSRReduceSum, nullptr, true}},
+    {prim::kPrimCSRGather, R{InferImplCSRGather, nullptr, true}},
+    {prim::kPrimCSR2COO, R{InferImplCSR2COO, nullptr, true}},
+    {prim::kPrimCOO2CSR, R{InferImplCOO2CSR, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, R{InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},
