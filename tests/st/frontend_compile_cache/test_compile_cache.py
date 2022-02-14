@@ -277,3 +277,17 @@ def test_compile_cache_lenet_ps():
     Expectation: success.
     """
     run_lenet_ps_twice("run_lenet_ps.py", "./lenet_ps", "lenet_ps_first.txt", "lenet_ps_second.txt")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_compile_cache_ms_function():
+    """
+    Feature: Compile cache.
+    Description: Test whether the compile cache function can run successfully in the compilation of ms_function.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_lenet_ms_function.py", "./lenet_ms_function", "lenet_ms_function_first.txt",
+                                "lenet_ms_function_second.txt")
