@@ -29,6 +29,7 @@
 #ifdef ENABLE_D
 #include "debug/dump_data_builder.h"
 #endif
+#include "runtime/device/device_address.h"
 
 using debugger::Chunk;
 using debugger::DataType;
@@ -41,6 +42,8 @@ using debugger::WatchCondition;
 using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
+using DeviceTensor = mindspore::device::DeviceAddress;
+using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 
 template <class T>
 using ProtoVector = google::protobuf::RepeatedPtrField<T>;
@@ -77,7 +80,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // reset debugger
   void Reset();
 
-  void PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs);
+  void PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs,
+                               const std::vector<AnfNodePtr> &origin_parameters_order);
   // enable debugger
   // send graph and wait for command
   // do nothing if graph is set already
@@ -86,6 +90,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void SetCurrentAndPrevRootGraph(uint32_t root_graph_id);
 
   void SetAscendKernelByKernelFlag(bool value) { ascend_kernel_by_kernel_ = value; }
+
+  bool GetAscendKernelByKernelFlag() const { return ascend_kernel_by_kernel_; }
 
   void StoreRunGraphIdList(uint32_t graph_id);
 
@@ -97,11 +103,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   static uint32_t GetRankID();
 
-  void Dump(const KernelGraphPtr &kernel_graph) const;
+  void DumpConstantDataAscend(const KernelGraphPtr &graph);
 
   void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
-
-  void DumpSetup(const KernelGraphPtr &kernel_graph) const;
 
   void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
 
@@ -144,6 +148,12 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadParametersAndConst(const KernelGraphPtr &graph);
 
+  void LoadParametersAllGraphs();
+
+  void LoadConstsForGraph(const KernelGraphPtr &graph);
+
+  void DumpParamsAndConstAndHistory();
+
   void UpdateStepNum(const session::KernelGraph *graph);
 
   void UpdateStepNumGPU();
@@ -151,8 +161,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void ClearCurrentData();
 
   void LoadGraphOutputs();
-
-  void LoadNodeOutputs(const CNodePtr &node, uint32_t exec_order, uint32_t root_graph_id);
 
   void CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);
 
@@ -163,6 +171,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   uint32_t GetCurrentRootGraphId() const { return cur_root_graph_id_; }
 
   uint32_t GetPrevRootGraphId() const { return prev_root_graph_id_; }
+
+  std::vector<KernelGraphPtr> GetStepGraphPtrList() const { return graph_ptr_step_vec_; }
 
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
@@ -181,6 +191,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::map<uint32_t, int32_t> GetGraphIterMap() { return graph_iter_num_map_; }
 
   void UpdateGraphIterMap(uint32_t graph_id, int32_t iter_num);
+
+  std::vector<AnfNodePtr> GetParametersMindRT() const { return parameters_mindRT_; }
 
 #ifdef ENABLE_D
   std::shared_ptr<DumpDataBuilder> LoadDumpDataBuilder(const std::string &node_name);
@@ -273,6 +285,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index, uint32_t root_graph_id);
 
+  void LoadSingleParameterMindRT(const AnfNodePtr &anf_node);
+
   // class members
 
   std::unique_ptr<GrpcClient> grpc_client_;
@@ -303,6 +317,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::list<KernelGraphPtr> graph_ptr_list_;
   // The vector of graph pointers that have been run in the current step.
   std::vector<KernelGraphPtr> graph_ptr_step_vec_;
+  // The vector of all the parameters for the current step for mindRT.
+  std::vector<AnfNodePtr> parameters_mindRT_;
+  std::vector<uint32_t> visited_root_graph_ids_;
 
   // map to store iter num in each epoch when dataset_sink_mode is true
   std::map<uint32_t, int32_t> graph_iter_num_map_;

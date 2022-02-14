@@ -64,7 +64,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_);
+        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -80,7 +80,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       }
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDumpAscend(cnode, exec_order_);
+        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -109,7 +109,9 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
-void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
+void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
+                                  const std::vector<AnfNodePtr> &origin_parameters_order,
+                                  std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
@@ -125,7 +127,7 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
   }
   auto debugger = Debugger::GetInstance();
   if (debugger != nullptr && debugger->DebuggerBackendEnabled()) {
-    debugger->PreExecuteGraphDebugger(graphs);
+    debugger->PreExecuteGraphDebugger(graphs, origin_parameters_order);
   }
 #endif
 

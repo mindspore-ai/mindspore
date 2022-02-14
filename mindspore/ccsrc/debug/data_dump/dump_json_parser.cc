@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,20 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
+  auto single_op = common::GetEnv(kGraphOpRun);
   auto config_path = common::GetEnv(kMindsporeDumpConfig);
   if (config_path.empty()) {
+    return false;
+  }
+  // Dump is supported with Ascend kernel-by-kernel mode (mindRT) when kGraphOpRun is set.
+  if (!single_op.empty() && single_op == "1" && !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    if (!dump_enabled_warning_printed_) {
+      MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
+                         "sink, so that the data can be dumped.";
+      // Only print the warning once.
+      dump_enabled_warning_printed_ = true;
+    }
+
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;
@@ -699,6 +711,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
                        << " Input:" << GetKernelNodeName(input);
           update_kernels.try_emplace(GetKernelNodeName(input), 0);
+          cell_dump_kernels_.push_back(GetKernelNodeName(input));
         }
       }
     }
