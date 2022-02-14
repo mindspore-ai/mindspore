@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -208,6 +208,7 @@ def test_case_7():
 
     ds.config.set_enable_shared_mem(mem_original)
 
+
 def test_case_8():
     """
     Test PyFunc
@@ -241,6 +242,7 @@ def test_case_8():
 
     ds.config.set_enable_shared_mem(mem_original)
 
+
 def test_case_9():
     """
     Test PyFunc
@@ -265,6 +267,7 @@ def test_case_9():
         i = i + 4
 
     ds.config.set_enable_shared_mem(mem_original)
+
 
 def test_case_10():
     """
@@ -292,6 +295,7 @@ def test_case_10():
         i = i + 4
 
     ds.config.set_enable_shared_mem(mem_original)
+
 
 def test_pyfunc_implicit_compose():
     """
@@ -326,7 +330,7 @@ def test_pyfunc_exception():
     # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
     it._cleanup()  # pylint: disable=W0212
 
-    def pyfunc(x):
+    def pyfunc():
         raise Exception("Pyfunc Throw")
 
     with pytest.raises(RuntimeError) as info:
@@ -339,11 +343,20 @@ def test_pyfunc_exception():
         assert "Pyfunc Throw" in str(info.value)
 
 
-def skip_test_pyfunc_exception_multiprocess():
+def test_pyfunc_exception_multiprocess():
+    """
+    Feature: PyFunc in Map op
+    Description: Test python_multiprocessing=True with exception in child pyfunc process
+    Expectation: Exception is received and test ends gracefully
+    """
     logger.info("Test Multiprocess PyFunc Exception Throw: lambda x : raise Exception()")
 
-    def pyfunc(x):
+    def pyfunc():
         raise Exception("MP Pyfunc Throw")
+
+    # Reduce memory required by disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
 
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
@@ -353,6 +366,8 @@ def skip_test_pyfunc_exception_multiprocess():
         for _ in data1:
             pass
         assert "MP Pyfunc Throw" in str(info.value)
+
+    ds.config.set_enable_shared_mem(mem_original)
 
 
 def test_func_with_yield_manifest_dataset_01():
@@ -382,6 +397,7 @@ def test_func_mixed_with_ops():
     Description: will decrease num_parallel_worker into 1
     Expectation: success
     """
+
     def generator_func():
         for i in range(1, 5):
             yield (np.ones(shape=[2, i]),)
@@ -417,6 +433,6 @@ if __name__ == "__main__":
     test_case_10()
     test_pyfunc_implicit_compose()
     test_pyfunc_exception()
-    skip_test_pyfunc_exception_multiprocess()
+    test_pyfunc_exception_multiprocess()
     test_func_with_yield_manifest_dataset_01()
     test_func_mixed_with_ops()
