@@ -45,18 +45,27 @@ class Adagrad(Optimizer):
     <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_.
     Adagrad can adaptively assign different learning rates to each parameter in response to the uneven number of
     samples for different parameters.
-    The updating formulas are as follows,
+    The updating Pseudo codes are as follows,
 
     .. math::
-        \begin{array}{ll} \\
-            h_{t+1} = h_{t} + g*g\\
-            w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
-        \end{array}
-
-    :math:`h` represents the cumulative sum of gradient squared,
-    :math:`g` represents `grads`,
-    :math:`lr` represents `learning_rate`,
-    :math:`w` represents `params`.
+       \begin{aligned}
+            &\rule{110mm}{0.4pt}                                                                 \\
+            &\textbf{Input}      : lr \text{ (learning rate)}, \: w_0 \text{ (params)}, \: f(w)
+                \text{ (objective)}, \: \lambda \text{ (weight decay)},                          \\
+            &\hspace{12mm}    accum \text{ (initial accumulator value)} \\
+            &\textbf{Initialize} :  state\_sum_0 \leftarrow 0.1                             \\[-1.ex]
+            &\rule{110mm}{0.4pt}                                                                 \\
+            &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
+            &\hspace{5mm}g_t           \leftarrow   \nabla_{w} f_t (w_{t-1})           \\
+            &\hspace{5mm} \textbf{if} \: \lambda \neq 0                                          \\
+            &\hspace{10mm} g_t \leftarrow g_t + \lambda w_{t-1}                             \\
+            &\hspace{5mm}state\_sum_t  \leftarrow  state\_sum_{t-1} + g^2_t                      \\
+            &\hspace{5mm}w_t \leftarrow
+                w_{t-1}- lr \frac{g_t}{\sqrt{state\_sum_t}}            \\
+            &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
+            &\bf{return} \:  w_t                                                     \\[-1.ex]
+            &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
+       \end{aligned}
 
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without

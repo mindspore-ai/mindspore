@@ -28,13 +28,13 @@ class MeanSurfaceDistance(Metric):
     to S(A) is defined as:
 
     .. math::
-        {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert \
+        {\text{dis}}\left (v, S(A)\right ) = \underset{s_{A}  \in S(A)}{\text{min }}\rVert v - s_{A} \rVert
 
     The Average Surface Distance from set(B) to set(A) is given by:
 
     .. math::
-        AvgSurDis(B\rightarrow A) = \frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}  \
-        left ( s_{B}, S(A) \right )} } {\left | S(B) \right |}
+        AvgSurDis(B \rightarrow A) = \frac{\sum_{s_{B}  \in S(B)}^{} {\text{dis}  \left
+        ( s_{B}, S(A) \right )} } {\left | S(B) \right |}
 
     Where the \|\|\*\|\| denotes a distance measure. \|\*\| denotes the number of elements.
 
@@ -51,7 +51,7 @@ class MeanSurfaceDistance(Metric):
         symmetric (bool): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math:`AvgSurDis(y_pred\rightarrow y)`,
                           otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
-                          :math:`MeanSurDis(A \leftrightarrow B)`, will be returned. Default: False.
+                          :math:`MeanSurDis(y_pred \leftrightarrow y)`, will be returned. Default: False.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

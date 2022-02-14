@@ -136,10 +136,11 @@ class OcclusionSensitivity(Metric):
                 `y_pred`: a batch of images to test, which could be 2D or 3D.
                 `label`: classification labels to check for changes. `label` is normally the true label, but
                 doesn't have to be.
+                `model` is the neural network.
 
         Raises:
             ValueError: If the number of inputs is not 3.
-            RuntimeError: If the batch size is not 1.
+            RuntimeError: If y_pred.shape[0] is not 1.
             RuntimeError: If the number of labels is different from the number of batches.
         """
         if len(inputs) != 3:

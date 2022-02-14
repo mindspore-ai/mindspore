@@ -73,7 +73,7 @@ class HausdorffDistance(Metric):
         \begin{array}{ll} \\
                 H(A, B) = \text{max}[h(A, B), h(B, A)]\\
                 h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}\\
-                h(A, B) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+                h(B, A) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
         \end{array}
 
     where h(A,B) is the maximum distance of a set A to the nearest point in the set B, h(B,A) is the maximum distance
