@@ -86,13 +86,14 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
 
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
-int MixedBitQuantFilter(const AnfNodePtr &node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
-                        QuantType quant_type, WeightQuantType weight_quant_type, TypeId quant_data_type,
-                        double init_scale, int index);
+int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                        const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry);
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 
-int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims);
+int GetPreferredDim(const CNodePtr &cnode, const PrimitivePtr &primitive, int input_index,
+                    const std::vector<int> &dims);
 
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
@@ -121,10 +122,10 @@ int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lit
 }
 
 template <typename T>
-int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
-                        QuantType quant_type, int quant_max, int quant_min, size_t bit_num,
-                        WeightQuantType weight_quant_type, TypeId quant_data_type, int index, bool symmetry = false,
-                        bool narrow_range = false, bool k_means = false) {
+int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                        const PrimitivePtr &primitive, QuantType quant_type, int quant_max, int quant_min,
+                        size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
+                        int preferred_dim, bool symmetry = false, bool narrow_range = false, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -146,7 +147,6 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &we
   std::vector<T> quant_data(elem_count);
   int ret = RET_OK;
   if (weight_quant_type == FIXED_BIT_PER_CHANNEL) {
-    int preferred_dim = GetPreferredDim(primitive, index, ConvertShapeVectorToInt32(dims));
     ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                                static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
                                quant_min, bit_num, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
@@ -166,9 +166,10 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter, const tensor::TensorPtr &we
     }
   } else {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
+    return RET_ERROR;
   }
   auto status =
-    UpdateTensorDataAndSize(parameter, weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
+    UpdateTensorDataAndSize(parameter_node, weight, quant_data.data(), quant_data.size() * sizeof(T), quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;

@@ -53,7 +53,7 @@ class InsertQuantNodeManager {
 
  private:
   TypeId dst_type_ = kNumberTypeInt8;
-  bool symmetric_ = true;
+  bool symmetric_ = false;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_INSERT_QUANT_NODE_MANAGER_H

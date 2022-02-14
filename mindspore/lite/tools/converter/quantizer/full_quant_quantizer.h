@@ -57,8 +57,8 @@ class FullQuantQuantizer : public Quantizer {
   int QuantNode(const FuncGraphPtr &func_graph);
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
-  int DoParameterWeightQuant(const ParameterPtr &weight, const PrimitivePtr &primitive, bool per_channel,
-                             int input_index) const;
+  int DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight, const PrimitivePtr &primitive,
+                             bool per_channel, int input_index) const;
   int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
                              int input_index) const;
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);

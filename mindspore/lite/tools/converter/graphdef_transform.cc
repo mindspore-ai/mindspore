@@ -54,7 +54,7 @@ std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT
 int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) {
   MS_ASSERT(graph_defT != nullptr);
   // quantization
-  if (ctx.commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
+  if (ctx.commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
     {
       // quantization
       // init old node indices

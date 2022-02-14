@@ -24,6 +24,7 @@
 #include "include/version.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/gather.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -32,6 +33,7 @@
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "nnacl/op_base.h"
 
 using std::string;
 using std::vector;
@@ -45,6 +47,7 @@ constexpr int kSingleDirBiasTensorSize = 4;
 constexpr int kLstmBiasShapeSize = 2;
 constexpr int kLstmBiasIndex = 3;
 constexpr size_t kBitNumPerByte = 8;
+constexpr size_t kGatherAxisIndex = 3;
 
 int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
                                  const float *raw_datas, const QuantParamHolderPtr &quant_param_holder,
@@ -414,10 +417,30 @@ int GetDeConvPreferredDim(const PrimitivePtr &primitive, const std::vector<int> 
   return 0;
 }
 
+int GetGatherPreferredDim(const CNodePtr &cnode) {
+  if (cnode->size() < kGatherAxisIndex + 1) {
+    MS_LOG(WARNING) << "gather cnode size < 4.";
+    return 0;
+  }
+  auto axis = cnode->input(kGatherAxisIndex);
+  tensor::TensorPtr tensor_info;
+  ParameterPtr parameter;
+  GetLiteParameter(axis, &parameter, &tensor_info);
+  size_t elem_count = tensor_info->DataSize();
+  if (elem_count != 1) {
+    MS_LOG(WARNING) << "gather axis data elem_count" << elem_count << " != 1.";
+    return 0;
+  } else {
+    auto *axis_data = static_cast<int *>(tensor_info->data_c());
+    return axis_data[0];
+  }
+  return 0;
+}
+
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first) {
   auto channels = dims[0];
   if (!(*channel_at_first)) {
-    if (dims.size() != 2) {
+    if (dims.size() != DIMENSION_2D) {
       MS_LOG(WARNING) << "unexpected dims size: " << dims.size();
       *channel_at_first = true;
     } else {
@@ -429,11 +452,14 @@ int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_
   return channels;
 }
 
-int GetPreferredDim(const PrimitivePtr &primitive, int input_index, const std::vector<int> &dims) {
+int GetPreferredDim(const CNodePtr &cnode, const PrimitivePtr &primitive, int input_index,
+                    const std::vector<int> &dims) {
   if (primitive->name() == ops::kNameMatMulFusion) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {
     return 0;
+  } else if (primitive->name() == ops::kNameGather) {
+    return GetGatherPreferredDim(cnode);
   }
   // The first index.
   return 0;
@@ -485,9 +511,9 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
   }
 }
 
-int MixedBitQuantFilter(const AnfNodePtr &node, const tensor::TensorPtr &weight, const PrimitivePtr &primitive,
-                        QuantType quant_type, WeightQuantType weight_quant_type, TypeId quant_data_type,
-                        double init_scale, int index) {
+int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                        const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();
@@ -517,17 +543,17 @@ int MixedBitQuantFilter(const AnfNodePtr &node, const tensor::TensorPtr &weight,
     const int quant_min = QuantMin(k8Bit, false, false);  // -128
     const int quant_max = QuantMax(k8Bit);                // 127
     MS_LOG(WARNING)
-      << node->fullname_with_scope()
+      << parameter_node->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
-    return FixedBitQuantFilter<int8_t>(node, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min, k8Bit,
-                                       FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index);
+    return FixedBitQuantFilter<int8_t>(parameter_node, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
+                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index, preferred_dim, symmetry);
   }
   if (ret != RET_OK) {
     return ret;
   }
 
-  auto status =
-    UpdateTensorDataAndSize(node, weight, quant_data.data(), quant_data.size() * sizeof(int16_t), quant_data_type);
+  auto status = UpdateTensorDataAndSize(parameter_node, weight, quant_data.data(), quant_data.size() * sizeof(int16_t),
+                                        quant_data_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;

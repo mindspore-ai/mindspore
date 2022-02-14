@@ -81,8 +81,9 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
   return RET_OK;
 }
 
-int FullQuantQuantizer::DoParameterWeightQuant(const ParameterPtr &weight, const PrimitivePtr &primitive,
-                                               bool per_channel, int input_index) const {
+int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight,
+                                               const PrimitivePtr &primitive, bool per_channel, int input_index) const {
+  CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(primitive);
   auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
@@ -90,10 +91,12 @@ int FullQuantQuantizer::DoParameterWeightQuant(const ParameterPtr &weight, const
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
+  int preferred_dim =
+    GetPreferredDim(cnode, primitive, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status =
-    FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_, weight_q_min_,
-                                bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetry_, true);
+  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_,
+                                            weight_q_min_, bit_num_, weight_quant_type, kNumberTypeInt8,
+                                            input_index - 1, preferred_dim, weight_symmetry_, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -171,13 +174,13 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
       return ret;
     }
   } else if (CheckNodeInSet(cnode, per_channel_ops_)) {
-    ret = DoParameterWeightQuant(input_node, primitive, true, input_index);
+    ret = DoParameterWeightQuant(cnode, input_node, primitive, true, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else {
-    ret = DoParameterWeightQuant(input_node, primitive, false, input_index);
+    ret = DoParameterWeightQuant(cnode, input_node, primitive, false, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;

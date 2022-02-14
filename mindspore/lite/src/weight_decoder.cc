@@ -19,6 +19,7 @@
 #include "src/huffman_decode.h"
 #include "tools/converter/quantizer/fse_decoder.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/gather_parameter.h"
 
 namespace mindspore::lite {
 namespace {
@@ -430,6 +431,12 @@ int WeightDecoder::GetDeConvPreferredDim(const OpParameter *op_parameter, const 
   }
 }
 
+int WeightDecoder::GetGatherPreferredDim(const OpParameter *op_parameter) {
+  MS_ASSERT(op_parameter != nullptr);
+  const auto *param = reinterpret_cast<const GatherParameter *>(op_parameter);
+  return param->axis_;
+}
+
 bool IsChannelFirst(int index, const OpParameter *op_parameter) {
   MS_ASSERT(op_parameter != nullptr);
   if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
@@ -443,7 +450,7 @@ bool IsChannelFirst(int index, const OpParameter *op_parameter) {
   return true;
 }
 
-int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims,
+int WeightDecoder::GetPreferredDim(const OpParameter *op_parameter, int index, const std::vector<int> &dims,
                                    const std::string &model_version) {
   const int first_version_offset = 5;
   if (model_version.empty() ||
@@ -454,6 +461,8 @@ int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const s
     return GetMatMulPreferredDim(op_parameter, index, dims);
   } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
     return 0;
+  } else if (op_parameter->type_ == schema::PrimitiveType_Gather) {
+    return GetGatherPreferredDim(op_parameter);
   }
   // The first index.
   return 0;
