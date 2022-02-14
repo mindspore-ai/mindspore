@@ -519,10 +519,10 @@ void AbstractSequence::InsertSequenceNode(const AnfNodePtr &sequence_node) {
                  [&sequence_node](const AnfNodeWeakPtr &weak_node) { return sequence_node == weak_node.lock(); });
   if (iter == sequence_nodes_->end()) {
     sequence_nodes_->emplace_back(sequence_node);
+    CheckSequenceNodesValid(*sequence_nodes_);
   } else {
-    MS_LOG(INFO) << "Fail to insert node \'" << sequence_node->DebugString() << "\' into sequence nodes.";
+    MS_LOG(DEBUG) << "Fail to insert node \'" << sequence_node->DebugString() << "\' into sequence nodes.";
   }
-  CheckSequenceNodesValid(*sequence_nodes_);
 }
 
 void AbstractSequence::UpdateSequenceNode(const AnfNodePtr &old_sequence_node, const AnfNodePtr &new_sequence_node) {
