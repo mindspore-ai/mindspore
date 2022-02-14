@@ -439,7 +439,7 @@ class WarmUpLR(LearningRateSchedule):
 
     Where :
 
-    .. math:
+    .. math::
         tmp\_step=min(current\_step, warmup\_steps)
 
     Args:

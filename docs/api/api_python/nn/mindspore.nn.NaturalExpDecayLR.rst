@@ -29,7 +29,7 @@ mindspore.nn.NaturalExpDecayLR
 
     **输入：**
 
-    - **global_step** （Tensor）：当前step数。
+    - **global_step** （Tensor）：当前step数，即current_step。
 
     **输出：**
 
