@@ -29,20 +29,20 @@ Status LFilterOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<
   } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
     std::vector<double> a_coeffs_double;
     std::vector<double> b_coeffs_double;
-    for (int i = 0; i < a_coeffs_.size(); i++) {
+    for (auto i = 0; i < a_coeffs_.size(); i++) {
       a_coeffs_double.push_back(static_cast<double>(a_coeffs_[i]));
     }
-    for (int i = 0; i < b_coeffs_.size(); i++) {
+    for (auto i = 0; i < b_coeffs_.size(); i++) {
       b_coeffs_double.push_back(static_cast<double>(b_coeffs_[i]));
     }
     return LFilter(input, output, a_coeffs_double, b_coeffs_double, clamp_);
   } else {
     std::vector<float16> a_coeffs_float16;
     std::vector<float16> b_coeffs_float16;
-    for (int i = 0; i < a_coeffs_.size(); i++) {
+    for (auto i = 0; i < a_coeffs_.size(); i++) {
       a_coeffs_float16.push_back(static_cast<float16>(a_coeffs_[i]));
     }
-    for (int i = 0; i < b_coeffs_.size(); i++) {
+    for (auto i = 0; i < b_coeffs_.size(); i++) {
       b_coeffs_float16.push_back(static_cast<float16>(b_coeffs_[i]));
     }
     return LFilter(input, output, a_coeffs_float16, b_coeffs_float16, clamp_);

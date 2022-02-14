@@ -37,7 +37,7 @@ class Caltech256Node : public MappableSourceNode {
                  std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~Caltech256Node() = default;
+  ~Caltech256Node() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -41,7 +40,7 @@ class DistributedSamplerObj : public SamplerObj {
   DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed,
                         int64_t offset, bool even_dist);
 
-  ~DistributedSamplerObj();
+  ~DistributedSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -80,7 +79,6 @@ class DistributedSamplerObj : public SamplerObj {
   int64_t offset_;
   bool even_dist_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_DISTRIBUTED_SAMPLER_IR_H_

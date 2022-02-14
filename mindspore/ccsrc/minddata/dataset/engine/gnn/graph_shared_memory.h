@@ -50,9 +50,9 @@ class GraphSharedMemory {
 
   Status GetData(uint8_t *data, int64_t data_len, int64_t offset, int64_t get_data_len);
 
-  key_t memory_key() { return memory_key_; }
+  key_t memory_key() const { return memory_key_; }
 
-  int64_t memory_size() { return memory_size_; }
+  int64_t memory_size() const { return memory_size_; }
 
  private:
   Status SharedMemoryImpl(const int &shmflg);

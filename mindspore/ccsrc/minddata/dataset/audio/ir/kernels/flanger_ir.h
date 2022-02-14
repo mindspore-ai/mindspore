@@ -37,7 +37,7 @@ class FlangerOperation : public TensorOperation {
   explicit FlangerOperation(int32_t sample_rate, float delay, float depth, float regen, float width, float speed,
                             float phase, Modulation modulation, Interpolation interpolation);
 
-  ~FlangerOperation() = default;
+  ~FlangerOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

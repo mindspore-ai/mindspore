@@ -33,7 +33,7 @@ class SpectralCentroidOperation : public TensorOperation {
   SpectralCentroidOperation(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad,
                             WindowType window);
 
-  ~SpectralCentroidOperation() = default;
+  ~SpectralCentroidOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

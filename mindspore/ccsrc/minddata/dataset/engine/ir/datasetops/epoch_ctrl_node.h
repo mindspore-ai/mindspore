@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class EpochCtrlNode : public RepeatNode {
   // Allow GeneratorNode to access internal members
   friend class GeneratorNode;
@@ -40,7 +39,7 @@ class EpochCtrlNode : public RepeatNode {
   EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
 
   /// \brief Destructor
-  ~EpochCtrlNode() = default;
+  ~EpochCtrlNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -75,7 +74,6 @@ class EpochCtrlNode : public RepeatNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_EPOCH_CTRL_NODE_H_

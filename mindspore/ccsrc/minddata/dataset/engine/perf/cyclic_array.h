@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CYCLIC_ARRAY_H
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CYCLIC_ARRAY_H
 
-#include <memory>
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <type_traits>
+
 #include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {
-
 /// \class CyclicArray "include/cyclic_array.h
 /// \brief This is a container with a contiguous memory layout that pnly keeps N last entries,
 ///        when the number of entries exceeds the capacity
@@ -164,11 +164,11 @@ class CyclicArray {
 
   /// \brief pushes a value
   /// \param[in] val value
-  void push_back(T val) {
+  void push_back(const T &val) {
     buf_[tail_] = val;
     if (size_ >= capacity_) {
-      (tail_ != capacity_) ? tail_++ : tail_ = 0;
-      (head_ != capacity_) ? head_++ : head_ = 0;
+      (tail_ != capacity_) ? tail_++ : (tail_ = 0);
+      (head_ != capacity_) ? head_++ : (head_ = 0);
     } else {
       tail_++;
       size_++;

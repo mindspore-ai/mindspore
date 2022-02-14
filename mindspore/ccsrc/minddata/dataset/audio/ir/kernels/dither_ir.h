@@ -35,7 +35,7 @@ class DitherOperation : public TensorOperation {
  public:
   DitherOperation(DensityFunction density_function, bool noise_shaping);
 
-  ~DitherOperation() = default;
+  ~DitherOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

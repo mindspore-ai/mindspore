@@ -32,7 +32,7 @@ class SlidingWindowCmnOperation : public TensorOperation {
  public:
   SlidingWindowCmnOperation(int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars);
 
-  ~SlidingWindowCmnOperation();
+  ~SlidingWindowCmnOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

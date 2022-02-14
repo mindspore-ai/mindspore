@@ -36,7 +36,7 @@ class BandBiquadOperation : public TensorOperation {
  public:
   BandBiquadOperation(int32_t sample_rate, float central_freq, float Q, bool noise);
 
-  ~BandBiquadOperation() = default;
+  ~BandBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

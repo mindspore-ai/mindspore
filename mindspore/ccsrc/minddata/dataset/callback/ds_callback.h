@@ -34,7 +34,7 @@ class DSCallback {
   explicit DSCallback(int32_t step_size = 1) : step_size_(step_size) {}
 
   /// \brief Destructor
-  ~DSCallback() = default;
+  virtual ~DSCallback() = default;
 
   /// \brief actual callback function for begin, needs to be overridden in the derived class
   /// \param cb_param, callback parameter passed in from DatasetOp when calling the callback

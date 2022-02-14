@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 #ifndef ENABLE_ANDROID
 class MindRecordSamplerObj : public SamplerObj {
  public:
@@ -34,7 +33,7 @@ class MindRecordSamplerObj : public SamplerObj {
   MindRecordSamplerObj() : shard_reader_(nullptr) {}
 
   /// \brief Destructor
-  ~MindRecordSamplerObj() = default;
+  ~MindRecordSamplerObj() override = default;
 
   /// \brief Convert a MindRecordSamplerObj into a runtime MindRecordSamplerRT object
   ///        Note that this function not only creates a runtime sampler object, but also creates a ShardReader,
@@ -61,7 +60,6 @@ class MindRecordSamplerObj : public SamplerObj {
   std::unique_ptr<mindrecord::ShardReader> shard_reader_;
 };
 #endif
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDRECORD_SAMPLER_IR_H

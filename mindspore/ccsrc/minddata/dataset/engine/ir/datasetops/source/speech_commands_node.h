@@ -31,7 +31,7 @@ class SpeechCommandsNode : public MappableSourceNode {
                      std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~SpeechCommandsNode() = default;
+  ~SpeechCommandsNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

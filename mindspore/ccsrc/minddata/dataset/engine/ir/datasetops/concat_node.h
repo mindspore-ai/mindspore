@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class ConcatNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -36,7 +35,7 @@ class ConcatNode : public DatasetNode {
                       const std::vector<std::pair<int, int>> &children_start_end_index = {});
 
   /// \brief Destructor
-  ~ConcatNode() = default;
+  ~ConcatNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -89,11 +88,6 @@ class ConcatNode : public DatasetNode {
   const std::vector<std::pair<int, int>> &ChildrenFlagAndNums() const { return children_flag_and_nums_; }
   const std::vector<std::pair<int, int>> &ChildrenStartEndIndex() const { return children_start_end_index_; }
 
- private:
-  std::shared_ptr<SamplerObj> sampler_;
-  std::vector<std::pair<int, int>> children_flag_and_nums_;
-  std::vector<std::pair<int, int>> children_start_end_index_;
-
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
@@ -105,8 +99,12 @@ class ConcatNode : public DatasetNode {
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
-};
 
+ private:
+  std::shared_ptr<SamplerObj> sampler_;
+  std::vector<std::pair<int, int>> children_flag_and_nums_;
+  std::vector<std::pair<int, int>> children_start_end_index_;
+};
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_CONCAT_NODE_H_

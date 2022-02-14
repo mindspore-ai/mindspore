@@ -50,7 +50,7 @@ enum SystemMemoryMetric { kMemoryAvailable, kMemoryTotal, kMemoryUsed };
 
 // Profiling is a class of basic unit of profiling action
 // This base class encapsulate the serialization output logic
-class Profiling : std::enable_shared_from_this<Profiling> {
+class Profiling : public std::enable_shared_from_this<Profiling> {
  public:
   // Constructor
   Profiling() : active_(false) {}
@@ -88,7 +88,8 @@ class Sampling : public Profiling {
  public:
   // Sampling action function. This function will be invoked by performance monitor thread.
   virtual Status Sample() = 0;
-  virtual ~Sampling() = default;
+
+  ~Sampling() override = default;
 };
 
 typedef struct TracingRecord_s {
@@ -185,7 +186,7 @@ class ProfilingManager {
   // @param step_num - The number of steps
   void RecordEndOfEpoch(uint32_t step_num);
 
-  const std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() { return sampling_nodes_; }
+  const std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() const { return sampling_nodes_; }
 
   // Launch monitoring thread.
   Status LaunchMonitor();

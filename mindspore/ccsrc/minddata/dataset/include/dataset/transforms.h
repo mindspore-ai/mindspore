@@ -62,7 +62,7 @@ class MS_API TensorTransform : public std::enable_shared_from_this<TensorTransfo
   TensorTransform() = default;
 
   /// \brief Destructor
-  ~TensorTransform() = default;
+  virtual ~TensorTransform() = default;
 
  protected:
   /// \brief Pure virtual function to convert a TensorTransform class into a IR TensorOperation object.

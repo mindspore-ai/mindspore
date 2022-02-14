@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class PhotoTourNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
@@ -33,7 +32,7 @@ class PhotoTourNode : public MappableSourceNode {
                 std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~PhotoTourNode() = default;
+  ~PhotoTourNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
@@ -94,7 +93,6 @@ class PhotoTourNode : public MappableSourceNode {
   std::string usage_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_PHOTO_TOUR_NODE_H_

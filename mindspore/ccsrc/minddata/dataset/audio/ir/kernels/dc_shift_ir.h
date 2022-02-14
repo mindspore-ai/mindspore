@@ -34,7 +34,7 @@ class DCShiftOperation : public TensorOperation {
  public:
   DCShiftOperation(float shift, float limiter_gain);
 
-  ~DCShiftOperation() = default;
+  ~DCShiftOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

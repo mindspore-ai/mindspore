@@ -37,7 +37,7 @@ class DetectPitchFrequencyOperation : public TensorOperation {
   DetectPitchFrequencyOperation(int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low,
                                 int32_t freq_high);
 
-  ~DetectPitchFrequencyOperation() = default;
+  ~DetectPitchFrequencyOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

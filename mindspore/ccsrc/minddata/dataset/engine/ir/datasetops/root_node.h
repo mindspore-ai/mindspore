@@ -35,7 +35,7 @@ class RootNode : public DatasetNode {
   explicit RootNode(std::shared_ptr<DatasetNode> child);
 
   /// \brief Destructor
-  ~RootNode() = default;
+  ~RootNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -55,10 +55,10 @@ class RootNode : public DatasetNode {
   Status Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) override;
 
   /// \brief Getter of number of epochs
-  int32_t num_epochs() { return num_epochs_; }
+  int32_t num_epochs() const { return num_epochs_; }
 
   /// \brief Setter of number of epochs
-  void SetNumEpochs(int32_t num_epochs) { num_epochs_ = num_epochs; }
+  void SetNumEpochs(int32_t num_epochs) override { num_epochs_ = num_epochs; }
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
@@ -79,7 +79,6 @@ class RootNode : public DatasetNode {
  private:
   int32_t num_epochs_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ROOT_NODE_H_

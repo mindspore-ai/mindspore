@@ -33,7 +33,7 @@ class ComplexNormOperation : public TensorOperation {
  public:
   explicit ComplexNormOperation(float power);
 
-  ~ComplexNormOperation();
+  ~ComplexNormOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

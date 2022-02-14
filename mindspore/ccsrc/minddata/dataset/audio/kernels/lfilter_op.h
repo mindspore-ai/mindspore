@@ -29,18 +29,18 @@ namespace dataset {
 
 class LFilterOp : public TensorOp {
  public:
-  LFilterOp(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp)
+  LFilterOp(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
       : a_coeffs_(a_coeffs), b_coeffs_(b_coeffs), clamp_(clamp) {}
 
   ~LFilterOp() override = default;
 
   void Print(std::ostream &out) const override {
     out << Name() << ": a_coeffs: ";
-    for (int i = 0; i < a_coeffs_.size(); i++) {
+    for (auto i = 0; i < a_coeffs_.size(); i++) {
       out << a_coeffs_[i] << " ";
     }
     out << "b_coeffs: ";
-    for (int i = 0; i < b_coeffs_.size(); i++) {
+    for (auto i = 0; i < b_coeffs_.size(); i++) {
       out << b_coeffs_[i] << " ";
     }
     out << "clamp: " << clamp_ << std::endl;

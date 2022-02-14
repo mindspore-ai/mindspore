@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class BuildVocabNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -35,7 +34,7 @@ class BuildVocabNode : public DatasetNode {
                  const std::vector<std::string> &special_tokens, bool special_first);
 
   /// \brief Destructor
-  ~BuildVocabNode() = default;
+  ~BuildVocabNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -86,7 +85,6 @@ class BuildVocabNode : public DatasetNode {
   std::vector<std::string> special_tokens_;
   bool special_first_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUILD_VOCAB_NODE_H_

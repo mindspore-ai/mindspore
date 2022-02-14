@@ -25,16 +25,15 @@
 
 namespace mindspore {
 namespace dataset {
-
 class CityscapesNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
   CityscapesNode(const std::string &dataset_dir, const std::string &usage, const std::string &quality_mode,
-                 const std::string &task, bool decode, std::shared_ptr<SamplerObj> sampler,
-                 std::shared_ptr<DatasetCache> cache);
+                 const std::string &task, bool decode, const std::shared_ptr<SamplerObj> &sampler,
+                 const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
-  ~CityscapesNode() = default;
+  ~CityscapesNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
@@ -105,7 +104,6 @@ class CityscapesNode : public MappableSourceNode {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CITYSCAPES_NODE_H_

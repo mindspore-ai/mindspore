@@ -32,7 +32,7 @@ class TimeMaskingOperation : public TensorOperation {
  public:
   TimeMaskingOperation(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value);
 
-  ~TimeMaskingOperation();
+  ~TimeMaskingOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

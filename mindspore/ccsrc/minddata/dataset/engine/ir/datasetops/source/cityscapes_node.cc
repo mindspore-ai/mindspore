@@ -28,14 +28,14 @@ namespace dataset {
 // Constructor for CityscapesNode
 CityscapesNode::CityscapesNode(const std::string &dataset_dir, const std::string &usage,
                                const std::string &quality_mode, const std::string &task, bool decode,
-                               std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache)
-    : MappableSourceNode(std::move(cache)),
+                               const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache)
+    : MappableSourceNode(cache),
       dataset_dir_(dataset_dir),
       usage_(usage),
       quality_mode_(quality_mode),
       task_(task),
-      sampler_(sampler),
-      decode_(decode) {}
+      decode_(decode),
+      sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> CityscapesNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();

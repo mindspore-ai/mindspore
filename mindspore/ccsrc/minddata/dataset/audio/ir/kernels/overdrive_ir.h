@@ -37,7 +37,7 @@ class OverdriveOperation : public TensorOperation {
  public:
   explicit OverdriveOperation(float gain, float color);
 
-  ~OverdriveOperation() = default;
+  ~OverdriveOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

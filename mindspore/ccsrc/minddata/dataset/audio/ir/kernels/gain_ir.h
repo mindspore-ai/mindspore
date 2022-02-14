@@ -35,7 +35,7 @@ class GainOperation : public TensorOperation {
  public:
   explicit GainOperation(float gain_db);
 
-  ~GainOperation() = default;
+  ~GainOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

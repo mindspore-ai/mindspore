@@ -34,7 +34,7 @@ class AmplitudeToDBOperation : public TensorOperation {
  public:
   AmplitudeToDBOperation(ScaleType stype, float ref_value, float amin, float top_db);
 
-  ~AmplitudeToDBOperation();
+  ~AmplitudeToDBOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

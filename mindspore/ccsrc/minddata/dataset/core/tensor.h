@@ -225,7 +225,8 @@ class Tensor {
   static Status from_json(nlohmann::json op_params, std::shared_ptr<Tensor> *tensor);
 
   template <typename T>
-  static Status from_json_convert(nlohmann::json json_data, TensorShape shape, std::shared_ptr<Tensor> *tensor);
+  static Status from_json_convert(const nlohmann::json &json_data, const TensorShape &shape,
+                                  std::shared_ptr<Tensor> *tensor);
 
   /// Get item located at `index`, caller needs to provide the type.
   /// \tparam T
@@ -481,6 +482,9 @@ class Tensor {
     ~TensorIterator() = default;
 
     TensorIterator<T> &operator=(const TensorIterator<T> &rhs) {
+      if (this == &rhs) {
+        return *this;
+      }
       ptr_ = rhs.ptr_;
       return *this;
     }
@@ -565,7 +569,7 @@ class Tensor {
     using pointer = std::string_view *;
     using reference = std::string_view &;
 
-    explicit TensorIterator(uchar *data = nullptr, dsize_t index = 0) {
+    explicit TensorIterator(const uchar *data = nullptr, dsize_t index = 0) {
       data_ = reinterpret_cast<const char *>(data);
       index_ = index;
     }
@@ -795,7 +799,7 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
   *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}),
                                       DataType(DataType::DE_STRING));
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
-  if (items.size() == 0) {
+  if (items.empty()) {
     if (shape.known()) {
       return (*out)->Reshape(shape);
     }

@@ -35,7 +35,7 @@ class EqualizerBiquadOperation : public TensorOperation {
  public:
   EqualizerBiquadOperation(int32_t sample_rate, float center_freq, float gain, float Q);
 
-  ~EqualizerBiquadOperation() = default;
+  ~EqualizerBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -40,7 +39,7 @@ class WeightedRandomSamplerObj : public SamplerObj {
  public:
   explicit WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
-  ~WeightedRandomSamplerObj();
+  ~WeightedRandomSamplerObj() override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -67,7 +66,6 @@ class WeightedRandomSamplerObj : public SamplerObj {
   int64_t num_samples_;
   bool replacement_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_WEIGHTED_RANDOM_SAMPLER_IR_H_

@@ -68,7 +68,7 @@ class TreeAdapter {
   Status GetNext(TensorRow *);
 
   // unique_ptr overloads operator bool(), will return false if it doesn't manage an object
-  std::weak_ptr<DatasetOp> GetRoot() { return tree_ ? tree_->root() : nullptr; }
+  std::weak_ptr<DatasetOp> GetRoot() const { return tree_ ? tree_->root() : nullptr; }
 
   // This function will return the column_name_map once BuildAndPrepare() is called
   std::unordered_map<std::string, int32_t> GetColumnNameMap() const { return column_name_map_; }

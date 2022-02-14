@@ -34,7 +34,7 @@ class AGNewsNode : public NonMappableSourceNode {
              int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor.
-  ~AGNewsNode() = default;
+  ~AGNewsNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.
