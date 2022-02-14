@@ -25,15 +25,18 @@ namespace kernel {
 using mindspore::device::TensorArrayMgr;
 using mindspore::device::TensorArrayPtr;
 TensorArrayStackCpuKernelMod::TensorArrayStackCpuKernelMod()
-    : handle_(0), value_size_(0), ele_size_(0), type_(nullptr) {
+    : handle_(0), value_size_(0), ele_size_(0), type_(nullptr), is_dynamic_(true) {
   ResetResource();
 }
 
 void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   auto max_element = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "max_element");
+  is_dynamic_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_dynamic_shape");
+  auto size = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
   for (auto i : shape) {
     shapes_.push_back(LongToSize(i));
   }
@@ -42,7 +45,11 @@ void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (auto i : shapes_) {
     ele_size_ *= i;
   }
-  value_size_ = ele_size_ * LongToSize(max_element);
+  if (is_dynamic_) {
+    value_size_ = ele_size_ * LongToSize(max_element);
+  } else {
+    value_size_ = ele_size_ * LongToSize(size);
+  }
   output_size_list_.push_back(value_size_);
   input_size_list_.push_back(sizeof(int64_t));
 }
@@ -61,6 +68,7 @@ void TensorArrayStackCpuKernelMod::ResetResource() noexcept {
   handle_ = 0;
   value_size_ = 0;
   ele_size_ = 0;
+  is_dynamic_ = true;
   shapes_.clear();
   input_size_list_.clear();
   output_size_list_.clear();
@@ -73,6 +81,14 @@ bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   auto out_value = GetDeviceAddress<unsigned char>(outputs, 0);
   MS_EXCEPTION_IF_NULL(out_value);
   MS_EXCEPTION_IF_NULL(handle_addr);
+
+  // Set out_value to zeros when TensorArray in static size.
+  if (!is_dynamic_) {
+    auto ret = memset_s(out_value, outputs[0]->size, 0, value_size_);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed, errorno(" << ret << ")";
+    }
+  }
   handle_ = handle_addr[0];
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
   MS_EXCEPTION_IF_NULL(tensors_);
@@ -85,10 +101,12 @@ bool TensorArrayStackCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     MS_EXCEPTION_IF_NULL(src_addr);
     auto ret = memcpy_s(out_value + ele_size_ * i, out_ele_size, src_addr, ele_size_);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memcpy failed, errorno(" << ret << ")";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy failed, errorno(" << ret << ")";
     }
   }
-  PostExecute();
+  if (is_dynamic_) {
+    PostExecute();
+  }
   return true;
 }
 }  // namespace kernel

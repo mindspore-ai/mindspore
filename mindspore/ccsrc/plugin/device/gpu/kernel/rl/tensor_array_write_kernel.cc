@@ -60,9 +60,7 @@ bool TensorArrayWriteKernelMod::Launch(const std::vector<AddressPtr> &inputs, co
                                              reinterpret_cast<cudaStream_t>(stream)),
                              "Get indexd failed");
   int64_t handle = 0;
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                             cudaMemcpyAsync(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
-                                             reinterpret_cast<cudaStream_t>(stream)),
+  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&handle, handle_addr, sizeof(int64_t), cudaMemcpyDeviceToHost),
                              "Get handle to host failed");
   GPUTensorArrayPtr tensors_ =
     std::dynamic_pointer_cast<GPUTensorArray>(TensorArrayMgr::GetInstance().GetTensorArray(handle));
