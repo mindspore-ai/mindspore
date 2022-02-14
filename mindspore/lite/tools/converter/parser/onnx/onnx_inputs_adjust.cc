@@ -176,7 +176,7 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
     return lite::RET_ERROR;
   }
   auto anf_node = cnode->input(1);
-  MS_ASSERT(anf_node != nullptr);
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, lite::RET_ERROR, "cnode's input is a nullptr.");
   auto param_node = anf_node->cast<ParameterPtr>();
   if (param_node == nullptr || param_node->has_default()) {
     MS_LOG(DEBUG) << "input is not graph input";
@@ -293,6 +293,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
       auto new_param_node = opt::BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
       if (new_param_node == nullptr) {
         MS_LOG(ERROR) << "new a parameter node failed.";
+        return lite::RET_ERROR;
       }
       manager->AddEdge(cnode, new_param_node);
       break;

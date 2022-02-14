@@ -92,6 +92,7 @@ bool Nc4hw4PassMatch(const std::vector<kernel::LiteKernel *> *kernels, size_t in
   if (start_kernel->out_kernels().size() != 1) {
     return false;
   }
+  MS_CHECK_TRUE_MSG(start_kernel->op_parameter() != nullptr, false, "kernel->op_parameter() is nullptr.");
   if (reinterpret_cast<ConvParameter *>(start_kernel->op_parameter())->group_ != 1) {
     /* conv-depthwise and group-conv */
     return false;
@@ -143,6 +144,7 @@ bool RuntimePassValid(kernel::SubGraphKernel *subgraph) {
   auto kernels = subgraph->nodes();
 
   for (auto kernel : kernels) {
+    MS_CHECK_TRUE_MSG(kernel != nullptr, false, "kernel is nullptr.");
     if (kernel->op_parameter() != nullptr) {
       if (kernel->op_parameter()->quant_type_ == schema::QuantType_AwareTraining ||
           kernel->op_parameter()->quant_type_ == schema::QuantType_PostTraining) {
@@ -192,6 +194,7 @@ void ConvNormC4PassActIndex(std::vector<kernel::LiteKernel *> *kernels, size_t i
   if (start_kernel->out_kernels().size() != 1) {
     return;
   }
+  CHECK_NULL_RETURN_VOID(start_kernel->op_parameter());
   if (reinterpret_cast<ConvParameter *>(start_kernel->op_parameter())->group_ != 1) {
     /* conv-depthwise and group-conv */
     return;
