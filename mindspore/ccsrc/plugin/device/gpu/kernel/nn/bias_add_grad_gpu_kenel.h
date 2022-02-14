@@ -44,7 +44,9 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
         cudnn_compute_format_(CUDNN_TENSOR_NCHW),
         dy_desc_(nullptr),
         db_desc_(nullptr),
-        op_desc_(nullptr) {}
+        op_desc_(nullptr) {
+    ResetResource();
+  }
   ~BiasAddGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -137,6 +139,29 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
       CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(dy_desc_),
                                  "cudnnDestroyOpTensorDescriptor failed");
     }
+  }
+
+  void ResetResource() noexcept override {
+    same_dims_ = true;
+    is_null_input_ = false;
+    kernel_name_ = "BiasAddGrad";
+    use_cudnn_ = false;
+    dy_num_ = 1;
+    db_num_ = 1;
+    num_dims_ = 0;
+    bias_size_ = 0;
+    dy_shape_.clear();
+    db_shape_.clear();
+    data_format_ = kOpFormat_NCHW;
+    cudnn_handle_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
+    dy_desc_ = nullptr;
+    db_desc_ = nullptr;
+    op_desc_ = nullptr;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

@@ -47,7 +47,9 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
         batch_size_(0),
         channel_size_(0),
         height_(0),
-        width_(0) {}
+        width_(0) {
+    ResetResource();
+  }
   ~SoftmaxGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -153,6 +155,33 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
                                "destroy output_descriptor failed");
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(input_descriptor_),
                                "destroy input_descriptor failed");
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    input_descriptor_ = nullptr;
+    output_descriptor_ = nullptr;
+    algo_ = CUDNN_SOFTMAX_ACCURATE;
+    mode_ = CUDNN_SOFTMAX_MODE_INSTANCE;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    is_null_input_ = false;
+    kernel_name_ = "Softmax";
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    input_shape_.clear();
+    transpose_shape_.clear();
+    transpose_axis_.clear();
+    need_transpose_ = false;
+    shape_size_ = 0;
+    batch_size_ = 0;
+    channel_size_ = 0;
+    height_ = 0;
+    width_ = 0;
+    workspace_size_list_.clear();
   }
 
  protected:
