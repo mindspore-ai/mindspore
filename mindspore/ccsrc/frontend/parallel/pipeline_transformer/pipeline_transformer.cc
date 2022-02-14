@@ -517,26 +517,30 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, con
   return std::make_pair(shape_list, dtype);
 }
 
-AnfNodePtr GetTrueNode(const AnfNodePtr &node, int64_t get_item_index) {
-  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad)) {
-    return GetTrueNode(node->cast<CNodePtr>()->input(1), get_item_index);
+AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node = nullptr) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
+      IsPrimitiveCNode(node, prim::kPrimCast)) {
+    return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node);
   }
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     auto cnode = node->cast<CNodePtr>();
     auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
     auto tuple_getitem_input = cnode->input(1);
-    auto pass_through_node = GetTrueNode(tuple_getitem_input, cur_get_item_index);
-    return GetTrueNode(pass_through_node, get_item_index);
+    auto pass_through_node = GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node);
+    return GetRealKernelNode(pass_through_node, get_item_index, call_node);
   }
   if (get_item_index != -1 && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     auto make_tuple_cnode = node->cast<CNodePtr>();
     auto make_tuple_input = make_tuple_cnode->input(LongToSize(get_item_index + 1));
-    return GetTrueNode(make_tuple_input, -1);
+    return GetRealKernelNode(make_tuple_input, -1, call_node);
   }
   if (node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
+    if (call_node != nullptr && *call_node == nullptr) {
+      *call_node = node->cast<CNodePtr>();
+    }
     auto cnode = node->cast<CNodePtr>();
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto output = GetTrueNode(graph->output(), get_item_index);
+    auto output = GetRealKernelNode(graph->output(), get_item_index, call_node);
     MS_EXCEPTION_IF_NULL(output);
     if (output->isa<Parameter>()) {
       auto parameters = graph->parameters();
@@ -546,7 +550,7 @@ AnfNodePtr GetTrueNode(const AnfNodePtr &node, int64_t get_item_index) {
         return output;
       }
       auto pos = std::distance(parameters.begin(), pos_iter);
-      return GetTrueNode(cnode->input(LongToSize(pos + 1)), -1);
+      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node);
     }
     return output;
   }
@@ -555,7 +559,7 @@ AnfNodePtr GetTrueNode(const AnfNodePtr &node, int64_t get_item_index) {
 
 AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto real_node = GetTrueNode(node, -1);
+  auto real_node = GetRealKernelNode(node, -1);
   if (!real_node->isa<CNode>()) {
     return real_node;
   }
@@ -753,32 +757,9 @@ AnfNodePtr PipelineTransformer::ActualOp(const AnfNodePtr &node) {
 bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) {
   // ParameterGraph: graph which return a parameter
   MS_EXCEPTION_IF_NULL(node);
-  auto temp_node = ActualOp(node);
-  auto cnode = temp_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  // parameter_graph->return->graph
-  if (!IsValueNode<FuncGraph>(cnode->input(0))) {
-    return false;
-  }
-  auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(graph);
-  auto graph_out = graph->output();
-  MS_EXCEPTION_IF_NULL(graph_out);
-  auto actual_op = ActualOp(graph_out);
-  MS_EXCEPTION_IF_NULL(actual_op);
-  if (actual_op->isa<Parameter>()) {
-    auto parameter_list = graph->parameters();
-    // parameter_graph->parameter->return->graph
-    auto parameter_iter = std::find(parameter_list.begin(), parameter_list.end(), actual_op);
-    if (parameter_iter == parameter_list.end()) {
-      return true;
-    }
-    // parameter->graph->return->graph
-    auto pos = std::distance(parameter_list.begin(), parameter_iter);
-    if (!cnode->input(LongToSize(pos + 1))->isa<Parameter>()) {
-      return false;
-    }
+  CNodePtr call_node = nullptr;
+  auto real_kernel = GetRealKernelNode(node, -1, &call_node);
+  if (call_node != nullptr && real_kernel->isa<Parameter>()) {
     return true;
   }
   return false;
@@ -787,19 +768,9 @@ bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) {
 AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage,
                                                      int64_t user_stage, const ValuePtr &micro, size_t pos,
                                                      const std::vector<AnfNodePtr> &ops) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto actual_node = ActualOp(node);
-  auto cnode = actual_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(graph);
-  AnfNodePtr argument;
-  AnfNodePtr parameter;
+  CNodePtr call_node = nullptr;
+  auto argument = GetRealKernelNode(node, -1, &call_node);
 
-  auto graph_out = ActualOp(graph->output());
-  MS_EXCEPTION_IF_NULL(graph_out);
-  auto parameter_list = graph->parameters();
-  auto param_iter = std::find(parameter_list.begin(), parameter_list.end(), graph_out);
   auto use_cnode = use_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(use_cnode);
   if (!IsValueNode<FuncGraph>(use_cnode->input(0))) {
@@ -807,14 +778,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
   }
   auto use_graph = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
   auto use_parameter_list = use_graph->parameters();
-  parameter = use_parameter_list.at(pos - 1);
-  // argument->load->graph
-  if (param_iter == parameter_list.end()) {
-    argument = graph_out;
-  } else {
-    auto param_pos = std::distance(parameter_list.begin(), param_iter);
-    argument = cnode->input(LongToSize(param_pos + 1));
-  }
+  auto parameter = use_parameter_list.at(pos - 1);
 
   // insert receive
   if (stage_ == user_stage) {
