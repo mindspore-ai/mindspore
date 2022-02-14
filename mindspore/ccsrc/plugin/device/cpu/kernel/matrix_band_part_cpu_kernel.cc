@@ -46,9 +46,15 @@ bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
 
   const size_t l = (*lower < 0 || *lower > static_cast<int64_t>(m_)) ? m_ : *lower;
   const size_t u = (*upper < 0 || *upper > static_cast<int64_t>(n_)) ? n_ : *upper;
-  memset(out_value, 0, matrix_size_ * sizeof(T));
+  auto ret_s1 = memset_s(out_value, matrix_size_ * sizeof(T), 0, matrix_size_ * sizeof(T));
+  if (ret_s1 != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output to 0 failed. Error no: " << ret_s1;
+  }
   if (l >= m_ && u >= n_) {
-    memcpy_s(out_value, matrix_size_ * sizeof(T), in_value, matrix_size_ * sizeof(T));
+    auto ret_s2 = memcpy_s(out_value, matrix_size_ * sizeof(T), in_value, matrix_size_ * sizeof(T));
+    if (ret_s2 != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy to output failed. Error no: " << ret_s2;
+    }
     return true;
   }
   size_t diag_len = std::min(m_, l + n_);
@@ -61,7 +67,11 @@ bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
       // When i = n - u, end is n -1, because end pos is start from 0
       const size_t e = j >= n - u ? n - 1 : j + u;
       const size_t offset = i * m * n + j * n;
-      (void)memcpy_s(out_value + offset + s, matrix_size * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
+      auto ret_s3 =
+        memcpy_s(out_value + offset + s, matrix_size * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
+      if (ret_s3 != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy in loop failed. Error no: " << ret_s3;
+      }
     }
   };
   ParallelLaunch(func, out_range_size_ * diag_len);

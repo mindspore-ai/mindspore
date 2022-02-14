@@ -14,37 +14,37 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/math/matrix_diag_part_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/arrays/matrix_band_part_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+MS_REG_GPU_KERNEL_ONE(MatrixBandPart,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt32),
-                      MatrixDiagPartGpuKernelMod, int32_t)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+                      MatrixBandPartGpuKernelMod, int32_t)
+MS_REG_GPU_KERNEL_ONE(MatrixBandPart,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
-                      MatrixDiagPartGpuKernelMod, int64_t)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+                      MatrixBandPartGpuKernelMod, int64_t)
+MS_REG_GPU_KERNEL_ONE(MatrixBandPart,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      MatrixDiagPartGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+                      MatrixBandPartGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(MatrixBandPart,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat64),
-                      MatrixDiagPartGpuKernelMod, double)
+                      MatrixBandPartGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
