@@ -61,6 +61,8 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   StartUpdatePersistentCommandTimer();
   MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler, there are " << node_manager_.worker_num()
                << " workers and " << node_manager_.server_num() << " servers registered.";
+
+  InitializeActorRouteTableService();
   return true;
 }
 
@@ -201,6 +203,13 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
+  RegisterActorRouteTableServiceHandler();
+}
+
+void SchedulerNode::RegisterActorRouteTableServiceHandler() {
+  handlers_[NodeCommand::REGISTER_ACTOR_ROUTE] = &SchedulerNode::ProcessRegisterActorRoute;
+  handlers_[NodeCommand::DELETE_ACTOR_ROUTE] = &SchedulerNode::ProcessDeleteActorRoute;
+  handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &SchedulerNode::ProcessLookupActorRoute;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -476,6 +485,28 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
   }
 }
 
+void SchedulerNode::ProcessRegisterActorRoute(const std::shared_ptr<TcpServer> &server,
+                                              const std::shared_ptr<TcpConnection> &conn,
+                                              const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+  MS_ERROR_IF_NULL_WO_RET_VAL(actor_route_table_service_);
+  ActorAddress actor_address;
+  actor_address.ParseFromArray(data, SizeToInt(size));
+  std::string actor_id = actor_address.actor_id();
+
+  std::string error = "";
+  bool ret = actor_route_table_service_->RegisterRoute(actor_id, actor_address, &error);
+  GeneralResponse(server, conn, meta, ret, error);
+}
+
+void SchedulerNode::ProcessDeleteActorRoute(const std::shared_ptr<TcpServer> &server,
+                                            const std::shared_ptr<TcpConnection> &conn,
+                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {}
+
+void SchedulerNode::ProcessLookupActorRoute(const std::shared_ptr<TcpServer> &server,
+                                            const std::shared_ptr<TcpConnection> &conn,
+                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {}
+
 bool SchedulerNode::SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) {
   uint64_t request_id = AddMessageTrack(node_infos.size());
   for (const auto &kvs : node_infos) {
@@ -634,6 +665,11 @@ void SchedulerNode::StartUpdatePersistentCommandTimer() {
   });
 
   MS_EXCEPTION_IF_NULL(update_persistent_cmd_thread_);
+}
+
+void SchedulerNode::InitializeActorRouteTableService() {
+  actor_route_table_service_ = std::make_unique<ActorRouteTableService>();
+  MS_EXCEPTION_IF_NULL(actor_route_table_service_);
 }
 
 const std::shared_ptr<TcpClient> &SchedulerNode::GetOrCreateClient(const NodeInfo &node_info) {
@@ -1382,6 +1418,26 @@ void SchedulerNode::SetRegisterConnectionFd(const std::shared_ptr<TcpConnection>
   }
   MS_LOG(INFO) << "register client fd:" << fd << ", register client id:" << node_id;
   register_connection_fd_[fd] = node_id;
+}
+
+void SchedulerNode::GeneralResponse(const std::shared_ptr<TcpServer> &server,
+                                    const std::shared_ptr<TcpConnection> &conn,
+                                    const std::shared_ptr<MessageMeta> &meta, bool is_success,
+                                    const std::string &error) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+
+  GeneralResponseMsg general_response_message;
+  general_response_message.set_is_success(is_success);
+  general_response_message.set_error(error);
+
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, general_response_message.SerializeAsString().data(),
+                           general_response_message.ByteSizeLong())) {
+    MS_LOG(ERROR) << "Scheduler failed to respond message.";
+    return;
+  }
+  return;
 }
 }  // namespace core
 }  // namespace ps
