@@ -33,24 +33,32 @@ def _type_convert(new_type, obj):
 
 
 @constexpr
-def _raise_value_error(info):
+def _raise_value_error(info, *param):
     """
     Raise ValueError in both graph/pynative mode
 
     Args:
         info(str): info string to display
+        param(tuple): any object that can be recognized by graph mode. All
+            param's value will be appended to info. Default is an empty tuple.
     """
+    for p in param:
+        info = info + f"{p}"
     raise ValueError(info)
 
 
 @constexpr
-def _raise_type_error(info):
+def _raise_type_error(info, *param):
     """
     Raise TypeError in both graph/pynative mode
 
     Args:
         info(str): info string to display
+        param(tuple): any object that can be recognized by graph mode. All
+            param's value will be appended to info. Default is an empty tuple.
     """
+    for p in param:
+        info = info + f"{p}"
     raise TypeError(info)
 
 
