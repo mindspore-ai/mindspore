@@ -47,8 +47,9 @@ class KernelActor : public DebugAwareActor {
   KernelActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
               const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
               GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
-              const std::set<size_t> &modifiable_ref_output_indexes)
-      : DebugAwareActor(name, KernelTransformType::kKernelActor, recorder_aid, memory_manager_aid, debug_aid),
+              const std::set<size_t> &modifiable_ref_output_indexes,
+              const KernelTransformType &type = KernelTransformType::kKernelActor)
+      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         kernel_info_(nullptr),
         is_dynamic_shape_(false),

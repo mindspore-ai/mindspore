@@ -17,43 +17,37 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTO_RPC_RPC_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTO_RPC_RPC_ACTOR_H_
 
+#include <set>
 #include <vector>
 #include <string>
 #include <memory>
 #include <utility>
-#include "runtime/graph_scheduler/actor/debug_aware_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_actor.h"
 
 namespace mindspore {
 namespace runtime {
 using mindspore::device::KernelInfo;
 
 // RpcActor is used to do rpc with other processes in distributed execution.
-// Besides data arrows and controlling arrows, RpcActor also has iter-process arrows which is in charge of remote
+// Besides data arrows and controlling arrows, RpcActor also has inter-process arrows which is in charge of remote
 // communication with other processes. It supports both sync and async communication.
-class RpcActor : public DebugAwareActor {
+class RpcActor : public KernelActor {
  public:
-  RpcActor(const std::string &name, KernelTransformType type, const CNodePtr &kernel,
-           const DeviceContext *device_context, const AID &memory_manager_aid, const AID *debug_aid,
-           const AID *recorder_aid)
-      : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
-        rpc_kernel_(kernel),
-        kernel_info_(nullptr) {
-    (void)device_contexts_.emplace_back(device_context);
-  }
-  ~RpcActor() override = default;
-
-  const CNodePtr &kernel() const { return rpc_kernel_; }
+  RpcActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
+           const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+           GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
+           const std::set<size_t> &modifiable_ref_output_indexes, const KernelTransformType &type)
+      : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
+                    modifiable_ref_input_indexes, modifiable_ref_output_indexes, type) {}
+  virtual ~RpcActor() = default;
 
  protected:
-  // The arrows represent iter-process communication.
-  std::vector<AID> iter_process_input_arrows_;
-  std::vector<AID> iter_process_output_arrows_;
+  // The arrows represent inter-process communication.
+  std::vector<AID> inter_process_input_arrows_;
+  std::vector<AID> inter_process_output_arrows_;
 
  private:
   friend class GraphScheduler;
-
-  CNodePtr rpc_kernel_;
-  KernelInfo *kernel_info_;
 };
 
 using RpcActorPtr = std::shared_ptr<RpcActor>;
