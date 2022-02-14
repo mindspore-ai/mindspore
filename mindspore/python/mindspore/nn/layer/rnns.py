@@ -683,6 +683,9 @@ class GRU(_RNNBase):
     `Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation
     <https://aclanthology.org/D14-1179.pdf>`_.
 
+    Note:
+        When using GRU on Ascend, the hidden size only supports multiples of 16.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
