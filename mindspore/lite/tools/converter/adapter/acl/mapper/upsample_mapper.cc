@@ -38,7 +38,7 @@ STATUS UpsampleMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   if (cnode->inputs().size() != kInputNum) {
-    MS_LOG(ERROR) << "Upsample input num should be three, real size: " << cnode->inputs().size();
+    MS_LOG(ERROR) << "Upsample input num should be " << kInputNum << ", real size: " << cnode->inputs().size();
     return RET_ERROR;
   }
   TypeId type_id;
@@ -64,7 +64,7 @@ STATUS UpsampleMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodeP
   CHECK_NULL_RETURN(attr_val);
   std::vector<float> scale = opt::CastToFloat(attr_val);
   if (scale.size() < kScaleMinNum) {
-    MS_LOG(ERROR) << "Scale size must not be less than two, real size: " << scale.size();
+    MS_LOG(ERROR) << "Scale size must not be less than " << kScaleMinNum << ", real size: " << scale.size();
     return RET_ERROR;
   }
   MS_LOG(DEBUG) << "The scale value: " << scale[1];

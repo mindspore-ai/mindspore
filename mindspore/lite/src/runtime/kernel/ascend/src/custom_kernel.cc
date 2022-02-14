@@ -129,7 +129,7 @@ STATUS CustomAscendKernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *in
   if (!acl_options_.batch_size.empty()) {
     int32_t *batch_size = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
     if (batch_size == nullptr) {
-      MS_LOG(ERROR) << "Malloc failed.";
+      MS_LOG(ERROR) << "Malloc batch size failed.";
       return lite::RET_ERROR;
     }
     if (GetRealBatchSize(inputs, batch_size) != lite::RET_OK) {
@@ -142,6 +142,10 @@ STATUS CustomAscendKernel::ProcDynamicInput(std::vector<mindspore::MSTensor> *in
   }
   if (!acl_options_.image_size.empty()) {
     int32_t *image_size = reinterpret_cast<int32_t *>(malloc(kImageSizeHwNum * sizeof(int32_t)));
+    if (image_size == nullptr) {
+      MS_LOG(ERROR) << "Malloc image size failed.";
+      return lite::RET_ERROR;
+    }
     if (GetRealImageSize(inputs, image_size, kImageSizeHwNum) != lite::RET_OK) {
       MS_LOG(ERROR) << "Get real image size failed.";
       free(image_size);
