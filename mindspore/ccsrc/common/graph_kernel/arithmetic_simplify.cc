@@ -97,7 +97,7 @@ class PatternTree {
     return attrs_map;
   }
   // check attributes meet requirements for certain pattern node if needed;
-  virtual bool CheckAttributes(const inner::NodePtr &origin_root) const { return true; }
+  virtual bool CheckAttributes(const inner::NodePtr &) const { return true; }
 
  private:
   PatternNodePtr lhs_root_ = nullptr;  // left side's root

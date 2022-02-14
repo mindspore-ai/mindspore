@@ -258,7 +258,7 @@ class Graph {
 
 class CircleChecker {
  public:
-  explicit CircleChecker(GraphPtr graph) : graph_(graph) {}
+  explicit CircleChecker(const GraphPtr &graph) : graph_(graph) {}
   ~CircleChecker() = default;
 
   void RemoveCircle(std::vector<size_t> *candidates) {

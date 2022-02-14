@@ -23,7 +23,7 @@ class OpRegister {
   OpRegister(const std::string &name, const CreatorFunc &func) { OpRegistry::Instance().Register(name, func); }
   ~OpRegister() = default;
 
- private:
+ protected:
   // for pclint-plus
   bool rev_{false};
 };
