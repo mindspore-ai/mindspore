@@ -19,7 +19,6 @@
 #include "src/huffman_decode.h"
 #include "tools/converter/quantizer/fse_decoder.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/gather_parameter.h"
 
 namespace mindspore::lite {
 namespace {
@@ -365,7 +364,7 @@ int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tens
   int index = 0;
   for (auto &tensor : in_tensors) {
     MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
-    auto preferred_dim = GetPreferredDim(op_parameter, index++, tensor->shape(), model_version);
+    auto preferred_dim = GetPreferredDim(in_tensors, op_parameter, index++, tensor->shape(), model_version);
     auto ret = WeightDecoder::DequantTensor(tensor, preferred_dim, dst_data_type);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(DEBUG) << "Dequant tensor failed";
@@ -431,13 +430,7 @@ int WeightDecoder::GetDeConvPreferredDim(const OpParameter *op_parameter, const 
   }
 }
 
-int WeightDecoder::GetGatherPreferredDim(const OpParameter *op_parameter) {
-  MS_ASSERT(op_parameter != nullptr);
-  const auto *param = reinterpret_cast<const GatherParameter *>(op_parameter);
-  return param->axis_;
-}
-
-bool IsChannelFirst(int index, const OpParameter *op_parameter) {
+bool WeightDecoder::IsChannelFirst(int index, const OpParameter *op_parameter) {
   MS_ASSERT(op_parameter != nullptr);
   if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
     const auto *param = reinterpret_cast<const MatMulParameter *>(op_parameter);
@@ -448,24 +441,6 @@ bool IsChannelFirst(int index, const OpParameter *op_parameter) {
     }
   }
   return true;
-}
-
-int WeightDecoder::GetPreferredDim(const OpParameter *op_parameter, int index, const std::vector<int> &dims,
-                                   const std::string &model_version) {
-  const int first_version_offset = 5;
-  if (model_version.empty() ||
-      model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.6.0") {
-    return IsChannelFirst(index, op_parameter) ? 0 : 1;
-  }
-  if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
-    return GetMatMulPreferredDim(op_parameter, index, dims);
-  } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
-    return 0;
-  } else if (op_parameter->type_ == schema::PrimitiveType_Gather) {
-    return GetGatherPreferredDim(op_parameter);
-  }
-  // The first index.
-  return 0;
 }
 
 bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {

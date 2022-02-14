@@ -349,12 +349,19 @@ void TrainExport::PrepareRemap(int offset) {
 int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
                               const std::vector<std::pair<size_t, tensor_info>> &map_index,
                               const std::vector<std::string> &output_names, const std::set<size_t> &out_set) {
+  std::vector<mindspore::lite::Tensor *> in_tensors;
+  for (auto index : map_index) {
+    auto id = index.first;
+    size_t pid = id - static_cast<size_t>(offset);
+    mindspore::lite::Tensor *tensor = tensors.at(pid);
+    in_tensors.push_back(tensor);
+  }
   for (auto index : map_index) {
     auto id = index.first;
     size_t pid = id - static_cast<size_t>(offset);
     mindspore::lite::Tensor *tensor = tensors.at(pid);
     schema::Tensor *scTensor = model->all_tensors_.at(pid);
-    auto preferred_dim = WeightDecoder::GetPreferredDim(index.second.op_parameter, index.second.input_index,
+    auto preferred_dim = WeightDecoder::GetPreferredDim(in_tensors, index.second.op_parameter, index.second.input_index,
                                                         tensor->shape(), model->version_);
     auto tensorT = CreateTensor(tensor, scTensor, preferred_dim);
     if (tensorT == nullptr) {

@@ -89,6 +89,11 @@ typedef struct GatherQuantArg {
   int zp_out_;
 } GatherQuantArg;
 
+typedef struct DynamicGatherQuantArg {
+  float *scale_in_;
+  int *zp_in_;
+} DynamicGatherQuantArg;
+
 typedef struct SoftmaxQuantArg {
   QuantArg in_quant_args_;
   QuantArg out_quant_arg_;
