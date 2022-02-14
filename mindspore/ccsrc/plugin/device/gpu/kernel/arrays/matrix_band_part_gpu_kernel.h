@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DIAG_PART_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DIAG_PART_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_BAND_PART_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_BAND_PART_GPU_KERNEL_H
 
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <cusolverDn.h>
 #include <cuda_runtime.h>
 #include <vector>
-#include <string>
-#include <utility>
 #include <algorithm>
 #include "utils/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/matrix_diag_part_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/matrix_band_part_impl.cuh"
 #include "plugin/device/gpu/hal/device/cuda_common.h"
-#include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -39,11 +36,10 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
-class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
+class MatrixBandPartGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MatrixDiagPartGpuKernelMod() : is_null_input_(false) { ResetResource(); }
-
-  ~MatrixDiagPartGpuKernelMod() = default;
+  MatrixBandPartGpuKernelMod() : is_null_input_(false) {}
+  ~MatrixBandPartGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
@@ -64,27 +60,7 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
     }
     matrix_size_ = out_range_size_ * m_ * n_;
     InitSizeLists();
-    alignment_ = GetAlignments(AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
-    kernel_node_ = kernel_node;
     return true;
-  }
-
-  void PostExecute() override {
-    auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node_.lock(), 0);
-    output_shape[shapes_.size() - kDim1] = max_diag_len_;
-    // If the out shape m' * n', the m' dimension is 1, then remove this dimension
-    output_shape[shapes_.size() - kDim2] = num_diags_;
-    if (num_diags_ == 1) {
-      output_shape.erase(output_shape.begin() + shapes_.size() - kDim2);
-    }
-    auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
-    AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
-  }
-
-  void ResetResource() noexcept override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -93,28 +69,32 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
     auto input_matrix_addr = GetDeviceAddress<T>(inputs, kDim0);
-    auto d_k_range = GetDeviceAddress<int64_t>(inputs, kDim1);
-    auto padding_value = GetDeviceAddress<T>(inputs, kDim2);
+    auto lower_addr = GetDeviceAddress<int64_t>(inputs, kDim1);
+    auto upper_addr = GetDeviceAddress<int64_t>(inputs, kDim2);
     auto output_matrix_addr = GetDeviceAddress<T>(outputs, kDim0);
-
-    int64_t k_range[kDim2]{0, 0};
+    cudaMemsetAsync(output_matrix_addr, 0, matrix_size_ * sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+    int64_t lower = 0;
+    int64_t upper = 0;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&k_range, d_k_range, kDim2 * sizeof(int64_t), cudaMemcpyDeviceToHost,
+                               cudaMemcpyAsync(&lower, lower_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Copy input lower to host failed");
-    int64_t l = k_range[0];
-    int64_t u = k_range[1];
-    // New diagonal matrix m*n matrix, m dimension ;
-    if (l > u) {
-      MS_LOG(EXCEPTION) << "The k[1] must not less than k[0].";
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(&upper, upper_addr, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "Copy input upper to host failed");
+    const size_t l = (lower < 0 || lower > static_cast<int64_t>(m_)) ? m_ : lower;
+    const size_t u = (upper < 0 || upper > static_cast<int64_t>(n_)) ? n_ : upper;
+    // Return all
+    if (l >= m_ && u >= n_) {
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(output_matrix_addr, input_matrix_addr, matrix_size_ * sizeof(T),
+                                                 cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 "Copy return all input matrix failed");
+      return true;
     }
-    u = std::min(u, static_cast<int64_t>(n_) - 1);
-    l = std::max(-(static_cast<int64_t>(m_) - 1), l);
-    num_diags_ = u - l + 1;
-    // New diagonal matrix m * n matrix, n dimension
-    max_diag_len_ = std::min(m_ + std::min(u, static_cast<int64_t>(0)), n_ + std::min(-l, static_cast<int64_t>(0)));
-    MatrixDiagPart(out_range_size_ * num_diags_ * max_diag_len_, input_matrix_addr, m_, n_, l, u, num_diags_,
-                   max_diag_len_, alignment_.first, alignment_.second, padding_value, output_matrix_addr,
+    size_t diag_len = std::min(m_, l + n_);
+    MatrixBandPart(out_range_size_ * diag_len, input_matrix_addr, m_, n_, l, u, output_matrix_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -122,8 +102,8 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(matrix_size_ * sizeof(T));   // Input
-    input_size_list_.push_back(kDim2 * sizeof(int64_t));    // k_range
-    input_size_list_.push_back(sizeof(T));                  // padding_value
+    input_size_list_.push_back(sizeof(int64_t));            // Lower
+    input_size_list_.push_back(sizeof(int64_t));            // Upper
     output_size_list_.push_back(matrix_size_ * sizeof(T));  // Output
   }
 
@@ -134,13 +114,10 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
   size_t dim_size_{1};
   size_t matrix_size_{0};
   size_t out_range_size_{1};
-  int64_t num_diags_{1};
-  int64_t max_diag_len_{1};
   size_t m_{1};
   size_t n_{1};
-  std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> alignment_{MatrixDiag::RIGHT, MatrixDiag::LEFT};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_DIAG_PART_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_BAND_PART_GPU_KERNEL_H
