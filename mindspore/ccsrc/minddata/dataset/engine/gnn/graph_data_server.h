@@ -48,9 +48,9 @@ class GraphDataServer {
   Status ClientRegister(int32_t pid);
   Status ClientUnRegister(int32_t pid);
 
-  enum ServerState state() { return state_; }
+  enum ServerState state() const { return state_; }
 
-  bool IsStopped() {
+  bool IsStopped() const {
     if (state_ == kGdsStopped) {
       return true;
     } else {
@@ -86,7 +86,7 @@ class GraphDataServer {
 #if !defined(_WIN32) && !defined(_WIN64)
 class UntypedCall {
  public:
-  virtual ~UntypedCall() {}
+  virtual ~UntypedCall() = default;
 
   virtual Status operator()() = 0;
 
@@ -112,7 +112,7 @@ class CallData : public UntypedCall {
         handle_request_function_(handle_request_function),
         responder_(&ctx_) {}
 
-  ~CallData() = default;
+  ~CallData() override = default;
 
   static Status EnqueueRequest(ServiceImpl *service_impl, AsyncService *async_service, grpc::ServerCompletionQueue *cq,
                                EnqueueFunction enqueue_function, HandleRequestFunction handle_request_function) {

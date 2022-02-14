@@ -32,9 +32,12 @@ enum CsvType : uint8_t { INT = 0, FLOAT, STRING };
 class CsvBase {
  public:
   CsvBase() = default;
+
   explicit CsvBase(CsvType t) : type(t) {}
-  virtual ~CsvBase() {}
-  CsvType type;
+
+  virtual ~CsvBase() = default;
+
+  CsvType type{INT};
 };
 
 /// \brief CSV Record that can represent integer, float and string.
@@ -42,8 +45,11 @@ template <typename T>
 class CsvRecord : public CsvBase {
  public:
   CsvRecord() = default;
+
   CsvRecord(CsvType t, T v) : CsvBase(t), value(v) {}
-  ~CsvRecord() {}
+
+  ~CsvRecord() override = default;
+
   T value;
 };
 
@@ -56,7 +62,7 @@ class CSVNode : public NonMappableSourceNode {
           std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~CSVNode() = default;
+  ~CSVNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -139,7 +145,6 @@ class CSVNode : public NonMappableSourceNode {
   int32_t num_shards_;
   int32_t shard_id_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CSV_NODE_H_

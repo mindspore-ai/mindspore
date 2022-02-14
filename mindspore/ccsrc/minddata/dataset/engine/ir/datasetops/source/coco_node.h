@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class CocoNode : public MappableSourceNode {
  public:
   /// \brief Constructor
@@ -34,7 +33,7 @@ class CocoNode : public MappableSourceNode {
            const bool &extra_metadata);
 
   /// \brief Destructor
-  ~CocoNode() = default;
+  ~CocoNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -104,7 +103,6 @@ class CocoNode : public MappableSourceNode {
   std::shared_ptr<SamplerObj> sampler_;
   bool extra_metadata_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_COCO_NODE_H_

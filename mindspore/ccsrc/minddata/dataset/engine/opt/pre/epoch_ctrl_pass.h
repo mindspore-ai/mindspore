@@ -72,7 +72,7 @@ class EpochCtrlPass : public IRTreePass {
     std::shared_ptr<DatasetNode> injection_point() { return injection_point_; }
 
     /// \brief Getter
-    int32_t num_epochs() { return num_epochs_; }
+    int32_t num_epochs() const { return num_epochs_; }
 
    private:
     std::shared_ptr<DatasetNode> injection_point_;

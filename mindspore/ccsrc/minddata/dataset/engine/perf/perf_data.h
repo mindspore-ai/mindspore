@@ -50,7 +50,7 @@ class PerfData {
   // T must be any container working with range based loops
   template <typename T>
   void AddSample(const T &row) {
-    auto i = 0;
+    size_t i = 0;
     for (const auto &e : row) {
       if (data_.size() > i) {
         data_[i++].push_back(e);

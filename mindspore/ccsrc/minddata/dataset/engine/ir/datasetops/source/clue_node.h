@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \class CLUENode
 /// \brief A Dataset derived class to represent CLUE dataset
 class CLUENode : public NonMappableSourceNode {
@@ -36,7 +35,7 @@ class CLUENode : public NonMappableSourceNode {
            ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~CLUENode() = default;
+  ~CLUENode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -145,7 +144,6 @@ class CLUENode : public NonMappableSourceNode {
   int32_t num_shards_;
   int32_t shard_id_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CLUE_NODE_H_

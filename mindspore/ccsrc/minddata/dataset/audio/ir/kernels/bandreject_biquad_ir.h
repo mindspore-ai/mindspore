@@ -36,7 +36,7 @@ class BandrejectBiquadOperation : public TensorOperation {
  public:
   BandrejectBiquadOperation(int32_t sample_rate, float central_freq, float Q);
 
-  ~BandrejectBiquadOperation() = default;
+  ~BandrejectBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

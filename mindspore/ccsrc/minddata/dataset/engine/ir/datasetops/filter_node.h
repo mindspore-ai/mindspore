@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class FilterNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -33,7 +32,7 @@ class FilterNode : public DatasetNode {
              std::vector<std::string> input_columns = {});
 
   /// \brief Destructor
-  ~FilterNode() = default;
+  ~FilterNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -83,7 +82,6 @@ class FilterNode : public DatasetNode {
   std::shared_ptr<TensorOp> predicate_;
   std::vector<std::string> input_columns_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_FILTER_NODE_H_

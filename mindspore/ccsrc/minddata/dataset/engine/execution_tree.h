@@ -64,23 +64,28 @@ class ExecutionTree {
       ++ind_;
       return *this;
     }  // prefix ++ overload
+
     Iterator operator++(int) {
       Iterator it = *this;
       it.ind_ = ind_;
       ind_++;
       return it;
     }  // post-fix ++ overload
+
     Iterator &operator--() {
       --ind_;
       return *this;
     }  // prefix -- overload
+
     Iterator operator--(int) {
       Iterator it = *this;
       it.ind_ = ind_;
       ind_--;
       return it;
-    }                                                 // post-fix -- overload
+    }  // post-fix -- overload
+
     DatasetOp &operator*() { return *nodes_[ind_]; }  // dereference operator
+
     std::shared_ptr<DatasetOp> operator->() { return nodes_[ind_]; }
 
     // getter function
@@ -91,10 +96,10 @@ class ExecutionTree {
 
     bool operator!=(const Iterator &rhs) { return nodes_[ind_] != rhs.nodes_[rhs.ind_]; }
 
-    int32_t NumNodes() { return nodes_.size(); }
+    size_t NumNodes() const { return nodes_.size(); }
 
    private:
-    int32_t ind_;                                    // the cur node our Iterator points to
+    size_t ind_;                                     // the cur node our Iterator points to
     std::vector<std::shared_ptr<DatasetOp>> nodes_;  // store the nodes in post order
     void PostOrderTraverse(const std::shared_ptr<DatasetOp> &);
   };
@@ -140,7 +145,7 @@ class ExecutionTree {
   /// \param out - reference to the output stream being overloaded
   /// \param exe_tree - reference to the execution tree to display
   /// \return - the output stream must be returned
-  friend std::ostream &operator<<(std::ostream &out, ExecutionTree &exe_tree) {
+  friend std::ostream &operator<<(std::ostream &out, const ExecutionTree &exe_tree) {
     exe_tree.Print(out);
     return out;
   }
@@ -164,8 +169,10 @@ class ExecutionTree {
   /// \return Status The status code returned
   Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::vector<Task *> *worker_tasks,
                        std::string name = "", int32_t operator_id = -1);
+
   Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "",
                        int32_t operator_id = -1);
+
   /// \brief Getter method
   /// \return shared_ptr to the root operator
   std::shared_ptr<DatasetOp> root() const { return root_; }
@@ -233,5 +240,4 @@ class ExecutionTree {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_EXECUTION_TREE_H_

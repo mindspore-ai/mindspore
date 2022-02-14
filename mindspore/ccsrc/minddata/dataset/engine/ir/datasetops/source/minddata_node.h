@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class MindDataNode : public MappableSourceNode {
  public:
   /// \brief Constructor
@@ -41,7 +40,7 @@ class MindDataNode : public MappableSourceNode {
                ShuffleMode shuffle_mode = ShuffleMode::kGlobal, std::shared_ptr<DatasetCache> cache = nullptr);
 
   /// \brief Destructor
-  ~MindDataNode() = default;
+  ~MindDataNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -120,7 +119,6 @@ class MindDataNode : public MappableSourceNode {
   std::vector<std::shared_ptr<ShardOperator>> operators_;
   ShuffleMode shuffle_mode_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_MINDDATA_NODE_H_

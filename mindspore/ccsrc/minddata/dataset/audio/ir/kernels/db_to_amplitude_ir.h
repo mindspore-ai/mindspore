@@ -35,7 +35,7 @@ class DBToAmplitudeOperation : public TensorOperation {
  public:
   DBToAmplitudeOperation(float ref, float power);
 
-  ~DBToAmplitudeOperation() = default;
+  ~DBToAmplitudeOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

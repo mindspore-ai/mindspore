@@ -74,8 +74,8 @@ class CallbackManager {
   Status StepEnd(const CallbackParam &);
 
  private:
-  bool enabled_;   // flag to enable callback, if false, all functions would return immediately
-  DatasetOp *op_;  // back pointer to DatasetOp, raw pointer to avoid circular ownership
+  bool enabled_;             // flag to enable callback, if false, all functions would return immediately
+  DatasetOp *op_ = nullptr;  // back pointer to DatasetOp, raw pointer to avoid circular ownership
   std::vector<std::shared_ptr<DSCallback>> callbacks_;  // list of callbacks the  DatasetOp needs to call
   std::vector<size_t> begin_indices_;
   std::vector<size_t> end_indices_;

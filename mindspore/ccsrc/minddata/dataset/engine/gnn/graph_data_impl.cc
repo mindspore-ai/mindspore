@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-GraphDataImpl::GraphDataImpl(std::string dataset_file, int32_t num_workers, bool server_mode)
+GraphDataImpl::GraphDataImpl(const std::string &dataset_file, int32_t num_workers, bool server_mode)
     : dataset_file_(dataset_file),
       num_workers_(num_workers),
       rnd_(GetRandomDevice()),
@@ -38,7 +38,7 @@ GraphDataImpl::GraphDataImpl(std::string dataset_file, int32_t num_workers, bool
   MS_LOG(INFO) << "num_workers:" << num_workers;
 }
 
-GraphDataImpl::~GraphDataImpl() {}
+GraphDataImpl::~GraphDataImpl() = default;
 
 Status GraphDataImpl::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);

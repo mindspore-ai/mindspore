@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class RandomNode : public NonMappableSourceNode {
  public:
   // Some constants to provide limits to random generation.
@@ -37,25 +36,25 @@ class RandomNode : public NonMappableSourceNode {
   static constexpr int32_t kMaxDimValue = 32;
 
   /// \brief Constructor
-  RandomNode(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, const std::vector<std::string> &columns_list,
-             std::shared_ptr<DatasetCache> cache)
-      : NonMappableSourceNode(std::move(cache)),
+  RandomNode(int32_t total_rows, const std::shared_ptr<SchemaObj> &schema, const std::vector<std::string> &columns_list,
+             const std::shared_ptr<DatasetCache> &cache)
+      : NonMappableSourceNode(cache),
         total_rows_(total_rows),
         schema_path_(""),
-        schema_(std::move(schema)),
+        schema_(schema),
         columns_list_(columns_list) {}
 
   /// \brief Constructor
-  RandomNode(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
-             std::shared_ptr<DatasetCache> cache)
-      : NonMappableSourceNode(std::move(cache)),
+  RandomNode(int32_t total_rows, const std::string &schema_path, const std::vector<std::string> &columns_list,
+             const std::shared_ptr<DatasetCache> &cache)
+      : NonMappableSourceNode(cache),
         total_rows_(total_rows),
         schema_path_(schema_path),
         schema_(nullptr),
         columns_list_(columns_list) {}
 
   /// \brief Destructor
-  ~RandomNode() = default;
+  ~RandomNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -137,7 +136,6 @@ class RandomNode : public NonMappableSourceNode {
   std::mt19937 rand_gen_;
   std::unique_ptr<DataSchema> data_schema_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_RANDOM_NODE_H_

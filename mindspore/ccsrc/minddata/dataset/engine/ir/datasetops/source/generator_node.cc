@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                              const std::vector<DataType> &column_types, int64_t source_len,
                              std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers)
@@ -33,20 +32,20 @@ GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<
       generator_function_(generator_function),
       column_names_(column_names),
       column_types_(column_types),
-      reset_ancestor_(nullptr),
-      sampler_(std::move(sampler)),
       source_len_(source_len),
-      num_parallel_workers_(num_parallel_workers) {}
+      sampler_(std::move(sampler)),
+      num_parallel_workers_(num_parallel_workers),
+      reset_ancestor_(nullptr) {}
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema,
                              int64_t source_len, std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers)
     : MappableSourceNode(),
       generator_function_(generator_function),
       schema_(schema),
-      reset_ancestor_(nullptr),
-      sampler_(std::move(sampler)),
       source_len_(source_len),
-      num_parallel_workers_(num_parallel_workers) {}
+      sampler_(std::move(sampler)),
+      num_parallel_workers_(num_parallel_workers),
+      reset_ancestor_(nullptr) {}
 
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   std::shared_ptr<GeneratorNode> node;

@@ -34,7 +34,7 @@ class ContrastOperation : public TensorOperation {
  public:
   explicit ContrastOperation(float enhancement_amount);
 
-  ~ContrastOperation() = default;
+  ~ContrastOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

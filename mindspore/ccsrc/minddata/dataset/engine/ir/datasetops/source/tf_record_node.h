@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \class TFRecordNode
 /// \brief A Dataset derived class to represent TFRecord dataset
 class TFRecordNode : public NonMappableSourceNode {
@@ -35,10 +34,10 @@ class TFRecordNode : public NonMappableSourceNode {
  public:
   /// \brief Constructor
   /// \note Parameter 'schema' is the path to the schema file
-  TFRecordNode(const std::vector<std::string> &dataset_files, std::string schema,
+  TFRecordNode(const std::vector<std::string> &dataset_files, const std::string &schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
-      : NonMappableSourceNode(std::move(cache)),
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache)
+      : NonMappableSourceNode(cache),
         dataset_files_(dataset_files),
         schema_path_(schema),
         columns_list_(columns_list),
@@ -56,10 +55,10 @@ class TFRecordNode : public NonMappableSourceNode {
 
   /// \brief Constructor
   /// \note Parameter 'schema' is shared pointer to Schema object
-  TFRecordNode(const std::vector<std::string> &dataset_files, std::shared_ptr<SchemaObj> schema,
+  TFRecordNode(const std::vector<std::string> &dataset_files, const std::shared_ptr<SchemaObj> &schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
-               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
-      : NonMappableSourceNode(std::move(cache)),
+               int32_t num_shards, int32_t shard_id, bool shard_equal_rows, const std::shared_ptr<DatasetCache> &cache)
+      : NonMappableSourceNode(cache),
         dataset_files_(dataset_files),
         schema_obj_(schema),
         columns_list_(columns_list),
@@ -70,7 +69,7 @@ class TFRecordNode : public NonMappableSourceNode {
         shard_equal_rows_(shard_equal_rows) {}
 
   /// \brief Destructor
-  ~TFRecordNode() = default;
+  ~TFRecordNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -171,7 +170,6 @@ class TFRecordNode : public NonMappableSourceNode {
   int32_t shard_id_;
   bool shard_equal_rows_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TF_RECORD_NODE_H_

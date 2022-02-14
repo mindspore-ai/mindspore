@@ -36,7 +36,7 @@ class LocalNode : public Node {
   // @param NodeType type - node type
   LocalNode(NodeIdType id, NodeType type, WeightType weight);
 
-  ~LocalNode() = default;
+  ~LocalNode() override = default;
 
   // Get the feature of a node
   // @param FeatureType feature_type - type of feature

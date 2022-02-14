@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Internal Sampler class forward declaration
 class SamplerRT;
 
@@ -42,7 +41,7 @@ class SamplerObj {
   SamplerObj();
 
   /// \brief Destructor
-  ~SamplerObj();
+  virtual ~SamplerObj();
 
   /// \brief Pure virtual function for derived class to implement parameters validation
   /// \return The Status code of the function. It returns OK status if parameters are valid.
@@ -93,7 +92,6 @@ class SamplerObj {
 
   std::vector<std::shared_ptr<SamplerObj>> children_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SAMPLERS_IR_H_

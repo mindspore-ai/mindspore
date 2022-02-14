@@ -25,14 +25,13 @@
 
 namespace mindspore {
 namespace dataset {
-
 class ZipNode : public DatasetNode {
  public:
   /// \brief Constructor
   explicit ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets);
 
   /// \brief Destructor
-  ~ZipNode() = default;
+  ~ZipNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -85,7 +84,6 @@ class ZipNode : public DatasetNode {
  private:
   std::vector<std::shared_ptr<DatasetNode>> datasets_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ZIP_NODE_H_

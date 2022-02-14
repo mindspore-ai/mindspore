@@ -99,7 +99,6 @@ Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t sample_size = -1;
   int64_t num_rows = 0;
   // iterate over the files in the directory and count files to initiate num_rows
   Path folder(dataset_dir_);
@@ -118,7 +117,7 @@ Status AlbumNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
   // give sampler the total number of files and check if num_samples is smaller
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
-  sample_size = sampler_rt->CalculateNumSamples(num_rows);
+  int64_t sample_size = sampler_rt->CalculateNumSamples(num_rows);
   if (sample_size == -1) {
     RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), &sample_size));
   }

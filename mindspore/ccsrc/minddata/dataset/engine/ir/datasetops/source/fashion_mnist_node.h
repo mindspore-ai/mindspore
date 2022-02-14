@@ -32,7 +32,7 @@ class FashionMnistNode : public MappableSourceNode {
                    std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~FashionMnistNode() = default;
+  ~FashionMnistNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

@@ -44,9 +44,9 @@ class GraphDataImpl : public GraphData {
   // Constructor
   // @param std::string dataset_file -
   // @param int32_t num_workers - number of parallel threads
-  GraphDataImpl(std::string dataset_file, int32_t num_workers, bool server_mode = false);
+  GraphDataImpl(const std::string &dataset_file, int32_t num_workers, bool server_mode = false);
 
-  ~GraphDataImpl();
+  ~GraphDataImpl() override;
 
   // Get all nodes from the graph.
   // @param NodeType node_type - type of node
@@ -150,11 +150,11 @@ class GraphDataImpl : public GraphData {
   Status GraphInfo(py::dict *out) override;
 #endif
 
-  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultNodeFeatures() {
+  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultNodeFeatures() const {
     return &default_node_feature_map_;
   }
 
-  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultEdgeFeatures() {
+  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllDefaultEdgeFeatures() const {
     return &default_edge_feature_map_;
   }
 

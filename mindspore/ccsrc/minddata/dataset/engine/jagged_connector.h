@@ -59,8 +59,8 @@ class JaggedConnector : public Connector<TensorRow> {
       }
 
       for (int offset = 1; offset <= num_producers_; offset++) {
-        int32_t nextQueueIndex = (pop_from_ + offset) % num_producers_;
-        if (is_queue_finished_[nextQueueIndex] == false) {
+        size_t nextQueueIndex = (pop_from_ + offset) % num_producers_;
+        if (!is_queue_finished_[nextQueueIndex]) {
           pop_from_ = nextQueueIndex;
           break;
         }
@@ -74,7 +74,7 @@ class JaggedConnector : public Connector<TensorRow> {
   }
 
   void DoReset() {
-    for (int i = 0; i < is_queue_finished_.size(); i++) {
+    for (auto i = 0; i < is_queue_finished_.size(); i++) {
       is_queue_finished_[i] = false;
     }
 

@@ -36,7 +36,7 @@ class RiaaBiquadOperation : public TensorOperation {
  public:
   explicit RiaaBiquadOperation(int32_t sample_rate);
 
-  ~RiaaBiquadOperation() = default;
+  ~RiaaBiquadOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

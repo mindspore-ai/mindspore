@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class RepeatOp;
 
 class RepeatNode : public DatasetNode {
@@ -42,7 +41,7 @@ class RepeatNode : public DatasetNode {
   RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
-  ~RepeatNode() = default;
+  ~RepeatNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -67,7 +66,7 @@ class RepeatNode : public DatasetNode {
 
   /// \brief Getter
   /// \return Number of cycles to repeat the execution
-  const int32_t Count() const { return repeat_count_; }
+  int32_t Count() const { return repeat_count_; }
 
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
@@ -136,7 +135,6 @@ class RepeatNode : public DatasetNode {
   std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
   int32_t repeat_count_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_REPEAT_NODE_H_

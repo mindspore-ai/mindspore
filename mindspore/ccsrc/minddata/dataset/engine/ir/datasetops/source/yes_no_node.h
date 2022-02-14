@@ -30,7 +30,7 @@ class YesNoNode : public MappableSourceNode {
   YesNoNode(const std::string &dataset_dir, std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~YesNoNode() = default;
+  ~YesNoNode() override = default;
 
   /// \brief Node name getter.
   /// \return Name of the current node.

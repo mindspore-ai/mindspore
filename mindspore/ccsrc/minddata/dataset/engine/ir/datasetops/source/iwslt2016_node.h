@@ -51,7 +51,7 @@ class IWSLT2016Node : public NonMappableSourceNode {
                 int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
-  ~IWSLT2016Node() = default;
+  ~IWSLT2016Node() override = default;
 
   /// \brief Node name getter.
   /// \return std::string Name of the current node.

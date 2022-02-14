@@ -32,7 +32,7 @@ class ComputeDeltasOperation : public TensorOperation {
  public:
   ComputeDeltasOperation(int32_t win_length, BorderType pad_mode);
 
-  ~ComputeDeltasOperation() = default;
+  ~ComputeDeltasOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

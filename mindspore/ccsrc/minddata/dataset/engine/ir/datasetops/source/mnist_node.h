@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 class MnistNode : public MappableSourceNode {
  public:
   /// \brief Constructor
@@ -33,7 +32,7 @@ class MnistNode : public MappableSourceNode {
             std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor
-  ~MnistNode() = default;
+  ~MnistNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -98,7 +97,6 @@ class MnistNode : public MappableSourceNode {
   std::string usage_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_MNIST_NODE_H_

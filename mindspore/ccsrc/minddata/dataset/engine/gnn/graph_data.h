@@ -44,6 +44,9 @@ struct MetaInfo {
 
 class GraphData {
  public:
+  // Destructor
+  virtual ~GraphData() = default;
+
   // Get all nodes from the graph.
   // @param NodeType node_type - type of node
   // @param std::shared_ptr<Tensor> *out - Returned nodes id

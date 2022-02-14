@@ -32,7 +32,7 @@ class MuLawDecodingOperation : public TensorOperation {
  public:
   explicit MuLawDecodingOperation(int32_t quantization_channels);
 
-  ~MuLawDecodingOperation();
+  ~MuLawDecodingOperation() override;
 
   std::shared_ptr<TensorOp> Build() override;
 

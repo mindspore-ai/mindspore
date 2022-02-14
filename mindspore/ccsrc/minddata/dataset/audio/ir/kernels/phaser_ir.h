@@ -38,7 +38,7 @@ class PhaserOperation : public TensorOperation {
   PhaserOperation(int32_t sample_rate, float gain_in, float gain_out, float delay_ms, float decay, float mod_speed,
                   bool sinusoidal);
 
-  ~PhaserOperation() = default;
+  ~PhaserOperation() override = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

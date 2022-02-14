@@ -40,8 +40,9 @@ class MS_API Angle final : public TensorTransform {
  public:
   /// \brief Constructor.
   Angle();
+
   /// \brief Destructor.
-  ~Angle() = default;
+  ~Angle() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -58,7 +59,7 @@ class MS_API AllpassBiquad final : public TensorTransform {
   explicit AllpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
-  ~AllpassBiquad() = default;
+  ~AllpassBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -84,7 +85,7 @@ class MS_API AmplitudeToDB final : public TensorTransform {
                          float top_db = 80.0);
 
   /// \brief Destructor.
-  ~AmplitudeToDB() = default;
+  ~AmplitudeToDB() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -107,7 +108,7 @@ class MS_API BandBiquad final : public TensorTransform {
   explicit BandBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool noise = false);
 
   /// \brief Destructor.
-  ~BandBiquad() = default;
+  ~BandBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -131,7 +132,7 @@ class MS_API BandpassBiquad final : public TensorTransform {
   explicit BandpassBiquad(int32_t sample_rate, float central_freq, float Q = 0.707, bool const_skirt_gain = false);
 
   /// \brief Destructor.
-  ~BandpassBiquad() = default;
+  ~BandpassBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -153,7 +154,7 @@ class MS_API BandrejectBiquad final : public TensorTransform {
   explicit BandrejectBiquad(int32_t sample_rate, float central_freq, float Q = 0.707);
 
   /// \brief Destructor.
-  ~BandrejectBiquad() = default;
+  ~BandrejectBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -176,7 +177,7 @@ class MS_API BassBiquad final : public TensorTransform {
   explicit BassBiquad(int32_t sample_rate, float gain, float central_freq = 100, float Q = 0.707);
 
   /// \brief Destructor.
-  ~BassBiquad() = default;
+  ~BassBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -201,7 +202,7 @@ class MS_API Biquad final : public TensorTransform {
   explicit Biquad(float b0, float b1, float b2, float a0, float a1, float a2);
 
   /// \brief Destructor.
-  ~Biquad() = default;
+  ~Biquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -222,7 +223,7 @@ class MS_API ComplexNorm final : public TensorTransform {
   explicit ComplexNorm(float power = 1.0);
 
   /// \brief Destructor.
-  ~ComplexNorm() = default;
+  ~ComplexNorm() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -244,7 +245,7 @@ class MS_API ComputeDeltas final : public TensorTransform {
   explicit ComputeDeltas(int32_t win_length = 5, BorderType pad_mode = BorderType::kEdge);
 
   /// \brief Destructor.
-  ~ComputeDeltas() = default;
+  ~ComputeDeltas() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -264,7 +265,7 @@ class MS_API Contrast final : public TensorTransform {
   explicit Contrast(float enhancement_amount = 75.0);
 
   /// \brief Destructor.
-  ~Contrast() = default;
+  ~Contrast() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -285,7 +286,7 @@ class MS_API DBToAmplitude final : public TensorTransform {
   explicit DBToAmplitude(float ref, float power);
 
   /// \brief Destructor.
-  ~DBToAmplitude() = default;
+  ~DBToAmplitude() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -311,7 +312,7 @@ class MS_API DCShift : public TensorTransform {
   explicit DCShift(float shift);
 
   /// \brief Destructor.
-  ~DCShift() = default;
+  ~DCShift() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -336,7 +337,7 @@ class MS_API DeemphBiquad final : public TensorTransform {
   explicit DeemphBiquad(int32_t sample_rate);
 
   /// \brief Destructor.
-  ~DeemphBiquad() = default;
+  ~DeemphBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -363,7 +364,7 @@ class MS_API DetectPitchFrequency final : public TensorTransform {
                                 int32_t freq_low = 85, int32_t freq_high = 3400);
 
   /// \brief Destructor.
-  ~DetectPitchFrequency() = default;
+  ~DetectPitchFrequency() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -389,7 +390,7 @@ class MS_API Dither final : public TensorTransform {
   explicit Dither(DensityFunction density_function = DensityFunction::kTPDF, bool noise_shaping = false);
 
   /// \brief Destructor.
-  ~Dither() = default;
+  ~Dither() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -412,7 +413,7 @@ class MS_API EqualizerBiquad final : public TensorTransform {
   EqualizerBiquad(int32_t sample_rate, float center_freq, float gain, float Q = 0.707);
 
   /// \brief Destructor.
-  ~EqualizerBiquad() = default;
+  ~EqualizerBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -436,7 +437,7 @@ class MS_API Fade final : public TensorTransform {
   explicit Fade(int32_t fade_in_len = 0, int32_t fade_out_len = 0, FadeShape fade_shape = FadeShape::kLinear);
 
   /// \brief Destructor.
-  ~Fade() = default;
+  ~Fade() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -468,7 +469,7 @@ class MS_API Flanger final : public TensorTransform {
                    Interpolation interpolation = Interpolation::kLinear);
 
   /// \brief Destructor.
-  ~Flanger() = default;
+  ~Flanger() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -495,7 +496,7 @@ class MS_API FrequencyMasking final : public TensorTransform {
                             float mask_value = 0.0);
 
   /// \brief Destructor.
-  ~FrequencyMasking() = default;
+  ~FrequencyMasking() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -515,7 +516,7 @@ class MS_API Gain final : public TensorTransform {
   explicit Gain(float gain_db = 1.0);
 
   /// \brief Destructor.
-  ~Gain() = default;
+  ~Gain() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -537,7 +538,7 @@ class MS_API HighpassBiquad final : public TensorTransform {
   HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q = 0.707);
 
   /// \brief Destructor.
-  ~HighpassBiquad() = default;
+  ~HighpassBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -562,7 +563,7 @@ class MS_API LFilter final : public TensorTransform {
   explicit LFilter(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp = true);
 
   /// \brief Destructor.
-  ~LFilter() = default;
+  ~LFilter() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -584,7 +585,7 @@ class MS_API LowpassBiquad final : public TensorTransform {
   LowpassBiquad(int32_t sample_rate, float cutoff_freq, float Q = 0.707);
 
   /// \brief Destructor.
-  ~LowpassBiquad() = default;
+  ~LowpassBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -604,7 +605,7 @@ class MS_API Magphase final : public TensorTransform {
   explicit Magphase(float power);
 
   /// \brief Destructor.
-  ~Magphase() = default;
+  ~Magphase() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -625,7 +626,7 @@ class MS_API MuLawDecoding final : public TensorTransform {
   explicit MuLawDecoding(int32_t quantization_channels = 256);
 
   /// \brief Destructor.
-  ~MuLawDecoding() = default;
+  ~MuLawDecoding() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -646,7 +647,7 @@ class MS_API MuLawEncoding final : public TensorTransform {
   explicit MuLawEncoding(int32_t quantization_channels = 256);
 
   /// \brief Destructor.
-  ~MuLawEncoding() = default;
+  ~MuLawEncoding() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -667,7 +668,7 @@ class MS_API Overdrive final : public TensorTransform {
   explicit Overdrive(float gain = 20.0f, float color = 20.0f);
 
   /// \brief Destructor.
-  ~Overdrive() = default;
+  ~Overdrive() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -697,7 +698,7 @@ class MS_API Phaser final : public TensorTransform {
                   float decay = 0.4f, float mod_speed = 0.5f, bool sinusoidal = true);
 
   /// \brief Destructor.
-  ~Phaser() = default;
+  ~Phaser() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -718,7 +719,7 @@ class MS_API RiaaBiquad final : public TensorTransform {
   explicit RiaaBiquad(int32_t sample_rate);
 
   /// \brief Destructor.
-  ~RiaaBiquad() = default;
+  ~RiaaBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -744,7 +745,7 @@ class MS_API SlidingWindowCmn final : public TensorTransform {
                             bool norm_vars = false);
 
   /// \brief Destructor.
-  ~SlidingWindowCmn() = default;
+  ~SlidingWindowCmn() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -771,7 +772,7 @@ class MS_API SpectralCentroid : public TensorTransform {
   explicit SpectralCentroid(int32_t sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
                             int32_t pad = 0, WindowType window = WindowType::kHann);
 
-  ~SpectralCentroid() = default;
+  ~SpectralCentroid() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -810,7 +811,7 @@ class MS_API Spectrogram : public TensorTransform {
                        bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
 
   /// \brief Destructor.
-  ~Spectrogram() = default;
+  ~Spectrogram() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -847,7 +848,7 @@ class MS_API TimeMasking final : public TensorTransform {
                        float mask_value = 0.0);
 
   /// \brief Destructor.
-  ~TimeMasking() = default;
+  ~TimeMasking() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -872,7 +873,7 @@ class MS_API TimeStretch final : public TensorTransform {
                        float fixed_rate = std::numeric_limits<float>::quiet_NaN());
 
   /// \brief Destructor.
-  ~TimeStretch() = default;
+  ~TimeStretch() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -895,7 +896,7 @@ class MS_API TrebleBiquad final : public TensorTransform {
   TrebleBiquad(int32_t sample_rate, float gain, float central_freq = 3000, float Q = 0.707);
 
   /// \brief Destructor.
-  ~TrebleBiquad() = default;
+  ~TrebleBiquad() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -919,7 +920,7 @@ class MS_API Vol final : public TensorTransform {
   explicit Vol(float gain, GainType gain_type = GainType::kAmplitude);
 
   /// \brief Destructor.
-  ~Vol() = default;
+  ~Vol() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -933,5 +934,4 @@ class MS_API Vol final : public TensorTransform {
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_

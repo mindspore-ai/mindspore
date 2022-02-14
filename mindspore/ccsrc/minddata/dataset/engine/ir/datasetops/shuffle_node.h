@@ -27,12 +27,11 @@
 
 namespace mindspore {
 namespace dataset {
-
 class ShuffleNode : public DatasetNode {
  public:
   ShuffleNode(std::shared_ptr<DatasetNode> child, int32_t shuffle_size, bool reset_every_epoch);
 
-  ~ShuffleNode() = default;
+  ~ShuffleNode() override = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
@@ -76,7 +75,6 @@ class ShuffleNode : public DatasetNode {
   uint32_t shuffle_seed_;
   bool reset_every_epoch_;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SHUFFLE_NODE_H_
