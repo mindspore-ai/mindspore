@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -658,24 +658,17 @@ class ParameterTuple(tuple):
         """Create instance object of ParameterTuple."""
         data = tuple(iterable)
         ids = set()
-        orders = {}
+        names = set()
         for x in data:
             if not isinstance(x, Parameter):
                 raise TypeError(f"ParameterTuple input should be `Parameter` collection."
                                 f"But got a {type(iterable)}, {iterable}")
             if id(x) not in ids:
+                if x.name in names:
+                    raise ValueError("The value {} , its name '{}' already exists. "
+                                     "Please set a unique name for the parameter.".format(x, x.name))
+                names.add(x.name)
                 ids.add(id(x))
-                if x.name not in orders.keys():
-                    orders[x.name] = [0, x]
-                else:
-                    if isinstance(orders[x.name], list):
-                        name = x.name
-                        orders[name][1].name = name + "_" + str(0)
-                        x.name = x.name + "_" + str(1)
-                        orders[name] = 1
-                    else:
-                        orders[x.name] += 1
-                        x.name = x.name + "_" + str(orders[x.name])
         return tuple.__new__(ParameterTuple, tuple(data))
 
     def clone(self, prefix, init='same'):

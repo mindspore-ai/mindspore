@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,13 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
 }
 
 namespace {
+std::string GetPyObjId(const py::object &obj) {
+  py::object out = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  if (py::isinstance<py::none>(out)) {
+    MS_LOG(EXCEPTION) << "Get pyobj failed";
+  }
+  return out.cast<std::string>();
+}
 // If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
@@ -94,23 +101,40 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   if (py::isinstance<py::none>(name_attr)) {
     MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
   }
-
+  auto obj_id = GetPyObjId(obj);
+  static std::vector<std::string> param_obj_ids;
   auto param_name = py::cast<std::string>(name_attr);
   auto top_func_graph = Parser::GetTopFuncGraph();
   // If the parameter node has been created , return it.
   AnfNodePtr para_node = nullptr;
   for (auto const &param : top_func_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
-    if (param_node != nullptr && param_node->name() == param_name && !param_node->is_top_graph_param()) {
-      para_node = param;
-      MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()
-                    << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
-      break;
+    if (param_node != nullptr && param_node->name() == param_name) {
+      if (param_node->is_top_graph_param()) {
+        // If the name of the input of construct is same as the parameters,
+        // add suffix to the name of the input of construct.
+        string suffix_name = param_node->name() + "_$";
+        param_node->set_name(suffix_name);
+        param_node->debug_info()->set_name(suffix_name);
+        MS_LOG(DEBUG) << "Add suffix to the name of the input of construct " << func_graph->ToString()
+                      << ", input: " << param_node->DebugString();
+      } else {
+        // Exist two parameter object which name is the same.
+        if (std::find(param_obj_ids.begin(), param_obj_ids.end(), obj_id) == param_obj_ids.end()) {
+          MS_LOG(EXCEPTION) << "The parameter " << param_node->DebugString() << " , its name '" << param_name
+                            << "' already exists. Please set a unique name for the parameter.";
+        }
+        para_node = param;
+        MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()
+                      << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
+        break;
+      }
     }
   }
   if (para_node == nullptr) {
     auto node = top_func_graph->AddWeightParameter(param_name);
     auto value = py::cast<tensor::MetaTensorPtr>(obj);
+    param_obj_ids.emplace_back(obj_id);
     node->set_default_param(value);
     // Set abstract for parameter
     auto abs = value->ToAbstract();

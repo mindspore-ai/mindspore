@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -565,8 +565,8 @@ class Cell(Cell_):
                 self._id += 1
             self.insert_param_to_cell(item.name, item, check_name_contain_dot=False)
             if item.name in exist_names:
-                raise ValueError("The value {} , its name '{}' already exists.".
-                                 format(value, item.name))
+                raise ValueError("The value {} , its name '{}' already exists. "
+                                 "Please set a unique name for the parameter.".format(value, item.name))
             exist_names.add(item.name)
 
         if context._get_mode() == context.PYNATIVE_MODE:
@@ -589,8 +589,8 @@ class Cell(Cell_):
                 item.name = item.name + "$" + str(self._id)
                 self._id += 1
             if item.name in self.exist_names:
-                raise ValueError("The value {} , its name '{}' already exists.".
-                                 format(value, item.name))
+                raise ValueError("The value {} , its name '{}' already exists. "
+                                 "Please set a unique name for the parameter.".format(value, item.name))
             self.exist_names.add(item.name)
         object.__setattr__(self, name, value)
 
@@ -1114,8 +1114,8 @@ class Cell(Cell_):
         names = set("")
         for value, param in self.parameters_and_names():
             if param.name in names:
-                raise ValueError("The value of {} is {}, its name '{}' already exists.".
-                                 format(value, param, param.name))
+                raise ValueError("The value of {} is {}, its name '{}' already exists. "
+                                 "Please set a unique name for the parameter.". format(value, param, param.name))
             names.add(param.name)
 
     def parameters_and_names(self, name_prefix='', expand=True):
