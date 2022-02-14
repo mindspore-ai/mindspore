@@ -186,7 +186,7 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
   BinarySearchResult br = BinarySearchForQuantizationScale(weights, input_shape, dims, preferred_dim, max_search_iters_,
                                                            target_relative_err_, target_search_tolerance_);
   if (br.status != RET_OK) {
-    MS_LOG(WARNING) << "this layer reached max iters.";
+    MS_LOG(DEBUG) << "this layer reached max iters.";
     return RET_NO_CHANGE;
   }
   schema::QuantParamT quant_param;

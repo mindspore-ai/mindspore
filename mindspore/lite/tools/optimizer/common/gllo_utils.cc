@@ -206,7 +206,7 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
     auto *origin_data = reinterpret_cast<int64_t *>(tensor_info->data_c());
     for (size_t i = 0; i < data_count; ++i) {
       if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
+        MS_LOG(WARNING) << "int64 data " << origin_data[i] << " cannot fit into int32";
         tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
       } else {
         tensor_data[i] = static_cast<int>(origin_data[i]);

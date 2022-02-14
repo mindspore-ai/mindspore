@@ -48,6 +48,8 @@ struct CommonQuantString {
 struct MixedBitWeightQuantString {
   std::string init_scale;
   std::string auto_tune;
+  std::string use_cv_data;
+  std::string max_iterations;
 };
 
 struct FullQuantString {

@@ -22,6 +22,8 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 
+static const float kEpsilon = 0.01;
+
 namespace mindspore::lite::quant {
 WeightQuantizer::~WeightQuantizer() {
   for (const auto &fp32_output_tensor : fp32_output_tensors_) {
@@ -119,8 +121,12 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
+      auto mixed_bit_init_scale = mixed_bit_init_scale_;
+      if (is_auto_tune_) {
+        mixed_bit_init_scale = kEpsilon + std::sqrt(tensor_info->DataSize()) * mixed_bit_init_scale_;
+      }
       status = MixedBitQuantFilter(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type,
-                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
+                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale, idx - 1,
                                    preferred_dim, symmetric);
     } else if (type_id_ == kNumberTypeInt8) {
       status =
