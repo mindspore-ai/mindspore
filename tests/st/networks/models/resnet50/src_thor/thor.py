@@ -37,7 +37,6 @@ Embedding = 3
 LayerNorm = 4
 BatchNorm = 5
 
-
 _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 op_add = P.AddN()
@@ -58,6 +57,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     success = True
     success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
     return success
+
 
 C0 = 16
 
@@ -122,10 +122,12 @@ def find_net_layertype_recur(net, layertype_map):
         else:
             find_net_layertype_recur(subcell, layertype_map)
 
+
 def get_net_layertype_mask(net):
     layertype_map = []
     find_net_layertype_recur(net, layertype_map)
     return layertype_map
+
 
 def get_layer_counter(layer_type, layer_counter, params, idx):
     """get layer counter"""
@@ -246,7 +248,6 @@ class THOR_Ascend(Optimizer):
             self.grad_reducer_Gmax = DistributedGradReducer(self.matrix_A, mean, degree, fusion_type=4)
             self.grad_reducer_A = DistributedGradReducer(self.matrix_A, mean, degree, fusion_type=6)
             self.grad_reducer_G = DistributedGradReducer(self.matrix_A, mean, degree, fusion_type=8)
-
 
     def _process_matrix_init_and_weight_idx_map(self, net):
         """process matrix init shape, and get weight idx map"""
