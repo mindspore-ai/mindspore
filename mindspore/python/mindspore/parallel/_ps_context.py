@@ -77,7 +77,8 @@ _set_ps_context_func_map = {
     "sign_thr_ratio": ps_context().set_sign_thr_ratio,
     "sign_global_lr": ps_context().set_sign_global_lr,
     "sign_dim_out": ps_context().set_sign_dim_out,
-    "global_iteration_time_window": ps_context().set_global_iteration_time_window
+    "global_iteration_time_window": ps_context().set_global_iteration_time_window,
+    "checkpoint_dir": ps_context().set_checkpoint_dir,
 }
 
 _get_ps_context_func_map = {
@@ -124,7 +125,8 @@ _get_ps_context_func_map = {
     "sign_thr_ratio": ps_context().sign_thr_ratio,
     "sign_global_lr": ps_context().sign_global_lr,
     "sign_dim_out": ps_context().sign_dim_out,
-    "global_iteration_time_window": ps_context().global_iteration_time_window
+    "global_iteration_time_window": ps_context().global_iteration_time_window,
+    "checkpoint_dir": ps_context().checkpoint_dir
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",

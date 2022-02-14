@@ -549,5 +549,9 @@ void PSContext::set_global_iteration_time_window(const uint64_t &global_iteratio
 }
 
 uint64_t PSContext::global_iteration_time_window() const { return global_iteration_time_window_; }
+
+std::string PSContext::checkpoint_dir() const { return checkpoint_dir_; }
+
+void PSContext::set_checkpoint_dir(const std::string &checkpoint_dir) { checkpoint_dir_ = checkpoint_dir; }
 }  // namespace ps
 }  // namespace mindspore

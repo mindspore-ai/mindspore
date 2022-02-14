@@ -202,7 +202,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     feature_map[weight_full_name] = weight_size;
   }
 
-  if (!LocalMetaStore::GetInstance().verifyFeatureMap(feature_map)) {
+  if (!LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
     auto next_req_time = LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp);
     std::string reason = "Verify model feature map failed, retry later at time: " + std::to_string(next_req_time);
     BuildUpdateModelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(next_req_time));

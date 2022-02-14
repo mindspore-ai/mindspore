@@ -155,6 +155,39 @@ def _type_convert(param, new_param, strict_load):
     return False
 
 
+def _save_weight(checkpoint_dir, model_name, iteration, params):
+    """Save model weight into checkpoint."""
+    logger.debug(f"Checkpoint dir is: '{checkpoint_dir}'")
+    exist_ckpt_file_list = []
+    if os.path.exists(checkpoint_dir):
+        for exist_ckpt_name in os.listdir(checkpoint_dir):
+            file_prefix = model_name + "_iteration_"
+            if exist_ckpt_name.startswith(file_prefix):
+                exist_ckpt_file_list.append(exist_ckpt_name)
+
+        param_dict = OrderedDict()
+        for key in params.keys():
+            value = params[key]
+            weight_type = value[0]
+            weight_shape = value[1]
+            weight_data = value[2]
+            weight_size = value[3]
+            weight_np = np.array(weight_data, dtype=weight_type.lower())
+            logger.debug(f"weight_type: '{weight_type}', weight_shape: '{weight_shape}', weight_size: "
+                         f"'{weight_size}', weight_np.nbytes: '{weight_np.nbytes}'")
+
+            param_dict[key] = [weight_shape, weight_type, weight_np]
+        ckpt_file_save_name = model_name + "_iteration_" + iteration + ".ckpt"
+        ckpt_file_save_path = os.path.join(checkpoint_dir, ckpt_file_save_name)
+
+        _exec_save(ckpt_file_save_path, param_dict)
+
+        for exist_ckpt_name in exist_ckpt_file_list:
+            os.remove(os.path.join(checkpoint_dir, exist_ckpt_name))
+        logger.info(f"Save weight to checkpoint file path '{ckpt_file_save_path}' success.")
+    else:
+        logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
+
 def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
     """Execute the process of saving checkpoint into file."""
     try:
@@ -995,7 +1028,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
 
     if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
         check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
-        dataset = kwargs['dataset']
+        dataset = kwargs.get('dataset')
         _save_dataset_to_mindir(model, dataset)
 
     save_together = _save_together(net_dict, model)
