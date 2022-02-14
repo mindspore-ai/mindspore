@@ -29,9 +29,17 @@ void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limi
       const int zp = zp_in[index];
       float *out = int8_out_m + i * inner_size;
       const int8_t *src = int8_in_m + index * inner_size;
+#ifndef ENABLE_ARM64
       for (int j = 0; j < inner_size; ++j) {
         out[j] = (src[j] - zp) * scale;
       }
+#else
+      int count_16 = DOWN_ROUND(inner_size, C16NUM);
+      DynamicGatherArm64(src, out, count_16, zp, scale);
+      for (int j = count_16; j < inner_size; ++j) {
+        out[j] = (src[j] - zp) * scale;
+      }
+#endif
     }
   }
   return;

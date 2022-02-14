@@ -231,6 +231,9 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
     if (ret == RET_NO_CHANGE) {
       continue;
     }
+    if (opt::IsSpecialType(cnode)) {
+      continue;
+    }
     auto is_support_node = CheckNodeInSet(cnode, support_dynamic_quant_ops);
     if (!is_support_node) {
       auto type = NodePrimitiveType(cnode);

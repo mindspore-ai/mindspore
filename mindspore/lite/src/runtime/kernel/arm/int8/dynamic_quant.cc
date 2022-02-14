@@ -34,6 +34,7 @@ namespace {
 constexpr int kBucketNums = 8;
 constexpr int k8Bit = 8;
 constexpr int kMinNums = 512;
+constexpr float kDefaultRange = 0.01;
 }  // namespace
 int DynamicQuantCPUKernel::Prepare() {
   auto in_tensor = in_tensors_.front();
@@ -117,7 +118,12 @@ void DynamicQuantCPUKernel::CalculateScaleZp() {
   constexpr int kQSymmetricRange = 255;
   constexpr int kQAsymmetricRange = 254;
   if (!symmetric_) {
-    scale = (real_max_ - real_min_) / kQSymmetricRange;  // -128 ~ 127
+    auto range = real_max_ - real_min_;
+    if (range <= 0) {
+      range = kDefaultRange;
+      MS_LOG(WARNING) << name_ << " range is 0 and set the range to 0.01.";
+    }
+    scale = range / kQSymmetricRange;  // -128 ~ 127
     zp = static_cast<int>(std::round(INT8_MIN - real_min_ / scale));
   } else {
     auto max = std::max(abs(real_max_), abs(real_min_));
