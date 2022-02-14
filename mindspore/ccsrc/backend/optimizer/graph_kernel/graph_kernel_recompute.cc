@@ -574,7 +574,7 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
 
 void GraphKernelRecompute::LinkIntoTargetFuncGraph(
   const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
-  std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> edge_match_func) {
+  const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func) {
   auto cloned_nodes = TopoSort(cloned_func->get_return());
   auto gt = AnfAlgo::GetCNodeFuncGraphPtr(candidate.target_graph);
   MS_EXCEPTION_IF_NULL(gt);
@@ -594,7 +594,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(
     // if the parameter is a recompute edge, then links the param to the cloned_func's output.
     auto [is_match, out_index] = edge_match_func(candidate, gt_node->input(i + 1));
     if (is_match) {
-      (void)mng->Replace(params[i], GetOutput(cloned_func, LongToSize(out_index)));
+      (void)mng->Replace(params[i], GetOutput(cloned_func, out_index));
     } else {
       new_parameters.push_back(params[i]);
       new_inputs.push_back(gt_node->input(i + 1));

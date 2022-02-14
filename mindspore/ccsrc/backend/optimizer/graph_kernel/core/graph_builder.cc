@@ -274,7 +274,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
 
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
   std::vector<AnfNodePtr> fn_inputs{NewValueNode(sub_fg)};
-  fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
+  (void)fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
   EliminateRedundantParameters(sub_fg, &fn_inputs);
   auto fuse_cnode = main_fg->NewCNode(fn_inputs);
   fuse_cnode->set_abstract(sub_fg->output()->abstract());
