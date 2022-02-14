@@ -91,7 +91,10 @@ bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "manager is nullptr.";
       return false;
     }
-    manager->Replace(input_node, reshape_pos);
+    if (!manager->Replace(input_node, reshape_pos)) {
+      MS_LOG(ERROR) << "Replace node failed.";
+      return false;
+    }
   }
   return true;
 }

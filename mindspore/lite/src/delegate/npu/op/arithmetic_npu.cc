@@ -18,13 +18,34 @@
 #include "src/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
 constexpr int ARITHMETIC_INPUT_NUM = 2;
+constexpr int MAX_HW_SIZE = 1664;
 int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors[0].Shape().size() != 0 && in_tensors[1].Shape().size() != 0 &&
-      in_tensors[0].Shape().size() != in_tensors[1].Shape().size()) {
-    MS_LOG(WARNING) << name_ << " for the two inputs, the dimension size must be same."
-                    << " size 1 is:" << in_tensors[0].Shape().size() << " size 2 is:" << in_tensors[1].Shape().size();
+  auto in_shape_0 = in_tensors[0].Shape();
+  auto in_shape_1 = in_tensors[1].Shape();
+  auto out_shape = out_tensors[0].Shape();
+  if (in_shape_0.size() != 0 && in_shape_1.size() != 0 && in_shape_0.size() != in_shape_1.size()) {
+    MS_LOG(WARNING) << name_ << " for the two inputs, the dimension size must be same. size 1 is: " << in_shape_0.size()
+                    << " size 2 is: " << in_shape_1.size();
     return RET_NOT_SUPPORT;
+  }
+  // a hidden limitation in npu bottom implementation
+  if (in_shape_0.size() == NPU_SHAPE_SIZE && in_shape_1.size() == NPU_SHAPE_SIZE) {
+    auto in_w_0 = in_shape_0.at(NHWC_W);
+    auto in_w_1 = in_shape_1.at(NHWC_W);
+    auto out_h = out_shape.at(NHWC_H);
+    auto out_w = out_shape.at(NHWC_W);
+    if (in_tensors[0].format() == Format::NCHW) {
+      in_w_0 = in_shape_0.at(NCHW_W);
+      in_w_1 = in_shape_1.at(NCHW_W);
+      out_h = out_shape.at(NCHW_H);
+      out_w = out_shape.at(NCHW_W);
+    }
+    if ((in_w_0 == 1 || in_w_1 == 1) && out_h * out_w > MAX_HW_SIZE) {
+      MS_LOG(WARNING) << "The size of out_height * out_width is larger than the max value (1664) that npu supports "
+                         "during broadcasting.";
+      return RET_NOT_SUPPORT;
+    }
   }
   auto type = primitive->value_type();
   if (type == mindspore::schema::PrimitiveType_Less && in_tensors[0].Shape().size() == 1) {

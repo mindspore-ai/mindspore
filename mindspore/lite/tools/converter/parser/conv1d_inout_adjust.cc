@@ -33,7 +33,7 @@ constexpr size_t kConvWeightIndex = 2;
 constexpr int64_t kNumDim2 = 2;
 }  // namespace
 CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                                               const std::vector<int64_t> &axis, std::string name) {
+                                               const std::vector<int64_t> &axis, const std::string &name) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr");
   MS_CHECK_TRUE_MSG(input_node != nullptr, nullptr, "input_node is nullptr");
   MS_CHECK_TRUE_MSG(!axis.empty(), nullptr, "axis is empty");
@@ -128,7 +128,7 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     auto input_node = cnode->input(1);
     auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis, cnode->fullname_with_scope() + "_unsqueeze");
     MS_CHECK_TRUE_MSG(unsqueeze != nullptr, false, "New unsqueeze node failed.");
-    (void)manager->SetEdge(cnode, SECOND_INPUT, unsqueeze);
+    manager->SetEdge(cnode, SECOND_INPUT, unsqueeze);
     auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
     (void)manager->Replace(cnode, squeeze);

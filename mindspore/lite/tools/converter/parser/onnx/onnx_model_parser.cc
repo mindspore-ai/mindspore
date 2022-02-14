@@ -96,8 +96,8 @@ ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
     tensor_data = nullptr;
     return nullptr;
   }
-  tensor_data = nullptr;
   delete[] tensor_data;
+  tensor_data = nullptr;
   const_node->set_default_param(tensor_info);
   return const_node;
 }

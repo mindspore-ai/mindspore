@@ -123,7 +123,10 @@ STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_gr
       return lite::RET_NULL_PTR;
     }
     auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
-    manager->Replace(param_node, param_node_new);
+    if (!manager->Replace(param_node, param_node_new)) {
+      MS_LOG(ERROR) << "Replace param node failed.";
+      return RET_ERROR;
+    }
   } else {
     // set graph input
     param_node->abstract()->set_type(TypeIdToType(kNumberTypeInt32));

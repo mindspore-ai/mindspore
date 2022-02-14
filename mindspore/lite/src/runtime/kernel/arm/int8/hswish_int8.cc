@@ -31,8 +31,6 @@ namespace mindspore::kernel {
 int HswishInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
   const auto &in_quant_args = input->quant_params();
   const auto &out_quant_args = output->quant_params();
   MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant param cannot be empty.");

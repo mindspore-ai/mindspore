@@ -29,8 +29,6 @@ namespace mindspore::kernel {
 int ReluXInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
-  MS_ASSERT(input);
-  MS_ASSERT(output);
   const auto &input_params = input->quant_params();
   const auto &output_params = output->quant_params();
   MS_CHECK_TRUE_MSG(!input_params.empty(), RET_ERROR, "Input quant param cannot be empty.");

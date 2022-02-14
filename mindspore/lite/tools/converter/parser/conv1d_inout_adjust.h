@@ -32,7 +32,7 @@ class Conv1DInOutAdjust {
 
  private:
   CNodePtr NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
-                              const std::vector<int64_t> &axis, std::string name);
+                              const std::vector<int64_t> &axis, const std::string &name);
   CNodePtr NewSqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                             const std::vector<int64_t> &axis);
   lite::STATUS ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format);

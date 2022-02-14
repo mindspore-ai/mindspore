@@ -35,6 +35,11 @@ int LocalResponseNormCPUKernel::Prepare() {
 
 int LocalResponseNormCPUKernel::ReSize() { return RET_OK; }
 
+bool LocalResponseNormCPUKernel::CheckParamsValid() const {
+  MS_CHECK_GT(lrn_param_->depth_radius_, 0, false);
+  return true;
+}
+
 int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) const {
   auto input_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
