@@ -16,7 +16,6 @@
 
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
-#include "utils/func_graph_analyzer.h"
 #include "utils/convert_utils.h"
 #include "abstract/utils.h"
 #include "ir/tensor.h"
@@ -1565,21 +1564,13 @@ std::vector<FuncGraphPtr> GetFuncGraphs(const AnfNodePtr &anf_node) {
 }
 
 void ControlNodeParser::ParseCallNodeToFuncGraph(const std::vector<AnfNodePtr> &control_nodes) {
-  auto func_graph_analyzer = std::make_shared<FuncGraphAnalyzer>(root_func_graph_);
-  func_graph_analyzer->Run();
-
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
     if (!AnfAlgo::IsCallNode(control_node)) {
       continue;
     }
     std::vector<FuncGraphPtr> func_graphs;
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-    if (enable_eliminate_unused_element) {
-      func_graphs = GetFuncGraphs(control_node->cast<CNodePtr>()->input(0));
-    } else {
-      func_graphs = func_graph_analyzer->GetCallerFuncGraphs(control_node);
-    }
+    func_graphs = GetFuncGraphs(control_node->cast<CNodePtr>()->input(0));
 
     for (auto func_graph : func_graphs) {
       (void)call_node_to_func_graphs_[control_node].emplace(func_graph);
