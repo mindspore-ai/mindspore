@@ -162,7 +162,10 @@ using ValueNodePtr = SharedPtr<ValueNode>;
 /// \param[in] value The given value.
 ///
 /// \return The created ValueNode.
-inline ValueNodePtr NewValueNode(const ValuePtr &value) { return MakeShared<ValueNode>(value); }
+template <typename T, typename = typename std::enable_if_t<std::is_base_of_v<Value, T>, T>>
+inline ValueNodePtr NewValueNode(const SharedPtr<T> &value) {
+  return MakeShared<ValueNode>(value);
+}
 
 /// \brief Create a ValueNode with the given primitive type value.
 ///
