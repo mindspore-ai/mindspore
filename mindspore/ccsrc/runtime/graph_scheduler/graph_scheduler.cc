@@ -182,7 +182,8 @@ void IntHandler(int, siginfo_t *, void *) {
 }  // namespace
 
 void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
-                           const std::vector<AnfNodePtr> &root_graph_parameters) noexcept {
+                           const std::vector<AnfNodePtr> &root_graph_parameters,
+                           const ControlNodeParserPtr &parser) noexcept {
   // Terminate the actors of actor info.
   if (actors_.count(actor_info) > 0) {
     auto actor_manager = ActorMgr::GetActorMgrRef();
@@ -202,6 +203,17 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
   // Clear device tensor and device tensor store.
   for (auto &graph : graphs) {
     ClearNodeInfo(graph);
+  }
+
+  if (parser != nullptr && parser->IsInited()) {
+    const auto &front_value_nodes = parser->front_value_nodes();
+    for (const auto &front_value_node : front_value_nodes) {
+      const auto &node = front_value_node.first.first;
+      size_t index = front_value_node.first.second;
+      if (AnfAlgo::OutputAddrExist(node, index)) {
+        AnfAlgo::SetOutputAddr(nullptr, index, node.get());
+      }
+    }
   }
 
   // Clear the member of DeviceTensorStore.
@@ -239,6 +251,13 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   }
 
   control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
+
+  // At the end of the step, the op data sent to the stack actor in each actor should be clear.
+  auto total_actors = CollectActors(actor_set);
+  for (auto &actor : total_actors) {
+    MS_EXCEPTION_IF_NULL(actor);
+    actor->to_stack_data_.clear();
+  }
 }
 
 using DataArrowLinkFunc = void (GraphScheduler::*)(AbstractActor *const, AbstractActor *const, const KernelWithIndex &,
