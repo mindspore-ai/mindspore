@@ -1,4 +1,5 @@
 import os
+import platform
 import pytest
 
 
@@ -11,6 +12,9 @@ def test_julia():
     Description: run julia_cases
     Expectation: res == 0
     """
+    system = platform.system()
+    if system != 'Linux':
+        pass
     res = os.system('sh julia_run.sh')
     if res != 0:
         assert False, 'julia test fail'
