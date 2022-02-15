@@ -221,6 +221,8 @@ union PrimitiveType {
     AllGather,
     ReduceScatter,
     DynamicQuant,
+    LSTMGradData,
+    LSTMGradWeight,
 }
 
 table Abs {
@@ -1221,4 +1223,28 @@ table ReduceScatter {
 table DynamicQuant {
     symmetric: bool = false;
     dst_type: long = 32;
+}
+
+table LSTMGradData {
+    bidirectional: bool;
+    has_bias: bool;
+    input_size: long;
+    hidden_size: long;
+    num_layers: long;
+    num_directions: long;
+    dropout: float;
+    zoneout_cell: float = 0;
+    zoneout_hidden: float = 0;
+}
+
+table LSTMGradWeight {
+    bidirectional: bool;
+    has_bias: bool;
+    input_size: long;
+    hidden_size: long;
+    num_layers: long;
+    num_directions: long;
+    dropout: float;
+    zoneout_cell: float = 0;
+    zoneout_hidden: float = 0;
 }

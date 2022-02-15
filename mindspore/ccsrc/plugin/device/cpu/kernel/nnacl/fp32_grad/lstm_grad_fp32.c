@@ -106,9 +106,9 @@ void LstmGradStepUnitInit(const float *output_gate, float *cell_state, float *dY
   ElementSub(dC, temp, dC, lstm_param->output_step_);
 }
 
-void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, float *forget_gate, float *cell_gate,
-                      float *output_gate, float *hidden_state, float *cell_state, float *dC, float *dH, float *dY,
-                      float *dW, float *dX, float *cell_state_minus1, float *weights, float *workspace,
+void LstmGradStepUnit(float *output, float *input_gate, float *forget_gate, float *cell_gate, float *output_gate,
+                      float *hidden_state, float *cell_state, float *dC, float *dH, float *dY, float *dX,
+                      float *cell_state_minus1, float *weights, float *workspace, float *dA,
                       const LstmParameter *lstm_param) {
   float *workspace_i = workspace;
 
@@ -124,19 +124,19 @@ void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, fl
   ElementMul(dC, input_gate, dG, lstm_param->output_step_);
 
   float *temp = AllocteFromScrachPad(&workspace_i, lstm_param->output_step_);
-  float *dAi = AllocteFromScrachPad(&workspace_i, lstm_param->output_step_);  // dAi = dI * I * (1 - I)
+  float *dAi = AllocteFromScrachPad(&dA, lstm_param->output_step_);  // dAi = dI * I * (1 - I)
   ElementMul(dI, input_gate, dAi, lstm_param->output_step_);
   ElementMul(dAi, input_gate, temp, lstm_param->output_step_);
   ElementSub(dAi, temp, dAi, lstm_param->output_step_);
-  float *dAo = AllocteFromScrachPad(&workspace_i, lstm_param->output_step_);  // dAo = dO * O * (1 - O)
+  float *dAo = AllocteFromScrachPad(&dA, lstm_param->output_step_);  // dAo = dO * O * (1 - O)
   ElementMul(dO, output_gate, dAo, lstm_param->output_step_);
   ElementMul(dAo, output_gate, temp, lstm_param->output_step_);
   ElementSub(dAo, temp, dAo, lstm_param->output_step_);
-  float *dAf = AllocteFromScrachPad(&workspace_i, lstm_param->output_step_);  // dAf = dF * F * (1 - F)
+  float *dAf = AllocteFromScrachPad(&dA, lstm_param->output_step_);  // dAf = dF * F * (1 - F)
   ElementMul(dF, forget_gate, dAf, lstm_param->output_step_);
   ElementMul(dAf, forget_gate, temp, lstm_param->output_step_);
   ElementSub(dAf, temp, dAf, lstm_param->output_step_);
-  float *dAg = AllocteFromScrachPad(&workspace_i, lstm_param->output_step_);  // dAg = dG * (1 - G^2)
+  float *dAg = AllocteFromScrachPad(&dA, lstm_param->output_step_);  // dAg = dG * (1 - G^2)
   ElementMul(cell_gate, cell_gate, dAg, lstm_param->output_step_);
   ElementMul(dG, dAg, dAg, lstm_param->output_step_);
   ElementSub(dG, dAg, dAg, lstm_param->output_step_);
@@ -146,8 +146,9 @@ void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, fl
 
   size_t dX_size = lstm_param->batch_ * lstm_param->input_size_ * sizeof(float);
   memset(dX, 0, dX_size);
+
   float *weights_loop = weights;
-  float *dA_loop = dAi;  // dAi, dAo, dAf, dAg*
+  float *dA_loop = dAi;  // dAi, dAo, dAf, dAg
   for (int idx = 0; idx < num_of_gates; idx++) {
     GemmMatmul(0, 0, lstm_param->batch_, lstm_param->input_size_, lstm_param->hidden_size_, 1.0, dA_loop,
                lstm_param->hidden_size_, weights_loop, lstm_param->input_size_, 1.0, dX, lstm_param->input_size_,
@@ -155,6 +156,7 @@ void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, fl
     weights_loop += lstm_param->hidden_size_ * lstm_param->input_size_;
     dA_loop += lstm_param->output_step_;
   }
+
   size_t dH_size = lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float);
   if (dY != NULL) {
     memcpy(dH, dY, dH_size);
@@ -170,8 +172,24 @@ void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, fl
     dA_loop += lstm_param->output_step_;
   }
 
+  NNACL_ASSERT(workspace_i <= workspace + GetRunWorkspaceSize(lstm_param));
+
+  ElementMul(dC, forget_gate, dC, lstm_param->output_step_);
+  ElementMul(dH, output_gate, temp, lstm_param->output_step_);
+
+  Tanh(cell_state_minus1, lstm_param->output_step_, tanh_c);
+  ElementMul(tanh_c, tanh_c, tanh_c, lstm_param->output_step_);
+  ElementMul(temp, tanh_c, tanh_c, lstm_param->output_step_);
+  ElementSub(temp, tanh_c, temp, lstm_param->output_step_);
+  ElementAdd(dC, temp, dC, lstm_param->output_step_);
+}
+
+void LstmGradWeightStepUnit(float *input_t, float *hidden_state, float *dA, float *dW, float *workspace,
+                            const LstmParameter *lstm_param) {
   // Calc dWi, dWo, dWf, dWg, dVi, dVo, dVf, dVg, dBi, dBo, dBf, dBg
-  dA_loop = dAi;
+  float *dA_loop = dA;
+  float *mat_workspace = AllocteFromScrachPad(
+    &workspace, GetGemmMatMullWorkspace(lstm_param->batch_, lstm_param->input_size_, lstm_param->hidden_size_));
   int dW_size = lstm_param->input_size_ * lstm_param->hidden_size_;
   int dV_size = lstm_param->hidden_size_ * lstm_param->hidden_size_;
   int dB_size = lstm_param->hidden_size_;
@@ -191,15 +209,4 @@ void LstmGradStepUnit(const float *input_t, float *output, float *input_gate, fl
     dV_loop += dV_size;
     dB_loop += dB_size;
   }
-
-  NNACL_ASSERT(workspace_i <= workspace + GetRunWorkspaceSize(lstm_param));
-
-  ElementMul(dC, forget_gate, dC, lstm_param->output_step_);
-  ElementMul(dH, output_gate, temp, lstm_param->output_step_);
-
-  Tanh(cell_state_minus1, lstm_param->output_step_, tanh_c);
-  ElementMul(tanh_c, tanh_c, tanh_c, lstm_param->output_step_);
-  ElementMul(temp, tanh_c, tanh_c, lstm_param->output_step_);
-  ElementSub(temp, tanh_c, temp, lstm_param->output_step_);
-  ElementAdd(dC, temp, dC, lstm_param->output_step_);
 }

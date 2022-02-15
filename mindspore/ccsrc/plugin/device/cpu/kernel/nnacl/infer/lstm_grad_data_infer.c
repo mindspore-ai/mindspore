@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,41 +14,40 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/lstm_grad_infer.h"
+#include "nnacl/infer/lstm_grad_data_infer.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/fp32/lstm_fp32.h"
 
-int LstmGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                       OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 11, 4);
+int LstmGradDataInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                           OpParameter *parameter) {
+  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 9, 3);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
 
-  const TensorC *input = inputs[0];
-  const TensorC *H = inputs[1];
-  const TensorC *C = inputs[2];
-  const TensorC *weight = inputs[3];
-  TensorC *output = outputs[0];
-  for (size_t i = 0; i < outputs_size; i++) {
-    SetDataTypeFormat(outputs[i], input);
+  const TensorC *dY = inputs[SECOND_INPUT];
+  const TensorC *H = inputs[THIRD_INPUT];
+  const TensorC *C = inputs[FOURTH_INPUT];
+  const TensorC *weight = inputs[FIFTH_INPUT];
+  TensorC *dX = outputs[FIRST_INPUT];
+  for (int i = 0; i < outputs_size; i++) {
+    SetDataTypeFormat(outputs[i], dY);
   }
 
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
 
-  if (input->shape_size_ != 3 || weight->shape_size_ != 3) {
+  if (dY->shape_size_ != C3NUM || weight->shape_size_ != C3NUM) {
     return NNACL_ERR;
   }
 
-  SetShapeArray(output, input->shape_, input->shape_size_);
+  SetShapeArray(dX, dY->shape_, dY->shape_size_);
   SetShapeArray(outputs[SECOND_INPUT], H->shape_, H->shape_size_);
   SetShapeArray(outputs[THIRD_INPUT], C->shape_, C->shape_size_);
-  SetShapeArray(outputs[FOURTH_INPUT], weight->shape_, weight->shape_size_);
 
   return NNACL_OK;
 }
 
-REG_INFER(LSTMGrad, PrimType_LSTMGrad, LstmGradInferShape)
+REG_INFER(LSTMGradData, PrimType_LSTMGradData, LstmGradDataInferShape)

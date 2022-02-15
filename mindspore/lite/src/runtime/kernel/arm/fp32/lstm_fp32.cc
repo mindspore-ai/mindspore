@@ -157,19 +157,26 @@ int LstmCPUKernel::InitStateWeightBias() {
   }
 
   // state bias
+  int weight_h_size = gate_num * lstm_param_->hidden_size_ * lstm_param_->hidden_size_;
+  int bias_size = gate_num * lstm_param_->hidden_size_;
   state_bias_ = reinterpret_cast<float *>(malloc(weight_batch_ * lstm_param_->state_col_align_ * sizeof(float)));
   if (state_bias_ == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc state_bias_ error.";
     return RET_ERROR;
   }
   memset(state_bias_, 0, weight_batch_ * lstm_param_->state_col_align_ * sizeof(float));
-  // if ONNX, secend bias is also present
+  // if ONNX, secend bias is also present order IOFG
   if (in_tensors_.size() > mindir_input_tensors) {
     float *state_bias =
       reinterpret_cast<float *>(in_tensors_.at(onnx_bias_index)->data()) + gate_num * lstm_param_->hidden_size_;
     CHECK_NULL_RETURN(state_bias);
     PackLstmBias(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_, lstm_param_->state_col_align_,
                  lstm_param_->bidirectional_, nullptr);
+  } else if (weight_h->ElementsNum() - weight_i_size - weight_h_size - C2NUM * bias_size == 0) {
+    // mindir from device "GPU", secend bias is also present order IFOG
+    float *state_bias = weight_h_data + weight_h_size + bias_size;
+    PackLstmBias(state_bias_, state_bias, weight_batch_, lstm_param_->hidden_size_, lstm_param_->state_col_align_,
+                 lstm_param_->bidirectional_, weights_order_IFOG);
   }
   return RET_OK;
 }
