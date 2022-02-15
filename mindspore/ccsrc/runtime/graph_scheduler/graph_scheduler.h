@@ -57,7 +57,8 @@ class GraphScheduler {
   // Clear the members.
   void Clear();
   void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs,
-             const std::vector<AnfNodePtr> &root_graph_parameters) noexcept;
+             const std::vector<AnfNodePtr> &root_graph_parameters,
+             const ControlNodeParserPtr &parser = nullptr) noexcept;
   // The control flow actors will generate some data in the loop body execution, so need clear on the end of execution.
   void ClearActorData(const ActorSet *actor_set);
 

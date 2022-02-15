@@ -815,7 +815,7 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
   // If the graph has a call input, all of its inputs in the graph should be linked to its stack actor.
   if (IsCallInputKernelGraph(graph.get())) {
     // If the input come from a kernel graph belong the same group, it should be linked by internal parameter.
-    if (front_node != nullptr && IsSameKernelGraphGroup(front_node, graph)) {
+    if (front_node != nullptr && (IsSameKernelGraphGroup(front_node, graph) || front_node->isa<ValueNode>())) {
       return false;
     }
     return true;
