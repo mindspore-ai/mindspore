@@ -58,7 +58,7 @@ namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
-enum class DeviceAddressType { kUnknown, kAscend, kCPU, kGPU };
+enum class DeviceAddressType { kUnknown, kCPU, kAscend, kGPU };
 static const std::map<DeviceAddressType, std::string> kDeviceTypeToName = {{DeviceAddressType::kUnknown, "Unknown"},
                                                                            {DeviceAddressType::kAscend, "Ascend"},
                                                                            {DeviceAddressType::kCPU, "CPU"},

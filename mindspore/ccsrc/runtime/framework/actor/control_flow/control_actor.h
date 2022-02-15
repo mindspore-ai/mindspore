@@ -72,6 +72,9 @@ class ControlActor : public MemoryAwareActor {
   const std::map<size_t, std::set<DeviceTensorPtr>> &ref_formal_parameter_device_tensors() const {
     return ref_formal_parameter_device_tensors_;
   }
+  const std::map<size_t, std::set<DeviceTensorPtr>> &ref_node_formal_parameter_device_tensors() const {
+    return ref_node_formal_parameter_device_tensors_;
+  }
   size_t branch_id() const { return output_branch_id_; }
 
  protected:
@@ -153,6 +156,7 @@ class ControlActor : public MemoryAwareActor {
   // The device tensors of backend input nodes corresponding to ref formal parameters, the key is the position index of
   // formal parameter. Used to update the ptr of device tensors when receive the real parameters for ref nodes.
   std::map<size_t, std::set<DeviceTensorPtr>> ref_formal_parameter_device_tensors_;
+  std::map<size_t, std::set<DeviceTensorPtr>> ref_node_formal_parameter_device_tensors_;
 
   // local node for control actor, such as return node for exit actor, switch node for switch actor.
   AnfNodePtr node_;

@@ -103,6 +103,7 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
       auto device_address = device_context->CreateDeviceAddress(nullptr, tensor_size,
                                                                 AnfAlgo::GetOutputFormat(item, index), output_type_id);
       device_address->set_from_persistent_mem(item->isa<Parameter>());
+      device_address->set_host_shape(trans::GetRuntimePaddingShape(item, index));
       MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(item) << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
@@ -289,9 +290,9 @@ void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
       if (graph->IsInRefOutputMap(out_pair)) {
         auto origin_pair = graph->GetRefCorrespondOutput(out_pair);
         MS_EXCEPTION_IF_NULL(origin_pair.first);
-        auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second);
+        auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second, false);
         MS_EXCEPTION_IF_NULL(origin_node_output_addr);
-        auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i);
+        auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
         if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
           MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
           MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
