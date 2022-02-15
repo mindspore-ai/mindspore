@@ -26,6 +26,9 @@ class TensorArray(PrimitiveWithInfer):
     r"""
     TensorArrayCreate used to create a TensorArray and return an unique handle.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
         element_shape (tuple[int]): the shape of each tensor in a TensorArray.
@@ -72,6 +75,9 @@ class TensorArrayWrite(PrimitiveWithInfer):
     r"""
     TensorArrayWrite used to write tensor into a created TensorArray.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Inputs:
         - **index** (Tensor[int64]) - The position to write.
         - **value** (Tensor) - The value to add into the TensorArray.
@@ -108,6 +114,9 @@ class TensorArrayWrite(PrimitiveWithInfer):
 class TensorArrayRead(PrimitiveWithInfer):
     r"""
     TensorArrayRead used to read tensor from a created TensorArray by the given index.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
@@ -157,6 +166,9 @@ class TensorArrayClose(PrimitiveWithInfer):
     r"""
     TensorArrayClose used to close the created TensorArray. The resources in TensorArray will be deleted.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
 
@@ -190,6 +202,9 @@ class TensorArrayClear(PrimitiveWithInfer):
     r"""
     TensorArrayClear used to reset the created TensorArray. The instance of TensorArray is still aviliable.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
 
@@ -222,6 +237,9 @@ class TensorArrayClear(PrimitiveWithInfer):
 class TensorArrayStack(Primitive):
     r"""
     TensorArrayStack used to stack the tensors in a created TensorArray into one tensor.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         dtype (mindspore.dtype): the data type in the TensorArray.
@@ -264,6 +282,9 @@ class TensorArraySize(PrimitiveWithInfer):
     r"""
     TensorArraySize used to get the logical size of the created TensorArray.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     Inputs:
         - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
 
@@ -291,3 +312,49 @@ class TensorArraySize(PrimitiveWithInfer):
     def infer_dtype(self, handle_type):
         validator.check_type_name("handle", handle_type, (ms.int64), self.name)
         return mstype.int64
+
+
+class TensorArrayGather(PrimitiveWithInfer):
+    r"""
+    TensorArrayGather used to gather specified elements from the created TensorArray.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        dtype (mindspore.dtype): the data type in the TensorArray.
+        element_shape (tuple[int]): the shape of each tensor in a TensorArray.
+
+    Inputs:
+        - **handle** (mindspore.int64) - The handle pointed to the TensorArray.
+        - **indices** (mindspore.int32) - The locations of the gathered elements.
+
+    Outputs:
+        - **output** (Tensor) - The gathered value from the TensorArray.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops as ops
+        >>> from mindspore import numpy as mnp
+        >>> create_op = ops.TensorArray(mindspore.float32, dynamic_size=False, element_shape=(8,))
+        >>> handle = create_op()
+        >>> indices = mnp.range(0, 25, 1, mindspore.int32)
+        >>> gather_op = ops.TensorArrayGather(dtype=mindspore.float32, element_shape=(8,))
+        >>> gather_result = gather_op(handle, indices)
+    """
+    @prim_attr_register
+    def __init__(self, dtype, element_shape):
+        self.init_prim_io_names(inputs=['handle', 'indices'], outputs=['value'])
+        self.add_prim_attr("side_effect_mem", True)
+        self.dtype = dtype
+        self.element_shape = element_shape
+
+    def infer_shape(self, handle, indices):
+        if len(indices) != 1:
+            return ValueError("indices dimension should be equal to 1")
+        return [indices[0]] + list(self.element_shape)
+
+    def infer_dtype(self, handle, indices):
+        validator.check_type_name("handle", handle, (ms.int64), self.name)
+        validator.check_type_name("indices", indices, (ms.int32), self.name)
+        return self.dtype

@@ -932,6 +932,9 @@ MS_CORE_API inline const PrimitivePtr kPrimStandardNormal = std::make_shared<Pri
 
 // RL Ops
 MS_CORE_API inline const PrimitivePtr kPrimTensorArrayStack = std::make_shared<Primitive>("TensorArrayStack");
+MS_CORE_API inline const PrimitivePtr kPrimTensorArray = std::make_shared<Primitive>("TensorArray");
+MS_CORE_API inline const PrimitivePtr kPrimTensorArrayWrite = std::make_shared<Primitive>("TensorArrayWrite");
+MS_CORE_API inline const PrimitivePtr kPrimTensorArrayGather = std::make_shared<Primitive>("TensorArrayGather");
 
 class DoSignaturePrimitive : public Primitive {
  public:

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,6 +343,9 @@ constexpr const char kNameResizeNearestNeighborV2[] = "ResizeNearestNeighborV2";
 constexpr const char kNameConv2DBackpropInputV2[] = "Conv2DBackpropInputV2";
 constexpr const char kNameConcatV2D[] = "ConcatV2D";
 constexpr const char kNameFillV1[] = "FillV1";
+constexpr const char kNameTensorArray[] = "TensorArray";
+constexpr const char kNameTensorArrayWrite[] = "TensorArrayWrite";
+constexpr const char kNameTensorArrayGather[] = "TensorArrayGather";
 
 class OpAdapterMap {
  public:
