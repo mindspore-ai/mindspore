@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_RPC_RECV_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_RPC_RECV_ACTOR_H_
 
+#include <set>
 #include <vector>
 #include <string>
 #include <memory>
@@ -28,21 +29,12 @@ namespace runtime {
 class RecvActor : public RpcActor {
  public:
   RecvActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
-            const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid)
-      : RpcActor(name, KernelTransformType::kRecvActor, kernel, device_context, memory_manager_aid, debug_aid,
-                 recorder_aid) {}
+            const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+            GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
+            const std::set<size_t> &modifiable_ref_output_indexes)
+      : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
+                 modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor) {}
   ~RecvActor() override = default;
-
-  // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
-
- protected:
-  void Init() override;
-  void Run(OpContext<DeviceTensor> *const context) override;
-  void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
  private:
   friend class GraphScheduler;
