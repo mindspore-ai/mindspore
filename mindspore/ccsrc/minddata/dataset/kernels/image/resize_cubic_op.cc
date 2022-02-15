@@ -19,21 +19,29 @@ namespace mindspore {
 namespace dataset {
 // using 8 bits for result
 constexpr uint8_t PrecisionBits = 22;
+// using 16 bit for clip8 table capacity
+constexpr uint16_t Clip8TableCapacity = 640;
 
 // construct lookup table
 static const std::vector<uint8_t> _clip8_table = []() {
   std::vector<uint8_t> v1(896, 0);
   std::vector<uint8_t> v2(384, 255);
   for (int i = 0; i < 256; i++) {
-    v1[i + 640] = i;
+    v1[i + Clip8TableCapacity] = i;
   }
   v1.insert(v1.end(), v2.begin(), v2.end());
   return v1;
 }();
 
-static const uint8_t *clip8_table = &_clip8_table[640];
+static const uint8_t *clip8_table = &_clip8_table[Clip8TableCapacity];
 
-static inline uint8_t clip8(unsigned int input) { return clip8_table[input >> PrecisionBits]; }
+static inline uint8_t clip8(unsigned int input) {
+  uint16_t index = input >> PrecisionBits;
+  if (index >= Clip8TableCapacity) {
+    return 0;
+  }
+  return clip8_table[index];
+}
 
 static inline double cubic_interp(double x) {
   double a = -0.5;
