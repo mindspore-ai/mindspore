@@ -117,6 +117,10 @@ def test_variable_size_batch():
 
     # same as test_batch_repeat_with_copy_map except with python multiprocessing enabled
     def test_batch_repeat_with_copy_map_multiproc(gen_num, r, drop, func, num_workers, my_maxrowsize):
+        # Reduce memory required by disabling the shared memory optimization
+        mem_original = ds.config.get_enable_shared_mem()
+        ds.config.set_enable_shared_mem(False)
+
         res = []
         data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"], num_parallel_workers=num_workers,
                                     python_multiprocessing=True, max_rowsize=my_maxrowsize) \
@@ -125,6 +129,8 @@ def test_variable_size_batch():
                    max_rowsize=my_maxrowsize).repeat(r)
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             res.append(item["num"])
+
+        ds.config.set_enable_shared_mem(mem_original)
         return res
 
     tst1, tst2, tst3, tst4, tst5, tst6, tst7 = [], [], [], [], [], [], []

@@ -211,12 +211,15 @@ def test_pad_via_map_multiproc():
     Expectation: pad_batch and numpy.pad results are the same
     """
     # Note: Reduce shared memory needed (for CI) by using small num_parallel_workers and max_rowsize values
+    # and disabling the shared memory optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
     res_from_map = pad_map_config(2, True, 1)
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
     for i, _ in enumerate(res_from_map):
         np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
-
+    ds.config.set_enable_shared_mem(mem_original)
 
 
 if __name__ == '__main__':

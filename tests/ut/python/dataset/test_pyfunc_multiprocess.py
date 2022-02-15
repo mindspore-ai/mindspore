@@ -29,7 +29,7 @@ PYFUNCMAP_DATA_DIR = ["../data/dataset/testPyfuncMap/data.data"]
 PYFUNCMAP_SCHEMA_DIR = "../data/dataset/testPyfuncMap/schema.json"
 
 
-def test_pyfunc_multiproc_shrmem():
+def skip_test_pyfunc_multiproc_shrmem():
     """
     Feature: PyFunc in Map op
     Description: Test python_multiprocessing=True with shared memory enabled
@@ -123,8 +123,11 @@ def test_pyfunc_multiproc_max_rowsize_small():
     Expectation: Number of return data rows is correct
     """
     # Reduce memory needed by reducing queue size
+    # and disabling the shared memory optimization
     prefetch_original = ds.config.get_prefetch_size()
     ds.config.set_prefetch_size(1)
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
 
     mydata1 = create_dataset_pyop_multiproc(num_parallel_workers=2, max_rowsize=1, num_samples=500)
     mycount1 = 0
@@ -133,6 +136,7 @@ def test_pyfunc_multiproc_max_rowsize_small():
     assert mycount1 == 15
 
     ds.config.set_prefetch_size(prefetch_original)
+    ds.config.set_enable_shared_mem(mem_original)
 
 
 def test_pyfunc_multiproc_max_rowsize_large():
@@ -260,7 +264,7 @@ def test_pyfunc_multiproc_mainproc_exception():
 
 
 if __name__ == '__main__':
-    test_pyfunc_multiproc_shrmem()
+    skip_test_pyfunc_multiproc_shrmem()
     test_pyfunc_multiproc_noshrmem()
     test_pyfunc_multiproc_max_rowsize_small()
     test_pyfunc_multiproc_max_rowsize_large()
