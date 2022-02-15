@@ -106,7 +106,10 @@ STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const Parameter
       MS_LOG(ERROR) << "BuildParameterNode failed.";
       return lite::RET_NULL_PTR;
     }
-    manager->Replace(param_node, param_node_new);
+    if (!manager->Replace(param_node, param_node_new)) {
+      MS_LOG(ERROR) << "Replace param node failed.";
+      return lite::RET_ERROR;
+    }
     func_graph->DropNode(param_node);
   } else {
     // set graph input
@@ -164,7 +167,10 @@ STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   }
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
-  manager->Replace(cnode, param_node);
+  if (!manager->Replace(cnode, param_node)) {
+    MS_LOG(ERROR) << "Replace param node failed.";
+    return RET_ERROR;
+  }
   return lite::RET_OK;
 }
 
@@ -226,7 +232,10 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
     param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vector));
     auto manager = func_graph->manager();
     MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "funcgraph has no manager");
-    manager->Replace(cnode, param_node);
+    if (!manager->Replace(cnode, param_node)) {
+      MS_LOG(ERROR) << "Replace param node failed.";
+      return RET_ERROR;
+    }
   }
   return lite::RET_OK;
 }
@@ -306,7 +315,6 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
 
 STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
-  MS_ASSERT(func_graph != nullptr);
   MS_CHECK_TRUE_RET(!cnode->inputs().empty(), lite::RET_ERROR);
   auto node = cnode->input(0);
   MS_ASSERT(node != nullptr);
@@ -354,7 +362,7 @@ STATUS AdjustResize(bool *need_update_manager, const CNodePtr &cnode) {
       MS_ASSERT(size_param != nullptr);
       bool is_scale_valid = ValidParameterNode(scale_param);
       bool is_size_valid = ValidParameterNode(size_param);
-      if (!(is_scale_valid ^ is_size_valid)) {
+      if (!(is_scale_valid || is_size_valid)) {
         MS_LOG(ERROR) << "One of scale and size should be specified.";
         return lite::RET_ERROR;
       }

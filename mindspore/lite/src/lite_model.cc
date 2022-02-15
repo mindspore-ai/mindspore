@@ -362,6 +362,11 @@ bool LiteModel::ModelVerify() const {
     return false;
   }
 
+  if (this->input_indices_ == this->output_indices_) {
+    MS_LOG(ERROR) << "Model outputs can not be totally same as the inputs.";
+    return false;
+  }
+
   auto all_tensors_size = this->all_tensors_.size();
   for (auto input_index : this->input_indices_) {
     if (input_index >= all_tensors_size) {

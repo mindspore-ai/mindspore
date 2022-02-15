@@ -64,6 +64,8 @@ class InnerKernel : public Kernel {
 
   virtual bool CheckInputsValid() const { return true; }
 
+  virtual bool CheckParamsValid() const { return true; }
+
   virtual int FreeInWorkTensor() const {
     for (auto &in_tensor : this->in_tensors()) {
       MS_ASSERT(in_tensor != nullptr);

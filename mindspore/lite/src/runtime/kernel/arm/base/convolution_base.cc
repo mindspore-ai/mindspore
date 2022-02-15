@@ -129,6 +129,27 @@ int ConvolutionBaseCPUKernel::Prepare() {
   return RET_OK;
 }
 
+bool ConvolutionBaseCPUKernel::CheckParamsValid() const {
+  auto weight = this->in_tensors_.at(kWeightIndex);
+  MS_CHECK_GT(conv_param_->group_, 0, false);
+  MS_CHECK_GE(conv_param_->pad_u_, 0, false);
+  MS_CHECK_GE(conv_param_->pad_d_, 0, false);
+  MS_CHECK_GE(conv_param_->pad_l_, 0, false);
+  MS_CHECK_GE(conv_param_->pad_r_, 0, false);
+  MS_CHECK_GE(conv_param_->output_padding_h_, 0, false);
+  MS_CHECK_GE(conv_param_->output_padding_w_, 0, false);
+  MS_CHECK_GT(conv_param_->dilation_h_, 0, false);
+  MS_CHECK_GT(conv_param_->dilation_w_, 0, false);
+  MS_CHECK_GT(conv_param_->stride_h_, 0, false);
+  MS_CHECK_GT(conv_param_->stride_w_, 0, false);
+  MS_CHECK_TRUE_MSG(conv_param_->kernel_h_ = weight->Height(), false, "Invalid kernel height in conv params.");
+  MS_CHECK_TRUE_MSG(conv_param_->kernel_w_ = weight->Width(), false, "Invalid kernel Width in conv params.");
+  if (conv_param_->group_ > conv_param_->input_channel_) {
+    conv_param_->group_ = conv_param_->input_channel_;
+  }
+  return true;
+}
+
 int ConvolutionBaseCPUKernel::InitConvWeightBias() {
   if (op_parameter_->is_train_session_) {
     UpdateOriginWeightAndBias();

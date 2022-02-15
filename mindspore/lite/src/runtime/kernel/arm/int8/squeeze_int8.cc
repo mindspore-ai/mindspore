@@ -54,15 +54,13 @@ int SqueezeInt8CPUKernel::Prepare() {
     return RET_ERROR;
   }
   auto in_quant_args = in_tensors_.front()->quant_params();
-  MS_ASSERT(in_quant_args.size() > 0);
+  MS_CHECK_TRUE_MSG(!in_quant_args.empty(), RET_ERROR, "Input quant_params cannot be empty.");
+
   quant_squeeze_param_->in_quant_args_->scale_ = in_quant_args.front().scale;
   quant_squeeze_param_->in_quant_args_->zp_ = in_quant_args.front().zeroPoint;
 
-  MS_ASSERT(this->out_tensors_.size() == 1);
-  auto output_tensor = out_tensors_.at(0);
-  MS_ASSERT(output_tensor != nullptr);
-  auto quant_params = output_tensor->quant_params();
-  MS_ASSERT(quant_params.size() == 1);
+  auto out_quant_params = out_tensors_.front()->quant_params();
+  MS_CHECK_TRUE_MSG(!out_quant_params.empty(), RET_ERROR, "Output quant_params cannot be empty.");
   quant_squeeze_param_->out_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (quant_squeeze_param_->out_quant_args_ == nullptr) {
     MS_LOG(ERROR) << "malloc QuantArg failed";
@@ -76,8 +74,8 @@ int SqueezeInt8CPUKernel::Prepare() {
     }
     return RET_ERROR;
   }
-  quant_squeeze_param_->out_quant_args_->scale_ = static_cast<float>(quant_params.front().scale);
-  quant_squeeze_param_->out_quant_args_->zp_ = quant_params.front().zeroPoint;
+  quant_squeeze_param_->out_quant_args_->scale_ = static_cast<float>(out_quant_params.front().scale);
+  quant_squeeze_param_->out_quant_args_->zp_ = out_quant_params.front().zeroPoint;
   if (!InferShapeDone()) {
     return RET_OK;
   }

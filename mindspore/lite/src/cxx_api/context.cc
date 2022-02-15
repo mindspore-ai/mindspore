@@ -101,7 +101,6 @@ bool Context::GetEnableParallel() const {
     MS_LOG(ERROR) << "Invalid context.";
     return false;
   }
-
   return data_->enable_parallel_;
 }
 
@@ -112,7 +111,8 @@ void Context::SetThreadAffinity(int mode) {
   }
   if (mode < lite::NO_BIND || mode > lite::MID_CPU) {
     MS_LOG(WARNING) << "Invalid thread affinity mode: " << mode << ", change to NO_BIND mode.";
-    mode = lite::NO_BIND;
+    data_->affinity_mode_ = lite::NO_BIND;
+    return;
   }
   data_->affinity_mode_ = mode;
   return;

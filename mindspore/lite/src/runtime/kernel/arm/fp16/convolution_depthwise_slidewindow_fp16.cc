@@ -108,7 +108,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Prepare() {
   }
 
   auto ret = InitConvWeightBias();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitConvWeightBias failed.";
     return RET_ERROR;
   }
@@ -146,7 +146,7 @@ static int ConvDwSWFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   auto ret = InitPackedInputOutput();
-  if (ret != 0) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitPackedInputOutput failed.";
     FreePackedInputOutput();
     return ret;

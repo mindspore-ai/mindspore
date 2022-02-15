@@ -69,6 +69,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   void *MallocAlignedData(size_t alignment, size_t size);
   void FreeAlignedData(void **ptr);
   bool CheckInputsValid() const override;
+  bool CheckParamsValid() const override;
 
   int CheckAndGetWeightParam(int32_t *batch, int32_t *height, int32_t *width) const;
 

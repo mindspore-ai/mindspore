@@ -528,7 +528,7 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
       auto buf = std::make_unique<float[]>(count);
       MSLITE_CHECK_PTR(buf);
       for (int j = 0; j < count; ++j) {
-        buf[j] = layer.blobs(j).double_data(j);
+        buf[j] = layer.blobs(i).double_data(j);
       }
       tensor_info = CreateTensorInfo(buf.get(), count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
     } else {
