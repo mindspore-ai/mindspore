@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/scatter_nd_fp32.h"
+#include "nnacl/base/scatter_nd_base.h"
 
 namespace mindspore {
 namespace lite {

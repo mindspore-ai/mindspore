@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
     return check_ret;
   }
 
-  const TensorC *shape = inputs[0];
+  const TensorC *shape = inputs[THIRD_INPUT];
   if (shape->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
-  const TensorC *update = inputs[2];
+  const TensorC *update = inputs[FIRST_INPUT];
   TensorC *output = outputs[0];
 
   SetDataTypeFormat(output, update);
