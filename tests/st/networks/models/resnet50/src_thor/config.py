@@ -35,5 +35,8 @@ config = ed({
     "label_smooth_factor": 0.1,
     "frequency": 834,
     "eval_interval": 1,
-    "eval_batch_size": 32
+    "eval_batch_size": 32,
+    "train_image_size": 224,
+    "eval_image_size": 224,
+    "device_target": "Ascend"
 })
