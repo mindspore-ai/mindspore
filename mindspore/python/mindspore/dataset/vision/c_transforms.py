@@ -285,13 +285,13 @@ class BoundingBoxAugment(ImageTensorOperation):
     Apply a given image transform on a random selection of bounding box regions of a given image.
 
     Args:
-        transform: C++ transformation operator to be applied on random selection
+        transform (TensorOperation): C++ transformation operator to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
             Range: [0, 1] (default=0.3).
 
     Raises:
-        TypeError: If `transform` is not of type ImageTensorOperation.
+        TypeError: If `transform` is not of type :class:`mindspore.dataset.vision.c_transforms.ImageTensorOperation`.
         TypeError: If `ratio` is not of type float.
         ValueError: If `ratio` is not in range [0, 1].
         RuntimeError: If given bounding box is invalid.
@@ -369,13 +369,13 @@ class ConvertColor(ImageTensorOperation):
     Args:
         convert_mode (ConvertMode): The mode of image channel conversion.
 
-            - ConvertMode.COLOR_BGR2BGRA, Add alpha channel to BGR image.
+            - ConvertMode.COLOR_BGR2BGRA, Convert BGR image to BGRA image.
 
-            - ConvertMode.COLOR_RGB2RGBA, Add alpha channel to RGB image.
+            - ConvertMode.COLOR_RGB2RGBA, Convert RGB image to RGBA image.
 
-            - ConvertMode.COLOR_BGRA2BGR, Remove alpha channel to BGR image.
+            - ConvertMode.COLOR_BGRA2BGR, Convert BGRA image to BGR image.
 
-            - ConvertMode.COLOR_RGBA2RGB, Remove alpha channel to RGB image.
+            - ConvertMode.COLOR_RGBA2RGB, Convert RGBA image to RGB image.
 
             - ConvertMode.COLOR_BGR2RGBA, Convert BGR image to RGBA image.
 
@@ -410,7 +410,7 @@ class ConvertColor(ImageTensorOperation):
             - ConvertMode.COLOR_RGBA2GRAY, Convert RGBA image to GRAY image.
 
     Raises:
-        TypeError: If `convert_mode` is not of type ConvertMode.
+        TypeError: If `convert_mode` is not of type :class:`mindspore.dataset.vision.c_transforms.ConvertMode`.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -489,7 +489,7 @@ class CutMixBatch(ImageTensorOperation):
         prob (float, optional): The probability by which CutMix is applied to each image, range: [0, 1] (default = 1.0).
 
     Raises:
-        TypeError: If `image_batch_format` is not of type ImageBatchFormat.
+        TypeError: If `image_batch_format` is not of type :class:`mindspore.dataset.vision.ImageBatchFormat`.
         TypeError: If `alpha` is not of type float.
         TypeError: If `prob` is not of type float.
         ValueError: If `alpha` is less than or equal 0.
@@ -555,11 +555,11 @@ class CutOut(ImageTensorOperation):
 
 class Decode(ImageTensorOperation):
     """
-    Decode the input image in RGB mode(default) or BGR mode(deprecated).
+    Decode the input image in RGB mode(default) or BGR mode(option is deprecated).
 
     Args:
         rgb (bool, optional): Mode of decoding input image (default=True).
-            If True means format of decoded image is RGB else BGR(deprecated).
+            If True means format of decoded image is RGB else BGR(option is deprecated).
 
     Raises:
         RuntimeError: If `rgb` is False, since this option is deprecated.
@@ -812,7 +812,7 @@ class NormalizePad(ImageTensorOperation):
             The mean values must be in range (0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
-        dtype (str): Set the output data type of normalized image (default is "float32").
+        dtype (str, optional): Set the output data type of normalized image (default is "float32").
 
     Raises:
         TypeError: If `mean` is not of type sequence.
@@ -876,7 +876,7 @@ class Pad(ImageTensorOperation):
     Raises:
         TypeError: If `padding` is not of type integer or sequence of integer.
         TypeError: If `fill_value` is not of type integer or tuple of integer.
-        TypeError: If `padding_mode` is not of type Border.
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -944,7 +944,7 @@ class RandomAffine(ImageTensorOperation):
     Apply Random affine transformation to the input image.
 
     Args:
-        degrees (int or float or sequence): Range of the rotation degrees.
+        degrees (Union[int, float, sequence]): Range of the rotation degrees.
             If `degrees` is a number, the range will be (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
         translate (sequence, optional): Sequence (tx_min, tx_max, ty_min, ty_max) of minimum/maximum translation in
@@ -953,17 +953,17 @@ class RandomAffine(ImageTensorOperation):
             (tx_min*width, tx_max*width) and (ty_min*height, ty_max*height), respectively.
             If a tuple or list of size 2, then a translate parallel to the X axis in the range of
             (translate[0], translate[1]) is applied.
-            If a tuple of list of size 4, then a translate parallel to the X axis in the range of
+            If a tuple or list of size 4, then a translate parallel to the X axis in the range of
             (translate[0], translate[1]) and a translate parallel to the Y axis in the range of
             (translate[2], translate[3]) are applied.
             If None, no translation is applied.
         scale (sequence, optional): Scaling factor interval, which must be non negative
             (default=None, original scale is used).
-        shear (int or float or sequence, optional): Range of shear factor, which must be positive (default=None).
+        shear (Union[int, float, sequence], optional): Range of shear factor, which must be positive (default=None).
             If a number, then a shear parallel to the X axis in the range of (-shear, +shear) is applied.
             If a tuple or list of size 2, then a shear parallel to the X axis in the range of (shear[0], shear[1])
             is applied.
-            If a tuple of list of size 4, then a shear parallel to X axis in the range of (shear[0], shear[1])
+            If a tuple or list of size 4, then a shear parallel to X axis in the range of (shear[0], shear[1])
             and a shear parallel to Y axis in the range of (shear[2], shear[3]) is applied.
             If None, no shear is applied.
         resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
@@ -975,7 +975,7 @@ class RandomAffine(ImageTensorOperation):
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-        fill_value (tuple or int, optional): Optional fill_value to fill the area outside the transform
+        fill_value (Union[int, tuple], optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
             (default=0, filling is performed).
 
@@ -984,7 +984,7 @@ class RandomAffine(ImageTensorOperation):
         TypeError: If `translate` is not of type sequence.
         TypeError: If `scale` is not of type sequence.
         TypeError: If `shear` is not of type integer, float or sequence.
-        TypeError: If `resample` is not of type Inter.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `fill_value` is not of type integer or tuple of integer.
         ValueError: If `degrees` is negative.
         ValueError: If `translate` is not in range [-1.0, 1.0].
@@ -1240,7 +1240,7 @@ class RandomCrop(ImageTensorOperation):
         TypeError: If `padding` is not of type integer or sequence of integer.
         TypeError: If `pad_if_needed` is not of type boolean.
         TypeError: If `fill_value` is not of type integer or sequence of integer.
-        TypeError: If `padding_mode` is not of type Border.
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
@@ -1314,7 +1314,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
         TypeError: If `size` is not of type integer or sequence of integer.
         TypeError: If `scale` is not of type tuple.
         TypeError: If `ratio` is not of type tuple.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -1401,7 +1401,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         TypeError: If `padding` is not of type integer or sequence of integer.
         TypeError: If `pad_if_needed` is not of type boolean.
         TypeError: If `fill_value` is not of type integer or sequence of integer.
-        TypeError: If `padding_mode` is not of type Border.
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
