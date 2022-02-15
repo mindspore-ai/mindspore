@@ -48,6 +48,8 @@ constexpr size_t ONEHOT_INPUTS_SIZE = 4;
 constexpr size_t UNSORTEDSEGMENTSUM_INPUTS_SIZE = 3;
 constexpr size_t GATHERV2_INPUTS_SIZE = 3;
 constexpr size_t DROPOUTDOMASK_INPUTS_SIZE = 3;
+constexpr size_t CROP_AND_RESIZE_INPUTS_SIZE = 3;
+constexpr size_t ROI_ALIGN_INPUTS_SIZE = 2;
 constexpr size_t ACTIVATION_ATTR_SIZE = 1;
 constexpr size_t SOFTMAX_ATTR_SIZE = 1;
 constexpr size_t ACTIVATION_INPUTS_SIZE = 1;
@@ -241,6 +243,11 @@ constexpr char GROUP_SIZE[] = "group_size";
 constexpr char REPEAT_DIM_DIRECT[] = "repeat_dim_direct";
 constexpr char RIGHT[] = "right";
 constexpr char BOOL[] = "Bool";
+constexpr char POOLED_HEIGHT[] = "pooled_height";
+constexpr char POOLED_WIDTH[] = "pooled_width";
+constexpr char SPATIAL_SCALE[] = "spatial_scale";
+constexpr char SAMPLE_NUM[] = "sample_num";
+constexpr char ROI_END_MODE[] = "roi_end_mode";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -424,6 +431,9 @@ constexpr char CUMSUM[] = "CumSum";
 constexpr char BOUNDING_BOX_ENCODE[] = "BoundingBoxEncode";
 constexpr char IOU[] = "IOU";
 constexpr char RANDOM_CHOICE_WITH_MASK[] = "RandomChoiceWithMask";
+constexpr char CROP_AND_RESIZE[] = "CropAndResize";
+constexpr char MASKED_FILL[] = "MaskedFill";
+constexpr char ROI_ALIGN[] = "ROIAlign";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

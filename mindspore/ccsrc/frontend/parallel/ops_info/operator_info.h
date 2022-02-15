@@ -354,6 +354,7 @@ std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequeue);
 ValuePtr MakeListValue(const std::vector<int64_t> &v);
 ValuePtr MakeTupleListValue(const Shapes &v);
 AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple);
+AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple);
 }  // namespace parallel
 }  // namespace mindspore
 

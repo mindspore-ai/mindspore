@@ -80,3 +80,4 @@ def test_bounding_box_encode_strategy_error():
     net = Net(strategy)
     with pytest.raises(RuntimeError):
         compile_net(net, _anchor_box, _gt_boxes)
+    context.reset_auto_parallel_context()

@@ -15,66 +15,72 @@
 import numpy as np
 import pytest
 
-import mindspore as ms
-from mindspore import context, Tensor
+from mindspore import Tensor, context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
-
-_anchor_boxes = Tensor(np.ones([32, 4]), ms.float32)
-_gt_boxes = Tensor(np.ones([64, 4]), ms.float32)
+BATCH_SIZE = 32
+NUM_BOXES = 8
+IMAGE_HEIGHT = 256
+IMAGE_WIDTH = 256
+CHANNELS = 3
+_images = Tensor(np.random.normal(size=[BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, CHANNELS]).astype(np.float32))
+_boxes = Tensor(np.random.uniform(size=[NUM_BOXES, 4]).astype(np.float32))
+_box_index = Tensor(np.random.uniform(size=[NUM_BOXES], low=0, high=BATCH_SIZE).astype(np.int32))
+_crop_size = (24, 24)
 
 
 class Net(Cell):
-    def __init__(self, strategy=None):
+    def __init__(self, crop_size, strategy=None):
         super(Net, self).__init__()
-        self.iou = P.IOU().shard(strategy)
+        self.crop_size = crop_size
+        self.crop_and_resize = P.CropAndResize().shard(strategy)
 
-    def construct(self, anchor_boxes, gt_boxes):
-        x = self.iou(anchor_boxes, gt_boxes)
-        return x
+    def construct(self, images, boxes, box_index):
+        output = self.crop_and_resize(images, boxes, box_index, self.crop_size)
+        return output
 
 
-def compile_net(net: Cell):
-    net.set_train()
+def compile_net(net: Cell, *inputs):
     net.set_auto_parallel()
-    _cell_graph_executor.compile(net, _anchor_boxes, _gt_boxes)
+    net.set_train()
+    _cell_graph_executor.compile(net, *inputs)
     context.reset_auto_parallel_context()
 
 
-def test_auto_parallel_iou():
+def test_crop_and_resize_auto_parallel():
     """
-    Feature: test IOU auto parallel
+    Feature: test CropAndResize auto parallel
     Description: auto parallel
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
-    net = Net()
-    compile_net(net)
+    net = Net(_crop_size)
+    compile_net(net, _images, _boxes, _box_index)
 
 
-def test_data_parallel_iou():
+def test_crop_and_resize_data_parallel():
     """
-    Feature: test IOU data parallel strategy
-    Description: only shard the batch dimension
+    Feature: test CropAndResize data parallel
+    Description: data parallel
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((2, 1), (4, 1))
-    net = Net(strategy)
-    compile_net(net)
+    strategy = ((4, 1, 1, 1), (2, 1), (2,))
+    net = Net(_crop_size, strategy)
+    compile_net(net, _images, _boxes, _box_index)
 
 
-def test_iou_strategy_error():
+def test_crop_and_resize_strategy_error():
     """
-    Feature: test IOU with illegal strategy
+    Feature: test invalid strategy for CropAndResize
     Description: illegal strategy
     Expectation: raise RuntimeError
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    strategy = ((2, 2), (2, 1))
-    net = Net(strategy)
+    strategy = ((4, 1, 1, 1), (2, 1), (1,))
+    net = Net(_crop_size, strategy)
     with pytest.raises(RuntimeError):
-        compile_net(net)
+        compile_net(net, _images, _boxes, _box_index)
     context.reset_auto_parallel_context()

@@ -1129,6 +1129,72 @@ class MatmulDDSCost : public OperatorCost {
 };
 using MatmulDDSCostPtr = std::shared_ptr<MatmulDDSCost>;
 
+class CropAndResizeCost : public OperatorCost {
+ public:
+  CropAndResizeCost() : OperatorCost() {}
+  ~CropAndResizeCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int64_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int64_t stage_id) const override;
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int64_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t stage_id) const override;
+  // Taking account for input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+
+  void set_strategy(const Shape &strategy) { strategy_ = strategy; }
+  void set_crop_size(const std::vector<int64_t> &crop_size) { crop_size_ = crop_size; }
+
+ protected:
+  Shape strategy_;
+  std::vector<int64_t> crop_size_;
+
+ private:
+  static const size_t CROP_AND_RESIZE_COST_WEIGHT0 = 1;
+  static const size_t CROP_AND_RESIZE_COST_WEIGHT1 = 1;
+  static const size_t CROP_AND_RESIZE_COST_WEIGHT2 = 8;
+  static const size_t CROP_AND_RESIZE_COST_WEIGHT3 = 2;
+};
+
+class ROIAlignCost : public CropAndResizeCost {
+ public:
+  ROIAlignCost() : CropAndResizeCost() {}
+  ~ROIAlignCost() override = default;
+
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override;
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int64_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t stage_id) const override;
+  // Taking account for input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+
+  void set_pooled_shape(Shape pooled_shape) { pooled_shape_ = pooled_shape; }
+
+ protected:
+  Shape pooled_shape_;
+
+ private:
+  static const size_t ROI_ALIGN_COST_WEIGHT0 = 1;
+  static const size_t ROI_ALIGN_COST_WEIGHT1 = 4;
+  static const size_t ROI_ALIGN_COST_WEIGHT2 = 2;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
