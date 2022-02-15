@@ -27,7 +27,7 @@ typedef struct TopkFp16Node {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void TopkFp16(float16_t *input_data, float16_t *output_data, int32_t *output_index, TopkParameter *parameter);
+void TopkFp16(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter);
 #ifdef __cplusplus
 }
 #endif

@@ -39,7 +39,8 @@ typedef struct TopkParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Topk(float *input_data, float *output_data, int32_t *output_index, TopkParameter *parameter);
+void Topk(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter);
+void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter);
 #ifdef __cplusplus
 }
 #endif

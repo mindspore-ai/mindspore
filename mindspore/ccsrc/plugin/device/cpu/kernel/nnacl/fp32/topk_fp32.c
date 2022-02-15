@@ -38,14 +38,42 @@ int IndexSortCmp(const void *a, const void *b) {
   }
 }
 
-void Topk(float *input_data, float *output_data, int32_t *output_index, TopkParameter *parameter) {
+void Topk(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter) {
   int last_dim_size = parameter->last_dim_size_;
   int loop_num = parameter->loop_num_;
   int k = parameter->k_;
   TopkNode *top_map = (TopkNode *)parameter->topk_node_list_;
 
-  float *cur_input_data = input_data;
-  float *cur_output_data = output_data;
+  float *cur_input_data = (float *)input_data;
+  float *cur_output_data = (float *)output_data;
+  int32_t *cur_output_index = output_index;
+  for (int i = 0; i < loop_num; i++) {
+    for (int j = 0; j < last_dim_size; j++) {
+      top_map[j].element = *(cur_input_data + j);
+      top_map[j].index = j;
+    }
+    qsort(top_map, last_dim_size, sizeof(top_map[0]), DescendCmp);
+    if (!parameter->sorted_) {
+      qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
+    }
+    for (int m = 0; m < k; m++) {
+      cur_output_data[m] = top_map[m].element;
+      cur_output_index[m] = top_map[m].index;
+    }
+    cur_input_data += last_dim_size;
+    cur_output_data += k;
+    cur_output_index += k;
+  }
+}
+
+void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter) {
+  int last_dim_size = parameter->last_dim_size_;
+  int loop_num = parameter->loop_num_;
+  int k = parameter->k_;
+  TopkNode *top_map = (TopkNode *)parameter->topk_node_list_;
+
+  int *cur_input_data = (int *)input_data;
+  int *cur_output_data = (int *)output_data;
   int32_t *cur_output_index = output_index;
   for (int i = 0; i < loop_num; i++) {
     for (int j = 0; j < last_dim_size; j++) {

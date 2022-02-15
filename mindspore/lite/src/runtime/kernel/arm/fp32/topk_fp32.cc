@@ -17,9 +17,6 @@
 #include "src/runtime/kernel/arm/fp32/topk_fp32.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#ifdef ENABLE_FP16
-#include "nnacl/fp16/topk_fp16.h"
-#endif
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -71,15 +68,8 @@ int TopKCPUKernel::Run() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  if (in_tensors_.front()->data_type() == kNumberTypeFloat32) {
-    Topk(static_cast<float *>(input_data), static_cast<float *>(output_data), output_index,
-         reinterpret_cast<TopkParameter *>(op_parameter_));
-  } else {
-#ifdef ENABLE_FP16
-    TopkFp16(static_cast<float16_t *>(input_data), static_cast<float16_t *>(output_data), output_index,
-             reinterpret_cast<TopkParameter *>(op_parameter_));
-#endif
-  }
+  CHECK_NULL_RETURN(topk_func_);
+  topk_func_(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(op_parameter_));
   ms_context_->allocator->Free(topk_param_->topk_node_list_);
   topk_param_->topk_node_list_ = nullptr;
   return RET_OK;
