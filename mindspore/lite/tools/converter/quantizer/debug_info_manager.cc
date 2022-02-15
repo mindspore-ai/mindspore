@@ -193,10 +193,11 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
   return RET_OK;
 }
 
-int DebugInfoManager::SetQuantStaticInfo(OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
+int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                                         OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
                                          const mindspore::lite::Tensor &tensor) {
   auto preferred_dim =
-    mindspore::lite::WeightDecoder::GetPreferredDim(op_parameter, tensor_index, tensor.shape(), Version());
+    mindspore::lite::WeightDecoder::GetPreferredDim(inputs, op_parameter, tensor_index, tensor.shape(), Version());
   float *quant_data;
   if (tensor.data_type() == kNumberTypeInt8) {
     quant_data = mindspore::lite::WeightDecoder::DequantData<int8_t, float>(&tensor, preferred_dim);
@@ -266,8 +267,10 @@ int DebugInfoManager::AddOriginInfo(const mindspore::CallBackParam &call_back_pa
   return RET_OK;
 }
 
-int DebugInfoManager::AddComparedInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter,
-                                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor) {
+int DebugInfoManager::AddComparedInfo(const mindspore::CallBackParam &call_back_param,
+                                      const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                                      OpParameter *op_parameter, bool is_input, int tensor_index,
+                                      mindspore::lite::Tensor *compared_tensor) {
   CHECK_NULL_RETURN(op_parameter);
   CHECK_NULL_RETURN(compared_tensor);
   QuantDebugInfo compared_debug_info;
@@ -280,7 +283,7 @@ int DebugInfoManager::AddComparedInfo(const mindspore::CallBackParam &call_back_
   auto is_const = compared_tensor->category() == CONST_TENSOR || compared_tensor->category() == CONST_SCALAR;
   compared_debug_info.tensor_type_flag = is_const ? WEIGHT : ACTIVATION;
   if (!compared_tensor->quant_params().empty()) {
-    auto ret = SetQuantStaticInfo(op_parameter, tensor_index, &compared_debug_info, *compared_tensor);
+    auto ret = SetQuantStaticInfo(inputs, op_parameter, tensor_index, &compared_debug_info, *compared_tensor);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << compared_tensor->tensor_name() << " get quant static info failed.";
       return RET_ERROR;
@@ -435,13 +438,13 @@ KernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
           MS_LOG(ERROR) << tensor->tensor_name() << " get const tensor failed.";
           return false;
         }
-        ret = AddComparedInfo(call_param, op_parameters.at(call_param.node_name), true, i, &new_tensor);
+        ret = AddComparedInfo(call_param, inputs, op_parameters.at(call_param.node_name), true, i, &new_tensor);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor->tensor_name() << " add compared info failed.";
           return false;
         }
       } else {
-        auto ret = AddComparedInfo(call_param, op_parameters.at(call_param.node_name), true, i,
+        auto ret = AddComparedInfo(call_param, inputs, op_parameters.at(call_param.node_name), true, i,
                                    static_cast<mindspore::lite::Tensor *>(tensor));
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor->tensor_name() << " add compared info failed.";
@@ -494,7 +497,7 @@ KernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, Op
       // all outputs are same dtype.
       for (size_t i = 0; i < outputs.size(); ++i) {
         auto tensor = outputs.at(i);
-        AddComparedInfo(call_param, op_parameters.at(call_param.node_name), false, i,
+        AddComparedInfo(call_param, inputs, op_parameters.at(call_param.node_name), false, i,
                         static_cast<mindspore::lite::Tensor *>(tensor));
       }
       return true;

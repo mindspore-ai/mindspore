@@ -25,6 +25,7 @@
 #include <string>
 #include <cmath>
 #include "nnacl/matmul_parameter.h"
+#include "nnacl/gather_parameter.h"
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
@@ -137,8 +138,24 @@ class WeightDecoder {
 
   static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
-  static int GetPreferredDim(const OpParameter *op_parameter, int index, const std::vector<int> &dims,
-                             const std::string &model_version);
+  template <typename T>
+  static int GetPreferredDim(const std::vector<T *> &in_tensors, const OpParameter *op_parameter, int index,
+                             const std::vector<int> &dims, const std::string &model_version) {
+    const int first_version_offset = 5;
+    if (model_version.empty() ||
+        model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.6.0") {
+      return IsChannelFirst(index, op_parameter) ? 0 : 1;
+    }
+    if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
+      return GetMatMulPreferredDim(op_parameter, index, dims);
+    } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
+      return 0;
+    } else if (op_parameter->type_ == schema::PrimitiveType_Gather) {
+      return GetGatherPreferredDim(op_parameter, in_tensors);
+    }
+    // The first index.
+    return 0;
+  }
 
   template <typename ST, typename DT = float>
   static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim) {
@@ -163,6 +180,8 @@ class WeightDecoder {
   static int UnPackToInt(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
   static int DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
+
+  static bool IsChannelFirst(int index, const OpParameter *op_parameter);
 
   template <typename ST, typename DT = float>
   static DT *DequantPerLayerData(const lite::Tensor *input_tensor, const ST *quant_datas) {
@@ -244,7 +263,23 @@ class WeightDecoder {
 
   static int GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
   static int GetDeConvPreferredDim(const OpParameter *op_parameter, const std::vector<int> &dims);
-  static int GetGatherPreferredDim(const OpParameter *op_parameter);
+
+  template <typename T>
+  static int GetGatherPreferredDim(const OpParameter *op_parameter, const std::vector<T *> &in_tensors) {
+    MS_ASSERT(op_parameter != nullptr);
+    const int axis_index = 2;
+    const int axis_tensor_size = 3;
+    if (in_tensors.size() == axis_tensor_size && in_tensors.at(axis_index)->IsConst()) {
+      if (in_tensors.at(axis_index)->data_type() == kNumberTypeInt32) {
+        return static_cast<int *>(in_tensors.at(axis_index)->data())[0];
+      } else if (in_tensors.at(axis_index)->data_type() == kNumberTypeInt64) {
+        return static_cast<int64_t *>(in_tensors.at(axis_index)->data())[0];
+      }
+    }
+    const auto *param = reinterpret_cast<const GatherParameter *>(op_parameter);
+    return param->axis_;
+  }
+
   static int DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
 
   template <typename T1, typename T2>
@@ -253,13 +288,14 @@ class WeightDecoder {
     T2 uint_result = 0;
     T1 result;
     UnPackFromUintToOrigin<T2>(packed_data, unpack_bit_data);
+    const int base = 2;
     while (static_cast<int>(unpack_bit_data->size()) >= origin_bit) {
       for (int k = 0; k < origin_bit; k++) {
         bool bit_tmp = unpack_bit_data->front();
         uint_result = (static_cast<size_t>(bit_tmp) << static_cast<unsigned int>(k)) + uint_result;
         unpack_bit_data->pop();
       }
-      result = uint_result - static_cast<T2>(pow(2, origin_bit - 1));
+      result = uint_result - static_cast<T2>(pow(base, origin_bit - 1));
       (static_cast<T1 *>(unpack_int))[*count] = result;
       uint_result = 0;
       (*count)++;
@@ -271,7 +307,7 @@ class WeightDecoder {
         uint_result = (static_cast<unsigned int>(bit) << i) + uint_result;
         unpack_bit_data->pop();
       }
-      result = static_cast<T1>(uint_result - static_cast<T2>(pow(2, origin_bit - 1)));
+      result = static_cast<T1>(uint_result - static_cast<T2>(pow(base, origin_bit - 1)));
       (static_cast<T1 *>(unpack_int))[*count] = result;
     }
   }

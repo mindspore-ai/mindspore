@@ -91,8 +91,9 @@ class DebugInfoManager {
   int AddOriginInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
                     int tensor_index, mindspore::lite::Tensor *origin_tensor);
 
-  int AddComparedInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
-                      int tensor_index, mindspore::lite::Tensor *compared_tensor);
+  int AddComparedInfo(const mindspore::CallBackParam &call_back_param,
+                      const std::vector<mindspore::tensor::MSTensor *> &inputs, OpParameter *op_parameter,
+                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor);
 
   void PrintAllDebugInfo();
 
@@ -100,8 +101,8 @@ class DebugInfoManager {
 
   int SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor);
 
-  int SetQuantStaticInfo(OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
-                         const mindspore::lite::Tensor &tensor);
+  int SetQuantStaticInfo(const std::vector<mindspore::tensor::MSTensor *> &inputs, OpParameter *op_parameter,
+                         int tensor_index, QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor);
 
   std::string ParseDataTypeFlagToString(DataTypeFlag data_type_flag);
 
