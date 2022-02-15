@@ -364,6 +364,39 @@ TEST_F(TestMindApi, test_tensor_api) {
 }
 
 /// Feature: MindAPI
+/// Description: test Tensor with dynamic shape.
+/// Expectation: Tensor API work as expected.
+TEST_F(TestMindApi, test_tensor_with_dyn_shape) {
+  ShapeVector shape{1, 2, -1, -2};
+  auto tensor = MakeShared<Tensor>(kNumberTypeFloat32, shape);
+
+  ASSERT_EQ(tensor->data_type(), kNumberTypeFloat32);
+  ASSERT_EQ(tensor->shape(), shape);
+  ASSERT_EQ(tensor->DataSize(), 0);
+  ASSERT_EQ(tensor->Size(), 0);
+
+  ShapeVector shape2{2, 3};
+  tensor->set_data_type(kNumberTypeInt32);
+  tensor->set_shape(shape2);
+  ASSERT_EQ(tensor->data_type(), kNumberTypeInt32);
+  ASSERT_EQ(tensor->shape(), shape2);
+
+  ShapeVector shape3{1, -1, 3};
+  auto tensor2 = MakeShared<Tensor>(kNumberTypeFloat32, shape);
+
+  ASSERT_EQ(tensor2->data_type(), kNumberTypeFloat32);
+  ASSERT_EQ(tensor2->shape(), shape);
+  ASSERT_EQ(tensor2->DataSize(), 0);
+  ASSERT_EQ(tensor2->Size(), 0);
+
+  ShapeVector shape4{3, 4};
+  tensor2->set_data_type(kNumberTypeInt32);
+  tensor2->set_shape(shape4);
+  ASSERT_EQ(tensor2->data_type(), kNumberTypeInt32);
+  ASSERT_EQ(tensor2->shape(), shape4);
+}
+
+/// Feature: MindAPI
 /// Description: test utils API.
 /// Expectation: Tensor API work as expected.
 TEST_F(TestMindApi, test_api_utils) {

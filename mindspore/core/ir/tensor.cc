@@ -44,7 +44,15 @@ static TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId) {
 }
 
 static size_t SizeOf(const ShapeVector &shape) {
-  return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
+  int64_t data_size = 1;
+  for (auto dim : shape) {
+    if (dim < 0) {
+      // For dynamic shape which has negative dimensions, data size should be zero.
+      return 0;
+    }
+    data_size *= dim;
+  }
+  return static_cast<size_t>(data_size);
 }
 
 static std::string ShapeToString(const ShapeVector &shape) {
