@@ -239,7 +239,7 @@ public abstract class Client {
             }
         }
         long endTime = System.currentTimeMillis();
-        logger.info(Common.addTag("total train time:" + (endTime - startTime) + "ms"));
+        logger.info(Common.addTag("total run time:" + (endTime - startTime) + "ms"));
         return Status.SUCCESS;
     }
 
@@ -272,12 +272,13 @@ public abstract class Client {
             Model model = new Model();
             boolean isSuccess = model.loadModel(modelPath);
             if (!isSuccess) {
-                logger.severe(Common.addTag("load model failed:" + modelPath));
+                logger.severe(Common.addTag("load model failed:" + modelPath+" ,please check model is valid or disk" +
+                "space is enough,please check lite log for detail."));
                 return Optional.empty();
             }
             trainSession = LiteSession.createSession(msConfig);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                logger.severe(Common.addTag("init session failed.please check lite log for detail."));
                 msConfig.free();
                 model.free();
                 return Optional.empty();
@@ -285,7 +286,7 @@ public abstract class Client {
             msConfig.free();
             isSuccess = trainSession.compileGraph(model);
             if (!isSuccess) {
-                logger.severe(Common.addTag("compile graph failed:" + modelPath));
+                logger.severe(Common.addTag("compile graph failed,please check lite log for detail."));
                 model.free();
                 trainSession.free();
                 return Optional.empty();
@@ -295,7 +296,8 @@ public abstract class Client {
         } else {
             trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+                logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
+                        "disk space is enough.please check lite log for detail."));
                 return Optional.empty();
             }
             return Optional.of(trainSession);
