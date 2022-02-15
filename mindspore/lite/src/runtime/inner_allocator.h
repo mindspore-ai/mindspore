@@ -44,7 +44,7 @@ class DefaultAllocator : public Allocator {
   int SetRefCount(void *ptr, int ref_count) override;
   int DecRefCount(void *ptr, int ref_count) override;
   int IncRefCount(void *ptr, int ref_count) override;
-  size_t total_size() { return this->total_size_; }
+  size_t total_size() const { return this->total_size_; }
   void Clear();
 
  private:
