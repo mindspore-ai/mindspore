@@ -26,8 +26,15 @@
 namespace mindspore {
 namespace {
 constexpr uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
-constexpr int kOneMillisecond = 1000;                 // 1ms
-constexpr int kOneHundredMilliseconds = 100000;       // 100ms
+constexpr timespec kOneMillisecond = {
+  0,                  // 0 seconds
+  1 * 1000L * 1000L,  // And 1 ms
+};
+
+constexpr timespec kOneHundredMilliseconds = {
+  0,                    // 0 seconds
+  100 * 1000L * 1000L,  // And 100 ms
+};
 }  // namespace
 
 MultiProcess::MultiProcess() = default;
@@ -164,7 +171,7 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
     send_msg_->read_ready_flag = 1;
     MS_LOG_INFO << "Send start " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
     while (!send_msg_->read_finish_flag && !peer_stopped_) {
-      (void)usleep(kOneMillisecond);  // 1ms
+      (void)nanosleep(&kOneMillisecond, nullptr);  // 1ms
     }
     if (peer_stopped_) {
       if (!send_msg_->read_finish_flag) {
@@ -185,7 +192,7 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
   do {
     MS_LOG_INFO << "Receive start from " << cur_offset;
     while (!receive_msg_->read_ready_flag && !peer_stopped_) {
-      (void)usleep(kOneMillisecond);  // 1ms
+      (void)nanosleep(&kOneMillisecond, nullptr);  // 1ms
     }
     if (peer_stopped_) {
       return kMEFailed;
@@ -232,7 +239,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
       }
     }
     send_msg_->heartbeat += 1;
-    (void)usleep(kOneHundredMilliseconds);  // sleep 100 ms
+    (void)nanosleep(&kOneHundredMilliseconds, nullptr);  // sleep 100 ms
   }
 }
 }  // namespace mindspore

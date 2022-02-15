@@ -231,7 +231,10 @@ int ScaleInt8CPUKernel::Prepare() {
     return RET_OK;
   }
 
-  ReSize();
+  if (ReSize() != RET_OK) {
+    MS_LOG(ERROR) << "Scale prepare resize failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
