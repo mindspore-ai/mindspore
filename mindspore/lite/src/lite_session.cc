@@ -1653,7 +1653,7 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
     return nullptr;
   }
   auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByBuf(
-    model_buf, mindspore::ModelType::kMindIR_Opt, size);
+    model_buf, mindspore::ModelType::kMindIR_Lite, size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1669,7 +1669,7 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
     return nullptr;
   }
   auto ret = reinterpret_cast<lite::LiteSession *>(session)->LoadModelAndCompileByPath(
-    model_path, mindspore::ModelType::kMindIR_Opt);
+    model_path, mindspore::ModelType::kMindIR_Lite);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     delete session;
@@ -1680,10 +1680,10 @@ session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_
 
 mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
                                                         size_t *size, mindspore::ModelType model_type) {
-  if (model_type == mindspore::ModelType::kMindIR_Opt) {
+  if (model_type == mindspore::ModelType::kMindIR_Lite) {
     *size = buf_size;
     *lite_buf = const_cast<char *>(model_buf);
-    return mindspore::ModelType::kMindIR_Opt;
+    return mindspore::ModelType::kMindIR_Lite;
   }
 
   if (model_type != mindspore::ModelType::kMindIR) {
@@ -1696,7 +1696,7 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
     MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";
     *size = buf_size;
     *lite_buf = const_cast<char *>(model_buf);
-    return mindspore::ModelType::kMindIR_Opt;
+    return mindspore::ModelType::kMindIR_Lite;
   }
   MS_LOG(WARNING) << "Invalid mslite model.";
   return mindspore::ModelType::kMindIR;
@@ -1705,10 +1705,10 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
 mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, const size_t &buf_size, char **lite_buf,
                                                         size_t *size, mindspore::ModelType model_type,
                                                         const std::shared_ptr<mindspore::Context> &ms_context) {
-  if (model_type == mindspore::ModelType::kMindIR_Opt) {
+  if (model_type == mindspore::ModelType::kMindIR_Lite) {
     *size = buf_size;
     *lite_buf = const_cast<char *>(model_buf);
-    return mindspore::ModelType::kMindIR_Opt;
+    return mindspore::ModelType::kMindIR_Lite;
   }
 
   if (model_type != mindspore::ModelType::kMindIR) {
@@ -1721,7 +1721,7 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
     MS_LOG(DEBUG) << "The kMindIR type model buffer is valid mslite model buffer";
     *size = buf_size;
     *lite_buf = const_cast<char *>(model_buf);
-    return mindspore::ModelType::kMindIR_Opt;
+    return mindspore::ModelType::kMindIR_Lite;
   }
   MS_LOG(WARNING) << "Invalid mslite model.";
 

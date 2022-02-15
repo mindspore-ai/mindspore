@@ -39,7 +39,7 @@ enum ModelType : uint32_t {
   kAIR = 1,
   kOM = 2,
   kONNX = 3,
-  kMindIR_Opt = 4,
+  kMindIR_Lite = 4,
   // insert new data type here
   kUnknownType = 0xFFFFFFFF
 };

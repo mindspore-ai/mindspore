@@ -74,7 +74,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByBuffer(JNIEnv
     return reinterpret_cast<jlong>(nullptr);
   }
   mindspore::ModelType c_model_type;
-  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Opt)) {
+  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
     c_model_type = static_cast<mindspore::ModelType>(model_type);
   } else {
     MS_LOGE("Invalid model type : %d", model_type);
@@ -133,7 +133,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *
                                                                         jcharArray key_str, jstring dec_mod) {
   auto c_model_path = env->GetStringUTFChars(model_path, JNI_FALSE);
   mindspore::ModelType c_model_type;
-  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Opt)) {
+  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
     c_model_type = static_cast<mindspore::ModelType>(model_type);
   } else {
     MS_LOGE("Invalid model type : %d", model_type);

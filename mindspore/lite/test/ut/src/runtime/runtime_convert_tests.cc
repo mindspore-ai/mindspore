@@ -53,7 +53,7 @@ TEST_F(RuntimeConvert, relu2) {
   Model model;
   auto context = std::make_shared<mindspore::Context>();
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
-  Status build_ret = model.Build("./relu.mindir", mindspore::kMindIR_Opt, context);
+  Status build_ret = model.Build("./relu.mindir", mindspore::kMindIR_Lite, context);
   ASSERT_NE(build_ret, Status::OK());
 }
 
