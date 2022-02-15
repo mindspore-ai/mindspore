@@ -220,11 +220,9 @@ void ReduceInt8CPUKernel::ReduceMean4DCalQuantParam() {
 
 int ReduceInt8CPUKernel::CalculateQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
-  CHECK_NULL_RETURN(input);
-  MS_CHECK_TRUE_MSG(!input->quant_params().empty(), RET_ERROR, "input quant_params is empty.");
   lite::Tensor *output = out_tensors_.at(0);
-  CHECK_NULL_RETURN(output);
-  MS_CHECK_TRUE_MSG(!output->quant_params().empty(), RET_ERROR, "output quant_params is empty.");
+  MS_CHECK_TRUE_MSG(!input->quant_params().empty(), RET_ERROR, "Input quant_params cannot be empty.");
+  MS_CHECK_TRUE_MSG(!output->quant_params().empty(), RET_ERROR, "Output quant_params cannot be empty.");
   quant_arg_.in_scale_ = input->quant_params().front().scale;
   quant_arg_.in_zp_ = input->quant_params().front().zeroPoint;
   quant_arg_.out_scale_ = output->quant_params().front().scale;

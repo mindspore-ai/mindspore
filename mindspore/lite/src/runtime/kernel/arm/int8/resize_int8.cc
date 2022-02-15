@@ -67,10 +67,12 @@ void ResizeInt8CPUKernel::FreeFloatResizeBiLinear() {
 
 ResizeInt8CPUKernel::~ResizeInt8CPUKernel() {
   if (method_ == schema::ResizeMethod_LINEAR) {
-    if (quant_in_->zp_ == 0) {
-      FreeResizeBiLinear();
-    } else {
-      FreeFloatResizeBiLinear();
+    if (quant_in_ != nullptr) {
+      if (quant_in_->zp_ == 0) {
+        FreeResizeBiLinear();
+      } else {
+        FreeFloatResizeBiLinear();
+      }
     }
   }
   delete quant_out_;

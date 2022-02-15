@@ -91,8 +91,9 @@ int ResizeNPUOp::SelectResizeOp(const mindspore::schema::Resize *prim) {
     }
     resize_bilinear->set_attr_align_corners(prim->coordinate_transform_mode() ==
                                             schema::CoordinateTransformMode_ALIGN_CORNERS);
+    resize_bilinear->set_attr_half_pixel_centers(prim->coordinate_transform_mode() ==
+                                                 schema::CoordinateTransformMode_HALF_PIXEL);
     resize_bilinear->set_input_size(*out_size_);
-    resize_bilinear->set_attr_half_pixel_centers(prim->preserve_aspect_ratio());
     resize_ = resize_bilinear;
   } else if (resize_method_ == schema::ResizeMethod_NEAREST) {
     if (is_support_v2_) {

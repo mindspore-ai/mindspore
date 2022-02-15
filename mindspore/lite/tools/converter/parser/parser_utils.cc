@@ -178,7 +178,10 @@ AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
   }
   auto manager = Manage(graph);
   MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager is nullptr.");
-  manager->Replace(cnode->input(index), weight_node);
+  if (!manager->Replace(cnode->input(index), weight_node)) {
+    MS_LOG(ERROR) << "Replace weight node failed.";
+    return nullptr;
+  }
   return weight_node;
 }
 
@@ -361,7 +364,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
       MS_CHECK_TRUE_MSG(trans_cnode != nullptr, RET_NULL_PTR, "trans_cnode is nullptr.");
       auto prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
       MS_CHECK_TRUE_MSG(prim != nullptr, RET_NULL_PTR, "prim is nullptr.");
-      prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
+      (void)prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
       auto weight_value = opt::GetTensorInfo(weight_node);
       MS_CHECK_TRUE_MSG(weight_value != nullptr, RET_NULL_PTR, "weight_value is nullptr.");
 
