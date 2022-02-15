@@ -617,7 +617,7 @@ void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
     row_threshold = C4NUM;
   }
 #else
-  int row_threshold = 0;
+  int row_threshold = 1;
 #endif
   int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, row_threshold);
   int row_remaining = MSMAX(row_num_ - row_step * op_parameter_->thread_num_, 0);

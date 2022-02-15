@@ -253,7 +253,7 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
   data_info->data_type_ = data_type;
   auto tensor_info = std::dynamic_pointer_cast<tensor::Tensor>(param_node->default_param());
   size_t offset = 0;
-  if (!shape_vector.empty() && data_type == kObjectTypeString) {
+  if (tensor_info != nullptr && !shape_vector.empty() && data_type == kObjectTypeString) {
     status = GetShapeVectorFromStringTensor(tensor_info, &shape_vector, &offset);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "get shape vector from string tensor failed.";
