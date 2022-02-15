@@ -126,7 +126,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         unit_diagonal (bool, optional): If True, diagonal elements of :math:`a` are assumed to be 1 and
             will not be referenced. Default: False.
         overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance). Default: False.
-        debug (None): Not implemented now. Default: False.
+        debug (None): Not implemented now. Default: None.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.

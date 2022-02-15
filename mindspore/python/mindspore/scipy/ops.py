@@ -128,8 +128,9 @@ class SolveTriangular(PrimitiveWithInfer):
             'value': None
         }
 
-    def infer_dtype(self, A_dtype, b_dtype):
-        return A_dtype
+    def infer_dtype(self, a_dtype, b_dtype):
+        del b_dtype
+        return a_dtype
 
 
 class Cholesky(PrimitiveWithInfer):
