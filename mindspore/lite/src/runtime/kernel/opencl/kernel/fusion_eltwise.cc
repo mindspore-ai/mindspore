@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,6 +131,13 @@ FusionEltwiseParameter *CreateFusionEltwiseParameter(
   return CreateParam(node, replace_map);
 }
 
+bool CheckDateTypeSupport(lite::Tensor *tensor) {
+  if (tensor->data_type() != kNumberTypeFloat16 && tensor->data_type() != kNumberTypeFloat32) {
+    return false;
+  }
+  return true;
+}
+
 bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
   MS_ASSERT(node);
   if (!IsOperatorSupported(node)) {
@@ -141,31 +148,36 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
   }
   auto *output_tensor = node->out_tensors()[0];
   MS_ASSERT(output_tensor);
-  auto output_info = GpuTensorInfo(output_tensor);
+  auto output_info = GpuTensorInfo::CreateGpuTensorInfo(output_tensor);
+  if (output_info == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
   auto output_shape = output_tensor->shape();
   for (auto *in_tensor : node->in_tensors()) {
     MS_ASSERT(in_tensor);
     auto shape = in_tensor->shape();
     bool is_scalar = shape.empty() || (shape.size() == DIMENSION_1D && shape.front() == 1);
-    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output_info.C);
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output_info->C);
     bool _111C = shape.size() == DIMENSION_4D && shape[kNHWC_N] == 1 && shape[kNHWC_H] == 1 && shape[kNHWC_W] == 1 &&
-                 shape[kNHWC_C] == static_cast<int>(output_info.C);
+                 shape[kNHWC_C] == static_cast<int>(output_info->C);
     bool same_with_out = shape == output_shape;
     if (!(is_scalar || is_vector || _111C || same_with_out)) {
       return false;
     }
-    if (in_tensor->data_type() != kNumberTypeFloat16 && in_tensor->data_type() != kNumberTypeFloat32) {
+    if (!CheckDateTypeSupport(in_tensor)) {
       return false;
     }
   }
-  if (output_tensor->data_type() != kNumberTypeFloat16 && output_tensor->data_type() != kNumberTypeFloat32) {
-    return false;
-  }
-  return true;
+  return CheckDateTypeSupport(output_tensor);
 }
 
 int FusionEltwiseOpenCLKernel::Prepare() {
   std::string source = Codegen();
+  if (source.empty()) {
+    MS_LOG(ERROR) << "Codegen source failed.";
+    return RET_ERROR;
+  }
   const std::string program_name = "FusionEltwise\n" + source;
   const std::string kernel_name = "FusionEltwise";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
@@ -223,9 +235,13 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
                                                                   : *(reinterpret_cast<float32_t *>(tensor->data()));
         scalar_weights_.push_back(value);
       } else {
-        auto tensor_info = GpuTensorInfo(tensor);
-        size_t num = tensor_info.ElementsNum;
-        size_t size = tensor_info.Image2DSize;
+        auto tensor_info = GpuTensorInfo::CreateGpuTensorInfo(tensor);
+        if (tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Create gpu tensor info failed.";
+          return RET_ERROR;
+        }
+        size_t num = tensor_info->ElementsNum;
+        size_t size = tensor_info->Image2DSize;
         void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
         if (buffer == nullptr) {
           MS_LOG(ERROR) << "Malloc failed.";
@@ -269,9 +285,13 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
         float value = *reinterpret_cast<float *>(tensor->data());
         scalar_weights_.push_back(value);
       } else {
-        auto tensor_info = GpuTensorInfo(tensor);
-        size_t num = tensor_info.ElementsNum;
-        size_t size = tensor_info.Image2DSize;
+        auto tensor_info = GpuTensorInfo::CreateGpuTensorInfo(tensor);
+        if (tensor_info == nullptr) {
+          MS_LOG(ERROR) << "Create gpu tensor info failed.";
+          return RET_ERROR;
+        }
+        size_t num = tensor_info->ElementsNum;
+        size_t size = tensor_info->Image2DSize;
         void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
         if (buffer == nullptr) {
           MS_LOG(ERROR) << "Malloc failed.";
@@ -296,17 +316,25 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
 #endif
 
 int FusionEltwiseOpenCLKernel::SetGlobalLocal() {
-  auto output = GpuTensorInfo(out_tensors_.front());
-  global_size_ = {output.N * output.H, output.W, output.Slice};
+  auto output = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_.front());
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
+  global_size_ = {output->N * output->D * output->H, output->W, output->Slice};
   local_size_ = {};
   AlignGlobalLocal(global_size_, local_size_);
   return RET_OK;
 }
 
 int FusionEltwiseOpenCLKernel::SetConstArgs() {
-  auto output = GpuTensorInfo(out_tensors_.front());
-  cl_int4 output_shape = {static_cast<cl_int>(output.N), static_cast<cl_int>(output.H), static_cast<cl_int>(output.W),
-                          static_cast<cl_int>(output.C)};
+  auto output = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_.front());
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
+  cl_int4 output_shape = {static_cast<cl_int>(output->N), static_cast<cl_int>(output->D * output->H),
+                          static_cast<cl_int>(output->W), static_cast<cl_int>(output->C)};
   int arg_idx = 0;
   int scalar_idx = 0;
   int buffer_idx = 0;
@@ -404,15 +432,19 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
           "    return;\n"
           "  }\n";
 
-  auto output = GpuTensorInfo(out_tensors_.front());
+  auto output = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_.front());
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return "";
+  }
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     auto *tensor = in_tensors_[i];
     MS_ASSERT(tensor);
     auto shape = in_tensors_[i]->shape();
     bool is_scalar = IsScalar(shape);
-    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output.C);
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output->C);
     bool _111C = shape.size() == DIMENSION_4D && shape[kNHWC_N] == 1 && shape[kNHWC_H] == 1 && shape[kNHWC_W] == 1 &&
-                 shape[kNHWC_C] == static_cast<int>(output.C);
+                 shape[kNHWC_C] == static_cast<int>(output->C);
     if (tensor->IsConst()) {
       if (!is_scalar) {
         code << "  FLT4 in" << i << " = input" << i << "[";

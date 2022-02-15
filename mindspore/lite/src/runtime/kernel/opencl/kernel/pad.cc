@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ int PadOpenCLKernel::SetConstArgs() {
     pad_before_ori.push_back(paddings[2 * i]);
   }
   cl_int4 pad_before;
-  Broadcast2GpuShape(pad_before.s, pad_before_ori.data(), ndim, 0);
+  Broadcast2GpuShape(pad_before_ori.data(), ndim, pad_before.s, DIMENSION_4D, 0);
 
   int arg_cn = 2;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape) != CL_SUCCESS) {

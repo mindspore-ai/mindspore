@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,8 +126,8 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
     MS_ASSERT(begin);
     auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
     MS_ASSERT(size);
-    Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
-    Broadcast2GpuShape(size_.s, size, input_info.NDim, -1);
+    Broadcast2GpuShape(begin, input_info.NDim, begin_.s, DIMENSION_4D, 0);
+    Broadcast2GpuShape(size, input_info.NDim, size_.s, DIMENSION_4D, -1);
     for (int i = 0; i < 4; ++i) {
       if (begin_.s[i] < 0) {
         begin_.s[i] += input_shape_.s[i];
@@ -153,9 +153,9 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
     auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data());
     MS_ASSERT(stride);
     cl_int4 end_ = input_shape_;
-    Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
-    Broadcast2GpuShape(end_.s, end, input_info.NDim);
-    Broadcast2GpuShape(stride_.s, stride, input_info.NDim, 1);
+    Broadcast2GpuShape(begin, input_info.NDim, begin_.s, DIMENSION_4D, 0);
+    Broadcast2GpuShape(end, input_info.NDim, end_.s, DIMENSION_4D);
+    Broadcast2GpuShape(stride, input_info.NDim, stride_.s, DIMENSION_4D, 1);
 
     for (int i = 0; i < 4; ++i) {
       // begin is negative

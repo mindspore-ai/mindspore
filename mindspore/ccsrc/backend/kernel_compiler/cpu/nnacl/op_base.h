@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,11 @@
 #define kNHWC_H 1
 #define kNHWC_W 2
 #define kNHWC_C 3
+#define kNDHWC_N 0
+#define kNDHWC_D 1
+#define kNDHWC_H 2
+#define kNDHWC_W 3
+#define kNDHWC_C 4
 #define kInputSize1 2
 #define kInputSize2 3
 #define MAX_AXIS_SIZE 6
@@ -128,6 +133,10 @@
 #define CLARGSINDEX7 7
 #define CLARGSINDEX8 8
 #define CLARGSINDEX9 9
+
+#define CLIDX_X 0
+#define CLIDX_Y 1
+#define CLIDX_Z 2
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

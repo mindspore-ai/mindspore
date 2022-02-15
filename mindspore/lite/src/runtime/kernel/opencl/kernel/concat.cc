@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
   for (size_t i = 0; i < out_tensors_[0]->shape().size(); ++i) {
     output_shape_.s[i] = out_tensors_[0]->shape()[i];
   }
-  Broadcast2GpuShape(out_shape_.s, output_shape_.s, out_tensors_[0]->shape().size(), 1);
+  Broadcast2GpuShape(output_shape_.s, out_tensors_[0]->shape().size(), out_shape_.s, DIMENSION_4D, 1);
   int arg_cn = in_tensors_.size() + 1;
   if (axis_ == 3 && !Align_) {
     for (auto &in_tensor : in_tensors_) {
@@ -136,7 +136,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
       for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
         temp.s[j] = in_tensor->shape()[j];
       }
-      Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
+      Broadcast2GpuShape(temp.s, in_tensor->shape().size(), in_shape_.s, DIMENSION_4D, 1);
       if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
@@ -152,7 +152,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
       for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
         temp.s[j] = in_tensor->shape()[j];
       }
-      Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
+      Broadcast2GpuShape(temp.s, in_tensor->shape().size(), in_shape_.s, DIMENSION_4D, 1);
       in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
       if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
