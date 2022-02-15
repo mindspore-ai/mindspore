@@ -50,7 +50,7 @@ class AkgCpuKernelMod : public CpuKernelMod {
   ~AkgCpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *) override;
 
   static AkgCpuKernelManagerPtr kernel_manager_;
 

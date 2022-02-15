@@ -153,7 +153,7 @@ class UnifyRepeatedOutput : public opt::Pass {
     bool found = false;
     for (size_t i = 0; i < outputs.size(); ++i) {
       index_map_[i] =
-        static_cast<size_t>(std::find(outputs.begin(), outputs.begin() + i, outputs[i]) - outputs.begin());
+        static_cast<size_t>(std::find(outputs.begin(), outputs.begin() + SizeToLong(i), outputs[i]) - outputs.begin());
       if (index_map_[i] != i) {
         found = true;
       }

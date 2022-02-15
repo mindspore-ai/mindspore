@@ -108,7 +108,7 @@ class GraphKernelRecompute : public opt::Pass {
                                                      const AnfNodePtrList &recompute_edge);
   void LinkIntoTargetFuncGraph(
     const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
-    std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> match_func);
+    const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &match_func);
 
   std::vector<Candidate> candidates_;
 };

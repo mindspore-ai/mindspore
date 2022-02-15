@@ -52,7 +52,7 @@ AnfNodePtrList GkUtils::SpreadTuples(const AnfNodePtrList &nodes, size_t begin_i
       auto mt = nodes[i]->cast<CNodePtr>();
       // recursively spread all inner tuples.
       auto mt_inputs = SpreadTuples(mt->inputs(), 1);
-      result.insert(result.end(), mt_inputs.begin(), mt_inputs.end());
+      (void)result.insert(result.end(), mt_inputs.begin(), mt_inputs.end());
     } else {
       result.push_back(nodes[i]);
     }
