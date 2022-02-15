@@ -27,10 +27,6 @@ class CosineSimilarity(Metric):
         reduction (str): 'none', 'sum', 'mean' (all along dim -1). Default: 'none'.
         zero_diagonal (bool): If True,  diagonals of results will be set to zero. Default: True.
 
-    Return:
-        numpy.ndarray. A square matrix with element-wise similarity scores. If `reduction` is set to
-        "sum" or "mean", values of the matrix will be reduced by row.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
