@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,6 +250,85 @@ Status ShardReader::Open(int n_consumer) {
     }
     MS_LOG(INFO) << "Succeed to open file, path: " << file;
   }
+  return Status::OK();
+}
+
+Status ShardReader::ExtendRandomFileStreams(const int n_new_consumers) {
+  CHECK_FAIL_RETURN_UNEXPECTED(n_new_consumers > 0,
+                               "n_new_consumers must be a positive number. Got: " + std::to_string(n_new_consumers));
+  CHECK_FAIL_RETURN_UNEXPECTED(!file_streams_random_.empty(),
+                               "ExtendRandomFileStreams() must not be called prior to calling Open()");
+  // make sure we won't exceed the number of allowed threads.
+  uint32_t thread_limit = GetMaxThreadNum();
+  CHECK_FAIL_RETURN_UNEXPECTED(n_consumer_ + n_new_consumers <= thread_limit,
+                               "Requested increase in number of consumers will cause it to be above the number of "
+                               "allowed threads. n_new_consumers: " +
+                                 std::to_string(n_new_consumers) +
+                                 ", new n_consumers: " + std::to_string(n_consumer_ + n_new_consumers));
+
+  for (int i = 0; i < n_new_consumers; i++) {
+    file_streams_random_.emplace_back(std::vector<std::shared_ptr<std::fstream>>());
+  }
+
+  for (const auto &file : file_paths_) {
+    std::optional<std::string> dir = "";
+    std::optional<std::string> local_file_name = "";
+    FileUtils::SplitDirAndFileName(file, &dir, &local_file_name);
+    if (!dir.has_value()) {
+      dir = ".";
+    }
+
+    auto realpath = FileUtils::GetRealPath(dir.value().data());
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      realpath.has_value(), "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
+
+    std::optional<std::string> whole_path = "";
+    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
+
+    for (int j = n_consumer_; j < n_consumer_ + n_new_consumers; ++j) {
+      std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
+      fs->open(whole_path.value(), std::ios::in | std::ios::binary);
+      if (!fs->good()) {
+        RETURN_STATUS_UNEXPECTED(
+          "Invalid file, failed to open files for reading mindrecord files. Please check file path, permission and "
+          "open files limit(ulimit -a): " +
+          file);
+      }
+      file_streams_random_[j].push_back(fs);
+    }
+    MS_LOG(INFO) << "Succeed to open file, path: " << file;
+  }
+  n_consumer_ += n_new_consumers;
+  MS_LOG(INFO) << "n_consumer_ is increased by " + std::to_string(n_new_consumers) + " to " +
+                    std::to_string(n_consumer_);
+
+  return Status::OK();
+}
+
+Status ShardReader::ShrinkRandomFileStreams(const int n_remove_consumers) {
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    n_remove_consumers > 0, "n_remove_consumers must be a positive number. Got: " + std::to_string(n_remove_consumers));
+  CHECK_FAIL_RETURN_UNEXPECTED(!file_streams_random_.empty(),
+                               "ShrinkRandomFileStreams() must not be called prior to calling Open()");
+  // make sure we won't go below the number of allowed threads.
+  CHECK_FAIL_RETURN_UNEXPECTED(n_consumer_ - n_remove_consumers >= kMinConsumerCount,
+                               "Requested decrease in number of consumers will cause it to be below the number of "
+                               "allowed threads. n_remove_consumers: " +
+                                 std::to_string(n_remove_consumers) +
+                                 ", new n_consumers: " + std::to_string(n_consumer_ - n_remove_consumers));
+
+  for (int i = n_consumer_ - 1; i >= n_consumer_ - n_remove_consumers; i--) {
+    for (int j = static_cast<int>(file_streams_random_[i].size()) - 1; j >= 0; --j) {
+      if (file_streams_random_[i][j] != nullptr) {
+        file_streams_random_[i][j]->close();
+      }
+    }
+    file_streams_random_.pop_back();
+  }
+  n_consumer_ -= n_remove_consumers;
+  MS_LOG(INFO) << "n_consumer_ is decreased by " + std::to_string(n_remove_consumers) + " to " +
+                    std::to_string(n_consumer_);
+
   return Status::OK();
 }
 

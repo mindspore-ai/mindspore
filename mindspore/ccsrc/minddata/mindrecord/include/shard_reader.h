@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,16 @@ class API_PUBLIC ShardReader {
   /// \brief read the file, get schema meta,statistics and index, multiple-thread mode
   /// \return MSRStatus the status of MSRStatus
   Status Open(int n_consumer);
+
+  /// \brief increase number of random file stream for parallel read
+  /// \param[in] n_new_consumers number of new file streams to be added
+  /// \return MSRStatus the status of MSRStatus
+  Status ExtendRandomFileStreams(const int n_new_consumers);
+
+  /// \brief decrease number of random file streams for parallel read
+  /// \param[in] n_remove_consumers number of file streams to be removed
+  /// \return MSRStatus the status of MSRStatus
+  Status ShrinkRandomFileStreams(const int n_remove_consumers);
 
   /// \brief launch threads to get batches
   /// \param[in] is_simple_reader trigger threads if false; do nothing if true
