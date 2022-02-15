@@ -3,40 +3,8 @@ mindspore.ops
 
 .. include:: operations.rst
 
-组合算子
----------
-
-组合算子是预定义的算子组合。
-
-.. cnmsplatformautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.batch_dot
-    mindspore.ops.clip_by_global_norm
-    mindspore.ops.clip_by_value
-    mindspore.ops.core
-    mindspore.ops.count_nonzero
-    mindspore.ops.cummin
-    mindspore.ops.dot
-    mindspore.ops.gamma
-    mindspore.ops.GradOperation
-    mindspore.ops.HyperMap
-    mindspore.ops.laplace
-    mindspore.ops.Map
-    mindspore.ops.matmul
-    mindspore.ops.multinomial
-    mindspore.ops.MultitypeFuncGraph
-    mindspore.ops.normal
-    mindspore.ops.poisson
-    mindspore.ops.repeat_elements
-    mindspore.ops.sequence_mask
-    mindspore.ops.tensor_dot
-    mindspore.ops.uniform
-
-functional算子
----------------
+functional
+-----------
 
 functional算子是经过初始化后的Primitive，可以直接作为函数使用。functional算子的使用示例如下：
 
@@ -353,21 +321,42 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
    * - mindspore.ops.zeros_like
      - Refer to :class:`mindspore.ops.ZerosLike`.
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.batch_dot
+    mindspore.ops.clip_by_global_norm
+    mindspore.ops.clip_by_value
+    mindspore.ops.core
+    mindspore.ops.count_nonzero
+    mindspore.ops.cummin
+    mindspore.ops.dot
+    mindspore.ops.gamma
     mindspore.ops.grad
+    mindspore.ops.GradOperation
+    mindspore.ops.HyperMap
     mindspore.ops.jvp
+    mindspore.ops.laplace
+    mindspore.ops.Map
+    mindspore.ops.matmul
+    mindspore.ops.multinomial
+    mindspore.ops.MultitypeFuncGraph
     mindspore.ops.narrow
+    mindspore.ops.normal
+    mindspore.ops.poisson
+    mindspore.ops.repeat_elements
     mindspore.ops.select
+    mindspore.ops.sequence_mask
+    mindspore.ops.tensor_dot
+    mindspore.ops.uniform
     mindspore.ops.vjp
 
 原语
 -----
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -381,7 +370,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 函数实现注册
 ----------------
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -391,7 +380,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 算子信息注册
 ----------------
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

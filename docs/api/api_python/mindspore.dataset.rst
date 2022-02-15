@@ -27,7 +27,7 @@ mindspore.dataset
 视觉
 -----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -64,7 +64,7 @@ mindspore.dataset
 文本
 ----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -90,7 +90,7 @@ mindspore.dataset
 音频
 ------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -103,7 +103,7 @@ mindspore.dataset
 标准格式
 --------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -115,7 +115,7 @@ mindspore.dataset
 用户自定义
 ----------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -128,7 +128,7 @@ mindspore.dataset
 图
 ---
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     
     mindspore.dataset.GraphData
@@ -137,7 +137,7 @@ mindspore.dataset
 采样器
 -------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
 
     mindspore.dataset.DistributedSampler
@@ -152,7 +152,7 @@ mindspore.dataset
 其他
 -----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset
     :nosignatures:
     :template: classtemplate_inherited.rst

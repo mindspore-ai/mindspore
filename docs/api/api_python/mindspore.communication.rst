@@ -16,7 +16,7 @@ mindspore.communication
     - BACKEND：使用的通信库，HCCL或者NCCL。
     - WORLD_COMM_GROUP：全局通信域。
 
-.. py:method:: mindspore.communication.init(backend_name=None)
+.. py:function:: mindspore.communication.init(backend_name=None)
 
     初始化通信服务需要的分布式后端，例如‘HCCL’或‘NCCL’服务。
 

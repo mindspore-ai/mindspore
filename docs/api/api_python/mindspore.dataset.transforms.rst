@@ -6,7 +6,7 @@ mindspore.dataset.transforms
 mindspore.dataset.transforms.c_transforms
 -----------------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_transforms
     :nosignatures:
     :template: classtemplate.rst
@@ -28,7 +28,7 @@ mindspore.dataset.transforms.c_transforms
 mindspore.dataset.transforms.py_transforms
 ------------------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_transforms
     :nosignatures:
     :template: classtemplate.rst

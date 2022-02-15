@@ -10,7 +10,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 基本构成单元
 ------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -21,7 +21,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 容器
 -----------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
 
     mindspore.nn.CellList
@@ -30,7 +30,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 卷积层
 --------------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
 
     mindspore.nn.Conv1d
@@ -43,7 +43,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 梯度
 -----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
 
     mindspore.nn.Jvp
@@ -52,7 +52,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 循环层
 --------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -67,7 +67,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 稀疏层
 -------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -81,7 +81,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 非线性激活函数
 --------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -108,7 +108,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 工具
 -----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -128,10 +128,10 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Triu
     mindspore.nn.Unfold
 
-图像函数
---------
+图像
+-----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -145,7 +145,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 归一化层
 ---------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -165,7 +165,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 池化层
 --------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -176,10 +176,10 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.MaxPool2d
 
 
-量化函数
--------------------
+量化
+-----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -199,7 +199,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 损失函数
 --------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -222,7 +222,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 优化器
 -------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -244,10 +244,10 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.SGD
     mindspore.nn.thor
 
-封装函数
+Wrapper
 ---------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -267,10 +267,10 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.WithGradCell
     mindspore.nn.WithLossCell
 
-数学函数
---------
+数学运算
+----------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -282,7 +282,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
 评估指标
 --------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst
@@ -335,7 +335,7 @@ LearningRateSchedule类
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=cosine_decay_lr, momentum=0.9)
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
 
     mindspore.nn.CosineDecayLR
@@ -365,7 +365,7 @@ Dynamic LR函数
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
     
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: nn
 
     mindspore.nn.cosine_decay_lr

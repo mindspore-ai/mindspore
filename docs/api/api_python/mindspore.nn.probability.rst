@@ -8,7 +8,7 @@ mindspore.nn.probability
 Bijectors
 ---------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn_probability
 
     mindspore.nn.probability.bijector.Bijector
@@ -22,7 +22,7 @@ Bijectors
 Distributions
 -------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: nn_probability
 
     mindspore.nn.probability.distribution.Bernoulli

@@ -6,7 +6,7 @@ operations
 
 operations中的Primitive算子在使用前需要实例化。
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -111,7 +111,7 @@ operations中的Primitive算子在使用前需要实例化。
 数学算子
 ^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -220,7 +220,7 @@ operations中的Primitive算子在使用前需要实例化。
 数组算子
 ^^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -328,7 +328,7 @@ distributed_training_ascend.html#id12>`_ 。
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
 <https://www.mindspore.cn/tutorials/zh-CN/master/intermediate/distributed_training/distributed_training_gpu.html#id6>`_ 。
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -345,7 +345,7 @@ distributed_training_ascend.html#id12>`_ 。
 调试算子
 ^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -362,7 +362,7 @@ distributed_training_ascend.html#id12>`_ 。
 随机算子
 ^^^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -382,7 +382,7 @@ distributed_training_ascend.html#id12>`_ 。
 图像算子
 ^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -392,7 +392,7 @@ distributed_training_ascend.html#id12>`_ 。
 稀疏算子
 ^^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -403,7 +403,7 @@ distributed_training_ascend.html#id12>`_ 。
 自定义算子
 ^^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
@@ -413,7 +413,7 @@ distributed_training_ascend.html#id12>`_ 。
 其他算子
 ^^^^^^^^^^^^^^^
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

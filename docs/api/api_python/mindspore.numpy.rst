@@ -6,7 +6,7 @@ mindspore.numpy
 Array Generation
 ----------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -57,7 +57,7 @@ Array Generation
 Array Operation
 ---------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -110,7 +110,7 @@ Array Operation
 Logic
 -----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -142,7 +142,7 @@ Logic
 Math
 ----
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst

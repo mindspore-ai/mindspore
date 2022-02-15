@@ -6,7 +6,7 @@ mindspore.dataset.vision
 mindspore.dataset.vision.c_transforms
 ------------------------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_vision
     :nosignatures:
     :template: classtemplate.rst
@@ -60,7 +60,7 @@ mindspore.dataset.vision.c_transforms
 mindspore.dataset.vision.py_transforms
 -------------------------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_vision
     :nosignatures:
     :template: classtemplate.rst
@@ -103,7 +103,7 @@ mindspore.dataset.vision.py_transforms
 mindspore.dataset.vision.utils
 -------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_vision
     :nosignatures:
     :template: classtemplate.rst
