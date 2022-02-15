@@ -91,19 +91,6 @@ bool IsDynamicShapeGraph(FuncGraphPtr func_graph) {
                      [](const AnfNodePtr &node) { return AnfAlgo::IsNodeDynamicShape(node); });
 }
 
-bool ExistControlNode(FuncGraphPtr func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto node_list = TopoSort(func_graph->get_return());
-  std::vector<PrimitivePtr> control_ops = {prim::kPrimSwitch, prim::kPrimCall, prim::kPrimSwitchLayer};
-  for (auto &node : node_list) {
-    if (std::any_of(control_ops.begin(), control_ops.end(),
-                    [&](PrimitivePtr prim) { return AnfAlgo::CheckPrimitiveType(node, prim); })) {
-      return true;
-    }
-  }
-  return false;
-}
-
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.
 void DisableMindRT(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
@@ -728,11 +715,7 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   return true;
 }
 
-bool HasIncorporateCall(const FuncGraphPtr &func_graph) {
-  if (func_graph->func_graphs_used_total().empty()) {
-    return false;
-  }
-  const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -783,15 +766,34 @@ bool HasIncorporateCall(const FuncGraphPtr &func_graph) {
   return false;
 }
 
+bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &target) {
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    if (GetCNodeTarget(node) == target) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ExistControlNode(const std::vector<AnfNodePtr> &all_nodes) {
+  std::vector<PrimitivePtr> control_ops = {prim::kPrimSwitch, prim::kPrimCall, prim::kPrimSwitchLayer};
+  for (auto &node : all_nodes) {
+    auto contain_control_node = std::any_of(control_ops.begin(), control_ops.end(),
+                                            [&](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+    if (contain_control_node) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void SetRunMode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  // GPU/CPU no need set any context.
-  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-    return;
-  }
-
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto backend_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
@@ -811,6 +813,12 @@ void SetRunMode(const ResourcePtr &res) {
     return;
   }
 
+  const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+  // GPU/CPU no need set any context.
+  if (!ExistTarget(all_nodes, kAscendDevice)) {
+    return;
+  }
+
   // GRAPH | Single Op : KernelByKernel path in MindRT.
   if (common::GetEnv(kGraphOpRun) == "1") {
     MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
@@ -821,7 +829,7 @@ void SetRunMode(const ResourcePtr &res) {
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
   graphs.insert(func_graph);
-  bool exist_func = HasIncorporateCall(func_graph);
+  bool exist_func = HasIncorporateCall(all_nodes);
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_while: " << exist_while;
@@ -831,15 +839,15 @@ void SetRunMode(const ResourcePtr &res) {
     return;
   }
 
-  // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-  if (func_graph->exist_multi_target() && ExistControlNode(func_graph)) {
-    MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
-    set_ctx(false, false, false);
-    return;
-  }
-
-  // GRAPH | Heterogeneous scenario : SubGraph path in MindRT.
+  // Multiple device targets scenario.
   if (func_graph->exist_multi_target()) {
+    // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
+    if (ExistControlNode(all_nodes)) {
+      MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
+      set_ctx(false, false, false);
+      return;
+    }
+    // GRAPH | Heterogeneous scenario : No control flow, subgraph sink path in MindRT.
     MS_LOG(INFO) << "Run graph mode with subgraph sink.";
     set_ctx(true, false, false);
     return;
