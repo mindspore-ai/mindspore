@@ -37,11 +37,11 @@ ValuePtr DTypeInferValue(const PrimitivePtr &primitive, const std::vector<Abstra
   if (type->isa<TensorType>()) {
     const std::set<TypePtr> valid_types = {kTensorType};
     return CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, valid_types, op_name);
-  } else if (input_args[0]->BuildType()->isa<CSRTensorType>()) {
+  } else if (type->isa<CSRTensorType>()) {
     const std::set<TypePtr> valid_types = {kCSRTensorType};
     return CheckAndConvertUtils::CheckCSRTensorTypeValid("input_x", type, valid_types, op_name);
   }
-  MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input argument[infer type]"
+  MS_EXCEPTION(TypeError) << "For Primitive[" << op_name << "], the input argument[input_x] "
                           << "must be a Tensor or CSRTensor but got " << type->ToString() << ".";
   return nullptr;
 }
