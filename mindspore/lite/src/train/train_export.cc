@@ -28,6 +28,7 @@
 #include "src/common/quant_utils.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "src/train/graph_fusion.h"
+#include "src/train/graph_dropout.h"
 #include "src/weight_decoder.h"
 
 namespace mindspore {
@@ -551,6 +552,15 @@ bool TrainExport::IsInputTensor(const schema::TensorT &t) {
 int TrainExport::TrainModelFusion() {
   GraphFusion graph_fusion;
   auto status = graph_fusion.Run(meta_graph_);
+  if (status != RET_OK) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int TrainExport::TrainModelDrop() {
+  GraphDropout graph_dropout;
+  auto status = graph_dropout.Run(meta_graph_);
   if (status != RET_OK) {
     return RET_ERROR;
   }

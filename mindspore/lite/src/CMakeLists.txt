@@ -260,6 +260,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_fusion.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_dropout.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
@@ -276,6 +277,9 @@ set(TRAIN_SRC
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
         ${TOOLS_DIR}/common/meta_graph_utils.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/graph/dropout_node_remove_pass.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/graph/subgraph_node_pass.cc
         )
 
 if(MSLITE_ENABLE_V0)
