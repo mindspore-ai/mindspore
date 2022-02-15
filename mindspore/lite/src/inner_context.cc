@@ -15,6 +15,7 @@
  */
 #include "src/inner_context.h"
 #include <algorithm>
+#include <memory>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
@@ -138,7 +139,11 @@ int InnerContext::Init() {
   }
 
   if (this->allocator == nullptr) {
+#ifdef SERVER_INFERENCE
+    this->allocator = std::make_shared<DynamicMemAllocator>(node_id_);
+#else
     this->allocator = mindspore::Allocator::Create();
+#endif
     CHECK_NULL_RETURN(this->allocator);
   }
   if (IsNpuEnabled()) {

@@ -44,6 +44,10 @@ bool IsSupportSDot();
 
 size_t GetMaxMallocSize();
 
+#ifdef SERVER_INFERENCE
+int64_t GetFreeMemory();
+#endif
+
 #ifdef __ANDROID__
 uint32_t getHwCap(int hwcap_type);
 #endif

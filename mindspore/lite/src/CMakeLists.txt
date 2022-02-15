@@ -110,6 +110,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
@@ -134,6 +135,9 @@ set(LITE_SRC
 if(MSLITE_ENABLE_SERVER_INFERENCE)
     set(LITE_SRC
             ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_allocator.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/dynamic_mem_manager.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/numa_adapter.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
             )
 endif()
