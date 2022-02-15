@@ -34,7 +34,7 @@ from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
 from mindspore.profiler.parser.framework_parser import FrameworkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
 from mindspore.profiler.parser.integrator import Integrator
-from mindspore.profiler.parser.integrator import GpuTimelineGenerator, AscendTimelineGenerator
+from mindspore.profiler.parser.integrator import GpuTimelineGenerator, AscendTimelineGenerator, CpuTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
@@ -163,6 +163,11 @@ class Profiler:
             cpu_profiler = c_expression.CPUProfiler
             self._cpu_profiler = cpu_profiler.get_instance()
             self._cpu_profiler.init(self._output_path)
+
+        if self._device_target and self._device_target == "CPU":
+            self.start_profile = kwargs.pop("start_profile", True)
+            if not isinstance(self.start_profile, bool):
+                raise TypeError("The parameter start_profile must be bool.")
 
         if self._device_target and self._device_target == "GPU":
             gpu_profiler = c_expression.GPUProfiler
@@ -295,6 +300,9 @@ class Profiler:
         _environment_check()
 
         self._cpu_profiler.stop()
+
+        if self._device_target and self._device_target == "CPU":
+            self._cpu_analyse()
 
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
@@ -589,6 +597,21 @@ class Profiler:
             'Please running on Ascend if you would like to see memory analysis, '
             'otherwise, this warning can be ignored.'
         )
+
+    def _cpu_analyse(self):
+        """Collect and analyse cpu performance data"""
+
+        try:
+            size_limit = 100 * 1024 * 1024  # 100MB
+            timeline_generator = CpuTimelineGenerator(self._output_path, 0)
+            timeline_generator.init_timeline()
+            timeline_generator.write_timeline(size_limit)
+            timeline_generator.write_timeline_summary()
+            return timeline_generator
+        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
+            logger.warning('Fail to write timeline data: %s', err)
+            raise RuntimeError('Fail to write timeline data.')
+
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):

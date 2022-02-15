@@ -830,7 +830,7 @@ def set_context(**kwargs):
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
         runtime_num_threads(int): The thread pool number of cpu kernel and actor used in runtime,
-            which must bigger than 0. Default value if 0.6 times of the machine threads, if you run many processes at
+            which must bigger than 0. Default value is 30, if you run many processes at
             the same time, you should set the value smaller to avoid thread contention.
     Raises:
         ValueError: If input key is not an attribute in context.

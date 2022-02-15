@@ -101,10 +101,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, false);
 
-  size_t cpu_core_num = std::thread::hardware_concurrency() - 1;
-  constexpr float kCpuUsage = 0.6;
-  uint32_t runtime_num_threads = std::max(static_cast<int>(std::floor(cpu_core_num * kCpuUsage)), 1);
-  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, runtime_num_threads);
+  uint32_t kDefaultRuntimeNumThreads = 30;
+  set_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS, kDefaultRuntimeNumThreads);
 
   backend_policy_ = policy_map_[policy];
 }
