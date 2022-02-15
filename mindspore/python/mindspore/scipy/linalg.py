@@ -14,7 +14,6 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .ops import Cholesky
-from .ops import CholeskySolve
 from .ops import EighNet
 from .ops import LU
 from .ops import LUSolver
@@ -313,15 +312,15 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     a_type = F.dtype(a)
     if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
-            "mindspore.scipy.linalg.cho_factor only support (Tensor[int32], Tensor[int64], Tensor[float32], "
+            "mindspore.scipy.linalg.cho_factor input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
     if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
     if a.ndim < 2:
-        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be greater or equal to 2 dimensions.")
+        _raise_value_error("mindspore.scipy.linalg.cho_factor input a must be equal to 2 dimensions.")
     if a_shape[-1] != a_shape[-2]:
-        _raise_value_error("input a to mindspore.scipy.linalg.cho_factor must be a square matrix.")
+        _raise_value_error("mindspore.scipy.linalg.cho_factor input a must be a square matrix.")
     cholesky_net = Cholesky(clean=False)
     c = cholesky_net(a)
     if not lower:
@@ -377,16 +376,16 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     a_type = F.dtype(a)
     if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
-            "mindspore.scipy.linalg.cholesky only support (Tensor[int32], Tensor[int64], Tensor[float32], "
+            "mindspore.scipy.linalg.cholesky input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
     if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
     a_shape = a.shape
-    if a.ndim < 2:
-        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be greater or equal to dimensions.")
+    if a.ndim != 2:
+        _raise_value_error("mindspore.scipy.linalg.cholesky input a must be equal to 2 dimensions.")
 
     if a_shape[-1] != a_shape[-2]:
-        _raise_value_error("input a to mindspore.scipy.linalg.cholesky must be a square matrix.")
+        _raise_value_error("mindspore.scipy.linalg.cholesky input a must be a square matrix.")
     cholesky_net = Cholesky(clean=True)
     c = cholesky_net(a)
     if not lower:
@@ -436,13 +435,23 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     c_type = F.dtype(c)
     if c_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
-            "mindspore.scipy.linalg.cho_solve only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
+            "mindspore.scipy.linalg.cho_solve input c only support (Tensor[int32], Tensor[int64], Tensor[float32],"
+            " Tensor[float64]).")
     if c_type not in (mstype.float32, mstype.float64):
         c = F.cast(c, mstype.float64)
-    cholesky_solve_net = CholeskySolve(lower=lower)
-    x = cholesky_solve_net(c, b)
-    return x
+        c_type = mstype.float64
+    if F.dtype(b) != c_type:
+        b = F.cast(b, c_type)
+    # Do not support complex, so trans is chosen from ('T', 'N')
+    if lower:
+        l_trans = 'N'
+        l_t_trans = 'T'
+    else:
+        l_trans = 'T'
+        l_t_trans = 'N'
+    b = SolveTriangular(lower=lower, unit_diagonal=False, trans=l_trans)(c, b)
+    b = SolveTriangular(lower=lower, unit_diagonal=False, trans=l_t_trans)(c, b)
+    return b
 
 
 def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,

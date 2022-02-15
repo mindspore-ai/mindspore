@@ -22,6 +22,7 @@ from scipy.linalg import solve_triangular, eig, eigvals
 
 from mindspore import Tensor, context
 from mindspore.scipy.ops import EighNet, Eig, Cholesky, SolveTriangular
+from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition, \
     match_exception_info
 
@@ -47,6 +48,42 @@ def test_cholesky(n: int, dtype: Generic):
     cholesky_net = Cholesky(clean=True)
     output = cholesky_net(tensor_a)
     assert np.allclose(expect, output.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 5, 5), (2, 3, 5, 5)])
+@pytest.mark.parametrize('lower', [True, False])
+@pytest.mark.parametrize('data_type', [np.float32, np.float64])
+def test_batch_cholesky(shape, lower: bool, data_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for cholesky decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    b_s_l = list()
+    b_s_a = list()
+    tmp = np.zeros(shape[:-2])
+    inner_row = shape[-2]
+    inner_col = shape[-1]
+    for _, _ in np.ndenumerate(tmp):
+        a = create_sym_pos_matrix((inner_row, inner_col), data_type)
+        s_l = scp.linalg.cholesky(a, lower)
+        b_s_l.append(s_l)
+        b_s_a.append(a)
+    tensor_b_a = Tensor(np.array(b_s_a))
+    b_m_l = Cholesky(clean=True)(tensor_b_a)
+    if not lower:
+        b_m_l = _nd_transpose(b_m_l)
+    b_s_l = np.asarray(b_s_l).reshape(b_m_l.shape)
+    rtol = 1.e-3
+    atol = 1.e-3
+    if data_type == np.float64:
+        rtol = 1.e-5
+        atol = 1.e-8
+    assert np.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0

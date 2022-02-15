@@ -41,14 +41,15 @@ void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, s
   }
   *row = shape.at(shape.size() - kRowIndex);
   *col = shape.at(shape.size() - kColIndex);
-  outer_batch_ = min_dim;
-  for (int batch = 0; batch < static_cast<int>(shape.size() - kRowIndex); ++batch) {
-    outer_batch_ *= shape.at(batch);
-  }
   if (*row != *col) {
     MS_LOG_EXCEPTION << kernel_name_ << " input shape is invalid. "
                      << "Cholesky expects a square matrix. but input or output shape is: " << *row << ", " << *col;
   }
+  outer_batch_ = min_dim;
+  for (const auto &sh : shape) {
+    outer_batch_ *= sh;
+  }
+  outer_batch_ /= ((*row) * (*col));
 }
 
 template <typename T>
@@ -97,11 +98,6 @@ bool CholeskyCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, cons
       } else {
         output = llt.matrixLLT().transpose();
       }
-    }
-    if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
-      continue;
-    } else {
-      MS_LOG_EXCEPTION << kernel_name_ << " cholesky llt calculating failed.";
     }
   }
   return true;

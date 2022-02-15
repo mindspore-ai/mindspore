@@ -41,9 +41,10 @@ void CholeskySolveCpuKernelMod<T>::InitRightMatrixInfo(const std::vector<size_t>
   *row = shape.at(shape.size() - kRowIndex);
   *col = shape.at(shape.size() - kColIndex);
   outer_batch_ = min_dim;
-  for (int batch = 0; batch < static_cast<int>(shape.size() - kRowIndex); ++batch) {
-    outer_batch_ *= shape.at(batch);
+  for (const auto &sh : shape) {
+    outer_batch_ *= sh;
   }
+  outer_batch_ /= ((*row) * (*col));
 }
 
 template <typename T>
@@ -105,11 +106,6 @@ bool CholeskySolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
     } else {
       output.noalias() = input.adjoint().template triangularView<Lower>().solve(input_b);
       input.template triangularView<Upper>().solveInPlace(output);
-    }
-    if (output.RowsAtCompileTime != 0 && output.ColsAtCompileTime != 0) {
-      continue;
-    } else {
-      MS_LOG_EXCEPTION << kernel_name_ << " cholesky solve failed, please check input info.";
     }
   }
   return true;
