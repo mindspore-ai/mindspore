@@ -24,24 +24,23 @@ namespace server {
 namespace kernel {
 void PushMetricsKernel::InitKernel(size_t) { local_rank_ = DistributedCountService::GetInstance().local_rank(); }
 
-bool PushMetricsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs) {
+bool PushMetricsKernel::Launch(const uint8_t *req_data, size_t len,
+                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(INFO) << "Launching PushMetricsKernel kernel.";
-  void *req_data = inputs[0]->addr;
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, reason.c_str(), reason.size());
+    GenerateOutput(message, reason.c_str(), reason.size());
     return true;
   }
 
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::RequestPushMetrics>()) {
     std::string reason = "The schema of RequestPushMetrics is invalid.";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_RequestError);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -50,12 +49,12 @@ bool PushMetricsKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     std::string reason = "Building flatbuffers schema failed for RequestPushMetrics";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_RequestError);
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
 
   ResultCode result_code = PushMetrics(fbb, push_metrics_req);
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
   return ConvertResultCode(result_code);
 }
 

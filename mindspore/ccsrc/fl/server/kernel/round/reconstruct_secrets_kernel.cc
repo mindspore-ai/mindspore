@@ -90,20 +90,13 @@ sigVerifyResult ReconstructSecretsKernel::VerifySignature(const schema::SendReco
   return sigVerifyResult::PASSED;
 }
 
-bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool ReconstructSecretsKernel::Launch(const uint8_t *req_data, size_t len,
+                                      const std::shared_ptr<ps::core::MessageHandler> &message) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Launching ReconstructSecrets Kernel, Iteration number is " << iter_num;
 
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "ReconstructSecretsKernel needs 1 input, but got " << inputs.size();
-    return false;
-  }
-
   std::shared_ptr<server::FBBuilder> fbb = std::make_shared<server::FBBuilder>();
-  void *req_data = inputs[0]->addr;
-
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
     MS_LOG(ERROR) << reason;
@@ -119,13 +112,13 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
   for (size_t i = 0; i < IntToSize(update_model_clients_pb.fl_id_size()); ++i) {
     update_model_clients.push_back(update_model_clients_pb.fl_id(SizeToInt(i)));
   }
-  flatbuffers::Verifier verifier(reinterpret_cast<uint8_t *>(req_data), inputs[0]->size);
+  flatbuffers::Verifier verifier(req_data, len);
   if (!verifier.VerifyBuffer<schema::SendReconstructSecret>()) {
     std::string reason = "The schema of SendReconstructSecret is invalid.";
     cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, SizeToInt(iter_num),
                                                    std::to_string(CURRENT_TIME_MILLI.count()));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::SendReconstructSecret *reconstruct_secret_req =
@@ -135,7 +128,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
     cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, SizeToInt(iter_num),
                                                    std::to_string(CURRENT_TIME_MILLI.count()));
     MS_LOG(ERROR) << reason;
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   // verify signature
@@ -146,7 +139,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason,
                                                      SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
 
@@ -155,7 +148,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason, SizeToInt(iter_num),
                                                      std::to_string(CURRENT_TIME_MILLI.count()));
       MS_LOG(ERROR) << reason;
-      GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+      GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
       return true;
     }
     MS_LOG(INFO) << "verify signature passed!";
@@ -174,7 +167,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                                                      "Current amount for ReconstructSecretsKernel is enough.",
                                                      SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
     }
-    GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
@@ -186,7 +179,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(INFO) << "Current amount for ReconstructSecretsKernel is enough.";
   }
-  GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
+  GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
 
   MS_LOG(INFO) << "reconstruct_secrets_kernel success.";
   if (!response) {

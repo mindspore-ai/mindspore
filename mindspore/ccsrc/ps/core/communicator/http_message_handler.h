@@ -91,7 +91,7 @@ class HttpMessageHandler {
 
   // Make sure code and all response body has finished set
   void SendResponse();
-  void QuickResponse(int code, const unsigned char *body, size_t len);
+  void QuickResponse(int code, const void *body, size_t len);
   void SimpleResponse(int code, const HttpHeaders &headers, const std::string &body);
   void ErrorResponse(int code, const RequestProcessResult &status);
 

@@ -160,7 +160,7 @@ class FedAvgKernel : public AggregationKernel {
   bool IsAggregationDone() override { return done_; }
 
   void SetParameterAddress(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                           const std::vector<AddressPtr> &outputs) {
+                           const std::vector<AddressPtr> &outputs) override {
     weight_addr_ = inputs[0];
     data_size_addr_ = inputs[1];
     new_weight_addr_ = inputs[2];
