@@ -72,7 +72,7 @@ int ConvolutionTrainCPUKernel::ReSize() {
 
 int ConvolutionTrainCPUKernel::Prepare() { return ReSize(); }
 
-int ConvolutionTrainCPUKernel::Execute(int task_id) {
+int ConvolutionTrainCPUKernel::DoExecute(int task_id) {
   auto conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_x = in_tensors_.at(kInputIndex);
   auto *input_w = in_tensors_.at(kWeightIndex);
@@ -154,7 +154,7 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
 int ConvolutionTrainRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto conv_kernel = reinterpret_cast<ConvolutionTrainCPUKernel *>(cdata);
-  auto error_code = conv_kernel->Execute(task_id);
+  auto error_code = conv_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionTrainRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

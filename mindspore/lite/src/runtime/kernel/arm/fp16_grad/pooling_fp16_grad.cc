@@ -72,7 +72,7 @@ int PoolingGradCPUKernelFp16::ReSize() {
 
 int PoolingGradCPUKernelFp16::Prepare() { return ReSize(); }
 
-int PoolingGradCPUKernelFp16::Execute(int task_id) {
+int PoolingGradCPUKernelFp16::DoExecute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_ptr);
@@ -102,7 +102,7 @@ int PoolingGradCPUKernelFp16::Execute(int task_id) {
 int PoolingFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto pooling = reinterpret_cast<PoolingGradCPUKernelFp16 *>(cdata);
-  auto error_code = pooling->Execute(task_id);
+  auto error_code = pooling->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Pooling Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

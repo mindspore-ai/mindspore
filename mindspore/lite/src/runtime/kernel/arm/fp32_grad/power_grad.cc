@@ -44,7 +44,7 @@ int PowerGradCPUKernel::Prepare() {
 
 int PowerGradCPUKernel::ReSize() { return RET_OK; }
 
-int PowerGradCPUKernel::Execute(int task_id) {
+int PowerGradCPUKernel::DoExecute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
@@ -73,7 +73,7 @@ int PowerGradCPUKernel::Execute(int task_id) {
 int PowerGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto power_kernel = reinterpret_cast<PowerGradCPUKernel *>(cdata);
   CHECK_NULL_RETURN(power_kernel);
-  auto error_code = power_kernel->Execute(task_id);
+  auto error_code = power_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "power grad error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

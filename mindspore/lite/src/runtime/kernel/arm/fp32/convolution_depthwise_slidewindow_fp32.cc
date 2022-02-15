@@ -92,7 +92,7 @@ int ConvolutionDepthwiseSWCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWCPUKernel::Execute(int task_id) {
+int ConvolutionDepthwiseSWCPUKernel::DoExecute(int task_id) {
   ConvDwSWFp32(packed_output_, packed_input_, reinterpret_cast<float *>(packed_weight_),
                reinterpret_cast<float *>(bias_data_), conv_param_, sliding_, task_id);
   return RET_OK;
@@ -100,7 +100,7 @@ int ConvolutionDepthwiseSWCPUKernel::Execute(int task_id) {
 
 int ConvDwSWRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseSWCPUKernel *>(cdata);
-  auto ret = conv_dw->Execute(task_id);
+  auto ret = conv_dw->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwiseSWRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

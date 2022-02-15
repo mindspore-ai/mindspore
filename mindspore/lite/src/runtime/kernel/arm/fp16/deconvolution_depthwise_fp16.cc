@@ -151,7 +151,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
+int DeconvolutionDepthwiseFp16CPUKernel::DoExecute(int task_id) {
   DeconvDwC8Fp16(packed_output_, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
                  reinterpret_cast<float16_t *>(bias_data_), conv_param_, sliding_, task_id);
   return RET_OK;
@@ -159,7 +159,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
 
 static int DeconvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto deconv_dw_fp16 = reinterpret_cast<DeconvolutionDepthwiseFp16CPUKernel *>(cdata);
-  auto ret = deconv_dw_fp16->Execute(task_id);
+  auto ret = deconv_dw_fp16->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvolutionDepthwiseFp16Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

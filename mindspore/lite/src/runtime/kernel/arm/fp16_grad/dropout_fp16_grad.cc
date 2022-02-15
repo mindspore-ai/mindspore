@@ -61,7 +61,7 @@ int DropoutGradCPUKernelFp16::Prepare() {
 
 int DropoutGradCPUKernelFp16::ReSize() { return RET_OK; }
 
-int DropoutGradCPUKernelFp16::Execute(int task_id) {
+int DropoutGradCPUKernelFp16::DoExecute(int task_id) {
   auto yt_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data());
   auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data());
@@ -81,7 +81,7 @@ int DropoutGradCPUKernelFp16::Execute(int task_id) {
 int RunDropoutFp16Grad(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto dropout = reinterpret_cast<DropoutGradCPUKernelFp16 *>(cdata);
   CHECK_NULL_RETURN(dropout);
-  auto error_code = dropout->Execute(task_id);
+  auto error_code = dropout->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout Grad Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

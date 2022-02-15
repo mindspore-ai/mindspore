@@ -31,7 +31,7 @@ class UnsortedSegmentSumCPUKernelFp16 : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int Execute(int task_id);
+  int DoExecute(int task_id);
   size_t unit_num_ = 0;
   size_t input_dim1_ = 0;
   size_t output_dim0_ = 0;

@@ -83,7 +83,7 @@ int StackFp16CPUKernel::Prepare() {
   return ReSize();
 }
 
-int StackFp16CPUKernel::Execute(int task_id) {
+int StackFp16CPUKernel::DoExecute(int task_id) {
   auto inputs = buffers_.data();
   void *output_data = reinterpret_cast<void *>(out_buffer_);
   auto step = UP_DIV(outer_size_, num_threads_);
@@ -99,7 +99,7 @@ int StackFp16CPUKernel::Execute(int task_id) {
 
 static int StackRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto stack = reinterpret_cast<StackFp16CPUKernel *>(cdata);
-  if (stack->Execute(task_id) != RET_OK) {
+  if (stack->DoExecute(task_id) != RET_OK) {
     return RET_ERROR;
   }
   return RET_OK;

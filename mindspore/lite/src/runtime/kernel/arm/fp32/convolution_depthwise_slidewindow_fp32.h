@@ -35,7 +35,7 @@ class ConvolutionDepthwiseSWCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
 
-  int Execute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   int InitPackedInputOutput();

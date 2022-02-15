@@ -39,7 +39,7 @@ class SgdCPUKernel : public OptimizerKernel {
   int ReSize() override;
   int Run() override;
   int ExecuteInit(int task_id);
-  int Execute(int task_id);
+  int DoExecute(int task_id);
   int OptimizerStep() override;
   std::vector<int> GetOptimizerParamsIdxs() const override;
 

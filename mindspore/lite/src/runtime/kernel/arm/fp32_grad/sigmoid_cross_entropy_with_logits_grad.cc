@@ -35,7 +35,7 @@ int SigmoidCrossEntropyWithLogitsGradCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int SigmoidCrossEntropyWithLogitsGradCPUKernel::Execute(int task_id) {
+int SigmoidCrossEntropyWithLogitsGradCPUKernel::DoExecute(int task_id) {
   auto logits = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(logits);
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
@@ -63,7 +63,7 @@ int SigmoidCrossEntropyWithLogitsGradRun(void *cdata, int task_id, float lhs_sca
   CHECK_NULL_RETURN(cdata);
   auto sig_crs_ent_kernel = reinterpret_cast<SigmoidCrossEntropyWithLogitsGradCPUKernel *>(cdata);
   CHECK_NULL_RETURN(sig_crs_ent_kernel);
-  auto error_code = sig_crs_ent_kernel->Execute(task_id);
+  auto error_code = sig_crs_ent_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SigmoidCrossEntropyWithLogitsGrad error task_id[" << task_id << "] error_code[" << error_code
                   << "]";

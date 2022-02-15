@@ -55,7 +55,7 @@ int DropoutCPUKernel::Prepare() {
 
 int DropoutCPUKernel::ReSize() { return RET_OK; }
 
-int DropoutCPUKernel::Execute(int task_id) {
+int DropoutCPUKernel::DoExecute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   auto mask = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
@@ -90,7 +90,7 @@ int DropoutCPUKernel::Execute(int task_id) {
 
 int RunDropout(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto dropout = reinterpret_cast<DropoutCPUKernel *>(cdata);
-  auto error_code = dropout->Execute(task_id);
+  auto error_code = dropout->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

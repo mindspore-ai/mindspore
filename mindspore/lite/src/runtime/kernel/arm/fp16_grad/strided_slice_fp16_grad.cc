@@ -114,7 +114,7 @@ int StridedSliceGradCPUKernelFp16::ReSize() { return RET_OK; }
 int StridedSliceFp16GradImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto slice = reinterpret_cast<StridedSliceGradCPUKernelFp16 *>(cdata);
-  auto error_code = slice->Execute(task_id);
+  auto error_code = slice->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "StridedSliceGrad Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
@@ -131,7 +131,7 @@ int StridedSliceGradCPUKernelFp16::Run() {
   return RET_OK;
 }
 
-int StridedSliceGradCPUKernelFp16::Execute(int task_id) {
+int StridedSliceGradCPUKernelFp16::DoExecute(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   int *po = output_shape_.data();

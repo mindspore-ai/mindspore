@@ -82,7 +82,7 @@ class ArithmeticCPUKernel : public InnerKernel {
   virtual int ConstTensorBroadCast();
   virtual void TileConstTensor(const void *in_data, void *out_data, size_t ndim, const int *in_shape,
                                const int *in_strides, const int *out_strides, const int *multiple);
-  virtual int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt);
+  virtual int DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt);
   virtual bool IsBatchScalarCalc();
   virtual bool IsScalarClac();
   virtual int CalcArithmeticByBatch(int task_id);

@@ -64,7 +64,7 @@ int ResizeGradCPUKernel::Prepare() {
   return ReSize();
 }
 
-int ResizeGradCPUKernel::Execute(int task_id) {
+int ResizeGradCPUKernel::DoExecute(int task_id) {
   auto in_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto param = reinterpret_cast<ResizeGradParameter *>(op_parameter_);
@@ -89,7 +89,7 @@ int ResizeGradCPUKernel::Execute(int task_id) {
 int ResizeGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto resize_grad_kernel = reinterpret_cast<ResizeGradCPUKernel *>(cdata);
   CHECK_NULL_RETURN(resize_grad_kernel);
-  auto error_code = resize_grad_kernel->Execute(task_id);
+  auto error_code = resize_grad_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "resize grad error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

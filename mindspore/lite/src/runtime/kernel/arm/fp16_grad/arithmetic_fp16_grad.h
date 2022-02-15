@@ -64,7 +64,7 @@ class ArithmeticGradCPUKernelFp16 : public InnerKernel {
   int InferShape();
   int ReSize() override;
   int Run() override;
-  int Execute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   int ArithmeticGradMaximum(float16_t *dy, int dy_size, float16_t *dx1, int dx1_size, float16_t *dx2, int dx2_size);

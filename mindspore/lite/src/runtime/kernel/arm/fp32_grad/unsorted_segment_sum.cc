@@ -62,7 +62,7 @@ int UnsortedSegmentSumCPUKernel::ReSize() { return RET_OK; }
 int UnsortedSegmentSumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<UnsortedSegmentSumCPUKernel *>(cdata);
-  auto error_code = kernel->Execute(task_id);
+  auto error_code = kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "UnsortedSegmentSum Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
@@ -79,7 +79,7 @@ int UnsortedSegmentSumCPUKernel::Run() {
   return RET_OK;
 }
 
-int UnsortedSegmentSumCPUKernel::Execute(int task_id) {
+int UnsortedSegmentSumCPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);

@@ -54,7 +54,7 @@ int BiasGradCPUKernel::Prepare() {
   return ReSize();
 }
 
-int BiasGradCPUKernel::Execute(int task_id) {
+int BiasGradCPUKernel::DoExecute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(in);
@@ -79,7 +79,7 @@ int BiasGradCPUKernel::Execute(int task_id) {
 int BiasGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto bias_kernel = reinterpret_cast<BiasGradCPUKernel *>(cdata);
-  auto error_code = bias_kernel->Execute(task_id);
+  auto error_code = bias_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "bias error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

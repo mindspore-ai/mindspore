@@ -51,7 +51,7 @@ void ArithmeticCompareCPUKernel::InitRunFunction(int primitive_type) {
   }
 }
 
-int ArithmeticCompareCPUKernel::Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
+int ArithmeticCompareCPUKernel::DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
   int ret = RET_OK;
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
     if (is_opt) {
@@ -95,9 +95,9 @@ int ArithmeticCompareCPUKernel::CalcArithmeticByBatch(int task_id) {
     batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_) + b_offset_[i] * b_stride_size_ * data_type_len_;
     batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_) + i * c_stride_size_ * sizeof(uint8_t);
     if (batch_scalar_) {
-      ret = Execute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, true);
+      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, true);
     } else {
-      ret = Execute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, false);
+      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, false);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "failed to calculate.";
@@ -124,12 +124,12 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   int out_offset = stride * task_id * sizeof(uint8_t);
   if (scalar_) {
     if (param_->in_elements_num0_ == 1) {
-      ret = Execute(batch_a_ptr_, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, true);
+      ret = DoExecute(batch_a_ptr_, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, true);
     } else {
-      ret = Execute(batch_a_ptr_ + in_offset, batch_b_ptr_, batch_c_ptr_ + out_offset, count, true);
+      ret = DoExecute(batch_a_ptr_ + in_offset, batch_b_ptr_, batch_c_ptr_ + out_offset, count, true);
     }
   } else {
-    ret = Execute(batch_a_ptr_ + in_offset, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, false);
+    ret = DoExecute(batch_a_ptr_ + in_offset, batch_b_ptr_ + in_offset, batch_c_ptr_ + out_offset, count, false);
   }
   return ret;
 }

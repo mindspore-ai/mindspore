@@ -30,7 +30,7 @@ constexpr static int kOutputIdx = 0;
 
 int SmoothL1LossCPUKernel::ReSize() { return RET_OK; }
 
-int SmoothL1LossCPUKernel::Execute(size_t task_id) {
+int SmoothL1LossCPUKernel::DoExecute(size_t task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
   CHECK_NULL_RETURN(smooth_l1_loss_param);
   auto predict = reinterpret_cast<float *>(in_tensors_.at(kPredictIdx)->MutableData());
@@ -69,7 +69,7 @@ int SmoothL1LossCPUKernel::Execute(size_t task_id) {
 int SmoothL1LossRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto smooth_l1_loss_kernel = reinterpret_cast<SmoothL1LossCPUKernel *>(cdata);
   CHECK_NULL_RETURN(smooth_l1_loss_kernel);
-  auto error_code = smooth_l1_loss_kernel->Execute(task_id);
+  auto error_code = smooth_l1_loss_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1Loss error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

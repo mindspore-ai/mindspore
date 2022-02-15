@@ -57,7 +57,7 @@ int BNGradCPUKernel::Prepare() {
   return ReSize();
 }
 
-int BNGradCPUKernel::Execute(int task_id) {
+int BNGradCPUKernel::DoExecute(int task_id) {
   auto *input_yt = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
   auto *input_scale = in_tensors_.at(2);
@@ -150,7 +150,7 @@ int BNGradCPUKernel::Execute(int task_id) {
 int BNGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
-  auto error_code = bn_kernel->Execute(task_id);
+  auto error_code = bn_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "BNGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

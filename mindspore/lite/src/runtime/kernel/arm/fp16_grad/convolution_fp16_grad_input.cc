@@ -75,7 +75,7 @@ int ConvolutionGradInputCPUKernelFp16::ReSize() {
 
 int ConvolutionGradInputCPUKernelFp16::Prepare() { return ReSize(); }
 
-int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
+int ConvolutionGradInputCPUKernelFp16::DoExecute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_dy = in_tensors_.at(0);
   auto *input_w = in_tensors_.at(1);
@@ -156,7 +156,7 @@ int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
 int ConvolutionGradInputFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   MS_ASSERT(cdata != nullptr);
   auto convinput_kernel = reinterpret_cast<ConvolutionGradInputCPUKernelFp16 *>(cdata);
-  auto error_code = convinput_kernel->Execute(task_id);
+  auto error_code = convinput_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv input error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
