@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
-#include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "nnacl/op_base.h"
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape) {

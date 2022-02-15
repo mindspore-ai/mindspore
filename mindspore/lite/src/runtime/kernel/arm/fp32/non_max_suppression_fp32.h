@@ -83,13 +83,13 @@ class NMSBox {
     return score_ < box.score_ || (std::abs(score_ - box.score_) < FLT_EPSILON && index_ > box.index_);
   }
 
-  const float get_score() const { return score_; }
-  const int get_index() const { return index_; }
-  const float get_y1() const { return y1_; }
-  const float get_y2() const { return y2_; }
-  const float get_x1() const { return x1_; }
-  const float get_x2() const { return x2_; }
-  const float get_area() const { return area_; }
+  float get_score() const { return score_; }
+  int get_index() const { return index_; }
+  float get_y1() const { return y1_; }
+  float get_y2() const { return y2_; }
+  float get_x1() const { return x1_; }
+  float get_x2() const { return x2_; }
+  float get_area() const { return area_; }
 
  private:
   float score_;

@@ -75,7 +75,7 @@ struct Context {
   Vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
 #ifndef NOT_USE_STL
-  DeviceContextVector device_list_ = {{DT_CPU, {false, MID_CPU}}};
+  DeviceContextVector device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
 #else
   DeviceContextVector device_list_;
 #endif  // NOT_USE_STL

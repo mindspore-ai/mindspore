@@ -41,8 +41,6 @@ class ModelC {
 
   MSTensor::Impl **GetInputs(size_t *input_num);
   MSTensor::Impl **GetOutputs(size_t *output_num);
-  MSTensor::Impl *GetInputByTensorName(const std::string &name);
-  MSTensor::Impl *GetOutputByTensorName(const std::string &name);
 
  private:
   std::shared_ptr<lite::LiteSession> session_ = nullptr;
@@ -283,24 +281,6 @@ MSTensor::Impl **ModelC::GetOutputs(size_t *output_num) {
                    return TensorToTensorImpl(iter.second);
                  });
   return outputs_.data();
-}
-
-MSTensor::Impl *ModelC::GetInputByTensorName(const std::string &name) {
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
-    return nullptr;
-  }
-  auto tensor = session_->GetInputsByTensorName(name);
-  return TensorToTensorImpl(tensor);
-}
-
-MSTensor::Impl *ModelC::GetOutputByTensorName(const std::string &name) {
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Session is null.";
-    return nullptr;
-  }
-  auto tensor = session_->GetOutputByTensorName(name);
-  return TensorToTensorImpl(tensor);
 }
 }  // namespace mindspore
 
