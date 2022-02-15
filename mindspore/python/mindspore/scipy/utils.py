@@ -102,11 +102,11 @@ def _normalize_matvec(f):
     if isinstance(f, Tensor):
         if f.ndim != 2 or f.shape[0] != f.shape[1]:
             _raise_value_error(
-                'linear operator must be a square matrix, but has shape: {}'.format(f.shape))
+                'linear operator must be a square matrix, but has shape: ', f.shape, ".")
         return F.partial(dot, f)
 
     _raise_value_error(
-        'linear operator must be either a function or Tensor: but got {}'.format(F.typeof(f)))
+        'linear operator must be either a function or Tensor: but got ', F.typeof(f), ".")
     return f
 
 

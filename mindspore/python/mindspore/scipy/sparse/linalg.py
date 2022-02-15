@@ -277,8 +277,7 @@ def gmres(A, b, x0=None, *, tol=1e-5, atol=0.0, restart=20, maxiter=None,
     elif solve_method == 'batched':
         x, info = BatchedGmres(A, M)(b, x0, tol, atol, restart, maxiter)
     else:
-        _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got {}."
-                           .format(solve_method))
+        _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", solve_method, ".")
     return x, _to_scalar(info)
 
 
@@ -394,7 +393,7 @@ def cg(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     if x0.shape != b.shape:
         _raise_value_error(
-            'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
+            'Input x0 and b must have matching shapes: ', x0.shape, ' vs ', b.shape)
 
     if (F.dtype(b) not in (mstype.float32, mstype.float64)) or (F.dtype(b) != F.dtype(x0)) or (
             F.dtype(b) != F.dtype(A)):
@@ -526,7 +525,7 @@ def bicgstab(A, b, x0=None, *, tol=1e-5, atol=0.0, maxiter=None, M=None):
 
     if x0.shape != b.shape:
         _raise_value_error(
-            'Input x0 and b must have matching shapes: {} vs {}'.format(x0.shape, b.shape))
+            'Input x0 and b must have matching shapes: ', x0.shape, ' vs ', b.shape)
 
     if (F.dtype(b) not in (mstype.float32, mstype.float64)) or (F.dtype(b) != F.dtype(x0)) or (
             F.dtype(b) != F.dtype(A)):

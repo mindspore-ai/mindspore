@@ -111,7 +111,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
           `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        A (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
+        a (Tensor): A non-singular triangular matrix of shape :math:`(M, M)`.
         b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(M, N)`. Right-hand side matrix in :math:`a x = b`.
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: False.
         trans (0, 1, 2, 'N', 'T', 'C', optional): Type of system to solve. Default: 0.
@@ -185,19 +185,19 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         a = F.cast(a, mstype.float64)
         b = F.cast(b, mstype.float64)
     if a.ndim != 2:
-        _raise_value_error("For 'solve_triangular', the dimension of `a` should be 2, but got {}.".format(a.ndim))
+        _raise_value_error("For 'solve_triangular', the dimension of `a` should be 2, but got ", a.ndim, ".")
     if b.ndim != 1 and b.ndim != 2:
-        _raise_value_error("For 'solve_triangular', the dimension of `b` should be 1 or 2, but got {}.".format(b.ndim))
+        _raise_value_error("For 'solve_triangular', the dimension of `b` should be 1 or 2, but got ", b.ndim, ".")
     if a.shape[0] != a.shape[1]:
         _raise_value_error("For 'solve_triangular', the matrix `a` should be a square matrix like (N, N), "
-                           "but got {}.".format(a.shape))
+                           "but got ", a.shape, ".")
     if a.shape[1] != b.shape[0]:
         _raise_value_error("For 'solve_triangular', the last two dimensions of `a` and `b` should be matched, "
-                           "but got shape of {} and {}. Please make sure that the shape of `a` and `b` be like "
-                           "(N, N) X (N, M) or (N, N) X (N).".format(a.shape, b.shape))
+                           "but got shape of ", a.shape, " and ", b.shape,
+                           ". Please make sure that the shape of `a` and `b` be like (N, N) X (N, M) or (N, N) X (N).")
     if trans not in (0, 1, 2, 'N', 'T', 'C'):
         _raise_value_error("For 'solve_triangular', the value of `trans` should be one of (0, 1, 2, 'N', 'T', 'C'), "
-                           "but got {}.".format(trans))
+                           "but got ", trans, ".")
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]
@@ -261,7 +261,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     Compute the cholesky decomposition of a matrix, to use in cho_solve.
 
     Returns a matrix containing the cholesky decomposition,
-    :math:`A = L L*` or :math:`A = U* U` of a Hermitian positive-definite matrix `a`.
+    :math:`a = l l*` or :math:`a = u* u` of a Hermitian positive-definite matrix `a`.
     The return value can be directly used as the first parameter to `cho_solve`.
 
     Note:
@@ -299,8 +299,8 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import cho_factor
-        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
-        >>> c, low = cho_factor(A)
+        >>> a = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
+        >>> c, low = cho_factor(a)
         >>> print(c)
         [[ 3.          1.          0.33333334  1.6666666 ]
          [ 3.          2.4494898   1.9051585  -0.2721655 ]
@@ -333,8 +333,8 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
     """
     Compute the cholesky decomposition of a matrix.
 
-    Returns the cholesky decomposition, :math:`A = L L^*` or
-    :math:`A = U^* U` of a Hermitian positive-definite matrix A.
+    Returns the cholesky decomposition, :math:`a = l l^*` or
+    :math:`a = u^* u` of a Hermitian positive-definite matrix a.
 
     Note:
         - `cholesky` is not supported on Windows platform yet.
@@ -395,10 +395,10 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
 
 def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
-    """Given the cholesky factorization of A, solve the linear equation
+    """Given the cholesky factorization of a, solve the linear equation
 
     .. math::
-        A x = b
+        a x = b
 
     Note:
         - `cho_solve` is not supported on Windows platform yet.
@@ -414,7 +414,7 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
-        Tensor, the solution to the system A x = b
+        Tensor, the solution to the system a x = b
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -423,9 +423,9 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import cho_factor, cho_solve
-        >>> A = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
+        >>> a = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
         >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float32))
-        >>> c, low = cho_factor(A)
+        >>> c, low = cho_factor(a)
         >>> x = cho_solve((c, low), b)
         >>> print(x)
         [-0.01749266  0.11953348  0.01166185  0.15743434]
@@ -505,8 +505,8 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         RuntimeError: If eigenvalue computation does not converge, an error occurred, or b matrix is not
             definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
             be reported but results will be wrong.
-        TypeError: If `A` is not Tensor.
-        RuntimeError: If `A` is not square matrix.
+        TypeError: If `a` is not Tensor.
+        RuntimeError: If `a` is not square matrix.
         ValueError: If `b` is not None.
         TypeError: If `lower` is not bool.
         TypeError: If `eigvals_only` is not bool.
@@ -613,10 +613,10 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     The decomposition is:
 
     .. math::
-        A = P L U
+        a = p l u
 
-    where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit diagonal elements,
-    and :math:`U` upper triangular.
+    where :math:`p` is a permutation matrix, :math:`l` lower triangular with unit diagonal elements,
+    and :math:`u` upper triangular.
 
     Note:
         - `lu_factor` is not supported on Windows platform yet.
@@ -626,7 +626,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a `float`,
             then it will be cast to :class:'mstype.float32'.
-        overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may increase performance). Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may increase performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems
             (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
@@ -648,8 +648,8 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import lu_factor
-        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
-        >>> lu, piv = lu_factor(A)
+        >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> lu, piv = lu_factor(a)
         >>> print(lu)
         [[ 7.          5.          6.          6.        ]
          [ 0.28571429  3.57142857  6.28571429  5.28571429]
@@ -681,7 +681,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     The decomposition is:
 
     .. math::
-        A = P L U
+        a = p l u
 
     where :math:`P` is a permutation matrix, :math:`L` lower triangular with unit
     diagonal elements, and :math:`U` upper triangular.
@@ -695,7 +695,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
         a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a `float`,
             then it will be cast to :class:'mstype.float32'.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute). Default: False.
-        overwrite_a (bool, optional): Whether to overwrite data in :math:`A` (may improve performance). Default: False.
+        overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may improve performance). Default: False.
         check_finite (bool, optional):  Whether to check that the input matrix contains
             only finite numbers. Disabling may give a performance gain, but may result
             in problems (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
@@ -719,8 +719,8 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import lu
-        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
-        >>> p, l, u = lu(A)
+        >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> p, l, u = lu(a)
         >>> print(p)
         [[0 1 0 0]
          [0 0 0 1]
@@ -799,9 +799,9 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         >>> import numpy as onp
         >>> from mindspore.common import Tensor
         >>> from mindspore.scipy.linalg import lu_factor, lu_solve
-        >>> A = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
+        >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float64))
-        >>> lu, piv = lu_factor(A)
+        >>> lu, piv = lu_factor(a)
         >>> print(lu_solve((lu, piv), b))
         [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
     """
@@ -894,7 +894,7 @@ def det(a, overwrite_a=False, check_finite=True):
     if a.ndim >= 2 and a.shape[-1] == 3 and a.shape[-2] == 3:
         return _det_3x3(a)
     if a.ndim < 2 or a.shape[-1] != a.shape[-2]:
-        _raise_value_error("Arguments to det must be [..., n, n], but got shape {}.".format(a.shape))
+        _raise_value_error("Arguments to det must be [..., n, n], but got shape ", a.shape, ".")
 
     a_type = F.dtype(a)
     if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
