@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class LayerNormGpuKernelMod : public NativeGpuKernelMod {
  public:
-  LayerNormGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
+  LayerNormGpuKernelMod() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) { ResetResource(); }
   ~LayerNormGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -85,6 +85,16 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_row_ = 1;
+    input_col_ = 1;
+    param_dim_ = 1;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

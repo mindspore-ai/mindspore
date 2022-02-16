@@ -83,7 +83,9 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
         batch_label(0),
         label_value_with_blank(nullptr),
         log_alpha_b(nullptr),
-        log_beta_b(nullptr) {}
+        log_beta_b(nullptr) {
+    ResetResource();
+  }
   ~CtcLossGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -143,6 +145,44 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     ignore_longer_outputs_than_inputs_ = GetAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    label_indice_size_ = 0;
+    label_size_ = 0;
+    sequence_lengths_size_ = 0;
+    preprocess_collapse_repeated_ = false;
+    ctc_merge_repeated_ = true;
+    ignore_longer_outputs_than_inputs_ = false;
+    is_null_input_ = false;
+    kernel_name_ = "CTCLoss";
+    probs = nullptr;
+    label_indices = nullptr;
+    label_values = nullptr;
+    sequence_length = nullptr;
+    costs = nullptr;
+    grads = nullptr;
+    softmax_probs = nullptr;
+    cum_labels_length = nullptr;
+    label_squence_length = nullptr;
+    label_value_sp = nullptr;
+    label_value_pcr = nullptr;
+    prob_num = nullptr;
+    precum_labels_length = nullptr;
+    max_labels_length = nullptr;
+    numclass = 0;
+    batch = 0;
+    max_time = 0;
+    max_sequence = 0;
+    max_labels_length_host = 0;
+    batch_label = 0;
+    label_value_with_blank = nullptr;
+    log_alpha_b = nullptr;
+    log_beta_b = nullptr;
+    workspace_size_list_.clear();
   }
 
  protected:
