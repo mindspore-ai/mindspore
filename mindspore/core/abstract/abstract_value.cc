@@ -321,7 +321,10 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
     return;
   }
   AnfNodePtr candidate_sequence_node = sequence_nodes[0].lock();
-  MS_EXCEPTION_IF_NULL(candidate_sequence_node);
+  if (candidate_sequence_node == nullptr) {
+    MS_LOG(ERROR) << "candidate_sequence_node is null.";
+    return;
+  }
   auto candidate_flags = GetSequenceNodeElementsUseFlags(candidate_sequence_node);
   if (candidate_flags == nullptr) {
     MS_LOG(ERROR) << "The candidate_flags is null, sequence_nodes[0]: " << candidate_sequence_node->DebugString();
@@ -329,14 +332,20 @@ void CheckSequenceNodesValid(const AnfNodeWeakPtrList &sequence_nodes) {
   }
   for (size_t i = 0; i < sequence_nodes.size(); ++i) {
     auto current_sequence_node = sequence_nodes[i].lock();
-    MS_EXCEPTION_IF_NULL(current_sequence_node);
+    if (current_sequence_node == nullptr) {
+      MS_LOG(ERROR) << "current_sequence_node is null.";
+      return;
+    }
     MS_LOG(ERROR) << "sequence_nodes[" << i << "]: " << current_sequence_node << "/"
                   << current_sequence_node->DebugString()
                   << ", flags: " << GetSequenceNodeElementsUseFlags(current_sequence_node);
   }
   for (size_t i = 1; i < sequence_nodes.size(); ++i) {
     auto current_sequence_node = sequence_nodes[i].lock();
-    MS_EXCEPTION_IF_NULL(current_sequence_node);
+    if (current_sequence_node == nullptr) {
+      MS_LOG(ERROR) << "current_sequence_node is null.";
+      return;
+    }
     if (candidate_sequence_node == current_sequence_node) {
       continue;
     }
