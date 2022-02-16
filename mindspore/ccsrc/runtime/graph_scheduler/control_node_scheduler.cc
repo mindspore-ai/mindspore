@@ -100,6 +100,35 @@ bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
 
   return true;
 }
+
+// Convert the control actors vector by the control actor set.
+std::vector<ControlActorPtr> CollectActors(const ControlActorSetPtr &control_actor_set) {
+  MS_EXCEPTION_IF_NULL(control_actor_set);
+  std::vector<ControlActorPtr> actors;
+
+  for (auto &switch_actor : control_actor_set->switch_actors_) {
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    (void)actors.emplace_back(static_cast<ControlActorPtr>(switch_actor));
+  }
+  for (auto &gather_actor : control_actor_set->gather_actors_) {
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    (void)actors.emplace_back(static_cast<ControlActorPtr>(gather_actor));
+  }
+  for (auto &entrance_actor : control_actor_set->entrance_actors_) {
+    MS_EXCEPTION_IF_NULL(entrance_actor);
+    (void)actors.emplace_back(static_cast<ControlActorPtr>(entrance_actor));
+  }
+  for (auto &exit_actor : control_actor_set->exit_actors_) {
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    (void)actors.emplace_back(static_cast<ControlActorPtr>(exit_actor));
+  }
+  for (auto &stack_actor : control_actor_set->stack_actors_) {
+    MS_EXCEPTION_IF_NULL(stack_actor);
+    (void)actors.emplace_back(static_cast<ControlActorPtr>(stack_actor));
+  }
+
+  return actors;
+}
 }  // namespace
 
 ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -1283,7 +1312,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         to_index = super_kernel_actor->FetchInputNodePosition(input);
         (void)sink_input_node_linked.insert(input);
       }
-      AddFormalParameterDeviceTensor(from_actor, from_index, input);
+      AddFormalParameterDeviceTensor(from_actor, from_index, input, graph);
       LinkDataArrow(from_actor, to_actor, from_index, to_index);
     }
   }
@@ -1361,9 +1390,10 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
 }
 
 void ControlNodeScheduler::AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index,
-                                                          const AnfNodePtr &input_node) {
+                                                          const AnfNodePtr &input_node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(graph);
   if (!HasAbstractRef(input_node)) {
     return;
   }
@@ -1371,6 +1401,9 @@ void ControlNodeScheduler::AddFormalParameterDeviceTensor(ControlActor *const fr
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
   (void)from_actor->ref_formal_parameter_device_tensors_[from_index].insert(device_tensor);
+  if (graph->IsRefOutputMapValue({input_node, 0})) {
+    (void)from_actor->ref_node_formal_parameter_device_tensors_[from_index].insert(device_tensor);
+  }
 
   UpdateRefCount(device_tensor.get(), true);
   device_tensor->SetNodeIndex(input_node, 0);
@@ -1481,6 +1514,32 @@ bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
       if (exit_actor_name != arrow->to_op_id_.Name()) {
         MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
                           << " and:" << arrow->to_op_id_.Name();
+      }
+    }
+  }
+
+  auto control_actors = CollectActors(actor_set->control_actors_);
+  for (const auto &control_actor : control_actors) {
+    MS_EXCEPTION_IF_NULL(control_actor);
+    for (auto &ref_node_formal_parameter_device_tensor : control_actor->ref_node_formal_parameter_device_tensors_) {
+      auto &device_tensors = ref_node_formal_parameter_device_tensor.second;
+      for (auto iter = device_tensors.begin(); iter != device_tensors.end(); ++iter) {
+        if (((*device_tensors.begin())->format() != (*iter)->format()) ||
+            ((*device_tensors.begin())->DeviceType() != (*iter)->DeviceType()) ||
+            ((*device_tensors.begin())->type_id() != (*iter)->type_id())) {
+          MS_LOG(EXCEPTION) << control_actor->GetAID().Name()
+                            << " does not support the ref node formal parameters that are different format.";
+        }
+      }
+    }
+
+    for (auto &ref_formal_parameter_device_tensor : control_actor->ref_formal_parameter_device_tensors_) {
+      auto &device_tensors = ref_formal_parameter_device_tensor.second;
+      for (auto iter = device_tensors.begin(); iter != device_tensors.end(); ++iter) {
+        if ((*device_tensors.begin())->type_id() != (*iter)->type_id()) {
+          MS_LOG(EXCEPTION) << control_actor->GetAID().Name()
+                            << " does not support the ref formal parameters that are different type.";
+        }
       }
     }
   }
