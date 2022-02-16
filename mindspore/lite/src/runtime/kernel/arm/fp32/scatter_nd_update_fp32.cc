@@ -31,7 +31,6 @@ namespace {
 constexpr int kScatterUpdateInputIndex = 0;
 constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;
-constexpr size_t kScatterIndicesDims = 2;
 }  // namespace
 int ScatterNdUpdateCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
@@ -46,26 +45,33 @@ int ScatterNdUpdateCPUKernel::ReSize() {
   auto input = in_tensors_.at(kScatterUpdateInputIndex);
   auto indices = in_tensors_.at(kScatterIndicesIndex);
   auto update = in_tensors_.at(kScatterUpdateIndex);
+  auto input_shape = input->shape();
+  auto indices_shape = indices->shape();
+  auto update_shape = update->shape();
+  int input_rank = static_cast<int>(input->shape().size());
+  int indices_rank = static_cast<int>(indices->shape().size());
+  int update_rank = static_cast<int>(update->shape().size());
+  int indice_unit_rank = indices->shape().back();
   auto output = out_tensors_.front();
   output_ptr_ = output->data();
 
   // check indices shape
-  int input_rank = static_cast<int>(input->shape().size());
-  int indice_unit_rank = indices->shape().back();
-  if (indice_unit_rank > input_rank) {
-    MS_LOG(ERROR) << "Value of last dimension of indices is greater than input rank.";
-    return RET_ERROR;
-  }
-
-  if (indices->shape().size() < kScatterIndicesDims) {
-    MS_LOG(ERROR) << "Indices dimension smaller than 2.";
-    return RET_ERROR;
-  }
-
+  MS_CHECK_TRUE_MSG(indices_rank >= DIMENSION_2D, RET_ERROR, "The rank of indices must be greater equal than 2.");
+  MS_CHECK_TRUE_MSG(indice_unit_rank <= input_rank, RET_ERROR,
+                    "The value of indices' last dimension must be less equal than the input rank.");
+  MS_CHECK_TRUE_MSG(update_rank == indices_rank - 1 + input_rank - indice_unit_rank, RET_ERROR,
+                    "The rank of update is illegal.");
   // check consistency of the shape indices and shape
-  int update_rank = static_cast<int>(update->shape().size());
-  auto indices_shape = indices->shape();
-  auto update_shape = update->shape();
+  for (int i = 0; i < update_rank; i++) {
+    if (i < indices_rank - 1) {
+      MS_CHECK_TRUE_MSG(update_shape[i] == indices_shape[i], RET_ERROR, "the shape of update tensor is illegal.");
+    }
+    if (i >= indice_unit_rank) {
+      MS_CHECK_TRUE_MSG(update_shape[i] == input_shape[i], RET_ERROR, "the shape of update tensor is illegal.");
+    }
+  }
+
+  // calculate unit_size
   param_->unit_size = 1;
   for (int i = indices_shape.size() - 1; i < update_rank; i++) {
     param_->unit_size *= update_shape.at(i);
@@ -75,15 +81,15 @@ int ScatterNdUpdateCPUKernel::ReSize() {
   int out_stride = 1;
   std::vector<int> out_strides;
   out_strides.push_back(1);
-  for (int i = indice_unit_rank - 2; i >= 0; i--) {
-    out_stride *= input->shape()[i + 1];
+  for (int i = indice_unit_rank - C2NUM; i >= 0; i--) {
+    out_stride *= input_shape[i + 1];
     out_strides.push_back(out_stride);
   }
   std::reverse(out_strides.begin(), out_strides.end());
 
   param_->num_unit = 1;
   param_->num_unit *= update_shape.at(indices_shape.size() - C2NUM);
-  for (int i = indices_shape.size() - 3; i >= 0; i--) {
+  for (int i = indices_shape.size() - C3NUM; i >= 0; i--) {
     param_->num_unit *= update_shape.at(i);
   }
 

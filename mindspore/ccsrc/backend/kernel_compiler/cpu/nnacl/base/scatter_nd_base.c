@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32/scatter_nd_fp32.h"
+#include "nnacl/base/scatter_nd_base.h"
 #include <string.h>
 #include "nnacl/errorcode.h"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/scatter_nd_fp32.h"
+#include "nnacl/base/scatter_nd_base.h"
 using mindspore::schema::PrimitiveType_ScatterNd;
 
 namespace mindspore {
