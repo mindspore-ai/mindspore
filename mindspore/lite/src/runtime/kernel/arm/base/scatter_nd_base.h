@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
-#include "nnacl/fp32/scatter_nd_fp32.h"
+#include "nnacl/base/scatter_nd_base.h"
 
 namespace mindspore::kernel {
 class ScatterNDCPUKernel : public InnerKernel {
@@ -39,6 +39,7 @@ class ScatterNDCPUKernel : public InnerKernel {
  private:
   ScatterNDParameter *param_ = nullptr;
   std::vector<int> output_unit_offsets_;
+  std::vector<int> out_strides_;
 };
 }  // namespace mindspore::kernel
 

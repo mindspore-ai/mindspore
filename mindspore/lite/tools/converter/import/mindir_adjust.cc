@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,24 @@ int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &i
 }
 }  // namespace
 
+int MindirAdjust::AdjustInputDataType(AnfNodePtr anf_node) {
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
+  auto param_node = anf_node->cast<ParameterPtr>();
+  MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "param_node is nullptr");
+  auto abstract_tensor = param_node->abstract()->cast<abstract::AbstractTensorPtr>();
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "param node has no abstract tensor.");
+  auto tensor_element = abstract_tensor->element();
+  MS_CHECK_TRUE_MSG(tensor_element != nullptr, RET_ERROR, "abstract tensor's element is null.");
+  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "Type pointer is null.");
+  auto org_type = type_ptr->type_id();
+  if (!param_node->has_default() && (org_type == kNumberTypeInt64 || org_type == kNumberTypeFloat64)) {
+    TypeId dst_type = org_type == kNumberTypeInt64 ? kNumberTypeInt32 : kNumberTypeFloat32;
+    tensor_element->set_type(TypeIdToType(dst_type));
+  }
+  return RET_OK;
+}
+
 int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
   if (!utils::isa<ValueNodePtr>(anf_node)) {
@@ -327,6 +345,8 @@ bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
         if (status == RET_OK || status == RET_NO_CHANGE) {
           status = UpdateConv2DTransposeInput(node->cast<CNodePtr>());
         }
+      } else if (utils::isa<ParameterPtr>(node)) {
+        status = AdjustInputDataType(node);
       } else if (utils::isa<ValueNodePtr>(node)) {
         status = ValueNodeInt64Convert(node);
       }
