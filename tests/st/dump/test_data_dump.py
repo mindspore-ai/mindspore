@@ -555,6 +555,24 @@ def test_ascend_statistic_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_async_dump', 'statistic')
 
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_statistic_dump_kernel_by_kernel():
+    """
+    Feature: Ascend Statistics Dump in kernel by kernel (mindRT) mode
+    Description: Test Ascend statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+    # set env `GRAPH_OP_RUN`` to enable kernel-by-kernel mode.
+    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_async_dump', 'statistic')
+    del os.environ['GRAPH_OP_RUN']
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

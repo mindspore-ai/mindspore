@@ -176,17 +176,18 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
-    if (IsDeviceTargetGPU()) {
-      if (DumpJsonParser::GetInstance().IsStatisticDump()) {
-        TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, false, j, j);
-        stat_dump.DumpTensorStatsToFile(GetKernelNodeName(node), dump_path, debugger);
-      }
-      if (DumpJsonParser::GetInstance().IsTensorDump()) {
+    if (DumpJsonParser::GetInstance().IsStatisticDump() &&
+        (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
+      TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, false, j, j);
+      stat_dump.DumpTensorStatsToFile(GetKernelNodeName(node), dump_path, debugger);
+    }
+    if (DumpJsonParser::GetInstance().IsTensorDump()) {
+      if (IsDeviceTargetGPU()) {
         DumpGPUMemToFile(file_path, GetKernelNodeName(node), *addr, int_shapes, type, device_type, trans_flag, j,
                          debugger);
+      } else {
+        DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
-    } else {
-      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
   }
 }
@@ -243,7 +244,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
 
     std::string tensor_name = GetKernelNodeName(node);
     size_t slot = j;
-    if (IsDeviceTargetGPU()) {
+    if (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
       auto input_kernel = node->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       tensor_name = input_kernel_name;
@@ -261,16 +262,17 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     MS_EXCEPTION_IF_NULL(addr);
-    if (IsDeviceTargetGPU()) {
-      if (DumpJsonParser::GetInstance().IsStatisticDump()) {
-        TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, true, j, slot);
-        stat_dump.DumpTensorStatsToFile(tensor_name, dump_path, debugger);
-      }
-      if (DumpJsonParser::GetInstance().IsTensorDump()) {
+    if (DumpJsonParser::GetInstance().IsStatisticDump() &&
+        (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
+      TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, true, j, slot);
+      stat_dump.DumpTensorStatsToFile(tensor_name, dump_path, debugger);
+    }
+    if (DumpJsonParser::GetInstance().IsTensorDump()) {
+      if (IsDeviceTargetGPU()) {
         DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
+      } else {
+        DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
-    } else {
-      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
     }
   }
 }
