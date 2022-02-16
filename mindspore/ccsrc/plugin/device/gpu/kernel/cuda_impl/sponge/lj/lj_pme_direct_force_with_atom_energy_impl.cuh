@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_LJ_LJ_PME_DIRECT_FORCE_WITH_ATOM_ENERGY_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 void LJDirectCFForceWithAtomEnergy(const int atom_numbers, const float cutoff, const float pme_beta,
                                    const int *uint_crd_f, const int *LJtype, const float *charge, const float *scaler_f,

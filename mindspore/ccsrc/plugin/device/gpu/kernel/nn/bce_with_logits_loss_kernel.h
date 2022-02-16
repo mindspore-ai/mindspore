@@ -21,7 +21,7 @@
 #include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/bce_with_logits_loss_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bce_with_logits_loss_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

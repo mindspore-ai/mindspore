@@ -22,7 +22,7 @@
 #include <memory>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/pack.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"
 
 namespace mindspore {
 namespace kernel {

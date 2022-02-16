@@ -22,7 +22,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_VIRIAL_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 void constrain_force_cycle_update(int atom_numbers, int constrain_pair_numbers, const unsigned int *uint_crd_f,
                                   const float *scaler_f, float *constrain_pair_f, const float *pair_dr_f,

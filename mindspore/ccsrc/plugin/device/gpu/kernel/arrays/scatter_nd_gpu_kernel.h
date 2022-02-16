@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/scatter_nd.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/scatter_nd.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

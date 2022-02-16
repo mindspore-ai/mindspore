@@ -21,7 +21,7 @@
 
 #include <vector>
 
-#include "plugin/device/gpu/kernel/cuda_impl/dynamic_range_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_range_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

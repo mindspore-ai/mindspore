@@ -22,8 +22,8 @@
 #include <string>
 #include <algorithm>
 
-#include "plugin/device/gpu/kernel/cuda_impl/pad_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/slice_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
