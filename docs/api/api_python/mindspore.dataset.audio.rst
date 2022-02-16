@@ -6,7 +6,7 @@ mindspore.dataset.audio
 mindspore.dataset.audio.transforms
 ----------------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_audio
 
     mindspore.dataset.audio.transforms.AllpassBiquad
@@ -26,7 +26,7 @@ mindspore.dataset.audio.transforms
 mindspore.dataset.audio.utils
 -----------------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: dataset_audio
 
     mindspore.dataset.audio.utils.ScaleType

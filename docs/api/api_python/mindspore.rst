@@ -4,7 +4,7 @@ mindspore
 张量
 ------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.Tensor
@@ -14,7 +14,7 @@ mindspore
 参数
 ---------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.Parameter
@@ -23,7 +23,7 @@ mindspore
 数据类型
 --------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.dtype
@@ -36,7 +36,7 @@ mindspore
 种子
 ----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.set_seed
@@ -45,7 +45,7 @@ mindspore
 模型
 -----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.Model
@@ -53,7 +53,7 @@ mindspore
 MindData数据集处理
 -------------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.DatasetHelper
@@ -62,7 +62,7 @@ MindData数据集处理
 损失函数管理
 ------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.LossScaleManager
@@ -72,7 +72,7 @@ MindData数据集处理
 序列化
 -------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.save_checkpoint
@@ -89,7 +89,7 @@ MindData数据集处理
 即时编译
 --------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.ms_function
@@ -97,7 +97,7 @@ MindData数据集处理
 日志
 ----
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.get_level
@@ -106,7 +106,7 @@ MindData数据集处理
 自动混合精度
 ------------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.build_train_network
@@ -114,7 +114,7 @@ MindData数据集处理
 安装验证
 --------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
 
     mindspore.run_check
@@ -122,7 +122,7 @@ MindData数据集处理
 调试
 ------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
     :nosignatures:
     :template: classtemplate.rst
@@ -132,7 +132,7 @@ MindData数据集处理
 内存回收
 ----------
 
-.. cnmsautosummary::
+.. mscnautosummary::
     :toctree: mindspore
     :nosignatures:
     :template: classtemplate.rst

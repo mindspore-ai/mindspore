@@ -6,7 +6,7 @@ mindspore.scipy
 mindspore.scipy.linalg
 ----------------------
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -22,7 +22,7 @@ mindspore.scipy.optimize
 
 .. automodule:: mindspore.scipy.optimize
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -35,7 +35,7 @@ mindspore.scipy.sparse.linalg
 
 .. automodule:: mindspore.scipy.sparse.linalg
 
-.. cnmsplatformautosummary::
+.. mscnplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst

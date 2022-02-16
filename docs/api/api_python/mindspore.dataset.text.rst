@@ -6,7 +6,7 @@ mindspore.dataset.text
 mindspore.dataset.text.transforms
 ---------------------------------
 
-.. cnmsnoteautosummary::
+.. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst
@@ -34,7 +34,7 @@ mindspore.dataset.text.transforms
 mindspore.dataset.text.utils
 ----------------------------
 
-.. cnmsnoteautosummary::
+.. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst
