@@ -40,7 +40,7 @@ void Round::RegisterMsgCallBack(const std::shared_ptr<ps::core::CommunicatorBase
   MS_EXCEPTION_IF_NULL(communicator);
   MS_LOG(INFO) << "Round " << name_ << " register message callback.";
   communicator->RegisterMsgCallBack(
-    name_, [this](std::shared_ptr<ps::core::MessageHandler> message) { LaunchRoundKernel(message); });
+    name_, [this](const std::shared_ptr<ps::core::MessageHandler> &message) { LaunchRoundKernel(message); });
 }
 
 void Round::Initialize(const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb) {

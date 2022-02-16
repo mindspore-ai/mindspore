@@ -42,7 +42,15 @@ bool PullWeightKernel::Launch(const uint8_t *req_data, size_t len,
     MS_LOG(ERROR) << "FBBuilder builder or req_data is nullptr.";
     return false;
   }
-
+  flatbuffers::Verifier verifier(req_data, len);
+  if (!verifier.VerifyBuffer<schema::RequestPullWeight>()) {
+    std::string reason = "The schema of RequestPullWeight is invalid.";
+    BuildPullWeightRsp(fbb, schema::ResponseCode_RequestError, reason, LocalMetaStore::GetInstance().curr_iter_num(),
+                       {});
+    MS_LOG(ERROR) << reason;
+    GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+    return true;
+  }
   const schema::RequestPullWeight *pull_weight_req = flatbuffers::GetRoot<schema::RequestPullWeight>(req_data);
   if (pull_weight_req == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestPullWeight";
