@@ -121,12 +121,13 @@ def get_bprpo_eigh(self):
     eigh = Eigh(compute_eigenvectors=True)
 
     def bprop(a, out, dout):
-        w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
         if not is_compute_v:
+            w, grad_w = out, dout
             # w, _ = Eigh(compute_eigenvectors=False)(a) -> a * _ = w * _
             _, v = eigh(a)
             grad_a = _matmul(v * F.expand_dims(grad_w, -2), _adjoint(v))
         else:
+            w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
             # w, v = Eigh(compute_eigenvectors=True)(a)  -> a * v = w * v
             vh_gv = _matmul(_adjoint(v), grad_v)
             f = _compute_f(w)

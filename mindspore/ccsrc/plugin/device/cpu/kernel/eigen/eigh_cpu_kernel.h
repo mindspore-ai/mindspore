@@ -40,6 +40,7 @@ class EighCpuKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
   size_t m_{1};
@@ -47,6 +48,16 @@ class EighCpuKernelMod : public NativeCpuKernelMod {
   bool lower_{true};
   TypeId dtype_{kNumberTypeFloat32};
 };
+
+MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    EighCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                    EighCpuKernelMod, double);
+
+MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                    EighCpuKernelMod, float_complex);
+MS_REG_CPU_KERNEL_T(Eigh, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                    EighCpuKernelMod, double_complex);
 
 MS_REG_CPU_KERNEL_T(
   Eigh,

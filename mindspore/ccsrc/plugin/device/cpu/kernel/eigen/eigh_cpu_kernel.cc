@@ -47,52 +47,59 @@ void EighCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
-                            bool compute_eigen_vectors) {
-  Eigen::SelfAdjointEigenSolver<MatrixSquare<T>> solver(A);
+void SolveSelfAdjointMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, bool compute_eigen_vectors,
+                            size_t m, T *output_v_addr = nullptr) {
+  Eigen::SelfAdjointEigenSolver<MatrixSquare<T>> solver(
+    A, compute_eigen_vectors ? Eigen::ComputeEigenvectors : Eigen::EigenvaluesOnly);
   output->noalias() = solver.eigenvalues();
-  if (compute_eigen_vectors) {
-    outputv->noalias() = solver.eigenvectors();
+  if (compute_eigen_vectors && output_v_addr != nullptr) {
+    Map<MatrixSquare<T>> outputv(output_v_addr, m, m);
+    outputv.noalias() = solver.eigenvectors();
   }
 }
 
 template <typename T>
-void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, Map<MatrixSquare<T>> *outputv,
-                        bool compute_eigen_vectors) {
-  Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(A);
+void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *output, bool compute_eigen_vectors,
+                        size_t m, T *output_v_addr = nullptr) {
+  Eigen::ComplexEigenSolver<MatrixSquare<T>> solver(A, compute_eigen_vectors);
   output->noalias() = solver.eigenvalues();
-  if (compute_eigen_vectors) {
-    outputv->noalias() = solver.eigenvectors();
+  if (compute_eigen_vectors && output_v_addr != nullptr) {
+    Map<MatrixSquare<T>> outputv(output_v_addr, m, m);
+    outputv.noalias() = solver.eigenvectors();
   }
 }
 
 template <typename T>
-bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+void EighCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  (void)workspace_size_list_.emplace_back(m_ * m_ * sizeof(T));
+}
+
+template <typename T>
+bool EighCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto A_addr = reinterpret_cast<T *>(inputs[0]->addr);
   // is the Matrix a symmetric matrix(true lower triangle, false upper triangle)
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_v_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  T *a_Work_dir = reinterpret_cast<T *>(workspace[0]->addr);
   Map<MatrixSquare<T>> A(A_addr, m_, m_);
-  Map<MatrixSquare<T>> A_(A_addr, m_, m_);
+  Map<MatrixSquare<T>> A_(a_Work_dir, m_, m_);
   Map<MatrixSquare<T>> output(output_addr, m_, 1);
-  Map<MatrixSquare<T>> outputv(output_v_addr, m_, m_);
   // selfadjoint matrix
   if (lower_) {
     A_ = A.template selfadjointView<Lower>();
   } else {
     A_ = A.template selfadjointView<Upper>();
   }
-  // Real scalar eigen solver
-  if constexpr (std::is_same_v<T, float>) {
-    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors_);
-  } else if constexpr (std::is_same_v<T, double>) {
-    SolveSelfAdjointMatrix(A_, &output, &outputv, compute_eigen_vectors_);
+  T *output_v_addr = nullptr;
+  if (compute_eigen_vectors_) {
+    output_v_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  }
+  if constexpr (std::is_same<T, float>::value || std::is_same<T, double>::value) {
+    SolveSelfAdjointMatrix(A_, &output, compute_eigen_vectors_, m_, output_v_addr);
   } else {
-    // complex eigen solver
-    SolveComplexMatrix(A_, &output, &outputv, compute_eigen_vectors_);
+    SolveComplexMatrix(A_, &output, compute_eigen_vectors_, m_, output_v_addr);
   }
   return true;
 }

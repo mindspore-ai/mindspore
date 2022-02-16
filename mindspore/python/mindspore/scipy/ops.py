@@ -227,12 +227,20 @@ class Eigh(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_types_same({"A_dtype": A['dtype']},
                                                     [mstype.float32, mstype.float64, mstype.complex64,
                                                      mstype.complex128], self.name, True)
-        shape = {
-            'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
-            'dtype': (A['dtype'], A['dtype']),
-            'value': None
-        }
-        return shape
+        output = None
+        if self.compute_eigenvectors:
+            output = {
+                'shape': ((A['shape'][0],), (A['shape'][0], A['shape'][0])),
+                'dtype': (A['dtype'], A['dtype']),
+                'value': None
+            }
+        else:
+            output = {
+                'shape': (A['shape'][0],),
+                'dtype': A['dtype'],
+                'value': None
+            }
+        return output
 
 
 class EighNet(nn.Cell):
@@ -249,10 +257,7 @@ class EighNet(nn.Cell):
     def construct(self, A):
         if F.dtype(A) in (mstype.int32, mstype.int64):
             A = F.cast(A, mstype.float64)
-        r = self.eigh(A)
-        if self.bv:
-            return (r[0], r[1])
-        return r[0]
+        return self.eigh(A)
 
 
 class Eig(PrimitiveWithInfer):

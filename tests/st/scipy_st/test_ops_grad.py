@@ -86,11 +86,12 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
             self.eigh = Eigh(compute_eigenvectors, lower)
 
         def construct(self, a):
-            w, v = self.eigh(a)
             res = None
             if self.compute_eigenvectors:
+                w, v = self.eigh(a)
                 res = self.sum(w) + self.mean(v)
             else:
+                w = self.eigh(a)
                 res = self.mean(w)
             return res
 
