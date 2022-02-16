@@ -31,18 +31,30 @@ class RandomChoiceWithMaskInfo : public OperatorInfo {
  public:
   RandomChoiceWithMaskInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                            const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<RandomChoicWithMaskCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<RandomChoicWithMaskCost>()),
+        seed_(0),
+        seed2_(0) {}
   ~RandomChoiceWithMaskInfo() = default;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
+  void ReplaceNodeInputOrAttrs() override;
 
  protected:
-  Status GetAttrs() override { return SUCCESS; }
+  Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferAsLossDivisor() override;
+
+ private:
+  void CheckGPUBackend();
+
+  int64_t seed_;
+  int64_t seed2_;
+  static int64_t SEED_NUM;
 };
 }  // namespace parallel
 }  // namespace mindspore
