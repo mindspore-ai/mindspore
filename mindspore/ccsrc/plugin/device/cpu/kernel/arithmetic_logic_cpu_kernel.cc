@@ -105,6 +105,20 @@ void ArithmeticLogicCpuKernelMod<T>::LogicalOr(const T *input1, const T *input2,
 }
 
 template <typename T>
+void ArithmeticLogicCpuKernelMod<T>::LogicalXor(const T *input1, const T *input2, bool *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [input1, input2, out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      out[i] = input1[iter.GetInputPosA()] != input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, output_size_);
+}
+
+template <typename T>
 void ArithmeticLogicCpuKernelMod<T>::Greater(const T *input1, const T *input2, bool *out) {
   BinaryOp(input1, input2, out, std::greater<T>());
 }
@@ -127,6 +141,7 @@ void ArithmeticLogicCpuKernelMod<T>::InitComputeFunc() {
     {prim::kPrimLogicalAnd->name(), &ArithmeticLogicCpuKernelMod<T>::LogicalAnd},
     {prim::kPrimLessEqual->name(), &ArithmeticLogicCpuKernelMod<T>::LessEqual},
     {prim::kPrimLogicalOr->name(), &ArithmeticLogicCpuKernelMod<T>::LogicalOr},
+    {prim::kPrimLogicalXor->name(), &ArithmeticLogicCpuKernelMod<T>::LogicalXor},
     {prim::kPrimLess->name(), &ArithmeticLogicCpuKernelMod<T>::Less},
     {prim::kPrimNotEqual->name(), &ArithmeticLogicCpuKernelMod<T>::NotEqual},
     {prim::kPrimEqual->name(), &ArithmeticLogicCpuKernelMod<T>::Equal}};

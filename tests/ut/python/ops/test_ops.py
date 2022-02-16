@@ -1615,6 +1615,11 @@ test_case_math_ops = [
         'block': P.LogicalOr(),
         'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_)), Tensor(np.ones((3, 1, 1), np.bool_))],
         'desc_bprop': [Tensor(np.zeros((3, 4, 5), np.bool_))]}),
+    ('LogicalXor', {
+        'block': P.LogicalXor(),
+        'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_)), Tensor(np.ones((3, 1, 1), np.bool_))],
+        'desc_bprop': [Tensor(np.zeros((3, 4, 5), np.bool_))],
+        'skip': ['backward']}),
     ('NpuAllocFloatStatus', {
         'block': P.NPUAllocFloatStatus(),
         'desc_inputs': [],

@@ -50,6 +50,7 @@ class ArithmeticLogicCpuKernelMod : public NativeCpuKernelMod {
   void LessEqual(const T *input1, const T *input2, bool *out);
   void LogicalAnd(const T *input1, const T *input2, bool *out);
   void LogicalOr(const T *input1, const T *input2, bool *out);
+  void LogicalXor(const T *input1, const T *input2, bool *out);
 
   using TypeComputeFunc = std::function<void(ArithmeticLogicCpuKernelMod *, const T *, const T *, bool *)>;
   TypeComputeFunc compute_func_{nullptr};
@@ -194,6 +195,9 @@ MS_REG_CPU_KERNEL_T(
   ArithmeticLogicCpuKernelMod, bool);
 MS_REG_CPU_KERNEL_T(
   LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ArithmeticLogicCpuKernelMod, bool);
+MS_REG_CPU_KERNEL_T(
+  LogicalXor, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   ArithmeticLogicCpuKernelMod, bool);
 }  // namespace kernel
 }  // namespace mindspore

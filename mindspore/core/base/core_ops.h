@@ -62,6 +62,7 @@ constexpr auto kACosGrad = "ACosGrad";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kLog = "Log";
+constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kSelect = "Select";
 constexpr auto kAdd = "Add";
 constexpr auto kBiasAdd = "BiasAdd";
@@ -217,6 +218,7 @@ MS_CORE_API inline const PrimitivePtr kPrimNotEqual = std::make_shared<Primitive
 MS_CORE_API inline const PrimitivePtr kPrimLogicalAnd = std::make_shared<Primitive>("LogicalAnd");
 MS_CORE_API inline const PrimitivePtr kPrimLogicalOr = std::make_shared<Primitive>("LogicalOr");
 MS_CORE_API inline const PrimitivePtr kPrimLogicalNot = std::make_shared<Primitive>("LogicalNot");
+MS_CORE_API inline const PrimitivePtr kPrimLogicalXor = std::make_shared<Primitive>(kLogicalXor);
 MS_CORE_API inline const PrimitivePtr kPrimEqualCount = std::make_shared<Primitive>("EqualCount");
 MS_CORE_API inline const PrimitivePtr kPrimApproximateEqual = std::make_shared<Primitive>("ApproximateEqual");
 

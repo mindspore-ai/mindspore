@@ -4124,6 +4124,44 @@ class LogicalOr(_LogicBinaryOp):
     """
 
 
+class LogicalXor(Primitive):
+    r"""
+    Computes the "logical XOR" of two tensors element-wise.
+
+    .. math::
+
+        out_{i} = x_{i} \oplus y_{i}
+
+    Inputs:
+        - **x** (Tensor) - The first input is a tensor whose data type is bool.
+        - **y** (Tensor) - The second input is a the tensor to compute XOR with the first input.
+          Datatype must be bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `x` nor `y` is a Tensor whose data type is bool.
+        ValueError: If the shape of two inputs cannot be broadcast.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+        >>> y = Tensor(np.array([True, True, False]), mindspore.bool_)
+        >>> logical_xor = ops.LogicalXor()
+        >>> output = logical_xor(x, y)
+        >>> print(output)
+        [ False True True]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize LogicalXor"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+
 class IsNan(Primitive):
     r"""
     Determines which elements are NaN for each position.
