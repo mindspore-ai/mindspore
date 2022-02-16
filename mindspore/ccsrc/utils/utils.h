@@ -531,6 +531,7 @@ constexpr auto kCustomTypeJULIA = "julia";
 constexpr auto kCustomTypePyfunc = "pyfunc";
 constexpr auto kCustomTypeTbe = "tbe";
 constexpr auto kCustomTypeAICPU = "aicpu";
+constexpr auto kCustomTypeHybrid = "hybrid";
 const std::set<std::string> kCustomTypeAkg = {"ir_builder", "tvm_compute", "hybrid"};
 
 // primal attr key name

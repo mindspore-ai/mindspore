@@ -17,6 +17,7 @@
 import os
 import inspect
 import json
+import re
 import hashlib
 from mindspore import ops
 from mindspore import log as logger
@@ -321,6 +322,7 @@ class Custom(ops.PrimitiveWithInfer):
                 self.func_type = "tvm_compute"
             else:
                 self.func_type = "hybrid"
+                self._hybrid_func_analyser()
                 if not self.bprop:
                     self._hybrid_autodiff()
         self.add_prim_attr("func_type", self.func_type)
@@ -653,3 +655,18 @@ class Custom(ops.PrimitiveWithInfer):
             op = Custom(func=self.func, out_shape=infer_func, out_dtype=infer_func,
                         func_type="akg", bprop=True)
             self.bprop = grad_func(op)
+
+    def _hybrid_func_analyser(self):
+        """analyze hybrid source string and add corresponding attrs."""
+        args = {val: idx for idx, val in enumerate(list(inspect.signature(self.func).parameters))}
+        if self.func_source_str.count('return') != 1:
+            logger.warning("Hybrid function code should have only one 'return' syntax.")
+        else:
+            sentences = [s for s in self.func_source_str.split('\n') if s.count("return") == 1]
+            symbols = re.sub(r"return|\s|\[|\]|\(|\)", "", sentences[-1]).split(',')
+            inplace_assign_output = [[idx, args[val]] if val in args else [idx, -1]
+                                     for idx, val in enumerate(symbols)]
+
+            if any(i[1] != -1 for i in inplace_assign_output):
+                self.add_prim_attr("inplace_assign_output", " ".join(
+                    [str(j) for i in inplace_assign_output for j in i]))
