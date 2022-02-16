@@ -117,8 +117,8 @@ class OptimizerKernel : public InnerKernel {
   }
 
   int RestoreDefaultLearningRate() {
-    SetLearningRate(default_lr_);
-    return RET_OK;
+    auto ret = SetLearningRate(default_lr_);
+    return ret;
   }
 
   int SetOptimizerMode(WeightUpdateMode mod) {
@@ -139,7 +139,11 @@ class OptimizerKernel : public InnerKernel {
       weight_update_mod_ = mod;
     } else {
       if (grad_sum_ != nullptr) {
-        OptimizerStep();
+        auto ret = OptimizerStep();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "OptimizerStep failed.";
+          return RET_ERROR;
+        }
         ms_context_->allocator->Free(grad_sum_);
         grad_sum_ = nullptr;
       }
@@ -169,7 +173,11 @@ class OptimizerKernel : public InnerKernel {
 
   int Eval() override {
     if (weight_update_mod_ != WeightUpdateMode::ACCUMULATE_GRADS) {
-      OptimizerStep();
+      auto ret = OptimizerStep();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "OptimizerStep failed.";
+        return RET_ERROR;
+      }
     }
     return InnerKernel::Eval();
   }
