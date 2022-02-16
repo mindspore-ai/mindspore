@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ArithmeticSelfOpenCLKernel::CheckSpecs() {
+int ArithmeticSelfOpenCLKernel::CheckSpecsWithoutShape() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
@@ -36,8 +36,12 @@ int ArithmeticSelfOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() != DIMENSION_4D && in_tensors_[0]->shape().size() != DIMENSION_2D) {
-    MS_LOG(WARNING) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
+  return RET_OK;
+}
+
+int ArithmeticSelfOpenCLKernel::CheckSpecs() {
+  if (in_tensors_[0]->shape().size() > DIMENSION_5D) {
+    MS_LOG(WARNING) << " only support dim <= 5 but your dim = " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   return RET_OK;
@@ -46,18 +50,18 @@ int ArithmeticSelfOpenCLKernel::CheckSpecs() {
 void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 4, max_y = 8;
-  int x = std::min(GetMaxDivisorStrategy1(global[0], max_divider), max_x);
+  int x = std::min(GetMaxDivisorStrategy1(global[CLIDX_X], max_divider), max_x);
   if (x == 0) {
     MS_LOG(ERROR) << "div num shouldn't be 0";
     return;
   }
   int yz = max_size / x;
-  int y = std::min(std::min(GetMaxDivisorStrategy1(global[1], max_divider), yz), max_y);
+  int y = std::min(std::min(GetMaxDivisorStrategy1(global[CLIDX_Y], max_divider), yz), max_y);
   if (y == 0) {
     MS_LOG(ERROR) << "div num shouldn't be 0";
     return;
   }
-  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[2], 2)));
+  int z = std::min(yz / y, static_cast<int>(UP_DIV(global[CLIDX_Z], 2)));  // 2 : take half
 
   local->clear();
   local->push_back(x);
@@ -66,19 +70,17 @@ void ArithmeticSelfGetWorkGroup(const std::vector<size_t> &global, std::vector<s
 }
 
 int ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
-  auto output_shape = out_tensors_[0]->shape();
-  uint32_t OH = 1, OW = 1, OC = 1;
-  if (output_shape.size() == DIMENSION_4D) {
-    output_shape_ = {output_shape[0], output_shape[1], output_shape[2], UP_DIV(output_shape[3], C4NUM)};
-    OH = output_shape[0] * output_shape[1];
-    OW = output_shape[2];
-    OC = UP_DIV(output_shape[3], C4NUM);
-  } else if (output_shape.size() == DIMENSION_2D) {
-    output_shape_ = {output_shape[0], 1, 1, UP_DIV(output_shape[1], C4NUM)};
-    OH = output_shape[0];
-    OW = 1;
-    OC = UP_DIV(output_shape[1], C4NUM);
+  auto out_gpu_shape = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_[0]);
+  if (out_gpu_shape == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
   }
+  output_shape_ = {(cl_int)out_gpu_shape->N, (cl_int)(out_gpu_shape->D * out_gpu_shape->H), (cl_int)out_gpu_shape->W,
+                   (cl_int)UP_DIV(out_gpu_shape->C, C4NUM)};
+  size_t OH = out_gpu_shape->N * out_gpu_shape->D * out_gpu_shape->H;
+  size_t OW = out_gpu_shape->W;
+  size_t OC = UP_DIV(out_gpu_shape->C, C4NUM);
+
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   local_size_ = {1, 1, 1};  // init local
   global_size_ = {OH, OW, OC};
@@ -116,11 +118,11 @@ int ArithmeticSelfOpenCLKernel::Prepare() {
 
 int ArithmeticSelfOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX0, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX1, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

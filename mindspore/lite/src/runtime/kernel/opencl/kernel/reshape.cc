@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ int ReshapeOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() > DIMENSION_4D) {
-    MS_LOG(WARNING) << "Reshape input size should in 0-4, actual: " << in_tensors_[0]->shape().size();
+  if (in_tensors_[0]->shape().size() > DIMENSION_5D) {
+    MS_LOG(WARNING) << "Reshape input size should in 0-5, actual: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
-  if (out_tensors_[0]->shape().size() > OUTPUT_TENSOR_SIZE_4) {
-    MS_LOG(WARNING) << "Reshape output size should in 0-4, actual: " << out_tensors_[0]->shape().size();
+  if (out_tensors_[0]->shape().size() > DIMENSION_5D) {
+    MS_LOG(WARNING) << "Reshape output size should in 0-5, actual: " << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   return RET_OK;
@@ -56,7 +56,7 @@ int ReshapeOpenCLKernel::CheckSpecs() {
 int ReshapeOpenCLKernel::SetConstArgs() {
   auto in = GpuTensorInfo(in_tensors_.front());
   auto out = GpuTensorInfo(out_tensors_.front());
-  cl_int4 src_size = {cl_int(in.C), cl_int(in.W), cl_int(in.H), cl_int(in.N)};
+  cl_int4 src_size = {cl_int(in.C), cl_int(in.W), cl_int(in.D * in.H), cl_int(in.N)};
   cl_int4 dst_size = {cl_int(out.width), cl_int(out.height), cl_int(out.C), cl_int(out.C * out.W)};
 
   int arg_idx = 2;

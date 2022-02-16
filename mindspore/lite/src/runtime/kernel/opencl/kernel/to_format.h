@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,14 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
   int SetConstArgs() override;
   int SetGlobalLocal() override;
   int InferShape() override;
 
  private:
   size_t N_{1};
+  size_t D_{1};
   size_t H_{1};
   size_t W_{1};
   size_t C_{1};

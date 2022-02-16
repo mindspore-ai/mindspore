@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,11 +109,11 @@ int StackOpenCLKernel::SetConstArgs() {
   for (size_t i = 0; i < in_tensors_[0]->shape().size(); ++i) {
     inshape_tmp.s[i] = in_tensors_[0]->shape()[i];
   }
-  Broadcast2GpuShape(in_shape_.s, inshape_tmp.s, in_tensors_[0]->shape().size(), 1);
+  Broadcast2GpuShape(inshape_tmp.s, in_tensors_[0]->shape().size(), in_shape_.s, DIMENSION_4D, 1);
   for (size_t i = 0; i < out_tensors_[0]->shape().size(); ++i) {
     outshape_tmp.s[i] = out_tensors_[0]->shape()[i];
   }
-  Broadcast2GpuShape(out_shape_.s, outshape_tmp.s, out_tensors_[0]->shape().size(), 1);
+  Broadcast2GpuShape(outshape_tmp.s, out_tensors_[0]->shape().size(), out_shape_.s, DIMENSION_4D, 1);
   in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
   out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
   if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_) != CL_SUCCESS) {

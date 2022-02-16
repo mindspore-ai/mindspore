@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,9 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
   int SetConstArgs() override {
-    if (ocl_runtime_->SetKernelArg(kernel_, 2, output_shape_) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX2, output_shape_) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

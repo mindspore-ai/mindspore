@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <memory>
 #include <string>
 #include <cfloat>
 #include "src/inner_kernel.h"
@@ -57,44 +58,54 @@ struct OpenGLTexture2DToOpenCLParameter {
 #endif
 
 template <typename SrcT, typename DstT>
-void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
-  MS_ASSERT(dst);
-  if (src == nullptr || src_num <= 0) {
-    return;
+int Broadcast2GpuShape(const SrcT *src, int src_num, DstT *dst, int dsc_num) {
+  if (src == nullptr || src_num <= 0 || dst == nullptr || dsc_num < src_num) {
+    MS_LOG(WARNING) << "Broadcast2GpuShape invalid input";
+    return RET_ERROR;
   }
-  auto *N = dst;
-  auto *H = dst + 1;
-  auto *W = dst + 2;
-  auto *C = dst + 3;
+
   if (src_num == DIMENSION_1D) {  // 1 1 1 C
-    *C = src[0];
+    dst[kNHWC_C] = src[DIMENSION_0D];
   } else if (src_num == DIMENSION_2D) {  // N 1 1 C
-    *N = src[0];
-    *C = src[1];
+    dst[kNHWC_N] = src[DIMENSION_0D];
+    dst[kNHWC_C] = src[DIMENSION_1D];
   } else if (src_num == DIMENSION_3D) {  // N 1 W C
-    *N = src[0];
-    *W = src[1];
-    *C = src[2];
+    dst[kNHWC_N] = src[DIMENSION_0D];
+    dst[kNHWC_W] = src[DIMENSION_1D];
+    dst[kNHWC_C] = src[DIMENSION_2D];
   } else if (src_num == DIMENSION_4D) {  // N H W C
-    *N = src[0];
-    *H = src[1];
-    *W = src[2];
-    *C = src[3];
-  } else if (src_num > 4) {
-    MS_LOG(ERROR) << "GPU doesn't support ndim>=" << src_num;
+    dst[kNHWC_N] = src[DIMENSION_0D];
+    dst[kNHWC_H] = src[DIMENSION_1D];
+    dst[kNHWC_W] = src[DIMENSION_2D];
+    dst[kNHWC_C] = src[DIMENSION_3D];
+  } else if (src_num == DIMENSION_5D) {  // N D H W C
+    dst[kNDHWC_N] = src[DIMENSION_0D];
+    dst[kNDHWC_D] = src[DIMENSION_1D];
+    dst[kNDHWC_H] = src[DIMENSION_2D];
+    dst[kNDHWC_W] = src[DIMENSION_3D];
+    dst[kNDHWC_C] = src[DIMENSION_4D];
+  } else if (src_num > DIMENSION_5D) {
+    MS_LOG(WARNING) << "GPU doesn't support ndim>=" << src_num;
+    return RET_ERROR;
   }
+
+  return RET_OK;
 }
 
 template <typename SrcT, typename DstT>
-void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_value) {
-  MS_ASSERT(dst);
-  for (int i = 0; i < 4; ++i) {
+int Broadcast2GpuShape(const SrcT *src, int src_num, DstT *dst, int dsc_num, DstT default_value) {
+  if (dst == nullptr || dsc_num <= 0) {
+    MS_LOG(WARNING) << "Broadcast2GpuShape invalid input";
+    return RET_ERROR;
+  }
+  for (int i = 0; i < dsc_num; ++i) {
     dst[i] = default_value;
   }
   if (src == nullptr || src_num <= 0) {
-    return;
+    return RET_OK;
   }
-  Broadcast2GpuShape(dst, src, src_num);
+
+  return Broadcast2GpuShape(src, src_num, dst, dsc_num);
 }
 
 struct GpuTensorInfo {
@@ -106,13 +117,23 @@ struct GpuTensorInfo {
     }
     auto shape_ori = tensor->shape();
     NDim = shape_ori.size();
-    cl_int4 shape;
-    Broadcast2GpuShape(shape.s, shape_ori.data(), shape_ori.size(), 1);
-    N = shape.s[0];
-    H = shape.s[1];
-    W = shape.s[2];
-    C = shape.s[3];
+    std::vector<size_t> shape_gpu(DIMENSION_5D);
+    (void)Broadcast2GpuShape(shape_ori.data(), NDim, shape_gpu.data(), DIMENSION_5D, (size_t)1);
+    if (NDim == DIMENSION_5D) {
+      N = shape_gpu[kNDHWC_N];
+      D = shape_gpu[kNDHWC_D];
+      H = shape_gpu[kNDHWC_H];
+      W = shape_gpu[kNDHWC_W];
+      C = shape_gpu[kNDHWC_C];
+    } else {
+      N = shape_gpu[kNHWC_N];
+      H = shape_gpu[kNHWC_H];
+      W = shape_gpu[kNHWC_W];
+      C = shape_gpu[kNHWC_C];
+    }
+
     MS_ASSERT(N > 0);
+    MS_ASSERT(D > 0);
     MS_ASSERT(H > 0);
     MS_ASSERT(W > 0);
     MS_ASSERT(C > 0);
@@ -121,10 +142,10 @@ struct GpuTensorInfo {
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
     FLT4_size = FLT_size * 4;
     if (W * Slice <= ocl_runtime_wrap_.GetInstance()->GetMaxImage2DWidth()) {
-      height = N * H;
+      height = N * D * H;
       width = W * Slice;
     } else {
-      height = N * H * W;
+      height = N * D * H * W;
       width = Slice;
       if (height > ocl_runtime_wrap_.GetInstance()->GetMaxImage2DHeight()) {
         height = -1;
@@ -132,10 +153,71 @@ struct GpuTensorInfo {
       }
     }
 
-    ElementsNum = N * H * W * C;
-    ElementsC4Num = N * H * W * Slice * C4NUM;
+    ElementsNum = N * D * H * W * C;
+    ElementsC4Num = N * D * H * W * Slice * C4NUM;
     OriginSize = ElementsNum * FLT_size;
     Image2DSize = height * width * FLT4_size;
+  }
+
+  static std::unique_ptr<GpuTensorInfo> CreateGpuTensorInfo(const lite::Tensor *tensor) {
+    if (tensor == nullptr) {
+      MS_LOG(WARNING) << "CreateGpuTensorInfo func's input tensor is nullptr";
+      return nullptr;
+    }
+
+    auto gpu_tensor = std::make_unique<GpuTensorInfo>();
+    auto ocl_runtime_wrap_ = lite::opencl::OpenCLRuntimeInnerWrapper();
+
+    auto shape_ori = tensor->shape();
+    gpu_tensor->NDim = shape_ori.size();
+    std::vector<size_t> shape_gpu(DIMENSION_5D);
+    auto ret = Broadcast2GpuShape(shape_ori.data(), gpu_tensor->NDim, shape_gpu.data(), DIMENSION_5D, (size_t)1);
+    if (ret != RET_OK) {
+      MS_LOG(WARNING) << "CreateGpuTensorInfo Broadcast2GpuShape failed";
+      return nullptr;
+    }
+
+    if (gpu_tensor->NDim == DIMENSION_5D) {
+      gpu_tensor->N = shape_gpu[kNDHWC_N];
+      gpu_tensor->D = shape_gpu[kNDHWC_D];
+      gpu_tensor->H = shape_gpu[kNDHWC_H];
+      gpu_tensor->W = shape_gpu[kNDHWC_W];
+      gpu_tensor->C = shape_gpu[kNDHWC_C];
+    } else {
+      gpu_tensor->N = shape_gpu[kNHWC_N];
+      gpu_tensor->H = shape_gpu[kNHWC_H];
+      gpu_tensor->W = shape_gpu[kNHWC_W];
+      gpu_tensor->C = shape_gpu[kNHWC_C];
+    }
+
+    MS_ASSERT(gpu_tensor->N > 0);
+    MS_ASSERT(gpu_tensor->D > 0);
+    MS_ASSERT(gpu_tensor->H > 0);
+    MS_ASSERT(gpu_tensor->W > 0);
+    MS_ASSERT(gpu_tensor->C > 0);
+    gpu_tensor->Slice = UP_DIV(gpu_tensor->C, C4NUM);
+
+    gpu_tensor->FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
+    gpu_tensor->FLT4_size = gpu_tensor->FLT_size * C4NUM;
+    if (gpu_tensor->W * gpu_tensor->Slice <= ocl_runtime_wrap_.GetInstance()->GetMaxImage2DWidth()) {
+      gpu_tensor->height = gpu_tensor->N * gpu_tensor->D * gpu_tensor->H;
+      gpu_tensor->width = gpu_tensor->W * gpu_tensor->Slice;
+    } else {
+      gpu_tensor->height = gpu_tensor->N * gpu_tensor->D * gpu_tensor->H * gpu_tensor->W;
+      gpu_tensor->width = gpu_tensor->Slice;
+      if (gpu_tensor->height > ocl_runtime_wrap_.GetInstance()->GetMaxImage2DHeight()) {
+        gpu_tensor->height = -1;
+        gpu_tensor->width = -1;
+      }
+    }
+
+    gpu_tensor->ElementsNum = gpu_tensor->N * gpu_tensor->D * gpu_tensor->H * gpu_tensor->W * gpu_tensor->C;
+    gpu_tensor->ElementsC4Num =
+      gpu_tensor->N * gpu_tensor->D * gpu_tensor->H * gpu_tensor->W * gpu_tensor->Slice * C4NUM;
+    gpu_tensor->OriginSize = gpu_tensor->ElementsNum * gpu_tensor->FLT_size;
+    gpu_tensor->Image2DSize = gpu_tensor->height * gpu_tensor->width * gpu_tensor->FLT4_size;
+
+    return gpu_tensor;
   }
 
   size_t RowPitch() const {
@@ -160,6 +242,7 @@ struct GpuTensorInfo {
   bool IsImageSizeValid() { return width > 0 && height > 0; }
 
   size_t N{1};
+  size_t D{1};
   size_t H{1};
   size_t W{1};
   size_t C{1};

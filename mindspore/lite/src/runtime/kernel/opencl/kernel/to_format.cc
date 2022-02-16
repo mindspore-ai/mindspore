@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
 
 namespace mindspore::kernel {
-int ToFormatOpenCLKernel::CheckSpecs() {
+int ToFormatOpenCLKernel::CheckSpecsWithoutShape() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
@@ -42,14 +42,16 @@ int ToFormatOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
+int ToFormatOpenCLKernel::CheckSpecs() { return RET_OK; }
+
 int ToFormatOpenCLKernel::SetConstArgs() {
-  cl_int4 shape{(cl_int)N_, (cl_int)H_, (cl_int)W_, (cl_int)C_};
-  cl_int4 gsize{(cl_int)(N_ * H_), (cl_int)W_, (cl_int)UP_DIV(C_, C4NUM), 1};
-  if (ocl_runtime_->SetKernelArg(kernel_, 2, gsize) != CL_SUCCESS) {
+  cl_int4 shape{(cl_int)N_, (cl_int)(H_ * D_), (cl_int)W_, (cl_int)C_};
+  cl_int4 gsize{(cl_int)(N_ * D_ * H_), (cl_int)W_, (cl_int)UP_DIV(C_, C4NUM), 1};
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX2, gsize) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 3, shape) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX3, shape) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -57,11 +59,11 @@ int ToFormatOpenCLKernel::SetConstArgs() {
 }
 
 int ToFormatOpenCLKernel::SetGlobalLocal() {
-  global_size_ = {N_ * H_, W_, UP_DIV(C_, C4NUM)};
-  local_size_ = {8, 16, 3};
+  global_size_ = {N_ * D_ * H_, W_, UP_DIV(C_, C4NUM)};
+  local_size_ = {8, 16, 3};  // local_x : 3, local_y : 16, local_z : 3
   size_t max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  if (max_work_group_size < 384) {
-    local_size_[2] = 1;
+  if (max_work_group_size < 384) {  // max work group size : 384
+    local_size_[CLIDX_Z] = 1;
   }
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 
@@ -91,11 +93,12 @@ int ToFormatOpenCLKernel::Prepare() {
     return ret;
   }
 
-  auto output = GpuTensorInfo(out_tensor);
-  N_ = output.N;
-  H_ = output.H;
-  W_ = output.W;
-  C_ = output.C;
+  auto output = GpuTensorInfo::CreateGpuTensorInfo(out_tensor);
+  N_ = output->N;
+  D_ = output->D;
+  H_ = output->H;
+  W_ = output->W;
+  C_ = output->C;
 
   (void)SetGlobalLocal();
   if (SetConstArgs() != RET_OK) {
@@ -110,12 +113,12 @@ int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto src_mem_type = (out_mem_type_ == MemType::IMG) ? lite::opencl::MemType::BUF : lite::opencl::MemType::IMG;
   auto dst_mem_type = out_mem_type_;
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data(),
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX0, in_tensors_.front()->data(),
                                  (src_mem_type == lite::opencl::MemType::BUF)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data(),
+  if (ocl_runtime_->SetKernelArg(kernel_, CLARGSINDEX1, out_tensors_.front()->data(),
                                  (dst_mem_type == lite::opencl::MemType::BUF)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
