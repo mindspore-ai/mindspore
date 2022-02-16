@@ -71,7 +71,13 @@ const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
 using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
-using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithContext>>;
+struct NodeWithContextCmp {
+  bool operator()(const NodeWithContext &node1, const NodeWithContext &node2) const {
+    return node1.second->GetDeviceAddressType() < node2.second->GetDeviceAddressType();
+  }
+};
+
+using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithContext, NodeWithContextCmp>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraphGroup = mindspore::HashMap<FuncGraphPtr, std::vector<std::vector<KernelGraphPtr>>>;
 using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;

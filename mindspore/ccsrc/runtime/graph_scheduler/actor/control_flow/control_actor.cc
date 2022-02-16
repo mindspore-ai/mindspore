@@ -348,8 +348,8 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
   MS_EXCEPTION_IF_NULL(output_data);
   MS_EXCEPTION_IF_NULL(data_arrow);
   auto formal_parameter_position = data_arrow->from_output_index_;
-  // Has no the ref formal parameter.
-  if (ref_formal_parameter_device_tensors_.count(formal_parameter_position) == 0) {
+  // Has no the ref node formal parameter.
+  if (ref_node_formal_parameter_device_tensors_.count(formal_parameter_position) == 0) {
     return;
   }
 
@@ -363,8 +363,9 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  // Foreach the device tensors to set the ptr from data.
-  for (auto &device_tensor : ref_formal_parameter_device_tensors_[formal_parameter_position]) {
+  // Foreach the device tensors to set the ptr from data, only the formal parameter device tensor of ref node need set
+  // before kernel running, because it will be used by ref output node.
+  for (auto &device_tensor : ref_node_formal_parameter_device_tensors_[formal_parameter_position]) {
     MS_EXCEPTION_IF_NULL(device_tensor);
     if ((device_tensor.get() == data) || (device_tensor->GetMutablePtr() == data->GetMutablePtr())) {
       continue;
@@ -372,13 +373,11 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     auto formal_parameter = device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(formal_parameter.first);
     if ((device_tensor->GetSize() != data->GetSize()) || (device_tensor->type_id() != data->type_id())) {
-      std::string error_info =
-        "The formal parameter: " + formal_parameter.first->DebugString() +
-        " position:" + std::to_string(formal_parameter_position) + "can not set from real parameter," +
-        " formal parameter size:" + std::to_string(device_tensor->GetSize()) +
-        " type id:" + std::to_string(device_tensor->type_id()) +
-        ", real parameter size:" + std::to_string(data->GetSize()) + " type id:" + std::to_string(data->type_id());
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      MS_LOG(WARNING) << "The formal parameter: " << formal_parameter.first->DebugString()
+                      << " position:" << formal_parameter_position
+                      << "please check the size and type id, formal parameter size:" << device_tensor->GetSize()
+                      << " type id:" << device_tensor->type_id() << ", real parameter size:" << data->GetSize()
+                      << " type id:" << data->type_id();
     }
 
     // Copy from the real parameter to formal parameter and insert the device tensor copy store.

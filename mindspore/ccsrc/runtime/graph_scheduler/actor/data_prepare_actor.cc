@@ -183,8 +183,8 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     auto &input_node = input_pair.first;
     auto input_node_output_index = input_pair.second;
 
-    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index);
-    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index);
+    auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
+    auto ref_node_output_addr = AnfAlgo::GetMutableOutputAddr(ref_node, output_index, false);
     // Just compare shared_ptr of two DeviceAddress.
     // The ptr of DeviceAddress may still be nullptr.
     if (input_addr != ref_node_output_addr) {

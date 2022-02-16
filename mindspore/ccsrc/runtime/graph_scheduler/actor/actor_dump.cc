@@ -206,19 +206,32 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
 void DumpFormalParameterDeviceTensor(const ControlActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   const auto &formal_parameter_device_tensors = actor->ref_formal_parameter_device_tensors();
-  if (formal_parameter_device_tensors.empty()) {
-    return;
+  if (!formal_parameter_device_tensors.empty()) {
+    ofs << "\t\tref_formal_parameter_device_tensors:" << formal_parameter_device_tensors.size() << "\n ";
+    for (const auto &formal_parameter_device_tensor : formal_parameter_device_tensors) {
+      for (const auto &device_tensor : formal_parameter_device_tensor.second) {
+        MS_EXCEPTION_IF_NULL(device_tensor);
+        auto ref_node = device_tensor->GetNodeIndex();
+        MS_EXCEPTION_IF_NULL(ref_node.first);
+        ofs << "\t\t\tref_position:" << formal_parameter_device_tensor.first
+            << "\tref_node_name:" << ref_node.first->fullname_with_scope()
+            << "\tref_node_debug_name:" << ref_node.first->DebugString() << "\n";
+      }
+    }
   }
 
-  ofs << "\t\tref_formal_parameter_device_tensors:" << formal_parameter_device_tensors.size() << "\n ";
-  for (const auto &formal_parameter_device_tensor : formal_parameter_device_tensors) {
-    for (const auto &device_tensor : formal_parameter_device_tensor.second) {
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      auto ref_node = device_tensor->GetNodeIndex();
-      MS_EXCEPTION_IF_NULL(ref_node.first);
-      ofs << "\t\t\tref_position:" << formal_parameter_device_tensor.first
-          << "\tref_node_name:" << ref_node.first->fullname_with_scope()
-          << "\tref_node_debug_name:" << ref_node.first->DebugString() << "\n";
+  const auto &ref_node_formal_parameter_device_tensors = actor->ref_node_formal_parameter_device_tensors();
+  if (!ref_node_formal_parameter_device_tensors.empty()) {
+    ofs << "\t\tref_node_formal_parameter_device_tensors:" << ref_node_formal_parameter_device_tensors.size() << "\n ";
+    for (const auto &ref_node_formal_parameter_device_tensor : ref_node_formal_parameter_device_tensors) {
+      for (const auto &device_tensor : ref_node_formal_parameter_device_tensor.second) {
+        MS_EXCEPTION_IF_NULL(device_tensor);
+        auto ref_node = device_tensor->GetNodeIndex();
+        MS_EXCEPTION_IF_NULL(ref_node.first);
+        ofs << "\t\t\tref_position:" << ref_node_formal_parameter_device_tensor.first
+            << "\tref_node_name:" << ref_node.first->fullname_with_scope()
+            << "\tref_node_debug_name:" << ref_node.first->DebugString() << "\n";
+      }
     }
   }
 }
