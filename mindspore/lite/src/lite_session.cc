@@ -503,6 +503,38 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   }
 }
 
+void LiteSession::UpdateGraphOutputMap(const std::vector<kernel::LiteKernel *> &kernels) {
+  if (!context_->float_mode) {
+    return;
+  }
+  output_tensor_map_.clear();
+  output_tensor_names_.clear();
+  output_node_map_.clear();
+  // output kernels may be modified during schedule runtime pass,need update node output tensor and node map
+  for (auto iter_kernel : kernels) {
+    auto subgraph = reinterpret_cast<kernel::SubGraphKernel *>(iter_kernel);
+    for (auto out_kernel : subgraph->out_nodes()) {
+      if (out_kernel->is_model_output()) {
+        for (auto out_tensor : out_kernel->out_tensors())
+          if (out_tensor->IsGraphOutput()) {
+            output_node_map_[out_kernel->name()].emplace_back(out_tensor);
+            if (!out_tensor->tensor_name().empty()) {
+              output_tensor_map_[out_tensor->tensor_name()] = out_tensor;
+              output_tensor_names_.emplace_back(out_tensor->tensor_name());
+            } else {
+              auto tensor_iter = std::find(tensors_.begin(), tensors_.end(), out_tensor);
+              if (tensor_iter != tensors_.end()) {
+                auto tensor_index = std::to_string(tensor_iter - tensors_.begin());
+                output_tensor_map_[tensor_index] = out_tensor;
+                output_tensor_names_.emplace_back(tensor_index);
+              }
+            }
+          }
+      }
+    }
+  }
+}
+
 void LiteSession::AdjustModelOutputTensorInitRefCount(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   auto graph_out_size = model->output_indices_.size();
@@ -675,7 +707,7 @@ int LiteSession::CompileGraph(Model *model) {
   InitGraphOutputTensors(model);
 
   // scheduler kernels
-  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, &is_infershape_,
+  Scheduler scheduler(context_, ms_context_, model, &tensors_, &inputs_, &outputs_, is_train_session_, &is_infershape_,
                       &is_control_flow_, execution_plan_, delegate_, delegate_device_type_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   scheduler.SetConfig(config_info_);
@@ -686,6 +718,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
   InitGraphInOutTensorsMap(model);
+  UpdateGraphOutputMap(kernels_);
 
   non_tail_call_kernels_ = scheduler.NonTailCallNodes();
 
