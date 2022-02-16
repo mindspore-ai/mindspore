@@ -810,11 +810,17 @@ class SyncBatchNorm(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, epsilon=1e-5, momentum=0.1, group="sync_bn_group0", device_num=2):
+    def __init__(self, epsilon=1e-5, momentum=0.1, group="sync_bn_group0", device_num=2, data_format="NCHW"):
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         validator.check_isinstance("group", group, str)
         validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError(f"For '{self.name}', the 'NHWC' format is only supported in GPU target, "
+                             f"but got the 'data_format' is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
+        self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
