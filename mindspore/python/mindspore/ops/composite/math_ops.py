@@ -258,14 +258,6 @@ def tensor_dot(x1, x2, axes):
             automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
             as axes for each respectively.
 
-    Inputs:
-        - **x1** (Tensor) - First tensor in tensor_dot with datatype float16 or float32
-        - **x2** (Tensor) - Second tensor in tensor_dot with datatype float16 or float32
-        - **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]) - Single value or
-          tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
-          automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
-          as axes for each respectively.
-
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
         contracted in both inputs
@@ -353,12 +345,6 @@ def dot(x1, x2):
             The rank must be greater than or equal to 2.
         x2 (Tensor): Second tensor in Dot op with datatype float16 or float32,
             The rank must be greater than or equal to 2.
-
-    Inputs:
-        - **x1** (Tensor) - First tensor in Dot op with datatype float16 or float32
-          The rank must be greater than or equal to 2.
-        - **x2** (Tensor) - Second tensor in Dot op with datatype float16 or float32
-          The rank must be greater than or equal to 2.
 
     Outputs:
         Tensor, dot product of x1 and x2.

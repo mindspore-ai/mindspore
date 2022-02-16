@@ -129,7 +129,7 @@ def _check_sequence_mask_input_len(input_shape, prim_name=None):
         raise ValueError(f"{msg_prefix} dimension of input_shape should be less than 7, but got {shape_size}d.")
 
 
-def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
+def sequence_mask(lengths, maxlen=None):
     """
     Returns a mask tensor representing the first N positions of each cell.
 
@@ -141,14 +141,6 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
             less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
         maxlen (int): size of the last dimension of returned tensor. Must be positive and same
             type as elements in `lengths`. Default is None.
-        prim_name (str): The name of primitive. Default: 'sequence_mask'.
-
-    Inputs:
-        - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor should be
-          less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
-          Must be type int32 or int64.
-        - **maxlen** (int) - size of the last dimension of returned tensor. Must be positive and same
-          type as elements in `lengths`. Default is None.
 
     Outputs:
         One mask tensor of shape lengths.shape + (maxlen,).
@@ -200,7 +192,7 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
     to_tensor_op = P.ScalarToArray()
 
     const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-    _check_sequence_mask_input_len(shape_op(lengths), prim_name)
+    _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
 
     if maxlen is None:
         flatten_data = reshape_op(lengths, (-1,))
