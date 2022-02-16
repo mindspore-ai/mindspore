@@ -372,6 +372,7 @@ void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
 void LiteSession::InitGraphInputMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->input_map_.empty());
+  MS_ASSERT(this->input_shape_map_.empty());
   auto graph_input_node_indexes = GetGraphInputNodes(model);
   auto graph_in_size = model->input_indices_.size();
   for (auto in_node_index : graph_input_node_indexes) {
@@ -399,6 +400,7 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       }
       auto tensor_name = in_node->name_ + std::to_string(i);
       this->input_map_[tensor_name] = in_tensor;
+      this->input_shape_map_[in_tensor] = in_tensor->shape();
       if (!in_tensor->tensor_name().empty()) {
         this->input_map_[in_tensor->tensor_name()] = in_tensor;
       }
@@ -818,6 +820,12 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
     MS_LOG(ERROR) << "CheckInputs failed.";
     return ret;
   }
+  ret = CheckGraphInputShapes(inputs_, input_shape_map_);
+  if (ret != RET_OK) {
+    is_running_.store(false);
+    MS_LOG(ERROR) << "Check graph input shapes failed.";
+    return ret;
+  }
   MS_ASSERT(this->context_ != nullptr);
   if (before == nullptr && after == nullptr) {
     ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_);
@@ -1046,6 +1054,7 @@ LiteSession::~LiteSession() {
 
   // Tensor * in input_map output_map are freed in tensors
   input_map_.clear();
+  input_shape_map_.clear();
   output_node_map_.clear();
   output_tensor_map_.clear();
   input_vec_.clear();
@@ -1098,6 +1107,19 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::strin
 
 std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
   return this->output_tensor_map_;
+}
+
+int LiteSession::UpdateInputShapeMap() {
+  for (auto input : inputs_) {
+    MS_CHECK_TRUE_MSG(input != nullptr, RET_ERROR, "graph input tensor is nullptr.");
+    if (input_shape_map_.find(input) != input_shape_map_.end()) {
+      input_shape_map_.at(input) = input->shape();
+    } else {
+      MS_LOG(ERROR) << "can't find " << input->tensor_name() << " in input_shape_map";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs,
@@ -1274,6 +1296,11 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 #if defined(LINUX_RUNTIME)
   (void)malloc_trim(0);
 #endif
+  ret = UpdateInputShapeMap();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "update input shape map failed.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

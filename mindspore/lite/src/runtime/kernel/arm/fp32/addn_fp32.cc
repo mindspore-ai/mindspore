@@ -93,6 +93,11 @@ int AddNCPUKernel::Run() {
     }
     return RET_OK;
   }
+  if (std::any_of(in_tensors_.begin(), in_tensors_.end(),
+                  [this](const lite::Tensor *input) { return input->shape() != out_tensors_.at(0)->shape(); })) {
+    MS_LOG(ERROR) << "all inputs should have the same shape of output.";
+    return RET_ERROR;
+  }
   in1_addr_ = input0_data;
   in2_addr_ = input1_data;
   out_addr_ = output_data;
