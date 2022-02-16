@@ -872,7 +872,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   // Launch Atomic Node
   auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(atomic_node));
+  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(node));
 }
 
 void AscendDeviceContext::InsertEventBeforeRunTask(const KernelGraphPtr &graph) const {
