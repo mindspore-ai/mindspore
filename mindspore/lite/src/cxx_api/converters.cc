@@ -139,7 +139,7 @@ lite::InnerContext *ContextUtils::Convert(const ContextC *context_c) {
   Status ret = kLiteError;
   for (auto &device_info_c : device_list) {
     MS_CHECK_TRUE_RET(device_info_c != nullptr, nullptr);
-    lite::DeviceInfo device_info = {0};
+    lite::DeviceInfo device_info = {{0}};
     if (device_info_c->device_type == kMSDeviceTypeCPU) {
       if (device_info_c->allocator == nullptr) {
         device_info_c->allocator = Allocator::Create();

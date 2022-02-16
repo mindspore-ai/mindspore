@@ -97,7 +97,7 @@ class MS_API DelegateModel {
   /// \brief Get the ms model version.
   ///
   /// \return The schema version for the primitives map.
-  const SchemaVersion GetVersion() { return version_; }
+  SchemaVersion GetVersion() const { return version_; }
 
  protected:
   std::vector<kernel::Kernel *> *kernels_;

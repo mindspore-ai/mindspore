@@ -36,7 +36,7 @@ namespace mindspore::lite {
 class ControlFlowScheduler {
  public:
   ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
-      : context_(ctx), ms_context_(ms_ctx), src_tensors_(src_tensors) {}
+      : context_(ctx), src_tensors_(src_tensors) {}
   ~ControlFlowScheduler() = default;
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
   void SetSubgraphForPartialNode(std::unordered_map<kernel::LiteKernel *, size_t> *partial_kernel_subgraph_index_map,
@@ -91,7 +91,6 @@ class ControlFlowScheduler {
 
  private:
   InnerContext *context_ = nullptr;
-  const mindspore::Context *ms_context_ = nullptr;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::vector<Tensor *> *src_tensors_ = nullptr;
   std::queue<kernel::LiteKernel *> to_process_q_{};

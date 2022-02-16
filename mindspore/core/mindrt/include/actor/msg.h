@@ -66,7 +66,7 @@ class MessageBase {
 
   inline void SetTo(const AID &aTo) { to = aTo; }
 
-  inline const Type GetType() const { return type; }
+  inline Type GetType() const { return type; }
 
   inline void SetType(Type eType) { type = eType; }
 
