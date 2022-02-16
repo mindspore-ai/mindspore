@@ -104,6 +104,7 @@ class LiteSession : public session::LiteSession {
   void InitGraphOutputNodeMap(const lite::Model *model);
   void InitGraphOutputTensorMap(const lite::Model *model);
   void AdjustModelOutputTensorInitRefCount(const lite::Model *model);
+  int UpdateInputShapeMap();
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
   int SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel);
   int PrepareKernels(const Model *model);
@@ -160,6 +161,8 @@ class LiteSession : public session::LiteSession {
   std::vector<mindspore::tensor::MSTensor *> input_vec_;
   // graph input tensor name -- input tensors
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> input_map_;
+  // graph input tensor -- input tensor shape
+  std::unordered_map<Tensor *, std::vector<int>> input_shape_map_;
   // graph output node name -- output tensors
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
 
