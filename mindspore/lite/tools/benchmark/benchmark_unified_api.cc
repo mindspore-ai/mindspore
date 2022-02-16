@@ -247,6 +247,7 @@ int BenchmarkUnifiedApi::GenerateInputData() {
       auto new_tensor =
         mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
       inputs.push_back(*new_tensor);
+      delete new_tensor;
     }
     all_inputs_.push_back(inputs);
     return RET_OK;
@@ -324,6 +325,7 @@ int BenchmarkUnifiedApi::ReadInputFile() {
       auto new_tensor =
         mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
       inputs.push_back(*new_tensor);
+      delete new_tensor;
     }
     all_inputs_.push_back(inputs);
     return RET_OK;
