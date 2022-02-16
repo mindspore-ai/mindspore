@@ -26,6 +26,7 @@
 #include "utils/utils.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
+#include "runtime/device/memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
@@ -526,8 +527,19 @@ void AscendDeviceContext::FreeMemory(DeviceAddress *const &address) const {
 bool AscendDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
                                                    const std::vector<size_t> &size_list) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
+  if (addr_list.size() != size_list.size()) {
+    MS_LOG(EXCEPTION) << "AllocateContinuousMemory check failed: input address list size " << addr_list.size()
+                      << " vs input size list size " << size_list.size();
+  }
   runtime_instance_->SetContext();
-  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  size_t align_total_size = 0;
+  std::vector<size_t> align_size_list;
+  for (size_t i = 0; i < size_list.size(); i++) {
+    auto align_size = device::MemoryManager::GetCommonAlignSize(size_list[i]);
+    align_size_list.emplace_back(align_size);
+    align_total_size += align_size;
+  }
+  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, align_total_size, align_size_list);
 }
 
 void *AscendDeviceContext::AllocateMemory(size_t size) const {
