@@ -86,6 +86,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
   MS_ASSERT(quantized_histogram != nullptr && expanded_histogram != nullptr);
   MS_ASSERT(quant_bint_nums != 0);
   const float bin_interval = static_cast<float>(bin_index) / static_cast<float>(quant_bint_nums);
+  MS_ASSERT(quant_bint_nums <= quantized_histogram->size());
   // merge i bins to target bins
   for (int i = 0; i < quant_bint_nums; ++i) {
     const float start = i * bin_interval;
@@ -93,6 +94,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     const int left_upper = static_cast<int>(std::ceil(start));
     if (left_upper > start) {
       const double left_scale = left_upper - start;
+      MS_ASSERT((left_upper - 1) < this->histogram_.size());
       quantized_histogram->at(i) += left_scale * this->histogram_[left_upper - 1];
     }
     const int right_lower = static_cast<int>(std::floor(end));
@@ -253,6 +255,7 @@ int32_t DataDistribution::GetZeroPoint() {
   if (symmetry_) {
     zero_point_ = 0;
   } else {
+    MS_ASSERT(scale_ > 0);
     zero_point_ = static_cast<int32_t>(std::round(quant_min_ - encode_min_ / scale_));
   }
   return zero_point_;

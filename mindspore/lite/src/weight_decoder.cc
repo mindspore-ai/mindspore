@@ -210,6 +210,7 @@ int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_ind
   for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
     stride_b *= dims[i];
   }
+  MS_ASSERT(stride_b > 0);
   int A = bucket_in_index / stride_b;
   int C = bucket_in_index % stride_b;
   return A * stride_a + bucket_index * stride_b + C;

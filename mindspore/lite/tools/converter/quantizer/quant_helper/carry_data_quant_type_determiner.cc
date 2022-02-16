@@ -21,8 +21,8 @@
 namespace mindspore::lite {
 bool CarryDataQuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
-  MS_ASSERT(node->inputIndex.size() >= 1);
-  MS_ASSERT(node->outputIndex.size() >= 1);
+  MS_ASSERT(node->inputIndex.size() >= kInputIndexOne);
+  MS_ASSERT(node->outputIndex.size() >= kInputIndexOne);
 
   // check first in tensor
   MS_ASSERT(graph.allTensors.size() > node->inputIndex.at(0));

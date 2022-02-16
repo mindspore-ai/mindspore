@@ -69,6 +69,7 @@ int HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Primit
 
 int HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
   MS_ASSERT(data != nullptr);
+  MS_ASSERT(pq != nullptr);
   std::map<int8_t, size_t> freq_map;
   for (size_t i = 0; i < data_size; i++) {
     freq_map[data[i]]++;

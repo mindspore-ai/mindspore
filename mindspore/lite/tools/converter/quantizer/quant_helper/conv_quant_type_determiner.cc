@@ -20,8 +20,8 @@
 namespace mindspore::lite {
 bool ConvQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::MetaGraphT &graph,
                                                    mindspore::schema::CNodeT *node) {
-  MS_ASSERT(node->inputIndex.size() >= 2);
   MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
+  MS_ASSERT(node->inputIndex.size() >= kInputIndexTwo);
   MS_CHECK_TRUE_MSG(graph.allTensors.size() > node->inputIndex.at(kInputIndex), false, "Out of vector range.");
   auto &input_tensor = graph.allTensors.at(node->inputIndex.at(kInputIndex));
   MS_CHECK_TRUE_MSG(graph.allTensors.size() > node->inputIndex.at(kWeightIndex), false, "Out of vector range.");

@@ -28,6 +28,7 @@ constexpr int kMinSize = 0;
 constexpr int kMaxSize = 65535;
 }  // namespace
 int QuantParamParser::ParseFilter(const CommonQuantString &common_quant_string, quant::CommonQuantParam *common_quant) {
+  MS_ASSERT(common_quant != nullptr);
   if (!common_quant_string.min_quant_weight_size.empty()) {
     if (!ConvertIntNum(common_quant_string.min_quant_weight_size, &common_quant->min_quant_weight_size)) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_size should be a valid number.";
@@ -84,6 +85,7 @@ int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, 
 
 int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
                                        quant::CommonQuantParam *common_quant) {
+  MS_ASSERT(common_quant != nullptr);
   if (!common_quant_string.quant_type.empty()) {
     auto ret = ParseQuantType(common_quant_string.quant_type, &common_quant->quant_type);
     if (ret != RET_OK) {

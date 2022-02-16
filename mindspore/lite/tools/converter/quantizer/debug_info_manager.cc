@@ -196,6 +196,7 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
 int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                                          OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
                                          const mindspore::lite::Tensor &tensor) {
+  MS_CHECK_TRUE_MSG(quant_debug_info != nullptr, RET_ERROR, "quant_debug_info is nullptr.");
   auto preferred_dim =
     mindspore::lite::WeightDecoder::GetPreferredDim(inputs, op_parameter, tensor_index, tensor.shape(), Version());
   float *quant_data;
@@ -323,6 +324,7 @@ std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseOutput
 
 int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &schema_tensor,
                                            mindspore::lite::Tensor *dst_tensor) {
+  MS_CHECK_TRUE_MSG(dst_tensor != nullptr, RET_ERROR, "dst_tensor is nullptr.");
   auto src_tensor = new (std::nothrow) SchemaTensorWrapper();
   if (src_tensor == nullptr) {
     MS_LOG(ERROR) << "Create SchemaTensorWrapper return nullptr";

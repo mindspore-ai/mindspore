@@ -176,7 +176,7 @@ float CompareData(const std::unordered_map<String, mindspore::tensor::MSTensor *
         }
       }
     }
-    if (mean_error > 0.0f) {
+    if (mean_error > 0.0f && error_count > 0) {
       mean_error /= error_count;
     }
     total_meam_error += std::abs(mean_error);

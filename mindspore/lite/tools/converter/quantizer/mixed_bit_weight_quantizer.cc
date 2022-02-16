@@ -21,6 +21,8 @@
 namespace mindspore::lite::quant {
 void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num, float scale,
                                                 float *origin_dequant_datas) {
+  MS_ASSERT(weights != nullptr);
+  MS_ASSERT(origin_dequant_datas != nullptr);
   MS_ASSERT(element_num > 0);
   double average_dequant = 0;
   double average_raw = 0;
@@ -98,7 +100,7 @@ float MixedBitWeightQuantizer::MeasureQuantizationError(float *weights, const in
   for (int i = preferred_dim; i < dims; i++) {
     bucket_volume *= shape[i];
   }
-
+  MS_ASSERT(bucket_volume != 0);
   // Bias Correction
   GetBiasCorrection(weights, element_num, scale, origin_dequant_datas.data());
   for (int i = 0; i < element_num; i++) {
@@ -175,9 +177,12 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
                                             std::vector<schema::QuantParamT> *quant_params,
                                             std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
+  MS_ASSERT(quant_params != nullptr);
+  MS_ASSERT(quant_datas != nullptr);
   int weight_count = 1;
   int dims = shape.size();
   int input_shape[4] = {0, 0, 0, 0};
+  MS_ASSERT(dims <= input_shape.size());
   for (int i = 0; i < dims; i++) {
     weight_count *= shape[i];
     input_shape[i] = shape[i];
@@ -202,6 +207,7 @@ int MixedBitWeightQuantizer::DoQuantization(float *weights, std::vector<int64_t>
 int MixedBitWeightQuantizer::QuantizeByScale(const float *weights, int weightsc, float scale,
                                              schema::QuantParamT *quant_params, std::vector<int16_t> *quant_datas) {
   MS_ASSERT(weights != nullptr);
+  MS_ASSERT(weightsc <= quant_datas->size());
   for (int i = 0; i < weightsc; i++) {
     auto q = static_cast<int>(floorf(weights[i] / scale + 0.5));
     quant_datas->at(i) = q;
