@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
 
+#include <memory>
 #include <vector>
 #include <string>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
@@ -35,6 +36,7 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Prepare() override;
   int CheckSpecs() override;
+  int CheckSpecsWithoutShape() override;
   int SetConstArgs() override;
   int SetGlobalLocal() override;
 
@@ -42,7 +44,7 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   static std::string GetActTypeString(int act_type);
   int type_ = 0;
   float alpha_ = 0.0f;
-  GpuTensorInfo outShape;
+  std::unique_ptr<GpuTensorInfo> out_shape_ = nullptr;
 };
 
 }  // namespace mindspore::kernel

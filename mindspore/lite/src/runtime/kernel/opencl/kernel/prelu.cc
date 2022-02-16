@@ -171,8 +171,8 @@ int PReluOpenCLKernel::Prepare() {
   for (size_t i = 0; i < in_tensors_.at(1)->shape().size(); ++i) {
     weight_shape.s[i] = in_tensors_.at(1)->shape()[i];
   }
-  Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);
-  Broadcast2GpuShape(weight_shape_.s, weight_shape.s, in_tensors_.at(1)->shape().size(), 1);
+  Broadcast2GpuShape(output_shape.s, out_tensors_.at(0)->shape().size(), out_shape_.s, DIMENSION_4D, 1);
+  Broadcast2GpuShape(weight_shape.s, in_tensors_.at(1)->shape().size(), weight_shape_.s, DIMENSION_4D, 1);
   auto param = reinterpret_cast<PReluParameter *>(op_parameter_);
   weight_is_scalar = param->channelShared;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();

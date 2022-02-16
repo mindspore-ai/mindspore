@@ -50,7 +50,7 @@ std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
   return "";
 }
 
-int ActivationOpenCLKernel::CheckSpecs() {
+int ActivationOpenCLKernel::CheckSpecsWithoutShape() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
     MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
@@ -62,8 +62,14 @@ int ActivationOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
+int ActivationOpenCLKernel::CheckSpecs() { return RET_OK; }
+
 int ActivationOpenCLKernel::Prepare() {
-  outShape = GpuTensorInfo(out_tensors_[0]);
+  out_shape_ = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_[0]);
+  if (out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
   std::string source = activation_source;
   const std::string program_name = "Activation";
   if (!ocl_runtime_->LoadSource(program_name, source)) {
@@ -88,8 +94,8 @@ int ActivationOpenCLKernel::Prepare() {
 }
 
 int ActivationOpenCLKernel::SetConstArgs() {
-  int arg_idx = 2;
-  cl_int2 image_size = {static_cast<int>(outShape.width), static_cast<int>(outShape.height)};
+  int arg_idx = CLARGSINDEX2;
+  cl_int2 image_size = {static_cast<int>(out_shape_->width), static_cast<int>(out_shape_->height)};
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, image_size) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
@@ -101,8 +107,8 @@ int ActivationOpenCLKernel::SetConstArgs() {
     }
   }
   if (type_ == ActivationType_SIGMOID) {
-    int c4 = outShape.Slice;
-    int last_c4 = outShape.C % 4 == 0 ? 4 : outShape.C % 4;
+    int c4 = out_shape_->Slice;
+    int last_c4 = out_shape_->C % C4NUM == 0 ? C4NUM : out_shape_->C % C4NUM;
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, c4) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
@@ -117,14 +123,14 @@ int ActivationOpenCLKernel::SetConstArgs() {
 
 int ActivationOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
-  global_size_ = {outShape.width, outShape.height};
+  global_size_ = {out_shape_->width, out_shape_->height};
   AlignGlobalLocal(global_size_, local_size_);
   return RET_OK;
 }
 
 int ActivationOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  int arg_idx = 0;
+  int arg_idx = CLARGSINDEX0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;

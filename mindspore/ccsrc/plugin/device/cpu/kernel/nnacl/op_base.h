@@ -106,6 +106,11 @@
 #define kNHWC_H 1
 #define kNHWC_W 2
 #define kNHWC_C 3
+#define kNDHWC_N 0
+#define kNDHWC_D 1
+#define kNDHWC_H 2
+#define kNDHWC_W 3
+#define kNDHWC_C 4
 #define kInputSize1 2
 #define kInputSize2 3
 #define MAX_AXIS_SIZE 6
@@ -128,6 +133,10 @@
 #define CLARGSINDEX7 7
 #define CLARGSINDEX8 8
 #define CLARGSINDEX9 9
+
+#define CLIDX_X 0
+#define CLIDX_Y 1
+#define CLIDX_Z 2
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

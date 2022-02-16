@@ -38,7 +38,7 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-int ArithmeticOpenCLKernel::CheckSpecs() {
+int ArithmeticOpenCLKernel::CheckSpecsWithoutShape() {
   for (auto &tensor : in_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
       MS_LOG(WARNING) << "ArithmeticOpenCLKernel only support fp32/fp16 input";
@@ -76,11 +76,13 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
+int ArithmeticOpenCLKernel::CheckSpecs() { return RET_OK; }
+
 int ArithmeticOpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
-    global_size_ = {out_shape_.width, out_shape_.height};
+    global_size_ = {out_shape_->width, out_shape_->height};
   } else {
-    global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
+    global_size_ = {out_shape_->Slice, out_shape_->W, out_shape_->H * out_shape_->D * out_shape_->N};
   }
   AlignGlobalLocal(global_size_, {});
   return RET_OK;
@@ -92,7 +94,7 @@ void SwitchGpuTensorInfoNWDim(GpuTensorInfo *gpuTensorInfo) {
   gpuTensorInfo->W = tmp;
 
   gpuTensorInfo->width = gpuTensorInfo->W * gpuTensorInfo->Slice;
-  gpuTensorInfo->height = gpuTensorInfo->H * gpuTensorInfo->N;
+  gpuTensorInfo->height = gpuTensorInfo->H * gpuTensorInfo->D * gpuTensorInfo->N;
 }
 
 int ArithmeticOpenCLKernel::InitWeights() {
@@ -100,16 +102,16 @@ int ArithmeticOpenCLKernel::InitWeights() {
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
     const auto &in_tensor = in_tensors_.at(i);
-    GpuTensorInfo in_shape = GpuTensorInfo(in_tensor);
+    auto in_shape = GpuTensorInfo::CreateGpuTensorInfo(in_tensor);
     if (in1_shape_switch_flag_ && i == 1) {
-      SwitchGpuTensorInfoNWDim(&in_shape);
+      SwitchGpuTensorInfoNWDim(in_shape.get());
     }
     if (in_tensor->IsConst()) {
-      std::vector<char> weight(in_shape.Image2DSize, 0);
+      std::vector<char> weight(in_shape->Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
-      PackNHWCToNHWC4(in_tensor->data(), weight.data(), src_is_fp16, fp16_enable, in_shape);
+      PackNHWCToNHWC4(in_tensor->data(), weight.data(), src_is_fp16, fp16_enable, *in_shape);
       size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
-      ImageSize img_size{in_shape.width, in_shape.height, dtype};
+      ImageSize img_size{in_shape->width, in_shape->height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
       if (weight_ptr_ == nullptr) {
         MS_LOG(ERROR) << "Malloc failed.";
@@ -124,18 +126,18 @@ int ArithmeticOpenCLKernel::InitWeights() {
 }
 
 int ArithmeticOpenCLKernel::SetConstArgs() {
-  int arg_idx = 3;
+  int arg_idx = CLARGSINDEX3;
   if (!element_flag_) {
-    cl_int4 in0_shape = {static_cast<int>(in0_shape_.N), static_cast<int>(in0_shape_.H), static_cast<int>(in0_shape_.W),
-                         static_cast<int>(in0_shape_.Slice)};
-    cl_int4 in1_shape = {static_cast<int>(in1_shape_.N), static_cast<int>(in1_shape_.H), static_cast<int>(in1_shape_.W),
-                         static_cast<int>(in1_shape_.Slice)};
-    cl_int4 out_shape = {static_cast<int>(out_shape_.N), static_cast<int>(out_shape_.H), static_cast<int>(out_shape_.W),
-                         static_cast<int>(out_shape_.Slice)};
+    cl_int4 in0_shape = {static_cast<int>(in0_shape_->N), static_cast<int>(in0_shape_->H),
+                         static_cast<int>(in0_shape_->W), static_cast<int>(in0_shape_->Slice)};
+    cl_int4 in1_shape = {static_cast<int>(in1_shape_->N), static_cast<int>(in1_shape_->H),
+                         static_cast<int>(in1_shape_->W), static_cast<int>(in1_shape_->Slice)};
+    cl_int4 out_shape = {static_cast<int>(out_shape_->N), static_cast<int>(out_shape_->H),
+                         static_cast<int>(out_shape_->W), static_cast<int>(out_shape_->Slice)};
     int broadcastC_flag = 0;  // do not need broadcast in C4
-    if (in0_shape_.C == 1 && in1_shape_.C != 1) {
+    if (in0_shape_->C == 1 && in1_shape_->C != 1) {
       broadcastC_flag = 1;  // BroadCast C4 in input0
-    } else if (in0_shape_.C != 1 && in1_shape_.C == 1) {
+    } else if (in0_shape_->C != 1 && in1_shape_->C == 1) {
       broadcastC_flag = 2;  // BroadCast C4 in input1
     }
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in0_shape) != CL_SUCCESS) {
@@ -172,23 +174,40 @@ int ArithmeticOpenCLKernel::SetConstArgs() {
   return RET_OK;
 }
 
-void ArithmeticOpenCLKernel::InitGpuTensorInfoShape() {
+int ArithmeticOpenCLKernel::InitGpuTensorInfoShape() {
   auto shape0 = in_tensors_.at(0)->shape();
   auto shape1 = in_tensors_.at(1)->shape();
 
-  in0_shape_ = GpuTensorInfo(in_tensors_.at(0));
-  in1_shape_ = GpuTensorInfo(in_tensors_.at(1));
-  out_shape_ = GpuTensorInfo(out_tensors_.at(0));
+  in0_shape_ = GpuTensorInfo::CreateGpuTensorInfo(in_tensors_.at(0));
+  if (in0_shape_ == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
+  in1_shape_ = GpuTensorInfo::CreateGpuTensorInfo(in_tensors_.at(1));
+  if (in1_shape_ == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
+  out_shape_ = GpuTensorInfo::CreateGpuTensorInfo(out_tensors_.at(0));
+  if (out_shape_ == nullptr) {
+    MS_LOG(ERROR) << "Create gpu tensor info failed.";
+    return RET_ERROR;
+  }
   if (shape0.size() == DIMENSION_4D && shape1.size() == DIMENSION_2D) {
     if (shape0.at(kNHWC_W) == shape1.at(kNHWC_N) && shape0.at(kNHWC_C) == shape1.at(kNHWC_H)) {
-      SwitchGpuTensorInfoNWDim(&in1_shape_);
+      SwitchGpuTensorInfoNWDim(in1_shape_.get());
       in1_shape_switch_flag_ = true;
     }
   }
+  return RET_OK;
 }
 
 int ArithmeticOpenCLKernel::Prepare() {
-  InitGpuTensorInfoShape();
+  auto ret = InitGpuTensorInfoShape();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init gpu tensor info shape failed.";
+    return ret;
+  }
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (type() == PrimitiveType_BiasAdd) {

@@ -189,7 +189,7 @@ int SplitOpenCLKernel::SetConstArgs() {
   for (size_t i = 0; i < in_tensors_[0]->shape().size(); ++i) {
     shape.s[i] = in_tensors_[0]->shape()[i];
   }
-  Broadcast2GpuShape(in_shape_.s, shape.s, out_tensors_[0]->shape().size(), 1);
+  Broadcast2GpuShape(shape.s, out_tensors_[0]->shape().size(), in_shape_.s, DIMENSION_4D, 1);
   if (Align_) {
     in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
   }
@@ -203,7 +203,7 @@ int SplitOpenCLKernel::SetConstArgs() {
     for (size_t j = 0; j < out_tensors_[i]->shape().size(); ++j) {
       temp.s[j] = out_tensors_[i]->shape()[j];
     }
-    Broadcast2GpuShape(out_shape_.s, temp.s, out_tensors_[i]->shape().size(), 1);
+    Broadcast2GpuShape(temp.s, out_tensors_[i]->shape().size(), out_shape_.s, DIMENSION_4D, 1);
     if (Align_) {
       out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
     }
