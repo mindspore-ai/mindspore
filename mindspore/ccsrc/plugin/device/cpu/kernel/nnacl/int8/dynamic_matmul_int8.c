@@ -321,9 +321,9 @@ void PackInput2Col4x4(const int8_t *src_input, int8_t *packed_input, int row, in
 }
 
 void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder order) {
-  int sum = 0;
   if (order == RowMajor) {
     for (int c = 0; c < col; ++c) {
+      int sum = 0;
       for (int r = 0; r < row; ++r) {
         sum += weight[r * col + c];
       }
@@ -331,6 +331,7 @@ void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder 
     }
   } else {
     for (int c = 0; c < col; ++c) {
+      int sum = 0;
       for (int r = 0; r < row; ++r) {
         sum += weight[c * row + r];
       }
@@ -341,9 +342,9 @@ void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder 
 }
 
 void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int *dst, DataOrder order) {
-  int sum = 0;
   if (order == RowMajor) {
     for (int c = 0; c < cur_col; ++c) {
+      int sum = 0;
       for (int r = 0; r < row; ++r) {
         sum += weight[r * stride + c];
       }
@@ -351,6 +352,7 @@ void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, 
     }
   } else {
     for (int c = 0; c < cur_col; ++c) {
+      int sum = 0;
       for (int r = 0; r < row; ++r) {
         sum += weight[c * row + r];
       }
