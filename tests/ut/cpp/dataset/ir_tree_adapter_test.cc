@@ -205,3 +205,89 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   // Expect 6 samples
   EXPECT_EQ(i, 6);
 }
+
+// Feature: Test for TreeModifier on MindDataset
+// Description: Create a simple tree with a Mindrecord op first add then add and remove workers afterward. Collect
+// file_name of images when executing the first tree and then compare the outputs of the other runs against it.
+// Expectation: No failures.
+TEST_F(MindDataTestTreeAdapter, TestTreeModifierMindRecord) {
+  MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestTreeModifierMindRecord.";
+
+  // Create a MindData Dataset
+  // Pass one mindrecord shard file to parse dataset info, and search for other mindrecord files with same dataset info,
+  // thus all records in imagenet.mindrecord0 ~ imagenet.mindrecord3 will be read (we only collect "file_name" column).
+  std::string file_path = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
+  std::shared_ptr<Dataset> ds = MindData(file_path, {"file_name"}, std::make_shared<SequentialSampler>(0, 20));
+  EXPECT_NE(ds, nullptr);
+  ds->SetNumWorkers(1);
+
+  TensorRow row;
+  std::vector<std::string> file_names;
+
+  auto tree_adapter = std::make_shared<TreeAdapter>();
+  // Disable IR optimization pass
+  tree_adapter->SetOptimize(false);
+
+  ASSERT_OK(tree_adapter->Compile(ds->IRNode(), 1));
+  // Iterate the dataset and collect the file_names in the dataset
+  ASSERT_OK(tree_adapter->GetNext(&row));
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto tensor = row[0];
+    std::string_view sv;
+    ASSERT_OK(tensor->GetItemAt(&sv, {}));
+    std::string image_name(sv);
+    file_names.push_back(image_name);
+
+    ASSERT_OK(tree_adapter->GetNext(&row));
+    i++;
+  }
+  // Expect 20 samples
+  EXPECT_EQ(i, 20);
+
+  auto tree_adapter2 = std::make_shared<TreeAdapter>();
+  // Disable IR optimization pass
+  tree_adapter2->SetOptimize(false);
+  ASSERT_OK(tree_adapter2->Compile(ds->IRNode(), 1));
+  auto tree_modifier1 = std::make_unique<TreeModifier>(tree_adapter2.get());
+  // Change number of workers for MindDataset from 1 to 5
+  tree_modifier1->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(5));
+
+  i = 0;
+  ASSERT_OK(tree_adapter2->GetNext(&row));
+  while (row.size() != 0) {
+    auto tensor = row[0];
+    std::string_view sv;
+    ASSERT_OK(tensor->GetItemAt(&sv, {}));
+    std::string image_name(sv);
+    EXPECT_EQ(image_name, file_names[i]);
+
+    ASSERT_OK(tree_adapter2->GetNext(&row));
+    i++;
+  }
+  // Expect 20 samples
+  EXPECT_EQ(i, 20);
+
+  auto tree_adapter3 = std::make_shared<TreeAdapter>();
+  // Disable IR optimization pass
+  tree_adapter3->SetOptimize(false);
+  ASSERT_OK(tree_adapter3->Compile(ds->IRNode(), 1));
+  auto tree_modifier2 = std::make_unique<TreeModifier>(tree_adapter3.get());
+  // Change number of workers for MindDataset from 5 to 2
+  tree_modifier2->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(2));
+
+  i = 0;
+  ASSERT_OK(tree_adapter3->GetNext(&row));
+  while (row.size() != 0) {
+    auto tensor = row[0];
+    std::string_view sv;
+    ASSERT_OK(tensor->GetItemAt(&sv, {}));
+    std::string image_name(sv);
+    EXPECT_EQ(image_name, file_names[i]);
+
+    ASSERT_OK(tree_adapter3->GetNext(&row));
+    i++;
+  }
+  // Expect 20 samples
+  EXPECT_EQ(i, 20);
+}

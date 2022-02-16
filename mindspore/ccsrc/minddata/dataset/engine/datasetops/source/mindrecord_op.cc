@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -318,6 +318,48 @@ Status MindRecordOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
+  return Status::OK();
+}
+
+Status MindRecordOp::AddNewWorkers(int32_t num_new_workers) {
+  // wait for workers to process the current rows
+  RETURN_IF_NOT_OK(WaitForWorkers());
+
+  RETURN_IF_NOT_OK(shard_reader_->ExtendRandomFileStreams(num_new_workers));
+  num_mind_record_workers_ += num_new_workers;
+
+  for (int32_t i = 0; i < num_new_workers; i++) {
+    worker_in_queues_.AddQueue(tree_->AllTasks());
+    worker_out_queues_.AddQueue(tree_->AllTasks());
+    Task *new_task;
+    RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+      Name() + "::WorkerEntry", std::bind(&MindRecordOp::WorkerEntry, this, num_workers_), &new_task, id()));
+    CHECK_FAIL_RETURN_UNEXPECTED(new_task != nullptr, "Cannot create a new worker.");
+    worker_tasks_.push_back(new_task);
+    num_workers_++;
+    MS_LOG(INFO) << "A new worker has been added to op: " << Name() << "::" << id() << " num_workers=" << num_workers_;
+  }
+
+  return Status::OK();
+}
+
+Status MindRecordOp::RemoveWorkers(int32_t num_workers) {
+  // wait for workers to process the current rows
+  RETURN_IF_NOT_OK(WaitForWorkers());
+
+  num_mind_record_workers_ -= num_workers;
+  RETURN_IF_NOT_OK(shard_reader_->ShrinkRandomFileStreams(num_workers));
+
+  for (int32_t i = 0; i < num_workers; i++) {
+    RETURN_IF_NOT_OK(SendQuitFlagToWorker(num_workers_ - 1));
+    RETURN_IF_NOT_OK(worker_tasks_[num_workers_ - 1]->Join());
+    RETURN_IF_NOT_OK(worker_in_queues_.RemoveLastQueue());
+    worker_tasks_.pop_back();
+    num_workers_--;
+    MS_LOG(INFO) << "Worker ID " << num_workers_ << " is requested to be removed in operator: " << NameWithID()
+                 << " num_workers=" << num_workers_;
+  }
+
   return Status::OK();
 }
 

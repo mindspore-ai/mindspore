@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,20 @@ class MindRecordOp : public MappableLeafOp {
 
  protected:
   Status PrepareData() override;
+
+  /// Add a new worker to the MindRecordOp. The function will have to wait for all workers to process current rows.
+  /// It will then update the shard reader. Finally, it adds a new thread to the list.
+  /// \note The caller of this function has to be the main thread of the Op, since it's the only entity responsible to
+  /// push rows to workers_in_queue
+  /// \return Status The status code returned
+  Status AddNewWorkers(int32_t num_new_workers = 1) override;
+
+  /// Remove a worker from MindRecordOp. The function will have to wait for all workers to process current rows.
+  /// It will then update the shard reader. Finally, it removes a thread from the list.
+  /// \note The caller of this function has to be the main thread of the Op, since it's the only entity responsible to
+  /// push rows to workers_in_queue
+  /// \return Status The status code returned
+  Status RemoveWorkers(int32_t num_workers = 1) override;
 
  private:
   std::vector<std::string> dataset_file_;                  // dataset files

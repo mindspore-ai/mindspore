@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,17 +375,15 @@ Status AutoTune::Analyse() {
 
   // check parallel ops in loop
   for (const auto &op_id : parallel_ops_ids_) {
-    // MindRecordOp and NonMappableDataset is not supported in AutoTune
-    if (ops_[op_id]->Name() == "MindRecordOp") {
-      continue;
-    }
-    // Skip python op
+    // Skip Generator op
     if (ops_[op_id]->Name() == "GeneratorOp") {
       continue;
     }
+    // Skip python op
     if (ops_[op_id]->IsPython()) {
       continue;
     }
+    //  NonMappableDataset is not supported in AutoTune
 #ifndef ENABLE_ANDROID
     if (std::dynamic_pointer_cast<NonMappableLeafOp>(ops_[op_id]) != nullptr) {
       continue;
