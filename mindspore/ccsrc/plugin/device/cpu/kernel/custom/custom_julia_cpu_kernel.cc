@@ -93,24 +93,13 @@ bool CustomJULIACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     params.push_back(GetDeviceAddress<void>(outputs, i));
   }
   int nparam = SizeToInt(params.size());
-  try {
-    int ret = 0;
-    MS_LOG(INFO) << "[RUN JULIA KERNEL]: " << file_path_ << ":" << module_name_ << ":" << func_name_;
-    JuliaAPI *julia = JuliaAPI::GetInstance();
-    MS_EXCEPTION_IF_NULL(julia);
-    bool init = julia->Init();
-    if (init) {
-      ret = julia->Run(file_path_, module_name_, func_name_, nparam, params, ndims_, shapes_, type_pointer_list_);
-    } else {
-      MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_ << "] init fail.";
-    }
-    if (ret) {
-      MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_
-                        << "] had a julia runtime error.";
-    }
-  } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "CustomJULIA operator failed when running julia func: " << file_path_ << ":" << module_name_
-                      << ":" << func_name_ << "! ";
+  JuliaAPI *julia = JuliaAPI::GetInstance();
+  MS_EXCEPTION_IF_NULL(julia);
+  if (!julia->Init()) {
+    MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_ << "] init failed.";
+  }
+  if (!julia->Run(file_path_, module_name_, func_name_, nparam, params, ndims_, shapes_, type_pointer_list_)) {
+    MS_LOG(EXCEPTION) << "Julia kernel[" << file_path_ << ":" << module_name_ << ":" << func_name_ << "] run failed.";
   }
   return true;
 }
