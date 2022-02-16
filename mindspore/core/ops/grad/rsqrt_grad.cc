@@ -15,12 +15,66 @@
  */
 
 #include "ops/grad/rsqrt_grad.h"
+#include <set>
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
+#include "abstract/param_validator.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameRsqrtGrad, RsqrtGrad);
+namespace {
+abstract::ShapePtr RsqrtGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
+}
+
+TypePtr RsqrtGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)abstract::CheckDtypeSame(prim_name, x, dout);
+
+  auto x_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
+                            << " input must be tensor type but got " << x_type->ToString();
+  }
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt32, kInt8};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  return x_type;
+}
+}  // namespace
+
+AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args) {
+  auto type = RsqrtGradInferType(primitive, input_args);
+  auto shape = RsqrtGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
+REGISTER_PRIMITIVE_EVAL_IMPL(RsqrtGrad, prim::kPrimRsqrtGrad, RsqrtGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
