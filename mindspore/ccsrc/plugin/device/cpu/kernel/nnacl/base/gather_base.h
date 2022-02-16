@@ -17,15 +17,14 @@
 #ifndef MINDSPORE_NNACL_GATHER_BASE_H_
 #define MINDSPORE_NNACL_GATHER_BASE_H_
 
-#include <string.h>
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Gather(const void *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
-           void *output, int data_size);
+int Gather(const void *input, int64_t outer_size, int64_t inner_size, int64_t limit, const int *indices,
+           int64_t indices_element_size, void *output, int64_t data_size);
 #ifdef __cplusplus
 }
 #endif
