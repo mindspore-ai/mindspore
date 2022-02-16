@@ -95,18 +95,6 @@ class InnerKernel : public Kernel {
                                             : schema::PrimitiveType_NONE;
   }
 
-  void set_inputs(const std::vector<mindspore::tensor::MSTensor *> &in_tensors) {
-    this->in_tensors_.resize(in_tensors.size());
-    (void)std::transform(in_tensors.begin(), in_tensors.end(), in_tensors_.begin(),
-                         [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
-  }
-
-  void set_outputs(const std::vector<mindspore::tensor::MSTensor *> &out_tensors) {
-    this->out_tensors_.resize(out_tensors.size());
-    (void)std::transform(out_tensors.begin(), out_tensors.end(), out_tensors_.begin(),
-                         [](mindspore::tensor::MSTensor *tensor) { return static_cast<lite::Tensor *>(tensor); });
-  }
-
   const std::vector<mindspore::MSTensor> &inputs() override {
     if (inputs_.empty()) {
       std::transform(in_tensors_.begin(), in_tensors_.end(), std::back_inserter(inputs_), [](lite::Tensor *tensor) {

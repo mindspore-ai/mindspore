@@ -101,7 +101,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseIndirectCPUKernel::Execute(int task_id) {
+int ConvolutionDepthwiseIndirectCPUKernel::DoExecute(int task_id) {
   ConvDwIndirection(output_ptr_, indirect_buffer_, reinterpret_cast<float *>(packed_weight_),
                     reinterpret_cast<float *>(bias_data_), zero_ptr_, conv_param_, task_id);
   return RET_OK;
@@ -109,7 +109,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Execute(int task_id) {
 
 int ConvDwIndirectRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwiseIndirectCPUKernel *>(cdata);
-  auto ret = conv_dw->Execute(task_id);
+  auto ret = conv_dw->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwiseIndirectRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

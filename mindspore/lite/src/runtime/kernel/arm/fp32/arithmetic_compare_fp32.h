@@ -45,7 +45,7 @@ class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
 
  protected:
   void InitRunFunction(int primitive_type) override;
-  int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) override;
+  int DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt) override;
   int CalcArithmeticByBatch(int task_id) override;
 
  private:

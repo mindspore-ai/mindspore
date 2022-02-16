@@ -57,7 +57,7 @@ int SoftmaxGradCPUKernel::Prepare() {
 
 int SoftmaxGradCPUKernel::ReSize() { return RET_OK; }
 
-int SoftmaxGradCPUKernel::Execute(int task_id) {
+int SoftmaxGradCPUKernel::DoExecute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
@@ -70,7 +70,7 @@ int SoftmaxGradCPUKernel::Execute(int task_id) {
 
 int SoftmaxGradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto softmax_kernel = reinterpret_cast<SoftmaxGradCPUKernel *>(cdata);
-  auto error_code = softmax_kernel->Execute(task_id);
+  auto error_code = softmax_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "softmax_kernel SoftmaxGradRun task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

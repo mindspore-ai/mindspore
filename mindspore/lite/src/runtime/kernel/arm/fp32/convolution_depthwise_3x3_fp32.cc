@@ -56,7 +56,7 @@ int ConvolutionDepthwise3x3CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionDepthwise3x3CPUKernel::Execute(int task_id) {
+int ConvolutionDepthwise3x3CPUKernel::DoExecute(int task_id) {
   int units = UP_DIV(conv_param_->output_w_, C2NUM);  // F(2, 3) contains 2 conv units
   int c4 = UP_ROUND(conv_param_->input_channel_, C4NUM);
   auto buffer = buffer_ + C12NUM * c4 * units * task_id;
@@ -74,7 +74,7 @@ int ConvolutionDepthwise3x3CPUKernel::Execute(int task_id) {
 
 int ConvDw3x3Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw = reinterpret_cast<ConvolutionDepthwise3x3CPUKernel *>(cdata);
-  auto ret = conv_dw->Execute(task_id);
+  auto ret = conv_dw->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwise3x3Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

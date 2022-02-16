@@ -47,7 +47,7 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int Execute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   SoftmaxCrossEntropyParameter *param;

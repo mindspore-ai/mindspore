@@ -39,7 +39,7 @@ class ApplyMomentumCPUKernel : public OptimizerKernel {
   }
   int Prepare() override;
   int ReSize() override;
-  int Execute(int task_id);
+  int DoExecute(int task_id);
   int Run() override;
   int OptimizerStep() override;
   std::vector<int> GetOptimizerParamsIdxs() const override;

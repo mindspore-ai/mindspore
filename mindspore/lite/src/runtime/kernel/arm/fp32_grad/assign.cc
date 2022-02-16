@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Assign;
 namespace mindspore::kernel {
 int AssignCPUKernel::ReSize() { return RET_OK; }
 
-int AssignCPUKernel::Execute(int task_id) {
+int AssignCPUKernel::DoExecute(int task_id) {
   auto x = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(x);
   auto y = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
@@ -49,7 +49,7 @@ int AssignCPUKernel::Execute(int task_id) {
 int AssignRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto Assign_kernel = reinterpret_cast<AssignCPUKernel *>(cdata);
-  auto error_code = Assign_kernel->Execute(task_id);
+  auto error_code = Assign_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "assign run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

@@ -68,7 +68,7 @@ int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, fl
   return RET_OK;
 }
 
-int SgdCPUKernel::Execute(int task_id) {
+int SgdCPUKernel::DoExecute(int task_id) {
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   CHECK_NULL_RETURN(weight);
   auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
@@ -127,7 +127,7 @@ int SgdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   } else if (sgd_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = sgd_kernel->ExecuteVirtualBatch(task_id);
   } else {
-    error_code = sgd_kernel->Execute(task_id);
+    error_code = sgd_kernel->DoExecute(task_id);
   }
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SGD run error task_id[" << task_id << "] error_code[" << error_code << "]";

@@ -70,7 +70,7 @@ int DeConvolutionGradFilterCPUKernel::Prepare() {
 
 int DeConvolutionGradFilterCPUKernel::ReSize() { return RET_OK; }
 
-int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
+int DeConvolutionGradFilterCPUKernel::DoExecute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto *input_dy = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
@@ -124,7 +124,7 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
 int DeConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto convfilter_kernel = reinterpret_cast<DeConvolutionGradFilterCPUKernel *>(cdata);
-  auto error_code = convfilter_kernel->Execute(task_id);
+  auto error_code = convfilter_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DeConvolutionGradFilterRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

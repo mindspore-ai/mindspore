@@ -67,7 +67,7 @@ std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::Gra
       }
     }
 
-    auto ret = session->Init(context, &train_cfg);
+    auto ret = session->TrainInit(context, &train_cfg);
     if (ret != mindspore::lite::RET_OK) {
       MS_LOG(ERROR) << "init session failed";
       return nullptr;

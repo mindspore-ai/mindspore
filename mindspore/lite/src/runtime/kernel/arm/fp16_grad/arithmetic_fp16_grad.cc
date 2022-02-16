@@ -72,7 +72,7 @@ int ArithmeticGradCPUKernelFp16::ArithmeticGradMinimum(float16_t *dy, int dy_siz
 
 int ArithmeticGradCPUKernelFp16::ReSize() { return RET_OK; }
 
-int ArithmeticGradCPUKernelFp16::Execute(int task_id) {
+int ArithmeticGradCPUKernelFp16::DoExecute(int task_id) {
   auto dy = reinterpret_cast<float16_t *>(in_tensors_[0]->data());
   auto dx1 = reinterpret_cast<float16_t *>(out_tensors_[0]->data());
   auto dx2 = reinterpret_cast<float16_t *>(out_tensors_[1]->data());
@@ -89,7 +89,7 @@ int ArithmeticGradCPUKernelFp16::Execute(int task_id) {
 int ArithmeticGradRunFp16(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto Arithmetic_kernel = reinterpret_cast<ArithmeticGradCPUKernelFp16 *>(cdata);
   CHECK_NULL_RETURN(Arithmetic_kernel);
-  auto error_code = Arithmetic_kernel->Execute(task_id);
+  auto error_code = Arithmetic_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticGradRunFp16 error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

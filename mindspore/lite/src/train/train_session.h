@@ -54,7 +54,7 @@ class TrainSession : virtual public lite::LiteSession {
   int CompileGraph(lite::Model *model) override;
   virtual int CompileTrainGraph(std::shared_ptr<Model> model);
 
-  virtual int Init(InnerContext *context, const TrainCfg *train_cfg);
+  virtual int TrainInit(InnerContext *context, const TrainCfg *train_cfg);
 
   int Train() override;
   int Eval() override;

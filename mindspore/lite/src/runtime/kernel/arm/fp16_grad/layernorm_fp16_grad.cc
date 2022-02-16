@@ -83,7 +83,7 @@ int LayerNormGradCPUKernelFp16::Prepare() {
   return RET_OK;
 }
 
-int LayerNormGradCPUKernelFp16::Execute(int task_id) {
+int LayerNormGradCPUKernelFp16::DoExecute(int task_id) {
   auto input_x = in_tensors_.at(kNumInputDim_0);
   auto input_dy = in_tensors_.at(kNumInputDim_1);
   auto input_var = in_tensors_.at(kNumInputDim_2);
@@ -117,7 +117,7 @@ int LayerNormF16GradRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
   CHECK_NULL_RETURN(cdata);
   auto ln_kernel = reinterpret_cast<LayerNormGradCPUKernelFp16 *>(cdata);
   CHECK_NULL_RETURN(ln_kernel);
-  auto error_code = ln_kernel->Execute(task_id);
+  auto error_code = ln_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "LayerNormGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

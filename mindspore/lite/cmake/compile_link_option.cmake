@@ -13,7 +13,7 @@ else()
     set(CMAKE_C_FLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -Wno-attributes -Wno-deprecated-declarations \
         -Wno-missing-braces  ${SECURE_C_FLAGS} ${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "-D_FORTIFY_SOURCE=2 -O2 -Wall -Werror -Wno-attributes -Wno-deprecated-declarations \
-        -Wno-missing-braces -Wno-overloaded-virtual -std=c++17 ${SECURE_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
+        -Wno-missing-braces -std=c++17 ${SECURE_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
 
     set(CMAKE_C_FLAGS_DEBUG "-DDebug -g -fvisibility=default")
     set(CMAKE_CXX_FLAGS_DEBUG "-DDebug -g -fvisibility=default")

@@ -71,7 +71,7 @@ static int DoAdam(float *m, float *v, const float *gradient, float *weight, floa
   return RET_OK;
 }
 
-int AdamCPUKernel::Execute(int task_id) {
+int AdamCPUKernel::DoExecute(int task_id) {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_10D);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(kMomentVector1stIdx)->MutableData());
@@ -107,7 +107,7 @@ int AdamRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   } else if (adam_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = adam_kernel->ExecuteVirtualBatch(task_id);
   } else {
-    error_code = adam_kernel->Execute(task_id);
+    error_code = adam_kernel->DoExecute(task_id);
   }
 
   if (error_code != RET_OK) {

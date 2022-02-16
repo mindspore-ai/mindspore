@@ -63,7 +63,7 @@ int UnsortedSegmentSumFp16Run(void *cdata, int task_id, float lhs_scale, float r
   CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<UnsortedSegmentSumCPUKernelFp16 *>(cdata);
   CHECK_NULL_RETURN(kernel);
-  auto error_code = kernel->Execute(task_id);
+  auto error_code = kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "UnsortedSegmentSum Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
@@ -80,7 +80,7 @@ int UnsortedSegmentSumCPUKernelFp16::Run() {
   return RET_OK;
 }
 
-int UnsortedSegmentSumCPUKernelFp16::Execute(int task_id) {
+int UnsortedSegmentSumCPUKernelFp16::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);

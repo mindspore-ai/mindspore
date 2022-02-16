@@ -48,7 +48,7 @@ class DeconvolutionDepthwiseFp16CPUKernel : public ConvolutionBaseCPUKernel {
 
   int InitPackedInputOutput();
   int InitSlideParam();
-  int Execute(int task_id);
+  int DoExecute(int task_id);
 
  private:
   int MallocWeightBiasData() override;

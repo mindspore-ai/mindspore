@@ -122,7 +122,7 @@ void ArithmeticFP16CPUKernel::TileConstTensor(const void *in_data, void *out_dat
                        in_shape, in_strides, out_strides, multiple);
 }
 
-int ArithmeticFP16CPUKernel::Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
+int ArithmeticFP16CPUKernel::DoExecute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
   int ret = RET_OK;
   if (is_opt) {
     CHECK_NULL_RETURN(arithmetic_opt_func_);

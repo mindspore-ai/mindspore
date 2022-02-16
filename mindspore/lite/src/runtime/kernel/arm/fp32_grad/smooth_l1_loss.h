@@ -33,7 +33,7 @@ class SmoothL1LossCPUKernel : public InnerKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int Execute(size_t task_id);
+  int DoExecute(size_t task_id);
 
  private:
   SmoothL1LossParameter *smooth_l1_param_;

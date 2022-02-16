@@ -45,7 +45,7 @@ static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate
   return RET_OK;
 }
 
-int ApplyMomentumCPUKernel::Execute(int task_id) {
+int ApplyMomentumCPUKernel::DoExecute(int task_id) {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(weight);
@@ -79,7 +79,7 @@ int ApplyMomentumRun(void *cdata, int task_id, float lhs_scale, float rhs_scale)
   } else if (applyMomentum_kernel->get_optimizer_mode() == WeightUpdateMode::ACCUMULATE_GRADS) {
     error_code = applyMomentum_kernel->ExecuteVirtualBatch(task_id);
   } else {
-    error_code = applyMomentum_kernel->Execute(task_id);
+    error_code = applyMomentum_kernel->DoExecute(task_id);
   }
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "apply Momentum run error task_id[" << task_id << "] error_code[" << error_code << "]";

@@ -79,7 +79,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *lab
   return RET_OK;
 }
 
-int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
+int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   auto sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(op_parameter_);
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(ins);
@@ -118,7 +118,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
 int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto sparse_kernel = reinterpret_cast<SparseSoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
-  auto error_code = sparse_kernel->Execute(task_id);
+  auto error_code = sparse_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogitsRun error task_id[" << task_id << "] error_code[" << error_code
                   << "]";

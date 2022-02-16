@@ -81,7 +81,7 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
 
 int ConvolutionGradFilterCPUKernel::Prepare() { return ReSize(); }
 
-int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
+int ConvolutionGradFilterCPUKernel::DoExecute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   CHECK_NULL_RETURN(conv_param);
   auto *input_dy = in_tensors_.at(kDyIdx);
@@ -187,7 +187,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
 int ConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernel *>(cdata);
   CHECK_NULL_RETURN(convfilter_kernel);
-  auto error_code = convfilter_kernel->Execute(task_id);
+  auto error_code = convfilter_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionGradFilterRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

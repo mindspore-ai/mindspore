@@ -90,7 +90,7 @@ int ConvolutionDepthwiseFp16CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
+int ConvolutionDepthwiseFp16CPUKernel::DoExecute(int task_id) {
   auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
   auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   MS_ASSERT(input_ptr != nullptr);
@@ -106,7 +106,7 @@ int ConvolutionDepthwiseFp16CPUKernel::Execute(int task_id) {
 
 static int ConvDwFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto conv_dw_fp16 = reinterpret_cast<ConvolutionDepthwiseFp16CPUKernel *>(cdata);
-  auto ret = conv_dw_fp16->Execute(task_id);
+  auto ret = conv_dw_fp16->DoExecute(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionDepthwiseFp16Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

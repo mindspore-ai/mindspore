@@ -57,7 +57,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
   }
 }
 
-int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
+int SoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(ins);
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->data());
@@ -82,7 +82,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
 int SoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto softmax_kernel = reinterpret_cast<SoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
-  auto error_code = softmax_kernel->Execute(task_id);
+  auto error_code = softmax_kernel->DoExecute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SoftmaxCrossEntropy error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;

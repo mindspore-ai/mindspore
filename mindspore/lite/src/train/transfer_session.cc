@@ -262,7 +262,7 @@ lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size
   }
 
   mindspore::lite::InnerContext *inner_context = new (std::nothrow) mindspore::lite::InnerContext(context);
-  auto ret = session->Init(inner_context, cfg);
+  auto ret = session->TrainInit(inner_context, cfg);
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init transfer session failed";
     delete session;
