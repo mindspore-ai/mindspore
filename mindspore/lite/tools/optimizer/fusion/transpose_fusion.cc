@@ -137,7 +137,7 @@ VectorRef TransposeFusion::DefineTransTransPattern() const {
   MS_CHECK_TRUE_RET(is_transpose1 != nullptr, {});
   auto is_transpose2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
   MS_CHECK_TRUE_RET(is_transpose2 != nullptr, {});
-  auto transpose_param = std::make_shared<CondVar>(IsParamNode);
+  auto transpose_param = std::make_shared<CondVar>(IsParamOrValueNodeWithData);
   MS_CHECK_TRUE_RET(transpose_param != nullptr, {});
   VectorRef trans_trans_ref = VectorRef({is_transpose2, is_transpose1, transpose_param});
   return trans_trans_ref;

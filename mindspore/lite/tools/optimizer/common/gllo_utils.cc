@@ -542,12 +542,15 @@ bool IsParamOrValueNodeWithData(const BaseRef &n) {
   if (utils::isa<ValueNode>(n)) {
     auto value_node = utils::cast<ValueNodePtr>(n);
     auto value = value_node->value();
-    if (value != nullptr && value->isa<tensor::Tensor>()) {
+    if (value == nullptr) {
+      return false;
+    }
+    if (value->isa<tensor::Tensor>()) {
       auto tensor = value->cast<tensor::TensorPtr>();
-      if (tensor == nullptr || tensor->data_c() == nullptr) {
-        return false;
-      }
-      return true;
+      return tensor != nullptr && tensor->data_c() != nullptr;
+    } else if (value->isa<ValueSequence>()) {
+      auto sequence_ptr = value->cast<ValueSequencePtr>();
+      return sequence_ptr != nullptr && !sequence_ptr->value().empty();
     } else {
       return false;
     }

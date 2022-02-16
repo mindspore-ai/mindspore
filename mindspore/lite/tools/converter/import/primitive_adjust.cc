@@ -69,6 +69,7 @@
 #include "ops/resize.h"
 #include "ops/resize_bilinear.h"
 #include "ops/resize_nearest_neighbor.h"
+#include "ops/shape.h"
 #include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
@@ -152,6 +153,7 @@ constexpr auto kNameTanhGrad = "TanhGrad";
 constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kNameStandardNormal = "StandardNormal";
+constexpr auto kNameDynamicShape = "DynamicShape";
 constexpr int kNCHW_H = 2;
 constexpr int kNCHW_W = 3;
 
@@ -675,5 +677,6 @@ REGIST_PRIMITIVE_ADJUST(kNameSparseSoftmaxCrossEntropyWithLogits,
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinearGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighborGrad, MoveAttrMapResizeGrad)
 REGIST_PRIMITIVE_ADJUST(kNameSoftplus, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameDynamicShape, MoveAttrMapCommon<ops::Shape>)
 }  // namespace lite
 }  // namespace mindspore
