@@ -13,7 +13,7 @@
       "op_bank_path": "",
       "op_bank_update": false,
       "op_debug_dir": "./rank_0/",
-      "op_debug_level": "0",
+      "op_debug_level": "3",
       "op_impl_mode": "",
       "op_impl_mode_list": [],
       "socVersion": "Ascend910A",
