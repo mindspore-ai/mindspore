@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
+#include "frontend/parallel/parallel_optimizer/opt_param_mgr.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -1574,9 +1575,9 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   if (opt_shard_group.empty()) {
     return;
   }
-  FuncGraphManagerPtr manager = root->manager();
+
+  // set all gather type
   MS_EXCEPTION_IF_NULL(parameter);
-  MS_EXCEPTION_IF_NULL(manager);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string op_name;
@@ -1587,6 +1588,10 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   } else {
     op_name = ALL_GATHER;
   }
+
+  // insert all gather
+  FuncGraphManagerPtr manager = root->manager();
+  MS_EXCEPTION_IF_NULL(manager);
   auto param_sub_set = manager->node_users()[parameter];
   bool insert_flag = false;
   for (auto &param_pair : param_sub_set) {
@@ -1601,6 +1606,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
         MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (param_pair.second - 1) << ", vector size is  "
                           << distribute_operator->inputs_tensor_info().size();
       }
+
       if (insert_flag) {
         // if there are multiple node users, they share one same allgather
         auto next_cnode = FindCNode(parameter, op_name, cnode->func_graph(), 0);
@@ -1623,53 +1629,24 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   }
 }
 
-static std::string GetOptShardGroup(const AnfNodePtr &parameter, TensorLayout *const tensor_layout,
-                                    const OperatorInfoPtr &distribute_operator) {
-  std::string opt_shard_group;
-  if (!ParameterRequireGrad(parameter)) {
-    // only trainable parameters need parallel optimizer
-    MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not trainable parameter.";
-  } else if (parameter->cast<ParameterPtr>()->param_info() &&
-             !parameter->cast<ParameterPtr>()->param_info()->parallel_optimizer()) {
-    MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " does not need weight shard.";
-  } else if (tensor_layout->GenerateOptShardSliceShape() == Status::SUCCESS) {
-    // get the shard tensor slice shape if the weight is repeated on devices
-    // and the shape of the first dimension could be divided
-    // apply parallel optimizer on parameters
-    // create communication group for allgather operator
-    std::vector<Group> dev_group;
-    if (distribute_operator->CreateGroupForOptShard(tensor_layout, &dev_group) == Status::SUCCESS &&
-        !dev_group.empty()) {
-      opt_shard_group = dev_group[0].name();
-      MS_LOG(INFO) << "Parallel optimizer: create group for " << parameter->ToString() << " success.";
-    } else {
-      MS_LOG(ERROR) << "Parallel optimizer: create group for " << parameter->ToString() << " failed.";
-    }
-  } else {
-    MS_LOG(WARNING) << "Parallel optimizer: " << parameter->ToString() << "'s distributed shape "
-                    << tensor_layout->slice_shape().ToString() << " does not satisfy the conditions.";
-  }
-  return opt_shard_group;
-}
-
 void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &parameter) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(parameter);
   FuncGraphManagerPtr manager = root->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto parameter_ptr = parameter->cast<ParameterPtr>();
-  if (!parameter_ptr) {
-    MS_LOG(INFO) << parameter->ToString() << " is not a parameter";
+  ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
+  if (parameter_ptr == nullptr) {
+    MS_LOG(INFO) << parameter->ToString() << ": cast to ptr failed. it may not be a parameter";
     return;
   }
-  auto param_sub_set = manager->node_users()[parameter];
-  int32_t users_count = 0;
-  for (auto &param_pair : param_sub_set) {
-    auto cnode = param_pair.first->cast<CNodePtr>();
+  auto user_set = manager->node_users()[parameter];
+  int32_t user_count = 0;
+  for (auto &param_pair : user_set) {
+    CNodePtr cnode = param_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->in_forward_flag()) users_count++;
+    if (cnode->in_forward_flag()) user_count++;
   }
-  if (users_count > 1) {
+  if (user_count > 1) {
     auto tensor_layout = parameter_ptr->user_data<TensorLayout>();
     tensor_layout->set_is_shared_param(true);
     MS_LOG(WARNING) << "There are multiple users for " << parameter->ToString()
@@ -1678,41 +1655,57 @@ void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &paramete
 }
 
 // When this function returns non-empty string, that means parallel optimizer is applied on this parameter.
-std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res) {
+std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res,
+                             const FuncGraphPtr &root) {
+  // check null for param and cnode
+  auto param_shape = parameter->Shape();
+
   MS_EXCEPTION_IF_NULL(parameter);
-  AbstractBasePtr abstract = parameter->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  MS_LOG(DEBUG) << "SetParallelShape " << parameter->ToString() << " shape " << parameter->Shape()->ToString();
+  MS_EXCEPTION_IF_NULL(param_shape);
+
   CNodePtr cnode = res.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+
+  // get slice_shape
   OperatorInfoPtr distribute_operator = cnode->user_data<OperatorInfo>();
   if (distribute_operator == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " 's OperatorInfoPtr is nullptr";
+    MS_LOG(EXCEPTION) << "node " << cnode->ToString() << " 's distribute_operator is nullptr";
   }
   if (LongToSize(res.second - 1) >= distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(EXCEPTION) << "The index is out of range, index is  " << (res.second - 1) << ", vector size is  "
-                      << distribute_operator->inputs_tensor_info().size();
+    MS_LOG(EXCEPTION) << "The parameter index is not in inputs_tensor_info. index = " << (res.second - 1)
+                      << ", inputs_tensor_info size = " << distribute_operator->inputs_tensor_info().size();
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(res.second - 1)];
   TensorLayout tensor_layout = tensorinfo_in.tensor_layout();
   Shape slice_shape = tensor_layout.slice_shape().array();
+
+  // generate shard group
   std::string opt_shard_group;
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
   if (enable_parallel_optimizer) {
-    opt_shard_group = GetOptShardGroup(parameter, &tensor_layout, distribute_operator);
+    std::unique_ptr<OptParamMgr> apOptParamMgr = createOptParamMgr(root);
+    opt_shard_group = apOptParamMgr->ShardOptGroup(parameter, &tensor_layout, distribute_operator);
+    // set the shape of parameter to sliced shape
+    if (!opt_shard_group.empty()) {
+      slice_shape = tensor_layout.opt_shard_slice_shape();
+    }
+    MS_LOG(INFO) << "the shape of " << parameter->ToString() << "(original: " << param_shape->ToString() << ")"
+                 << " will be sliced into " << MakeValue(slice_shape)->ToString() << " in op "
+                 << distribute_operator->name();
   }
-  if (!opt_shard_group.empty()) {
-    slice_shape = tensor_layout.opt_shard_slice_shape();
+
+  AbstractBasePtr abstract = parameter->abstract();
+  if (abstract == nullptr) {
+    MS_LOG(EXCEPTION) << "parameter " << parameter->ToString() << ": abstract is nullptr";
   }
-  MS_LOG(INFO) << "SetParallelShape slice_shape  " << parameter->ToString() << "  shape "
-               << MakeValue(slice_shape)->ToString() << ", op name is " << distribute_operator->name();
-  std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
-  MS_EXCEPTION_IF_NULL(parallel_shape);
-  // Don't modify it in-place as the pointer of this AbstractValue may used as cache key in StaticAnalysis.
-  auto cloned_abstract = abstract->Clone();
-  MS_EXCEPTION_IF_NULL(cloned_abstract);
-  cloned_abstract->set_shape(parallel_shape);
+
+  AbstractBasePtr cloned_abstract = abstract->Clone();
+  if (cloned_abstract == nullptr) {
+    MS_LOG(EXCEPTION) << "parameter " << parameter->ToString() << ": abstract clone failed";
+  }
+
+  cloned_abstract->set_shape(std::make_shared<abstract::Shape>(slice_shape));
   parameter->set_abstract(cloned_abstract);
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
@@ -1725,19 +1718,21 @@ void CoverSliceShape(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   for (auto &parameter : parameters) {
     MS_EXCEPTION_IF_NULL(parameter->Shape());
+
     auto iter = g_RefMap.find(parameter);
     if (iter != g_RefMap.end()) {
-      std::string group = SetParallelShape(parameter, g_RefMap[parameter]);
+      std::string group = SetParallelShape(parameter, g_RefMap[parameter], root);
       // find all forward nodes that use parameter in graphs and insert allgather if group is not empty
       SetSharedParameterFlag(root, parameter);
       ApplyParallelOptOnParam(root, parameter, group);
       continue;
     }
+
     std::pair<AnfNodePtr, int64_t> res = FindSubGraph(root, parameter);
     if (res.first == nullptr) {
-      MS_LOG(INFO) << "Parameter " << parameter->ToString() << " don't need to set parallel shape";
+      MS_LOG(INFO) << "Parameter " << parameter->ToString() << " is not in graph, thus no need to set parallel shape";
     } else {
-      std::string group = SetParallelShape(parameter, res);
+      std::string group = SetParallelShape(parameter, res, root);
       // find all forward nodes that use parameter in graphs and insert allgather if group is not empty
       SetSharedParameterFlag(root, parameter);
       ApplyParallelOptOnParam(root, parameter, group);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_global_rank", &ParallelContext::set_global_rank, "Set global rank.")
     .def("get_grad_accumulation_shard", &ParallelContext::grad_accumulation_shard, "Get grad_accumulation_shard.")
     .def("set_grad_accumulation_shard", &ParallelContext::set_grad_accumulation_shard, "Set grad_accumulation_shard.")
+    .def("get_parallel_optimizer_threshold", &ParallelContext::get_parallel_optimizer_threshold, "Get opt threshold.")
+    .def("set_parallel_optimizer_threshold", &ParallelContext::set_parallel_optimizer_threshold, "Set opt threshold.")
     .def("get_global_rank_is_set", &ParallelContext::global_rank_is_set, "Get global rank is set.")
     .def("get_gradients_mean", &ParallelContext::gradients_mean, "Get mirror mean.")
     .def("set_gradients_mean", &ParallelContext::set_gradients_mean, "Set mirror mean.")

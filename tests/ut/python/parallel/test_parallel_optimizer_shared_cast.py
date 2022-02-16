@@ -66,8 +66,9 @@ class Net2(nn.Cell):
 def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None,
                               interleaved_batch=2, stages=1, micro_size=1):
     context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num, enable_parallel_optimizer=True,
-                                      pipeline_stages=stages)
+    context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num, pipeline_stages=stages,
+                                      enable_parallel_optimizer=True,
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1})
     inputs = Tensor(np.ones([64, 48]).astype(np.float32))
     label = Tensor(np.zeros([64, 16]).astype(np.float32))
     net = MicroBatchInterleaved(net(strategy1, strategy2), interleaved_batch)
