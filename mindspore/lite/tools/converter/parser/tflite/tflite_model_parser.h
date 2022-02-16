@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@ class TfliteModelParser : public converter::ModelParser {
                                      ops::PrimitiveC *primitive_c);
   static STATUS SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                     std::vector<QuantParamT> *quant_params, int round_type = 1);
+  STATUS TfliteOpVerify(const std::unique_ptr<tflite::SubGraphT> &subgraph, const size_t operator_codes_size,
+                        const size_t all_tensor_size);
+  STATUS TfliteTensorVerify(const std::unique_ptr<tflite::SubGraphT> &subgraph, const size_t model_buffers_size);
   STATUS TfliteModelVerify();
 
  private:
