@@ -277,13 +277,13 @@ public abstract class Client {
             Model model = new Model();
             boolean isSuccess = model.loadModel(modelPath);
             if (!isSuccess) {
-                logger.severe(Common.addTag("load model failed:" + modelPath));
+                logger.severe(Common.addTag("load model failed:" + modelPath+" ,please check model is valid or disk" +
+                "space is enough,please check lite log for detail."));
                 return Optional.empty();
             }
             trainSession = LiteSession.createSession(msConfig);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
-                        "disk space is enough"));
+                logger.severe(Common.addTag("init session failed.please check lite log for detail."));
                 msConfig.free();
                 model.free();
                 return Optional.empty();
@@ -291,7 +291,7 @@ public abstract class Client {
             msConfig.free();
             isSuccess = trainSession.compileGraph(model);
             if (!isSuccess) {
-                logger.severe(Common.addTag("compile graph failed:" + modelPath));
+                logger.severe(Common.addTag("compile graph failed,please check lite log for detail."));
                 model.free();
                 trainSession.free();
                 return Optional.empty();
@@ -302,7 +302,7 @@ public abstract class Client {
             trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
             if (trainSession == null) {
                 logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
-                        "disk space is enough"));
+                        "disk space is enough.please check lite log for detail."));
                 return Optional.empty();
             }
             return Optional.of(trainSession);
