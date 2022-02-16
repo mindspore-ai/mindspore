@@ -33,8 +33,8 @@ mindspore
     mindspore.pytype_to_dtype
     mindspore.get_py_obj_dtype
 
-种子
-----
+随机种子
+---------
 
 .. mscnautosummary::
     :toctree: mindspore
@@ -50,7 +50,7 @@ mindspore
 
     mindspore.Model
 
-MindData数据集处理
+数据处理工具
 -------------------
 
 .. mscnautosummary::
@@ -59,8 +59,8 @@ MindData数据集处理
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-损失函数管理
-------------
+混合精度管理
+--------------
 
 .. mscnautosummary::
     :toctree: mindspore
