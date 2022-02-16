@@ -4,7 +4,7 @@ mindspore.profiler
 profiler模块简介。
 
 本模块提供Python API，用于启用MindSpore神经网络性能数据的分析。
-用户可以通过 ``import Mindspore.profiler.Profiler`` 并初始化Profiler对象以开始分析，并使用 `Profiler.analyse()` 停止收集和分析。
+用户可以通过 ``import mindspore.profiler.Profiler`` 并初始化Profiler对象以开始分析，并使用 `Profiler.analyse()` 停止收集和分析。
 用户可通过Mindinsight工具可视化分析结果。
 目前，Profiler支持AICore算子、AICpu算子、HostCpu算子、内存、设备通信、集群等数据的分析。
 
