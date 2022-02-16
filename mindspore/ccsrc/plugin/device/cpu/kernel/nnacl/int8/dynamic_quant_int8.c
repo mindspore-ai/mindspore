@@ -34,16 +34,16 @@ void CalculateMinMaxFp32(const float *data, int count, float *real_min, float *r
     "ld1 {v31.4s}, [x4]\n"       // min
     "ld1 {v30.4s}, [x4], #16\n"  // max
     "subs w5, w5, #4\n"
-    "ble MinMax\n"
+    "ble 1f\n"
 
-    "LoopCount:\n"
+    "0:\n"
     "ld1 {v0.4s}, [x4], #16\n"
     "fmin v31.4s, v31.4s, v0.4s\n"
     "fmax v30.4s, v30.4s, v0.4s\n"
     "subs w5, w5, #4\n"
-    "bgt LoopCount\n"
+    "bgt 0b\n"
 
-    "MinMax:\n"
+    "1:\n"
     "fminv s6, v31.4s\n"
     "fmaxv s7, v30.4s\n"
 
