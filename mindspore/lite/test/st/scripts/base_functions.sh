@@ -252,6 +252,10 @@ function Run_Benchmark() {
       if [[ ${benchmark_mode} = "calib" || ${benchmark_mode} = "calib+loop" ]]; then
         echo "$6 $7 ${mode} run calib: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
         if [[ $6 == "arm64" || $6 == "arm32" ]]; then
+          echo 'pid=`pidof benchmark`' > kill_benchmark.txt
+          echo 'if [[ -n $pid ]]; then kill -9 $pid; fi' >> kill_benchmark.txt
+          adb -s $8 shell < kill_benchmark.txt
+
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
           echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
@@ -278,6 +282,10 @@ function Run_Benchmark() {
           input_files=""
         fi
         if [[ $6 == "arm64" || $6 == "arm32" ]]; then
+          echo 'pid=`pidof benchmark`' > kill_benchmark.txt
+          echo 'if [[ -n $pid ]]; then kill -9 $pid; fi' >> kill_benchmark.txt
+          adb -s $8 shell < kill_benchmark.txt
+
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
           echo './benchmark --inDataFile='${input_files}' --modelFile='${model_file}' --inputShapes='${input_shapes}' --enableFp16='${enableFp16}' --warmUpLoopCount=0 --loopCount=2 --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
@@ -301,6 +309,10 @@ function Run_Benchmark() {
       if [[ ${input_data_mode} == "opengl" ]]; then
         echo "$6 $7 ${mode} run gl texture: ${model_name}, accuracy limit:${acc_limit}" >> "$4"
         if [[ $6 == "arm64" ]]; then
+          echo 'pid=`pidof benchmark`' > kill_benchmark.txt
+          echo 'if [[ -n $pid ]]; then kill -9 $pid; fi' >> kill_benchmark.txt
+          adb -s $8 shell < kill_benchmark.txt
+
           echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
           echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
           echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --enableGLTexture='${enableGLTexture}' --accuracyThreshold='${acc_limit}' --device='$7' --numThreads='${threads} >> adb_run_cmd.txt
