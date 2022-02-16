@@ -233,7 +233,7 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
     // only one in and one output
     MS_ASSERT(!input_shapes.empty() && !output_shapes.empty());
     std::vector<ShapeVector> shape_vec = {input_shapes.front(), output_shapes.front()};
-    node_in_out_shapes.emplace_back(shape_vec);
+    (void)node_in_out_shapes.emplace_back(shape_vec);
     index_node++;
   }
   if (node_in_out_shapes.empty() || node_in_out_shapes.size() < (node_size - 1) || node_in_out_shapes[0].size() <= 1 ||

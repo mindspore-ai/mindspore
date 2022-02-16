@@ -251,10 +251,10 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     return RET_ERROR;
   }
 
-  auto ret = KernelInferShape(inputs, *outputs, prim, {}, SCHEMA_CUR);
+  auto ret = KernelInferShape(inputs, *outputs, prim, {}, static_cast<int>(SCHEMA_CUR));
   if (ret == lite::RET_NOT_SUPPORT) {
-    auto parameter_gen =
-      lite::PopulateRegistry::GetInstance()->GetParameterCreator(static_cast<int>(prim->value_type()), SCHEMA_CUR);
+    auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(
+      static_cast<int>(prim->value_type()), static_cast<int>(SCHEMA_CUR));
     if (parameter_gen == nullptr) {
       fbb.Clear();
       MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
