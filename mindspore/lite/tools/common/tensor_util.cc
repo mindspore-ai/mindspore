@@ -334,7 +334,7 @@ int GenerateRandomData(mindspore::tensor::MSTensor *tensor) {
   if (tensor->data_type() == kObjectTypeString) {
     status = StringsToMSTensor({"you're the best."}, tensor);
   } else {
-    status = GenerateRandomData(tensor->Size(), input_data, static_cast<float>(tensor->data_type()));
+    status = GenerateRandomData(tensor->Size(), input_data, static_cast<int>(tensor->data_type()));
   }
   if (status != RET_OK) {
     std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;

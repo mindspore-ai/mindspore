@@ -422,19 +422,27 @@ int GetGatherPreferredDim(const CNodePtr &cnode) {
     MS_LOG(WARNING) << "gather cnode size < 4.";
     return 0;
   }
-  auto axis = cnode->input(kGatherAxisIndex);
-  tensor::TensorPtr tensor_info;
-  ParameterPtr parameter;
-  GetLiteParameter(axis, &parameter, &tensor_info);
-  size_t elem_count = tensor_info->DataSize();
-  if (elem_count != 1) {
-    MS_LOG(WARNING) << "gather axis data elem_count" << elem_count << " != 1.";
-    return 0;
+  DataInfo data_info;
+  auto output_type_node = cnode->input(kGatherAxisIndex);
+  if (utils::isa<ParameterPtr>(output_type_node)) {
+    if (FetchDataFromParameterNode(cnode, kGatherAxisIndex, converter::kFmkTypeMs, &data_info, true) != lite::RET_OK) {
+      MS_LOG(WARNING) << "Fetch data from parameter node failed.";
+      return 0;
+    }
+  } else if (utils::isa<ValueNodePtr>(output_type_node)) {
+    if (FetchDataFromValueNode(cnode, kGatherAxisIndex, converter::kFmkTypeMs, false, &data_info, true) !=
+        lite::RET_OK) {
+      MS_LOG(WARNING) << "Fetch data from value node failed.";
+      return 0;
+    }
   } else {
-    auto *axis_data = static_cast<int *>(tensor_info->data_c());
-    return axis_data[0];
+    MS_LOG(WARNING) << "The data type is not a const.";
+    return 0;
   }
-  return 0;
+
+  auto axis_data = reinterpret_cast<const int *>(data_info.data_.data());
+  CHECK_NULL_RETURN(axis_data);
+  return axis_data[0];
 }
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first) {

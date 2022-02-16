@@ -146,7 +146,7 @@ int DynamicGatherInt8CPUKernel::AssignIndicesData(bool isIndicesInt32, int indic
     }
   } else {
     indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->MutableData());
-    for (int i = 0; i < limit; ++i) {
+    for (int i = 0; i < indices_tensor->ElementsNum(); ++i) {
       if (indices_data_[i] >= limit) {
         MS_LOG(ERROR) << " indice data: " << indices_data_[i] << " greater or equal to " << limit;
         return RET_ERROR;
