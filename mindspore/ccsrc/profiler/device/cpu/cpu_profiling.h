@@ -27,6 +27,7 @@
 #if ENABLE_GPU
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif
+#include "actor/actormgr.h"
 
 namespace mindspore {
 namespace profiler {
@@ -46,9 +47,13 @@ class CPUProfiler : public Profiler {
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerBegin(const std::string op_name, const uint32_t pid);
   void OpDataProducerEnd() override;
+  void OpDataProducerEndParallel(const std::string op_name);
+  void OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid);
+  float SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp);
+  void SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp);
 
  private:
-  void SetRunTimeData(const std::string &op_name, const uint32_t pid);
+  void SetRunTimeData(const std::string &op_name, const uint32_t pid, bool is_parallel = false);
   void SaveProfileData() override;
   void ClearInst() override;
 

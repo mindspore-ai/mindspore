@@ -19,6 +19,7 @@
 
 #include <new>
 #include <vector>
+#include <unordered_map>
 #include <memory>
 #include <thread>
 #include <atomic>
@@ -146,6 +147,8 @@ class MS_CORE_API ThreadPool {
   void SetMaxSpinCount(int spin_count);
   void SetMinSpinCount(int spin_count);
   void ActiveWorkers() const;
+  void SetWorkerIdMap();
+  const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
 
  protected:
   ThreadPool() = default;
@@ -164,6 +167,7 @@ class MS_CORE_API ThreadPool {
 
   std::mutex pool_mutex_;
   std::vector<Worker *> workers_;
+  std::unordered_map<std::thread::id, size_t> worker_ids_;
   CoreAffinity *affinity_{nullptr};
   size_t actor_thread_num_{0};
   size_t kernel_thread_num_{0};

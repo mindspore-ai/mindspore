@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -32,6 +33,7 @@ namespace profiler {
 struct StartDuration {
   uint64_t start_timestamp = 0l;
   float duration = 0l;
+  size_t tid = 0;
 };
 
 struct OneStepStartEndInfo {
@@ -48,6 +50,7 @@ struct OpInfo {
   int op_kernel_api_count = 0;
   int op_kernel_count = 0;
   int op_count = 0;
+  StartDuration tmp_start_duration;
   std::vector<StartDuration> start_duration;
   void *stream;
   uint32_t pid;
@@ -101,6 +104,7 @@ class Profiler {
   OneStepStartEndInfo step_start_end_info_;
   std::vector<OneStepStartEndInfo> all_step_start_end_info_;
   std::vector<std::string> step_start_end_info_vector_;
+  std::shared_mutex op_map_mutex_;
   std::mutex record_mutex_;
   bool init_flag_ = false;
 };

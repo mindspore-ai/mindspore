@@ -409,4 +409,12 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
   }
   return pool;
 }
+
+void ThreadPool::SetWorkerIdMap() {
+  for (size_t i = 0; i < workers_.size(); ++i) {
+    auto thread_id = workers_[i]->thread_id();
+    worker_ids_[thread_id] = i;
+  }
+  return;
+}
 }  // namespace mindspore
