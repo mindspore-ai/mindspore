@@ -1,8 +1,8 @@
 
-0.1.0	MindSpore*1.5.0:ó
-e
-bprop.8:doutbprop.8:[CNode]:1bprop.8:[CNode]:1"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op13bprop.8*
-	bprop.8:x*
-bprop.8:out*
-bprop.8:dout2
-bprop.8:[CNode]:1:@6114cc535041d10038b41a1d2a9da09c7ffdfc140121c87b8837270a9795c3a0P
+0.1.0	MindSpore*1.6.0:õ
+f
+bprop.1:doutbprop.1:[CNode]2:1bprop.1:[CNode]2:1"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op0bprop.1*
+	bprop.1:x*
+bprop.1:out*
+bprop.1:dout2
+bprop.1:[CNode]2:1:@3e6210d3b327ebcf502924d190fdb3d42b4bc35d56edb82d34b2a2e72245aafdP

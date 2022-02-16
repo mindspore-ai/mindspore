@@ -182,7 +182,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             (with property `drop_overflow_update=False` ).
     """
     validator.check_value_type('network', network, nn.Cell)
-    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt))
+    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt,
+                                                        nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
 
     level, enable_boost = _check_level(level, boost_level)
 
