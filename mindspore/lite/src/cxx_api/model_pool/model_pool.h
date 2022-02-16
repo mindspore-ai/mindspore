@@ -52,6 +52,8 @@ class ModelPool {
   Status SplitOutputTensorByBatch(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs,
                                   size_t batch_split_num);
   Status ConcatPredictOutput(std::vector<std::vector<MSTensor>> *outputs, std::vector<MSTensor> *new_outputs);
+  Status FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs,
+                         std::vector<std::vector<MSTensor>> *new_outputs);
 
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;

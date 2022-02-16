@@ -220,44 +220,30 @@ Status ModelPool::SplitInputTensorByBatch(const std::vector<MSTensor> &inputs,
           MS_LOG(ERROR) << "malloc size is wrong.";
           return kLiteError;
         }
-        void *data = malloc(input_size * sizeof(float));
-        if (data == nullptr) {
-          MS_LOG(ERROR) << "malloc failed.";
-          return kLiteError;
-        }
-        memcpy(reinterpret_cast<float *>(data),
-               reinterpret_cast<float *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i],
-               input_size * sizeof(float));
-        auto new_tensor = mindspore::MSTensor::CreateTensor(
-          inputs[i].Name(), static_cast<enum DataType>(kNumberTypeFloat32), shape, data, input_size * sizeof(float));
+        auto data =
+          reinterpret_cast<float *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i];
+        auto new_tensor = MSTensor(inputs[i].Name(), static_cast<enum DataType>(kNumberTypeFloat32), shape, data,
+                                   input_size * sizeof(float));
         if (new_tensor == nullptr) {
           MS_LOG(ERROR) << "create tensor failed.";
           return kLiteError;
         }
-        new_inputs_tensor.push_back(*new_tensor);
-        free(data);
+        new_inputs_tensor.push_back(new_tensor);
         input_data_split_size[i] += input_size;
       } else if (inputs[i].DataType() == static_cast<enum DataType>(kNumberTypeInt32)) {
         if (input_size * sizeof(int32_t) > MAX_MALLOC_SIZE) {
           MS_LOG(ERROR) << "malloc size is wrong.";
           return kLiteError;
         }
-        void *data = malloc(input_size * sizeof(int32_t));
-        if (data == nullptr) {
-          MS_LOG(ERROR) << "malloc failed.";
-          return kLiteError;
-        }
-        memcpy(reinterpret_cast<int32_t *>(data),
-               reinterpret_cast<int32_t *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i],
-               input_size * sizeof(int32_t));
-        auto new_tensor = mindspore::MSTensor::CreateTensor(
-          inputs[i].Name(), static_cast<enum DataType>(kNumberTypeInt32), shape, data, input_size * sizeof(int32_t));
+        auto data =
+          reinterpret_cast<int32_t *>(const_cast<MSTensor &>(inputs[i]).MutableData()) + input_data_split_size[i];
+        auto new_tensor = MSTensor(inputs[i].Name(), static_cast<enum DataType>(kNumberTypeInt32), shape, data,
+                                   input_size * sizeof(int32_t));
         if (new_tensor == nullptr) {
           MS_LOG(ERROR) << "create tensor failed.";
           return kLiteError;
         }
-        new_inputs_tensor.push_back(*new_tensor);
-        free(data);
+        new_inputs_tensor.push_back(new_tensor);
         input_data_split_size[i] += input_size;
       } else {
         MS_LOG(ERROR) << "not support data type in split batch.";
@@ -323,9 +309,10 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
       return kLiteError;
     }
     for (size_t j = 0; j < outputs->size(); j++) {
-      void *out_data = outputs->at(j)[i].MutableData();
+      void *out_data = outputs->at(j).at(i).MutableData();
       if (out_data == nullptr) {
         free(all_out_data);
+        all_out_data = nullptr;
         MS_LOG(ERROR) << "output data is nullptr.";
         return kLiteError;
       }
@@ -343,6 +330,26 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
       all_out_data = nullptr;
     }
     new_outputs->push_back(*new_tensor);
+    delete new_tensor;
+  }
+  return kSuccess;
+}
+
+Status ModelPool::FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs,
+                                  std::vector<std::vector<MSTensor>> *new_outputs) {
+  for (size_t i = 0; i < new_inputs->size(); i++) {
+    for (size_t j = 0; j < new_inputs->at(i).size(); j++) {
+      new_inputs->at(i).at(j).SetData(nullptr);
+    }
+  }
+  new_inputs->clear();
+  if (is_user_data_) {
+    for (size_t i = 0; i < new_outputs->size(); i++) {
+      for (size_t j = 0; j < new_outputs->at(i).size(); j++) {
+        new_outputs->at(i).at(j).SetData(nullptr);
+      }
+    }
+    new_outputs->clear();
   }
   return kSuccess;
 }
@@ -383,12 +390,10 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(ERROR) << "ConcatPredictOutput failed.";
       return kLiteError;
     }
-    if (is_user_data_) {
-      for (size_t i = 0; i < batch_split_num; i++) {
-        for (size_t j = 0; j < new_outputs.size(); j++) {
-          new_outputs.at(i).at(j).SetData(nullptr);
-        }
-      }
+    status = FreeSplitTensor(&new_inputs, &new_outputs);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "free split tensor failed.";
+      return kLiteError;
     }
   } else {
     if (wait_model_num == 1) {

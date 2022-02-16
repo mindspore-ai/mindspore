@@ -35,6 +35,7 @@ void ModelThread::Run() {
       continue;
     }
     if (is_copy_output_) {
+      std::vector<MSTensor> new_outputs;
       auto output_size = outputs->size();
       for (size_t i = 0; i < output_size; i++) {
         auto copy_tensor =
@@ -46,9 +47,11 @@ void ModelThread::Run() {
           PredictTaskQueue::GetInstance()->ActiveTask();
           continue;
         }
-        outputs->erase(outputs->begin());
-        outputs->push_back(*copy_tensor);
+        new_outputs.push_back(*copy_tensor);
+        delete copy_tensor;
       }
+      outputs->clear();
+      outputs->insert(outputs->end(), new_outputs.begin(), new_outputs.end());
     }
     task->ready = true;
     PredictTaskQueue::GetInstance()->ActiveTask();
