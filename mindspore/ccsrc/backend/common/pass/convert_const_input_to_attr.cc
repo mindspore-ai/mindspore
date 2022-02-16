@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_const_input_to_attr.h"
-#include "backend/common/optimizer/const_input_to_attr_registry.h"
-#include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "base/core_ops.h"

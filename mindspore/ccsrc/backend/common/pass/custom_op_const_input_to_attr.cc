@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <memory>
 
 #include "utils/hash_set.h"
-#include "backend/common/optimizer/helper.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

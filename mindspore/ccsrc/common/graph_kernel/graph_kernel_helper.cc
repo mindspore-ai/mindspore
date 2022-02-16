@@ -27,7 +27,6 @@
 #include "kernel/akg/akg_kernel_json_decoder.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "backend/common/optimizer/const_input_to_attr_registry.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "ir/func_graph_cloner.h"

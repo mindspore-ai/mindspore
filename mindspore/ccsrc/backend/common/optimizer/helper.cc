@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "backend/common/optimizer/const_input_to_attr_registry.h"
+#include "backend/common/optimizer/const_input_to_attr.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
@@ -589,55 +589,6 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
   MS_EXCEPTION_IF_NULL(shape_value_node);
   kernel_graph->AddValueNodeToGraph(shape_value_node);
   return shape_value_node;
-}
-
-void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<AnfNodePtr> new_inputs;
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  primitive = primitive->Clone();
-  auto input_names = primitive->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
-    return;
-  }
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-  auto inputs = cnode->inputs();
-  new_inputs.push_back(inputs[0]);
-  bool need_update = false;
-  for (size_t i = 0; i < inputs.size() - 1; ++i) {
-    auto input_node = inputs[i + 1];
-    if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
-      input_node = AnfAlgo::VisitKernel(input_node, 0).first;
-    }
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
-      auto value_node = input_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
-      if (i >= input_names_vec.size()) {
-        MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
-      }
-      auto value = value_node->value();
-      if (value->isa<tensor::Tensor>()) {
-        auto tensor = value->cast<tensor::TensorPtr>();
-        if (tensor->data().const_data() == nullptr) {
-          need_update = false;
-          break;
-        }
-      }
-      primitive->set_attr(input_names_vec[i], value);
-      need_update = true;
-    } else {
-      new_inputs.push_back(inputs[i + 1]);
-    }
-  }
-  if (need_update) {
-    // Update cnode's inputs
-    new_inputs[0] = NewValueNode(primitive);
-    cnode->set_inputs(new_inputs);
-  }
 }
 
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
