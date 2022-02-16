@@ -18,7 +18,7 @@
 
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

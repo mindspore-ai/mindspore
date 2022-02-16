@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RL_BUFFER_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RL_BUFFER_IMPL_H_
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 void BufferAppend(const int64_t capacity, const size_t size, const int *index, const int exp_batch,
                   unsigned char *buffer, const unsigned char *exp, cudaStream_t cuda_stream);
 void IncreaseCount(const int64_t capacity, const int exp_batch, int *count, int *head, int *index,

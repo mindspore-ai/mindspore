@@ -27,7 +27,7 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cufft.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 #define TWO_DIVIDED_BY_SQRT_PI 1.1283791670218446
 #define CONSTANT_kB 0.00198716

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/math/unary_op_complex_gpu_kernel.h"
 
 namespace mindspore {

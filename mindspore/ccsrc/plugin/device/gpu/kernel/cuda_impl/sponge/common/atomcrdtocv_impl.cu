@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common/atomcrdtocv_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 __device__ __host__ float fc(float Rij) {
   const float PI = 3.141592654;

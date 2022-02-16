@@ -17,7 +17,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/crdmcmap/cal_no_wrap_crd_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 __global__ void Calculate_No_Wrap_Crd(int atom_numbers, INT_VECTOR *box_map_times, VECTOR *box, VECTOR *crd,
                                       VECTOR *nowrap_crd) {

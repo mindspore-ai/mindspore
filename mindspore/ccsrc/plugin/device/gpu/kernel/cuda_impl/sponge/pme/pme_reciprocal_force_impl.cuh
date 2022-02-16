@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_PME_RECIPROCAL_FORCE_IMPL_H_
 
 #include <cufft.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 struct _VECTOR {
   float x;

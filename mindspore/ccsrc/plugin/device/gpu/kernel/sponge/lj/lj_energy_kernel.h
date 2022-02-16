@@ -21,7 +21,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/lj/lj_energy_impl.cuh"
 namespace mindspore {
 namespace kernel {

@@ -22,7 +22,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/scatter_nd_functor_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/scatter_nd_functor_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/minmax_update_perlayer_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/minmax_update_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/minmax_update_impl.cuh"
 #include <thrust/extrema.h>
 #include <thrust/pair.h>
 #include <thrust/device_vector.h>

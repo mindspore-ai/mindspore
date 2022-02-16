@@ -21,7 +21,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/square_sum_all_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/square_sum_all_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

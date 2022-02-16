@@ -28,9 +28,9 @@
 #include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/einsum_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/tile_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/einsum_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tile_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {

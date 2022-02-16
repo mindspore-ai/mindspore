@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/nvtit/md_iteration_setup_random_state_gpu_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
 
 void MD_Iteration_Setup_Random_State(int float4_numbers, curandStatePhilox4_32_10_t *rand_state, int seed,

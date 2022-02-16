@@ -25,7 +25,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/pme/pme_excluded_force_impl.cuh"

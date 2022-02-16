@@ -22,7 +22,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_LJ_DIRECT_CF_FORCE_WITH_LJ_VIRIAL_DIRECT_CF_ENERGY_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 void LJ_Direct_CF_Force_With_LJ_Virial_Direct_CF_Energy(
   const int atom_numbers, const float cutoff, const float pme_beta, const unsigned int *uint_crd_f, const int *LJtype,

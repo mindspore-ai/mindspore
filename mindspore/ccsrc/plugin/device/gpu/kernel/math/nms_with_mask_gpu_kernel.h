@@ -22,7 +22,7 @@
 #include <iostream>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/nms_with_mask_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/nms_with_mask_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {
