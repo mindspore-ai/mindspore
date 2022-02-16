@@ -331,11 +331,13 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
 #ifndef DELEGATE_CLIP
+#ifndef RUNTIME_PASS_CLIP
   // Free the output tensor data of shape fusion.
   for (auto tensor : shape_fusion_outputs_) {
     tensor->FreeData();
     tensor->set_category(VAR);
   }
+#endif
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
@@ -642,7 +644,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
         return RET_ERROR;
       }
     }
-#ifndef DELEGATE_CLIP
+#if !defined(RUNTIME_PASS_CLIP) && !defined(DELEGATE_CLIP)
     if (node->node_type_ == PrimType_Inner_ShapeFusion) {
       shape_fusion_outputs_.insert(shape_fusion_outputs_.end(), outputs.begin(), outputs.end());
     }
