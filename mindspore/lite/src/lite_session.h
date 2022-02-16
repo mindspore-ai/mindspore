@@ -135,6 +135,7 @@ class LiteSession : public session::LiteSession {
  private:
   int IsolateOutputTensor();
   bool IsIsolatedSubGraph(const kernel::LiteKernel *kernel);
+  void UpdateGraphOutputMap(const std::vector<kernel::LiteKernel *> &kernel);
   void UpdateLinkInfoForIsolateOutput();
   std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */

@@ -300,6 +300,58 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels
   return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
 }
 
+STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *kernels) {
+  for (auto iter = (*kernels).begin(); iter != (*kernels).end();) {
+    auto cur_kernel = *iter;
+    if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
+      auto sub_inner_graph = reinterpret_cast<kernel::SubGraphKernel *>(cur_kernel);
+      auto &subgraph_nodes = sub_inner_graph->nodes();
+      if (DelQuantDTypeCastKernel(&subgraph_nodes) != RET_OK) {
+        MS_LOG(ERROR) << "DeleteRedundantTrans failed in subgraph.";
+        return RET_ERROR;
+      }
+    }
+    if (cur_kernel->type() != schema::PrimitiveType_QuantDTypeCast) {
+      iter++;
+      continue;
+    }
+    auto &post_kernels = cur_kernel->out_kernels();
+    auto &pre_kernels = cur_kernel->in_kernels();
+    if (pre_kernels.size() != 1 || cur_kernel->in_tensors().size() != 1) {
+      MS_LOG(ERROR) << "kernel input size error.";
+      return RET_ERROR;
+    }
+    // modify post kernel input to new kernel and new tensor
+    for (auto post_kernel : post_kernels) {
+      auto post_in_kernels = post_kernel->in_kernels();
+      auto post_input_iter = std::find(post_in_kernels.begin(), post_in_kernels.end(), cur_kernel);
+      *post_input_iter = pre_kernels[0];
+      post_kernel->set_in_tensor(cur_kernel->in_tensors()[0], post_input_iter - post_in_kernels.begin());
+      post_kernel->set_in_kernels(post_in_kernels);
+    }
+    auto pre_out_kernels = pre_kernels[0]->out_kernels();
+    auto pre_out_iter = std::find(pre_out_kernels.begin(), pre_out_kernels.end(), cur_kernel);
+    if (pre_out_iter != pre_out_kernels.end()) {
+      pre_out_kernels.erase(pre_out_iter);
+      pre_out_kernels.insert(pre_out_iter, post_kernels.begin(), post_kernels.end());
+      pre_kernels[0]->set_out_kernels(pre_kernels);
+    }
+    // update model output
+    if (cur_kernel->is_model_output()) {
+      pre_kernels[0]->set_is_model_output(true);
+      cur_kernel->in_tensors()[0]->set_category(Category::GRAPH_OUTPUT);
+      pre_kernels[0]->set_out_kernels({});
+    }
+    auto tensor_iter = std::find((*outputs_).begin(), (*outputs_).end(), cur_kernel->out_tensors()[0]);
+    if (tensor_iter != (*outputs_).end()) {
+      *tensor_iter = cur_kernel->in_tensors()[0];
+    }
+    iter = kernels->erase(iter);
+    delete cur_kernel;
+  }
+  return RET_OK;
+}
+
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
@@ -328,6 +380,14 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule graph to kernels failed.";
     return ret;
+  }
+  if (context_->float_mode) {
+    kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
+    ret = DelQuantDTypeCastKernel(dst_kernels);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Delete quant_dtype_cast kernel failed.";
+      return ret;
+    }
   }
 
 #ifndef DELEGATE_CLIP
@@ -422,8 +482,8 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::LiteKernel *> *dst_ker
     kernels.push_back((*dst_kernels)[i]->kernel());
   }
 
-  ms_inputs_ = LiteTensorsToMSTensors(inputs_);
-  ms_outputs_ = LiteTensorsToMSTensors(outputs_);
+  ms_inputs_ = LiteTensorsToMSTensors(*inputs_);
+  ms_outputs_ = LiteTensorsToMSTensors(*outputs_);
   auto schema_version = static_cast<SchemaVersion>(schema_version_);
   DelegateModel<schema::Primitive> *model =
     new (std::nothrow) DelegateModel<schema::Primitive>(&kernels, ms_inputs_, ms_outputs_, primitives_, schema_version);
@@ -939,6 +999,9 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     cpu_desc.data_type = kNumberTypeFloat16;
   }
   int ret;
+  if (context_->float_mode && op_parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
+    op_parameter->quant_type_ = schema::QuantType_QUANT_WEIGHT;
+  }
 #ifndef WEIGHT_DECODE_CLIP
   ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_);
   if (ret != RET_OK) {
@@ -1076,6 +1139,14 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   } else {
     data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
+  }
+  if (context_->float_mode) {
+    data_type = kNumberTypeFloat32;
+    for (auto tensor : in_tensors) {
+      if (tensor->data() == nullptr) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
   }
   kernel::LiteKernel *kernel = nullptr;
   int status;
