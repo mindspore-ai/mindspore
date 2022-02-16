@@ -80,7 +80,7 @@ struct Context {
   DeviceContextVector device_list_;
 #endif  // NOT_USE_STL
   DelegatePtr delegate = nullptr;
-  bool float_mode = false;
+  bool float_mode = false; /**< convert full quant model to float model */
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_CONTEXT_H_
