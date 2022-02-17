@@ -25,13 +25,13 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Custom;
+
+namespace mindspore {
+namespace proposal {
 constexpr int kMaxSize = 1024;
 constexpr int kNumInput2 = 2;
 constexpr int kDecimal = 10;
 constexpr auto kMazRoiNum = "MaxROINum";
-
-namespace mindspore {
-namespace proposal {
 bool IsValidUnsignedNum(const std::string &num_str) {
   return !num_str.empty() && std::all_of(num_str.begin(), num_str.end(), ::isdigit);
 }
@@ -186,8 +186,6 @@ std::shared_ptr<mindspore::kernel::Kernel> ProposalCreateKernel(const std::vecto
   }
 
   auto kernel = std::make_shared<ProposalCPUKernel>(inputs, outputs, primitive, ctx, ndims, image_height, image_width);
-  // auto kernel = new (std::nothrow) ProposalCPUKernel(inputs, outputs, primitive, ctx, ndims, image_height,
-  // image_width);
   if (kernel == nullptr) {
     LOGE("new custom kernel is nullptr");
     return nullptr;

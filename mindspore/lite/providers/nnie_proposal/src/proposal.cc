@@ -22,11 +22,11 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-constexpr int kNumInput2 = 2;
-constexpr int kNCHWDims = 4;
 
 namespace mindspore {
 namespace proposal {
+constexpr int kNumInput2 = 2;
+constexpr int kNCHWDims = 4;
 uint32_t RpnTmpBufSize(uint32_t num_ratio_anchors, uint32_t num_scale_anchors, uint32_t input_height,
                        uint32_t input_width) {
   uint32_t anchors_num = num_ratio_anchors * num_scale_anchors * input_height * input_width;
@@ -156,6 +156,10 @@ static int32_t NonRecursiveArgQuickSort(int32_t *array, int32_t low, int32_t hig
 
 static int32_t FilterLowScoreBbox(int32_t *proposals, uint32_t anchors_num, uint32_t filter_thresh,
                                   uint32_t *num_after_filter) {
+  if (proposals == nullptr) {
+    LOGE("inputs proposals is nullptr");
+    return RET_ERROR;
+  }
   uint32_t proposal_cnt = anchors_num;
 
   if (filter_thresh > 0) {
@@ -222,6 +226,10 @@ static int32_t SVP_NNIE_Overlap(int32_t x_min1, int32_t y_min1, int32_t x_max1, 
 
 static int32_t SVP_NNIE_NonMaxSuppression(int32_t *proposals, uint32_t anchors_num, uint32_t nms_thresh,
                                           uint32_t max_roi_num) {
+  if (proposals == nullptr) {
+    LOGE("inputs proposals is nullptr");
+    return RET_ERROR;
+  }
   /****** define variables *******/
   int32_t x_min1;
   int32_t y_min1;
@@ -276,7 +284,6 @@ static void Rpn(float **inputs, uint32_t num_ratio_anchors, uint32_t num_scale_a
                 uint32_t min_size, uint32_t spatial_scale, uint32_t nms_thresh, uint32_t filter_thresh,
                 uint32_t num_before_nms, char *pu32MemPool, float *proposal_result, uint32_t dst_stride,
                 uint32_t *num_rois) {
-#if 1
   /******************** define parameters ****************/
   uint32_t size;
   int32_t *anchors = nullptr;
@@ -400,6 +407,10 @@ static void Rpn(float **inputs, uint32_t num_ratio_anchors, uint32_t num_scale_a
 
   /******************* Copy the anchors to every pixel in the feature map ******************/
   ptr1 = anchors;
+  if (spatial_scale == 0) {
+    LOGE("inputs spatial_scale is zero.");
+    return;
+  }
   pixel_interval = QUANT_BASE / spatial_scale;
 
   for (p = 0; p < inputs_height[0]; p++) {
@@ -527,7 +538,6 @@ static void Rpn(float **inputs, uint32_t num_ratio_anchors, uint32_t num_scale_a
   }
 
   *num_rois = roi_count;
-#endif
 }
 
 int32_t ProposalInit(ProposalParam *param, const std::vector<mindspore::MSTensor> &inputs, uint32_t max_roi_num,
