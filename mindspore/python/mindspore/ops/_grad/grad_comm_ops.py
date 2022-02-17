@@ -441,26 +441,28 @@ def get_bprop_mirror_operator(self):
     Backpropagator for _MirrorOperator, do allreduce or allgather for the devices in group(only for one group),
     allgather for sparse feature.
     """
-    group = self.group
-    dev_num = self.dev_num
-    mean_flag = self.mean_flag
+    group = self.get_attr_dict()['group']
+    dev_num = self.get_attr_dict()['dev_num']
+    mean_flag = self.get_attr_dict()['mean_flag']
+    if dev_num > 1:
+        all_reduce = AllReduce(group=group)
+        all_gather = AllGather(group=group)
+        mul = P.Mul()
+        cast = P.Cast()
 
-    all_reduce = AllReduce(group=group)
-    all_gather = AllGather(group=group)
-    mul = P.Mul()
-    cast = P.Cast()
+        fusion = self.get_attr_dict()["fusion"]
+        all_reduce.add_prim_attr("fusion", fusion)
+        if hasattr(self, 'parameter'):
+            parameter = self.parameter
+            all_reduce.add_prim_attr("parameter", parameter)
 
-    fusion = self.get_attr_dict()["fusion"]
-    all_reduce.add_prim_attr("fusion", fusion)
-    if hasattr(self, 'parameter'):
-        parameter = self.parameter
-        all_reduce.add_prim_attr("parameter", parameter)
-
-    if self.instance_name:
-        instance_name = "grad_mirror" + self.instance_name
-        all_reduce.set_prim_instance_name(instance_name)
+        if self.instance_name:
+            instance_name = "grad_mirror" + self.instance_name
+            all_reduce.set_prim_instance_name(instance_name)
 
     def bprop(x, out, dout):
+        if dev_num == 1:
+            return (dout,)
         if mean_flag:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 dx = all_reduce(dout)

@@ -487,10 +487,10 @@ class Receive(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_types_same(args, valid_type, self.name)
 
     def infer_shape(self, x_shape=None):
-        return self.shape
+        return self.get_attr_dict()['shape']
 
     def infer_dtype(self, x_dtype=None):
-        return self.dtype
+        return self.get_attr_dict()['dtype']
 
 
 class MatrixSetDiag(PrimitiveWithInfer):
