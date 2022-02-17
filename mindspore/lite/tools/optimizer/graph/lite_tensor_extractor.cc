@@ -156,7 +156,7 @@ int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_i
     STATUS status;
     lite::DataInfo data_info;
     if (utils::isa<ParameterPtr>(cnode->input(i))) {
-      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, train_flag, &data_info, copy_data);
+      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, &data_info, copy_data);
     } else {
       status = lite::FetchDataFromValueNode(cnode, i, fmk_type, train_flag, &data_info, copy_data);
     }
@@ -172,8 +172,7 @@ int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_i
   return ConvertToLiteTensor(data_infos, const_ms_inputs);
 }
 
-int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs, converter::FmkType fmk_type,
-                     bool train_flag) {
+int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs, converter::FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
   MS_ASSERT(var_ms_inputs != nullptr);
   for (size_t i = 1; i < cnode->size(); ++i) {
@@ -181,7 +180,7 @@ int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_input
       continue;
     }
     lite::DataInfo data_info;
-    if (lite::FetchDataFromCNode(cnode, i, fmk_type, train_flag, &data_info) != lite::RET_OK) {
+    if (lite::FetchDataFromCNode(cnode, i, fmk_type, &data_info) != lite::RET_OK) {
       MS_LOG(ERROR) << "parse cnode failed.";
       return lite::RET_ERROR;
     }
@@ -229,7 +228,7 @@ int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector
     return lite::RET_ERROR;
   }
   std::vector<TensorPtr> var_inputs;
-  if (GetCNodeVarInput(cnode, &var_inputs, fmk_type, train_flag) != lite::RET_OK) {
+  if (GetCNodeVarInput(cnode, &var_inputs, fmk_type) != lite::RET_OK) {
     MS_LOG(ERROR) << "get var inputs failed.";
     cnode->set_inputs(origin_inputs);
     return lite::RET_ERROR;

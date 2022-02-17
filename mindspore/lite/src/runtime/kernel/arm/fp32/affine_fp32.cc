@@ -419,7 +419,7 @@ int AffineFp32CPUKernel::FullSpliceRun() {
   for (int r = 0; r < splice_dst_row_; ++r) {
     for (int off = 0; off < affine_parameter_->context_size_; ++off) {
       int r_off = r - src_to_dst_row_offset_ + affine_parameter_->context_[off];
-      const float *tmp_src_data = input_data + r_off * splice_src_col_;
+      const float *tmp_src_data = input_data + static_cast<int64_t>(r_off) * splice_src_col_;
       float *tmp_dst_data = output_data + r * splice_dst_col_;
       memcpy(tmp_dst_data + off * splice_src_col_, tmp_src_data, splice_src_col_ * sizeof(float));
     }

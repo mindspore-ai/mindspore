@@ -174,9 +174,9 @@ std::vector<int> NodeInferShape::GetInputShape(const CNodePtr &cnode, size_t ind
     position = 1;
   }
   if (utils::isa<CNode>(base_node->input(position))) {
-    status = lite::FetchDataFromCNode(base_node, position, fmk_type_, train_flag_, &data_info);
+    status = lite::FetchDataFromCNode(base_node, position, fmk_type_, &data_info);
   } else if (utils::isa<Parameter>(base_node->input(position))) {
-    status = lite::FetchDataFromParameterNode(base_node, position, fmk_type_, train_flag_, &data_info, false);
+    status = lite::FetchDataFromParameterNode(base_node, position, fmk_type_, &data_info, false);
   } else if (utils::isa<ValueNodePtr>(base_node->input(position))) {
     status = lite::FetchDataFromValueNode(base_node, position, fmk_type_, train_flag_, &data_info, false);
   } else {

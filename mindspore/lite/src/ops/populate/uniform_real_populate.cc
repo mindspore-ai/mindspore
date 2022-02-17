@@ -42,6 +42,6 @@ OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_POPULATE(PrimitiveType_UniformReal, DefaultPopulateParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_UniformReal, PopulateRandomStandardNormalParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
