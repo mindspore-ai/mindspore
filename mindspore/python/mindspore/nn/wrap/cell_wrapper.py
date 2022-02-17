@@ -15,6 +15,7 @@
 """Cell_wrapper."""
 from types import FunctionType, MethodType
 
+from mindspore import log as logger
 from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
                                        _get_parallel_mode, _get_enable_parallel_optimizer)
 from mindspore.context import ParallelMode
@@ -613,12 +614,11 @@ class VirtualDatasetCellTriple(Cell):
 
     def __init__(self, backbone):
         super(VirtualDatasetCellTriple, self).__init__(auto_prefix=False)
+        logger.warning("WARN_DEPRECATED: The usage of VirtualDatasetCellTriple is deprecated.")
         self._backbone = backbone
-        self._virtual_dataset = _VirtualDataset()
 
     def construct(self, a, b, c):
-        a_, b_, c_ = self._virtual_dataset(a, b, c)
-        return self._backbone(a_, b_, c_)
+        return self._backbone(a, b, c)
 
 
 class WithEvalCell(Cell):
