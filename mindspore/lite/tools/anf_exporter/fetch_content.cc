@@ -361,7 +361,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
   return ret;
 }
 
-int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info) {
+int FetchDataFromCNode(const CNodePtr &cnode, size_t index, DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto abstract = opt::GetCNodeInputAbstract(cnode, index);
   if (abstract == nullptr) {
@@ -532,7 +532,7 @@ int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::
       return ret;
     }
     parameter->thread_num_ = 1;
-    op_parameters->insert(std::pair<std::string, OpParameter *>(cnode->fullname_with_scope(), parameter));
+    op_parameters->emplace(std::pair<std::string, OpParameter *>(cnode->fullname_with_scope(), parameter));
   }
   return RET_OK;
 }
