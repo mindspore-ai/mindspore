@@ -123,8 +123,8 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
       if (tensor_move == nullptr) {
         MS_LOG(EXCEPTION) << "Create tensor_move op failed.";
       }
-      if (input->isa<CNode>() && AnfAlgo::IsNodeDynamicShape(input)) {
-        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), tensor_move);
+      if (input->isa<CNode>() && AnfAlgo::IsDynamicShape(input)) {
+        MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
       new_inputs.push_back(tensor_move);
       need_tensor_move_async = true;

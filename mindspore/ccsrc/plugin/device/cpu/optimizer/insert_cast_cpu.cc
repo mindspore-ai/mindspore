@@ -54,7 +54,6 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     cast->set_kernel_info(kernel_info);
   }
   if (origin_shape->IsDynamic()) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cast);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
   }

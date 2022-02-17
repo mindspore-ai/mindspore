@@ -57,12 +57,6 @@ bool TbeDynamicShapeUtil::IsDynamicShapeNode(const AnfNodePtr &anf_node) {
   return false;
 }
 
-void TbeDynamicShapeUtil::SetDynamicShapeAttr(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto is_dyanmic_shape = IsDynamicShapeNode(cnode);
-  AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(is_dyanmic_shape), cnode);
-}
-
 bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<CNode>()) {
@@ -75,11 +69,7 @@ bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const AnfNodePtr &anf_node) {
 
 bool TbeDynamicShapeUtil::GetDynamicShapeAttr(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto is_dynamic_shape = AnfAlgo::HasNodeAttr(kAttrIsDynamicShape, cnode);
-  if (!is_dynamic_shape) {
-    return false;
-  }
-  is_dynamic_shape = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrIsDynamicShape);
+  auto is_dynamic_shape = AnfAlgo::IsDynamicShape(cnode);
   return is_dynamic_shape;
 }
 

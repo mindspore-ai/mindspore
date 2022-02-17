@@ -43,8 +43,8 @@ AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, con
     if (new_node == nullptr) {
       MS_LOG(EXCEPTION) << "Create tensor move op failed!";
     }
-    if (AnfAlgo::IsNodeDynamicShape(tuple_get_item)) {
-      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), new_node);
+    if (AnfAlgo::IsDynamicShape(tuple_get_item)) {
+      MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
     }
     AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), new_node);
     make_tuple_inputs.push_back(new_node);

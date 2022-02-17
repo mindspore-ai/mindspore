@@ -49,7 +49,6 @@ void BnGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNo
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
   AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_update_grad);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_update_grad);
   }
   CreateMultipleOutputsOfAnfNode(graph, bn_update_grad, kBNTrainingUpdateGradOutputNum, bn_update_grad_outputs);
@@ -87,7 +86,6 @@ void BnGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNo
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
   AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), bn_reduce_grad);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_reduce_grad);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_reduce_grad);
   }

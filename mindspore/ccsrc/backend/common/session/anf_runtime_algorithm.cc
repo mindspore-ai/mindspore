@@ -236,6 +236,26 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
   }
   return ret;
 }
+
+bool IsNodeDynamicShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto in_dynamic = AnfAlgo::IsNodeInputDynamicShape(cnode);
+  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
+  if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+    MS_LOG(DEBUG) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+  }
+  if (out_dynamic && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
+    MS_LOG(DEBUG) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+  }
+  return in_dynamic || out_dynamic;
+}
 }  // namespace
 
 AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
@@ -1573,7 +1593,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   size_t ret = cur_index;
   auto node_name = AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
-    if (AnfAlgo::IsNodeDynamicShape(anf_node) || AnfAlgo::IsDynamicShape(anf_node)) {
+    if (IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
       if (find_dynamic != spec_dynamic_node_list.end()) {
         auto dyn_index_converter = find_dynamic->second;
@@ -1597,7 +1617,7 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
   size_t ret = cur_index;
   auto node_name = AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
-    if (AnfAlgo::IsNodeDynamicShape(anf_node) || AnfAlgo::IsDynamicShape(anf_node)) {
+    if (IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
       if (find_dynamic != spec_dynamic_node_list.end()) {
         auto dyn_index_converter = find_dynamic->second;
@@ -2004,13 +2024,22 @@ bool AnfRuntimeAlgorithm::HasDynamicShapeFlag(const PrimitivePtr &prim) {
     }
     return GetValue<bool>(primitive->GetAttr(attr_name));
   };
-  return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape) ||
-         get_bool_attr(prim, kAttrIsDynamicShape);
+  return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape);
 }
 
 bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
-  return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape) ||
-         GetBooleanAttr(node, kAttrIsDynamicShape);
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode.";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if ((!HasNodeAttr(kAttrInputIsDynamicShape, cnode)) && (!HasNodeAttr(kAttrOutputIsDynamicShape, cnode))) {
+    auto ret = IsNodeDynamicShape(node);
+    MS_LOG(DEBUG) << "The Node:" << node->fullname_with_scope() << " is dynamic shape or not:" << ret;
+    return ret;
+  }
+  return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape);
 }
 
 void AnfRuntimeAlgorithm::GetRealDynamicShape(const std::vector<size_t> &shape,
@@ -2126,26 +2155,6 @@ bool AnfRuntimeAlgorithm::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) 
     }
   }
   return false;
-}
-
-bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(DEBUG) << "Node is not a cnode";
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  auto in_dynamic = IsNodeInputDynamicShape(cnode);
-  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
-  if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
-    MS_LOG(INFO) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
-  }
-  if (out_dynamic && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
-    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
-    MS_LOG(INFO) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
-  }
-  return in_dynamic || out_dynamic;
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {

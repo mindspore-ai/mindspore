@@ -37,7 +37,7 @@ const AnfNodePtr StridedSliceGradUpdateInputNames::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(strided_slice_grad);
 
   const size_t shapex_index = 1;
-  if (AnfAlgo::IsNodeDynamicShape(strided_slice_grad)) {
+  if (AnfAlgo::IsDynamicShape(strided_slice_grad)) {
     auto primitive = AnfAlgo::GetCNodePrimitive(strided_slice_grad);
     MS_EXCEPTION_IF_NULL(primitive);
     auto input_names_ptr = primitive->GetAttr(kAttrInputNames);

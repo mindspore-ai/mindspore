@@ -50,7 +50,6 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr 
   auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0),
                  AnfAlgo::GetPrevNodeOutputDetailShape(layer_norm_grad, 1)};
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
   }
@@ -74,7 +73,6 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackpropV2(
   layer_norm_beta_gamma_backprop->set_kernel_info(kernel_info);
   layer_norm_beta_gamma_backprop->set_scope(layer_norm_grad->scope());
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
   }
   auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputGammaIndex),
