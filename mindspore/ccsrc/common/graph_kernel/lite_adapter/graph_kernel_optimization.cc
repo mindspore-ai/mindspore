@@ -28,6 +28,7 @@
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
+#include "common/graph_kernel/lite_adapter/akg_build.h"
 #include "common/graph_kernel/lite_adapter/convert_const_input_to_attr.h"
 #include "common/graph_kernel/lite_adapter/graph_kernel_pass_manager.h"
 
@@ -88,6 +89,17 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &kernel_graph) {
     kernel_graph->set_manager(mng);
   }
   (void)optimizer->Optimize(kernel_graph);
+  auto node_list = kernel_graph->GetOrderedCnodes();
+  AnfNodePtrList anf_list;
+  for (auto &node : node_list) {
+    if (AnfUtils::IsGraphKernel(node)) {
+      anf_list.push_back(node);
+    }
+  }
+  graphkernel::AkgKernelBuilder gk;
+  if (!gk.CompileJsonsInAnfnodes(anf_list)) {
+    MS_LOG(WARNING) << "Graph kernel compile fail";
+  }
 }
 
 void GraphKernelOptimize(const FuncGraphPtr &kernel_graph) { GraphKernelOptimizer().Run(kernel_graph); }

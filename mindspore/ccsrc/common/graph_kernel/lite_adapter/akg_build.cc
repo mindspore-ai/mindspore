@@ -41,7 +41,7 @@ bool CompileSingleJson(const std::string &json_name) {
   py_cmd << "from akg.ms import compilewithjsonname\n";
   py_cmd << "if not compilewithjsonname(\'" << json_name << "\', " << attrs << "):\n";
   py_cmd << "    raise RuntimeError(\'Compile fail for json: " << json_name << "\')";
-  std::string cmd = "python -c \"" + py_cmd.str() + "\"";
+  std::string cmd = "unset LD_LIBRARY_PATH;python -c \"" + py_cmd.str() + "\"";
   auto ret = system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "python process start fail!";
