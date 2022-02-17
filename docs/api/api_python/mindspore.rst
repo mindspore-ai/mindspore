@@ -134,8 +134,5 @@ mindspore
 
 .. mscnautosummary::
     :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
 
     mindspore.ms_memory_recycle
-    
