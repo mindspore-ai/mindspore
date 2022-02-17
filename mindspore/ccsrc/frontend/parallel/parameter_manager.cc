@@ -877,6 +877,34 @@ void HandleAdaSumSqueeze(const AnfNodePtr &stridedslice_node1, const std::vector
   }
 }
 
+void HandleAdaSumPureModelParallel(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimSend) && !IsPrimitiveCNode(node, prim::kPrimReceive)) {
+    return;
+  }
+  PrimitivePtr send_rec_prim = GetCNodePrimitive(node);
+  int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr("opposite_rank"));
+  int64_t rank = g_device_manager->global_rank();
+  CNodePtr cnode = node->cast<CNodePtr>();
+  auto pre_cnode = RealInputNode(cnode, 1);
+  int64_t rank_dis = abs(origin_dest_rank - rank);
+  if (rank_dis == ADASUM_MIN_DIS && IsPrimitiveCNode(pre_cnode, prim::kPrimStridedSlice)) {
+    auto squeeze_node = pre_cnode->cast<CNodePtr>()->input(1);
+    if (!IsPrimitiveCNode(squeeze_node, prim::kPrimSqueeze)) {
+      return;
+    }
+    auto squeeze_input = squeeze_node->cast<CNodePtr>()->input(1);
+    auto manager = squeeze_node->func_graph()->manager();
+    AnfNodeIndexSet squeeze_input_node_user_set = manager->node_users()[squeeze_input];
+    for (auto &squeeze_input_user : squeeze_input_node_user_set) {
+      if (IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimSqueeze) ||
+          IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimUpdateState)) {
+        continue;
+      }
+      manager->Replace(squeeze_input_user.first, squeeze_input);
+    }
+  }
+}
+
 bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                   std::unordered_map<std::string, std::shared_ptr<TensorLayout>> *adasum_param_tensor_layout_map) {
   std::unordered_map<std::string, CNodePtr> forward_origin_first_node_map;
@@ -901,6 +929,12 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
     target_param = GetValue<std::string>(prim->GetAttr("target_param"));
     auto target_param_layout = (*adasum_param_tensor_layout_map)[target_param];
     RankList group_devices = GetRankListByLayout(target_param_layout);
+    // only model parallel
+    if (group_devices.size() == 1) {
+      HandleAdaSumPureModelParallel(node);
+      continue;
+    }
+
     int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
     // when the repeat dim is right, the parameter do not enable adasum.
     if (adasum_rank_distance == 1 && group_devices.size() < size_t(g_device_manager->stage_device_num())) {
