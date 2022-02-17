@@ -78,6 +78,10 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
         a_pack_ptr_ = reinterpret_cast<float *>(a_packed.second);
         a_is_packed_ = a_packed.first;
       }
+      if (a_is_packed_ == lite::MALLOC && a_pack_ptr_ == nullptr) {
+        a_pack_ptr_ = reinterpret_cast<float *>(
+          ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_pack_size_) * sizeof(float)));
+      }
 #else
       a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
 #endif
@@ -104,6 +108,10 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
       b_pack_ptr_ = reinterpret_cast<float *>(b_packed.second);
       b_is_packed_ = b_packed.first;
     } else {
+      b_pack_ptr_ = reinterpret_cast<float *>(
+        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
+    }
+    if (b_is_packed_ == lite::MALLOC && b_pack_ptr_ == nullptr) {
       b_pack_ptr_ = reinterpret_cast<float *>(
         ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
     }
