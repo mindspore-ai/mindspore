@@ -527,10 +527,10 @@ void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
  * Runtime category: MindRT.
  * Description: Dumps a single node for given graph_id.
  */
-void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
+void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id, const KernelLaunchInfo *launch_info) {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
-    (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
+    (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get(), launch_info);
   }
 }
 
