@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,21 +35,23 @@ namespace dataset {
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
                  const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache,
-                 const std::vector<std::shared_ptr<DSCallback>> callbacks, ManualOffloadMode offload)
+                 const std::vector<std::shared_ptr<DSCallback>> callbacks, ManualOffloadMode offload,
+                 std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
       project_columns_(project_columns),
       DatasetNode(std::move(cache)),
       callbacks_(callbacks),
-      offload_(offload) {
+      offload_(offload),
+      python_mp_(std::move(python_mp)) {
   this->AddChild(child);
 }
 
 std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
   auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
-                                        callbacks_, offload_);
+                                        callbacks_, offload_, python_mp_);
   node->SetNumWorkers(num_workers_);
   node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -96,6 +98,9 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   }
   map_op->SetTotalRepeats(GetTotalRepeats());
   map_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
+  if (python_mp_ != nullptr) {
+    map_op->SetPythonMp(python_mp_);
+  }
   node_ops->push_back(map_op);
   return Status::OK();
 }

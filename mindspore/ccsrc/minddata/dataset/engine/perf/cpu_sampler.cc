@@ -467,6 +467,21 @@ Status CpuSampler::UpdateTaskList() {
       }
     }
   }
+  for (const auto &op : *tree) {
+    std::vector<int32_t> pids = op.GetMPWorkerPIDs();
+    int32_t op_id = op.id();
+    auto iter = op_info_by_id_.find(op_id);
+    if (iter != op_info_by_id_.end()) {
+      for (auto pid : pids) {
+        if (!iter->second.TaskExists(pid)) {
+          auto task_cpu_info_ptr = std::make_shared<ProcessInfo>(pid);
+          (void)tasks_.emplace_back(task_cpu_info_ptr);
+          main_process_info_->AddChildProcess(task_cpu_info_ptr);
+          iter->second.AddTask(task_cpu_info_ptr);
+        }
+      }
+    }
+  }
 
   if (!fetched_all_python_multiprocesses_ && tree->IsPython()) {
     py::gil_scoped_acquire gil_acquire;
