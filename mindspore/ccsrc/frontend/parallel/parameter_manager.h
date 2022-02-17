@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <memory>
+#include <unordered_map>
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -40,6 +42,13 @@ void HandleNoUsedParameter(const FuncGraphPtr &root);
 void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
+std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
+std::unordered_map<std::string, std::shared_ptr<TensorLayout>> AdaSumParamTensorLayout(const FuncGraphPtr &root);
+bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+                  std::unordered_map<std::string, std::shared_ptr<TensorLayout>> *adasum_param_tensor_layout_map);
+void HandleMirrorInAdaSum(
+  const FuncGraphPtr &root,
+  std::unordered_map<std::string, std::shared_ptr<TensorLayout>> *adasum_param_tensor_layout_map);
 bool ParameterIsCloned(const AnfNodePtr &parameter_node);
 bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num = 1);
 }  // namespace parallel

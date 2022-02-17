@@ -86,8 +86,6 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node);
 
 void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node);
 
-std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
-
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
                                     size_t max_depth);
 
