@@ -125,6 +125,7 @@ Task::Task(const std::string &myName, const std::function<Status()> &f, int32_t 
 
 Status Task::Run() {
   Status rc;
+  std::lock_guard<std::mutex> lk(mux_);
   if (running_ == false) {
     try {
       thrd_ = std::async(std::launch::async, std::ref(*this));
