@@ -58,6 +58,60 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
+STATUS TfliteModelParser::TfliteOpVerify(const std::unique_ptr<tflite::SubGraphT> &subgraph,
+                                         const size_t operator_codes_size, const size_t all_tensor_size) {
+  int32_t all_tensor_num = static_cast<int32_t>(all_tensor_size);
+  for (auto &op : subgraph->operators) {
+    if (op == nullptr) {
+      MS_LOG(ERROR) << "tflite contain nullptr op.";
+      return RET_ERROR;
+    }
+    if (op->opcode_index >= operator_codes_size) {
+      MS_LOG(ERROR) << "op is not a tflite opcode";
+      return RET_ERROR;
+    }
+    if (std::any_of(op->inputs.begin(), op->inputs.end(), [&all_tensor_num](int32_t index) {
+          return index >= all_tensor_num || index + all_tensor_num < 0;
+        })) {
+      MS_LOG(ERROR) << "op input illegal.";
+      return RET_ERROR;
+    }
+    if (std::any_of(op->outputs.begin(), op->outputs.end(), [&all_tensor_num](int32_t index) {
+          return index >= all_tensor_num || index + all_tensor_num < 0;
+        })) {
+      MS_LOG(ERROR) << "op output illegal.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+STATUS TfliteModelParser::TfliteTensorVerify(const std::unique_ptr<tflite::SubGraphT> &subgraph,
+                                             const size_t model_buffers_size) {
+  for (auto &tensor : subgraph->tensors) {
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "tflite model contain nullptr tensor.";
+      return RET_ERROR;
+    }
+    if (tensor->buffer >= model_buffers_size) {
+      MS_LOG(ERROR) << "tflite tensor buffer index beyond upper limit.";
+      return RET_ERROR;
+    }
+    if (tensor->quantization != nullptr && !tensor->quantization->scale.empty()) {
+      auto scale_size = tensor->quantization->scale.size();
+      auto zp_size = tensor->quantization->zero_point.size();
+      auto min_size = tensor->quantization->min.size();
+      auto max_size = tensor->quantization->max.size();
+      if ((zp_size != 0 && zp_size != scale_size) || (min_size != 0 && min_size != scale_size) ||
+          (max_size != 0 && max_size != scale_size)) {
+        MS_LOG(ERROR) << "The element numbers of non-empty quantization parameters must be same.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS TfliteModelParser::TfliteModelVerify() {
   if (tflite_model_->subgraphs.empty()) {
     MS_LOG(ERROR) << "tflite model does not has a main graph.";
@@ -71,46 +125,34 @@ STATUS TfliteModelParser::TfliteModelVerify() {
       MS_LOG(ERROR) << "tflite contain nullptr subgraph.";
       return RET_ERROR;
     }
-    auto all_singraph_tensor_size = subgraph->tensors.size();
+    auto all_subgraph_tensor_size = subgraph->tensors.size();
     if (subgraph->inputs.empty() || subgraph->outputs.empty()) {
       MS_LOG(ERROR) << "tflite subgraph inputs or outputs is empty.";
       return RET_ERROR;
     }
-    if (std::any_of(subgraph->inputs.begin(), subgraph->inputs.end(), [&all_singraph_tensor_size](int32_t index) {
-          return index >= static_cast<int32_t>(all_singraph_tensor_size) || index < 0;
+    if (std::any_of(subgraph->inputs.begin(), subgraph->inputs.end(), [&all_subgraph_tensor_size](int32_t index) {
+          return index >= static_cast<int32_t>(all_subgraph_tensor_size) || index < 0;
         })) {
       MS_LOG(ERROR) << "tflite input illegal.";
       return RET_ERROR;
     }
-    if (std::any_of(subgraph->outputs.begin(), subgraph->outputs.end(), [&all_singraph_tensor_size](int32_t index) {
-          return index >= static_cast<int32_t>(all_singraph_tensor_size) || index < 0;
+    if (std::any_of(subgraph->outputs.begin(), subgraph->outputs.end(), [&all_subgraph_tensor_size](int32_t index) {
+          return index >= static_cast<int32_t>(all_subgraph_tensor_size) || index < 0;
         })) {
       MS_LOG(ERROR) << "tflite output illegal.";
       return RET_ERROR;
     }
-    for (auto &op : subgraph->operators) {
-      if (op == nullptr) {
-        MS_LOG(ERROR) << "tflite contain nullptr op.";
-        return RET_ERROR;
-      }
-      if (op->opcode_index >= tflite_model_operator_codes_size) {
-        MS_LOG(ERROR) << "op is not a tflite opcode";
-        return RET_ERROR;
-      }
+    auto ret = TfliteOpVerify(subgraph, tflite_model_operator_codes_size, all_subgraph_tensor_size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Tflite op verification dose not pass.";
+      return RET_ERROR;
     }
-
-    for (auto &tensor : subgraph->tensors) {
-      if (tensor == nullptr) {
-        MS_LOG(ERROR) << "tflite model contain nullptr tensor.";
-        return RET_ERROR;
-      }
-      if (tensor->buffer >= tflite_model_buffers_size) {
-        MS_LOG(ERROR) << "tflite tensor buffer index beyond upper limit.";
-        return RET_ERROR;
-      }
+    ret = TfliteTensorVerify(subgraph, tflite_model_buffers_size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Tflite Tensor verification dose not pass.";
+      return RET_ERROR;
     }
   }
-
   return RET_OK;
 }
 
@@ -353,18 +395,13 @@ STATUS TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tens
       return RET_NULL_PTR;
     }
 
-    if (!tflite_tensor->quantization->scale.empty()) {
-      quant_param->scale = tflite_tensor->quantization->scale[i];
-    }
-
+    quant_param->scale = tflite_tensor->quantization->scale[i];
     if (!tflite_tensor->quantization->zero_point.empty()) {
       quant_param->zeroPoint = tflite_tensor->quantization->zero_point[i];
     }
-
     if (!tflite_tensor->quantization->min.empty()) {
       quant_param->min = tflite_tensor->quantization->min[i];
     }
-
     if (!tflite_tensor->quantization->max.empty()) {
       quant_param->max = tflite_tensor->quantization->max[i];
     }

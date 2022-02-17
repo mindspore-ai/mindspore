@@ -185,11 +185,13 @@ int MindirAdjust::AdjustInputDataType(AnfNodePtr anf_node) {
   MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
   auto param_node = anf_node->cast<ParameterPtr>();
   MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "param_node is nullptr");
-  auto abstract_tensor = param_node->abstract()->cast<abstract::AbstractTensorPtr>();
+  auto abstract = param_node->abstract();
+  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr");
+  auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "param node has no abstract tensor.");
   auto tensor_element = abstract_tensor->element();
   MS_CHECK_TRUE_MSG(tensor_element != nullptr, RET_ERROR, "abstract tensor's element is null.");
-  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  auto type_ptr = tensor_element->GetTypeTrack();
   MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "Type pointer is null.");
   auto org_type = type_ptr->type_id();
   if (!param_node->has_default() && (org_type == kNumberTypeInt64 || org_type == kNumberTypeFloat64)) {

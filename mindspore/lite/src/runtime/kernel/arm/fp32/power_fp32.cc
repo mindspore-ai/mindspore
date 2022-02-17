@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  MS_CHECK_TRUE_MSG(in_tensors_.size() == C2NUM, RET_ERROR, "Only support Power op with 2 inputs.");
   auto exp_datatype = in_tensors_.at(1)->data_type();
   MS_CHECK_TRUE_MSG((exp_datatype == kNumberTypeFloat32 || exp_datatype == kNumberTypeFloat ||
                      exp_datatype == kNumberTypeInt32 || exp_datatype == kNumberTypeInt),
@@ -70,7 +70,6 @@ int PowerCPUKernel::RunImpl(int task_id) const {
   if (len <= 0) {
     return RET_OK;
   }
-  MS_ASSERT(in_tensors_.size() == 2);
   float *exp_addr = reinterpret_cast<float *>(in_tensors_[1]->data());
   CHECK_NULL_RETURN(exp_addr);
   bool broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
