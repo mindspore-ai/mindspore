@@ -498,8 +498,12 @@ int TrainSession::MixPrecisionExecKernels(const KernelCallBack &before, const Ke
   float scale = cfg_.mix_precision_cfg_.loss_scale_;
   for (auto *kernel : run_kernels) {
     MS_ASSERT(kernel != nullptr);
-    MixPrecisionPreProcess(kernel, scale);
-    auto ret = kernel->Execute(before, after);
+    auto ret = MixPrecisionPreProcess(kernel, scale);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "MixPrecisionPreProcess failed.";
+      return RET_ERROR;
+    }
+    ret = kernel->Execute(before, after);
     if (RET_OK != ret) {
       MixPrecisionPostProcess(kernel);
       // decrease loss scale in case of nan or inf
@@ -758,7 +762,11 @@ void TrainSession::CompileOptimizedKernels() {
       std::copy(kernel->in_tensors().begin(), kernel->in_tensors().end(), std::back_inserter(out_tensor));
       if (cfg_.accumulate_gradients_) {
         auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
-        optimizer->SetOptimizerMode(kernel::WeightUpdateMode::ACCUMULATE_GRADS);
+        auto ret = optimizer->SetOptimizerMode(kernel::WeightUpdateMode::ACCUMULATE_GRADS);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "SetOptimizerMode failed.";
+          return;
+        }
       }
     }
   }
@@ -832,7 +840,7 @@ int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &para
   for (size_t ix = 0; ix < params.size(); ix++) {
     auto param = params[ix];
     if (param == nullptr) {
-      MS_LOG(ERROR) << "Param tensor " << param->tensor_name() << " is null.";
+      MS_LOG(ERROR) << "Param tensor is null.";
       return RET_ERROR;
     }
     bool found = false;
@@ -876,7 +884,7 @@ int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradient
   for (size_t ix = 0; ix < gradients.size(); ix++) {
     auto gradient = gradients[ix];
     if (gradient == nullptr) {
-      MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " is null.";
+      MS_LOG(ERROR) << "gradient tensor is null.";
       return RET_ERROR;
     }
     bool found = false;
@@ -904,7 +912,10 @@ int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradient
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
-      optimizer->set_grad_sum_valid();
+      if (optimizer->set_grad_sum_valid() != RET_OK) {
+        MS_LOG(ERROR) << "set grad sum valid failed.";
+        return RET_ERROR;
+      }
       auto ret = optimizer->OptimizerStep();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "failed to optimize model weights";
