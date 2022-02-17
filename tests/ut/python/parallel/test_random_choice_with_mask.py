@@ -51,6 +51,7 @@ def test_auto_parallel_random_choice_with_mask():
     Description: auto parallel
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net = Net()
     compile_net(net, _input_x)
@@ -62,9 +63,24 @@ def test_random_choice_with_mask_wrong_strategy():
     Description: illegal strategy
     Expectation: raise RuntimeError
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy = ((8, 1),)
     net = Net(strategy)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _input_x)
+    context.reset_auto_parallel_context()
+
+
+def test_random_choice_with_mask_not_gpu():
+    """
+    Feature: RandomChoiceWithMask
+    Description: not compile with gpu backend
+    Expectation: raise RuntimeError
+    """
+    context.set_context(device_target="Ascend")
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
+    net = Net()
     with pytest.raises(RuntimeError):
         compile_net(net, _input_x)
     context.reset_auto_parallel_context()

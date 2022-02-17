@@ -19,6 +19,18 @@
 
 namespace mindspore {
 namespace parallel {
+int64_t RandomChoiceWithMaskInfo::SEED_NUM = 1;
+
+Status RandomChoiceWithMaskInfo::GetAttrs() {
+  if (attrs_.find(SEED) != attrs_.end()) {
+    seed_ = GetValue<int64_t>(attrs_[SEED]);
+  }
+  if (attrs_.find(SEED2) != attrs_.end()) {
+    seed2_ = GetValue<int64_t>(attrs_[SEED2]);
+  }
+  return SUCCESS;
+}
+
 Status RandomChoiceWithMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy.";
@@ -70,6 +82,40 @@ Status RandomChoiceWithMaskInfo::InferAsLossDivisor() {
                << ", the output tensor map is " << ShapeToString(outputs_tensor_map_[0]) << ", loss divisor is "
                << as_loss_divisor_;
   return SUCCESS;
+}
+
+void RandomChoiceWithMaskInfo::ReplaceNodeInputOrAttrs() {
+  if (seed_ != 0 || seed2_ != 0) {
+    return;
+  }
+  if (cnode_->HasAttr(SEED)) {
+    cnode_->EraseAttr(SEED);
+  }
+  if (cnode_->HasAttr(SEED2)) {
+    cnode_->EraseAttr(SEED2);
+  }
+  cnode_->AddAttr(SEED, MakeValue(SEED_NUM));
+  cnode_->AddAttr(SEED2, MakeValue(SEED_NUM));
+  ++SEED_NUM;
+}
+
+void RandomChoiceWithMaskInfo::CheckGPUBackend() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend != kGPUDevice) {
+    MS_LOG(EXCEPTION) << name_ << ": The backend is " << backend << " , only support on GPU backend now.";
+  }
+}
+
+Status RandomChoiceWithMaskInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  CheckGPUBackend();
+  return OperatorInfo::Init(in_strategy, out_strategy);
+}
+
+Status RandomChoiceWithMaskInfo::InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) {
+  CheckGPUBackend();
+  return OperatorInfo::InitForCostModel(strategy, out_strategy);
 }
 }  // namespace parallel
 }  // namespace mindspore
