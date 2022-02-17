@@ -2395,11 +2395,11 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
   top_cell()->set_k_pynative_cell_ptr(ad::GradPynativeCellBegin(curr_g()->parameters(), input_param_values));
 }
 
-void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args) {
+void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py::object &cell, const py::args &args) {
   if (cell_stack_.empty() || IsNestedGrad()) {
     if (cell_stack_.empty() && !grad_is_running_) {
       MS_LOG(DEBUG) << "Make new topest graph";
-      MakeNewTopGraph(cell_id, args, true);
+      MakeNewTopGraph(cell_id, cell, args, true);
     } else if (grad_is_running_ && IsBpropGraph(cell_id)) {
       MS_LOG(DEBUG) << "Run bprop cell";
       auto fg = std::make_shared<FuncGraph>();
@@ -2410,12 +2410,12 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
       bprop_grad_stack_.push(std::make_pair(cell_id, false));
     } else if (grad_is_running_ && top_cell()->grad_order() != grad_order_) {
       MS_LOG(DEBUG) << "Nested grad graph existed in bprop";
-      MakeNewTopGraph(cell_id, args, false);
+      MakeNewTopGraph(cell_id, cell, args, false);
       bprop_grad_stack_.push(std::make_pair(cell_id, true));
     } else if (!cell_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_) {
       MS_LOG(DEBUG) << "Nested grad graph existed in construct";
       auto cur_top_is_dynamic = top_cell()->is_dynamic();
-      MakeNewTopGraph(cell_id, args, false);
+      MakeNewTopGraph(cell_id, cell, args, false);
       top_cell()->set_is_dynamic(cur_top_is_dynamic);
     }
   }
@@ -2468,7 +2468,7 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
     custom_bprop_cell_count_ += 1;
   }
   // Make top graph and init resource for resource and df_builder
-  InitResourceAndDfBuilder(cell_id, args);
+  InitResourceAndDfBuilder(cell_id, cell, args);
   // Check whether cell has dynamic construct
   if (!top_cell()->is_dynamic()) {
     bool is_dynamic = parse::DynamicParser::IsDynamicCell(cell);
@@ -2479,8 +2479,9 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   }
 }
 
-void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest) {
-  pipeline::CheckArgsValid(args);
+void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell, const py::args &args,
+                                   bool is_topest) {
+  pipeline::CheckArgsValid(cell, args);
   // Record input args info
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
