@@ -777,29 +777,6 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   return ret;
 }
 
-AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(input->shape());
-  auto shape = input->shape()->shape();
-  bool has_dyn_shape = std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
-  ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
-  if (has_dyn_shape) {
-    auto elem = std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64));
-    auto min_value = MakeValue(input->shape()->min_shape());
-    auto max_value = MakeValue(input->shape()->max_shape());
-    auto tensor = std::make_shared<AbstractTensor>(elem, std::make_shared<Shape>(tensor_shp));
-    tensor->set_value_range(min_value, max_value);
-    return tensor;
-  }
-  auto shp_buf_size = sizeof(int64_t) * shape.size();
-  auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, tensor_shp, shape.data(), shp_buf_size);
-
-  return tensor->ToAbstract();
-}
-
 AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();

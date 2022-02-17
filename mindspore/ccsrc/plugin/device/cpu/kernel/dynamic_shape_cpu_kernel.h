@@ -25,10 +25,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DynamicShapeCpuKernelMod : public NativeCpuKernelMod {
+class TensorShapeCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DynamicShapeCpuKernelMod() = default;
-  ~DynamicShapeCpuKernelMod() override = default;
+  TensorShapeCpuKernelMod() = default;
+  ~TensorShapeCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -36,16 +36,27 @@ class DynamicShapeCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, float);
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int8_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int16_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int32_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, int64_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint8_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint16_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint32_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, uint64_t)
-MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), DynamicShapeCpuKernelMod, bool)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(DynamicShape, KernelAttr(), TensorShapeCpuKernelMod, bool)
+
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, float);
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, int8_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, int16_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, int32_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, int64_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, uint8_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, uint16_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, uint32_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, uint64_t)
+MS_REG_CPU_KERNEL_T(TensorShape, KernelAttr(), TensorShapeCpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -24,23 +24,24 @@
 using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 namespace mindspore {
 namespace kernel {
-class DynamicShapeKernel : public HostDynamicKernel {
+class TensorShapeKernel : public HostDynamicKernel {
  public:
-  DynamicShapeKernel(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
-  ~DynamicShapeKernel() override = default;
+  TensorShapeKernel(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
+  ~TensorShapeKernel() override = default;
   void Execute() override;
   void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 
-class DynamicShapeKernelMod : public HostKernelMod {
+class TensorShapeKernelMod : public HostKernelMod {
  public:
-  DynamicShapeKernelMod() = default;
-  ~DynamicShapeKernelMod() override = default;
+  TensorShapeKernelMod() = default;
+  ~TensorShapeKernelMod() override = default;
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 };
-MS_HOST_REG_KERNEL(DynamicShape, DynamicShapeKernelMod);
+MS_HOST_REG_KERNEL(DynamicShape, TensorShapeKernelMod);
+MS_HOST_REG_KERNEL(TensorShape, TensorShapeKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
 

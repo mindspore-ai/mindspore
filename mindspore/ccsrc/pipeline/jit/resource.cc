@@ -224,8 +224,8 @@ BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
     {kObjectTypeTensorType,
      {
-       {"shape", std::string("shape_")},        // C.shape_
-       {"dtype", std::string("dtype_")},        // C.dtype_
+       {"shape", prim::kPrimShape},             // C.shape_
+       {"dtype", prim::kPrimDType},             // C.dtype_
        {"size", std::string("size_")},          // C.size_
        {"ndim", std::string("ndim_")},          // C.ndim_
        {"T", std::string("T_")},                // C.T_

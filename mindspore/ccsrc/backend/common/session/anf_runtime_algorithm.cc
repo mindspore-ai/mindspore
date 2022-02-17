@@ -2270,7 +2270,8 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
 
 bool AnfRuntimeAlgorithm::IsHostKernel(const CNodePtr &kernel_node) {
   const std::set<std::string> host_kernel = {prim::kPrimDynamicShape->name(), prim::kPrimReshape->name(),
-                                             prim::kPrimDynamicBroadcastGradientArgs->name()};
+                                             prim::kPrimDynamicBroadcastGradientArgs->name(),
+                                             prim::kPrimTensorShape->name()};
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);
   if (host_kernel.find(op_name) == host_kernel.end()) {
     return false;

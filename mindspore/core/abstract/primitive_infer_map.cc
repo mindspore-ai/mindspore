@@ -157,7 +157,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimComputeAccidentalHits, R{InferImplComputeAccidentalHits, nullptr, true}},
     {prim::kPrimDynamicStitch, R{InferImplDynamicStitch, nullptr, true}},
     {prim::kPrimPadAndShift, R{InferImplPadAndShift, nullptr, true}},
-    {prim::kPrimDynamicShape, R{InferImplDynamicShape, nullptr, true}},
     {prim::kPrimMapUniform, R{InferImplMapUniform, nullptr, true}},
     {prim::kPrimSplit, R{InferImplSplit, nullptr, true}},
     {prim::kPrimSequenceMask, R{InferImplSequenceMask, nullptr, true}},

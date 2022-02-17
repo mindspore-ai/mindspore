@@ -16,17 +16,18 @@
 import functools
 import numpy as np
 import pytest
-from mindspore.ops.signature import sig_rw, sig_dtype, make_sig
-
 import mindspore as ms
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import prim_attr_register
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import PrimitiveWithInfer
-import mindspore.context as context
+from mindspore.ops.signature import sig_rw, sig_dtype, make_sig
+
+
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -273,6 +274,8 @@ class UnpackNet(Cell):
 
     def construct(self, x):
         return self.unstack(x)
+
+
 class SpaceToDepthNet(Cell):
     def __init__(self):
         super(SpaceToDepthNet, self).__init__()
@@ -313,6 +316,17 @@ class SpaceToBatchNDNet(Cell):
 
     def construct(self, x):
         return self.space_to_batch_nd(x)
+
+
+class TensorShapeNet(Cell):
+    def __init__(self):
+        super(TensorShapeNet, self).__init__()
+        self.shape = P.TensorShape()
+        self.unique = P.Unique()
+
+    def construct(self, x):
+        x, _ = self.unique(x)
+        return self.shape(x)
 
 
 class RangeNet(Cell):
@@ -367,13 +381,15 @@ test_case_array_ops = [
     ('RangeNet', {
         'block': RangeNet(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),
+    ('TensorShapeNet', {'block': TensorShapeNet(), 'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]})
 ]
 
 test_case_lists = [test_case_array_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
+
+
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
-
 
 
 @non_graph_engine
@@ -393,6 +409,8 @@ raise_set = [
     ('ReduceSum_Error', {
         'block': (lambda x: P.ReduceSum(keep_dims=1), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]}),
+    ('TensorShapeNet_Error', {'block': (lambda x: P.TensorSHape(), {'exception': TypeError}),
+                              'desc_inputs': [(Tensor(np.ones(shape=[3, 1, 5])), Tensor(np.ones(shape=[3, 1, 5])))]})
 ]
 
 

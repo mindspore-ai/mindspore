@@ -24,7 +24,7 @@ constexpr size_t kDynamicShapeOutputNum = 1;
 }  // namespace
 
 template <typename T>
-void DynamicShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void TensorShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
@@ -35,9 +35,9 @@ void DynamicShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool DynamicShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool TensorShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicShapeOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   if (node_ == nullptr) {
