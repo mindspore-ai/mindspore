@@ -16,7 +16,6 @@
 from .ops import Cholesky
 from .ops import EighNet
 from .ops import LU
-from .ops import LUSolver
 from .ops import SolveTriangular
 from .utils import _nd_transpose
 from .utils_const import _raise_value_error, _raise_type_error, _type_check
@@ -561,7 +560,6 @@ def lu_pivots_to_permutation(pivots, permutation_size: int):
     permutation = mnp.array(permutation)
     if permutation_size == 0:
         return permutation
-
     for i in range(k):
         j = pivots[..., i]
         loc = mnp.ix_(*(mnp.arange(0, b) for b in batch_dims))
@@ -570,29 +568,6 @@ def lu_pivots_to_permutation(pivots, permutation_size: int):
         permutation[..., i] = y
         permutation[loc + (j,)] = x
     return permutation
-
-
-def lu_solve_core(in_lu, permutation, b, trans):
-    """ core implementation of lu solve"""
-    m = in_lu.shape[0]
-    res_shape = b.shape[1:]
-    prod_result = 1
-    for sh in res_shape:
-        prod_result *= sh
-    x = mnp.reshape(b, (m, prod_result))
-    trans_str = None
-    if trans == 0:
-        trans_str = "N"
-        x = x[permutation, :]
-    elif trans == 1:
-        trans_str = "T"
-    elif trans == 2:
-        trans_str = "C"
-    else:
-        _raise_value_error("trans error, it's value must be 0, 1, 2")
-    ms_lu_solve = LUSolver(trans_str)
-    output = ms_lu_solve(in_lu, x)
-    return mnp.reshape(output, b.shape)
 
 
 def check_lu_shape(in_lu, b):
@@ -611,8 +586,6 @@ def check_lu_shape(in_lu, b):
     else:
         if b.shape[-2] != in_lu.shape[-1]:
             _raise_value_error("LU decomposition: lu matrix and b must have same number of dimensions")
-
-    return True
 
 
 def lu_factor(a, overwrite_a=False, check_finite=True):
@@ -751,10 +724,10 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     _type_check('permute_l', permute_l, [bool], 'lu')
     a_type = F.dtype(a)
     if len(a.shape) < 2:
-        _raise_value_error("input matrix dimension of lu must larger than 2D.")
+        _raise_value_error("mindspore.scipy.linalg.lu input a's dimension must larger than 2D.")
     if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
-            "mindspore.scipy.linalg.lu only support (Tensor[int32], Tensor[int64], Tensor[float32], "
+            "mindspore.scipy.linalg.lu input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
     if a_type not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float64)
@@ -765,8 +738,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     if m > n:
         _raise_value_error("last two dimensions of LU decomposition must be row less or equal to col.")
     k = min(m, n)
-    a_dtype = a.dtype
-    l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=a_dtype)
+    l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=a_type)
     u = mnp.triu(m_lu)[:k, :]
     if permute_l:
         return mnp.dot(p, l), u
@@ -819,22 +791,29 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
     _type_check('trans', trans, [int], 'lu_solve')
     m_lu, pivots = lu_and_piv
     m_lu_type = F.dtype(m_lu)
-    if len(m_lu.shape) < 2:
-        _raise_value_error("input matrix dimension of lu_solve must larger than 2D.")
     if m_lu_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
         _raise_type_error(
             "mindspore.scipy.linalg.lu_solve only support (Tensor[int32], Tensor[int64], Tensor[float32], "
             "Tensor[float64]).")
     if m_lu_type not in (mstype.float32, mstype.float64):
         m_lu = F.cast(m_lu, mstype.float64)
-    # 1. check shape
+    # 1. Check shape
     check_lu_shape(m_lu, b)
     # here permutation array has been calculated, just use it.
-    # 2. calculate permutation
+    # 2. Calculate permutation
     permutation = lu_pivots_to_permutation(pivots, pivots.size)
-    # 3. rhs_vector
+    # 3. Get rhs_vector
     rhs_vector = m_lu.ndim == b.ndim + 1
-    x = lu_solve_core(m_lu, permutation, b, trans)
+    x = b[permutation, :]
+    if trans == 0:
+        x = SolveTriangular(lower=True, unit_diagonal=True, trans='N')(m_lu, x)
+        x = SolveTriangular(lower=False, unit_diagonal=False, trans='N')(m_lu, x)
+    elif trans in (1, 2):
+        x = SolveTriangular(lower=False, unit_diagonal=False, trans='T')(m_lu, x)
+        x = SolveTriangular(lower=True, unit_diagonal=True, trans='T')(m_lu, x)
+    else:
+        _raise_value_error("mindspore.scipy.linalg.lu_solve input trans must be 0,1 or 2, but got ", trans)
+    x = mnp.reshape(x, b.shape)
     return x[..., 0] if rhs_vector else x
 
 
