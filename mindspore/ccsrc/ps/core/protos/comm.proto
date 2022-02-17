@@ -43,6 +43,12 @@ enum NodeCommand {
   SCHEDULER_RECOVERY = 13;
   // This command is used to send prepare building network msg.
   PREPARE_BUILDING_NETWORK = 14;
+  // Register address for actor's route table.
+  REGISTER_ACTOR_ROUTE = 15;
+  // Delete address of actor.
+  DELETE_ACTOR_ROUTE = 16;
+  // Lookup address of the actor.
+  LOOKUP_ACTOR_ROUTE = 17;
 }
 
 enum NodeRole {
@@ -207,4 +213,15 @@ message EventRespMessage {
 
 message ScaleInFinishMessage {
   bool is_all_nodes_registered = 1;
+}
+
+message GeneralResponseMsg {
+  bool is_success = 1;
+  string error = 2;
+}
+
+message ActorAddress {
+  string actor_id = 1;
+  string ip = 2;
+  uint32 port = 3;
 }

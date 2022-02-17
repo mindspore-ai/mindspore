@@ -42,10 +42,12 @@
 #include "ps/core/leader_scaler.h"
 #include "ps/core/recovery_base.h"
 #include "ps/core/instance_manager.h"
+#include "distributed/cluster/actor_route_table_service.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
+using distributed::cluster::ActorRouteTableService;
 class SchedulerNode : public Node {
  public:
   SchedulerNode()
@@ -60,7 +62,8 @@ class SchedulerNode : public Node {
         leader_scaler_(nullptr),
         scheduler_recovery_(nullptr),
         persistent_cmd_(PersistentCommand::DEFAULT),
-        is_worker_timeout_(false) {}
+        is_worker_timeout_(false),
+        actor_route_table_service_(nullptr) {}
   ~SchedulerNode() override;
 
   typedef void (SchedulerNode::*ResponseHandler)(const std::shared_ptr<TcpServer> &server,
@@ -80,6 +83,10 @@ class SchedulerNode : public Node {
   void StartUpdateClusterStateTimer();
   // Persistent timer, periodically trigger persistent behavior.
   void StartUpdatePersistentCommandTimer();
+
+  // Register and initialize the actor route table service.
+  void RegisterActorRouteTableServiceHandler();
+  void InitializeActorRouteTableService();
 
   const std::shared_ptr<TcpClient> &GetOrCreateClient(const NodeInfo &node_info);
 
@@ -102,6 +109,18 @@ class SchedulerNode : public Node {
   // Process scale_in_done messages from workers/servers
   void ProcessSendEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                         const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process register actor route messages from other nodes.
+  void ProcessRegisterActorRoute(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                                 const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process delete actor route messages from other nodes.
+  void ProcessDeleteActorRoute(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                               const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
+  // Process lookup actor route messages from other nodes.
+  void ProcessLookupActorRoute(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                               const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   // Determine whether the registration request of the node should be rejected, the registration of the
   // alive node should be rejected.
@@ -176,6 +195,10 @@ class SchedulerNode : public Node {
 
   bool SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos);
 
+  // Responding peer with the general response message.
+  void GeneralResponse(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
+                       const std::shared_ptr<MessageMeta> &meta, bool is_success, const std::string &error);
+
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
@@ -214,6 +237,8 @@ class SchedulerNode : public Node {
   std::atomic<bool> is_worker_timeout_;
   // This is a map of register connection fd to client node id
   std::unordered_map<int, std::string> register_connection_fd_;
+
+  std::unique_ptr<ActorRouteTableService> actor_route_table_service_;
 };
 }  // namespace core
 }  // namespace ps
