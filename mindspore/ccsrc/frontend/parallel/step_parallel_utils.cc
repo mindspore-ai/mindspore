@@ -477,32 +477,6 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   return new_node;
 }
 
-AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() <= index) {
-    MS_LOG(EXCEPTION) << "cnode inputs size: " << cnode->size() << " is less equal index: " << index;
-  }
-  auto input0 = cnode->input(index);
-  if (!input0->isa<CNode>()) {
-    return input0;
-  }
-  auto prim = GetCNodePrimitive(input0);
-  MS_EXCEPTION_IF_NULL(prim);
-  while (prim->name() == LOAD || prim->name() == DEPEND || prim->name() == UPDATESTATE) {
-    if (prim->name() == LOAD || prim->name() == DEPEND) {
-      input0 = input0->cast<CNodePtr>()->input(1);
-    } else if (prim->name() == UPDATESTATE) {
-      input0 = input0->cast<CNodePtr>()->input(2);
-    }
-    if (!input0->isa<CNode>()) {
-      return input0;
-    }
-    prim = GetCNodePrimitive(input0);
-    MS_EXCEPTION_IF_NULL(prim);
-  }
-  return input0;
-}
-
 void LabelGenMaskMicro(const FuncGraphPtr &root) {
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);

@@ -301,20 +301,24 @@ RankList DeviceManager::FindRankListByHashName(const std::string &hash_name) {
 
 std::string HashName(const std::string &origin_name) { return std::to_string(std::hash<string>{}(origin_name)); }
 
-// Group name is generated using the increasing ranks of the devices.
-// E.g. the devices' ranks are '<0, 5, 3, 7, 1>', and the generated group name
-// is '0-1-3-5-7'.
-std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
+std::string RankListName(const RankList &ranks) {
   std::string rank_list_name;
-  std::vector<int64_t>::iterator it;
-  std::sort(ranks.begin(), ranks.end());  // sorted in increasing order
-  for (it = ranks.begin(); it != ranks.end(); ++it) {
+  for (auto it = ranks.begin(); it != ranks.end(); ++it) {
     if (it == ranks.begin()) {
       rank_list_name = std::to_string(*it);
     } else {
       rank_list_name += "-" + std::to_string(*it);
     }
   }
+  return rank_list_name;
+}
+
+// Group name is generated using the increasing ranks of the devices.
+// E.g. the devices' ranks are '<0, 5, 3, 7, 1>', and the generated group name
+// is '0-1-3-5-7'.
+std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
+  std::sort(ranks.begin(), ranks.end());  // sorted in increasing order
+  std::string rank_list_name = RankListName(ranks);
 
   // hash rank-list-name and add ranks' size as prefix
   std::string group_hash_name = HashName(rank_list_name);

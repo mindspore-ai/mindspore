@@ -23,6 +23,7 @@
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/resource.h"
 
@@ -50,28 +51,6 @@ Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_val
   return SUCCESS;
 }
 
-Status GetInput(const ValuePtr &input_value, std::vector<int64_t> *input) {
-  MS_EXCEPTION_IF_NULL(input_value);
-  ValueTuplePtr value_tuple = input_value->cast<ValueTuplePtr>();
-  if (value_tuple == nullptr) {
-    MS_LOG(ERROR) << "Input value must be ValueTuplePtr.";
-    return FAILED;
-  }
-
-  for (auto &element : value_tuple->value()) {
-    MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<Int64Imm>()) {
-      int64_t value = element->cast<Int64ImmPtr>()->value();
-      input->push_back(value);
-    } else {
-      MS_LOG(ERROR) << "The value must be int64";
-      return FAILED;
-    }
-  }
-
-  return SUCCESS;
-}
-
 Status StridedSliceInfo::GetAttrs() {
   if (attrs_.size() < STRIDED_SLICE_ATTRS_SIZE) {
     MS_LOG(ERROR) << name_ << ": The size of attrs small than " << STRIDED_SLICE_ATTRS_SIZE;
@@ -91,9 +70,9 @@ Status StridedSliceInfo::GetAttrs() {
     return FAILED;
   }
 
-  if ((GetInput(input_value_[STRIDED_SLICE_BEGIN_INDEX], &begin_) != SUCCESS) ||
-      (GetInput(input_value_[STRIDED_SLICE_END_INDEX], &end_) != SUCCESS) ||
-      (GetInput(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS)) {
+  if ((TransValueSequeueToVector(input_value_[STRIDED_SLICE_BEGIN_INDEX], &begin_) != SUCCESS) ||
+      (TransValueSequeueToVector(input_value_[STRIDED_SLICE_END_INDEX], &end_) != SUCCESS) ||
+      (TransValueSequeueToVector(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS)) {
     return FAILED;
   }
 

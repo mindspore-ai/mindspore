@@ -31,6 +31,7 @@ constexpr int64_t NO_SPLIT_MAP = -1;
 constexpr int64_t NO_SPLIT_STRATEGY = 1;
 constexpr int64_t SPLIT_FLAG = 1;
 constexpr int64_t NO_SPLIT_FLAG = 0;
+constexpr int64_t ADASUM_MIN_DIS = 8;
 constexpr size_t MATMUL_ATTRS_SIZE = 2;
 constexpr size_t SLICE_BEGIN_INDEX = 1;
 constexpr size_t SLICE_SIZE_INDEX = 2;

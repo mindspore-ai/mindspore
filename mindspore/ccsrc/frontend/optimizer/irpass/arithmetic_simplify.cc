@@ -28,7 +28,15 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
   PConstant const_(node);
   PConstant const_2(node);
   PConstant any_const(node);
-
+  // if node has keep_alive attr, it would not be eliminated.
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim->HasAttr("keep_alive") && GetValue<bool>(prim->GetAttr("keep_alive"))) {
+      MS_LOG(INFO) << "keep node " << node->fullname_with_scope() << " alive";
+      return nullptr;
+    }
+  }
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     MATCH_REPLACE(node, x + zero_, x);                                                           // Add by zero
     MATCH_REPLACE(node, x + zero_scalar_, x);                                                    // Add by zero

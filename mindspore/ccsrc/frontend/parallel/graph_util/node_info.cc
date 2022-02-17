@@ -418,5 +418,53 @@ void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_a
     }
   }
 }
+
+// Convert ValueTuple/ValueList to vector
+Status TransValueSequeueToVector(const ValuePtr &input_value, std::vector<int64_t> *input) {
+  MS_EXCEPTION_IF_NULL(input_value);
+  if (!input_value->isa<ValueSequeue>()) {
+    MS_LOG(ERROR) << "Input value must be ValueTuplePtr.";
+    return FAILED;
+  }
+  ValueSequeuePtr value_seq = input_value->cast<ValueSequeuePtr>();
+  for (auto &element : value_seq->value()) {
+    MS_EXCEPTION_IF_NULL(element);
+    if (element->isa<Int64Imm>()) {
+      int64_t value = element->cast<Int64ImmPtr>()->value();
+      input->push_back(value);
+    } else {
+      MS_LOG(ERROR) << "The value must be int64";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
+// Get the input of cnode, skipping DEPEND/LOAD/UPDATESTATE
+const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() <= index) {
+    MS_LOG(EXCEPTION) << "cnode inputs size: " << cnode->size() << " is less equal index: " << index;
+  }
+  auto input0 = cnode->input(index);
+  if (!input0->isa<CNode>()) {
+    return input0;
+  }
+  auto prim = GetCNodePrimitive(input0);
+  MS_EXCEPTION_IF_NULL(prim);
+  while (prim->name() == LOAD || prim->name() == DEPEND || prim->name() == UPDATESTATE) {
+    if (prim->name() == LOAD || prim->name() == DEPEND) {
+      input0 = input0->cast<CNodePtr>()->input(1);
+    } else {
+      input0 = input0->cast<CNodePtr>()->input(2);
+    }
+    if (!input0->isa<CNode>()) {
+      return input0;
+    }
+    prim = GetCNodePrimitive(input0);
+    MS_EXCEPTION_IF_NULL(prim);
+  }
+  return input0;
+}
 }  // namespace parallel
 }  // namespace mindspore

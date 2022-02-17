@@ -936,79 +936,6 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
   }
 }
 
-static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
-  if (IsValueNode<RefKey>(node)) {
-    std::vector<AnfNodePtr> param_v = FindParameterByRefKeyNode(node, func_graph);
-    if (param_v.size() != 1) {
-      MS_LOG(EXCEPTION) << "FindParameterByRefKeyNode failed, return vector size must be 1, real is  "
-                        << param_v.size();
-    }
-    auto param_ptr = param_v[0]->user_data<parallel::TensorLayout>();
-    if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
-      return std::make_pair(nullptr, true);
-    }
-    return std::make_pair(node, true);
-  }
-  return std::make_pair(nullptr, false);
-}
-
-static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node) {
-  auto param_ptr = node->user_data<parallel::TensorLayout>();
-  if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
-    return std::make_pair(nullptr, false);
-  }
-  return std::make_pair(node, false);
-}
-
-// Only used for InsertMirrorOps
-std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
-  if (!node->isa<Parameter>() && !node->isa<CNode>() && !node->isa<ValueNode>()) {
-    return std::make_pair(nullptr, false);
-  }
-
-  if (node->isa<Parameter>()) {
-    return FindParameterByParameter(node);
-  }
-
-  if (node->isa<ValueNode>()) {
-    return FindParameterByValueNode(node, func_graph);
-  }
-
-  CNodePtr cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!IsValueNode<Primitive>(cnode->input(0))) {
-    for (size_t index = 0; index < cnode->inputs().size(); ++index) {
-      auto res = FindParameter(cnode->input(index), func_graph);
-      if (!res.first) {
-        continue;
-      }
-      return res;
-    }
-  }
-
-  // When not fully use opt shard, allgather and mirror would be both inserted.
-  // Skip allgather here and find parameter recursively.
-  if (IsParallelCareNode(cnode) && !IsInAllGatherNodeList(cnode)) {
-    return std::make_pair(nullptr, false);
-  }
-
-  ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(prim_anf_node);
-  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
-    PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-    MS_EXCEPTION_IF_NULL(prim);
-    if ((prim->name() == DEPEND || prim->name() == LOAD || IsInAllGatherNodeList(cnode)) && index != 1) {
-      continue;
-    }
-    auto res = FindParameter(cnode->input(index), func_graph);
-    if (!res.first) {
-      continue;
-    }
-    return res;
-  }
-  return std::make_pair(nullptr, false);
-}
-
 // only used for FindCNode
 CNodePtr SkipTrivialNodesMoveDown(const FuncGraphManagerPtr &manager, CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -2898,6 +2825,10 @@ void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) 
     if (prim->name() != RESHAPE) {
       continue;
     }
+    Shape origin_dst_shape = GetValue<std::vector<int64_t>>(cnode->input(2)->cast<ValueNodePtr>()->value());
+    if (origin_dst_shape.size() == 1 && origin_dst_shape[0] == -1) {
+      continue;
+    }
     auto root = node->func_graph();
     auto grad_node = FindGrad(cnode, 0);
     if (grad_node) {
@@ -3177,10 +3108,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
-      if (HasStrategy(root)) {
-        MS_LOG(INFO) << "Strategies ignored in " << parallel_mode
-                     << ", set_strategy() only valid in [semi_]auto_parallel.";
-      }
+      MS_LOG(WARNING) << "Strategies would be ignored in " << parallel_mode
+                      << ", shard() only valid in [semi_]auto_parallel.";
       root->set_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY, true);
     }
     ReorderForPipelineSplit(root, manager, pipeline_stages);
@@ -3246,12 +3175,18 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   HandleAdaFactorOpt(root);
 
+  auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
+  bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
+
   // save strategy as checkpoint for multi-train
   if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
     CheckpointStrategy(all_nodes, root);
   }
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
+  if (is_apply_adasum) {
+    HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
+  }
 
   PipelinePostProcess(root, all_nodes);
 

@@ -52,7 +52,24 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
 
 bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index,
                                   bool *is_next_reshape, size_t curr_depth);
+
 void SetUserAttrs(const mindspore::HashMap<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim);
+
+Status TransValueSequeueToVector(const ValuePtr &input_value, std::vector<int64_t> *input);
+
+template <typename T>
+std::shared_ptr<typename std::enable_if<std::is_base_of<ValueSequeue, T>::value, T>::type> TransVectorToValueSequeue(
+  const std::vector<int64_t> &input) {
+  std::vector<ValuePtr> elements;
+  for (auto dim : input) {
+    ValuePtr value_dim = MakeValue<int64_t>(dim);
+    elements.push_back(value_dim);
+  }
+  std::shared_ptr<T> seq_value = std::make_shared<T>(elements);
+  return seq_value;
+}
+
+const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -69,7 +69,6 @@ class DeviceManager {
 
   Device CreateNewDeviceByRank(int64_t rank) const;
   std::vector<Device> CreateDeviceListByRankList(RankList ranks);
-
   std::string GenerateGroupNameByRanks(RankList dev_ranks);
   Group CreateGroup(const std::string &group_name, const std::vector<Device> &devices);
   Group CreateGroup(const RankList &dev_ranks);

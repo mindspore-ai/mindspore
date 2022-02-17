@@ -25,6 +25,7 @@
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "utils/log_adapter.h"
 

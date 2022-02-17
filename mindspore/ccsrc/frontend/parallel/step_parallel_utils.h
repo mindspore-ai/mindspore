@@ -31,7 +31,6 @@ const int64_t TWO_INPUT_SIZE = 2;
 // common method
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 bool IsParallelCareNode(const CNodePtr &cnode);
-AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index);
 Shapes GetNodeShape(const AnfNodePtr &node);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node);
