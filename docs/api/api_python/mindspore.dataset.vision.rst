@@ -1,7 +1,15 @@
 mindspore.dataset.vision
 ===================================
 
-.. automodule:: mindspore.dataset.vision
+his module is to support vision augmentations. It includes two parts: c_transforms and py_transforms. C_transforms is a high performance image augmentation module which is developed with c++ opencv. Py_transforms provide more kinds of image augmentations which are developed with Python PIL.
+
+Common imported modules in corresponding API examples are as follows:
+
+.. code-block::
+
+    import mindspore.dataset.vision.c_transforms as c_vision
+    import mindspore.dataset.vision.py_transforms as py_vision
+    from mindspore.dataset.transforms import c_transforms
 
 mindspore.dataset.vision.c_transforms
 ------------------------------------------------
