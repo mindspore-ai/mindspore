@@ -20,8 +20,7 @@ from ... import numpy as mnp
 from ...common import Tensor
 
 from .line_search import LineSearch
-from ..utils import _to_scalar, grad
-from ..utils import _INT_ZERO, _INT_ONE, _BOOL_FALSE
+from ..utils import _to_scalar, _to_tensor, grad
 
 
 class _BFGSResults(NamedTuple):
@@ -74,6 +73,11 @@ class MinimizeBfgs(nn.Cell):
         self.line_search = LineSearch(func)
 
     def construct(self, x0, maxiter=None, norm=mnp.inf, gtol=1e-5, line_search_maxiter=10):
+        # Constant tensors which avoid loop unrolling
+        _BOOL_FALSE = _to_tensor(False)
+        _INT_ZERO = _to_tensor(0)
+        _INT_ONE = _to_tensor(1)
+
         def _my_norm(x, ord_=None):
             if ord_ == mnp.inf:
                 res = mnp.max(mnp.abs(x))

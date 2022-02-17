@@ -24,7 +24,6 @@ from .ops import EighNet
 from ..ops import operations as P
 from ..ops import functional as F
 from ..common import dtype as mstype
-from .utils import float_types
 from .utils_const import _raise_value_error
 
 __all__ = ['block_diag', 'inv', 'eigh', 'lu_factor', 'lu']
@@ -195,7 +194,7 @@ def inv(a, overwrite_a=False, check_finite=True):
         [[ 1.00000000e+00,  0.00000000e+00],
          [ 8.88178420e-16,  1.00000000e+00]])
     """
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
 
     matrix_inverse = P.MatrixInverse(adjoint=False)
@@ -249,7 +248,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 1.00000000e+00,  5.00000000e+00,  2.29330778e+00,  8.55952621e-01],
          [ 5.00000000e+00,  1.00000000e+00,  2.00000000e+00,  1.55418575e+00]])
     """
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
     cholesky_net = Cholesky(lower=lower, clean=False)
     c = cholesky_net(a)
@@ -292,7 +291,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         [[ 1.00000000e+00,  0.00000000e+00],
          [ 2.00000000e+00,  1.00000000e+00]])
     """
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
     cholesky_net = Cholesky(lower=lower, clean=True)
     c = cholesky_net(a)
@@ -516,7 +515,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> piv
         Tensor(shape=[4], dtype=Int32, value= [2, 2, 3, 3])
     """
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
     if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
         _raise_value_error("input of lu matrix must be square.")
@@ -586,7 +585,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.00000000e+00,  0.00000000e+00, -1.03999996e+00,  3.07999992e+00],
          [ 0.00000000e+00, -0.00000000e+00, -0.00000000e+00,  7.46153831e+00]])
     """
-    if F.dtype(a) not in float_types:
+    if F.dtype(a) not in (mstype.float32, mstype.float64):
         a = F.cast(a, mstype.float32)
     msp_lu = LU()
     m_lu, _, p = msp_lu(a)
