@@ -88,9 +88,6 @@ int SubInt8CPUKernel::Prepare() {
   quant_param_->left_shift_result0_ = (1 << left_shift) * ((1 << left_shift0));
   quant_param_->left_shift_result1_ = (1 << left_shift) * ((1 << left_shift1));
 
-  MS_ASSERT(left_shift + left_shift0 == left_shift);
-  MS_ASSERT(left_shift + left_shift1 == left_shift);
-
   if (!InferShapeDone()) {
     return RET_OK;
   }

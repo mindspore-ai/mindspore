@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ ops::PrimitiveC *TfliteArgminParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_out_max_value(false);
   prim->set_top_k(1);
 
+  MS_CHECK_TRUE_MSG(tflite_op->inputs.size() >= kInputSize1, nullptr, "argmin input size should be greater than 1.");
   const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
   MS_CHECK_TRUE_MSG(axis_tensor != nullptr, nullptr, "axis_tensor is nullptr");
   const auto &buf_data = tflite_model->buffers.at(axis_tensor->buffer);
