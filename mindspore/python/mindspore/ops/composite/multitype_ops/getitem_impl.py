@@ -47,7 +47,31 @@ class _TupleSlice(base.TupleSlice_):
 
 
 _tuple_slice = _TupleSlice('tuple_slice')
-"""_tuple_slice is an metafuncgraph object which will slice a tuple."""
+"""_tuple_slice is a metafuncgraph object which will slice a tuple."""
+
+
+class _ListSlice(base.ListSlice_):
+    """
+    Slices a List.
+
+    Inputs:
+        data (List): A List to be sliced.
+        s (slice): The index to slice list data.
+
+    Outputs:
+        List, consists of some elements of data.
+    """
+
+    def __init__(self, name):
+        """Initialize _TupleSlice."""
+        base.ListSlice_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_list_slice = _ListSlice('list_slice')
+"""_list_slice is a metafuncgraph object which will slice a list."""
 
 
 class _TupleGetItemTensor(base.TupleGetItemTensor_):
@@ -133,6 +157,19 @@ def _list_getitem_by_number(data, number_index):
     """
     return F.list_getitem(data, number_index)
 
+@getitem.register("List", "Slice")
+def _list_getitem_by_slice(data, slice_index):
+    """
+    Getting item of list by slice index.
+
+    Inputs:
+        data (list): data
+        slice_index (Slice): Index in slice.
+
+    Outputs:
+        List, element type is the same as the element type of data.
+    """
+    return _list_slice(data, slice_index)
 
 @getitem.register("Dictionary", "String")
 def _dict_getitem_by_key(data, key):

@@ -1006,8 +1006,8 @@ int64_t CheckSliceMember(const AbstractBasePtr &member, int64_t default_value, c
   MS_LOG(EXCEPTION) << "The argument of SliceMember operator must be a Scalar or None, but got " << member->ToString();
 }
 
-void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int64_t *start_index,
-                                 int64_t *stop_index, int64_t *step_value) {
+void GenerateTupleSliceParameter(const abstract::AbstractSequencePtr &tuple, const AbstractSlicePtr &slice,
+                                 int64_t *start_index, int64_t *stop_index, int64_t *step_value) {
   MS_EXCEPTION_IF_NULL(tuple);
   MS_EXCEPTION_IF_NULL(slice);
   MS_EXCEPTION_IF_NULL(start_index);
@@ -1053,19 +1053,16 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
   }
 }
 
-FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tuple
   // args: tuple, start index, end index, step
-  const std::string op_name("TupleSlice");
-  constexpr size_t arg_size = 2;
-  abstract::CheckArgsSize(op_name, args_spec_list, arg_size);
-  AbstractTuplePtr tuple = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
-  AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>(op_name, args_spec_list, 1);
-
+  auto seq_pair = CheckArgs(args_spec_list);
+  auto sequence = seq_pair.first;
+  auto slice = seq_pair.second;
   int64_t start_index;
   int64_t stop_index;
   int64_t step_value;
-  GenerateTupleSliceParameter(tuple, slice, &start_index, &stop_index, &step_value);
+  GenerateTupleSliceParameter(sequence, slice, &start_index, &stop_index, &step_value);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -1073,19 +1070,37 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   (void)ret->add_parameter();
 
   std::vector<AnfNodePtr> elems;
-  elems.push_back(NewValueNode(prim::kPrimMakeTuple));
+  elems.push_back(NewValueNode(prim_));
   if (step_value > 0) {
     for (int64_t index = start_index; index < stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_tuple, NewValueNode(index)}));
     }
   } else {
     for (int64_t index = start_index; index > stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_tuple, NewValueNode(index)}));
     }
   }
 
   ret->set_output(ret->NewCNodeInOrder(elems));
   return ret;
+}
+
+std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> TupleSlice::CheckArgs(
+  const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t arg_size = 2;
+  abstract::CheckArgsSize("TupleSlice", args_spec_list, arg_size);
+  auto sequence = abstract::CheckArg<abstract::AbstractSequence>("TupleSlice", args_spec_list, 0);
+  AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>("TupleSlice", args_spec_list, 1);
+  return std::make_pair(sequence, slice);
+}
+
+std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> ListSlice::CheckArgs(
+  const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t arg_size = 2;
+  abstract::CheckArgsSize("ListSlice", args_spec_list, arg_size);
+  auto sequence = abstract::CheckArg<abstract::AbstractSequence>("ListSlice", args_spec_list, 0);
+  AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>("ListSlice", args_spec_list, 1);
+  return std::make_pair(sequence, slice);
 }
 
 FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
@@ -1116,6 +1131,11 @@ REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
 REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
                          (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(
                            *m, "TupleGetItemTensor_")
+                           .def(py::init<std::string &>());
+                       }));
+
+REGISTER_PYBIND_DEFINE(ListSlice_, ([](const py::module *m) {
+                         (void)py::class_<ListSlice, MetaFuncGraph, std::shared_ptr<ListSlice>>(*m, "ListSlice_")
                            .def(py::init<std::string &>());
                        }));
 

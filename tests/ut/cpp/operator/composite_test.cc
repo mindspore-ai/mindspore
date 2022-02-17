@@ -35,6 +35,8 @@ using AbstractSlicePtr = abstract::AbstractSlicePtr;
 
 using AbstractTuple = abstract::AbstractTuple;
 using AbstractTuplePtr = abstract::AbstractTuplePtr;
+using AbstractList = abstract::AbstractList;
+using AbstractListPtr = abstract::AbstractListPtr;
 
 using AbstractTensor = abstract::AbstractTensor;
 using AbstractTensorPtr = abstract::AbstractTensorPtr;
@@ -245,6 +247,157 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_positive) {
     dyn_cast<AbstractTuple>(engine_->Run(tupleSliceGraphPtr, args_spec_list).eval_result->abstract());
   if (ret == nullptr) {
     FAIL() << "Cast ret to abstract tuple failed.";
+  }
+  size_t real = ret->size();
+  size_t expect = 5;
+  ASSERT_EQ(real, expect);
+}
+
+/// Feature: Test list slice
+/// Description: The second input is a scalar
+/// Expectation: Throw type error
+TEST_F(TestComposite, test_ListSlice_arg_one_number) {
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  FuncGraphPtr list_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 3);
+
+  AbstractBasePtrList eles;
+  auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
+  size_t list_size = 6;
+  for (size_t i = 0; i < list_size; i++) {
+    eles.push_back(tensor);
+  }
+  auto list_tensor = std::make_shared<AbstractList>(eles);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  AbstractBasePtrList args_spec_list = {list_tensor, start_index};
+
+  try {
+    trace::ClearTraceStack();
+    engine_->Run(list_graph, args_spec_list);
+    FAIL() << "Excepted exception: Args type is wrong";
+  } catch (pybind11::type_error const &err) {
+    ASSERT_TRUE(true);
+  } catch (std::runtime_error const &err) {
+    if (std::strstr(err.what(), "TypeError") != nullptr) {
+      ASSERT_TRUE(true);
+    } else {
+      FAIL() << "Excepted exception: Args type is wrong, message: " << err.what();
+    }
+  } catch (...) {
+    FAIL() << "Excepted exception: Args type is wrong";
+  }
+}
+
+/// Feature: Test list slice
+/// Description: Test List slice
+/// Expectation: No Expectation
+TEST_F(TestComposite, test_ListSlice_arg_slice) {
+  std::shared_ptr<py::scoped_interpreter> env = parse::python_adapter::set_python_scoped();
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
+
+  AbstractBasePtrList eles;
+  auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
+  size_t list_size = 6;
+  for (size_t i = 0; i < list_size; i++) {
+    eles.push_back(tensor);
+  }
+  auto list_tensor = std::make_shared<AbstractList>(eles);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  auto stop_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(6));
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(2));
+  auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
+  AbstractBasePtrList args_spec_list = {list_tensor, slice};
+
+  AbstractListPtr ret = dyn_cast<AbstractList>(engine_->Run(list_slice_graph, args_spec_list).eval_result->abstract());
+  if (ret == nullptr) {
+    FAIL() << "Cast ret to abstract list failed.";
+  }
+  size_t real = ret->size();
+  size_t expect = 3;
+  ASSERT_EQ(real, expect);
+}
+
+/// Feature: Test list slice
+/// Description: Test List slice the step is none
+/// Expectation: No Expectation
+TEST_F(TestComposite, test_ListSlice_arg_slice_step_none) {
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
+
+  AbstractBasePtrList eles;
+  auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
+  size_t list_size = 6;
+  for (size_t i = 0; i < list_size; i++) {
+    eles.push_back(tensor);
+  }
+  auto list_tensor = std::make_shared<AbstractList>(eles);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  auto stop_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(5));
+  auto step = std::make_shared<AbstractNone>();
+  auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
+  AbstractBasePtrList args_spec_list = {list_tensor, slice};
+
+  AbstractListPtr ret = dyn_cast<AbstractList>(engine_->Run(list_slice_graph, args_spec_list).eval_result->abstract());
+  if (ret == nullptr) {
+    FAIL() << "Cast ret to abstract list failed.";
+  }
+  size_t real = ret->size();
+  size_t expect = 4;
+  ASSERT_EQ(real, expect);
+}
+
+/// Feature: Test list slice
+/// Description: Test List slice the step is negative
+/// Expectation: No Expectation
+TEST_F(TestComposite, test_ListSlice_arg_slice_step_negative) {
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
+
+  AbstractBasePtrList eles;
+  auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
+  size_t list_size = 6;
+  for (size_t i = 0; i < list_size; i++) {
+    eles.push_back(tensor);
+  }
+  auto list_tensor = std::make_shared<AbstractList>(eles);
+  auto start_index = std::make_shared<AbstractNone>();
+  auto stop_index = std::make_shared<AbstractNone>();
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(-1));
+  auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
+  AbstractBasePtrList args_spec_list = {list_tensor, slice};
+
+  AbstractListPtr ret = dyn_cast<AbstractList>(engine_->Run(list_slice_graph, args_spec_list).eval_result->abstract());
+  if (ret == nullptr) {
+    FAIL() << "Cast ret to abstract list failed.";
+  }
+  size_t real = ret->size();
+  size_t expect = 6;
+  ASSERT_EQ(real, expect);
+}
+
+/// Feature: Test list slice
+/// Description: Test List slice the step is positive
+/// Expectation: No Expectation
+TEST_F(TestComposite, test_ListSlice_arg_slice_step_positive) {
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
+
+  AbstractBasePtrList eles;
+  auto tensor = UTCompositeUtils::ArrayInt32Of({2, 3, 4});
+  size_t list_size = 6;
+  for (size_t i = 0; i < list_size; i++) {
+    eles.push_back(tensor);
+  }
+  auto list_tensor = std::make_shared<AbstractList>(eles);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(-2));
+  auto stop_index = std::make_shared<AbstractNone>();
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(-1));
+  auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
+  AbstractBasePtrList args_spec_list = {list_tensor, slice};
+
+  AbstractListPtr ret = dyn_cast<AbstractList>(engine_->Run(list_slice_graph, args_spec_list).eval_result->abstract());
+  if (ret == nullptr) {
+    FAIL() << "Cast ret to abstract list failed.";
   }
   size_t real = ret->size();
   size_t expect = 5;

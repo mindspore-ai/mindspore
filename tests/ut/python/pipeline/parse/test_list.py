@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell
+from mindspore import ops
 
 
 class Net1(Cell):
@@ -33,6 +34,17 @@ class Net1(Cell):
         return x
 
 
+class Net2(Cell):
+    def __init__(self, list1):
+        super().__init__()
+        self.list = list1
+        self.addn = ops.AddN()
+
+    def construct(self, x):
+        x = self.addn(self.list[0::2])
+        return x
+
+
 def test_list1():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
@@ -44,4 +56,15 @@ def test_list2():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = Net1([1, 2])
+    _cell_graph_executor.compile(net, input_me)
+
+
+def test_list_slice():
+    """
+    Feature: Support List Slice
+    Description: Test List Slice
+    Expectation: No exception.
+    """
+    input_me = Tensor(8)
+    net = Net2([Tensor(1), Tensor(2), Tensor(3), Tensor(4), Tensor(5), Tensor(6), Tensor(7)])
     _cell_graph_executor.compile(net, input_me)

@@ -21,7 +21,7 @@ from types import FunctionType
 
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
-    TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_
+    TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, ListSlice_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
@@ -29,7 +29,7 @@ from ..operations import _grad_ops
 from .. import operations as P
 from .. import signature as sig
 
-__all__ = [TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
+__all__ = [TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_, ListSlice_]
 
 
 def add_flags(fn=None, **flags):
