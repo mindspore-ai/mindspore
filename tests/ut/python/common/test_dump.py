@@ -44,7 +44,7 @@ def test_set_dump_on_cell():
     net = MyNet()
     set_dump(net.relu1)
 
-    assert net.relu1.relu.attrs["dump"] == "true"
+    assert net.relu1.get_flags()["dump"] is True
 
 
 def test_set_dump_on_primitive():
@@ -84,3 +84,51 @@ def test_set_dump_warning():
         set_dump(op)
         assert "Only Ascend device target is supported" in str(w[-2].message)
         assert "Only GRAPH_MODE is supported" in str(w[-1].message)
+
+
+def test_set_dump_on_cell_with_false():
+    """
+    Feature: Python API set_dump on cell with False.
+    Description: Use set_dump API on Cell instance.
+    Expectation: Success.
+    """
+
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super(MyNet, self).__init__()
+            self.relu1 = nn.ReLU()
+
+        def construct(self, x):
+            x = self.relu1(x)
+            return x
+
+    net = MyNet()
+    set_dump(net.relu1)
+    assert net.relu1.get_flags()["dump"] is True
+
+    set_dump(net, False)
+    assert net.relu1.get_flags()["dump"] is False
+
+
+def test_set_dump_on_primitive_with_false():
+    """
+    Feature: Python API set_dump on primitive with False.
+    Description: Use set_dump API on Cell instance.
+    Expectation: Success.
+    """
+
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super(MyNet, self).__init__()
+            self.relu1 = ops.ReLU()
+
+        def construct(self, x):
+            x = self.relu1(x)
+            return x
+
+    net = MyNet()
+    set_dump(net.relu1)
+    assert net.relu1.attrs.get("dump") == "true"
+
+    set_dump(net, False)
+    assert net.relu1.attrs.get("dump") == "false"

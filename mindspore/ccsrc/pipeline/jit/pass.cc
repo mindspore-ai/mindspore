@@ -55,6 +55,7 @@
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
+#include "frontend/optimizer/irpass/expand_dump_flag.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -355,7 +356,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig recompute_prepare = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
-  OptPassGroupMap map_a({{"switch_simplify", opt::OptPassConfig({irpass.switch_simplify_})},
+  OptPassGroupMap map_a({{"expand_dump_flag", opt::OptPassConfig(opt::irpass::ExpandDumpFlag())},
+                         {"switch_simplify", opt::OptPassConfig({irpass.switch_simplify_})},
                          {"a_1", a_1},
                          {"recompute_prepare", recompute_prepare},
                          {"updatestate_depend_eliminate", updatestate_depend_eliminate},
@@ -385,7 +387,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  constexpr auto a1_a2_len = 7;
+  constexpr auto a1_a2_len = 9;
   OptPassGroupMap a1_a2(opt_a.begin(), opt_a.begin() + a1_a2_len);
   return a1_a2;
 }

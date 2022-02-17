@@ -2582,6 +2582,9 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   if (py::hasattr(cell, "construct")) {
     parse::UpdateFuncGraphFlags(cell.attr("construct"), func_graph);
   }
+  if (current_graph->has_flag(FUNC_GRAPH_FLAG_DUMP) && func_graph->has_flag(FUNC_GRAPH_FLAG_DUMP)) {
+    current_graph->erase_flag(FUNC_GRAPH_FLAG_DUMP);
+  }
 
   auto unpacking = func_graph->has_vararg() || func_graph->has_kwarg();
   MS_EXCEPTION_IF_NULL(current_graph->get_return());

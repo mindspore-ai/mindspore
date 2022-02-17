@@ -73,6 +73,8 @@ class MS_CORE_API AnfUtils {
   static void SetDumpFlag(const AnfNodePtr &node);
   // Get dump flag from CNode's primitive.
   static bool GetDumpFlag(const AnfNodePtr &node);
+  // Check whether the node has dump flag or not.
+  static bool HasDumpFlag(const AnfNodePtr &node);
   static AbstractScope GetAbstractLock(const AnfNode *node);
   static void OpenAbstractLock();
   static void CloseAbstractLock();

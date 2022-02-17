@@ -44,6 +44,7 @@
 #include "mindspore/core/load_mindir/load_model.h"
 #include "utils/system/sha256.h"
 #include "utils/file_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace ad {
@@ -522,6 +523,16 @@ std::vector<NodeDebugInfoPtr> GeneratePrimalDebugInfo(const ValueNodePtr &value_
   return primal_debug_infos;
 }
 
+void SetDumpFlag(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
+  if (prim == nullptr || bprop_fg == nullptr) {
+    return;
+  }
+  auto attr = prim->GetAttr(kAttrDump);
+  if (attr != nullptr && attr->isa<StringImm>() && attr->cast<StringImmPtr>()->value() == kValueTrue) {
+    bprop_fg->set_flag(FUNC_GRAPH_FLAG_DUMP, true);
+  }
+}
+
 FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
                                const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
@@ -552,6 +563,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
     bprop_fg = GetPrimBprop(prim, value_node, resources);
   }
 
+  SetDumpFlag(prim, bprop_fg);
   AdjustForAutoMonad(prim, bprop_fg);
   mindspore::HashMap<std::string, ValuePtr> primal_attrs;
   std::vector<NodeDebugInfoPtr> primal_debug_infos = GeneratePrimalDebugInfo(value_node, resources);

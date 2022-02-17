@@ -388,6 +388,10 @@ bool IrExportBuilder::BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_i
   MS_EXCEPTION_IF_NULL(graph_proto);
   for (auto attr : func_graph->attrs()) {
     MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
+    auto iter = g_export_attr_blacklist.find(attr.first);
+    if (iter != g_export_attr_blacklist.end()) {
+      continue;
+    }
     mind_ir::AttributeProto *attr_proto = graph_proto->add_attribute();
     attr_proto->set_name(attr.first);
     if (!SetValueToAttributeProto(attr.second, attr_proto)) {

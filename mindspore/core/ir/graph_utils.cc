@@ -256,6 +256,31 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
   return vecs;
 }
 
+std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, const AnfNodePtr &node) {
+  std::vector<AnfNodePtr> vecs;
+  if (node == nullptr) {
+    return vecs;
+  }
+
+  if (IsValueNode<FuncGraph>(node)) {
+    auto graph = GetValueNode<FuncGraphPtr>(node);
+    if (graph_filter != nullptr && graph_filter(graph)) {
+      return vecs;
+    }
+
+    auto &ret = graph->return_node();
+    if (ret != nullptr) {
+      vecs.push_back(ret);
+    }
+    return vecs;
+  } else {
+    if (node->isa<CNode>()) {
+      PushSuccessors(node->cast<CNodePtr>(), &vecs);
+    }
+    return vecs;
+  }
+}
+
 const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node) {
   static std::vector<AnfNodePtr> empty_inputs;
   auto cnode = dyn_cast<CNode>(node);
