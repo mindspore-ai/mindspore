@@ -99,6 +99,16 @@ class MS_API Context {
   /// \return Pointer to the custom delegate.
   std::shared_ptr<Delegate> GetDelegate() const;
 
+  /// \brief Set quant model to run as float model in multi device.
+  ///
+  /// \param[in] float_mode: true, run as float model; false, not run as float model.
+  void SetMultiModalHW(bool float_mode);
+
+  /// \brief Get the mode of the model run.
+  ///
+  /// \return Bool value that indicates whether run as float model
+  bool GetMultiModalHW() const;
+
   /// \brief Get a mutable reference of DeviceInfoContext vector in this context. Only MindSpore Lite supports
   /// heterogeneous scenarios with multiple members in the vector.
   ///

@@ -347,6 +347,7 @@ STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::LiteKernel *> *ker
       *tensor_iter = cur_kernel->in_tensors()[0];
     }
     iter = kernels->erase(iter);
+    MS_LOG(DEBUG) << "Delete kernel: " << cur_kernel->name();
     delete cur_kernel;
   }
   return RET_OK;
