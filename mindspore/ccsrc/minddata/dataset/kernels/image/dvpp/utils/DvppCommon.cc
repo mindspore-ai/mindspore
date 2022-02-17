@@ -1059,7 +1059,6 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
 
   // Get the buffer size(On device) of decode output according to the input data and output format
   uint32_t outBuffSize;
-  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
   ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
@@ -1160,7 +1159,6 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
 
   // Get the buffer size of decode output according to the input data and output format
   uint32_t outBuffSize;
-  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
   ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
