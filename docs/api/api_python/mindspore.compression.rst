@@ -1,6 +1,8 @@
 mindspore.compression
 =====================
 
+Quantization module, including base class of the quantizer, the quantization aware training algorithm, and quantization utils.
+
 mindspore.compression.quant
 ---------------------------
 

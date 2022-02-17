@@ -1,7 +1,24 @@
 mindspore.numpy
 ===============
 
-.. automodule:: mindspore.numpy
+Numpy-like interfaces in mindspore.
+
+**Examples**
+
+.. code-block::
+
+    import mindspore.numpy as np
+
+.. note::
+    array_ops.py defines all the array operation interfaces.
+
+    array_creations.py defines all the array generation interfaces.
+
+    math_ops.py defines all the math operations on tensors.
+
+    logic_ops.py defines all the logical operations on tensors.
+
+    dtypes.py defines all the mindspore.numpy dtypes (mainly redirected from mindspore)
 
 Array Generation
 ----------------

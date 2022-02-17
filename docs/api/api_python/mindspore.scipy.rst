@@ -1,12 +1,14 @@
 mindspore.scipy
 ===============
 
-.. automodule:: mindspore.scipy
+Scipy-like interfaces in mindspore.
 
 mindspore.scipy.linalg
 ----------------------
 
-.. mscnplatformautosummary::
+Linear algebra submodule.
+
+.. msplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -20,9 +22,9 @@ mindspore.scipy.linalg
 mindspore.scipy.optimize
 ------------------------
 
-.. automodule:: mindspore.scipy.optimize
+Optimize submodule.
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -33,9 +35,9 @@ mindspore.scipy.optimize
 mindspore.scipy.sparse.linalg
 -----------------------------
 
-.. automodule:: mindspore.scipy.sparse.linalg
+Sparse linear algebra submodule.
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: scipy
     :nosignatures:
     :template: classtemplate_inherited.rst
