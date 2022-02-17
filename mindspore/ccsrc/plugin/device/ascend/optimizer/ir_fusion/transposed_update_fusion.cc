@@ -97,10 +97,12 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
 
+  MS_EXCEPTION_IF_NULL(kernel_select_);
   kernel_select_->SelectKernel(transpose);
   auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(transpose);
   MS_EXCEPTION_IF_NULL(ori_build_info);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(ori_build_info);
+  MS_EXCEPTION_IF_NULL(builder);
   auto input_format = AnfAlgo::GetInputFormat(node, 0);
   auto output_format = AnfAlgo::GetOutputFormat(node, 0);
   builder->SetInputsFormat({input_format, kOpFormat_DEFAULT});

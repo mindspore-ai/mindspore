@@ -31,6 +31,7 @@ void DoRefresh(const CNodePtr &cnode) {
     if (input_kernel_node->isa<Parameter>()) {
       std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(builder);
       auto cnode_input_format = AnfAlgo::GetInputFormat(cnode, input_index);
       auto kernel_node_format = AnfAlgo::GetOutputFormat(input_kernel_node, 0);
       auto dtype = AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0);
