@@ -50,12 +50,11 @@
 namespace mindspore {
 namespace parallel {
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
-  if (!cnode) {
-    return false;
-  }
+  if (!cnode) return false;
   ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(anf_node);
+  if (!anf_node) return false;
   PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) return false;
   return (prim->name() == name);
 }
 
