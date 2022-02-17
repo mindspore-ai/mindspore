@@ -163,7 +163,13 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
   if (dump_enabled) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     auto graph_id = kernel_graph->graph_id();
-    debugger->DumpSingleNode(cnode, graph_id);
+    // for GPU, nodes are dumped in graph_id directory.
+    if (IsDeviceTargetGPU()) {
+      debugger->DumpSingleNode(cnode, graph_id);
+    } else {
+      // for Ascend, node are dumped in root_graph_id directory.
+      debugger->DumpSingleNode(cnode, root_graph_id);
+    }
     // Clear Dumped data when online debugger is not enabled
     if (!debugger->debugger_enabled()) {
       debugger->ClearCurrentData();
