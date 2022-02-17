@@ -93,9 +93,11 @@ Debugger::Debugger()
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
-  if (device_target == kCPUDevice) {
+  if (!CheckDebuggerEnabled()) {
+    return;
+  } else if (device_target == kCPUDevice) {
     MS_LOG(WARNING) << "Not enabling debugger. Debugger does not support CPU.";
-  } else if (CheckDebuggerEnabled()) {
+  } else {
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
 
