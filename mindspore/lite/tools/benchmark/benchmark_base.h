@@ -74,7 +74,7 @@ extern const std::unordered_map<int, std::string> kTypeIdMap;
 extern const std::unordered_map<mindspore::Format, std::string> kTensorFormatMap;
 
 const std::unordered_map<std::string, mindspore::ModelType> ModelTypeMap{
-  {"MindIR_Opt", mindspore::ModelType::kMindIR_Opt}, {"MindIR", mindspore::ModelType::kMindIR}};
+  {"MindIR_Lite", mindspore::ModelType::kMindIR_Lite}, {"MindIR", mindspore::ModelType::kMindIR}};
 
 namespace dump {
 constexpr auto kConfigPath = "MINDSPORE_DUMP_CONFIG";
@@ -116,7 +116,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   BenchmarkFlags() {
     // common
     AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
-    AddFlag(&BenchmarkFlags::model_type_, "modelType", "Input model type. MindIR | MindIR_Opt", "MindIR");
+    AddFlag(&BenchmarkFlags::model_type_, "modelType", "Input model type. MindIR | MindIR_Lite", "MindIR");
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU | Ascend310 | Ascend710", "CPU");

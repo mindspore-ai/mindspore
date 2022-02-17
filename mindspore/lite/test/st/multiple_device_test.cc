@@ -363,7 +363,7 @@ TEST_F(MultipleDeviceTest, NewApi1) {
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
 
   mindspore::Model *model = new mindspore::Model();
-  auto ret = model->Build(content, size, mindspore::kMindIR_Opt, context);
+  auto ret = model->Build(content, size, mindspore::kMindIR_Lite, context);
   ASSERT_EQ(false, ret.IsOk());
 
   delete model;
@@ -422,7 +422,7 @@ TEST_F(MultipleDeviceTest, NewApi5) {
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::CPUDeviceInfo>());
 
   auto model_impl = std::make_shared<mindspore::ModelImpl>();
-  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Opt, context);
+  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Lite, context);
   ASSERT_EQ(mindspore::kSuccess, ret.StatusCode());
 
   CheckResult(reinterpret_cast<const mindspore::lite::LiteSession *>(model_impl->GetSession())->get_kernels(),
@@ -467,7 +467,7 @@ TEST_F(MultipleDeviceTest, NewApi6) {
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
 
   auto model_impl = std::make_shared<mindspore::ModelImpl>();
-  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Opt, context);
+  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Lite, context);
   ASSERT_EQ(mindspore::kSuccess, ret.StatusCode());
 
   CheckResult(reinterpret_cast<const mindspore::lite::LiteSession *>(model_impl->GetSession())->get_kernels(),
@@ -511,7 +511,7 @@ TEST_F(MultipleDeviceTest, NewApi7) {
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::GPUDeviceInfo>());
 
   auto model_impl = std::make_shared<mindspore::ModelImpl>();
-  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Opt, context);
+  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Lite, context);
   ASSERT_EQ(mindspore::kSuccess, ret.StatusCode());
 
   CheckResult(reinterpret_cast<const mindspore::lite::LiteSession *>(model_impl->GetSession())->get_kernels(),
@@ -536,7 +536,7 @@ TEST_F(MultipleDeviceTest, NewApi8) {
   context->MutableDeviceInfo().push_back(std::make_shared<mindspore::KirinNPUDeviceInfo>());
 
   auto model_impl = std::make_shared<mindspore::ModelImpl>();
-  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Opt, context);
+  auto ret = model_impl->Build(content, size, mindspore::kMindIR_Lite, context);
   ASSERT_EQ(mindspore::kSuccess, ret.StatusCode());
 
   CheckResult(reinterpret_cast<const mindspore::lite::LiteSession *>(model_impl->GetSession())->get_kernels(),
