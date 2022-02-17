@@ -167,7 +167,11 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   tensorT->enableHuffmanCode = false;
   if ((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) {
     if (NeedQuantization(tensor)) {
-      QuantTensorData(tensorT.get(), tensor, preferred_dim);
+      auto ret = QuantTensorData(tensorT.get(), tensor, preferred_dim);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "QuantTensorData failed.";
+        return nullptr;
+      }
     } else {
       tensorT->data = CreateData(tensor);
     }

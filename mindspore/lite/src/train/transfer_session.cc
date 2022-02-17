@@ -195,7 +195,10 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
   }
 
   bool orig_train_state = IsTrain();
-  Eval();
+  if (Eval() != RET_OK) {
+    MS_LOG(ERROR) << "eval failed.";
+    return RET_ERROR;
+  }
   TrainExport texport(filename);
   int status = texport.LoadModel(lite_model_, size_backbone_);
   if (status != RET_OK) {
@@ -231,7 +234,13 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
     MS_LOG(ERROR) << "failed to save to " << filename;
     return status;
   }
-  if (orig_train_state) Train();
+  if (orig_train_state) {
+    auto ret = Train();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "train failed.";
+      return RET_ERROR;
+    }
+  }
   return status;
 }
 
