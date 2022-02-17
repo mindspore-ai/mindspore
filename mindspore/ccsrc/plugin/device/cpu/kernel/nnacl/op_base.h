@@ -96,6 +96,7 @@
 #define DIMENSION_6D 6
 #define DIMENSION_7D 7
 #define DIMENSION_8D 8
+#define DIMENSION_9D 9
 #define DIMENSION_10D 10
 #define DIMENSION_11D 11
 #define kInputIndex 0
@@ -479,8 +480,10 @@ enum PrimType {
   PrimType_AllGather = 201,
   PrimType_ReduceScatter = 202,
   PrimType_DynamicQuant = 203,
+  PrimType_LSTMGradData = 204,
+  PrimType_LSTMGradWeight = 205,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_DynamicQuant + 1,
+  PrimType_MAX = PrimType_LSTMGradWeight + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

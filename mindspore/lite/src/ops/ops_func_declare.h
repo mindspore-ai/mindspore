@@ -185,6 +185,8 @@
 #include "ops/grad/layer_norm_grad.h"
 #include "ops/grad/log_grad.h"
 #include "ops/grad/lstm_grad.h"
+#include "ops/grad/lstm_grad_data.h"
+#include "ops/grad/lstm_grad_weight.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/grad/maximum_grad.h"
 #include "ops/grad/minimum_grad.h"
@@ -350,6 +352,8 @@ FUNC_MSOP2SCHEMAOP_DECLARE(LRN)
 FUNC_MSOP2SCHEMAOP_DECLARE(LshProjection)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTM)
 FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGrad)
+FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGradData)
+FUNC_MSOP2SCHEMAOP_DECLARE(LSTMGradWeight)
 FUNC_MSOP2SCHEMAOP_DECLARE(L2NormalizeFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(MatMulFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum)

@@ -525,6 +525,54 @@ OpParameter *PopulateLstmGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
+OpParameter *PopulateLstmGradDataParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_LSTMGradData();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr.";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(LstmParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->bidirectional_ = value->bidirectional();
+  param->zoneout_cell_ = value->zoneout_cell();
+  param->zoneout_hidden_ = value->zoneout_hidden();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+OpParameter *PopulateLstmGradWeightParameter(const void *prim) {
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  MS_ASSERT(primitive != nullptr);
+  auto value = primitive->value_as_LSTMGradWeight();
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr.";
+    return nullptr;
+  }
+
+  auto *param = reinterpret_cast<LstmParameter *>(malloc(sizeof(LstmParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc LstmParameter failed.";
+    return nullptr;
+  }
+  memset(param, 0, sizeof(LstmParameter));
+
+  param->op_parameter_.type_ = primitive->value_type();
+  param->input_size_ = value->input_size();
+  param->hidden_size_ = value->hidden_size();  // output_size
+  param->bidirectional_ = value->bidirectional();
+  param->zoneout_cell_ = value->zoneout_cell();
+  param->zoneout_hidden_ = value->zoneout_hidden();
+  return reinterpret_cast<OpParameter *>(param);
+}
+
 void PopulateTrainParameters() {
   Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                           lite::SCHEMA_CUR);
@@ -580,6 +628,10 @@ void PopulateTrainParameters() {
   Registry ResizeGradParameterRegistry(schema::PrimitiveType_ResizeGrad, PopulateResizeGradParameter, lite::SCHEMA_CUR);
   Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
   Registry LSTMGradParameterRegistry(schema::PrimitiveType_LSTMGrad, PopulateLstmGradParameter, lite::SCHEMA_CUR);
+  Registry LSTMGradDataParameterRegistry(schema::PrimitiveType_LSTMGradData, PopulateLstmGradDataParameter,
+                                         lite::SCHEMA_CUR);
+  Registry LSTMGradWeightParameterRegistry(schema::PrimitiveType_LSTMGradWeight, PopulateLstmGradWeightParameter,
+                                           lite::SCHEMA_CUR);
 }
 }  // namespace kernel
 }  // namespace mindspore

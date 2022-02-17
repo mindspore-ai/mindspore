@@ -33,7 +33,7 @@ OpParameter *PopulateCallParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc CallParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(CallParameter));
+  memset(reinterpret_cast<void *>(param), 0, sizeof(CallParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->is_tail_call = value->is_tail_call();
