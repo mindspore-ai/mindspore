@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,6 +44,38 @@ def cube(a):
     return c
 
 
+def multioutput(a, b):
+    c = output_tensor(a.shape, a.dtype)
+    d = output_tensor(a.shape, a.dtype)
+    for i0 in range(a.shape[0]):
+        for i1 in range(a.shape[1]):
+            c[i0, i1] = a[i0, i1] + b[i0, i1]
+            d[i0, i1] = a[i0, i1] * b[i0, i1]
+    return c, d
+
+
+def custom_inplace_assign_signle_output(a, b):
+    c = allocate(a.shape, a.dtype, 'local')
+    for i0 in range(a.shape[0]):
+        for i1 in range(a.shape[1]):
+            c[i0, i1] = a[i0, i1] + b[i0, i1]
+            a[i0, i1] = c[i0, i1] * b[i0, i1]
+    return a
+
+
+def custom_inplace_assign_two_outputs(a, b):
+    c = allocate(a.shape, a.dtype, 'local')
+    d = output_tensor(b.shape, b.dtype)
+    for i0 in range(a.shape[0]):
+        for i1 in range(a.shape[1]):
+            c[i0, i1] = a[i0, i1] + b[i0, i1]
+            a[i0, i1] = c[i0, i1] * b[i0, i1]
+    for j0 in range(b.shape[0]):
+        for j1 in range(b.shape[1]):
+            d[j0, j1] = c[j0, j1]
+    return a, d
+
+
 class TestHybridTwoInputs(Cell):
     """Net definition"""
 
@@ -66,6 +98,22 @@ class TestHybridOneInput(Cell):
 
     def construct(self, x):
         return self.program(x)
+
+
+class TestHybridTwoOutputs(Cell):
+    """Net definition"""
+
+    def __init__(self, func, out_shape, out_dtype):
+        super(TestHybridTwoOutputs, self).__init__()
+
+        self.program = ops.Custom(func, out_shape=out_shape, out_dtype=out_dtype, func_type="akg")
+        self.add = ops.Add()
+        self.mul = ops.Mul()
+
+    def construct(self, x, y):
+        res1, res2 = self.program(x, y)
+        res3 = self.mul(res1, y)
+        return self.add(res2, res3)
 
 
 class MatMulNN(Cell):
@@ -130,6 +178,45 @@ def hybrid_pow_autodiff():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
+def hybrid_multioutput_autodiff():
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    sens = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestHybridTwoOutputs(multioutput, lambda x, _: (x, x), lambda x, _: (x, x))
+    dx, dy = ops.GradOperation(sens_param=True, get_all=True)(test)(Tensor(input_x), Tensor(input_y), Tensor(sens))
+    edx = input_y * sens * 2.0
+    edy = input_x * sens * 2.0 + input_y * sens * 2.0
+    compare_res = np.allclose(edx, dx.asnumpy(), 0.001, 0.001)
+    compare_res &= np.allclose(edy, dy.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
+def hybrid_custom_inplace_assign_one_output():
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestHybridTwoInputs(custom_inplace_assign_signle_output, lambda x, _: x, lambda x, _: x)
+    output = test(Tensor(input_x), Tensor(input_y))
+    expect = input_x * input_y + input_y * input_y
+    compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
+def hybrid_custom_inplace_assign_two_outputs():
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestHybridTwoOutputs(custom_inplace_assign_two_outputs, lambda x, y: (x, y), lambda x, y: (x, y))
+    output = test(Tensor(input_x), Tensor(input_y))
+    expect = input_x * (input_y**2) + input_y**3 + input_x + input_y
+    compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -171,6 +258,9 @@ def test_hybrid_gpu_graph_mode():
     hybrid_outer_product()
     hybrid_outer_product_autodiff()
     hybrid_pow_autodiff()
+    hybrid_multioutput_autodiff()
+    hybrid_custom_inplace_assign_one_output()
+    hybrid_custom_inplace_assign_two_outputs()
 
 
 @pytest.mark.level0
@@ -186,20 +276,23 @@ def test_hybrid_gpu_pynative_mode():
     hybrid_outer_product()
     hybrid_outer_product_autodiff()
     hybrid_pow_autodiff()
+    hybrid_multioutput_autodiff()
+    hybrid_custom_inplace_assign_one_output()
+    hybrid_custom_inplace_assign_two_outputs()
 
 
-v_add_ascend_info = CustomRegOp() \
-    .input(0, "x", "dynamic") \
-    .output(0, "y") \
-    .dtype_format(DataType.None_None, DataType.None_None) \
-    .target("Ascend") \
+v_add_ascend_info = CustomRegOp()\
+    .input(0, "x", "dynamic")\
+    .output(0, "y")\
+    .dtype_format(DataType.None_None, DataType.None_None)\
+    .target("Ascend")\
     .get_op_info()
 
-v_add_gpu_info = CustomRegOp() \
-    .input(0, "x", "dynamic") \
-    .output(0, "y") \
-    .dtype_format(DataType.F16_None, DataType.F16_None) \
-    .target("GPU") \
+v_add_gpu_info = CustomRegOp()\
+    .input(0, "x", "dynamic")\
+    .output(0, "y")\
+    .dtype_format(DataType.F16_None, DataType.F16_None)\
+    .target("GPU")\
     .get_op_info()
 
 

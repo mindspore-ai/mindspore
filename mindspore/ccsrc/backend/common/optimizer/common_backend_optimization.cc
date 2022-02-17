@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/sparse_process.h"
+#include "backend/common/pass/insert_assign_for_custom_op.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -118,6 +119,7 @@ void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
   pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
+  pm->AddPass(std::make_shared<InsertAssignForCustomOp>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
