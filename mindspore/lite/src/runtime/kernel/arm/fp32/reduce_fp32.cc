@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,9 @@ int ReduceImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ReduceCPUKernel::Run() {
+  if (only_copy_) {
+    return CopyInputToOutput();
+  }
   data_type_ = in_tensors().at(0)->data_type();
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
