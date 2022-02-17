@@ -168,7 +168,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
       debugger->DumpSingleNode(cnode, graph_id);
     } else {
       // for Ascend, node are dumped in root_graph_id directory.
-      debugger->DumpSingleNode(cnode, root_graph_id);
+      debugger->DumpSingleNode(cnode, root_graph_id, launch_info);
     }
     // Clear Dumped data when online debugger is not enabled
     if (!debugger->debugger_enabled()) {

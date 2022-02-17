@@ -35,6 +35,7 @@
 #include "utils/file_utils.h"
 #include "debug/data_dump/tensor_stat_dump.h"
 #include "abstract/utils.h"
+#include "runtime/hardware/device_context_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -212,7 +213,8 @@ void E2eDump::DumpInput(const session::KernelGraph *graph, const std::string &du
   }
 }
 
-void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger) {
+void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_path, const Debugger *debugger,
+                                  const KernelLaunchInfo *launch_info) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.InputNeedDump()) {
     return;
@@ -224,11 +226,25 @@ void E2eDump::DumpInputSingleNode(const CNodePtr &node, const std::string &dump_
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(kernel_name);
-  DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
+  DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger, launch_info);
+}
+
+std::shared_ptr<device::DeviceAddress> CreateAscendDeviceAddress(const KernelLaunchInfo *launch_info, size_t index,
+                                                                 TypeId type) {
+  MS_EXCEPTION_IF_NULL(launch_info);
+  auto addr_ptr = launch_info->inputs_[index];
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
+  auto format = kOpFormat_DEFAULT;
+  MS_EXCEPTION_IF_NULL(addr_ptr);
+  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, format, type);
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
-                            std::string *kernel_name, const Debugger *debugger) {
+                            std::string *kernel_name, const Debugger *debugger, const KernelLaunchInfo *launch_info) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
   auto input_size = AnfAlgo::GetInputTensorNum(node);
@@ -270,6 +286,10 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
       if (IsDeviceTargetGPU()) {
         DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
+      } else if (Debugger::GetInstance()->GetAscendKernelByKernelFlag()) {
+        // load address from launch_info when it's Ascend Kernel by kernel mode.
+        auto ascend_device_addr = CreateAscendDeviceAddress(launch_info, j, type);
+        DumpMemToFile(file_path, *ascend_device_addr, int_shapes, type, trans_flag);
       } else {
         DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
       }
@@ -529,12 +549,13 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   }
 }
 
-bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger) {
+bool E2eDump::DumpSingleNodeData(const CNodePtr &node, uint32_t graph_id, uint32_t rank_id, const Debugger *debugger,
+                                 const KernelLaunchInfo *launch_info) {
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.DumpEnabledForIter()) {
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
-    DumpInputSingleNode(node, dump_path, debugger);
+    DumpInputSingleNode(node, dump_path, debugger, launch_info);
     DumpOutputSingleNode(node, dump_path, debugger);
     success = true;
   }
