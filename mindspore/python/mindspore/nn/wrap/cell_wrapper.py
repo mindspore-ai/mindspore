@@ -370,15 +370,12 @@ class GetNextSingleOp(Cell):
     """
     Cell to run for getting the next operation.
 
-    For detailed information, refer to `ops.operations.GetNext`.
+    For detailed information, refer to `mindspore.ops.GetNext`.
 
     Args:
         dataset_types (list[:class:`mindspore.dtype`]): The types of dataset.
         dataset_shapes (list[tuple[int]]): The shapes of dataset.
         queue_name (str): Queue name to fetch the data.
-
-    Inputs:
-        No inputs.
 
     Outputs:
         tuple[Tensor], the data get from Dataset.
