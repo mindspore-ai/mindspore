@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,14 @@ void MatmulCPUKernel::InitShapeB() {
 int MatmulCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  MatmulFp32BaseCPUKernel::InitParameter();
+  params_->a_const_ = in_tensors_[kInputIndex]->IsConst() && !op_parameter_->is_train_session_;
+  params_->b_const_ = in_tensors_[kWeightIndex]->IsConst() && !op_parameter_->is_train_session_;
 
-  if (params_->a_const_) {
+  if (params_->a_const_ || InferShapeDone()) {
     InitShapeA();
   }
 
-  if (params_->b_const_) {
+  if (params_->b_const_ || InferShapeDone()) {
     InitShapeB();
   }
 

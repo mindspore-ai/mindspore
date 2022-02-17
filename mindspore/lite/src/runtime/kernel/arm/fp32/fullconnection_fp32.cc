@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,17 @@ namespace mindspore::kernel {
 int FullconnectionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  params_->a_const_ = in_tensors_[kInputIndex]->IsConst() && !op_parameter_->is_train_session_;
+  params_->b_const_ = in_tensors_[kWeightIndex]->IsConst() && !op_parameter_->is_train_session_;
 
-  MatmulFp32BaseCPUKernel::InitParameter();
-
-  if (params_->a_const_) {
+  if (params_->a_const_ || InferShapeDone()) {
     auto a_shape = in_tensors_.at(0)->shape();
     CHECK_LESS_RETURN(a_shape.size(), C2NUM);
     params_->row_ = a_shape[0];
     params_->deep_ = a_shape[1];
   }
 
-  if (params_->b_const_) {
+  if (params_->b_const_ || InferShapeDone()) {
     auto b_shape = in_tensors_.at(1)->shape();
     CHECK_LESS_RETURN(b_shape.size(), C2NUM);
     params_->col_ = b_shape[0];

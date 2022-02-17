@@ -44,12 +44,31 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
                           const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
-    vec_matmul_ = false;
   }
   ~MatmulFp32BaseCPUKernel() override;
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+
+  using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
+  ParallelRun parallel_fun_ = nullptr;
+
+ private:
+  struct MatrixInfo {
+    bool need_pack;
+    bool has_packed;  // only valid for constant, only do once throughout the process.
+    bool has_origin;  // only valid for constant, only true when failing to infer shape, then false after packing.
+    int pack_size;
+    float *origin_ptr;  // only valid for constant, which is synchronized with the 'has_origin'.
+    float *pack_ptr;
+    MatrixInfo()
+        : need_pack(false),
+          has_packed(false),
+          has_origin(false),
+          pack_size(-1),
+          origin_ptr(nullptr),
+          pack_ptr(nullptr) {}
+  };
 
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512) || defined(ENABLE_ARM64)
   int ParallelRunByRow(int task_id) const;
@@ -57,24 +76,14 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
-  using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
-  ParallelRun parallel_fun_ = nullptr;
-
- protected:
-  int InitBufferA();
-  int InitBufferB();
-  int InitMatrixA(const float *src_ptr) const;
-  int InitMatrixB(const float *src_ptr) const;
-  void FreeBiasBuf();
-  int InitBiasData();
-  void InitParameter();
-  int init_global_variable();
-
- private:
-  void ResizeParameter();
-  void FreeResizeBufA();
-  void FreeResizeBufB();
-  int CalBroadCastBiasDataElements();
+  int BackupConstMatrix(MatrixInfo *matrix_info, int index);
+  void InitGlobalVariable();
+  int PackMatrixA();
+  int PackMatrixB();
+  int PackBiasMatrix();
+  void FreePackedMatrixA();
+  void FreePackedMatrixB();
+  int InitParameter();
   int InitTmpOutBuffer();
   int GetThreadCuttingPolicy();
   bool CheckThreadCuttingByRow();
@@ -82,12 +91,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
 
  protected:
   MatMulParameter *params_ = nullptr;
-  float *a_pack_ptr_ = nullptr;
-  float *b_pack_ptr_ = nullptr;
-#ifdef SERVER_INFERENCE
-  lite::PackStatus a_is_packed_ = lite::MALLOC;
-  lite::PackStatus b_is_packed_ = lite::MALLOC;
-#endif
   int a_batch_ = 1;
   int b_batch_ = 1;
   std::vector<int> a_offset_;
@@ -99,18 +102,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   int batch_stride_ = 0;
   int oc_stride_ = 0;
   int thread_count_ = 0;
-  bool vec_matmul_ = false;
-  float *bias_ptr_ = nullptr;
-  float *batch_a_ptr_ = nullptr;
-  float *batch_b_ptr_ = nullptr;
-  float *batch_c_ptr_ = nullptr;
   float *output_data_ = nullptr;
-  int matrix_a_pack_size_ = -1;
-  int matrix_b_pack_size_ = -1;
-  MatrixPackFun matrix_a_pack_fun_ = nullptr;
-  MatrixPackFun matrix_b_pack_fun_ = nullptr;
-  bool batch_split_ = false;
-  bool is_pack_ = true;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
@@ -120,6 +112,11 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   GemmIsNotPackFun gemmIsNotPackFun = nullptr;
   int row_num_;
   std::vector<int> row_split_points_;
+  MatrixInfo matrix_a_;
+  MatrixInfo matrix_b_;
+  MatrixInfo matrix_c_;
+  MatrixPackFun matrix_a_pack_fun_ = nullptr;
+  MatrixPackFun matrix_b_pack_fun_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
