@@ -43,6 +43,11 @@ OpParameter *PopulateReverseParameter(const void *prim) {
     return nullptr;
   }
   reverse_param->num_axis_ = static_cast<int>(flatAxis->size());
+  if (reverse_param->num_axis_ > REVERSE_SHAPE_MAX_SIZE) {
+    MS_LOG(ERROR) << "Invalid axis size: " << reverse_param->num_axis_;
+    free(reverse_param);
+    return nullptr;
+  }
   int i = 0;
   for (int flatAxi : *flatAxis) {
     reverse_param->axis_[i++] = flatAxi;

@@ -34,6 +34,7 @@ OpParameter *PopulateSpaceToBatchNDParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
   }
+  (void)memset(space_batch_param_nd, 0, sizeof(SpaceToBatchParameter));
 
   space_batch_param_nd->op_parameter_.type_ = schema::PrimitiveType_SpaceToBatchND;
   auto block_sizes = space_to_batch_nd_prim->blockShape();
