@@ -171,6 +171,28 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
   return std::make_pair(flags, enable_context);
 }
 
+void GraphKernelFlags::CheckSupport() const {
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+  if (IsEnableGraphKernel()) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
+      MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE.";
+      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+      return;
+    }
+#ifndef USE_LLVM
+    auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+    if (is_cpu) {
+      MS_LOG(WARNING) << "GraphKernel is not usable without LLVM on cpu platform.";
+      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+      return;
+    }
+#endif
+  }
+#endif
+}
+
 void GraphKernelFlags::Refresh() {
   auto flag_map = ParseFlags(flags_cache_);
   RegisterFlags(&flag_map);
@@ -179,28 +201,15 @@ void GraphKernelFlags::Refresh() {
   }
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
+    CheckSupport();
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
-      MS_LOG(WARNING) << "GraphKernel only support GRAPH_MODE";
-      opt_level = OptLevel_0;
-    }
-
-    // check whether on ascend open graphkernel, if open, may cause error, reminder
-    // users to close this feature.
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
       MS_LOG(WARNING)
         << "GraphKernel on Ascend is experimental, please disable it if you meet some compiling or running error. For "
            "more details, please refer to 'mindspore.context' at https://www.mindspore.cn.";
     }
-#ifndef USE_LLVM
-    auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-    if (is_cpu) {
-      MS_LOG(WARNING) << "GraphKernel is not usable without LLVM on cpu platform";
-      opt_level = OptLevel_0;
-    }
-#endif
   }
 #endif
   // If enable graphkernel, Dump flags so that people can check the setting.

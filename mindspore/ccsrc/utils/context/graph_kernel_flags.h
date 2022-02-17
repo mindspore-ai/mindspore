@@ -52,6 +52,9 @@ class GraphKernelFlags {
   // Check whether graph_kernel is enabled
   bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
 
+  // Check whether GraphKernel supports current situation.
+  void CheckSupport() const;
+
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
   GraphKernelFlags(GraphKernelFlags &&flags) = delete;
   void operator=(const GraphKernelFlags &flags) = delete;
