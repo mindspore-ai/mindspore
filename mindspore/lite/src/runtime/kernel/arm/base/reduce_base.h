@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,14 @@ class ReduceBaseCPUKernel : public InnerKernel {
 
   void CalculateTmpBufferSize();
   void CalculateInnerOuterSize();
+  void DecideIfOnlyCopy();
+  int CopyInputToOutput();
 
   int axes_[MAX_SHAPE_SIZE] = {0};
   int num_axes_{0};
   int mode_{0};
   bool reduce_to_end_{false};
+  bool only_copy_{false};
 
   std::vector<size_t> buffer_sizes_;
   std::vector<int> outer_sizes_;
