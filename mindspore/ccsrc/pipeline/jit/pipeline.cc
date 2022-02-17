@@ -89,6 +89,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #include "debug/rdr/recorder_manager.h"
+#include "ir/cell.h"
 #endif
 
 namespace mindspore {
@@ -226,14 +227,24 @@ void RecordInitStatus() {
 void RecordExitStatus() { MS_LOG(INFO) << "Status record: system exit."; }
 }  // namespace
 
-void CheckArgsValid(const py::tuple &args) {
+void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
+  std::string obj_desc;
+  if (py::isinstance<Cell>(source_obj)) {
+    auto cell_class_name = source_obj.attr("__class__").attr("__name__");
+    obj_desc = "'" + py::cast<std::string>(cell_class_name) + ".construct'";
+  } else {
+    auto ms_function_name = source_obj.attr("__name__");
+    obj_desc = "'" + py::cast<std::string>(ms_function_name) + "'";
+  }
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
-        << "The inputs types of the outermost network support bool, int, float, None, tensor, "
+        << "The inputs types of the outermost network " << obj_desc
+        << " support bool, int, float, None, tensor, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
            "and tuple or list containing only these types, and dict whose values are these types, but the "
-        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
+        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"
+        << "For more details, please search 'outermost network' at https://www.mindspore.cn.";
     }
   }
 }
@@ -774,8 +785,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     MS_LOG(ERROR) << "The source object to compile should not be None.";
     return false;
   }
+
   // Check if the args of function or net is valid.
-  CheckArgsValid(args);
+  CheckArgsValid(source_obj, args);
 
   auto phase = py::cast<std::string>(phase_obj);
   phase_ = phase;
