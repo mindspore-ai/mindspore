@@ -19,11 +19,9 @@ from .metric import Metric, rearrange_inputs
 
 
 class ConfusionMatrix(Metric):
-    r"""
+    """
     Computes the confusion matrix, which is commonly used to evaluate the performance of classification models,
-    including binary classification and multiple classification. It returns an array of shape [BC4], where B is the
-    batch size and C is the number of classes to be calculated, the third dimension represents each channel of
-    each sample in the input batch, .
+    including binary classification and multiple classification.
 
     If you only need confusion matrix, use this class. If you want to calculate other metrics, such as 'PPV',
     'TPR', 'TNR', etc., use class 'mindspore.metrics.ConfusionMatrixMetric'.
