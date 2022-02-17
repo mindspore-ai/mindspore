@@ -12,8 +12,8 @@
 
     **异常：**
 
-    - **TypeError：** - `apply_func` 的类型不是函数。
-    - **TypeError：** - `apply_func` 未返回Dataset对象。
+    - **TypeError** - `apply_func` 的类型不是函数。
+    - **TypeError** - `apply_func` 未返回Dataset对象。
 
 .. py:method:: batch(batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False, max_rowsize=16)
 

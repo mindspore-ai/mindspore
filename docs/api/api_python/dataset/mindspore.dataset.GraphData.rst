@@ -233,7 +233,7 @@ mindspore.dataset.GraphData
 
         **异常：**
 
-        **TypeError：** 参数 `edge_list` 不为列表或ndarray。
+        **TypeError** 参数 `edge_list` 不为列表或ndarray。
 
     .. py:method:: get_node_feature(node_list, feature_types)
 

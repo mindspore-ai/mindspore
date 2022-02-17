@@ -63,7 +63,12 @@ class OneHot(TensorOperation):
             It should be larger than the largest label number in the dataset.
 
     Raises:
-        RuntimeError: feature size is bigger than num_classes.
+        TypeError: num_classes is not of type int.
+        RuntimeError: Input tensor is not of type int.
+        RuntimeError: Input tensor is not a 1-D tensor.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
@@ -87,6 +92,12 @@ class Fill(TensorOperation):
     Args:
         fill_value (Union[str, bytes, int, float, bool]) : scalar value
             to fill the tensor with.
+
+    Raises:
+        TypeError: If `fill_value` is not of type str, float, bool, int or bytes.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -115,6 +126,12 @@ class TypeCast(TensorOperation):
 
     Args:
         data_type (mindspore.dtype): mindspore.dtype to be cast to.
+
+    Raises:
+        TypeError: If `data_type` is not of type bool, int, float or string.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -182,6 +199,12 @@ class Slice(TensorOperation):
                 Similar to start:stop:step.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]` in Python indexing.
             5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
+
+    Raises:
+        TypeError: If `slices` is not of type int, list[int], slice, None or Ellipsis.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> # Data before
@@ -289,6 +312,15 @@ class PadEnd(TensorOperation):
         pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default to 0 or empty
             string in case of tensors of strings.
 
+    Raises:
+        TypeError: If `pad_shape` is not of type list.
+        TypeError: If `pad_value` is not of type str, float, bool, int or bytes.
+        TypeError: If elements of `pad_shape` is not of type int.
+        ValueError: If elements of `pad_shape` is not of positive.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # Data before
         >>> # |   col   |
@@ -325,6 +357,14 @@ class Concatenate(TensorOperation):
             (Default=None).
         append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
+    Raises:
+        TypeError: If `axis` is of type int.
+        TypeError: If `prepend` not of type numpy.ndarray.
+        TypeError: If `append` not of type numpy.ndarray.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> # concatenate string
@@ -349,6 +389,12 @@ class Concatenate(TensorOperation):
 class Duplicate(TensorOperation):
     """
     Duplicate the input tensor to output, only support transform one column each time.
+
+    Raises:
+        RuntimeError: If given tensor has two columns.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> # Data before
@@ -420,6 +466,15 @@ class Compose(TensorOperation):
     Args:
         transforms (list): List of transformations to be applied.
 
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        ValueError: If `transforms` is empty.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> compose = c_transforms.Compose([c_vision.Decode(), c_vision.RandomCrop(512)])
         >>> image_folder_dataset = image_folder_dataset.map(operations=compose)
@@ -447,6 +502,17 @@ class RandomApply(TensorOperation):
         transforms (list): List of transformations to be applied.
         prob (float, optional): The probability to apply the transformation list (default=0.5).
 
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        ValueError: If `transforms` is empty.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+        TypeError: If `prob` is not of type bool.
+        ValueError: If `prob` is not in range [0.0, 1.0].
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> rand_apply = c_transforms.RandomApply([c_vision.RandomCrop(512)])
         >>> image_folder_dataset = image_folder_dataset.map(operations=rand_apply)
@@ -473,6 +539,15 @@ class RandomChoice(TensorOperation):
 
     Args:
         transforms (list): List of transformations to be chosen from to apply.
+
+    Raises:
+        TypeError: If `transforms` is not of type list.
+        ValueError: If `transforms` is empty.
+        TypeError: If elements of `transforms` are neither Python callable objects nor have
+            type :class:`mindspore.dataset.transforms.c_transforms.TensorOperation` .
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> rand_choice = c_transforms.RandomChoice([c_vision.CenterCrop(50), c_vision.RandomCrop(512)])
