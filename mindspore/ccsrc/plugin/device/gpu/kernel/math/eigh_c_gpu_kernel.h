@@ -94,10 +94,10 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
     CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "cublasSetStream failed");
+                                "CublasSetStream failed");
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnSetStream(cusolver_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                  "cusolverDnSetStream failed");
-    // matrix A, input or output(eigenvector)
+                                  "CusolverDnSetStream failed");
+    // Matrix A, input or output(eigenvector)
     auto inout_A_addr = GetDeviceAddress<T>(inputs, kDim0);
     if (lower_) {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
@@ -106,18 +106,23 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
     }
     size_t lda_ = m_;
     auto output_w_addr = GetDeviceAddress<T>(outputs, kDim0);
-    // output eigenvector
-    auto output_v_addr = GetDeviceAddress<T>(outputs, kDim1);
+    // Output eigenvector if need
+    T *output_v_addr = nullptr;
+    if (compute_eigen_vectors_) {
+      output_v_addr = GetDeviceAddress<T>(outputs, kDim1);  // output eigenvalues
+    } else {
+      output_v_addr = GetDeviceAddress<T>(workspace, kDim6);  // not output eigenvalues, use workspace
+    }
     int *devInfo = GetDeviceAddress<int>(workspace, kDim0);
-    // temp output eigenvalues real scalar
+    // Temp output eigenvalues real scalar
     auto w_w_addr = GetDeviceAddress<D>(workspace, kDim1);
     auto w_w_c_addr = GetDeviceAddress<T>(workspace, kDim2);
-    // temp eigenvector before transpose
+    // Temp eigenvector before transpose
     auto w_v_addr = GetDeviceAddress<T>(workspace, kDim3);
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(output_v_addr, inout_A_addr, m_ * m_ * sizeof(T),
                                                cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "copy input matrix failed");
+                               "Copy input matrix failed");
     size_t input_shape[kShape2dDims] = {m_, m_};
     size_t input_axis[kShape2dDims] = {1, 0};
     size_t *dev_input_shape = GetDeviceAddress<size_t>(workspace, kDim4);
@@ -125,11 +130,11 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(dev_input_shape, input_shape, kShape2dDims * sizeof(size_t),
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "malloc input shape workspace failed");
+                               "Malloc input shape workspace failed");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(dev_input_axis, input_axis, kShape2dDims * sizeof(size_t),
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "malloc input shape workspace failed");
+                               "Malloc input shape workspace failed");
     CalTranspose(m_ * m_, output_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, w_v_addr,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
 
@@ -156,18 +161,20 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(w_w_c_addr, w_w_addr, m_ * sizeof(D), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "copy eigenvalue from workspace to host failed");
-    // convert real scalar to complex
+                               "Copy eigenvalue from workspace to host failed");
+    // Convert real scalar to complex
     RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
                   reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalTranspose(m_ * m_, w_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, output_v_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (compute_eigen_vectors_) {
+      CalTranspose(m_ * m_, w_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, output_v_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "copy eigenvalues to outpu failed");
+                               "Copy eigenvalues to outpu failed");
     if (info_gpu != 0) {
       MS_LOG_EXCEPTION << kernel_name_ << " launch gpu kernel fail for dtype:" << dtype_;
     }
@@ -176,21 +183,27 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
-    // in/out matrix, eigenvector
+    // In/out matrix, eigenvector
     input_size_list_.push_back(m_ * m_ * sizeof(T));
-    // eigenvalues, cuda output original real scalar, should covert to complex<ft32/64>
+    // Eigenvalues, cuda output original real scalar, should covert to complex<ft32/64>
     output_size_list_.push_back(m_ * sizeof(T));
-    output_size_list_.push_back(m_ * m_ * sizeof(T));
-    // result
+    // Eigenvector if need
+    if (compute_eigen_vectors_) {
+      output_size_list_.push_back(m_ * m_ * sizeof(T));
+    }
     workspace_size_list_.push_back(sizeof(int));
-    // for temp original eigenvalue real scalar
+    // For temp original eigenvalue real scalar
     workspace_size_list_.push_back(m_ * sizeof(D));
-    // for temp pre-transpose complex mitrx
+    // For temp pre-transpose complex mitrx
     workspace_size_list_.push_back(m_ * sizeof(T));
     workspace_size_list_.push_back(m_ * m_ * sizeof(T));
-    // transpose scalar workspace
+    // Transpose scalar workspace
     workspace_size_list_.push_back(kShape2dDims * sizeof(size_t));
     workspace_size_list_.push_back(kShape2dDims * sizeof(size_t));
+    // A temp space for input/eigenvectors if eigenvector not need to output
+    if (!compute_eigen_vectors_) {
+      workspace_size_list_.push_back(m_ * m_ * sizeof(T));
+    }
   }
 
   size_t m_{1};
