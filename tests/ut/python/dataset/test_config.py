@@ -394,6 +394,41 @@ def test_auto_num_workers():
     assert saved_config == ds.config.get_auto_num_workers()
 
 
+def test_enable_watchdog():
+    """
+    Feature: Test the function of get_enable_watchdog and set_enable_watchdog.
+    Description: We add this new interface so we can close the watchdog thread
+    Expectation: The default state is True, when execute set_enable_watchdog, the state will update.
+    """
+    saved_config = ds.config.get_enable_watchdog()
+    assert isinstance(saved_config, bool)
+    assert saved_config is True
+    # change to a different config
+    flipped_config = not saved_config
+    ds.config.set_enable_watchdog(flipped_config)
+    assert flipped_config == ds.config.get_enable_watchdog()
+    # now flip this back
+    ds.config.set_enable_watchdog(saved_config)
+    assert saved_config == ds.config.get_enable_watchdog()
+
+
+def test_multiprocessing_timeout_interval():
+    """
+    Feature: Test the function of get_multiprocessing_timeout_interval and set_multiprocessing_timeout_interval.
+    Description: We add this new interface so we can adjust the timeout of multiprocessing get function.
+    Expectation: The default state is 300s, when execute set_multiprocessing_timeout_interval, the state will update.
+    """
+    saved_config = ds.config.get_multiprocessing_timeout_interval()
+    assert saved_config == 300
+    # change to a different config
+    flipped_config = 1000
+    ds.config.set_multiprocessing_timeout_interval(flipped_config)
+    assert flipped_config == ds.config.get_multiprocessing_timeout_interval()
+    # now flip this back
+    ds.config.set_multiprocessing_timeout_interval(saved_config)
+    assert saved_config == ds.config.get_multiprocessing_timeout_interval()
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -406,3 +441,5 @@ if __name__ == '__main__':
     test_deterministic_python_seed_multi_thread()
     test_auto_num_workers_error()
     test_auto_num_workers()
+    test_enable_watchdog()
+    test_multiprocessing_timeout_interval()

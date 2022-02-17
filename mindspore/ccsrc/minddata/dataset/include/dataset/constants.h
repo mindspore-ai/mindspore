@@ -302,8 +302,10 @@ constexpr uint32_t kCfgOpConnectorSize = 16;
 constexpr uint32_t kCfgSendingBatch = 0;
 constexpr int32_t kCfgDefaultRankId = -1;
 constexpr uint32_t kCfgDefaultSeed = std::mt19937::default_seed;
-constexpr uint32_t kCfgMonitorSamplingInterval = 1000;  // timeout value for sampling interval in milliseconds
-constexpr uint32_t kCfgCallbackTimeout = 60;            // timeout value for callback in seconds
+constexpr uint32_t kCfgMonitorSamplingInterval = 1000;        // timeout value for monitor sampling interval in
+                                                              // milliseconds
+constexpr uint32_t kCfgCallbackTimeout = 60;                  // timeout value for callback in seconds
+constexpr uint32_t kCfgMultiprocessingTimeoutInterval = 300;  // timeout value for multiprocessing interval in seconds
 constexpr int32_t kCfgDefaultCachePort = 50052;
 constexpr char kCfgDefaultCacheHost[] = "127.0.0.1";
 constexpr int32_t kDftCachePrefetchSize = 20;

@@ -68,6 +68,10 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_enable_autotune", &ConfigManager::enable_autotune)
                     .def("set_autotune_interval", &ConfigManager::set_autotune_interval)
                     .def("get_autotune_interval", &ConfigManager::autotune_interval)
+                    .def("set_enable_watchdog", &ConfigManager::set_enable_watchdog)
+                    .def("get_enable_watchdog", &ConfigManager::enable_watchdog)
+                    .def("set_multiprocessing_timeout_interval", &ConfigManager::set_multiprocessing_timeout_interval)
+                    .def("get_multiprocessing_timeout_interval", &ConfigManager::multiprocessing_timeout_interval)
                     .def("load", [](ConfigManager &c, const std::string &s) { THROW_IF_ERROR(c.LoadFile(s)); });
                 }));
 

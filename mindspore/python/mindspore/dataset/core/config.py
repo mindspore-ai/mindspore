@@ -30,12 +30,19 @@ import mindspore._c_dataengine as cde
 from mindspore import log as logger
 from .validator_helpers import replace_none
 
-__all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
-           'get_num_parallel_workers', 'set_numa_enable', 'get_numa_enable', 'set_monitor_sampling_interval',
-           'get_monitor_sampling_interval', 'set_callback_timeout', 'get_callback_timeout',
-           'set_auto_num_workers', 'get_auto_num_workers', 'set_enable_shared_mem', 'get_enable_shared_mem',
-           'set_sending_batches', 'load', '_init_device_info', 'set_enable_autotune', 'get_enable_autotune',
-           'set_autotune_interval', 'get_autotune_interval']
+__all__ = ['set_sending_batches', 'load', '_init_device_info',
+           'set_seed', 'get_seed',
+           'set_prefetch_size', 'get_prefetch_size',
+           'set_num_parallel_workers', 'get_num_parallel_workers',
+           'set_numa_enable', 'get_numa_enable',
+           'set_monitor_sampling_interval', 'get_monitor_sampling_interval',
+           'set_callback_timeout', 'get_callback_timeout',
+           'set_auto_num_workers', 'get_auto_num_workers',
+           'set_enable_shared_mem', 'get_enable_shared_mem',
+           'set_enable_autotune', 'get_enable_autotune',
+           'set_autotune_interval', 'get_autotune_interval',
+           'set_enable_watchdog', 'get_enable_watchdog',
+           'set_multiprocessing_timeout_interval', 'get_multiprocessing_timeout_interval']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
@@ -633,3 +640,76 @@ def get_auto_offload():
         >>> auto_offload = ds.config.get_auto_offload()
     """
     return _config.get_auto_offload()
+
+
+def set_enable_watchdog(enable):
+    """
+    Set the default state of watchdog Python thread as enabled, the default state of watchdog Python thread is enabled.
+    Watchdog is a thread which cleans up hanging subprocesses.
+
+    Args:
+        enable (bool): Whether to launch a watchdog Python thread. System default: True.
+
+    Raises:
+        TypeError: If enable is not a boolean data type.
+
+    Examples:
+        >>> # Set a new global configuration value for the state of watchdog Python thread as enabled.
+        >>> ds.config.set_enable_watchdog(True)
+    """
+    if not isinstance(enable, bool):
+        raise TypeError("enable must be a boolean dtype.")
+    _config.set_enable_watchdog(enable)
+
+
+def get_enable_watchdog():
+    """
+    Get the state of watchdog Python thread to indicate enabled or disabled state.
+    This is the DEFAULT watchdog Python thread state value used for the all processes.
+
+    Returns:
+        bool, the default state of watchdog Python thread enabled.
+
+    Examples:
+        >>> # Get the global configuration of watchdog Python thread.
+        >>> watchdog_state = ds.config.get_enable_watchdog()
+    """
+    return _config.get_enable_watchdog()
+
+
+def set_multiprocessing_timeout_interval(interval):
+    """
+    Set the default interval (in seconds) for multiprocessing timeout when main process gets data from subprocesses.
+
+    Args:
+        interval (int): Interval (in seconds) to be used for multiprocessing timeout when main process gets data from
+          subprocess. System default: 300s.
+
+    Raises:
+        ValueError: If interval is invalid when interval <= 0 or interval > MAX_INT_32.
+
+    Examples:
+        >>> # Set a new global configuration value for multiprocessing timeout when getting data.
+        >>> ds.config.set_multiprocessing_timeout_interval(300)
+    """
+    if not isinstance(interval, int):
+        raise ValueError("interval isn't of type int.")
+    if interval <= 0 or interval > INT32_MAX:
+        raise ValueError("Interval given is not within the required range (0, INT32_MAX).")
+    _config.set_multiprocessing_timeout_interval(interval)
+
+
+def get_multiprocessing_timeout_interval():
+    """
+    Get the global configuration of multiprocessing timeout when main process gets data from subprocesses.
+
+    Returns:
+        int, interval (in seconds) for multiprocessing timeout when main process gets data from subprocesses
+          (default is 300s).
+
+    Examples:
+        >>> # Get the global configuration of multiprocessing timeout when main process gets data from subprocesses.
+        >>> # If set_multiprocessing_timeout_interval() is never called before, the default value(300) will be returned.
+        >>> multiprocessing_timeout_interval = ds.config.get_multiprocessing_timeout_interval()
+    """
+    return _config.get_multiprocessing_timeout_interval()

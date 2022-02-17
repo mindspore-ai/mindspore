@@ -259,6 +259,22 @@ class ConfigManager {
   // @param interval - autotune interval in steps
   void set_autotune_interval(int64_t interval) { autotune_interval_ = interval; }
 
+  // setter function
+  // @param enable - To enable watchdog python thread
+  void set_enable_watchdog(bool enable) { enable_watchdog_ = enable; }
+
+  // getter function
+  // @return - Flag to indicate whether watchdog python thread is enabled
+  bool enable_watchdog() const { return enable_watchdog_; }
+
+  // getter function
+  // @return - multiprocessing timeout interval in seconds
+  uint32_t multiprocessing_timeout_interval() const { return multiprocessing_timeout_interval_; }
+
+  // setter function
+  // @param interval - multiprocessing timeout interval in seconds
+  void set_multiprocessing_timeout_interval(uint32_t interval) { multiprocessing_timeout_interval_ = interval; }
+
  private:
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
@@ -286,6 +302,8 @@ class ConfigManager {
   bool save_autoconfig_;                // True if should save AutoTune configuration
   std::string autotune_json_filepath_;  // Filepath name of the final AutoTune Configuration JSON file
   int64_t autotune_interval_;
+  bool enable_watchdog_;                       // Watchdog python thread enabled flag
+  uint32_t multiprocessing_timeout_interval_;  // Multiprocessing timeout interval in seconds
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);
