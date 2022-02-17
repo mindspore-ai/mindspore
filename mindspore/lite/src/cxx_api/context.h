@@ -36,6 +36,7 @@ struct Context::Data {
   std::vector<int32_t> affinity_core_list_;
   int affinity_mode_ = 0;
   std::shared_ptr<Delegate> delegate = nullptr;
+  bool float_mode = false;
 };
 
 struct DeviceInfoContext::Data {
