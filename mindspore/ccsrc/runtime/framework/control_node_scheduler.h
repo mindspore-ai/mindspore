@@ -63,20 +63,22 @@ class ControlNodeScheduler {
   // Link all arrows between control actors.
   void LinkArrowForControlActor(ControlActorSet *const control_actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkArrowbyFormalParameter(ControlActor *const to_actor, const KernelWithIndex &from_node_with_index,
-                                  const KernelWithIndex &to_node_with_index, const ControlNodeParserPtr &parser);
+                                  const KernelWithIndex &to_node_with_index,
+                                  const GraphCompilerInfo &graph_compiler_info);
   void LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
                            const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
                            const ControlNodeParserPtr &parser);
   void LinkArrowByKernel(const AnfNodePtr &kernel, ControlActor *const to_actor,
                          const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
-                         const ControlNodeParserPtr &parser);
+                         const GraphCompilerInfo &graph_compiler_info);
   void LinkArrowByParameter(const AnfNodePtr &parameter, ControlActor *const to_actor,
                             const KernelWithIndex &from_node_with_index, const KernelWithIndex &to_node_with_index,
                             const ControlNodeParserPtr &parser);
   void LinkArrowByValueNode(const AnfNodePtr &value_node, ControlActor *const to_actor, size_t from_index,
                             size_t to_index);
   // Link arrow from stack actor to control actor.
-  void LinkArrowFromStackActor(StackActor *stack_actor, ControlActor *to_actor, const ControlNodeParserPtr &parser);
+  void LinkArrowFromStackActor(StackActor *stack_actor, ControlActor *to_actor,
+                               const GraphCompilerInfo &graph_compiler_info);
 
   // Link data arrow between control actor and actor in frame, including kernel actor, output actor, data source actor.
   void LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info);
