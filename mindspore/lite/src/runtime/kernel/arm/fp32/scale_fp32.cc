@@ -27,6 +27,24 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
+namespace {
+int CheckInputsOutputsDataType(const std::vector<lite::Tensor *> &in_tensors,
+                               const std::vector<lite::Tensor *> &out_tensors) {
+  if (std::any_of(in_tensors.begin(), in_tensors.end(), [](const lite::Tensor *input) {
+        return input->data_type() != kNumberTypeFloat && input->data_type() != kNumberTypeFloat32;
+      })) {
+    MS_LOG(ERROR) << "scale op input data type should float32";
+    return RET_ERROR;
+  }
+  if (std::any_of(out_tensors.begin(), out_tensors.end(), [](const lite::Tensor *output) {
+        return output->data_type() != kNumberTypeFloat && output->data_type() != kNumberTypeFloat32;
+      })) {
+    MS_LOG(ERROR) << "scale op output data type should float32";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+}  // namespace
 ScaleCPUKernel::~ScaleCPUKernel() {
   if (scale_param_->const_scale_) {
     if (scale_ != nullptr) {
@@ -121,7 +139,12 @@ int ScaleCPUKernel::CalculateParameter() {
 int ScaleCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = InitScaleOffset();
+  auto ret = CheckInputsOutputsDataType(in_tensors_, out_tensors_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Scale inputs or outputs data type is invalid.";
+    return RET_ERROR;
+  }
+  ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
     return RET_ERROR;

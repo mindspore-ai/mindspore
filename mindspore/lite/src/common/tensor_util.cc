@@ -16,6 +16,7 @@
 
 #include "src/common/tensor_util.h"
 #include <algorithm>
+#include <unordered_map>
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -252,6 +253,23 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
     }
     if (tensor->data() == nullptr) {
       MS_LOG(ERROR) << "tensor data should be filled before run op";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
+                          const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map) {
+  for (const auto input : inputs) {
+    MS_CHECK_TRUE_MSG(input != nullptr, RET_ERROR, "graph input tensor is nullptr.");
+    if (input_shape_map.find(input) == input_shape_map.end()) {
+      MS_LOG(ERROR) << "can't find " << input->tensor_name() << " in input_shape_map";
+      return RET_ERROR;
+    }
+    if (!input_shape_map.at(input).empty() && input_shape_map.at(input) != input->shape()) {
+      MS_LOG(ERROR) << "graph input:" << input->tensor_name()
+                    << " shape has been illegally modified, please modify the input shape with method Resize().";
       return RET_ERROR;
     }
   }
