@@ -37,7 +37,7 @@ class CsvWriter {
   ~CsvWriter();
   DISABLE_COPY_AND_ASSIGN(CsvWriter)
   bool OpenFile(const std::string &path, const std::string &header = "");
-  void CloseFile();
+  void CloseFile() noexcept;
   template <typename T>
   void WriteToCsv(const T &val, bool end_line = false);
 
@@ -57,7 +57,7 @@ class TensorStatDump {
   TensorStatDump(const std::string &op_type, const std::string &op_name, const std::string &task_id,
                  const std::string &stream_id, const std::string &timestamp, const std::string &io, size_t slot,
                  size_t tensor_loader_slot);
-  bool DumpTensorStatsToFile(const std::string &dump_path, std::shared_ptr<TensorData> data);
+  bool DumpTensorStatsToFile(const std::string &dump_path, const std::shared_ptr<TensorData> data);
   bool DumpTensorStatsToFile(const std::string &original_kernel_name, const std::string &dump_path,
                              const Debugger *debugger);
 

@@ -174,31 +174,31 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
   if (dtype_value == DT_BOOL) {
     is_bool_ = true;
   }
-  const int default_threads = 32;
-  const int default_elements_per_thread = 10000;
+  const uint64_t default_threads = 32;
+  const uint64_t default_elements_per_thread = 10000;
 
   if (num_elements_ <= default_elements_per_thread) {
     return TensorStatisticsSingleThread();
   }
-  int desired_threads = num_elements_ / default_elements_per_thread;
-  int actual_threads = std::min(desired_threads, default_threads);
-  int actual_elements_per_thread = num_elements_ / actual_threads;
+  uint64_t desired_threads = num_elements_ / default_elements_per_thread;
+  uint64_t actual_threads = std::min(desired_threads, default_threads);
+  uint64_t actual_elements_per_thread = num_elements_ / actual_threads;
 
   // Use multithread to calculate statistic on chunks of data
   void *previous_tensor_ptr = nullptr;
   size_t offset = 0;
   std::vector<std::unique_ptr<TensorSummary<T>>> summary_vec;
   std::vector<std::future<void>> summary_future_vec;
-  for (int i = 0; i < actual_threads; i++) {
-    int num_elements_for_thread;
+  for (uint64_t i = 0; i < actual_threads; i++) {
+    uint64_t num_elements_for_thread;
     if (i == actual_threads - 1) {
       num_elements_for_thread = num_elements_ - offset;
     } else {
       num_elements_for_thread = actual_elements_per_thread;
     }
-    summary_vec.emplace_back(std::make_unique<TensorSummary<T>>(current_tensor_ptr_ + offset, previous_tensor_ptr,
-                                                                num_elements_for_thread, 0));
-    summary_future_vec.emplace_back(
+    (void)summary_vec.emplace_back(std::make_unique<TensorSummary<T>>(current_tensor_ptr_ + offset, previous_tensor_ptr,
+                                                                      num_elements_for_thread, 0));
+    (void)summary_future_vec.emplace_back(
       std::async(std::launch::async, &TensorSummary<T>::TensorStatisticsSingleThread, summary_vec[i].get()));
     offset += num_elements_for_thread;
   }
