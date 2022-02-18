@@ -20,8 +20,11 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateRelu6Parameter(const void *prim) {
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "prim is nullptr.";
+    return nullptr;
+  }
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
   auto value = primitive->value_as_Activation();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
@@ -33,7 +36,7 @@ OpParameter *PopulateRelu6Parameter(const void *prim) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(ActivationParameter));
+  (void)memset(param, 0, sizeof(ActivationParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
   param->type_ = static_cast<int>(value->activation_type());
