@@ -17,30 +17,31 @@
 #include "nnacl/int8/dynamic_matmul_int8.h"
 #include "nnacl/int8/fixed_point.h"
 
-void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
-                             int deep4, size_t stride, float input_scale, const float *filter_scale,
-                             bool filter_per_channel) {
+void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
+                             float *bias, size_t row, size_t col, size_t stride, const int *a_sums, const int *b_sums,
+                             int64_t a_zp, int64_t b_zp_sum) {
   /* *
    * row4x4-major * row4x16-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
    * */
   for (int r = 0; r < row; r++) {
+    int64_t s2 = a_sums[r] * b_zp_sum;
     for (int c = 0; c < col; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM;
       int c16div = c / C16NUM, c16mod = c % C16NUM;
-      int32_t value = 0;
+      int32_t s1 = 0;
       for (int d = 0; d < deep4; d++) {
         int d4div = d / C4NUM, d4mod = d % C4NUM;
         size_t ai = r4div * deep4 * C4NUM + d4div * C4NUM * C4NUM + r4mod * C4NUM + d4mod;
         size_t bi = c16div * deep4 * C16NUM + d4div * C4NUM * C16NUM + c16mod * C4NUM + d4mod;
-        value += a[ai] * b[bi];
+        s1 += a[ai] * b[bi];
       }
-      int filter_quant_index = filter_per_channel ? c : 0;
-      double multi_scale = input_scale * filter_scale[filter_quant_index];
-      size_t ci = r * stride + c;
-      dst[ci] = multi_scale * value;
+      int64_t s3 = b_sums[c] * a_zp;
+      int64_t s4 = a_zp * b_zp_sum;
+      size_t ci = r * stride / sizeof(float) + c;
+      out[ci] = multi_scales[c] * (s1 - s2 - s3 + s4);
       if (bias != NULL) {
-        dst[ci] += bias[c];
+        out[ci] += bias[c];
       }
     }
   }
@@ -74,7 +75,7 @@ void DynamicMatmul4x16x4AIWI(const int8_t *a, const int8_t *b, const float *bias
       }
       value = s0 - s1 - s2 + s3;
       int filter_quant_index = filter_per_channel ? c : 0;
-      double multi_scale = input_scale * filter_scale[filter_quant_index];
+      float multi_scale = input_scale * filter_scale[filter_quant_index];
       size_t ci = r * stride + c;
       dst[ci] = multi_scale * value;
       if (bias != NULL) {

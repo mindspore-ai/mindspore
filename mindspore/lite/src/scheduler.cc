@@ -664,7 +664,9 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
 
   parameter->quant_type_ = node->quant_type_;
   parameter->thread_num_ = context_->thread_num_;
-
+  if (context_->float_mode && parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
+    parameter->quant_type_ = schema::QuantType_QUANT_WEIGHT;
+  }
   if (node->output_indices_.empty()) {
     MS_LOG(ERROR) << "The output size is invalid";
     if (parameter->destroy_func_ != nullptr) {
@@ -1000,9 +1002,6 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     cpu_desc.data_type = kNumberTypeFloat16;
   }
   int ret;
-  if (context_->float_mode && op_parameter->quant_type_ == schema::QuantType_QUANT_ALL) {
-    op_parameter->quant_type_ = schema::QuantType_QUANT_WEIGHT;
-  }
 #ifndef WEIGHT_DECODE_CLIP
   ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_);
   if (ret != RET_OK) {

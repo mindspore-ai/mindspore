@@ -88,6 +88,7 @@ function Convert() {
         done
       fi
       # start running converter
+      echo "Convert ${model_name} ${quant_type} ......"
       echo ${model_name} >> "$4"
       echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
         ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\

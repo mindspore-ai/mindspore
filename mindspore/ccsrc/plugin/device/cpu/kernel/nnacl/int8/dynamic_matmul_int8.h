@@ -34,12 +34,11 @@ void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, 
 #ifdef ENABLE_ARM64
 void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
                                  float *bias, size_t row, size_t col, size_t stride, const int *a_sums,
-                                 const int *b_sums, int64_t a_zp, int64_t b_zp);
-#else
-void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, const float *bias, float *dst, int row, int col,
-                             int deep4, size_t stride, float input_scale, const float *filter_scale,
-                             bool filter_per_channel);
+                                 const int *b_sums, int64_t a_zp, int64_t b_zp_sum);
 #endif
+void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
+                             float *bias, size_t row, size_t col, size_t stride, const int *a_sums, const int *b_sums,
+                             int64_t a_zp, int64_t b_zp_sum);
 #ifdef __cplusplus
 }
 #endif

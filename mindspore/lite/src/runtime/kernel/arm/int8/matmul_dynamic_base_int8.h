@@ -39,10 +39,10 @@ class MatmulDynamicBaseInt8CPUKernel : public InnerKernel {
   int ReSize() override;
 
  private:
-  void ResizeParameter();
+  void ResizeMatrixBParameter();
   int CopyBias();
-  int InitTmpBuffer();
-
+  int InitMatrixABuffer();
+  int InitMatrixBBuffer();
   int MallocQuantParam();
 
  protected:

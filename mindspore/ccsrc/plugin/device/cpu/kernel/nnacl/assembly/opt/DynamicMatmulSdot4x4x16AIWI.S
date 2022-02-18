@@ -20,7 +20,7 @@
 
 // void DynamicMatmulSdot4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
 //                                  float *bias, size_t row, size_t col, size_t stride, const int *a_sums,
-//                                  const int *b_sums, size_t a_zp, size_t b_zp, size_t deep);
+//                                  const int *b_sums, int64_t a_zp, int64_t b_zp_sum);
 // x0: a(left matrix ptr)
 // x1: b(right matrix ptr)
 // x2: out ptr
@@ -33,7 +33,7 @@
 // x9: a_sums
 // x10: b_sums
 // x19/w19: a_zp
-// x19/w20: b_zp
+// x19/w20: b_zp_sum
 
 asm_function DynamicMatmulSdot4x4x16AIWI
     sub sp, sp, #144
