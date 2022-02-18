@@ -49,6 +49,7 @@ from mindspore.ops.operations.array_ops import SegmentSum
 from mindspore.ops.operations.array_ops import IdentityN
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
+from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import MatrixDiagV3
@@ -3355,6 +3356,17 @@ test_case_image_ops = [
                                 [[7.0, 8.0, 9.0],
                                  [10.0, 11.0, 12.0]]]),
                         Tensor(0.5, mstype.float32)],
+        'skip': ['backward']}),
+    ('NonMaxSuppressionWithOverlaps', {
+        'block': NonMaxSuppressionWithOverlaps(),
+        'desc_inputs': [Tensor(np.array([[0.6964692, 0.28613934, 0.22685145, 0.5513148],
+                                         [0.71946895, 0.42310646, 0.9807642, 0.6848297],
+                                         [0.4809319, 0.39211753, 0.343178, 0.7290497],
+                                         [0.43857226, 0.059677895, 0.39804426, 0.7379954]]).astype(np.float32)),
+                        Tensor(np.array([0.18249173, 0.17545176, 0.53155136, 0.53182757]).astype(np.float32)),
+                        Tensor(4, mstype.int32),
+                        Tensor(0.1, mstype.float32),
+                        Tensor(0.2, mstype.float32)],
         'skip': ['backward']}),
     ('NonMaxSuppressionV3', {
         'block': P.NonMaxSuppressionV3(),

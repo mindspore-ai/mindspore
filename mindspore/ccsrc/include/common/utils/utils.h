@@ -563,6 +563,7 @@ constexpr auto kAttrFixedOutputFormat = "fixed_output_format";
 constexpr auto kAttrFixedInputDeviceShape = "fixed_input_device_shape";
 constexpr auto kAttrFixedOutputDeviceShape = "fixed_output_device_shape";
 constexpr auto kAttrFuncType = "func_type";
+constexpr auto kNonMaxSuppressionWithOverlapsOpName = "NonMaxSuppressionWithOverlaps";
 constexpr auto kAttrCustAicpu = "cust_aicpu";
 constexpr auto kAttrIsInternalOutputNopNode = "is_internal_output_nop_node";
 constexpr auto kAttrIsUBFusionOp = "is_ub_fusion_op";
@@ -840,6 +841,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kGetNextOpName,
                                               kListDiffOpName,
                                               kNonMaxSuppressionV3OpName,
+                                              kNonMaxSuppressionWithOverlapsOpName,
                                               kCoalesceOpName,
                                               kTruncatedNormal,
                                               kNonDeterministicInts,

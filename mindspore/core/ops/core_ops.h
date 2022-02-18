@@ -939,10 +939,11 @@ GVAR_DEF(PrimitivePtr, kPrimSvd, std::make_shared<Primitive>("Svd"));
 
 // Image
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionV3, std::make_shared<Primitive>("NonMaxSuppressionV3"));
+GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionWithOverlaps,
+         std::make_shared<Primitive>("NonMaxSuppressionWithOverlaps"));
 GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHue));
 GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2));
 GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturation));
-
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>("Return"));
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));
