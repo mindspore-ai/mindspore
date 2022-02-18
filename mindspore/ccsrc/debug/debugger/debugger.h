@@ -44,6 +44,7 @@ using debugger::WatchNode;
 using debugger::WatchpointHit;
 using DeviceTensor = mindspore::device::DeviceAddress;
 using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
+using mindspore::kernel::KernelLaunchInfo;
 
 template <class T>
 using ProtoVector = google::protobuf::RepeatedPtrField<T>;
@@ -105,7 +106,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void DumpConstantDataAscend(const KernelGraphPtr &graph);
 
-  void DumpSingleNode(const CNodePtr &node, uint32_t graph_id);
+  void DumpSingleNode(const CNodePtr &node, uint32_t graph_id, const KernelLaunchInfo *launch_info = nullptr);
 
   void DumpInGraphCompiler(const KernelGraphPtr &kernel_graph);
 
