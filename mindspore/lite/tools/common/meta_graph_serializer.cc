@@ -108,11 +108,7 @@ bool MetaGraphSerializer::InitPath(const std::string &output_path) {
   return true;
 }
 
-bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, const std::string &output_path, bool save_together) {
-  if (!InitPath(output_path)) {
-    MS_LOG(ERROR) << "Init path failed";
-    return false;
-  }
+bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, bool save_together) {
   // init file streams
   ChangeMod(save_model_path_);
   model_fs_ = OpenFile(save_model_path_, std::ios::out | std::ios::binary | std::ios::trunc);
@@ -248,9 +244,13 @@ int MetaGraphSerializer::Save(const schema::MetaGraphT &graph, const std::string
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
-  auto save_together = (size < kModelSizeLimit);
   MetaGraphSerializer meta_graph_serializer;
-  if (!meta_graph_serializer.Init(graph, output_path, save_together)) {
+  if (!meta_graph_serializer.InitPath(output_path)) {
+    MS_LOG(ERROR) << "Init path failed";
+    return RET_ERROR;
+  }
+  auto save_together = (size < kModelSizeLimit);
+  if (!meta_graph_serializer.Init(graph, save_together)) {
     MS_LOG(ERROR) << "Init MetaGraphSerializer failed";
     return RET_ERROR;
   }

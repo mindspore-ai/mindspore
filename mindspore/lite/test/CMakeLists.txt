@@ -191,6 +191,7 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             mindspore::glog
             preprocess_mid
             config_parser_mid
+            coder_mid
             )
 endif()
 

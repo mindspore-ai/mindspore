@@ -25,6 +25,7 @@
 namespace mindspore::lite {
 class MetaGraphSerializer {
  public:
+  // save serialized fb model
   static int Save(const schema::MetaGraphT &graph, const std::string &output_path);
 
  private:
@@ -34,7 +35,7 @@ class MetaGraphSerializer {
 
   bool InitPath(const std::string &real_output_path);
 
-  bool Init(const schema::MetaGraphT &graph, const std::string &output_path, bool save_together = true);
+  bool Init(const schema::MetaGraphT &graph, bool save_together = true);
 
   schema::ExternalDataT *AddExternalData(const char *data, size_t size);
 
@@ -50,8 +51,14 @@ class MetaGraphSerializer {
   std::string model_name_;
   std::string save_model_path_;
   std::string save_data_path_;
+  std::string code_mode_;
+  std::string target_;
+  bool support_parallel_{false};
+  bool debug_mode_{false};
   std::fstream *model_fs_ = nullptr;
   std::fstream *data_fs_ = nullptr;
+
+  friend class Coder;
 };
 }  // namespace mindspore::lite
 

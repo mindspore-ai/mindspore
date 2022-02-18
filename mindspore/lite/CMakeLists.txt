@@ -61,6 +61,7 @@ endif()
 if(DEFINED ENV{MSLITE_ENABLE_TRAIN})
     set(MSLITE_ENABLE_TRAIN $ENV{MSLITE_ENABLE_TRAIN})
 endif()
+
 if(DEFINED ENV{MSLITE_ENABLE_SSE})
     set(MSLITE_ENABLE_SSE $ENV{MSLITE_ENABLE_SSE})
 endif()
@@ -599,7 +600,9 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite_cv")
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ops)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
+if(ANDROID_NDK_TOOLCHAIN_INCLUDED)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/micro/coder)
+endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl build)

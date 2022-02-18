@@ -24,6 +24,7 @@ set(MSLITE_PROPOSAL_LIB_NAME libmslite_proposal)
 set(MICRO_NNIE_LIB_NAME libmicro_nnie)
 set(DPICO_ACL_ADAPTER_LIB_NAME libdpico_acl_adapter)
 set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
+set(MICRO_DIR ${TOP_DIR}/mindspore/lite/tools/converter/micro)
 
 set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
 set(BENCHMARK_TRAIN_NAME benchmark_train)
@@ -156,7 +157,7 @@ function(__install_micro_wrapper)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(DIRECTORY ${NNACL_DIR}/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/micro/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
+    install(DIRECTORY ${MICRO_DIR}/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
 endfunction()
@@ -171,7 +172,6 @@ function(__install_micro_codegen)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(TARGETS cmsis_nn ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/third_party/lib
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 endfunction()
 
 if(WIN32)
@@ -236,7 +236,7 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    if(NOT TARGET_MIX210)
+    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER)
         __install_micro_wrapper()
     endif()
     if(MSLITE_ENABLE_TOOLS)
@@ -479,7 +479,9 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    __install_micro_wrapper()
+    if(ANDROID_NDK_TOOLCHAIN_INCLUDED OR MSLITE_ENABLE_CONVERTER)
+        __install_micro_wrapper()
+    endif()
     if(MSLITE_ENABLE_TOOLS AND NOT TARGET_OHOS_LITE)
         if(NOT MSLITE_COMPILE_TWICE)
             install(TARGETS ${BENCHMARK_NAME} RUNTIME

@@ -31,6 +31,7 @@
 #include "tools/converter/config_parser/preprocess_parser.h"
 #include "tools/converter/config_parser/quant_param_parser.h"
 #include "tools/converter/config_parser/acl_option_param_parser.h"
+#include "tools/converter/config_parser/micro_param_parser.h"
 
 namespace mindspore {
 namespace converter {
@@ -299,6 +300,13 @@ int Flags::InitConfigFile() {
     return ret;
   }
   (void)CheckOfflineParallelConfig(this->configFile, &parallel_split_config_);
+
+  lite::MicroParamParser micro_param_parser;
+  ret = micro_param_parser.ParseMicroParam(config_file_parser.GetMicroParamString(), &this->microParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse micro param failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
