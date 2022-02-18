@@ -194,7 +194,7 @@ class SequenceSlice : public MetaFuncGraph {
       : MetaFuncGraph(name), prim_(prim), get_item_(get_item) {}
   ~SequenceSlice() override = default;
   MS_DECLARE_PARENT(SequenceSlice, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) final;
   friend bool operator==(const SequenceSlice &lhs, const SequenceSlice &rhs) { return lhs.name_ == rhs.name_; }
   virtual std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
     const AbstractBasePtrList &args_spec_list) = 0;

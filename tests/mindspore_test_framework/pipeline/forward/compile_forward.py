@@ -21,6 +21,7 @@ from ...components.function.compile_block import CompileBlockBC
 from ...components.function.run_block import RunBlockBC
 from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
 from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
+from ...components.inputs.get_inputs_from_config import IdentityDC
 
 # pylint: disable=W0105
 """
@@ -61,3 +62,7 @@ pipeline_for_compile_forward_ge_graph_for_case_by_case_config = [MeFacadeFC, Gen
 
 pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception = [MeFacadeFC, GenerateFromShapeDC, RunBlockBC,
                                                                            IdCartesianProductFIPC]
+
+pipeline_for_compile_forward_ge_graph_for_case_by_case_config_input_list = [MeFacadeFC, RunBlockBC,
+                                                                            IdCartesianProductFIPC, IdentityEC,
+                                                                            IdentityDC]

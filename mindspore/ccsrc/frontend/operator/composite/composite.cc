@@ -1003,7 +1003,13 @@ int64_t CheckSliceMember(const AbstractBasePtr &member, int64_t default_value, c
     return default_value;
   }
 
-  MS_LOG(EXCEPTION) << "The argument of SliceMember operator must be a Scalar or None, but got " << member->ToString();
+  if (member->isa<abstract::AbstractTensor>()) {
+    MS_EXCEPTION(TypeError)
+      << "The argument of SliceMember operator must be a Scalar or None or constant Tensor, but got a variable Tensor";
+  }
+  MS_EXCEPTION(TypeError)
+    << "The argument of SliceMember operator must be a Scalar or None or constant Tensor, but got "
+    << member->BuildType()->ToString();
 }
 
 void GenerateTupleSliceParameter(const abstract::AbstractSequencePtr &tuple, const AbstractSlicePtr &slice,

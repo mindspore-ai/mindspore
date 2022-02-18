@@ -1149,7 +1149,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      MS_LOG(EXCEPTION) << "Not supported to get attribute item name:\'" << item_name << "\' of a type["
+      MS_LOG(EXCEPTION) << "MindSpore not support to get attribute \'" << item_name << "\' of a type["
                         << data_type->ToString() << "]";
     }
     require_type = REQUIRE_TYPE::ATTR;
