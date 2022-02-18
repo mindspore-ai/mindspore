@@ -21,7 +21,7 @@
 #include <limits>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/unsorted_segment_max.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unsorted_segment_max.cuh"
 
 namespace mindspore {
 namespace kernel {

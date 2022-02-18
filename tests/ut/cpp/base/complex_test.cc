@@ -16,7 +16,7 @@
 #include <memory>
 
 #include "common/common_test.h"
-#include "utils/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 

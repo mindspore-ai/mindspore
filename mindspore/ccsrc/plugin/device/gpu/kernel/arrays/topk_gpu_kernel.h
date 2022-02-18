@@ -21,8 +21,8 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cast_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/topk_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

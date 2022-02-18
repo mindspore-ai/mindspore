@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/restrain/restrain_force_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 __global__ void restrainforcekernel(int restrain_numbers, const int *restrain_list, const UNSIGNED_INT_VECTOR *uint_crd,
                                     const UNSIGNED_INT_VECTOR *uint_crd_ref, const float factor, const VECTOR *scaler,

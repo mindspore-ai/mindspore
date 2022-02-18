@@ -21,7 +21,7 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NEIGHBOR_LIST_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NEIGHBOR_LIST_IMPL_H_
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 struct VECTOR {
   float x;

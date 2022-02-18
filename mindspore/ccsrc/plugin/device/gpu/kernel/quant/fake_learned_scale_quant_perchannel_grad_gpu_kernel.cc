@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/quant/fake_learned_scale_quant_perchannel_grad_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/fake_learned_scale_quant_perchannel_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_learned_scale_quant_perchannel_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

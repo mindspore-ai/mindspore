@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_ANGLE_ANGLE_ATOM_ENERGY_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 void AngleAtomEnergy(int angle_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
                      const int *atom_a, const int *atom_b, const int *atom_c, const float *angle_k,

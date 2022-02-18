@@ -140,7 +140,7 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_GPU)
-    target_link_libraries(mindspore_shared_lib PRIVATE  gpu_cuda_lib gpu_queue cublas
+    target_link_libraries(mindspore_shared_lib PRIVATE  gpu_cuda_lib gpu_queue cublas cuda_ops
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so

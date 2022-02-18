@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "plugin/device/gpu/kernel/cuda_impl/pad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"

@@ -26,7 +26,7 @@
 #include "kernel/oplib/oplib.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "plugin/device/gpu/kernel/custom/custom_aot_gpu_kernel.h"
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/utils.h"

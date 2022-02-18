@@ -22,7 +22,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NVTIT_MD_ITERATION_LEAP_FROG_IMPL_H
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 void MDIterationLeapFrog(const int atom_numbers, float *vel, float *crd, float *frc, float *acc,
                          const float *inverse_mass, const float dt, cudaStream_t stream);
