@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ STATUS PrimitiveMapper::GetValueNodeAndPrimFromCnode(const CNodePtr &cnode, Valu
 }
 
 STATUS PrimitiveMapper::AttrAdjust(const PrimitivePtr &prim, const std::string &name) const {
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "prim is nullptr.");
   auto value_ptr = prim->GetAttr(name);
   if (value_ptr == nullptr) {
     MS_LOG(WARNING) << prim->name() << " has no attr " << name;
@@ -143,6 +144,7 @@ STATUS PrimitiveMapper::AdjustPoolAttr(int fmk_type, const std::string &src_prim
     AdjustOnnxPoolAttr(dst_prim);
   }
   // adjust common attr
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
   auto status = AttrAdjust(dst_prim, ops::kKernelSize);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust kernel size failed.";
@@ -163,10 +165,7 @@ STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &d
     MS_LOG(ERROR) << "Get primitive from cnode failed.";
     return lite::RET_ERROR;
   }
-  if (dst_prim == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
   return lite::RET_OK;
@@ -174,6 +173,7 @@ STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &d
 
 STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                        const PrimitivePtr &dst_prim, const std::string &attr_name, size_t flag) const {
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
   auto attr_val = dst_prim->GetAttr(attr_name);
   if (attr_val == nullptr) {
     MS_LOG(INFO) << "There is no attr: " << attr_name;
@@ -232,6 +232,7 @@ STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const
 
 STATUS PrimitiveMapper::AdjustAttrFormat(const PrimitivePtr &prim, const std::string &name) const {
   int64_t format = Format::NCHW;
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "prim is nullptr.");
   if (prim->GetAttr(ops::kFormat) != nullptr) {
     format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
   }

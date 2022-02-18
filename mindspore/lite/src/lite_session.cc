@@ -576,9 +576,11 @@ int LiteSession::IsolateOutputTensor() {
     new_tensor->set_init_ref_count(src_tensor->init_ref_count());
 
     /* src tensor set for graph calculate */
+#ifdef ENABLE_FP16
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       src_tensor->set_data_type(kNumberTypeFloat32);
     }
+#endif
     src_tensor->set_ref_count(1);
 
     isolate_graph_output_map_.insert(std::make_pair(new_tensor, src_tensor));

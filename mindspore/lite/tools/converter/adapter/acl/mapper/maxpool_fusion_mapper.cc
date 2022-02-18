@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -40,10 +41,7 @@ STATUS MaxPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   } else {
     dst_prim = std::make_shared<ops::MaxPool>();
   }
-  if (dst_prim == nullptr) {
-    MS_LOG(ERROR) << "Get primitive by fmk type failed.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "Get primitive by fmk type failed.");
   dst_prim->SetAttrs(src_prim->attrs());
   if (AdjustPoolAttr(fmk_type, kNameMaxPoolFusion, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";

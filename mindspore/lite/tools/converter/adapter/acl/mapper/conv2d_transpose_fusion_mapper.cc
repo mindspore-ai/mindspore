@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "include/registry/converter_context.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -44,7 +45,7 @@ STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
   } else {
     dst_prim = std::make_shared<acl::Conv2DTransposeD>();
   }
-  MS_ASSERT(dst_prim != nullptr);
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_ERROR, "dst_prim is nullptr.");
   dst_prim->SetAttrs(src_prim->attrs());
   if (fmk_type != converter::kFmkTypeCaffe) {
     if (AdjustGeAttr(cnode, dst_prim) != RET_OK) {
@@ -62,6 +63,7 @@ STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS Conv2dTransposeMapper::AdjustGeAttr(const CNodePtr &cnode, const PrimitivePtr &dst_prim) {
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_ERROR, "dst_prim is nullptr.");
   std::vector<int64_t> shape = {0, 0, 0, 0};
   dst_prim->AddAttr("input_size", MakeValue(shape));
 

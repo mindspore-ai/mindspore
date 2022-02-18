@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -60,6 +61,8 @@ STATUS UpsampleMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS UpsampleMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node) {
+  MS_CHECK_TRUE_MSG(src_prim != nullptr, RET_ERROR, "src_prim is nullptr.");
+  MS_CHECK_TRUE_MSG(val_node != nullptr, RET_ERROR, "val_node is nullptr.");
   auto attr_val = src_prim->GetAttr("scale");
   CHECK_NULL_RETURN(attr_val);
   std::vector<float> scale = opt::CastToFloat(attr_val);

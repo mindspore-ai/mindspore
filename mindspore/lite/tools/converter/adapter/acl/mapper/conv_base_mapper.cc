@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <vector>
 #include <map>
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,6 +33,7 @@ constexpr auto kNamePaddingMode = "padding";
 
 STATUS ConvBaseMapper::AdjustAttrPad(const PrimitivePtr &prim) {
   // attr pad val
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "prim is nullptr.");
   auto pad_ptr = prim->GetAttr(ops::kPadList);
   if (pad_ptr == nullptr) {
     std::vector<int64_t> pad_list = {0, 0, 0, 0};
