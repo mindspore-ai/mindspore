@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_CRD_TO_UINT_CRD_QUARTER_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void CrdToUintCrdQuarter(const int atom_numbers, const float *crd_to_uint_crd_cof_f, const float *crd_f,
                          unsigned int *uint_crd_f, cudaStream_t stream);

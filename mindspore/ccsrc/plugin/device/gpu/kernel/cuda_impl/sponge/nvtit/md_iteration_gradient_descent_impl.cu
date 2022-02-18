@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/nvtit/md_iteration_gradient_descent_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
 
 __global__ void MD_Iteration_Gradient_Descent(const int atom_numbers, VECTOR *crd, VECTOR *frc,

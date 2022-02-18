@@ -22,8 +22,8 @@
 #include <iostream>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reverse_sequence_impl.cuh"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/reverse_sequence_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {

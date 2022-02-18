@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_PME_EXCLUDED_FORCE_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void PMEExcludedForce(const int atom_numbers, const float pme_beta, const int *uint_crd_f, const float *sacler_f,
                       const float *charge, const int *excluded_list_start, const int *excluded_list,

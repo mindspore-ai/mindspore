@@ -22,8 +22,8 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/local_response_norm_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/local_response_norm_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl_opt.cuh"
 #include "utils/utils.h"
 
 namespace mindspore {

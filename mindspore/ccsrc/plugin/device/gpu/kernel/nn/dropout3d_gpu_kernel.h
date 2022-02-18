@@ -21,7 +21,7 @@
 #include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dropout3d_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/dropout3d_impl.cuh"
 #include "include/curand.h"
 
 namespace mindspore {

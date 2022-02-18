@@ -22,7 +22,7 @@
 #include <map>
 #include <utility>
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 namespace mindspore {
 namespace kernel {

@@ -16,7 +16,7 @@
 
 #include "ps/ps_cache/gpu/gpu_ps_cache.h"
 #include "ps/ps_cache/ps_cache_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/hash_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/hash_impl.cuh"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"

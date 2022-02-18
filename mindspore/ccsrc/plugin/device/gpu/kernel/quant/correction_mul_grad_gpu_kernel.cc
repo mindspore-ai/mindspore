@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/correction_mul_grad_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/correction_mul_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/correction_mul_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

@@ -21,7 +21,7 @@
 
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/rl/rl_buffer_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/topk_impl.cuh"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 
 namespace mindspore {

@@ -28,7 +28,7 @@
 #include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 #include "plugin/device/gpu/hal/hardware/optimizer.h"
 #include "utils/ms_device_shape_transfer.h"
 #include "utils/context/graph_kernel_flags.h"

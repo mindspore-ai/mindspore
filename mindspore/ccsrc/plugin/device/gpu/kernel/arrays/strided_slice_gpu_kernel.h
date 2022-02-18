@@ -23,7 +23,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/arrays/strided_slice_gpu_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/slice_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

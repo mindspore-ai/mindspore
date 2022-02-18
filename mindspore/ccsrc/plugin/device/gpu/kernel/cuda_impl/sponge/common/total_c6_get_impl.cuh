@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TOTAL_C6_GET_IMPL_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_TOTAL_C6_GET_IMPL_H_
 
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void total_c6_get(int atom_numbers, int *atom_lj_type, float *d_lj_b, float *d_factor, cudaStream_t stream);
 

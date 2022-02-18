@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/check_valid_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/check_valid_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

@@ -24,13 +24,13 @@
 #include <complex>
 #include <algorithm>
 #include <type_traits>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/triangle_matrix_copy_impl.cuh"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "utils/convert_utils.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

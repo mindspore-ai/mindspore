@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_NN_SGD_KERNEL_H_
 
 #include <vector>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sgd_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/sgd_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

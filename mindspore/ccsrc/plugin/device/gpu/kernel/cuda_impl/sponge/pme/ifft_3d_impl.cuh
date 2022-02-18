@@ -17,8 +17,8 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_PME_IFFT_3D_IMPL_H_
 
 #include <cufft.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "utils/complex.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 template <typename T>
 void IFFT3D(int Nfft, Complex<T> *input_tensor, T *output_tensor, const cufftHandle &FFT_plan_c2r, cudaStream_t stream);

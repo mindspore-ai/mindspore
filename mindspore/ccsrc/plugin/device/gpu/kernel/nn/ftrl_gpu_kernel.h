@@ -21,7 +21,7 @@
 #include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/ftrl_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/ftrl_impl.cuh"
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 8;

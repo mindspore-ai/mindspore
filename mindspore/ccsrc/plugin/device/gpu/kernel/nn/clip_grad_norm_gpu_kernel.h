@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/clip_grad_norm_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/clip_grad_norm_impl.cuh"
 
 namespace mindspore::kernel {
 constexpr size_t kArgMaxDim = 7;

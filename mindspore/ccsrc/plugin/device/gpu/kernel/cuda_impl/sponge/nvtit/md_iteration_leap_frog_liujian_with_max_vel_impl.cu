@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/nvtit/md_iteration_leap_frog_liujian_with_max_vel_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
 
 __global__ void MD_Iteration_Leap_Frog_With_LiuJian_With_Max_Velocity(

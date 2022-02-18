@@ -22,8 +22,8 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/l2normalize_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/broadcast_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/l2normalize_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 namespace mindspore {
 namespace kernel {

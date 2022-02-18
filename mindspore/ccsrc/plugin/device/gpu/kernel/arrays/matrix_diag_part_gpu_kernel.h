@@ -25,9 +25,9 @@
 #include <string>
 #include <utility>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_diag_part_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "utils/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/matrix_diag_part_impl.cuh"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
