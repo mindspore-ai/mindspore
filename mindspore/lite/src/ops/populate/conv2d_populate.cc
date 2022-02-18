@@ -29,8 +29,12 @@ int SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, Conv
     case schema::PadMode_VALID:
       param->pad_mode_ = Pad_valid;
       break;
-    default:
+    case schema::PadMode_PAD:
       param->pad_mode_ = Pad_pad;
+      break;
+    default:
+      MS_LOG(ERROR) << "Pad mode does not support, " << pad_mode;
+      return RET_NOT_SUPPORT;
   }
 
   switch (act_type) {
@@ -54,12 +58,9 @@ int SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, Conv
 
 OpParameter *PopulateConvParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  MS_ASSERT(primitive != nullptr);
+  MS_CHECK_TRUE_MSG(primitive != nullptr, nullptr, "primitive is nullptr.");
   auto value = primitive->value_as_Conv2DFusion();
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(value != nullptr, nullptr, "value is nullptr.");
 
   auto *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
@@ -95,7 +96,14 @@ OpParameter *PopulateConvParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-
+  for (size_t i = 0; i <= 1; i++) {
+    auto stride_item = *(stride->begin() + i);
+    if (stride_item < 0 || stride_item > static_cast<int64_t>(INT32_MAX)) {
+      MS_LOG(ERROR) << "strides has invalid num.";
+      free(param);
+      return nullptr;
+    }
+  }
   param->group_ = static_cast<int>(value->group());
   param->stride_h_ = static_cast<int>(*(stride->begin()));
   param->stride_w_ = static_cast<int>(*(stride->begin() + 1));
@@ -105,6 +113,14 @@ OpParameter *PopulateConvParameter(const void *prim) {
     param->pad_l_ = 0;
     param->pad_r_ = 0;
   } else {
+    for (size_t i = 0; i <= kOffsetThree; i++) {
+      auto pad_item = *(pad_list->begin() + i);
+      if (pad_item < 0 || pad_item > static_cast<int64_t>(INT32_MAX)) {
+        MS_LOG(ERROR) << "pad list has invalid num.";
+        free(param);
+        return nullptr;
+      }
+    }
     param->pad_u_ = static_cast<int>(*(pad_list->begin()));
     param->pad_d_ = static_cast<int>(*(pad_list->begin() + 1));
     param->pad_l_ = static_cast<int>(*(pad_list->begin() + kOffsetTwo));

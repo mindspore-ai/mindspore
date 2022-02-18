@@ -27,17 +27,11 @@ int BiasGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   const TensorC *in0 = inputs[0];
   TensorC *out = outputs[0];
 
-  if (in0->shape_size_ > MAX_SHAPE_SIZE) {
+  if (in0->shape_size_ > MAX_SHAPE_SIZE || in0->shape_size_ < 1) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
-  int inshape[MAX_SHAPE_SIZE];
-  size_t inshape_size = 0;
-  ShapeSet(inshape, &inshape_size, in0->shape_, in0->shape_size_);
-  size_t ndim = inshape_size;
-  MS_CHECK_TRUE_RET(ndim - 1 <= MAX_SHAPE_SIZE, NNACL_ERR);
-  for (size_t i = 0; i < ndim - 1; i++) {
-    inshape[i] = 1;
-  }
+  int inshape[] = {in0->shape_[in0->shape_size_ - 1]};
+  size_t inshape_size = 1;
   SetDataTypeFormat(out, in0);
   SetShapeArray(out, inshape, inshape_size);
 

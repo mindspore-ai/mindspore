@@ -27,6 +27,70 @@ constexpr int kWeightChannelOut = 0;
 constexpr int kWeightKernelH = 1;
 constexpr int kWeightKernelW = 2;
 constexpr int kWeightChannelIn = 3;
+STATUS GetConvPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode,
+                           const ops::Conv2DFusion *conv_prim, std::vector<int64_t> *params) {
+  MSLITE_CHECK_PTR(tensor);
+  MSLITE_CHECK_PTR(params);
+  MSLITE_CHECK_PTR(conv_prim);
+  if (tensor->shape.empty()) {
+    MS_LOG(DEBUG) << "the tensor's shape is dynamic, which obtain only when running.";
+    return RET_NO_CHANGE;
+  }
+  int pad_u = 0;
+  int pad_d = 0;
+  int pad_l = 0;
+  int pad_r = 0;
+  if (pad_mode == mindspore::PadMode::SAME) {
+    auto shape = tensor->shape;
+    MS_CHECK_TRUE_RET(shape.size() == DIMENSION_4D, RET_ERROR);
+    int input_h = shape.at(kNHWC_H);
+    int input_w = shape.at(kNHWC_W);
+    auto strides = conv_prim->get_stride();
+    MS_CHECK_TRUE_MSG(strides.size() > 1, RET_ERROR, "conv stride param is invalid.");
+    auto dilates = conv_prim->get_dilation();
+    MS_CHECK_TRUE_MSG(dilates.size() > 1, RET_ERROR, "conv dilation param is invalid.");
+    auto kernel_size = conv_prim->get_kernel_size();
+    MS_CHECK_TRUE_MSG(kernel_size.size() > 1, RET_ERROR, "conv kernel_size param is invalid.");
+    int stride_h = strides[0];
+    int stride_w = strides[1];
+    int dilate_h = dilates[0];
+    int dilate_w = dilates[1];
+    int kernel_h = kernel_size[0];
+    int kernel_w = kernel_size[1];
+    MS_CHECK_TRUE_MSG(stride_h != 0, RET_ERROR, "stride_h shouldn't be 0");
+    MS_CHECK_TRUE_MSG(stride_w != 0, RET_ERROR, "stride_w shouldn't be 0");
+    int output_w = ceil(static_cast<float>(input_w) / static_cast<float>(stride_w));
+    int output_h = ceil(static_cast<float>(input_h) / static_cast<float>(stride_h));
+    if (INT_MUL_OVERFLOW(output_h - 1, stride_h) || INT_MUL_OVERFLOW(kernel_h - 1, dilate_h)) {
+      MS_LOG(ERROR) << "int mul overflow";
+      return RET_ERROR;
+    }
+    int pad_h_all = ((output_h - 1) * stride_h + (kernel_h - 1) * dilate_h + 1 - input_h);
+    if (INT_MUL_OVERFLOW(output_w - 1, stride_w) || INT_MUL_OVERFLOW(kernel_w - 1, dilate_w)) {
+      MS_LOG(ERROR) << "int mul overflow";
+      return RET_ERROR;
+    }
+    int pad_w_all = ((output_w - 1) * stride_w + (kernel_w - 1) * dilate_w + 1 - input_w);
+    if (pad_h_all < 0) {
+      pad_u = pad_d = 0;
+    } else {
+      pad_u = pad_h_all / 2;
+      pad_d = pad_h_all - pad_u;
+    }
+    if (pad_w_all < 0) {
+      pad_l = pad_r = 0;
+    } else {
+      pad_l = pad_w_all / 2;
+      pad_r = pad_w_all - pad_l;
+    }
+  }
+
+  params->emplace_back(pad_u);
+  params->emplace_back(pad_d);
+  params->emplace_back(pad_l);
+  params->emplace_back(pad_r);
+  return RET_OK;
+}
 }  // namespace
 ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
@@ -72,8 +136,7 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
   // calculate pad params
   const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[0]);
   std::vector<int64_t> params;
-  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
-                               weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);
+  int status = GetConvPaddingParam(dataTensor, padMode, prim.get(), &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;
@@ -146,8 +209,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
 
   // calculate pad params
   std::vector<int64_t> params;
-  int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
-                               weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);
+  int status = GetConvPaddingParam(data_tensor, padMode, prim.get(), &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;

@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_TENSOR_UTIL_H_
 #define MINDSPORE_LITE_SRC_COMMON_TENSOR_UTIL_H_
 #include <vector>
-
+#include <unordered_map>
 #include <memory>
 #include "src/tensor.h"
 #include "nnacl/tensor_c.h"
@@ -43,6 +43,8 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
                        std::vector<TensorC *> *out_tensor_c);
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
+int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
+                          const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map);
 std::vector<mindspore::MSTensor> LiteTensorsToMSTensors(const std::vector<lite::Tensor *> &lite_tensors);
 void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
