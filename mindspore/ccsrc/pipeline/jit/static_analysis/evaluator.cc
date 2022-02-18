@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,25 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
   }
 }
 }  // namespace
+
+bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
+  auto new_sequence = dyn_cast<AbstractSequence>(arg);
+  if (new_sequence != nullptr && new_sequence->sequence_nodes() != nullptr && new_sequence->size() != 0) {
+    static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
+    auto prev_result = cache_mgr.GetValue(conf);
+    if (prev_result == nullptr) {
+      return false;
+    }
+    auto prev_abs = prev_result->abstract();
+    auto old_sequence = dyn_cast<AbstractSequence>(prev_abs);
+    if (old_sequence != nullptr &&
+        (old_sequence->sequence_nodes() == nullptr || old_sequence->sequence_nodes()->empty()) && *arg == *prev_abs) {
+      MS_LOG(DEBUG) << "Always eval";
+      return true;
+    }
+  }
+  return false;
+}
 
 void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                                              const StackFramePtr &new_stack_frame) {
@@ -172,7 +191,13 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context, fg);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
-    auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+    EvalResultPtr node_eval_result = nullptr;
+    if (always_eval_flag()) {
+      MS_LOG(DEBUG) << "Always eval node";
+      node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
+    } else {
+      node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+    }
     MS_EXCEPTION_IF_NULL(node_eval_result);
     res_base = node_eval_result->abstract();
     MS_EXCEPTION_IF_NULL(res_base);
@@ -234,15 +259,19 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
       engine->set_root_context(context);
     }
   }
+  bool always_eval_flag = false;
   const auto &parameters = fg->parameters();
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg = args_abs_list[i];
     const auto &node = parameters[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, context, fg);
+    always_eval_flag = always_eval_flag || CheckIfAlwaysEval(conf, arg);
     engine->SaveEvalResultInCache(conf, std::make_shared<EvalResult>(arg, nullptr));
     MS_LOG(DEBUG) << GetInferThread() << ", Save argument[" << i << "] result for " << fg->ToString()
                   << ", NodeConfig: " << conf->ToString() << ", result: " << arg << "/" << arg->ToString();
   }
+  PushAlwaysEvalFlag(always_eval_flag);
+
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
@@ -253,6 +282,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   } else {
     res_base = LaunchStackFrame(engine, fg, context);
   }
+  PopAlwaysEvalFlag();
 
   MS_EXCEPTION_IF_NULL(res_base);
   MS_LOG(DEBUG) << "Analysis FuncGraph end, " << fg << "/" << fg->ToString()
