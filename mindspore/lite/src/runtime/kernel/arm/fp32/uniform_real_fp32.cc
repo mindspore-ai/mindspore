@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/uniform_real_fp32.h"
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
