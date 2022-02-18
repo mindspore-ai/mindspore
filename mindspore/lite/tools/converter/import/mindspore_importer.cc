@@ -180,7 +180,7 @@ bool IsEmptyOp(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   return (opt::CheckPrimitiveType(node, prim::kPrimMakeTuple) || opt::CheckPrimitiveType(node, prim::kPrimReturn) ||
           opt::CheckPrimitiveType(node, prim::kPrimTupleGetItem) || opt::CheckPrimitiveType(node, prim::kPrimDepend) ||
-          opt::CheckPrimitiveType(node, prim::kPrimUpdateState));
+          opt::CheckPrimitiveType(node, prim::kPrimUpdateState) || opt::CheckPrimitiveType(node, prim::kPrimLoad));
 }
 
 void RemovePostEdgeOfParameter(const AnfNodePtr &parameter) {
@@ -210,49 +210,42 @@ void RemovePostEdgeOfParameter(const AnfNodePtr &parameter) {
 
 void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  std::map<AnfNodePtr, bool> graph_input_map;
-  for (auto &input : func_graph->get_inputs()) {
-    graph_input_map[input] = false;
-  }
-  auto node_list = TopoSort(func_graph->get_return());
-  for (auto &node : node_list) {
-    if (!utils::isa<CNode>(node)) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    for (size_t i = 0; i < cnode->inputs().size(); i++) {
-      for (auto &input : func_graph->get_inputs()) {
-        if (input == cnode->input(i) && graph_input_map.count(input) == 1) {
-          graph_input_map[input] = true;
-        }
-      }
-    }
-  }
   // drop unused input_parameter and disconnect edge
-  std::queue<AnfNodePtr> q;
-  q.push(func_graph->get_return());
-  while (!q.empty()) {
-    auto cur_node = q.front();
-    q.pop();
-    if (IsEmptyOp(cur_node)) {
-      auto cur_cnode = utils::cast<CNodePtr>(cur_node);
-      for (size_t i = 1; i < cur_cnode->inputs().size(); i++) {
-        const auto &input = cur_cnode->input(i);
-        q.push(input);
+  auto graph_inputs = func_graph->get_inputs();
+  auto manager = Manage(func_graph);
+  MS_ASSERT(manager != nullptr);
+  auto nodes_users = manager->node_users();
+  std::vector<AnfNodePtr> unused_inputs;
+  for (const auto &input : graph_inputs) {
+    bool found_used = false;
+    std::queue<AnfNodePtr> q;
+    q.push(input);
+    while (!q.empty()) {
+      auto cur_node = q.front();
+      q.pop();
+      if (cur_node != input && !IsEmptyOp(cur_node)) {
+        found_used = true;
+        break;
+      }
+      auto node_users_itr = nodes_users.find(cur_node);
+      if (node_users_itr == nodes_users.end()) {
+        continue;
+      }
+      for (const auto &node_user_itr : node_users_itr->second) {
+        MS_ASSERT(utils::isa<CNodePtr>(node_user_itr.first));
+        auto node_user_cnode = utils::cast<CNodePtr>(node_user_itr.first);
+        q.push(node_user_cnode);
       }
     }
-    if (utils::isa<ParameterPtr>(cur_node)) {
-      auto iter = graph_input_map.find(cur_node);
-      if (iter != graph_input_map.end()) {
-        RemovePostEdgeOfParameter(cur_node);
-        iter->second = false;
+    if (!found_used) {
+      if (nodes_users.find(input) != nodes_users.end()) {
+        RemovePostEdgeOfParameter(input);
       }
+      unused_inputs.push_back(input);
     }
   }
-  for (auto &item : graph_input_map) {
-    if (!item.second) {
-      func_graph->DropNode(item.first);
-    }
+  for (auto &input : unused_inputs) {
+    func_graph->DropNode(input);
   }
 }
 
