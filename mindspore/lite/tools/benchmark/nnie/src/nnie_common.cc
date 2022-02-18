@@ -22,10 +22,10 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-constexpr int kSleepUs = 100;
 
 namespace mindspore {
 namespace nnie {
+constexpr int kSleepUs = 100;
 static void NnieParamRelease(NnieParam *nnie_param) {
   if (nnie_param == nullptr) {
     return;
@@ -179,7 +179,8 @@ static void GetBlobMemSize(SVP_NNIE_NODE_S nnie_node[], HI_U32 node_num, HI_U32 
 }
 
 static int GetTaskAndBlobBufSize(NnieCfg *nnie_cfg, NnieParam *nnie_param, HI_U32 *total_task_buf_size,
-                                 HI_U32 *tmp_buf_size, NnieBlobSize blob_size[], HI_U32 *total_size) {
+                                 HI_U32 *tmp_buf_size, NnieBlobSize blob_size[], HI_U32 blob_size_len,
+                                 HI_U32 *total_size) {
   HI_S32 ret = HI_SUCCESS;
   HI_U32 i, j;
   HI_U32 total_step = 0;
@@ -199,7 +200,7 @@ static int GetTaskAndBlobBufSize(NnieCfg *nnie_cfg, NnieParam *nnie_param, HI_U3
   *tmp_buf_size = nnie_param->model_->u32TmpBufSize;
   *total_size += *total_task_buf_size + *tmp_buf_size;
 
-  for (i = 0; i < nnie_param->model_->u32NetSegNum; i++) {
+  for (i = 0; i < nnie_param->model_->u32NetSegNum && i < blob_size_len; i++) {
     if (SVP_NNIE_NET_TYPE_RECURRENT == nnie_param->model_->astSeg[i].enNetType) {
       for (j = 0; j < nnie_param->seg_data_[i].src_[0].u32Num; j++) {
         total_step += *(reinterpret_cast<HI_S32 *>(
@@ -219,9 +220,7 @@ static int GetTaskAndBlobBufSize(NnieCfg *nnie_cfg, NnieParam *nnie_param, HI_U3
 
 static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
   HI_U32 i, j;
-  HI_U32 total_size = 0;
-  HI_U32 total_task_buf_size = 0;
-  HI_U32 tmp_buf_size_ = 0;
+  HI_U32 total_size = 0, total_task_buf_size = 0, tmp_buf_size_ = 0;
   HI_S32 ret = HI_SUCCESS;
   HI_U32 off_set = 0;
   HI_U64 phy_addr = 0;
@@ -230,7 +229,9 @@ static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
 
   FillForwardInfo(nnie_cfg, nnie_param);
 
-  ret = GetTaskAndBlobBufSize(nnie_cfg, nnie_param, &total_task_buf_size, &tmp_buf_size_, blob_size, &total_size);
+  HI_U32 blob_size_len = sizeof(blob_size) / sizeof(blob_size[0]);
+  ret = GetTaskAndBlobBufSize(nnie_cfg, nnie_param, &total_task_buf_size, &tmp_buf_size_, blob_size, blob_size_len,
+                              &total_size);
   if (HI_SUCCESS != ret) {
     LOGE("Error,Malloc memory failed! ");
     return RET_ERROR;

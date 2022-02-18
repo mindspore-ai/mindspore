@@ -21,10 +21,10 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-constexpr int kNumInput2 = 2;
 
 namespace mindspore {
 namespace nnie {
+constexpr int kNumInput2 = 2;
 int NNIEManager::CfgInit(int max_roi_num, int step, const std::vector<int> &core_id) {
   memset(&nnie_cfg_, 0, sizeof(NnieRunCfg));
 
@@ -70,10 +70,7 @@ int NNIEManager::Run(std::vector<mindspore::MSTensor> *outputs, unsigned int seg
   return RET_OK;
 }
 
-void NNIEManager::Release() {
-  // NniePrintReportResult(&nnie_cfg_.param_);
-  NnieCommDelete(&nnie_cfg_.param_, &nnie_cfg_.model_);
-}
+void NNIEManager::Release() { NnieCommDelete(&nnie_cfg_.param_, &nnie_cfg_.model_); }
 
 int NNIEManager::GetOutputData(std::vector<mindspore::MSTensor> *outputs,
                                const std::vector<std::vector<int64_t>> &outputs_shape, bool run_box) {
