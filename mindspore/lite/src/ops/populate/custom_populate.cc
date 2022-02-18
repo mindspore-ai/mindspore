@@ -16,7 +16,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
-using PrimType::PrimType_Custom;
+using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
 namespace lite {
