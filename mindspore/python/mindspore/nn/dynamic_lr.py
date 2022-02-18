@@ -43,6 +43,9 @@ def piecewise_constant_lr(milestone, learning_rates):
         ValueError: If the length of `milestone` and `learning_rates` is not same.
         ValueError: If the value in `milestone` is not monotonically decreasing.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import mindspore.nn as nn
         >>>
@@ -115,6 +118,9 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         TypeError: If `learning_rate` or `decay_rate` is not a float.
         ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import mindspore.nn as nn
         >>>
@@ -166,6 +172,9 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         TypeError: If `is_stair` is not a bool.
         TypeError: If `learning_rate` or `decay_rate` is not a float.
         ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
@@ -220,6 +229,9 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         TypeError: If `learning_rate` or `decay_rate` is not a float.
         ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import mindspore.nn as nn
         >>>
@@ -271,6 +283,9 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         ValueError: If `max_lr` is not greater than 0 or `min_lr` is less than 0.
         ValueError: If `total_step` or `step_per_epoch` or `decay_epoch` is less than 0.
         ValueError: If `min_lr` is greater than or equal to `max_lr`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
@@ -350,6 +365,9 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     Returns:
         list[float]. The size of list is `total_step`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import mindspore.nn as nn
         >>>
@@ -414,6 +432,9 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         TypeError: If `learning_rate` is not a float.
         TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
         ValueError: If `learning_rate` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn
