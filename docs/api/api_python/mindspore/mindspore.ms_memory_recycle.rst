@@ -1,7 +1,7 @@
-mindspore.ops.ms_memory_recycle
+mindspore.ms_memory_recycle
 ================================
 
-.. py:function:: mindspore.ops.ms_memory_recycle()
+.. py:function:: mindspore.ms_memory_recycle()
 
     回收MindSpore使用的内存。
 
