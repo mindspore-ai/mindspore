@@ -17,6 +17,7 @@ import pytest
 import numpy as onp
 import mindspore.nn as nn
 import mindspore.ops as ops
+import mindspore.scipy as scp
 from mindspore import context, Tensor
 from mindspore.scipy.ops import Eigh, Cholesky, SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
@@ -56,6 +57,44 @@ def test_cholesky_grad(shape, data_type):
     context.set_context(mode=context.PYNATIVE_MODE)
     cholesky_net(Tensor(a))
     assert gradient_check(Tensor(a), cholesky_net, epsilon) < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('lower', [True, False])
+@pytest.mark.parametrize('shape', [(8, 8)])
+@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
+def test_cho_factor_grad(lower, shape, data_type):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for grad implementation of cho_factor in graph mode and pynative mode.
+    Expectation: the result match gradient checking.
+    """
+    onp.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE)
+    dtype, epsilon, error = data_type
+
+    class ChoFactorNet(nn.Cell):
+        def __init__(self, lower):
+            super(ChoFactorNet, self).__init__()
+            self.mean = ops.ReduceMean()
+            # Input arg clean not supports grad right now, just default clean to True.
+            self.cho_factor = scp.linalg.cho_factor
+            self.lower = lower
+
+        def construct(self, a):
+            c = self.cho_factor(a, self.lower)
+            return self.mean(c)
+
+    cho_factor_net = ChoFactorNet(lower)
+    a = create_sym_pos_matrix(shape, dtype)
+    cho_factor_net(Tensor(a))
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon) < error
+    context.set_context(mode=context.PYNATIVE_MODE)
+    cho_factor_net(Tensor(a))
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon) < error
 
 
 @pytest.mark.level0
