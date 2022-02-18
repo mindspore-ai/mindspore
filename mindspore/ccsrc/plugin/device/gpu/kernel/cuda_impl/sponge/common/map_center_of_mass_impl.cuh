@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_MAPCENTEROFMASS_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void MapCenterOfMass(int residue_numbers, int *start, int *end, float *center_of_mass_f,
                      float *box_length_f, float *no_wrap_crd_f, float *crd_f, float* scaler, cudaStream_t stream);

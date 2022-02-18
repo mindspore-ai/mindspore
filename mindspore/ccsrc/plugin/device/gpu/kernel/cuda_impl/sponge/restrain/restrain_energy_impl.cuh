@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_RESTRAIN_RESTRAIN_ENERGY_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void restrainenergy(int restrain_numbers, int atom_numbers, float weight, const int *restrain_list, const float *crd_f,
                     const float *crd_ref, const float *boxlength_f, float *ene, cudaStream_t stream);

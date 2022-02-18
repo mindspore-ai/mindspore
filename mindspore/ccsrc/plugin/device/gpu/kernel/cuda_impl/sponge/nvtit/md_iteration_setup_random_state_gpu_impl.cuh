@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_MD_ITERATION_SETUP_RANDOM_STATE_GPU_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 void MD_Iteration_Setup_Random_State(int float4_numbers, curandStatePhilox4_32_10_t *rand_state, int seed,
                                      cudaStream_t stream);
 #endif

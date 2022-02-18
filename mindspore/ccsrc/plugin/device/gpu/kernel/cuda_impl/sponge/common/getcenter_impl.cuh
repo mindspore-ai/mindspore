@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_GETCENTER_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void GetCenterOfGeometry(const int center_numbers, float center_numbers_inverse, const int *center_atoms,
                          const float *crd_f, float *center_of_geometry_f, cudaStream_t stream);

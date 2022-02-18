@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/restrain/restrain_energy_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
 
 __global__ void restrain_energy_kernel(const int restrain_numbers, const int *restrain_list, const VECTOR *crd,
                                        const VECTOR *crd_ref, const float weight, const VECTOR boxlength, float *ene) {

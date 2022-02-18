@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_MDTEMPERATURE_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void MDTemperature(const int residue_numbers, const int *start, const int *end, const float *atom_vel_f,
                    const float *atom_mass, float *ek, cudaStream_t stream);

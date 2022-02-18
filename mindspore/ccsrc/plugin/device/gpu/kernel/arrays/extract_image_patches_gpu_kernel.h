@@ -23,8 +23,8 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/extract_image_patches_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl_opt.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/extract_image_patches_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

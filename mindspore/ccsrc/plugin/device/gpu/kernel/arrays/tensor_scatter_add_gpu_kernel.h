@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tensor_scatter_add.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/tensor_scatter_add.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

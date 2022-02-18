@@ -21,8 +21,8 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/transpose_impl_opt.cuh"
 namespace mindspore {
 namespace kernel {
 constexpr size_t kDimSize4 = 4;

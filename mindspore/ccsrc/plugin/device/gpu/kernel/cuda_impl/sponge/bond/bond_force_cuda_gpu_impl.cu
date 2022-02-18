@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/bond/bond_force_cuda_gpu_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
 
 __global__ void BondForceCudaKernel(int bond_numbers, const UNSIGNED_INT_VECTOR *uint_crd, const VECTOR *scaler,
                                     const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,

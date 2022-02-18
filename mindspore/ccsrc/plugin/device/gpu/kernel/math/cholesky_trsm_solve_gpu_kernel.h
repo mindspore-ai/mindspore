@@ -21,8 +21,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/eye_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_split_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/eye_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/matrix_split_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"

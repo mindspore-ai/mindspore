@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_RESTRAIN_RESTAIN_FORCE_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void restrainforce(int restrain_numbers, int atom_numbers, const int *restrain_list, const int *uint_crd_f,
                    const int *uint_crd_ref, const float factor, const float *scaler_f, float *frc_f,

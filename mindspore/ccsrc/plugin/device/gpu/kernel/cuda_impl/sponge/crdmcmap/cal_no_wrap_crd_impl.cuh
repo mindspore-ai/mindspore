@@ -19,7 +19,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_CRDMCMAP_CAL_NO_WRAP_CRD_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/hal/device/cuda_common.h"
 
 void calculatenowrapcrd(int atom_numbers, int *box_map_times_f, float *box_f, float *crd_f, float *nowrap_crd_f,
                         cudaStream_t stream);

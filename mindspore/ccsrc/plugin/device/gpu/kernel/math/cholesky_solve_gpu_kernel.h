@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/triangle_matrix_copy_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"

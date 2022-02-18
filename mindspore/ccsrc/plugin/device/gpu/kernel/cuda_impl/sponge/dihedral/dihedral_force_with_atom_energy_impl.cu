@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/dihedral/dihedral_force_with_atom_energy_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/util.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/sponge/common_sponge.cuh"
 
 __global__ void DihedralForceWithAtomEnergyKernel(int dihedral_numbers, const UNSIGNED_INT_VECTOR *uint_crd,

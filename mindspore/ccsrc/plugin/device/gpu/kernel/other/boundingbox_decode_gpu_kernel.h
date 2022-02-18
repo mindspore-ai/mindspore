@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/boundingbox_decode_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/boundingbox_decode_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 

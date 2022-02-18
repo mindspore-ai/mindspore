@@ -20,7 +20,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unsorted_segment_sum.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/unsorted_segment_sum.cuh"
 
 namespace mindspore {
 namespace kernel {
