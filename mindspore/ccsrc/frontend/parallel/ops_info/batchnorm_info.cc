@@ -263,17 +263,15 @@ void BatchNormInfo::InferReplaceOps() {
 
   ValuePtr epsilon = MakeValue(epsilon_);
   ValuePtr momentum = MakeValue(momentum_);
-  ValuePtr format = MakeValue(format_);
   ValuePtr group = MakeValue(forward_allreduce_group_[0].name());
   ValuePtr device_num = MakeValue(forward_allreduce_group_[0].GetDevNum());
 
   Attr attr_epsilon = std::make_pair(EPSILON, epsilon);
   Attr attr_momentum = std::make_pair(MOMENTUM, momentum);
-  Attr attr_format = std::make_pair(FORMAT, format);
   Attr attr_group = std::make_pair(GROUP, group);
   Attr attr_device_num = std::make_pair(DEVICE_NUM, device_num);
 
-  OperatorAttrs attrs = {attr_epsilon, attr_momentum, attr_group, attr_device_num, attr_format};
+  OperatorAttrs attrs = {attr_epsilon, attr_momentum, attr_group, attr_device_num};
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(SYNC_BATCH_NORM, args)};

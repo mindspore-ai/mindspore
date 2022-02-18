@@ -99,7 +99,11 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
   }
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update);
-  AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
+  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_cnode)) {
+    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_training_update);
+  }
   AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
   return bn_training_update;
 }

@@ -47,7 +47,11 @@ void BnGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNo
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_update_grad.get());
 
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
-  AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
+  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
+    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_update_grad);
+  }
   if (is_dynamic) {
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_update_grad);
   }
@@ -84,7 +88,11 @@ void BnGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNo
   AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_reduce_grad.get());
 
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
-  AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
+  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
+    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_reduce_grad);
+  }
   if (is_dynamic) {
     AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_reduce_grad);
     AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_reduce_grad);
