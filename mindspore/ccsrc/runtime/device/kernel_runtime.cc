@@ -1053,6 +1053,52 @@ DeviceAddressPtr KernelRuntime::CreateDeviceAddressForStringValue(const ValuePtr
   return address;
 }
 
+bool KernelRuntime::MemSchedulerPreCompute(const AnfNodePtr &kernel, const std::shared_ptr<MemScheduler> &mem_scheduler,
+                                           void *stream, bool mock, KernelLaunchInfo *kernel_launch_info) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(mem_scheduler);
+  MS_EXCEPTION_IF_NULL(stream);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (!mock && AnfAlgo::IsCommunicationOp(kernel) && !SyncStream()) {
+    MS_LOG(ERROR) << "SyncStream failed";
+    return false;
+  }
+  bool ret = mem_scheduler->PreCompute(stream);
+  if (!ret) {
+    return ret;
+  }
+  AssignKernelAddress(mem_scheduler, kernel, kernel_launch_info);
+  auto cnode = kernel->cast<CNodePtr>();
+  if (mock && AnfAlgo::HasNodeAttr(kAttrOffload, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrOffload)) {
+    for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
+      auto device_address = AnfAlgo::GetOutputAddr(kernel, i, true);
+      mem_scheduler->SetOffload(device_address);
+    }
+  }
+  return true;
+}
+
+bool KernelRuntime::MemSchedulerPostCompute(const session::KernelGraph &graph, const AnfNodePtr &kernel,
+                                            const std::shared_ptr<MemScheduler> &mem_scheduler, void *stream,
+                                            bool mock) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(mem_scheduler);
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!mock) {
+    SyncNodeOutputTensors(mem_scheduler, graph, kernel);
+  }
+  bool ret = mem_scheduler->PostCompute(stream);
+  if (!ret) {
+    return ret;
+  }
+  if (!mock && AnfAlgo::IsCommunicationOp(kernel) && !SyncStream()) {
+    MS_LOG(ERROR) << "SyncStream failed";
+    return false;
+  }
+  return true;
+}
+
 void KernelRuntime::AssignDynamicMemory(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto context_ptr = MsContext::GetInstance();
@@ -1505,17 +1551,9 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
   }
   bool ret = true;
   if (mem_scheduler != nullptr) {
-    ret = mem_scheduler->PreCompute(stream);
+    ret = MemSchedulerPreCompute(kernel, mem_scheduler, stream, mock, &kernel_launch_info);
     if (!ret) {
       return ret;
-    }
-    AssignKernelAddress(mem_scheduler, kernel, &kernel_launch_info);
-    auto cnode = kernel->cast<CNodePtr>();
-    if (mock && AnfAlgo::HasNodeAttr(kAttrOffload, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrOffload)) {
-      for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
-        auto device_address = AnfAlgo::GetOutputAddr(kernel, i, true);
-        mem_scheduler->SetOffload(device_address);
-      }
     }
   } else if (!kernel_mod->GetInputsAddr().empty() || !kernel_mod->GetOutputsAddr().empty()) {
     kernel_launch_info.inputs_ = kernel_mod->GetInputsAddr();
@@ -1535,10 +1573,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
     }
   }
   if (mem_scheduler != nullptr) {
-    if (!mock) {
-      SyncNodeOutputTensors(mem_scheduler, graph, kernel);
-    }
-    ret = mem_scheduler->PostCompute(stream);
+    ret = MemSchedulerPostCompute(graph, kernel, mem_scheduler, stream, mock);
   }
   return ret;
 }
