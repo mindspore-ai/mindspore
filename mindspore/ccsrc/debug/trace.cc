@@ -447,12 +447,12 @@ void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
   graph_infer_stack.pop_back();
 }
 
-void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graphEvals) {
-  graph_infer_stack.insert(graph_infer_stack.end(), graphEvals.begin(), graphEvals.end());
+void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graph_evals) {
+  graph_infer_stack.insert(graph_infer_stack.end(), graph_evals.begin(), graph_evals.end());
 }
 
-void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnodeEvals) {
-  cnode_debug_stack.insert(cnode_debug_stack.end(), cnodeEvals.begin(), cnodeEvals.end());
+void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnode_evals) {
+  cnode_debug_stack.insert(cnode_debug_stack.end(), cnode_evals.begin(), cnode_evals.end());
 }
 
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_config) { cnode_debug_stack.push_back(node_config); }
