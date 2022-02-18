@@ -117,8 +117,10 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   // malloc memory for x, y coordinates
   {
+    MS_CHECK_LE((static_cast<int64_t>(sizeof(int)) * x_len), MAX_MALLOC_SIZE, RET_ERROR);
     coordinate_.x_lefts_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * x_len));
     CHECK_MALLOC_RES(coordinate_.x_lefts_, RET_NULL_PTR);
+    MS_CHECK_LE((static_cast<int64_t>(sizeof(int)) * y_len), MAX_MALLOC_SIZE, RET_ERROR);
     coordinate_.y_tops_ = reinterpret_cast<int *>(malloc(static_cast<int>(sizeof(int)) * y_len));
     CHECK_MALLOC_RES(coordinate_.y_tops_, RET_NULL_PTR);
     if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
@@ -131,13 +133,18 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   // malloc memory for weights of x, y axes
   {
+    MS_CHECK_LE((static_cast<int64_t>(DataTypeLen()) * x_weight_len), MAX_MALLOC_SIZE, RET_ERROR);
     x_weights_ = malloc(x_weight_len * DataTypeLen());
     CHECK_MALLOC_RES(x_weights_, RET_NULL_PTR);
+    MS_CHECK_LE((static_cast<int64_t>(DataTypeLen()) * y_weight_len), MAX_MALLOC_SIZE, RET_ERROR);
     y_weights_ = malloc(y_weight_len * DataTypeLen());
     CHECK_MALLOC_RES(y_weights_, RET_NULL_PTR);
   }
 
   {
+    MS_CHECK_LE((static_cast<int64_t>(DataTypeLen()) * x_len * in_tensors_.at(0)->Channel() * kResizeSizeDouble *
+                 op_parameter_->thread_num_),
+                MAX_MALLOC_SIZE, RET_ERROR);
     MS_CHECK_TRUE_RET(in_tensors_.at(0)->Channel() > 0, RET_ERROR);
     line_buffer_ =
       malloc(DataTypeLen() * x_len * in_tensors_.at(0)->Channel() * kResizeSizeDouble * op_parameter_->thread_num_);
