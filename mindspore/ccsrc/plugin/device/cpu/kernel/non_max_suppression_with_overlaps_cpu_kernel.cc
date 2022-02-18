@@ -56,11 +56,12 @@ void NonMaxSuppressionWithOverlapsCpuKernelMod::InitKernel(const CNodePtr &kerne
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input score_threshold must be float.";
   }
   if (overlaps_shape[0] != overlaps_shape[1]) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input dim size of overlaps must be squared.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input dim size of overlaps must be squared.";
   }
   num_boxes_ = overlaps_shape[0];
   if (scores_shape[0] != overlaps_shape[0]) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of scores must be equal to the number of boxes.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', the length of scores must be equal to the number of boxes.";
   }
   node_wpt_ = kernel_node;
 }
@@ -77,7 +78,7 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   std::copy_n(reinterpret_cast<float *>(inputs[1]->addr), num_boxes_, scores_data.begin());
   auto max_output_size_ = *reinterpret_cast<int32_t *>(inputs[2]->addr);
   if (max_output_size_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input max_output_size must be non-negative.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input max_output_size must be non-negative.";
   }
   auto overlap_threshold = *reinterpret_cast<float *>(inputs[3]->addr);
   auto score_threshold = *reinterpret_cast<float *>(inputs[4]->addr);

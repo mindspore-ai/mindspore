@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t InpuIndex2 = 2;
+const int64_t InputIndex2 = 2;
 constexpr size_t kNonMaxSuppressionWithOverlapsInputsNum = 5;
 constexpr size_t kOverlapsRank = 2;
 abstract::ShapePtr NonMaxSuppressionWithOverlapsInferShape(const PrimitivePtr &primitive,

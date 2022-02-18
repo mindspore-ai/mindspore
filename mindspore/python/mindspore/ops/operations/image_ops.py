@@ -423,14 +423,14 @@ class NonMaxSuppressionWithOverlaps(Primitive):
           corresponding to each box (each row of boxes),the num_boxes of "scores" must be equal to
           the num_boxes of "overlaps".
           Types allowed:float32.
-        - **max_output_size** (Tensor) - A scalar integer Tensor representing the maximum
+        - **max_output_size** (Union[Tensor, Number.Int]) - A scalar integer Tensor representing the maximum
           number of boxes to be selected by non max suppression, and max_output_size must be equal to or greater
           than 0.
           Types allowed:int32.
-        - **overlap_threshold** (Tensor) - A 0-D float tensor representing the threshold for deciding
-          whether boxes overlap too much.
+        - **overlap_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
+          deciding whether boxes overlap too much.
           Types allowed:float32.
-        - **score_threshold** (Tensor) - A 0-D float tensor representing the threshold for
+        - **score_threshold** (Union[Tensor, Number.Float]) - A 0-D float tensor representing the threshold for
           deciding when to remove boxes based on score.
           Types allowed:float32.
 
