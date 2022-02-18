@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,6 +165,11 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
 // Resolve Cell with attr name.
 AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj, const AnfNodePtr &node,
                                const AnfNodePtr &attr);
+AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
+                                   const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
+                                   const CNodePtr &operand_cnode);
+// Check if node is resolve node with getitem.
+bool IsResolveNodeWithGetItem(const AnfNodePtr &node);
 
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
 bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);

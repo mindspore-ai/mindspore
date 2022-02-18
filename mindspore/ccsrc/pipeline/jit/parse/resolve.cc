@@ -349,6 +349,30 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
   return item_obj;
 }
 
+AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
+                                   const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
+                                   const CNodePtr &operand_cnode) {
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+  auto sequence = obj.cast<py::sequence>();
+  // Incorporate if all elements of the sequence are Cell instances.
+  for (size_t i = 0; i < sequence.size(); ++i) {
+    if (!parse::data_converter::IsCellInstance(sequence[i])) {
+      return nullptr;
+    }
+    // Resolve Cell instance.
+    auto res = parse::ResolveCellWithAttr(manager, sequence[i], resolve_node, attr);
+    inputs.emplace_back(res);
+  }
+
+  constexpr auto prim_index = 0;
+  constexpr auto index_index = 2;
+  auto fg = operand_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto make_tuple_node = fg->NewCNodeInOrder(inputs);
+  return fg->NewCNodeInOrder({operand_cnode->input(prim_index), make_tuple_node, operand_cnode->input(index_index)});
+}
+
 std::pair<parse::NameSpacePtr, parse::SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
     auto resolve_cnode = node->cast<CNodePtr>();
@@ -427,6 +451,18 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   AnfNodePtr resolved_node = node->func_graph()->NewCNode(std::move(inputs));
   TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
+}
+
+bool IsResolveNodeWithGetItem(const AnfNodePtr &node) {
+  // Check if the node matches: {prim::kPrim::Resolve, ..., 'getitem'}.
+  if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
+    constexpr size_t symbol_index = 2;
+    constexpr auto getitem_symbol = "getitem";
+    auto cnode = node->cast<CNodePtr>();
+    auto symbol = GetValueNode<parse::SymbolPtr>(cnode->input(symbol_index));
+    return symbol->symbol() == getitem_symbol;
+  }
+  return false;
 }
 
 namespace {
