@@ -78,7 +78,6 @@ class RecorderManager {
 
   bool rdr_enable_{false};
   int rdr_mode_{Exceptional};
-  int rdr_mode_dup_{Exceptional};
   bool rdr_has_record_mem_{false};
 
   mutable std::mutex mtx_;

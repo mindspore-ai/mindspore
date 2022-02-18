@@ -27,7 +27,6 @@ void RecorderManager::UpdateRdrEnable() {
   auto &config_parser = mindspore::EnvConfigParser::GetInstance();
   rdr_enable_ = config_parser.RdrEnabled();
   rdr_mode_ = config_parser.RdrMode();
-  rdr_mode_dup_ = rdr_mode_;
   if (config_parser.HasRdrSetting()) {
 #ifdef __linux__
     if (!rdr_enable_) {
@@ -107,22 +106,20 @@ void RecorderManager::TriggerAll() {
   if (!trigger) {
     MS_LOG(WARNING) << "There is no recorder to export.";
   } else {
-    // Prevent duplicate data export by ClearResAtexit() in exceptional scenario.
-    rdr_mode_ = Exceptional;
-    MS_LOG(INFO) << "RDR exports all recorders.";
+    if (rdr_mode_ != Normal) {
+      MS_LOG(INFO) << "RDR exports all recorders in abnormal end scenario.";
+    }
   }
 }
 
 void RecorderManager::Snapshot() {
-  if (rdr_mode_ != Normal) {
-    // Restore RDR mode value from early backup.
-    rdr_mode_ = rdr_mode_dup_;
+  if (!rdr_enable_ || rdr_mode_ != Normal) {
     return;
   }
   RecorderManager::TriggerAll();
-  if (rdr_enable_) {
-    MS_LOG(INFO) << "RDR exports all recorders in normal end scenario.";
-  }
+  MS_LOG(INFO) << "RDR exports all recorders in normal end scenario.";
+  // Prevent duplicate data export by ClearResAtexit() in exceptional scenario.
+  ClearAll();
 }
 
 void RecorderManager::ClearAll() {
