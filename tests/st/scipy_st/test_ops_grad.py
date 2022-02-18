@@ -17,8 +17,8 @@ import pytest
 import numpy as onp
 import mindspore.nn as nn
 import mindspore.ops as ops
-import mindspore.scipy as scp
 from mindspore import context, Tensor
+from mindspore.scipy.linalg import cho_factor, cho_solve
 from mindspore.scipy.ops import Eigh, Cholesky, SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
 
@@ -80,21 +80,61 @@ def test_cho_factor_grad(lower, shape, data_type):
         def __init__(self, lower):
             super(ChoFactorNet, self).__init__()
             self.mean = ops.ReduceMean()
-            # Input arg clean not supports grad right now, just default clean to True.
-            self.cho_factor = scp.linalg.cho_factor
             self.lower = lower
 
         def construct(self, a):
-            c = self.cho_factor(a, self.lower)
+            c, _ = cho_factor(a, self.lower)
             return self.mean(c)
+
+    def _enumerate_fn(x):
+        for inner, _ in onp.ndenumerate(x):
+            if inner[-1] > inner[-2]:
+                continue
+            yield inner, _
 
     cho_factor_net = ChoFactorNet(lower)
     a = create_sym_pos_matrix(shape, dtype)
-    cho_factor_net(Tensor(a))
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon) < error
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon, _enumerate_fn) < error
     context.set_context(mode=context.PYNATIVE_MODE)
-    cho_factor_net(Tensor(a))
-    assert gradient_check(Tensor(a), cho_factor_net, epsilon) < error
+    assert gradient_check(Tensor(a), cho_factor_net, epsilon, _enumerate_fn) < error
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('lower', [True, False])
+@pytest.mark.parametrize('shape', [(8, 8)])
+@pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
+def test_cho_solve_grad(lower, shape, data_type):
+    """
+    Feature: ALL TO ALL
+    Description: test cases for grad implementation of cho_solve in graph mode and pynative mode.
+    Expectation: the result match gradient checking.
+    """
+    onp.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE)
+    dtype, epsilon, error = data_type
+
+    class ChoSolveNet(nn.Cell):
+        def __init__(self, lower):
+            super(ChoSolveNet, self).__init__()
+            self.mean = ops.ReduceMean()
+            self.lower = lower
+
+        def construct(self, c, b):
+            c_lower = (c, self.lower)
+            output = cho_solve(c_lower, b)
+            return self.mean(output)
+
+    a = create_sym_pos_matrix(shape, dtype)
+    n = shape[-1]
+    b = onp.ones((n, 1), dtype=dtype)
+    msp_c, msp_lower = cho_factor(Tensor(a), lower)
+    cho_solve_net = ChoSolveNet(msp_lower)
+    assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
+    context.set_context(mode=context.PYNATIVE_MODE)
+    assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
 
 
 @pytest.mark.level0
