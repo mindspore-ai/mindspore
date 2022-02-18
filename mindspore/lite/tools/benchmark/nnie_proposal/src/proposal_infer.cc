@@ -67,7 +67,6 @@ Status ProposalInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::v
 }  // namespace mindspore
 namespace mindspore {
 namespace kernel {
-// static KernelInterfaceReg a(aa, schema::PrimitiveType_Custom, CustomInferCreater);
 REGISTER_CUSTOM_KERNEL_INTERFACE(NNIE, Proposal, proposal::ProposalInferCreater);
 }  // namespace kernel
 }  // namespace mindspore
