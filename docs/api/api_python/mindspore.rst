@@ -124,8 +124,6 @@ mindspore
 
 .. mscnautosummary::
     :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
 
     mindspore.set_dump
 
