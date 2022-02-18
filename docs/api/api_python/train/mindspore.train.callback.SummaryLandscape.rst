@@ -12,7 +12,7 @@
 
         清理checkpoint。
 
-    .. py:method:: gen_landscape_with_multi_process(callback_fn, collect_landscape=None, device_ids=None, output=None)
+    .. py:method:: gen_landscapes_with_multi_process(callback_fn, collect_landscape=None, device_ids=None, output=None)
 
         使用多进程来生成地形图。
 
