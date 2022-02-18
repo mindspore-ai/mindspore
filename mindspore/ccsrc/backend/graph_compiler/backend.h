@@ -134,7 +134,7 @@ class MindRTBackend : public Backend {
   bool CompileGraph(const FuncGraphPtr &func_graph);
 
   // Compile the kernel graph by the segment which is from the function graph partition.
-  void CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target, bool run_in_pynative);
+  void CompileGraph(const GraphSegmentPtr &segment);
 
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
