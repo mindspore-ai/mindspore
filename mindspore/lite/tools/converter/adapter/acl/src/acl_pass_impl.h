@@ -67,7 +67,7 @@ class AclPassImpl {
   CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
   void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);
   STATUS SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
-  STATUS SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type);
+  STATUS SetMultiOutputs(const CNodePtr &new_cnode, std::vector<TypeId> data_type);
   STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
   STATUS TraceOutput(const AnfNodePtr &node);
 

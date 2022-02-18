@@ -468,10 +468,10 @@ STATUS AclPassImpl::GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
-STATUS AclPassImpl::SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type) {
+STATUS AclPassImpl::SetMultiOutputs(const CNodePtr &new_cnode, std::vector<TypeId> data_type) {
   AbstractBasePtrList abstract_list;
   for (size_t j = 0; j < graph_outputs_.size(); j++) {
-    auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[j], data_type);
+    auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[j], data_type[j]);
     if (abstract_tensor == nullptr) {
       MS_LOG(ERROR) << "Abstract tensor is nullptr for output " << j;
       return lite::RET_ERROR;
@@ -489,8 +489,9 @@ STATUS AclPassImpl::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNode
     return lite::RET_ERROR;
   }
   custom_node->AddAttr(kOutputNames, MakeValue(graph_output_names_));
-  TypeId type = lite::acl::GetTypeFromNode(graph_outputs_[0]);
+  TypeId type;
   if (graph_outputs_.size() == 1) {
+    type = lite::acl::GetTypeFromNode(graph_outputs_[0]);
     auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[0], type);
     if (abstract_tensor == nullptr) {
       MS_LOG(ERROR) << "Abstract_tensor is nullptr.";
@@ -499,7 +500,12 @@ STATUS AclPassImpl::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNode
     custom_node->set_abstract(abstract_tensor);
     return lite::RET_OK;
   }
-  if (SetMultiOutputs(custom_node, type) != lite::RET_OK) {
+  std::vector<TypeId> types;
+  for (size_t i = 0; i < graph_outputs_.size(); i++) {
+    type = lite::acl::GetTypeFromNode(graph_outputs_[i]);
+    types.emplace_back(type);
+  }
+  if (SetMultiOutputs(custom_node, types) != lite::RET_OK) {
     MS_LOG(ERROR) << "Set multi graph output failed.";
     return lite::RET_ERROR;
   }
