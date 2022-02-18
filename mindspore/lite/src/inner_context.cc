@@ -54,6 +54,7 @@ InnerContext::InnerContext(const Context *context) {
     this->affinity_core_list_ = context->affinity_core_list_;
     SetContextDevice(context);
     this->delegate = context->delegate;
+    this->float_mode = context->float_mode;
   }
   InitDeviceFp16();
 }

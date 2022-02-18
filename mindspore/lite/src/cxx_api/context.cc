@@ -160,6 +160,22 @@ std::shared_ptr<Delegate> Context::GetDelegate() const {
   return data_->delegate;
 }
 
+void Context::SetMultiModalHW(bool float_mode) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->float_mode = float_mode;
+}
+
+bool Context::GetMultiModalHW() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return false;
+  }
+  return data_->float_mode;
+}
+
 std::vector<std::shared_ptr<DeviceInfoContext>> &Context::MutableDeviceInfo() {
   static std::vector<std::shared_ptr<DeviceInfoContext>> empty{};
   if (data_ == nullptr) {

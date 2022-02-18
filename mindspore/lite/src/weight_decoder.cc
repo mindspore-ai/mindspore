@@ -216,10 +216,6 @@ int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_ind
 
 int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type) {
   MS_ASSERT(input_tensor != nullptr);
-  if (input_tensor->data_type() != kNumberTypeInt8 && input_tensor->data_type() != kNumberTypeInt16) {
-    MS_LOG(ERROR) << "Conv weight input type error." << input_tensor->data_type();
-    return RET_ERROR;
-  }
   if (input_tensor->quant_params().empty()) {
     MS_LOG(ERROR) << "No quant param.";
     return RET_ERROR;
@@ -262,6 +258,13 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, 
     MS_LOG(ERROR) << "Float16 is not supported";
     return RET_NOT_SUPPORT;
 #endif
+  } else if (input_tensor->data_type() == kNumberTypeInt32 && dst_data_type == kNumberTypeFloat32) {
+    auto new_const_data = DequantData<int32_t, float>(input_tensor, preferred_dim);
+    CHECK_NULL_RETURN(new_const_data);
+    input_tensor->FreeData();
+    input_tensor->set_data(new_const_data);
+    input_tensor->set_own_data(true);
+    input_tensor->set_data_type(dst_data_type);
   } else {
     MS_LOG(ERROR) << "Unsupported dequant from data_type(" << (input_tensor->data_type()) << ") to data_type("
                   << dst_data_type << ")";
@@ -380,7 +383,8 @@ int WeightDecoder::DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_d
     return RET_NO_CHANGE;
   }
   bool need_dequant = !tensor->quant_params().empty() && tensor->quant_params().front().inited &&
-                      (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeInt16);
+                      (tensor->data_type() == kNumberTypeInt8 || tensor->data_type() == kNumberTypeInt16 ||
+                       tensor->data_type() == kNumberTypeInt32);
   if (!need_dequant) {
     return RET_NO_CHANGE;
   }
