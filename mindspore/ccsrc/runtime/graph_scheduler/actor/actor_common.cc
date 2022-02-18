@@ -80,7 +80,7 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
 
   // In control flow, only the parameters of the root funcgraph are in the host data source.
   const auto &front_node = graph->GetFrontAnfByBackendAnf(node);
-  bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
+  bool is_host = ((front_node == nullptr) ||
                   find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
 
   // Judge whether node is internal parameter.
