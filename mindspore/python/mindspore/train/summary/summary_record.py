@@ -336,7 +336,8 @@ class SummaryRecord:
             >>> from mindspore.train.summary import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
-            ...         summary_record.record(step=2)
+            ...         result = summary_record.record(step=2)
+            ...         print(result)
             ...
             True
         """
