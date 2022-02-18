@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,17 +111,19 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
   MS_EXCEPTION_IF_NULL(parent_context);
   auto new_context = parent_context->NewContext(fg, args_abs_list);
 
+  bool always_eval_flag = false;
   // Evaluate the parameters with new context.
   for (size_t i = 0; i < nargs; i++) {
     const auto &arg_abs = args_abs_list[i];
     const auto &node = fg->parameters()[i];
     AnfNodeConfigPtr conf = engine->MakeConfig(node, new_context, new_context->func_graph());
+    always_eval_flag = always_eval_flag || CheckIfAlwaysEval(conf, arg_abs);
     auto result = std::make_shared<EvalResult>(arg_abs, nullptr);
     MS_LOG(DEBUG) << "Save argument[" << i << "] result, NodeConfig: " << conf->ToString()
                   << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
     engine->SaveEvalResultInCache(conf, result);
   }
-
+  fg_evaluator->PushAlwaysEvalFlag(always_eval_flag);
   // Create a new stack frame and set arguments for it.
   auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, parent_context);
   new_stack_frame->set_args_abs_list(std::move(args_abs_list));
@@ -160,7 +162,17 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   MS_LOG(DEBUG) << "current_node: " << current_node->DebugString()
                 << ", current_context_: " << current_context_->ToString();
   AnfNodeConfigPtr node_conf = engine->MakeConfig(current_node, current_context_, current_context_->func_graph());
-  auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+  EvalResultPtr node_eval_result = nullptr;
+  const auto &fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator());
+  if (fg_evaluator == nullptr) {
+    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator()->ToString();
+  }
+  if (fg_evaluator->always_eval_flag()) {
+    MS_LOG(DEBUG) << "Always eval node";
+    node_eval_result = engine->ObtainEvalResultWithoutCache(node_conf);
+  } else {
+    node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
+  }
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
                 << (node_eval_result->abstract() ? node_eval_result->abstract()->ToString() : "Abstract null");
   return node_eval_result;
@@ -181,6 +193,11 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   auto evaluator = last_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
   evaluator->evaluator_cache_mgr()->SetValue(last_stack_frame->args_abs_list(), result);
+  const auto &fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(evaluator);
+  if (fg_evaluator == nullptr) {
+    MS_LOG(EXCEPTION) << "Evaluator should be a BaseGraphEvaluator, but got " << evaluator->ToString();
+  }
+  fg_evaluator->PopAlwaysEvalFlag();
 
   // Continue saving node's result for parent func graph.
   auto &current_node = NextNode();

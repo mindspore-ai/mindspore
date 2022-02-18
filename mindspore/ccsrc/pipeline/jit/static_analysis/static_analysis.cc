@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +167,19 @@ EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &
     MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
   }
   MS_LOG(DEBUG) << "Evaluate node on demand for NodeConfig: " << conf->ToString()
+                << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
+  SaveEvalResultInCache(conf, result);
+  return result;
+}
+
+EvalResultPtr AnalysisEngine::ObtainEvalResultWithoutCache(const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(conf);
+  EvalResultPtr result = nullptr;
+  result = Eval(conf);
+  if (result == nullptr) {
+    MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
+  }
+  MS_LOG(DEBUG) << "Always Evaluate node for NodeConfig: " << conf->ToString()
                 << ", result: " << result->abstract().get() << "/" << result->abstract()->ToString();
   SaveEvalResultInCache(conf, result);
   return result;
@@ -543,8 +556,9 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
 EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
   MS_EXCEPTION_IF_NULL(orig_conf);
   MS_EXCEPTION_IF_NULL(new_conf);
-  // Use anfnode_config_map_[orig_conf] = new_conf will require AnfNodeConfig provide copy constructor.
-  (void)anfnode_config_map_.emplace(orig_conf, new_conf);
+  // If always_eval_flag is true in BaseFuncGraphEvaluaotr, then the CNode with same orig_conf may be forwarded
+  // again, so update the config_map with new_conf;
+  anfnode_config_map_[orig_conf] = new_conf;
   MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->ToString() << ", to new_conf: " << new_conf->ToString();
   auto old_cnode = orig_conf->node()->cast<CNodePtr>();
   auto new_cnode = new_conf->node()->cast<CNodePtr>();
