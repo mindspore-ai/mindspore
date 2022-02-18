@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/cxx_api/model_pool/model_thread.h"
+#include "src/cxx_api/model_pool/model_worker.h"
 #include "src/common/log.h"
 #include "src/common/utils.h"
 namespace mindspore {

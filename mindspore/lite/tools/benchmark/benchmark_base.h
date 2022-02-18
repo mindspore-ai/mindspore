@@ -140,7 +140,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
 #ifdef SERVER_INFERENCE
-    AddFlag(&BenchmarkFlags::model_pool_, "modelPool", "use model pool", false);
+    AddFlag(&BenchmarkFlags::enable_parallel_predict_, "enableParallelPredict", "Enable model parallel : true | false",
+            false);
     AddFlag(&BenchmarkFlags::num_require_, "numRequire", "require num", 1);
 #endif
 #ifdef ENABLE_OPENGL_TEXTURE
@@ -157,7 +158,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
  public:
   // common
 #ifdef SERVER_INFERENCE
-  bool model_pool_ = false;
+  bool enable_parallel_predict_ = false;
   int num_require_ = 1;
 #endif
   std::string model_file_;
