@@ -44,12 +44,20 @@ typedef struct _jl_array_t jl_array_t;
     if (!func##_) {                                                                               \
       func##_ = reinterpret_cast<std::add_pointer<rt(__VA_ARGS__)>::type>(dlsym(handle_, #func)); \
       if (auto error_info = dlerror(); error_info != nullptr) {                                   \
-        MS_LOG(EXCEPTION) << error_info;                                                          \
+        MS_LOG(ERROR) << error_info;                                                              \
         suc = false;                                                                              \
       }                                                                                           \
     }                                                                                             \
   } while (0)
 
+#define RETURN_FALSE_IF_GET_JULIA_EXCEPTION() \
+  do {                                        \
+    auto ex = JlExceptionOccurred();          \
+    if (ex) {                                 \
+      ErrorMsg(ex);                           \
+      return false;                           \
+    }                                         \
+  } while (0)
 /*
  *   kernel one             julia thread              kernel two                JuliaAPI
  *   =============init================
@@ -124,9 +132,9 @@ class JuliaAPI {
     return true;
   }
 
-  int Run(const std::string &file, const std::string &module, const std::string &func, int nparam,
-          const std::vector<void *> &param, const std::vector<int> &ndims, const std::vector<int64_t *> &shapes,
-          const std::vector<const char *> &dtypes) {
+  bool Run(const std::string &file, const std::string &module, const std::string &func, int nparam,
+           const std::vector<void *> &param, const std::vector<int> &ndims, const std::vector<int64_t *> &shapes,
+           const std::vector<const char *> &dtypes) {
     std::unique_lock<std::mutex> lock(mutex_);
     auto NotRunning = [this]() { return !this->running_; };
     // when second kernel get mutex should wait first kernel run finished
@@ -258,41 +266,35 @@ class JuliaAPI {
     // Base.showerror(stderr, ex)
     std::vector<jl_value_t *> args{reinterpret_cast<jl_value_t *>(Core("stderr")), ex};
     constexpr size_t args_num = 2;
-    JlEvalString("print(\"\\n====================JULIA ERROR====================\\n\")");
+    JlEvalString("print(\"====================JULIA ERROR====================\\n\")");
     JlCall(showerror, &args[0], args_num);
     JlEvalString("print(\"\\n===================================================\\n\")");
   }
 
-  int RunJuliaKernel() {
+  bool RunJuliaKernel() {
     // include julia file
     JlEvalString("Base.include(Main, \"" + file_ + "\")");
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     // using julia module
     JlEvalString("using Main." + module_);
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     jl_module_t *jmod = reinterpret_cast<jl_module_t *>(JlEvalString("Main." + module_));
-    if (!jmod) {
-      MS_LOG(ERROR) << "Could not load julia module: " << module_;
-      return -1;
-    }
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     // get julia function from module
     jl_function_t *jfunc = JlGetFunction(jmod, func_);
-    if (!jfunc) {
-      MS_LOG(ERROR) << "Could not load julia function: " << func_;
-      return -1;
-    }
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     // convert kernel inputs to julia type
     std::vector<jl_value_t *> args(nparam_);
     for (int i = 0; i < nparam_; i++) {
       args[i] = reinterpret_cast<jl_value_t *>(GetJuliaArray(params_[i], ndims_[i], shapes_[i], dtypes_[i]));
     }
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     // call the julia function
     JlCall(jfunc, &args[0], nparam_);
-    auto ex = JlExceptionOccurred();
-    if (ex) {
-      ErrorMsg(ex);
-      return -1;
-    }
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
     JlAtexitHook(0);
-    return 0;
+    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+    return true;
   }
 
   jl_value_t *JlEvalString(const std::string &str) { return jl_eval_string_(str.c_str()); }
@@ -369,7 +371,7 @@ class JuliaAPI {
   // check if a kernel is running, another kernel should wait if a kernel is already running
   bool running_{false};
   // the result show julia kernel run success or not.
-  int result_{0};
+  bool result_{true};
 
   // julia kernel's inputs
   std::vector<void *> params_;
