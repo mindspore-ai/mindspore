@@ -30,8 +30,7 @@ from .._checkparam import check_input_data, check_output_data, Validator
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
-    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
-    _check_task_sink_envs
+    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
@@ -496,14 +495,6 @@ class Model:
             sink_size (int): Control the amount of data in each sink. Default: -1.
         """
         epoch = Validator.check_positive_int(epoch)
-        if context.get_context("device_target") == "Ascend" and \
-           context.get_context("mode") == context.GRAPH_MODE and not \
-           _check_task_sink_envs() and \
-           dataset_sink_mode:
-            dataset_sink_mode = False
-            logger.warning("The Ascend cannot support dataset sink when performed with nontask sink mode."
-                           "So the training process will be performed with dataset not sink.")
-
         if self._parameter_broadcast:
             self._train_network.set_broadcast_flag()
 
@@ -954,13 +945,6 @@ class Model:
             dataset_sink_mode = False
             logger.warning("CPU cannot support dataset sink mode currently."
                            "So the evaluating process will be performed with dataset non-sink mode.")
-        if context.get_context("device_target") == "Ascend" and \
-           context.get_context("mode") == context.GRAPH_MODE and not \
-           _check_task_sink_envs() and \
-           dataset_sink_mode:
-            dataset_sink_mode = False
-            logger.warning("The Ascend cannot support dataset sink when performed with nontask sink mode."
-                           "So the training process will be performed with dataset not sink.")
 
         with _CallbackManager(callbacks) as list_callback:
             if dataset_sink_mode:
