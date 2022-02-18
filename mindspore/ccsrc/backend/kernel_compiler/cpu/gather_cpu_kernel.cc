@@ -92,11 +92,13 @@ bool GatherV2CPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
     indices_element_size *= indices_shape_.at(i);
   }
   auto limit = input_shape_.at(axis);
+  size_t byte_inner_size = inner_size * sizeof(T);
+  size_t byte_out_stride = indices_element_size * byte_inner_size;
   auto task = [&](size_t start, size_t end) {
     int count = SizeToInt(end - start);
-    const int8_t *in = input_tensor + start * limit * inner_size * sizeof(T);
-    int8_t *out = output_addr + start * indices_element_size * inner_size * sizeof(T);
-    int ret = Gather(in, count, inner_size, limit, indices_data, indices_element_size, out, sizeof(T));
+    const int8_t *in = input_tensor + start * limit * byte_inner_size;
+    int8_t *out = output_addr + start * byte_out_stride;
+    int ret = Gather(in, count, byte_inner_size, limit, indices_data, indices_element_size, out, byte_out_stride);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', error_code[" << ret << "]";
     }

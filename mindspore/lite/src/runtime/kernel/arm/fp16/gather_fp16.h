@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,20 @@
 #include <arm_neon.h>
 #include <vector>
 #include "include/errorcode.h"
-#include "src/inner_kernel.h"
-#include "nnacl/gather_parameter.h"
-#include "nnacl/base/gather_base.h"
+#include "src/runtime/kernel/arm/base/gather_base.h"
 
 namespace mindspore::kernel {
-class GatherFp16CPUKernel : public InnerKernel {
+class GatherFp16CPUKernel : public GatherBaseCPUKernel {
  public:
   GatherFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {}
+      : GatherBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~GatherFp16CPUKernel() = default;
 
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
-  int DoGather(int task_id);
 
  private:
-  int *indices_data_ = nullptr;
-  int AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor);
-  void FreeIndicesData();
-  bool is_indices_int32_ = false;
+  int AssignIndicesData(bool isIndicesInt32) override;
 };
 }  // namespace mindspore::kernel
 
