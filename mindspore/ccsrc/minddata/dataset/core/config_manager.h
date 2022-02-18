@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@
 
 namespace mindspore {
 namespace dataset {
+const char kEmptyString[] = "";
+const char kJsonExtension[] = ".json";
 // The ConfigManager is a class for managing default values.  When a user is constructing any objects
 // in the framework, often they may choose to omit some settings instead of overriding them.
 // This class manages some of the default values, for cases when the user does not manually specify
@@ -232,11 +234,22 @@ class ConfigManager {
 
   // setter function
   // @param enable - To enable autotune
-  void set_enable_autotune(bool enable) { enable_autotune_ = enable; }
+  // @param bool save_autoconfig - True if should save AutoTune data pipeline configuration
+  // @param json_filepath - JSON filepath where the final AutoTune data pipeline will be generated
+  // @return Status error code
+  Status set_enable_autotune(bool enable, bool save_autoconfig, const std::string &json_filepath);
 
   // getter function
   // @return - Flag to indicate whether autotune is enabled
   bool enable_autotune() const { return enable_autotune_; }
+
+  // getter function
+  // @return - Flag to indicate whether to save AutoTune configuration
+  bool save_autoconfig() { return save_autoconfig_; }
+
+  // getter function
+  // @return - The final AutoTune configuration JSON filepath
+  std::string get_autotune_json_filepath() { return autotune_json_filepath_; }
 
   // getter function
   // @return - autotune interval in steps
@@ -270,6 +283,8 @@ class ConfigManager {
   bool enable_shared_mem_;
   bool auto_offload_;
   bool enable_autotune_;
+  bool save_autoconfig_;                // True if should save AutoTune configuration
+  std::string autotune_json_filepath_;  // Filepath name of the final AutoTune Configuration JSON file
   int64_t autotune_interval_;
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info

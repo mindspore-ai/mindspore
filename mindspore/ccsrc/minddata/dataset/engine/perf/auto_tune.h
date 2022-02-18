@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_AUTO_TUNE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_AUTO_TUNE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_AUTO_TUNE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_AUTO_TUNE_H_
 
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -191,7 +192,12 @@ class AutoTune {
   int64_t step_gap_;
   int32_t last_step_profiled_;
   bool skip_bool_;
+  /// True if should save AutoTune configuration
+  bool save_autoconfig_;
+
+  /// Filepath name of the final AutoTune Configuration JSON file
+  std::string autotune_json_filepath_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_AUTO_TUNE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_AUTO_TUNE_H_

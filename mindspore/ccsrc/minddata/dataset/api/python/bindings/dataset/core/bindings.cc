@@ -61,7 +61,10 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_enable_shared_mem", &ConfigManager::enable_shared_mem)
                     .def("set_auto_offload", &ConfigManager::set_auto_offload)
                     .def("get_auto_offload", &ConfigManager::get_auto_offload)
-                    .def("set_enable_autotune", &ConfigManager::set_enable_autotune)
+                    .def("set_enable_autotune",
+                         [](ConfigManager &c, bool enable, bool save_autoconfig, std::string json_filepath) {
+                           THROW_IF_ERROR(c.set_enable_autotune(enable, save_autoconfig, json_filepath));
+                         })
                     .def("get_enable_autotune", &ConfigManager::enable_autotune)
                     .def("set_autotune_interval", &ConfigManager::set_autotune_interval)
                     .def("get_autotune_interval", &ConfigManager::autotune_interval)
