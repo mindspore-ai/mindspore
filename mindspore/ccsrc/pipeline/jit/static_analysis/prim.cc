@@ -1115,7 +1115,6 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
   std::string item_name = item_value->cast<StringImmPtr>()->value();
   MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
   MS_LOG(DEBUG) << "Resolve item: " << item_name;
-  MS_EXCEPTION_IF_NULL(cls);
   AbstractBasePtr attr = cls->GetAttribute(item_name);
   if (attr != nullptr) {
     return std::make_shared<EvalResult>(attr, nullptr);

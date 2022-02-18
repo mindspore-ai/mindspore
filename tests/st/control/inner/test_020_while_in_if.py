@@ -57,7 +57,6 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@pytest.mark.skip(reason="GPU backward result is error!")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

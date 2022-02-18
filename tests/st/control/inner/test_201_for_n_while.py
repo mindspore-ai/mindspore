@@ -68,7 +68,6 @@ def test_forward():
     assert graph_out == Tensor(np.array(18), mstype.int32)
 
 
-@pytest.mark.skip(reason="Ascend kernel compiler error!")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

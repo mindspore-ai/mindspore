@@ -133,7 +133,6 @@ def control_flow_if_after_if_in_for(input_net, x, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-# @pytest.mark.skip(reason="ME EvalCNode error")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
