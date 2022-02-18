@@ -1,7 +1,7 @@
 mindspore.ops.Primitive
 =======================
 
-.. py:class:: mindspore.Primitive(name)
+.. py:class:: mindspore.ops.Primitive(name)
 
     Primitive是Python中算子原语的基类。
 
@@ -54,7 +54,7 @@ mindspore.ops.Primitive
         如果有一个被设置了重计算属性的Primitive，并且其结果在计算导数的时候被使用，那么不会保存该Primitive在前向网络中的中间计算结果，而是在自动微分的时候重新进行计算。
 
         .. note::
-            - 如果计算涉及随机化或全局变量，则暂无法保证等效性。              
+            - 如果计算涉及随机化或全局变量，则暂无法保证等效性。
             - 在PyNative模式下不支持。
 
         **参数：**

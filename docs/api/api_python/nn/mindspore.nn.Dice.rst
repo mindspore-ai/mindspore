@@ -1,7 +1,7 @@
 mindspore.nn.Dice
 ==================
 
-.. py:class:: mindspore.nn.nn.Dice(smooth=1e-05)
+.. py:class:: mindspore.nn.Dice(smooth=1e-05)
 
     集合相似性度量。
 
@@ -10,7 +10,7 @@ mindspore.nn.Dice
     .. math::
         dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
 
-    **参数：** 
+    **参数：**
 
     - **smooth** (float) - 在计算过程中添加到分母里，用于提高数值稳定性，取值需大于0。默认值：1e-5。
 
@@ -34,7 +34,7 @@ mindspore.nn.Dice
 
         更新内部评估结果 `y_pred` 和 `y` 。
 
-        **参数：** 
+        **参数：**
 
         - **inputs** (tuple) -输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。
 

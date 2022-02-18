@@ -1,7 +1,7 @@
 mindspore.ops.PrimitiveWithInfer
 ================================
 
-.. py:class:: mindspore.PrimitiveWithInfer(name)
+.. py:class:: mindspore.ops.PrimitiveWithInfer(name)
 
     PrimitiveWithInfer是Python中的原语基类，在python中定义了跟踪推理的函数。
 
@@ -43,7 +43,7 @@ mindspore.ops.PrimitiveWithInfer
     .. py:method:: infer_value(*args)
 
         根据编译时的输入值推断输出值。
-    
+
         **参数：**
 
         - **args** (Any) - 输入的值。
