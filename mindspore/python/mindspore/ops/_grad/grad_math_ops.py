@@ -59,7 +59,7 @@ def dyn_binop_grad_common(x, y, dx, dy):
     return reduce_dx, reduce_dy
 
 
-def binop_grad_common(x, y, dx, dy):
+def binop_grad_common(x, y, dx, dy, shift=0):
     """
     Common grad definition for binary operations.
 
@@ -67,11 +67,16 @@ def binop_grad_common(x, y, dx, dy):
     """
     shape_of_x = shape_op(x)
     shape_of_y = shape_op(y)
+    broadcast_shape_of_x = shape_of_x
+    broadcast_shape_of_y = shape_of_y
+    if shift != 0:
+        broadcast_shape_of_x = shape_of_x[:-shift]
+        broadcast_shape_of_y = shape_of_y[:-shift]
     # if input shape is the same as dout shape, do not need to reduce
     reduce_dx = dx
     reduce_dy = dy
     if not (is_shape_unknown(shape_of_x) or is_shape_unknown(shape_of_y)):
-        rx = broadcast_gradient_args(shape_of_x, shape_of_y)
+        rx = broadcast_gradient_args(broadcast_shape_of_x, broadcast_shape_of_y)
         if rx[0]:
             # if dx is scalar whose shape is (), do not need reduce
             if shape_op(dx):
@@ -217,7 +222,7 @@ def bprop_batchmatmul(self):
             dw = mul2(dout, x)
         else:
             dw = mul2(x, dout)
-        return dx, dw
+        return binop_grad_common(x, w, dx, dw, shift=2)
 
     return bprop
 

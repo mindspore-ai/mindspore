@@ -90,11 +90,12 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   ShapeVector ret_max_shape;
   auto make_shape = [&transpose_a, &transpose_b, &offset](ShapeVector &output, const ShapeVector xshp,
                                                           const ShapeVector yshp) -> void {
-    for (size_t i = 0; i < xshp.size() - offset; i++) {
-      if (xshp[i] < 0) {
+    ShapeVector broadcast_input = xshp.size() > yshp.size() ? xshp : yshp;
+    for (size_t i = 0; i < broadcast_input.size() - offset; i++) {
+      if (broadcast_input[i] < 0) {
         output.push_back(abstract::Shape::SHP_ANY);
       } else {
-        output.push_back(xshp[i]);
+        output.push_back(broadcast_input[i]);
       }
     }
     size_t x_offset = xshp.size() - offset;
