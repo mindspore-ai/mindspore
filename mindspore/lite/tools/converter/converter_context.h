@@ -53,7 +53,7 @@ class NotSupportOp {
     return &not_support_op;
   }
   void set_fmk_type(const std::string &fmk_type) { fmk_type_ = fmk_type; }
-  void InsertOp(const std::string &op_name) { not_support_ops_.insert(op_name); }
+  void InsertOp(const std::string &op_name) { (void)not_support_ops_.insert(op_name); }
   void PrintOps() const {
     if (!not_support_ops_.empty()) {
       MS_LOG(ERROR) << "===========================================";
@@ -104,7 +104,7 @@ class ConverterInnerContext {
     }
     return graph_input_tensor_shape_map_.at(tensor_name);
   }
-  size_t GetGraphInputTensorShapeMapSize() { return graph_input_tensor_shape_map_.size(); }
+  size_t GetGraphInputTensorShapeMapSize() const { return graph_input_tensor_shape_map_.size(); }
 
   void SetGraphOutputTensorNames(const std::vector<std::string> &output_names) {
     graph_output_tensor_names_ = output_names;
@@ -117,10 +117,10 @@ class ConverterInnerContext {
     if (external_used_config_infos_.find(section) != external_used_config_infos_.end()) {
       MS_LOG(WARNING) << "This section " << section << " has been saved. Now, the content will be overwrite.";
     }
-    external_used_config_infos_.emplace(section, external_infos);
+    (void)external_used_config_infos_.emplace(section, external_infos);
   }
 
-  const std::map<std::string, std::map<std::string, std::string>> &GetExternalUsedConfigInfos() {
+  const std::map<std::string, std::map<std::string, std::string>> &GetExternalUsedConfigInfos() const {
     return external_used_config_infos_;
   }
 

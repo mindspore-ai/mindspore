@@ -64,8 +64,8 @@ bool SubgraphNodePass::IsNodeOutputInSubgraph(const std::set<uint32_t> &tensors_
   });
 }
 
-void SubgraphNodePass::DecreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT *graph) {
-  for (auto &subgraph : graph->subGraph) {
+void SubgraphNodePass::DecreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT &graph) {
+  for (auto &subgraph : graph.subGraph) {
     std::transform(subgraph->nodeIndices.begin(), subgraph->nodeIndices.end(), subgraph->nodeIndices.begin(),
                    [&node_idx](uint32_t idx) {
                      if (idx > node_idx) {
@@ -76,8 +76,8 @@ void SubgraphNodePass::DecreaseSubgraphNodeIndices(const size_t &node_idx, const
   }
 }
 
-void SubgraphNodePass::IncreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT *graph) {
-  for (auto &subgraph : graph->subGraph) {
+void SubgraphNodePass::IncreaseSubgraphNodeIndices(const size_t &node_idx, const schema::MetaGraphT &graph) {
+  for (auto &subgraph : graph.subGraph) {
     std::transform(subgraph->nodeIndices.begin(), subgraph->nodeIndices.end(), subgraph->nodeIndices.begin(),
                    [&node_idx](uint32_t idx) {
                      if (idx >= node_idx) {
@@ -92,7 +92,7 @@ STATUS SubgraphNodePass::Run(schema::MetaGraphT *graph) {
   CHECK_NULL_RETURN(graph);
   std::vector<schema::CNodeT *> new_nodes{};
   std::transform(graph->nodes.begin(), graph->nodes.end(), std::back_inserter(new_nodes),
-                 [](std::unique_ptr<CNodeT> &node) { return node.get(); });
+                 [](const std::unique_ptr<CNodeT> &node) { return node.get(); });
 
   for (auto it = old_nodes_.begin(); it != old_nodes_.end();) {
     if (!IsContain(new_nodes, *it)) {
@@ -101,7 +101,7 @@ STATUS SubgraphNodePass::Run(schema::MetaGraphT *graph) {
         auto node_idx_pos = std::find(subgraph->nodeIndices.begin(), subgraph->nodeIndices.end(), node_idx);
         if (node_idx_pos != subgraph->nodeIndices.end()) {
           subgraph->nodeIndices.erase(node_idx_pos);
-          DecreaseSubgraphNodeIndices(node_idx, graph);
+          DecreaseSubgraphNodeIndices(node_idx, *graph);
           break;
         }
       }
@@ -137,17 +137,17 @@ STATUS SubgraphNodePass::Run(schema::MetaGraphT *graph) {
         }
       }
       if (contain_subgraphs.size() == 1) {
-        IncreaseSubgraphNodeIndices(i, graph);
+        IncreaseSubgraphNodeIndices(i, *graph);
         contain_subgraphs[0]->nodeIndices.push_back(i);
         continue;
       }
       if (contain_node_input_subgraphs.size() == 1 && contain_node_output_subgraphs.empty()) {
-        IncreaseSubgraphNodeIndices(i, graph);
+        IncreaseSubgraphNodeIndices(i, *graph);
         contain_node_input_subgraphs[0]->nodeIndices.push_back(i);
         continue;
       }
       if (contain_node_output_subgraphs.size() == 1 && contain_node_input_subgraphs.empty()) {
-        IncreaseSubgraphNodeIndices(i, graph);
+        IncreaseSubgraphNodeIndices(i, *graph);
         contain_node_output_subgraphs[0]->nodeIndices.push_back(i);
         continue;
       } else {

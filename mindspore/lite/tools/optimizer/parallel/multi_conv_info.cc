@@ -149,7 +149,7 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
   std::string conv_cnode_name = node->fullname_with_scope();
   // Create Split node and get outputs of Split
   std::vector<AnfNodePtr> split_outputs;
-  if (!CreateOutputsOfSplitWithOverlap(func_graph_, conv_nodes_[conv_nodes_.size() - 1], &split_outputs, &split_info_,
+  if (!CreateOutputsOfSplitWithOverlap(func_graph_, conv_nodes_[conv_nodes_.size() - 1], &split_outputs, split_info_,
                                        conv_cnode_name)) {
     MS_LOG(ERROR) << "CreateOutputsOfSplitWithOverlap failed";
     return nullptr;
@@ -167,7 +167,7 @@ AnfNodePtr MultiConvSplit::MultiConvNHSplit(const AnfNodePtr &node) {
     outputs_node.clear();
   }
   // Create concate node
-  auto concat_node = CreateOutputsOfConcat(func_graph_, node, split_outputs, &split_info_, conv_cnode_name);
+  auto concat_node = CreateOutputsOfConcat(func_graph_, node, split_outputs, split_info_, conv_cnode_name);
   split_outputs.clear();
   return concat_node;
 }

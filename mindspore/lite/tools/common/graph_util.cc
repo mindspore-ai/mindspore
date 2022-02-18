@@ -60,16 +60,16 @@ int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> 
 }
 
 OpDefCopyer GetSimpleOpCopyer() {
-  return [](CNodeT *inCNode) -> std::unique_ptr<CNodeT> {
+  return [](const CNodeT &inCNode) -> std::unique_ptr<CNodeT> {
     std::unique_ptr<CNodeT> newCNode = std::make_unique<CNodeT>();
     if (newCNode == nullptr) {
       return nullptr;
     }
 
-    newCNode->name = inCNode->name;
-    newCNode->quantType = inCNode->quantType;
+    newCNode->name = inCNode.name;
+    newCNode->quantType = inCNode.quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
-    newCNode->primitive->value.type = inCNode->primitive->value.type;
+    newCNode->primitive->value.type = inCNode.primitive->value.type;
     return newCNode;
   };
 }
@@ -194,7 +194,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-    auto toAddNode = opDefCopyer(toAddNodeIn.get());
+    auto toAddNode = opDefCopyer(*toAddNodeIn);
     if (toAddNode == nullptr) {
       MS_LOG(ERROR) << "copy toAddNodeIn failed";
       *errorCode = RET_NULL_PTR;
@@ -272,7 +272,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     }
     graphT->allTensors.emplace_back(std::move(toAddTensor));
     size_t toAddTensorIdx = graphT->allTensors.size() - 1;
-    auto toAddNode = opDefCopyer(toAddNodeIn.get());
+    auto toAddNode = opDefCopyer(*toAddNodeIn);
     if (toAddNode == nullptr) {
       MS_LOG(ERROR) << "copy toAddNodeIn failed";
       *errorCode = RET_NULL_PTR;

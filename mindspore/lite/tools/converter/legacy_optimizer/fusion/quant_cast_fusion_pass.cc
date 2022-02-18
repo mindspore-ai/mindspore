@@ -26,13 +26,13 @@
 
 namespace mindspore {
 namespace lite {
-#define kQuantCastMatchPathLen2 2
-#define kQuantCastMatchPathLen3 3
+constexpr size_t kQuantCastMatchPathLen2 = 2;
+constexpr size_t kQuantCastMatchPathLen3 = 3;
 
 STATUS QuantCastFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph); }
 
 STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternName,
-                                     std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
+                                     const std::unordered_map<std::string, std::shared_ptr<Path>> &matchedPath) {
   MS_ASSERT(graph != nullptr);
   if (matchedPath.size() != kQuantCastMatchPathLen2 && matchedPath.size() != kQuantCastMatchPathLen3) {
     MS_LOG(ERROR) << "QuantDtypeCastFusion should have " << kQuantCastMatchPathLen2 << " or " << kQuantCastMatchPathLen3
@@ -40,9 +40,13 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
     return RET_PARAM_INVALID;
   }
 
-  auto srcPath = matchedPath[kQuantCastSrcOp];
+  auto srcPathIter = matchedPath.find(kQuantCastSrcOp);
+  MS_ASSERT(srcPathIter != matchedPath.end());
+  auto &srcPath = srcPathIter->second;
   MS_ASSERT(srcPath != nullptr);
-  auto dstPath = matchedPath[kQuantCastDstOp];
+  auto dstPathIter = matchedPath.find(kQuantCastDstOp);
+  MS_ASSERT(dstPathIter != matchedPath.end());
+  auto &dstPath = dstPathIter->second;
   MS_ASSERT(dstPath != nullptr);
   auto srcNode = graph->nodes.at(srcPath->nodeIdx).get();
   MS_ASSERT(srcNode != nullptr);

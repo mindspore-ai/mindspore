@@ -233,7 +233,7 @@ bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePt
     // only one in and one output
     MS_ASSERT(!input_shapes.empty() && !output_shapes.empty());
     std::vector<ShapeVector> shape_vec = {input_shapes.front(), output_shapes.front()};
-    node_in_out_shapes.emplace_back(shape_vec);
+    (void)node_in_out_shapes.emplace_back(shape_vec);
     index_node++;
   }
   if (node_in_out_shapes.empty() || node_in_out_shapes.size() < (node_size - 1) || node_in_out_shapes[0].size() <= 1 ||
@@ -319,21 +319,20 @@ bool GetMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePt
 }
 
 AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_cnode,
-                                 const std::vector<AnfNodePtr> &conv_outputs, SplitInfo *split_info,
+                                 const std::vector<AnfNodePtr> &conv_outputs, const SplitInfo &split_info,
                                  const std::string &node_name) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "input FuncGraphPtr is nullptr");
   MS_CHECK_TRUE_MSG(conv_cnode != nullptr, nullptr, "input AnfNodePtr is nullptr");
-  MS_CHECK_TRUE_MSG(split_info != nullptr, nullptr, "input SplitInfo is nullptr");
 
   auto nodes_num = static_cast<int64_t>(conv_outputs.size());
-  if (nodes_num != split_info->out_num) {
+  if (nodes_num != split_info.out_num) {
     MS_LOG(ERROR) << "Conv outputs has wrong input size";
     return nullptr;
   }
 
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_MSG(concat_prim != nullptr, nullptr, "create ops::Concat return nullptr");
-  concat_prim->set_axis(split_info->axis);
+  concat_prim->set_axis(split_info.axis);
 
   // the inputs of concate are from the outputs of conv
   auto concate_primitive = NewValueNode(concat_prim);
@@ -357,20 +356,19 @@ AnfNodePtr CreateOutputsOfConcat(const FuncGraphPtr &func_graph, const AnfNodePt
 }
 
 bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNodePtr &conv_node,
-                                     std::vector<AnfNodePtr> *split_outputs, SplitInfo *split_info,
+                                     std::vector<AnfNodePtr> *split_outputs, const SplitInfo &split_info,
                                      const std::string &node_name) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "input FuncGraphPtr is nullptr");
   MS_CHECK_TRUE_MSG(conv_node != nullptr, false, "input conv_node is nullptr");
   MS_CHECK_TRUE_MSG(split_outputs != nullptr, false, "input split_outputs is nullptr");
-  MS_CHECK_TRUE_MSG(split_info != nullptr, false, "input split_info is nullptr");
   // attr of split
   auto split_prim = std::make_shared<ops::SplitWithOverlap>();
   MS_CHECK_TRUE_MSG(split_prim != nullptr, false, "create ops::SplitWithOverlap return nullptr");
-  split_prim->set_split_dim(split_info->axis);
-  split_prim->set_number_split(split_info->out_num);
-  split_prim->set_ratio(split_info->size_splits);
-  split_prim->set_extend_top(split_info->extend_top);
-  split_prim->set_extend_bottom(split_info->extend_bottom);
+  split_prim->set_split_dim(split_info.axis);
+  split_prim->set_number_split(split_info.out_num);
+  split_prim->set_ratio(split_info.size_splits);
+  split_prim->set_extend_top(split_info.extend_top);
+  split_prim->set_extend_bottom(split_info.extend_bottom);
   auto conv_cnode = conv_node->cast<CNodePtr>();
 
   // the inputs of split is from the inputs of conv
@@ -385,18 +383,18 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
   MS_CHECK_TRUE_MSG(split_cnode != nullptr, false, "create split_cnode return nullptr");
 
   split_cnode->set_fullname_with_scope(node_name + "_Split");
-  if (split_info->out_num < 0) {
+  if (split_info.out_num < 0) {
     MS_LOG(ERROR) << "out_num should greater then zero";
     return false;
   }
   // create outputs op split
-  if (!GetMultipleOutputsOfAnfNode(func_graph, split_cnode, split_info->out_num, split_outputs)) {
+  if (!GetMultipleOutputsOfAnfNode(func_graph, split_cnode, split_info.out_num, split_outputs)) {
     MS_LOG(ERROR) << "GetMultipleOutputsOfAnfNode failed";
     return false;
   }
 
   AbstractBasePtrList ptr_list;
-  for (int64_t i = 0; i < split_info->out_num; i++) {
+  for (int64_t i = 0; i < split_info.out_num; i++) {
     // set date_type same with weight
     auto type_id = static_cast<TypeId>(kNumberTypeFloat32);
     auto type_ptr = TypeIdToType(type_id);

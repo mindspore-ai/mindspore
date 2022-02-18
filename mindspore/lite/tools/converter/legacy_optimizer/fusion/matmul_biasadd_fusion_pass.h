@@ -35,7 +35,7 @@ class MatMulBiasAddFusionPass : public FusionPass {
   STATUS DefinePattern() override;
 
   STATUS DoFusion(MetaGraphT *graph, const std::string &pattern_name,
-                  std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) override;
+                  const std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) override;
 
   STATUS Run(MetaGraphT *graph) override;
 };
