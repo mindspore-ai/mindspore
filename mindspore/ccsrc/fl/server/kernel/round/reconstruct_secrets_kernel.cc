@@ -32,7 +32,7 @@ void ReconstructSecretsKernel::InitKernel(size_t) {
   auto last_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) {
     if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kReconstructSeccrets) {
       MS_LOG(INFO) << "start FinishIteration";
-      FinishIteration();
+      FinishIteration(true);
       MS_LOG(INFO) << "end FinishIteration";
     }
     return;

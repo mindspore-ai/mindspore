@@ -42,9 +42,9 @@ void RoundKernel::StopTimer() const {
   return;
 }
 
-void RoundKernel::FinishIteration() const {
+void RoundKernel::FinishIteration(bool is_last_iter_valid) const {
   if (finish_iteration_cb_) {
-    finish_iteration_cb_(true, "");
+    finish_iteration_cb_(is_last_iter_valid, "");
   }
   return;
 }

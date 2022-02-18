@@ -37,7 +37,8 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
   size_t dst_size = count * sizeof(T);
   int ret = memcpy_s(recvbuff, dst_size, sendbuff, src_size);
   if (ret != 0) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                  << ", dest size is " << dst_size << ", src size is " << src_size;
     return false;
   }
 
@@ -90,7 +91,9 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
     }
     ret = memcpy_s(tmp_recv_chunk.get(), chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
     if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", dest size is " << (chunk_sizes[recv_chunk_index] * sizeof(T)) << ", src size is "
+                    << recv_str->size();
       return false;
     }
     // Step 3: Reduce the data so we can overlap the time cost of send.
@@ -126,7 +129,9 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
     }
     ret = memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
     if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", dest size is " << chunk_sizes[recv_chunk_index] * sizeof(T) << ", src size is "
+                    << recv_str->size();
       return false;
     }
     if (!server_node_->Wait(send_req_id, kCollectiveCommTimeout)) {
@@ -151,7 +156,8 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   size_t dst_size = count * sizeof(T);
   int ret = memcpy_s(recvbuff, dst_size, sendbuff, src_size);
   if (ret != 0) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                  << ", dest size is " << dst_size << ", src size is " << src_size;
     return false;
   }
   T *output_buff = reinterpret_cast<T *>(recvbuff);
@@ -170,7 +176,8 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
       }
       ret = memcpy_s(tmp_recv_buff.get(), count * sizeof(T), recv_str->data(), recv_str->size());
       if (ret != 0) {
-        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                      << ", dest size is " << count * sizeof(T) << ", src size is " << recv_str->size();
         return false;
       }
       for (size_t j = 0; j < count; j++) {
@@ -209,7 +216,8 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
     }
     ret = memcpy_s(output_buff, count * sizeof(T), recv_str->data(), recv_str->size());
     if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", dest size is " << count * sizeof(T) << ", src size is " << recv_str->size();
       return false;
     }
   }
@@ -245,7 +253,8 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
   size_t dst_size = send_count * sizeof(T);
   int ret = memcpy_s(output_buff + chunk_offset[rank_id_], dst_size, sendbuff, src_size);
   if (ret != 0) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                  << ", dest size is " << dst_size << ", src size is " << src_size;
     return false;
   }
 
@@ -269,7 +278,9 @@ bool CollectiveOpsImpl::RingAllGather(const void *sendbuff, void *const recvbuff
     }
     ret = memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
     if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", dest size is " << (chunk_sizes[recv_chunk_index] * sizeof(T)) << ", src size is "
+                    << recv_str->size();
       return false;
     }
     if (!node_->Wait(send_req_id, kCollectiveCommTimeout)) {
@@ -318,7 +329,8 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
     }
     int ret = memcpy_s(recvbuff, count * sizeof(T), recv_str->data(), recv_str->size());
     if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", dest size is " << (count * sizeof(T)) << ", src size is " << recv_str->size();
       return false;
     }
   }

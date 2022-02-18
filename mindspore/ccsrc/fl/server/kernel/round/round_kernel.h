@@ -72,7 +72,7 @@ class RoundKernel {
 
   // Called after this iteration(including all rounds) is finished. All rounds' Reset method will
   // be called.
-  void FinishIteration() const;
+  void FinishIteration(bool is_last_iter_valid) const;
 
   // Set round kernel name, which could be used in round kernel's methods.
   void set_name(const std::string &name);

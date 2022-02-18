@@ -108,6 +108,9 @@ class FedAvgKernel : public AggregationKernel {
       done_ = true;
       return;
     };
+
+    MS_LOG(INFO) << "Weight full name is " << weight_node->fullname_with_scope() << ", weight size is " << weight_size;
+    LocalMetaStore::GetInstance().put_feature_map(weight_node->fullname_with_scope(), weight_size);
     DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
     GenerateReuseKernelNodeInfo();
     return;

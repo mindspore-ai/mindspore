@@ -131,8 +131,6 @@ void SSLClient::InitSSL() {
   StartCheckCertTime(*config_, cert);
 
   EVP_PKEY_free(pkey);
-  X509_free(caCert);
-  X509_free(cert);
   (void)BIO_free(ca_bio);
 }
 
