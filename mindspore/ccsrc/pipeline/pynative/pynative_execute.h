@@ -292,6 +292,7 @@ class GradExecutor {
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, index);
   }
+  void MarkMsFunctionNodes(const pipeline::ResourcePtr &resource);
 
  private:
   bool grad_flag_{false};
@@ -311,6 +312,8 @@ class GradExecutor {
   TopCellInfoPtr top_cell_{nullptr};
   // Records forwrad cell, the bottom is top cell
   std::stack<std::string> cell_stack_;
+  // Stores parameter in ms_function
+  std::vector<std::string> ms_function_params_;
   // For high grad of bprop
   std::stack<std::pair<std::string, bool>> bprop_grad_stack_;
   std::vector<std::string> bprop_cell_list_;

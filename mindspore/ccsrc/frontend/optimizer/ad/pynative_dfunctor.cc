@@ -126,7 +126,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
                                                            const FuncGraphPtr &fprop_graph,
                                                            const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (IsPrimitiveCNode(cnode_morph, prim::kPrimStopGradient)) {
+  if (IsPrimitiveCNode(cnode_morph, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode_morph, prim::kPrimMirror)) {
     return {};
   }
   // Use manager to get the link relation among nodes.
@@ -176,7 +176,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
     MS_EXCEPTION_IF_NULL(input_node);
     // Parameter, ValueNode and StopGradient CNode no need to replace.
     if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() ||
-        IsPrimitiveCNode(input_node, prim::kPrimStopGradient)) {
+        IsPrimitiveCNode(input_node, prim::kPrimStopGradient) || IsPrimitiveCNode(input_node, prim::kPrimMirror)) {
       continue;
     }
     // Replace forward input node by its output value.
@@ -187,6 +187,9 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
     MS_EXCEPTION_IF_NULL(output_vnode_i);
     output_vnode_i->set_has_new_value(true);
     manager->Replace(paras[i], output_vnode_i);
+    if (IsPrimitiveCNode(cnode_i, prim::kPrimLoad)) {
+      para_ref_size += 1;
+    }
     MS_LOG(DEBUG) << "Replace: " << paras[i]->DebugString() << " with " << output_vnode_i->ToString();
     // Save forward input node when it used in bprop graph.
     if (para_ref_size > 0 && !IsPrimitiveCNode(input_node, prim::kPrimUpdateState)) {

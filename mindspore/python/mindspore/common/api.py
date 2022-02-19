@@ -23,6 +23,7 @@ import ast
 import importlib
 from collections import OrderedDict
 from functools import wraps
+import numpy as np
 
 from mindspore import context
 from mindspore import log as logger
@@ -30,6 +31,7 @@ from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
 from .tensor import COOTensor as MsCOOTensor
+from .initializer import initializer
 from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, COOTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
@@ -200,6 +202,7 @@ class _MindsporeFunctionExecutor:
         self.obj = None
         if obj and hasattr(obj, fn.__name__):
             self.obj = obj
+        self.shard_parent_obj = obj
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
 
@@ -222,6 +225,36 @@ class _MindsporeFunctionExecutor:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
+
+    def _parallel_process_for_ms_function(self, phase):
+        """Set parameter and optimizer states data according to sliced shape for shard"""
+        obj = self.shard_parent_obj if self.obj is None else self.obj
+        obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
+        obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
+        replace = obj.init_parameters_data(auto_parallel_mode=True)
+        new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
+        self._graph_executor.updata_param_node_default_input(phase, new_param)
+        obj.load_parameter_slice(None)
+
+
+        if _pynative_executor.get_optimizer():
+            params = obj.trainable_params()
+            opt_params = _pynative_executor.get_optimizer().trainable_params()
+            opt_states = []
+            for opt_param in opt_params:
+                for param in params:
+                    if opt_param.name.find(param.name) > 0:
+                        opt_states.append(opt_param)
+                        obj.parameter_layout_dict[opt_param.name] = obj.parameter_layout_dict[param.name]
+                        continue
+
+            states_tuple = (opt_states[:len(params)], opt_states[len(params):]) if len(opt_states) != len(params) \
+                else (opt_states[:len(params)],)
+            for states in states_tuple:
+                for param, state in zip(params, states):
+                    if param.shape != state.shape:
+                        state.set_data(initializer(state.init, param.shape), True)
+        _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
 
     def compile(self, args_list, method_name):
         """Returns pipeline for the given args."""
@@ -271,6 +304,10 @@ class _MindsporeFunctionExecutor:
         else:
             self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, args_list, phase, True)
+
+        if is_pynative_parallel():
+            self._parallel_process_for_ms_function(phase)
+
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
         if context.get_context("enable_ge"):
@@ -284,7 +321,18 @@ class _MindsporeFunctionExecutor:
         if self.obj is not None:
             args_list = args_list[1:]
 
-        phase = self.compile(args_list, self.fn.__name__)
+        if is_pynative_parallel() and not hasattr(self.shard_parent_obj, "keep_input_unchanged"):
+            device_num = context.get_auto_parallel_context('device_num')
+            new_args_list = ()
+            for arg in args_list:
+                if isinstance(arg, MsTensor):
+                    new_shape = (arg.shape[0] * device_num,) + arg.shape[1:]
+                    new_args_list += (MsTensor(np.zeros(shape=new_shape), arg.dtype),)
+                else:
+                    new_args_list += (arg,)
+            phase = self.compile(new_args_list, self.fn.__name__)
+        else:
+            phase = self.compile(args_list, self.fn.__name__)
 
         if context.get_context("precompile_only"):
             return None
@@ -371,6 +419,8 @@ def ms_function(fn=None, obj=None, input_signature=None):
             process_obj = None
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
+            if process_obj is None and is_pynative_parallel():
+                process_obj = obj
             out = _MindsporeFunctionExecutor(func, ms_create_time, input_signature, process_obj)(*args)
             return out
 
@@ -380,6 +430,11 @@ def ms_function(fn=None, obj=None, input_signature=None):
         return wrap_mindspore(fn)
     return wrap_mindspore
 
+def is_pynative_parallel():
+    run_mode = context.get_context('mode')
+    parallel_mode = context.get_auto_parallel_context('parallel_mode')
+    return run_mode == context.PYNATIVE_MODE and parallel_mode in (
+        context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL)
 
 def _get_auto_split_param_names(parameter_layout_dict):
     auto_split_param_names = []
@@ -443,6 +498,8 @@ class _PynativeExecutor:
         self._executor = PynativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
+        self._optimizer = None
+        self._top_cell = None
 
     def new_graph(self, obj, *args, **kwargs):
         self._executor.new_graph(obj, *args, *(kwargs.values()))
@@ -507,6 +564,12 @@ class _PynativeExecutor:
 
     def set_hook_changed(self, cell):
         self._executor.set_hook_changed(cell)
+
+    def get_optimizer(self):
+        return self._optimizer
+
+    def get_top_cell(self):
+        return self._top_cell
 
     def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())

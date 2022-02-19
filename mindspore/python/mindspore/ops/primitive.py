@@ -21,6 +21,7 @@ from mindspore.common.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import context, log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
+from mindspore.common.parameter import Parameter
 from .._c_expression import Primitive_, real_run_op, prim_type
 from .._checkparam import Validator
 from . import signature as sig
@@ -283,6 +284,9 @@ class Primitive(Primitive_):
 
     def __call__(self, *args):
         should_elim, output = self.check_elim(*args)
+        for arg in args:
+            if isinstance(arg, Parameter) and arg.has_init:
+                arg.init_data()
         if should_elim:
             return output
         return _run_op(self, self.name, args)

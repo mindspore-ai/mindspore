@@ -754,7 +754,10 @@ class Shard(Shard_):
         self.device = None
         self.level = None
 
-    def __call__(self, fn, in_axes, out_axes, device, level=0):
+    def __call__(self, fn, in_axes, out_axes, device="Ascend", level=0):
+        if context.get_context("mode") != context.PYNATIVE_MODE or \
+            context.get_auto_parallel_context("parallel_mode") not in ["semi_auto_parallel", "auto_parallel"]:
+            raise AssertionError(f"'Shard' only supports semi_auto/auto parallel under PyNative mode")
         if not isinstance(in_axes, tuple):
             raise TypeError(f"For 'Shard', the 'in_axes' should be a tuple, but got {type(in_axes).__name__}")
         if not isinstance(out_axes, tuple):
@@ -771,7 +774,7 @@ class Shard(Shard_):
             return self.shard_fn
         shard_ = Shard()
 
-        @ms_function
+        @ms_function(obj=fn)
         def after_shard(*args):
             return shard_(fn, in_axes, out_axes, device, level)(*args)
 

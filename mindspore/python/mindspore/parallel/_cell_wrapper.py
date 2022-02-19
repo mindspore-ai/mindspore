@@ -17,6 +17,7 @@
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm
+from ..common import ms_function
 
 _allgather_cell = None
 
@@ -31,6 +32,7 @@ class AllGatherCell(Cell):
 
         self.allgather = AllGather(group)
 
+    @ms_function()
     def construct(self, x):
         x = self.allgather(x)
 

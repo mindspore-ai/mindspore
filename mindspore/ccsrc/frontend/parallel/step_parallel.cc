@@ -934,10 +934,30 @@ void InsertAllReduceToNodeInput(const CNodePtr &node, const std::string &group, 
   }
 }
 
+FuncGraphPtr PynativeParallelGraph(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+  FuncGraphPtr real_graph = root;
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!IsValueNode<Primitive>(cnode->input(0))) {
+      continue;
+    }
+    auto expect_shard_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (expect_shard_prim->name() != SHARD) {
+      continue;
+    }
+    real_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+  }
+  return real_graph;
+}
+
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   vector<std::string> last_forward_node_ids;
   vector<size_t> last_indexs;
-  FindLastNodesUniqueId(root, &last_forward_node_ids, &last_indexs);
+  auto real_graph = PynativeParallelGraph(root, all_nodes);
+  FindLastNodesUniqueId(real_graph, &last_forward_node_ids, &last_indexs);
   MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
   for (auto &node : all_nodes) {
     // here insert virtualoutput node
@@ -2194,9 +2214,9 @@ std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
     auto tuple_index = GetTupleGetItemIndex(cnode);
     auto layout_ptr = FindPrevParallelCareNodeLayout(cnode->input(1), LongToSize(tuple_index));
     if (!layout_ptr) {
-      MS_LOG(EXCEPTION)
-        << " Failure:FindPrevLayout failed, tuple_getitem before reshape, but there does not exit a parallel care node "
-           "before tuple_getitem!";
+      MS_LOG(EXCEPTION) << " Failure:FindPrevLayout failed, tuple_getitem before reshape, but there does not exit a "
+                           "parallel care node "
+                           "before tuple_getitem!";
     }
     return layout_ptr;
   }
@@ -2490,8 +2510,8 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_no
     if ((cnode->size() < 2) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
-    auto expect_j_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (expect_j_prim->name() != J) {
+    auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (expect_prim->name() != J && expect_prim->name() != SHARD) {
       continue;
     }
     if (IsValueNode<FuncGraph>(cnode->input(1))) {
@@ -2516,6 +2536,12 @@ void StepSplitSens(const std::pair<CNodePtr, LossNodeInfo> &sens_loss_pair) {
   if (!loss_grad_layout.empty()) {
     SplitSens(sens_node, loss_grad_layout[0]);
   }
+}
+
+bool IsPynativeParallel() {
+  auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+  return (execution_mode == kPynativeMode) && (parallel_mode == SEMI_AUTO_PARALLEL || parallel_mode == AUTO_PARALLEL);
 }
 
 // Sens node satisfies the following conditions: cnode(sens)-->cnode(tuple_getitem)-->cnode-->cnode(J)
@@ -2612,7 +2638,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
         StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
       }
       // insert backward ops
-      if (has_backward) {
+      if (has_backward || IsPynativeParallel()) {
         BackwardCommunication(root, distribute_operator, cnode, sens_loss_pairs);
       }
 
@@ -3080,8 +3106,9 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
                        "the input parallel strategy when using context.set_auto_parallel_context(dataset_strategy)"
                        " to configure the input strategy.";
   }
-  return (!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
-          current_stage == split_stage_num - 1);
+  return ((!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
+           current_stage == split_stage_num - 1) ||
+          IsPynativeParallel());
 }
 
 static void HandleGroupInfo(const FuncGraphPtr &root) {

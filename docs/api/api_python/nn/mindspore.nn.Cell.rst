@@ -340,6 +340,14 @@
 
         .. note:: 仅在全自动并行(AUTO_PARALLEL)模式下生效。
 
+    .. py:method:: shard(in_axes, out_axes, device="Ascend", level=0)
+
+        指定输入/输出tensor的分布策略，其余算子的策略推导得到。在PyNative模式下，可以利用此方法指定某个cell以图模式进行分布式执行。
+        in_axes/out_axes需要为元组类型，其中的每一个元素指定对应的输入/输出的tensor分布策略，其类型需要为元组，
+        可参考：`mindspore.ops.Primitive.shard`的描述，也可以设置为None，会默认以数据并行执行。
+
+        .. note:: 需设置为Pyative模式，并且全自动并行(AUTO_PARALLEL)，同时search mode为sharding_propagation，或半自动并行（SEMI_AUTO_PARALLEL)。
+
     .. py:method:: set_grad(requires_grad=True)
 
         Cell的梯度设置。在PyNative模式下，该参数指定Cell是否需要梯度。如果为True，则在执行正向网络时，将生成需要计算梯度的反向网络。

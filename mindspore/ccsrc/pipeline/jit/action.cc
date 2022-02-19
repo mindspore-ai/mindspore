@@ -723,6 +723,17 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   return true;
 }
 
+bool EliminateAdRelatedSpecialOpNode(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, manager is null.";
+  }
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "PynativeElimOpt error, graph is null.";
+  }
+  return EliminateAdRelatedSpecialOpOptPass(res);
+}
+
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
@@ -1371,6 +1382,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // eliminate forward cnode for grad graph
     (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
+
+    // eliminate the virtual mirror node
+    (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
 
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   }
