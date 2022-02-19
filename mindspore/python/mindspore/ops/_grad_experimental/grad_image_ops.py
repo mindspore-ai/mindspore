@@ -30,6 +30,7 @@ from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations.image_ops import RGBToHSV
 from mindspore.ops.operations.image_ops import ScaleAndTranslate
 from mindspore.ops._utils.utils import is_shape_unknown
+from mindspore import context
 
 
 @bprop_getters.register(ResizeBicubic)
@@ -57,9 +58,11 @@ def get_bprop_crop_and_resize(self):
     method_ = self.method
     dyn_shape = P.TensorShape()
 
+    is_ascend_cpu = context.get_context('device_target') in ("Ascend", "CPU")
     def bprop(x, boxes, box_index, crop_size, out, dout):
         if method_ != "bilinear":
-            return (zeros_like(x), zeros_like(boxes), zeros_like(box_index), zeros_like(crop_size))
+            if not is_ascend_cpu:
+                return (zeros_like(x), zeros_like(boxes), zeros_like(box_index), zeros_like(crop_size))
         image_type = x.dtype
         if image_type not in allowed_types:
             x = F.cast(x, mstype.float32)

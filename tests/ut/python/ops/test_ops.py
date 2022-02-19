@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
 from mindspore.ops.function.math_func import sinc
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
-                                               AdjustSaturation, CombinedNonMaxSuppression
+                                               AdjustSaturation, CombinedNonMaxSuppression, CropAndResizeGradImage
 from mindspore.ops.operations.image_ops import ExtractGlimpse
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
@@ -4543,6 +4543,14 @@ test_case_other_ops = [
                         Tensor(np.array([7, 7]).astype(np.int64))],
         'desc_bprop': [Tensor(np.array([[3, 2], [1, 1], [4, 4], [2, 1]]).astype(np.int64)),
                        Tensor(np.array([3, 1, 4, 2]).astype(np.int64))]}),
+    ('CropAndResizeGradImage', {
+        'block': CropAndResizeGradImage(mstype.float32),
+        'desc_inputs': [Tensor(np.random.uniform(0, 10, size=(2, 5, 5, 2)).astype(np.float32)),
+                        Tensor(np.random.uniform(0, 1, size=(2, 4)).astype(np.float32)),
+                        Tensor(np.random.randint(0, 2, size=(2)).astype(np.int32)),
+                        Tensor(np.array([2, 10, 10, 2]).astype(np.int32))
+                        ],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [

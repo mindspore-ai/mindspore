@@ -864,7 +864,7 @@ class CropAndResizeGradImage(Primitive):
 
     Args:
         method (str): A string specifying the interpolation method. "bilinear", "nearest" and "bilinear_v2" are
-            supported for now. Default: "bilinear".
+            supported for now. "bilinear_v2" only supports GPU. Default: "bilinear".
         T (mindspore.dtype): T is a required attribute. The value range of T is {mindspore.float16, mindspore.float32,
             mindspore.float64}.
 
@@ -896,7 +896,7 @@ class CropAndResizeGradImage(Primitive):
         TypeError: If `box_index` is not tensor or its dtype is not int32.
         TypeError: If `image_size` is not tensor or its dtype is not int32.
         TypeError: If the value of `T` is not a number dtype in mindspore.
-        ValueError: If `method` is not "bilinear".
+        ValueError: If `method` is not in {"bilinear", "nearest", "bilinear_v2"}.
         ValueError: If `T` is not in {mindspore.float16, mindspore.float32, mindspore.float64}.
         ValueError: If the size of `grads` tensor shape is not equal to 4.
         ValueError: If the size of `boxes` tensor shape is not equal to 2.
@@ -907,7 +907,7 @@ class CropAndResizeGradImage(Primitive):
         ValueError: If the value of image_height or image_width of `image_size` is not positive.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> crop_and_resize_grad_image = ops.CropAndResizeGradImage(T = mindspore.float32, method = "bilinear")
@@ -940,7 +940,11 @@ class CropAndResizeGradImage(Primitive):
         """Initialize CropAndResizeGradImage"""
         self.init_prim_io_names(inputs=['grads', 'boxes', 'box_index', 'image_size'], outputs=['y'])
         validator.check_value_type("method", method, [str], self.name)
-        validator.check_string(method, ["bilinear", "nearest", "bilinear_v2"], "method", self.name)
+        is_ascend_cpu = context.get_context('device_target') in ("Ascend", "CPU")
+        if is_ascend_cpu:
+            validator.check("method", method, "expected", ("bilinear", "nearest"), Rel.IN, self.name)
+        else:
+            validator.check("method", method, "expected", ("bilinear", "nearest", "bilinear_v2"), Rel.IN, self.name)
         self.method = method
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         if T in mstype.number_type:
