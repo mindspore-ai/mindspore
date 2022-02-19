@@ -244,8 +244,7 @@ def test_if_after_for_in_if_break():
     assert graph_backward_res == (Tensor(1, mstype.int32),)
 
 
-@pytest.mark.skip(reason="ME EvalCNode error.")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -285,10 +284,8 @@ def test_if_after_for_in_for_break():
     net = Grad(if_after_for_in_for_net)
     graph_backward_res = net(x)
 
-    print("test_if_after_for_in_for_break graph_forward_res:", graph_forward_res)
-    print("test_if_after_for_in_for_break graph_backward_res:", graph_backward_res)
-    # assert graph_forward_res == Tensor(12285, mstype.int32)
-    # assert graph_backward_res == (Tensor(1025, mstype.int32),)
+    assert graph_forward_res == Tensor(106, mstype.int32)
+    assert graph_backward_res == (Tensor(10, mstype.int32),)
 
 
 class WhileAfterWhileInWhileBreakForwardNet(nn.Cell):
@@ -398,7 +395,11 @@ class ForInFor2BreakForwardNet(nn.Cell):
         return out
 
 
-@pytest.mark.skip(reason="Get wrong parent graph")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_in_for_break():
     x = Tensor(np.array(7), mstype.float32)
     y = Tensor(np.array(20), mstype.float32)
@@ -408,8 +409,11 @@ def test_for_in_for_break():
     print("test_for_in_for_break graph out:", graph_out)
 
 
-# raise a endless loop exception.
-@pytest.mark.skip(reason="Infer raise a endless loop exception")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_true_break():
     class WhileTrueBreakNet(nn.Cell):
         def __init__(self, t):
@@ -438,8 +442,11 @@ def test_while_true_break():
     print(grad_out)
 
 
-# stuck in vm backend
-@pytest.mark.skip(reason="Stuck in vm backend")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_continue_stuck_in_vm():
     class NetWork(nn.Cell):
         def __init__(self, t):

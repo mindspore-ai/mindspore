@@ -127,6 +127,13 @@ class IfInIfNet4(nn.Cell):
         out += self.param_b
         return out
 
+    def func(self, x):
+        x += 10
+        if x > self.param_a:
+            self.param_b += 1
+            x += self.param_a
+        return x
+
 
 class GradNet(nn.Cell):
     def __init__(self, net):
@@ -175,7 +182,6 @@ def test_if_in_if_01():
     control_flow_if_in_if(IfInIfNet1, x, expect1, expect2)
 
 
-@pytest.mark.skip(reason="Ascend compile error in multigraph sink.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -183,8 +189,8 @@ def test_if_in_if_01():
 @pytest.mark.env_onecard
 def test_if_in_if_02():
     x = Tensor(2, mstype.int32)
-    expect1 = 0
-    expect2 = 0
+    expect1 = Tensor(5, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
     control_flow_if_in_if(IfInIfNet2, x, expect1, expect2)
 
 
@@ -200,13 +206,12 @@ def test_if_in_if_03():
     control_flow_if_in_if(IfInIfNet3, x, expect1, expect2)
 
 
-@pytest.mark.skip(reason="Result not correct in ascend vm")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_in_if_04():
     x = Tensor(2, mstype.int32)
-    expect1 = 0
-    expect2 = 0
+    expect1 = Tensor(22, mstype.int32)
+    expect2 = (Tensor(1, mstype.int32),)
     control_flow_if_in_if(IfInIfNet4, x, expect1, expect2)

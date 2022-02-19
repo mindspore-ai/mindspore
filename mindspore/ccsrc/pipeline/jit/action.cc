@@ -61,6 +61,8 @@
 namespace mindspore {
 namespace pipeline {
 namespace {
+bool ExistControlFlow(const FuncGraphPtr &func_graph) { return !func_graph->func_graphs_used_total().empty(); }
+
 void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_paras;
@@ -101,9 +103,15 @@ void DisableMindRT(const ResourcePtr &res) {
   }
   auto func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  bool is_parallel_mode = parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL;
   bool enable_old_runtime = (common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "0");
-  if (enable_old_runtime ||
-      (func_graph != nullptr && func_graph->exist_multi_target() && IsDynamicShapeGraph(func_graph))) {
+  bool use_old_vm_for_dynamic_shape = func_graph->exist_multi_target() && IsDynamicShapeGraph(func_graph);
+  bool use_old_vm_for_control_parallel =
+    func_graph->exist_multi_target() && ExistControlFlow(func_graph) && is_parallel_mode;
+  if (enable_old_runtime || use_old_vm_for_dynamic_shape || use_old_vm_for_control_parallel) {
     // Heterogeneous scenario + dynamic_shape runs in MsBackend.
     MS_LOG(INFO) << "Disable mindRT in the heterogeneous + dynamic shape scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
@@ -778,18 +786,6 @@ bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &ta
   return false;
 }
 
-bool ExistControlNode(const std::vector<AnfNodePtr> &all_nodes) {
-  std::vector<PrimitivePtr> control_ops = {prim::kPrimSwitch, prim::kPrimCall, prim::kPrimSwitchLayer};
-  for (auto &node : all_nodes) {
-    auto contain_control_node = std::any_of(control_ops.begin(), control_ops.end(),
-                                            [&](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-    if (contain_control_node) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void SetRunMode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   auto context_ptr = MsContext::GetInstance();
@@ -829,7 +825,7 @@ void SetRunMode(const ResourcePtr &res) {
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
   graphs.insert(func_graph);
-  bool exist_func = HasIncorporateCall(all_nodes);
+  bool exist_func = ExistControlFlow(func_graph) ? HasIncorporateCall(all_nodes) : false;
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_func: " << exist_func << " exist_while: " << exist_while;
@@ -842,7 +838,7 @@ void SetRunMode(const ResourcePtr &res) {
   // Multiple device targets scenario.
   if (func_graph->exist_multi_target()) {
     // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-    if (ExistControlNode(all_nodes)) {
+    if (ExistControlFlow(func_graph)) {
       MS_LOG(INFO) << "Run graph mode with kernelbykernel.";
       set_ctx(false, false, false);
       return;
