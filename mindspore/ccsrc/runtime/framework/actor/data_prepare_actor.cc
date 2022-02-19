@@ -25,7 +25,6 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
-#include "runtime/device/memory_manager.h"
 
 namespace mindspore {
 namespace runtime {
@@ -75,10 +74,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
     for (size_t i = 0; i < intput_sizes.size(); ++i) {
       const auto &device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
-      auto origin_size = intput_sizes[i];
-      auto align_size = device::MemoryManager::GetCommonAlignSize(origin_size);
-      *total_size += align_size;
-      (void)size_list->emplace_back(align_size);
+      *total_size += intput_sizes[i];
+      (void)size_list->emplace_back(intput_sizes[i]);
       (void)addr_list->emplace_back(device_tensor);
     }
   } else {
@@ -86,10 +83,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
     for (size_t i = 0; i < output_sizes.size(); ++i) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
-      auto origin_size = output_sizes[i];
-      auto align_size = device::MemoryManager::GetCommonAlignSize(origin_size);
-      *total_size += align_size;
-      (void)size_list->emplace_back(align_size);
+      *total_size += output_sizes[i];
+      (void)size_list->emplace_back(output_sizes[i]);
       (void)addr_list->emplace_back(device_tensor);
     }
   }
