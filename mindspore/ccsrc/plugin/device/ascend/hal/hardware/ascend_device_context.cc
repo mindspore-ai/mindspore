@@ -386,7 +386,6 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     } else {
       PreprocessBeforeRunSingleOpGraph(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
-      GenKernelEvents(NOT_NULL(graph));
     }
   } catch (const std::exception &e) {
     ReportErrorMessage();
@@ -711,7 +710,7 @@ bool AscendDeviceContext::MemoryCopyAsync(const CNodePtr &node, const vector<Add
   }
 
   aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, GetKernelStream(node));
+                                     ACL_MEMCPY_DEVICE_TO_DEVICE, compute_stream_);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status;
     return false;
@@ -770,8 +769,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   BindDeviceToCurrentThread();
 
-  auto event_funcs = runtime_instance_->GetKernelEventFuncs(kernel);
-
   std::vector<AddressPtr> real_inputs;
   bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);
   if (!ret) {
@@ -783,12 +780,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 
   // start launch
   std::lock_guard<std::mutex> locker(launch_mutex_);
-
-  // launch pre events
-  MS_LOG(DEBUG) << "Launch pre-events for kernel " << kernel->fullname_with_scope();
-  for (auto &pre_event_func : event_funcs.first) {
-    pre_event_func();
-  }
 
   // launch atomic clean
   if (!LaunchAtomicClean(kernel, workspace, outputs)) {
@@ -812,18 +803,12 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
       dynamic_kernel->Execute();
       dynamic_kernel->PostExecute();
     } else {
-      ret = kernel_mod->Launch(real_inputs, workspace, outputs, GetKernelStream(kernel));
+      ret = kernel_mod->Launch(real_inputs, workspace, outputs, compute_stream_);
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
         return false;
       }
     }
-  }
-
-  // launch post event
-  MS_LOG(DEBUG) << "Launch post-events for kernel " << kernel->fullname_with_scope();
-  for (auto &post_event_func : event_funcs.second) {
-    post_event_func();
   }
 
   return PySyncRuning();
@@ -872,7 +857,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   // Launch Atomic Node
   auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(node));
+  return kernel_mod->Launch(atomic_inputs, {}, {}, compute_stream_);
 }
 
 void AscendDeviceContext::InsertEventBeforeRunTask(const KernelGraphPtr &graph) const {
