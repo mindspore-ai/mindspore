@@ -186,6 +186,7 @@ Status NPUDelegate::Init() {
     {schema::PrimitiveType_Transpose, GetNPUOp<TransposeNPUOp>},
     {schema::PrimitiveType_Unsqueeze, GetNPUOp<UnsqueezeNPUOp>},
     {schema::PrimitiveType_Abs, GetNPUOp<AbsNPUOp>},
+    {schema::PrimitiveType_Flatten, GetNPUOp<FlattenNPUOp>},
   };
   return mindspore::kSuccess;
 }
