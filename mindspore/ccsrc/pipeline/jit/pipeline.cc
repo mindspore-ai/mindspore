@@ -1647,6 +1647,8 @@ void InitHccl() {
     if (!HcclCollectiveGroup::instance().InitCollective()) {
       MS_LOG(EXCEPTION) << "Mpi init failed, please check if mpirun is used correctly.";
     }
+    auto rank_id = HcclCollectiveGroup::instance().GetRankId(kHcclWorldGroup);
+    common::SetEnv(kRankID, std::to_string(rank_id).c_str());
     device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
     ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
     ms_context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);

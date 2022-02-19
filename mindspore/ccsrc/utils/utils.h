@@ -345,6 +345,7 @@ constexpr auto kScatterUpdateOpName = "ScatterUpdate";
 constexpr auto kNcclWorldGroup = "nccl_world_group";
 constexpr auto kHcclWorldGroup = "hccl_world_group";
 constexpr auto kSyncBnGroup = "sync_bn_group";
+constexpr auto kRankID = "RANK_ID";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
