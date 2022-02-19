@@ -30,6 +30,7 @@ py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource);
 py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
 py::list GetParallelParameterNameListFromGraph(const FuncGraphPtr &graph);
 py::list GetParallelParameterNameListFromResource(const pipeline::ResourcePtr &resource);
+py::dict GetParallelCNodeInfoFromGraph(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore
 
