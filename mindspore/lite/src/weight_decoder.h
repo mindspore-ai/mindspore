@@ -205,6 +205,11 @@ class WeightDecoder {
           free(dequant_datas);
           return nullptr;
         }
+        if (abs(index - INT8_MIN) >= static_cast<int>(param.clusters.size())) {
+          MS_LOG(ERROR) << "index exceed the boundary of param.clusters";
+          free(dequant_datas);
+          return nullptr;
+        }
         dequant_datas[j] = static_cast<DT>(param.clusters[index - INT8_MIN]);
       } else {
 #ifdef ENABLE_ARM32
