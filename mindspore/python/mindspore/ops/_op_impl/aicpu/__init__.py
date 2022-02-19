@@ -15,6 +15,8 @@
 """aicpu ops"""
 from .fractional_max_pool import _fractional_max_pool_aicpu
 from .fractional_max_pool_grad import _fractional_max_pool_grad_aicpu
+from .fractional_avg_pool import _fractional_avg_pool_aicpu
+from .fractional_avg_pool_grad import _fractional_avg_pool_grad_aicpu
 from .hsv_to_rgb import _hsv_to_rgb_aicpu
 from .unique import _unique_aicpu
 from .lu_solve import _lu_solve_aicpu

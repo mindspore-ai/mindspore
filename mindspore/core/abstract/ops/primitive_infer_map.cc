@@ -76,8 +76,10 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
+  static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
+                                                        {kFractionalAvgPoolGrad, ShapeSet{0}},
                                                         {kUnsortedSegmentMin, ShapeSet{2}},
                                                         {kUnsortedSegmentMax, ShapeSet{2}},
                                                         {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},

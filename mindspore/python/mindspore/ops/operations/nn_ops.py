@@ -9206,3 +9206,84 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
                                                    self.name, allow_five=False, ret_five=False)
         self.add_prim_attr("ksize", self.ksize)
         self.add_prim_attr("output_shape", self.output_shape)
+
+
+class FractionalAvgPool(Primitive):
+    r"""
+    Performs fractional avg pooling on the input.
+
+    Fractional avg pooling is similar to regular avg pooling, In regular avg pooling, you downsize an
+    input set by taking the avgrage value of smaller N x N subsections of the set (often 2x2), and try
+    to reduce the set by a factor of N, where N is an integer. Fractional avg pooling, means that the
+    overall reduction ratio N does not have to be an integer. In each pooling region, a mean operation
+    is performed.
+
+    .. warning::
+        "pooling_ratio", currently only supports row and col dimension and should be >= 1.0, the first
+        and last elements must be 1.0 because we don't allow pooling on batch and channels dimensions.
+
+    Args:
+        pooling_ratio (list(float)): Decide the shape of output, is a list of floats that has length >= 4.
+            Pooling ratio for each dimension of value should be >=0, currently only support for row and col
+            dimension. The first and last elements must be 1.0 because we don't allow pooling on batch and
+            channels dimensions.
+        pseudo_random(bool): An optional bool. Defaults to False. When set to True, generates the pooling
+            sequence in a pseudorandom fashion, otherwise, in a random fashion.
+            Check paper Benjamin Graham, Fractional Max-Pooling for difference between pseudo_random and
+            random.
+        overlapping(bool): An optional bool. Defaults to False. When set to True, it means when pooling,
+            the values at the boundary of adjacent pooling cells are used by both cells.
+        deterministic(bool): An optional bool. Defaults to False. When set to True, a fixed pooling region
+            will be used when iterating over a FractionalAvgPool node in the computation graph. Mainly
+            used in unit test to make FractionalAvgPool deterministic.
+        seed(int): An optional int. Defaults to 0. If either seed or seed2 are set to be non-zero, the
+            random number generator is seeded by the given seed. Otherwise, it is seeded by a random seed.
+        seed2(int): An optional int. Defaults to 0. An second seed to avoid seed collision.
+
+    Inputs:
+        - **x** (Tensor) -The data type must be one of the following types: float32, float64, int32, int64.
+          Tensor of shape :math:`(N, H_{in}, W_{in}, C_{in})`.
+
+    Outputs:
+        - **y** (Tensor) - A tensor, the output of FractionalAvgPool, has the same data type with `x`.
+          Tensor of shape :math:`(N, H_{out}, W_{out}, C_{out})`.
+
+        - **row_pooling_sequence** (Tensor) - A tensor of type int64, the result list of pool boundary rows.
+
+        - **col_pooling_sequence** (Tensor) - A tensor of type int64, the result list of pool boundary cols.
+
+    Raises:
+        TypeError: If data type of `x` is not float32, float64, int32, int64.
+        TypeError: If `x` is not a 4D tensor.
+        ValueError: If element of `x` equals 0 or is less than 0.
+        ValueError: If `pooling_ratio` is a list whose length is not equal to 4.
+        ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
+        ValueError: If seed or seed2 not equals to 0 when deterministic is false.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
+        >>> pooling_ratio=[1.0,1.5,1.5,1.0]
+        >>> fractionalavgpool_op = ops.FractionalAvgPool(pooling_ratio=pooling_ratio)
+        >>> output = fractionalavgpool_op(Tensor(x))
+        >>> print(output)
+        (Tensor(shape=[1, 2, 2, 1], dtype=Int64, value=
+        [[[[ 3],
+           [ 5]],
+          [[11],
+           [13]]]]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]))
+    """
+    @prim_attr_register
+    def __init__(self, pooling_ratio, pseudo_random=False, overlapping=False, deterministic=False, seed=0, seed2=0):
+        """Initialize FractionalAvgPool."""
+        self.init_prim_io_names(inputs=["x"], outputs=["y", "row_pooling_sequence", "col_pooling_sequence"])
+        validator.check_value_type('pooling_ratio', pooling_ratio, [list], self.name)
+        for item in pooling_ratio:
+            validator.check_value_type("pooling_ratio_item", item, float, self.name)
+        validator.check_value_type("pseudo_random", pseudo_random, [bool], self.name)
+        validator.check_value_type("overlapping", overlapping, [bool], self.name)
+        validator.check_value_type("deterministic", deterministic, [bool], self.name)
+        validator.check_value_type("seed", seed, [int], self.name)
+        validator.check_value_type("seed2", seed2, [int], self.name)
