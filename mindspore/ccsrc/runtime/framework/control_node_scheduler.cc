@@ -684,14 +684,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     MS_EXCEPTION_IF_NULL(actor);
     const auto &switch_actor = dynamic_cast<SwitchActor *>(actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
-
-    const auto &abstract = from_node->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    if (abstract->isa<abstract::AbstractFunction>()) {
-      LinkPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
-    } else {
-      LinkDataArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
-    }
+    LinkPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
   } else if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
     // Link arrow from gather actor
     const auto &actor_name = GetActorName(from_node);
