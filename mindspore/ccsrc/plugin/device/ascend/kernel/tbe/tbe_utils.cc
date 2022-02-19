@@ -56,7 +56,6 @@ constexpr auto kJRlTuneList = "rl_tune_list";
 constexpr auto kJOpTuneSwitch = "op_tune_switch";
 constexpr auto kJOpTuneList = "op_tune_list";
 constexpr auto kJPassList = "pass_list";
-constexpr auto kRankID = "RANK_ID";
 constexpr auto kCOMPILER_OP_LEVEL = "MS_COMPILER_OP_LEVEL";
 
 uintptr_t KernelManager::kernel_stub_gen_ = 0;
