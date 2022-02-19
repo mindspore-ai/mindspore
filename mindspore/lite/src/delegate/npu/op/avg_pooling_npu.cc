@@ -16,7 +16,10 @@
 
 #include "src/delegate/npu/op/avg_pooling_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
+#include "src/delegate/npu/npu_manager.h"
 namespace mindspore {
+constexpr int MAX_HW_SIZE = 65534;
+
 int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   auto pooling_prim = primitive->value_as_AvgPoolFusion();
@@ -30,6 +33,13 @@ int AvgPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::ve
   auto pad_l = static_cast<int>(*(pooling_prim->pad()->begin() + PAD_LEFT));
   if (pad_u > stride_h || pad_l > stride_w) {
     MS_LOG(WARNING) << "Npu pooling does not support pad > stride.";
+    return RET_NOT_SUPPORT;
+  }
+  auto input_shape = in_tensors.front().Shape();
+  auto height = input_shape.at(NHWC_H);
+  auto width = input_shape.at(NHWC_W);
+  if (!NPUManager::CheckDDKVerGreatEqual("100.330.011.032") && height * width > MAX_HW_SIZE) {
+    MS_LOG(WARNING) << "The pooling size of " << name_ << " exceeds the max size that NPU support.";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;

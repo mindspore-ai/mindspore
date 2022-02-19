@@ -43,6 +43,9 @@ class FlattenNPUOp : public NPUOp {
 
  private:
   hiai::op::Flatten *flatten_ = nullptr;
+  hiai::op::Reshape *reshape_ = nullptr;
+  hiai::op::Const *shape_ = nullptr;
+  bool use_reshape_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FLATTEN_NPU_H_
