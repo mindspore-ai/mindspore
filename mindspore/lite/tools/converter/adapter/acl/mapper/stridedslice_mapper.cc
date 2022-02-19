@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/converter_context.h"
 #include "ops/op_utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +36,7 @@ STATUS StridedSliceMapper::Mapper(const CNodePtr &cnode) {
   int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
   if (fmk_type == converter::kFmkTypeOnnx) {
     auto dst_prim = std::make_shared<acl::StridedSliceV2>();
-    MS_ASSERT(dst_prim != nullptr);
+    MS_CHECK_TRUE_MSG(dst_prim != nullptr, lite::RET_ERROR, "dst_prim is nullptr.");
     dst_prim->SetAttrs(src_prim->attrs());
     value_node->set_value(dst_prim);
   }
