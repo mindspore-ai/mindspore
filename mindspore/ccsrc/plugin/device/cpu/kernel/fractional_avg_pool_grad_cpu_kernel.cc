@@ -41,7 +41,7 @@ void FractionalAvgPoolGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "FractionalAvgPoolGrad does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;
@@ -68,7 +68,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   MS_EXCEPTION_IF_NULL(output);
   size_t orig_input_shape_num = inputs[0]->size / sizeof(int64_t);
   if (orig_input_shape_.size() != 1 || orig_input_shape_num != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "original input tensor shape must be 1-dimensional and 4 elements.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', the input 'orig_input_tensor_shape' must be 1-dimensional and 4 elements.";
   }
   const int64_t out_batch = out_backprop_shape_[kShapeIndexN];
   const int64_t out_rows = out_backprop_shape_[kShapeIndexH];
@@ -77,13 +78,15 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   int64_t row_seq_nums = inputs[2]->size / sizeof(int64_t);
   int64_t col_seq_nums = inputs[3]->size / sizeof(int64_t);
   if (row_seq_nums <= out_rows) {
-    MS_EXCEPTION(ValueError) << "Given out_backprop shape [" << out_batch << "," << out_rows << "," << out_cols << ","
-                             << out_depth << "], row_seq_tensor must have at least [" << (out_rows + 1)
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', given 'out_backprop' shape [" << out_batch << ","
+                             << out_rows << "," << out_cols << "," << out_depth
+                             << "], 'row_pooling_sequence' must have at least [" << (out_rows + 1)
                              << "elements, but got[" << row_seq_nums << ".";
   }
   if (col_seq_nums <= out_cols) {
-    MS_EXCEPTION(ValueError) << "Given out_backprop shape [" << out_batch << "," << out_rows << "," << out_cols << ","
-                             << out_depth << "], row_seq_tensor must have at least [" << (out_cols + 1)
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', given 'out_backprop' shape [" << out_batch << ","
+                             << out_rows << "," << out_cols << "," << out_depth
+                             << "], 'col_pooling_sequence' must have at least [" << (out_cols + 1)
                              << "elements, but got[" << col_seq_nums << ".";
   }
   const int64_t in_batch = *(orig_input_tensor_shape);
@@ -93,7 +96,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   std::vector<size_t> out_shape;
   for (size_t i = 0; i < orig_input_shape_num; i++) {
     if (orig_input_tensor_shape[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', each dimension of input 'orig_input_tensor_shape' must be greater than 0.";
       return false;
     }
     out_shape.push_back(orig_input_tensor_shape[i]);
@@ -145,7 +149,8 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(
     width_end = std::min(width_end, width_max);
     const int64_t num_elements_in_pooling_cell = (height_end - height_start + 1) * (width_end - width_start + 1);
     if (num_elements_in_pooling_cell == 0) {
-      MS_EXCEPTION(ValueError) << "FractionalAvgPoolGrad input error, please check it.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', input 'orig_input_tensor_shape' error, please check it.";
     }
     const int64_t out_index = (b * out_rows + hs) * out_cols + ws;
     // Now we can evenly distribute out_backprop(b, h, w, *) to in_backprop(b, hs:he, ws:we, *).

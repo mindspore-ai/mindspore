@@ -43,23 +43,25 @@ void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (input_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "x must be 4-dimensional.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
   }
   for (size_t i = 0; i < input_shape_.size(); i++) {
     if (input_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalAvgPool: expected input to have non-empty spatial dimensions, "
-                                  "but input has sizes "
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', expected input have non-empty spatial dimensions, but input has sizes "
                                << input_shape_[i] << " with dimension " << i << " being empty.";
     }
   }
   pooling_ratio_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "pooling_ratio");
   if (pooling_ratio_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "The size of pooling_ratio must be 4, but got " << pooling_ratio_.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', the size of parameter 'pooling_ratio' must be 4, but got " << pooling_ratio_.size()
+                             << ".";
   }
   if (pooling_ratio_[kPoolingRatioIndex0] != static_cast<float>(1) ||
       pooling_ratio_[kPoolingRatioIndex3] != static_cast<float>(1)) {
-    MS_EXCEPTION(ValueError) << "FractionalAvgPool is not yet supported on the batch nor channel "
-                                "dimension. The first and last elements of pooling ratio must be 1.0.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', the first and last elements of parameter 'pooling_ratio' must be 1.0.";
   }
   pseudo_random_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "pseudo_random");
   overlapping_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "overlapping");
@@ -70,7 +72,7 @@ void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "FractionalAvgPool does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;
@@ -81,14 +83,15 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
   std::vector<int64_t> cum_seq(output_length + 1, 0);
   std::vector<int64_t> diff(output_length, 0);
   if (output_length == 0) {
-    MS_EXCEPTION(ValueError) << "FractionalAvgPool output_length equals 0.";
+    MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
   } else {
     // generate a random number u which is in (0,1)
     double alpha = static_cast<double>(input_length) / output_length;
     int k = input_length / output_length;
     double u_max1 = (k + 2) / alpha - 1;
     if ((alpha - (output_length - 1)) == 0) {
-      MS_EXCEPTION(ValueError) << "FractionalAvgPool input_length and output_length error, please check it.";
+      MS_EXCEPTION(ValueError) << "For FractionalAvgPool, the input_length and output_length is wrong, please check "
+                                  "the parameter 'pooling ratio'.";
     } else {
       double u_max2 = (input_length + 1 - k) / alpha - (output_length - 1);
       double max_u = std::min(u_max1, u_max2);
@@ -110,7 +113,7 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
 
 static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, size_t output_length, int64_t seed) {
   if (output_length == 0) {
-    MS_EXCEPTION(ValueError) << "FractionalAvgPool output_length equals 0.";
+    MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
   } else {
     int k = input_length / output_length;
     size_t num_random_spot = input_length % output_length;
@@ -127,7 +130,7 @@ std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_
                                              int64_t seed) {
   std::vector<int64_t> diff;
   if (output_length == 0) {
-    MS_EXCEPTION(ValueError) << "FractionalAvgPool output_length equals 0.";
+    MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
   } else {
     if (input_length % output_length == 0) {
       diff = std::vector<int64_t>(output_length, input_length / output_length);
@@ -141,7 +144,7 @@ std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_
     int k = input_length / output_length;
     for (size_t i = 0; i < output_length; i++) {
       if (diff[i] < k || diff[i] > k + 1) {
-        MS_EXCEPTION(ValueError) << "FractionalAvgPool kernel GeneratePoolingSequence diff[" << i << "] is error";
+        MS_EXCEPTION(ValueError) << "For FractionalAvgPool, GeneratePoolingSequence diff[" << i << "] is error";
       }
     }
     std::vector<int64_t> cum_seq(output_length + 1, 0);
@@ -166,7 +169,7 @@ bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<Ad
   for (size_t i = 0; i < tensor_in_and_out_dims; i++) {
     output_shape_[i] = static_cast<int>(std::floor(input_shape_[i] / pooling_ratio_[i]));
     if (output_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalAvgPool kernel outputsize[" << i << "] cannot be 0.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', outputsize[" << i << "] cannot be 0.";
     }
   }
   std::random_device rd;
@@ -181,7 +184,8 @@ bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<Ad
     }
   } else {
     if ((seed != 0) || (seed2 != 0)) {
-      MS_EXCEPTION(ValueError) << "Both seed and seed2 should be 0 if deterministic is false.";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', both 'seed' and 'seed2' should be 0 if 'deterministic' is false.";
     }
   }
   if (seed == 0 && seed2 != 0) {

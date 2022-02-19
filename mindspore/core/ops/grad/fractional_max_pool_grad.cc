@@ -51,7 +51,8 @@ abstract::ShapePtr FractionalMaxPoolGradInferShape(const PrimitivePtr &primitive
     }
   }
   if (shape_error) {
-    MS_EXCEPTION(ValueError) << "The shape of backprop should be consistent with the shape of orig_output.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the shape of 'out_backprop' should be consistent with the shape of 'orig_output'.";
   }
   auto infer_shape = std::make_shared<abstract::Shape>(in_shape);
   return infer_shape;

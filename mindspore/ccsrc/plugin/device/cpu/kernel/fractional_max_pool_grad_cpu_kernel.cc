@@ -45,17 +45,17 @@ void FractionalMaxPoolGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   overlapping_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "overlapping");
   tensor_in_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (tensor_in_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "orig_input should be a tensor of rank 4.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_input' should be a tensor of rank 4.";
   }
   tensor_out_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (tensor_out_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "orig_output should be a tensor of rank 4.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_output' should be a tensor of rank 4.";
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "FractionalMaxPoolGrad does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;
@@ -176,8 +176,8 @@ bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradOutput(int tensor_i
   for (int index = 0; index < back_in_nums; ++index) {
     int input_index = tensor_out_index[index];
     if (input_index < 0 || input_index >= output_nums)
-      MS_EXCEPTION(ValueError) << "Invalid input backprop index:[" << input_index
-                               << "], The maximum number of output is: [" << output_nums << "].";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', invalid input 'out_backprop' index:[" << input_index
+                               << "], the maximum number of output is: [" << output_nums << "].";
     *(output + input_index) += *(out_backprop + index);
   }
   return true;
