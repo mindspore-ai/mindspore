@@ -38,6 +38,9 @@ constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
 constexpr auto kCdist = "Cdist";
 constexpr auto kCdistGrad = "CdistGrad";
+// image
+constexpr auto kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
+
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
 constexpr auto kScalarSub = "ScalarSub";
@@ -368,6 +371,9 @@ GVAR_DEF(PrimitivePtr, kPrimLstsq, std::make_shared<Primitive>(kLstsq));
 GVAR_DEF(PrimitivePtr, kPrimLowerBound, std::make_shared<Primitive>(kLowerBound));
 GVAR_DEF(PrimitivePtr, kPrimUpperBound, std::make_shared<Primitive>(kUpperBound));
 GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
+
+// image
+GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
 
 // NN
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));

@@ -239,3 +239,75 @@ class HSVToRGB(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
+
+
+class CropAndResizeGradBoxes(Primitive):
+    """
+    Computes the gradient of the CropAndResize op with respect to the input boxes tensor.
+
+    Note:
+        Input images and grads must be a 4-D tensor.
+
+    Args:
+        method (str): A string specifying the interpolation method. Only "bilinear" is supported for now.
+            Default: "bilinear".
+
+    Inputs:
+        - **grads** (Tensor) - A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth].
+          The format must be NHWC. Types allowed: float32.
+        - **images** (Tensor) - A 4-D tensor of shape [batch, image_height, image_width, depth].
+          The format must be NHWC. Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
+          Both image_height and image_width need to be positive.
+        - **boxes** (Tensor) - A 2-D tensor of shape [num_boxes, 4].
+          The i-th row of the tensor specifies the coordinates of a box in the box_index[i] image
+          and is specified in normalized coordinates [y1, x1, y2, x2]. A normalized coordinate value of y is mapped to
+          the image coordinate at y * (image_height - 1), so as the [0, 1] interval of normalized image height is
+          mapped to [0, image_height - 1] in image height coordinates. We do allow y1 > y2, in which case the sampled
+          crop is an up-down flipped version of the original image. The width dimension is treated similarly.
+          Normalized coordinates outside the [0, 1] range are allowed, in which case we use extrapolation_value to
+          extrapolate the input image values. Types allowed: float32.
+        - **box_index** (Tensor) - A 1-D tensor of shape [num_boxes] with int32 values in [0, batch).
+          The value of box_index[i] specifies the image that the i-th box refers to. Types allowed: int32.
+
+    Outputs:
+        A 2-D tensor of shape [num_boxes, 4] with type: float32.
+
+    Raises:
+        TypeError: If `method` is not a str.
+        TypeError: If `grads` is not tensor or its dtype is not float32.
+        TypeError: If `images` is not tensor or its dtype is incorrect.
+        TypeError: If `boxes` is not tensor or its dtype is not float32.
+        TypeError: If `box_index` is not tensor or its dtype is not int32.
+        ValueError: If `method` is not 'bilinear'.
+        ValueError: If the size of `grads` tensor shape is not equal to 4.
+        ValueError: If the size of `images` tensor shape is not equal to 4.
+        ValueError: If the value of image_height or image_width of `image` tensor shape is not positive.
+        ValueError: If the size of `boxes` tensor shape is not equal to 2.
+        ValueError: If the length of the second dimension of `boxes` is not equal to 4.
+        ValueError: If the size of `box_index` tensor shape is not equal to 1.
+        ValueError: If the length of `box_index` is not equal to num_boxes.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> crop_and_resize_grad_boxes = ops.CropAndResizeGradBoxes(method = "bilinear")
+        >>> grads = Tensor(np.array([[[[2.0], [5.0]], [[1.0], [4.0]]]]), mindspore.float32)
+        >>> image = Tensor(np.array([[[[9.0], [5.0], [2.0], [1.0]],
+        ...                           [[6.0], [1.0], [9.0], [7.0]],
+        ...                           [[6.0], [0.0], [2.0], [9.0]],
+        ...                           [[1.0], [2.0], [6.0], [7.0]]]]), mindspore.float32)
+        >>> boxes = Tensor(np.array([[0.3, 0.8, 0.3, 0.8]]), mindspore.float32)
+        >>> box_index = Tensor(np.array([0]), mindspore.int32)
+        >>> output = crop_and_resize_grad_boxes(grads, image, boxes, box_index)
+        >>> print(output.asnumpy())
+        [138.6,-17.1,99.0,-51.300003]
+    """
+
+    @prim_attr_register
+    def __init__(self, method="bilinear"):
+        """Initialize CropAndResizeGradBoxes"""
+        self.init_prim_io_names(inputs=['grads', 'images', 'boxes', 'box_index'], outputs=['y'])
+        validator.check_value_type("method", method, [str], self.name)
+        validator.check_string(method, ["bilinear"], "method", self.name)
+        self.method = method
