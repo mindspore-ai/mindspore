@@ -33,6 +33,7 @@ from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
+from mindspore.ops.operations.array_ops import Triu
 from mindspore.nn.layer import normalization
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
@@ -2826,6 +2827,11 @@ test_case_array_ops = [
     }),
     ('Tril', {
         'block': Tril(),
+        'desc_inputs': [Tensor(np.random.rand(3, 8, 9), mstype.float32)],
+        'desc_brop': [Tensor(np.random.rand(5, 6, 6), mstype.float32)]
+    }),
+    ('Triu', {
+        'block': Triu(),
         'desc_inputs': [Tensor(np.random.rand(3, 8, 9), mstype.float32)],
         'desc_brop': [Tensor(np.random.rand(5, 6, 6), mstype.float32)]
     }),
