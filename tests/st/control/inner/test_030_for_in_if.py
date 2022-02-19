@@ -174,7 +174,6 @@ def test_for_in_if_03():
     assert graph_backward_res == (Tensor([3], mstype.float32),)
 
 
-@pytest.mark.skip(reason="Ascend control multi sink result error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -221,10 +220,9 @@ def test_for_in_if_04():
     graph_backward_res = net(x)
 
     assert graph_forward_res == Tensor([45], mstype.int32)
-    assert graph_backward_res == Tensor([9], mstype.int32)
+    assert graph_backward_res == (Tensor([9], mstype.int32),)
 
 
-@pytest.mark.skip(reason="Ascend control multi sink result error")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -273,4 +271,4 @@ def test_for_in_if_05():
     graph_backward_res = net(x)
 
     assert graph_forward_res == Tensor([-91], mstype.int32)
-    assert graph_backward_res == Tensor([13], mstype.int32)
+    assert graph_backward_res == (Tensor([13], mstype.int32),)

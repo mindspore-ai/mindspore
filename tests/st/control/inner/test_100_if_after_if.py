@@ -190,7 +190,6 @@ def test_if_after_if_03():
     control_flow_if_after_if(IfAfterIfNet3, x, y, expect1, expect2)
 
 
-# @pytest.mark.skip(reason="Result is not correct in vm ascend.")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

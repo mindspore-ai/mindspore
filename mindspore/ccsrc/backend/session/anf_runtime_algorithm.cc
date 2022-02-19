@@ -585,6 +585,10 @@ bool AnfRuntimeAlgorithm::HasNodeAttr(const std::string &key, const CNodePtr &no
     MS_LOG(WARNING) << "Only cnode has attr, but this anf is " << node->DebugString();
     return false;
   }
+  // call node's input0 is not a primitive.
+  if (!IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
+    return false;
+  }
   // single op cnode.
   auto primitive = AnfAlgo::GetCNodePrimitive(node);
   if (primitive != nullptr) {
