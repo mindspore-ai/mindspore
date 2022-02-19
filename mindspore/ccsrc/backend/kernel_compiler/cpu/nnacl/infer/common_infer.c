@@ -491,7 +491,6 @@ bool InferFlag(const TensorC *const *inputs, size_t inputs_size) {
 REG_INFER(Abs, PrimType_Abs, CommonInferShape)
 REG_INFER(AbsGrad, PrimType_AbsGrad, CommonGradInferShape)
 REG_INFER(Activation, PrimType_Activation, CommonInferShape)
-REG_INFER(ActivationGrad, PrimType_ActivationGrad, CommonInferShape)
 REG_INFER(BatchNorm, PrimType_BatchNorm, CommonInferShape)
 REG_INFER(BinaryCrossEntropyGrad, PrimType_BinaryCrossEntropyGrad, CommonInferShape)
 REG_INFER(Ceil, PrimType_Ceil, CommonInferShape)
