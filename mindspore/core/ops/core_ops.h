@@ -154,6 +154,7 @@ constexpr auto kEye = "Eye";
 constexpr auto kTriu = "Triu";
 constexpr auto kIndexFill = "IndexFill";
 constexpr auto kMeshgrid = "Meshgrid";
+constexpr auto kScatterNdMax = "ScatterNdMax";
 
 // NN
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";

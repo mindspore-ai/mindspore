@@ -75,7 +75,6 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 from ....ops_common import convert
-
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
 
 
@@ -531,6 +530,19 @@ class ScatterNdAdd(nn.Cell):
 
     def construct(self, indices, updates):
         out = self.scatter_nd_add(self.ref, indices, updates)
+        return out
+
+
+class ScatterNdMax(nn.Cell):
+    """ScatterNdMax net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdMax, self).__init__()
+        self.scatter_nd_max = P.ScatterNdMax()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_max(self.ref, indices, updates)
         return out
 
 
@@ -3314,6 +3326,11 @@ test_case_other_ops = [
         'skip': ['backward']}),
     ('ScatterNdAdd', {
         'block': ScatterNdAdd((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterNdMax', {
+        'block': ScatterNdMax((8,)),
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
