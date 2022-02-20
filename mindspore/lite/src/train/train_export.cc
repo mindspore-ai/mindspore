@@ -23,6 +23,7 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 #include "src/train/train_utils.h"
+#include "src/train/graph_dropout.h"
 #include "src/common/quant_utils.h"
 #include "tools/common/storage.h"
 
@@ -418,6 +419,15 @@ int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); 
 int TrainExport::IsInputTensor(const schema::TensorT &t) {
   int total_dims = std::accumulate(t.dims.begin(), t.dims.end(), 1, std::multiplies<int>());
   return ((t.data.size() == 0) && (total_dims != 0));
+}
+
+int TrainExport::TrainModelDrop() {
+  GraphDropout graph_dropout;
+  auto status = graph_dropout.Run(meta_graph_);
+  if (status != RET_OK) {
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 TrainExport::~TrainExport() { delete meta_graph_; }

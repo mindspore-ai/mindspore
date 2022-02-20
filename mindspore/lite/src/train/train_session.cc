@@ -716,6 +716,13 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
     MS_LOG(ERROR) << "cannot export Network";
     return status;
   }
+  if (model_type == MT_INFERENCE) {
+    status = texport.TrainModelDrop();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "TrainModelDrop failed.";
+      return status;
+    }
+  }
   status = texport.SaveToFile();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "failed to save to " << file_name;

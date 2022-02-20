@@ -270,6 +270,7 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/parallel/spliter.cc
             ${LITE_DIR}/tools/optimizer/parallel/split_strategy.cc
             ${LITE_DIR}/tools/common/graph_util.cc
+            ${LITE_DIR}/tools/common/meta_graph_utils.cc
             ${LITE_DIR}/tools/common/tensor_util.cc
             ${LITE_DIR}/tools/common/node_util.cc
             ${LITE_DIR}/tools/common/storage.cc
@@ -281,6 +282,15 @@ if(MSLITE_ENABLE_CONVERTER)
             ${LITE_DIR}/tools/converter/import/primitive_adjust.cc
             ${LITE_DIR}/tools/converter/import/mindir_adjust.cc
             )
+else()
+set(TEST_LITE_SRC
+        ${TEST_LITE_SRC}
+        ${LITE_DIR}/tools/common/meta_graph_utils.cc
+        ${LITE_DIR}/tools/converter/optimizer.cc
+        ${LITE_DIR}/tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.cc
+        ${LITE_DIR}/tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc
+        ${LITE_DIR}/tools/converter/legacy_optimizer/graph/subgraph_node_pass.cc
+        )
 endif()
 ### train
 if(SUPPORT_TRAIN)
@@ -292,6 +302,7 @@ if(SUPPORT_TRAIN)
             ${LITE_DIR}/src/train/train_export.cc
             ${LITE_DIR}/src/train/train_utils.cc
             ${LITE_DIR}/src/train/transfer_session.cc
+            ${LITE_DIR}/src/train/graph_dropout.cc
             ${LITE_DIR}/src/lite_session.cc
             ${LITE_DIR}/tools/common/storage.cc
             )

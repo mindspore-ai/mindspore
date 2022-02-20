@@ -22,6 +22,7 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/common/graph_util.h"
+#include "tools/common/meta_graph_utils.h"
 #include "tools/common/node_util.h"
 #include "src/common/quant_utils.h"
 
