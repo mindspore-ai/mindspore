@@ -138,6 +138,8 @@ class Cell(Cell_):
         self.cast = Cast()
         self._has_config_recompute = False
         self._user_parameters = []
+        self._dynamic_shape_inputs = None
+        self.saved_dynamic_shape = None
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -660,7 +662,7 @@ class Cell(Cell_):
             exist_objs.add(item)
             if item.name == PARAMETER_NAME_DEFAULT:
                 logger.warning("The parameter definition is deprecated.\n"
-                               "Please set a unique name for the parameter in ParameterTuple '{}'.". format(value))
+                               "Please set a unique name for the parameter in ParameterTuple '{}'.".format(value))
                 item.name = item.name + "$" + str(self._id)
                 self._id += 1
             self.insert_param_to_cell(item.name, item, check_name_contain_dot=False)
@@ -875,6 +877,40 @@ class Cell(Cell_):
         self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
         self._construct_inputs_num = self._construct_inputs_num - 1
 
+    def set_inputs(self, *inputs):
+        """
+        Save set inputs for computation graph.
+
+        Args:
+            inputs (tuple): Inputs of the Cell object.
+
+        Examples:
+            >>> n = Net()
+            >>> input_dyn = Tensor(shape = [3, None], dtype=type)
+            >>> net.set_inputs(input_dyn)
+            >>> input1 = Tensor(np.random.random([3, 10]), dtype=type)
+            >>> output = net(input1)
+
+        NOTE:
+            This is an experimental interface that is subject to change or deletion.
+        """
+
+        self._dynamic_shape_inputs = inputs
+        if isinstance(self._dynamic_shape_inputs[0], (str, int, dict)):
+            raise TypeError(f"For 'set_inputs, the type must be tuple, but got {type(self._dynamic_shape_inputs[0])}.")
+
+    def get_inputs(self):
+        """
+        Returns the dynamic_inputs of a cell object in one network.
+
+        Returns:
+            inputs (tuple): Inputs of the Cell object.
+        NOTE:
+            This is an experimental interface that is subject to change or deletion.
+        """
+
+        return self._dynamic_shape_inputs
+
     def compile(self, *inputs):
         """
         Compile Cell as a computation graph, the input must be consistent with the input defined in construct.
@@ -882,7 +918,20 @@ class Cell(Cell_):
         Args:
             inputs (tuple): Inputs of the Cell object.
         """
-        _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+        if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
+            _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+        else:
+            self._check_compile_dynamic_shape(*inputs)
+            if self.saved_dynamic_shape:
+                for i in range(len(self.saved_dynamic_shape)):
+                    if self.saved_dynamic_shape[i].shape != self._dynamic_shape_inputs[i].shape \
+                            and self.saved_dynamic_shape[i].shape != self._dynamic_shape_inputs[i].shape:
+                        break
+                return
+            self.saved_dynamic_shape = self._dynamic_shape_inputs
+            _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
+                                         auto_parallel_mode=self._auto_parallel_mode)
+            logger.debug("Compiled Graph with dynamic shape")
 
     def compile_and_run(self, *inputs):
         """
@@ -911,7 +960,7 @@ class Cell(Cell_):
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
-            elif hasattr(self, "enable_tuple_broaden") and self.enable_tuple_broaden and isinstance(i, tuple) and\
+            elif hasattr(self, "enable_tuple_broaden") and self.enable_tuple_broaden and isinstance(i, tuple) and \
                     _check_all_tensor(i):
                 new_inputs.append(i)
 
@@ -1239,7 +1288,7 @@ class Cell(Cell_):
         for value, param in self.parameters_and_names():
             if param.name in names:
                 raise ValueError("The value of {} is {}, its name '{}' already exists. "
-                                 "Please set a unique name for the parameter.". format(value, param, param.name))
+                                 "Please set a unique name for the parameter.".format(value, param, param.name))
             names.add(param.name)
 
     def parameters_and_names(self, name_prefix='', expand=True):
@@ -2066,6 +2115,43 @@ class Cell(Cell_):
             if current_stage in param._pipeline_stage_list:
                 params.append(param)
         return params
+
+    def _check_compile_dynamic_shape(self, *inputs):
+        """
+        Check if graph has been compiled with dynamic shape.
+
+        Args:
+            inputs (tuple): Inputs of the Cell object.
+        """
+        len_inputs = len(inputs)
+        len_dynamic_shape_inputs = len(self._dynamic_shape_inputs)
+        if len_dynamic_shape_inputs != len_inputs:
+            raise ValueError(
+                f"For 'set_inputs', the Length of Tensor should be {len_inputs}, but got {len_dynamic_shape_inputs}."
+            )
+        for tensor_index in range(len_dynamic_shape_inputs):
+            i_dynamic_shape_inputs = self._dynamic_shape_inputs[tensor_index]
+            i_inputs = inputs[tensor_index]
+            if i_dynamic_shape_inputs.dtype is not i_inputs.dtype:
+                raise TypeError(
+                    f"For 'set_inputs', the DataType of Tensor should be {i_inputs.dtype}, but got "
+                    f"{i_dynamic_shape_inputs.dtype}."
+                )
+            set_inputs_shape = list(i_dynamic_shape_inputs.shape)
+            inputs_shape = list(i_inputs.shape)
+            if len(inputs_shape) != len(set_inputs_shape):
+                raise ValueError(
+                    f"For 'set_inputs' the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
+                    f"{len(set_inputs_shape)}."
+                )
+            for shape_index in i_dynamic_shape_inputs.shape:
+                if shape_index != -1:
+                    dynamic_index = i_dynamic_shape_inputs.shape.index(shape_index)
+                    if set_inputs_shape[dynamic_index] != inputs_shape[dynamic_index]:
+                        raise ValueError(
+                            f"For 'Length of Tensor shape', the value must be the same with that of inputs, but"
+                            f" got {i_dynamic_shape_inputs.shape}."
+                        )
 
 
 class GraphCell(Cell):

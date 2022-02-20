@@ -294,6 +294,8 @@ class Model:
             if self._optimizer is None:
                 # In this case, multiple optimizer(s) is supposed to be included in 'self._network'
                 _set_multi_subgraphs()
+        if self._network.get_inputs() is not None:
+            network.set_inputs(*self._network.get_inputs())
         return network
 
     def _build_eval_network(self, metrics, eval_network, eval_indexes):

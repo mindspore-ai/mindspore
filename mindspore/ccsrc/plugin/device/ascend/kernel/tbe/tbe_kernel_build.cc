@@ -42,8 +42,8 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
         if (j >= input_max_shape.size()) {
           MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
-        MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
-        (*size_i) = SizetMulWithOverflowCheck((*size_i), LongToSize(input_max_shape[j][1]));
+        MS_LOG(INFO) << "Change -1 Shape to 1:" << input_max_shape[j][1];
+        (*size_i) = SizetMulWithOverflowCheck((*size_i), 1);
         continue;
       }
       (*size_i) = SizetMulWithOverflowCheck((*size_i), static_cast<size_t>(input_json[kJShape][j]));
@@ -89,8 +89,8 @@ void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *o
         if (j >= output_max_shape.size()) {
           MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
-        MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
-        (*size_i) = SizetMulWithOverflowCheck(*size_i, LongToSize(output_max_shape[j][1]));
+        MS_LOG(INFO) << "Change -1 Shape to 1:" << output_max_shape[j][1];
+        (*size_i) = SizetMulWithOverflowCheck(*size_i, 1);
         continue;
       }
       (*size_i) = SizetMulWithOverflowCheck(*size_i, static_cast<size_t>(output_json[kJShape][j]));

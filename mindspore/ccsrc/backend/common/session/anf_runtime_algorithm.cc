@@ -927,15 +927,19 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
 }
 
 static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, std::vector<size_t> *device_shape) {
+  constexpr size_t kDefaultValueForDynamicDim = 16;
+  auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](size_t size) {
+    return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
+  };
   if (!max_shape.empty()) {
-    (void)std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+    if (device_shape->empty()) {
+      std::transform(max_shape.begin(), max_shape.end(), std::back_inserter(*device_shape), ConvertNegOneToDefault);
+    } else {
+      std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+    }
   } else {
-    constexpr size_t kDefaultValueForDynamicDim = 16;
     auto tmp_shape = *device_shape;
-    auto ConvertNegOneToDefalut = [&kDefaultValueForDynamicDim](size_t size) {
-      return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
-    };
-    (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefalut);
+    (void)std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefault);
   }
 }
 
@@ -948,7 +952,7 @@ static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, s
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetInputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (AnfUtils::IsShapeDynamic(device_shape)) {
+  if (AnfUtils::IsShapeDynamic(device_shape) || device_shape.empty()) {
     auto max_shape = common::AnfAlgo::GetInputMaxShape(anf_node, index);
     GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetInputFormat(anf_node, index);
@@ -962,7 +966,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const Anf
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (AnfUtils::IsShapeDynamic(device_shape)) {
+  if (AnfUtils::IsShapeDynamic(device_shape) || device_shape.empty()) {
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, index);
     GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetOutputFormat(anf_node, index);
