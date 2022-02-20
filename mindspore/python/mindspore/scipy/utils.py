@@ -19,7 +19,7 @@ from ..numpy import where, zeros_like, dot, greater
 from ..ops import functional as F
 from ..common import Tensor
 from ..common import dtype as mstype
-from .utils_const import _type_convert, _raise_value_error, _callable_const
+from .utils_const import _type_convert, _raise_value_error, _callable_const, _super_check
 from ..ops.composite import GradOperation
 
 grad = GradOperation(get_all=False, get_by_list=False, sens_param=False)
@@ -116,3 +116,27 @@ def _nd_transpose(a):
     axes = ops.make_range(0, dims)
     axes = axes[:-2] + (axes[-1],) + (axes[-2],)
     return ops.transpose(a, axes)
+
+
+def _value_op_check(op, arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
+    return _super_check(op, arg_value, valid_value, prim_name, arg_name, fmt, msg, True)
+
+
+def _value_in_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
+    return _super_check("in", arg_value, valid_value, prim_name, arg_name, fmt, msg, True)
+
+
+def _type_op_check(op, arg_value, valid_value, prim_name=None, arg_name=None, fmt="type", msg=None):
+    return _super_check(op, arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
+
+
+def _type_in_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
+    return _super_check("in", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
+
+
+def _type_is_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="type", msg=None):
+    return _super_check("isinstance", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
+
+
+def _is_tensor_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="tensor", msg=None):
+    return _super_check("istensor", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
