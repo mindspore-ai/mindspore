@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/eigen/solve_triangular_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/eigen/matrix_triangular_solve_cpu_kernel.h"
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
@@ -38,7 +38,7 @@ constexpr auto kAMatrixDimNum = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 template <typename T>
-void SolveTriangularCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
+void MatrixTriangularSolveCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
   auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
@@ -59,20 +59,30 @@ void SolveTriangularCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-void SolveTriangularCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
+void MatrixTriangularSolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   InitShape(kernel_node);
-  lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-  unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
-  const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
-  if (trans == "N") {
-    trans_ = false;
-  } else if (trans == "T") {
-    trans_ = true;
-  } else if (trans == "C") {
-    trans_ = true;
+  if (AnfAlgo::HasNodeAttr(ADJOINT, kernel_node)) {
+    // MatrixTriangularSolve attribute
+    trans_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
+    if (AnfAlgo::HasNodeAttr(TRANS, kernel_node)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the attribute 'adjoint' and 'trans' could not exist at the same time.";
+    }
   } else {
-    MS_LOG(EXCEPTION) << "Trans should be in [N, T, C], but got [" << trans << "].";
+    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+    unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
+    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
+    if (trans == "N") {
+      trans_ = false;
+    } else if (trans == "T") {
+      trans_ = true;
+    } else if (trans == "C") {
+      trans_ = true;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'trans' should be in ['N', 'T', 'C'], but got [" << trans
+                        << "].";
+    }
   }
 }
 
@@ -96,9 +106,9 @@ inline void solve(const MatrixBase<Derived_a> &a, const MatrixBase<Derived_b> &b
 }
 
 template <typename T>
-bool SolveTriangularCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                            const std::vector<AddressPtr> & /* workspace */,
-                                            const std::vector<AddressPtr> &outputs) {
+bool MatrixTriangularSolveCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> & /* workspace */,
+                                                  const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSolveTriangularInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSolveTriangularOutputsNum, kernel_name_);
 

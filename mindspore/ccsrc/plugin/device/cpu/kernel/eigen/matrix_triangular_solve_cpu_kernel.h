@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_TRIANGULAR_SOLVE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_TRIANGULAR_SOLVE_CPU_KERNEL_H_
 
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -24,10 +24,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SolveTriangularCpuKernelMod : public NativeCpuKernelMod {
+class MatrixTriangularSolveCpuKernelMod : public NativeCpuKernelMod {
  public:
-  SolveTriangularCpuKernelMod() = default;
-  ~SolveTriangularCpuKernelMod() override = default;
+  MatrixTriangularSolveCpuKernelMod() = default;
+  ~MatrixTriangularSolveCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -47,12 +47,20 @@ class SolveTriangularCpuKernelMod : public NativeCpuKernelMod {
 MS_REG_CPU_KERNEL_T(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  SolveTriangularCpuKernelMod, float)
+  MatrixTriangularSolveCpuKernelMod, float)
 MS_REG_CPU_KERNEL_T(
   SolveTriangular,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-  SolveTriangularCpuKernelMod, double)
+  MatrixTriangularSolveCpuKernelMod, double)
+MS_REG_CPU_KERNEL_T(
+  MatrixTriangularSolve,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  MatrixTriangularSolveCpuKernelMod, float)
+MS_REG_CPU_KERNEL_T(
+  MatrixTriangularSolve,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  MatrixTriangularSolveCpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_MATRIX_TRIANGULAR_SOLVE_CPU_KERNEL_H_
