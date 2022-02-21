@@ -18,28 +18,28 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+MS_REG_GPU_KERNEL_ONE(MatrixDiagPartV3,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
                       MatrixDiagPartGpuKernelMod, int32_t)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+MS_REG_GPU_KERNEL_ONE(MatrixDiagPartV3,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt64),
                       MatrixDiagPartGpuKernelMod, int64_t)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+MS_REG_GPU_KERNEL_ONE(MatrixDiagPartV3,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       MatrixDiagPartGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(MatrixDiagPart,
+MS_REG_GPU_KERNEL_ONE(MatrixDiagPartV3,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
                         .AddInputAttr(kNumberTypeInt64)

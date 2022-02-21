@@ -391,7 +391,7 @@ class MatrixBandPart(PrimitiveWithInfer):
         return shape
 
 
-class MatrixDiagPart(PrimitiveWithInfer):
+class MatrixDiagPartV3(PrimitiveWithInfer):
     """
     Returns:
         batched diagonal part of a batched tensor, the part between, k[0] to k[1], the shape is dynamic
@@ -401,7 +401,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
-        super().__init__(name="MatrixDiagPart")
+        super().__init__(name="MatrixDiagPartV3")
         self.add_prim_attr('alignment', align)
         self.init_prim_io_names(inputs=['A', 'k', 'padding_value'], outputs=['output'])
 

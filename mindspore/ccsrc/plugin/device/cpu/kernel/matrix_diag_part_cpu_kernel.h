@@ -45,7 +45,7 @@ class MatrixDiagPartCpuKernelMod : public NativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
 };
 
-MS_REG_CPU_KERNEL_T(MatrixDiagPart,
+MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt64)
@@ -53,7 +53,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddOutputAttr(kNumberTypeInt32),
                     MatrixDiagPartCpuKernelMod, int32_t);
 
-MS_REG_CPU_KERNEL_T(MatrixDiagPart,
+MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeInt64)
                       .AddInputAttr(kNumberTypeInt64)
@@ -61,7 +61,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddOutputAttr(kNumberTypeInt64),
                     MatrixDiagPartCpuKernelMod, int64_t);
 
-MS_REG_CPU_KERNEL_T(MatrixDiagPart,
+MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt64)
@@ -69,7 +69,7 @@ MS_REG_CPU_KERNEL_T(MatrixDiagPart,
                       .AddOutputAttr(kNumberTypeFloat32),
                     MatrixDiagPartCpuKernelMod, float);
 
-MS_REG_CPU_KERNEL_T(MatrixDiagPart,
+MS_REG_CPU_KERNEL_T(MatrixDiagPartV3,
                     KernelAttr()
                       .AddInputAttr(kNumberTypeFloat64)
                       .AddInputAttr(kNumberTypeInt64)
