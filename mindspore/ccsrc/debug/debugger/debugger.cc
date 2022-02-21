@@ -431,7 +431,7 @@ void Debugger::DumpParamsAndConstAndHistory() {
     return;
   }
   LoadParametersAllGraphs();
-  (void)E2eDump::DumpParametersData(GetRankID(), debugger_.get());
+  E2eDump::DumpParametersData(GetRankID(), debugger_.get());
   // Whether constant data was already dumped for the current root graph.
   bool cur_root_graph_checked = std::find(visited_root_graph_ids_.begin(), visited_root_graph_ids_.end(),
                                           cur_root_graph_id_) != visited_root_graph_ids_.end();
@@ -1029,13 +1029,13 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
   tensor_statistics->set_max_value(static_cast<float>(tensor_stat.max_value));
   tensor_statistics->set_min_value(static_cast<float>(tensor_stat.min_value));
   tensor_statistics->set_avg_value(static_cast<float>(tensor_stat.avg_value));
-  tensor_statistics->set_count(tensor_stat.count);
-  tensor_statistics->set_neg_zero_count(tensor_stat.neg_zero_count);
-  tensor_statistics->set_pos_zero_count(tensor_stat.pos_zero_count);
-  tensor_statistics->set_nan_count(tensor_stat.nan_count);
-  tensor_statistics->set_neg_inf_count(tensor_stat.neg_inf_count);
-  tensor_statistics->set_pos_inf_count(tensor_stat.pos_inf_count);
-  tensor_statistics->set_zero_count(tensor_stat.zero_count);
+  tensor_statistics->set_count(SizeToInt(tensor_stat.count));
+  tensor_statistics->set_neg_zero_count(SizeToInt(tensor_stat.neg_zero_count));
+  tensor_statistics->set_pos_zero_count(SizeToInt(tensor_stat.pos_zero_count));
+  tensor_statistics->set_nan_count(SizeToInt(tensor_stat.nan_count));
+  tensor_statistics->set_neg_inf_count(SizeToInt(tensor_stat.neg_inf_count));
+  tensor_statistics->set_pos_inf_count(SizeToInt(tensor_stat.pos_inf_count));
+  tensor_statistics->set_zero_count(SizeToInt(tensor_stat.zero_count));
 
   tensor_summary_list->push_back(tensor_summary_item);
 }
@@ -1623,7 +1623,7 @@ std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string
   return dump_data_construct_map_[node_name];
 }
 
-void Debugger::ClearDumpDataBuilder(const std::string &node_name) { dump_data_construct_map_.erase(node_name); }
+void Debugger::ClearDumpDataBuilder(const std::string &node_name) { (void)dump_data_construct_map_.erase(node_name); }
 #endif
 
 }  // namespace mindspore
