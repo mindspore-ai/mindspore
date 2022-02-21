@@ -305,7 +305,7 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
       auto value = value_node->value();
       MS_EXCEPTION_IF_NULL(value);
       auto tensor = value->cast<tensor::TensorPtr>();
-      value_node_pos.emplace(i, tensor);
+      (void)value_node_pos.emplace(i, tensor);
     }
   }
 
@@ -313,10 +313,10 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
   for (size_t i = 0; i < input_num; ++i) {
     auto iter = value_node_pos.find(i);
     if (iter == value_node_pos.end()) {
-      new_input_tensors.emplace_back(tensors_without_value_node[cur_input_tensor_index]);
+      (void)new_input_tensors.emplace_back(tensors_without_value_node[cur_input_tensor_index]);
       cur_input_tensor_index++;
     } else {
-      new_input_tensors.emplace_back(iter->second);
+      (void)new_input_tensors.emplace_back(iter->second);
     }
   }
   MS_LOG(DEBUG) << "new input tensor size:" << new_input_tensors.size();
@@ -657,7 +657,7 @@ void ConvertPyObjectToTensor(const py::object &input_object, std::vector<tensor:
     MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
   }
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  tensors->emplace_back(tensor_ptr);
+  (void)tensors->emplace_back(tensor_ptr);
 }
 
 void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler, const KernelGraphPtr &graph,
@@ -780,7 +780,7 @@ void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value)
     auto value_element = value[i];
     MS_EXCEPTION_IF_NULL(value_element);
     if (utils::isa<tensor::TensorPtr>(value_element)) {
-      flatted_value->emplace_back(value_element);
+      (void)flatted_value->emplace_back(value_element);
     } else if (utils::isa<ValueTuplePtr>(value_element)) {
       auto value_tuple_element = value_element->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value_tuple_element);
@@ -1203,10 +1203,8 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
   actor_to_graph_compiler_info_.erase(actor_info);
 }
 
-void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph,
-                                     const std::vector<session::KernelWithIndex> &output_nodes,
-                                     const OpRunInfo &op_run_info, const GraphCompilerInfo *graph_compiler_info,
-                                     DeviceContext *device_context) {
+void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
+                                     const GraphCompilerInfo *graph_compiler_info) {
   // Erase value node tensor.
   std::vector<tensor::TensorPtr> tensors_without_value_node;
   const auto &input_tensors = op_run_info.input_tensors;
@@ -1309,8 +1307,7 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       auto &op_run_task = op_run_tasks.front();
       const auto &context = op_run_task->context();
       ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
-      RunSingleOpGraph(context->graph(), context->output_nodes(), context->op_run_info(),
-                       context->graph_compiler_info(), context->device_context());
+      RunSingleOpGraph(context->graph(), context->op_run_info(), context->graph_compiler_info());
       ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
 
       UpdateInputDeviceAddress(context->graph());
@@ -1365,7 +1362,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     if (!single_op_cache_hit) {
       CompileSingleOpGraph(graph, device_context, graph_compiler_info);
     }
-    RunSingleOpGraph(graph, output_nodes, *op_run_info, graph_compiler_info, device_context);
+    RunSingleOpGraph(graph, *op_run_info, graph_compiler_info);
     UpdateOutput(output_nodes, outputs);
     ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
     UpdateInputDeviceAddress(graph);

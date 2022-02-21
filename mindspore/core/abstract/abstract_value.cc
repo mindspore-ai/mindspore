@@ -249,7 +249,7 @@ void CollectSequenceNodes(const AnfNodeWeakPtrList &source_sequence_nodes, AnfNo
       sequence_nodes.begin(), sequence_nodes.end(),
       [&source_sequence_node](const AnfNodeWeakPtr &weak_node) { return source_sequence_node == weak_node.lock(); });
     if (this_iter == sequence_nodes.end()) {
-      sequence_nodes.emplace_back(AnfNodeWeakPtr(source_sequence_node));
+      (void)sequence_nodes.emplace_back(AnfNodeWeakPtr(source_sequence_node));
     }
   }
 }
