@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_NNACL_FP32_REDUCE_H_
 #define MINDSPORE_NNACL_FP32_REDUCE_H_
+#include <stddef.h>
 #include "nnacl/op_base.h"
 #include "nnacl/reduce_parameter.h"
 
