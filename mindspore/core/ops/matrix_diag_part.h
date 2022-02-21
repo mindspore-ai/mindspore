@@ -26,16 +26,16 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMatrixDiagPart = "MatrixDiagPart";
+constexpr auto kNameMatrixDiagPart = "MatrixDiagPartV3";
 /// \brief get the specified part of the inner most diag matrix of a matrix, fill with padding value .
 /// Refer to Python API @ref mindspore.ops.MatrixDiagPart for more details.
-class MatrixDiagPart : public PrimitiveC {
+class MatrixDiagPartV3 : public PrimitiveC {
  public:
   /// \brief Constructor.
-  MatrixDiagPart() : PrimitiveC(kNameMatrixDiagPart) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
+  MatrixDiagPartV3() : PrimitiveC(kNameMatrixDiagPart) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
   /// \brief Destructor.
-  ~MatrixDiagPart() = default;
-  MS_DECLARE_PARENT(MatrixDiagPart, PrimitiveC);
+  ~MatrixDiagPartV3() = default;
+  MS_DECLARE_PARENT(MatrixDiagPartV3, PrimitiveC);
 };
 
 AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

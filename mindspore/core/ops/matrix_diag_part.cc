@@ -53,6 +53,6 @@ AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const P
                                     const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDiagPart, prim::kPrimMatrixDiagPart, MatrixDiagPartInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDiagPartV3, prim::kPrimMatrixDiagPart, MatrixDiagPartInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
