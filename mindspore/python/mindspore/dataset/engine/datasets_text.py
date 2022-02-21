@@ -906,7 +906,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If shard_id is specified but num_shards is None.
 
     Examples:
-        >>> iwslt2017_dataset_dir = "/path/to/iwslt207_dataset_dir"
+        >>> iwslt2017_dataset_dir = "/path/to/iwslt2017_dataset_dir"
         >>> dataset = ds.IWSLT2017Dataset(dataset_dir=iwslt2017_dataset_dir, usage='all', language_pair=('de', 'en'))
 
     About IWSLT2017 dataset:

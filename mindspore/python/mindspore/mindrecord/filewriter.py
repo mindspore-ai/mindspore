@@ -128,7 +128,7 @@ class FileWriter:
             >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
             >>> data = [{"file_name": "1.jpg", "label": 0,
             ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-            >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
+            >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
             >>> writer.add_schema(schema_json, "test_schema")
             0
             >>> writer.write_raw_data(data)
