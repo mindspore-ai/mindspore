@@ -91,7 +91,7 @@ models_tflite_fp16_config=${basepath}/../config/models_tflite_fp16.cfg
 models_tf_fp16_config=${basepath}/../config/models_tf_fp16.cfg
 models_mindspore_config=${basepath}/../config/models_mindspore.cfg
 models_mindspore_fp16_config=${basepath}/../config/models_mindspore_fp16.cfg
-models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
+#models_mindspore_train_config=${basepath}/../config/models_mindspore_train.cfg
 models_weightquant_7bit_config=${basepath}/../config/models_weightquant_7bit.cfg
 models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
@@ -115,14 +115,16 @@ elif [[ $backend == "arm64_onnx" ]]; then
   fp32_cfg_file_list=("$models_onnx_config")
   fp16_cfg_file_list=("$models_onnx_fp16_config")
 elif [[ $backend == "arm64_mindir" ]]; then
-  fp32_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
-                      "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" "$models_weightquant_9bit_config"\
-                      "$models_mindspore_config")
-  fp16_cfg_file_list=("$models_process_only_fp16_config" "$models_mindspore_fp16_config")
+  fp32_cfg_file_list=("$models_mindspore_config")
+  fp16_cfg_file_list=("$models_mindspore_fp16_config")
+elif [[ $backend == "arm64_quant" ]]; then
+  fp32_cfg_file_list=("$models_posttraining_config" "$models_process_only_config" "$models_weightquant_8bit_config" \
+                      "$models_weightquant_7bit_config" "$models_weightquant_9bit_config")
+  fp16_cfg_file_list=("$models_process_only_fp16_config")
 else
   fp32_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                       "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
-                       "$models_tflite_awaretraining_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
+                       "$models_posttraining_config" "$models_process_only_config" "$models_tflite_awaretraining_config" \
+                       "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
                        "$models_weightquant_9bit_config")
   fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" \
                       "$models_process_only_fp16_config" "$models_mindspore_fp16_config")
@@ -177,7 +179,8 @@ Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt
 backend=${backend:-"all"}
 isFailed=0
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_tflite" || \
-      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" || \
+      $backend == "arm64_quant" ]]; then
     # Run on arm64
     echo "start Run ${backend} ..."
     Run_arm64
@@ -186,7 +189,8 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
 #    sleep 1
 fi
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" || $backend == "arm64_tflite" || \
-      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" || \
+      $backend == "arm64_quant" ]]; then
     # Run on arm64_fp16
     echo "start Run ${backend}_fp16 ..."
     Run_arm64_fp16
@@ -196,7 +200,8 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" |
 fi
 
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_tflite" || \
-      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" || \
+      $backend == "arm64_quant" ]]; then
 #    wait ${Run_arm64_fp32_PID}
 #    Run_arm64_fp32_status=$?
     if [[ ${Run_arm64_fp32_status} != 0 ]];then
@@ -206,7 +211,8 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
     fi
 fi
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" || $backend == "arm64_tflite" || \
-      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" || \
+      $backend == "arm64_quant" ]]; then
 #    wait ${Run_arm64_fp16_PID}
 #    Run_arm64_fp16_status=$?
     if [[ ${Run_arm64_fp16_status} != 0 ]];then
