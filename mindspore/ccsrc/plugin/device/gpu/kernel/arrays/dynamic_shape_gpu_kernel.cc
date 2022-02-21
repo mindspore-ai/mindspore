@@ -19,28 +19,52 @@
 
 namespace mindspore {
 namespace kernel {
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      TensorShapeGpuKernelMod, int32_t, int32_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+                      TensorShapeGpuKernelMod, half, int32_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+                      TensorShapeGpuKernelMod, float, int32_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
+                      TensorShapeGpuKernelMod, bool, int32_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, int32_t, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, half, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, float, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(TensorShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
+                      TensorShapeGpuKernelMod, bool, int64_t)
+
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernelMod, int32_t, int32_t)
+                      TensorShapeGpuKernelMod, int32_t, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernelMod, half, int32_t)
+                      TensorShapeGpuKernelMod, half, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernelMod, float, int32_t)
+                      TensorShapeGpuKernelMod, float, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-                      DynamicShapeGpuKernelMod, bool, int32_t)
+                      TensorShapeGpuKernelMod, bool, int32_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernelMod, int32_t, int64_t)
+                      TensorShapeGpuKernelMod, int32_t, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernelMod, half, int64_t)
+                      TensorShapeGpuKernelMod, half, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernelMod, float, int64_t)
+                      TensorShapeGpuKernelMod, float, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(DynamicShape, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-                      DynamicShapeGpuKernelMod, bool, int64_t)
+                      TensorShapeGpuKernelMod, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

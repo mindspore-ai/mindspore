@@ -89,6 +89,7 @@ constexpr auto kCross = "Cross";
 
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
+constexpr auto kTensorShape = "TensorShape";
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
@@ -263,6 +264,7 @@ MS_CORE_API inline const PrimitivePtr kPrimSparseToDense = std::make_shared<Prim
 MS_CORE_API inline const PrimitivePtr kPrimShape = std::make_shared<Primitive>("Shape");
 MS_CORE_API inline const PrimitivePtr kPrimStridedSlice = std::make_shared<Primitive>(kStridedSlice);
 MS_CORE_API inline const PrimitivePtr kPrimStridedSliceGrad = std::make_shared<Primitive>(kStridedSliceGrad);
+MS_CORE_API inline const PrimitivePtr kPrimTensorShape = std::make_shared<Primitive>(kTensorShape);
 MS_CORE_API inline const PrimitivePtr kPrimDynamicShape = std::make_shared<Primitive>(kDynamicShape);
 MS_CORE_API inline const PrimitivePtr kPrimEmbeddingLookup = std::make_shared<Primitive>("EmbeddingLookup");
 MS_CORE_API inline const PrimitivePtr kPrimEmbeddingLookupCommGrad =

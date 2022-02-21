@@ -1,5 +1,3 @@
-# coding: utf-8
-
 # Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -637,6 +635,39 @@ class Shape(Primitive):
     def __init__(self):
         """Initialize Shape"""
 
+class TensorShape(Primitive):
+    """
+    Returns the shape of the input tensor. And it used to be dynamic shape.
+
+    Note:
+        Dynamic shape: After the graph is running, as the tensor flows in the graph, the specific shape of the tensor
+        on each node on the graph can be inferred according to the structure of the graph.
+        This shape is called a dynamic shape. As the input shape of the graph is different,
+        the dynamic shape of the tensor in the graph will change.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor[int], 1-dim Tensor of type int32
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+        >>> shape = ops.TensorShape()
+        >>> output = shape(input_x)
+        >>> print(output)
+        [3 2 1]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init Shape"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 class DynamicShape(Primitive):
     """
@@ -668,6 +699,7 @@ class DynamicShape(Primitive):
         [3 2 1]
     """
 
+    @deprecated("1.7", "TensorShape", True)
     @prim_attr_register
     def __init__(self):
         """init Shape"""

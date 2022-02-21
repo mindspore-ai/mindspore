@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class DynamicShapeGpuKernelMod : public NativeGpuKernelMod {
+class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  DynamicShapeGpuKernelMod() { ResetResource(); }
-  ~DynamicShapeGpuKernelMod() = default;
+  TensorShapeGpuKernelMod() { ResetResource(); }
+  ~TensorShapeGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
