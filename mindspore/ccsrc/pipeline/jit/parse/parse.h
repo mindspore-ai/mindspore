@@ -20,6 +20,7 @@
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_PARSE_H_
 
 #include <limits>
+#include <utility>
 #include <vector>
 #include <string>
 #include <map>
@@ -187,6 +188,9 @@ class Parser {
   AnfNodePtr ParseListCompIfs(const FunctionBlockPtr &list_body_block, const ParameterPtr &list_param,
                               const py::object &node, const py::object &generator_node);
 
+  // Transform tail call to parallel call.
+  void TransformParallelCall();
+
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
                         const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
@@ -303,6 +307,9 @@ class Parser {
   std::stack<Loop> loops_;
   string max_for_loop_count_str_;
   string support_fallback_;
+
+  // The func graphs to transform tail call ir to independent call ir.
+  std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> parallel_call_graphs_;
 };
 
 // AST node type define code to ast
@@ -406,8 +413,6 @@ class ParseFunctionAst {
 bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
-TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph);
-
 }  // namespace parse
 }  // namespace mindspore
 

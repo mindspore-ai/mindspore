@@ -23,6 +23,7 @@
 #include <memory>
 #include <sstream>
 #include <algorithm>
+#include <unordered_set>
 #include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -33,6 +34,7 @@
 #include "utils/interpret_node_recorder.h"
 #include "debug/trace.h"
 #include "mindspore/core/ir/cell.h"
+#include "mindspore/ccsrc/utils/utils.h"
 
 namespace mindspore {
 namespace parse {
@@ -60,33 +62,6 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
   }
 
   return func_graph;
-}
-
-TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
-    return kFloat32;
-  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
-    return kFloat16;
-  } else {
-    return nullptr;
-  }
-}
-
-// If any mixed precision flag add a cast node after the parameter node.
-AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  TypePtr dst_type;
-  if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
-    dst_type = kFloat32;
-  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
-    dst_type = kFloat16;
-  } else {
-    return param;
-  }
-  auto cast_helper = prim::kPrimMixedPrecisionCast;
-  auto cast = func_graph->NewCNodeAfter(param, {NewValueNode(cast_helper), NewValueNode(dst_type), param});
-  return cast;
 }
 
 FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
@@ -172,6 +147,97 @@ void CheckFuncReturn(const FuncGraphPtr &fn, const std::shared_ptr<ParseFunction
   }
 }
 
+bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return false;
+  }
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr) {
+    return false;
+  }
+  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
+  auto sort_rhs_first =
+    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
+  return sort_rhs_first;
+}
+
+// Transform tail call to parallel call.
+void Parser::TransformParallelCall() {
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_PARALLEL_CALL") == "1");
+  if (!transform_tail_call_to_parallel_call) {
+    return;
+  }
+  std::unordered_set<FuncGraphPtr> latter_call_graphs_set;
+  for (auto &call_graphs_pair : parallel_call_graphs_) {
+    MS_EXCEPTION_IF_NULL(call_graphs_pair.first);
+    auto former_call_graph = call_graphs_pair.first->func_graph();
+    MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
+    auto middle_call_graph = call_graphs_pair.second->func_graph();
+    constexpr auto recur_3 = 3;
+    MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
+                  << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
+
+    // Transform the call of {middle_graph -> latter_graph}.
+    auto middle_graph_return = middle_call_graph->get_return();
+    MS_EXCEPTION_IF_NULL(middle_graph_return);
+    auto middle_graph_output = middle_call_graph->output();
+    MS_EXCEPTION_IF_NULL(middle_graph_output);
+    auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
+    MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
+    if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
+      auto middle_graph_real_output_cnode = dyn_cast<CNode>(middle_graph_output_cnode->input(1));
+      MS_EXCEPTION_IF_NULL(middle_graph_real_output_cnode);
+      middle_graph_output_cnode = middle_graph_real_output_cnode;
+    }
+    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+    if (middle_graph_output_cnode_size <= 1) {
+      constexpr auto recur_2 = 2;
+      MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
+      continue;
+    }
+    bool use_arguments_pack = false;
+    auto latter_graph_node = middle_graph_output_cnode->input(0);
+    constexpr auto output_inputs_num = 2;
+    if (middle_graph_output_cnode_size == output_inputs_num) {  // Only one argument.
+      middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimReturn));
+      middle_call_graph->set_return(middle_graph_output_cnode);
+    } else {  // More than one argument, pack them with tuple.
+      middle_graph_output_cnode->set_input(0, NewValueNode(prim::kPrimMakeTuple));
+      use_arguments_pack = true;
+    }
+
+    // Transform the call of {former_graph -> middle_graph}.
+    auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
+    if (latter_call_graph == nullptr) {
+      constexpr auto recur_2 = 2;
+      MS_LOG(DEBUG) << "The latter graph node is not FuncGraph, " << latter_graph_node->DebugString(recur_2);
+      continue;
+    }
+    if (latter_call_graphs_set.find(latter_call_graph) != latter_call_graphs_set.end()) {
+      MS_LOG(DEBUG) << "The latter graph is handled before, " << latter_call_graph->ToString();
+      continue;
+    }
+    latter_call_graphs_set.emplace(latter_call_graph);
+    auto former_graph_output = former_call_graph->output();
+    MS_EXCEPTION_IF_NULL(former_graph_output);
+    std::vector<AnfNodePtr> inputs({latter_graph_node});
+    if (use_arguments_pack) {
+      for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
+        auto getitem_input = former_call_graph->NewCNodeInOrder(
+          {NewValueNode(prim::kPrimTupleGetItem), former_graph_output, NewValueNode(SizeToLong(i))});
+        inputs.emplace_back(getitem_input);
+      }
+    } else {
+      inputs.emplace_back(former_graph_output);
+    }
+    auto new_output = former_call_graph->NewCNodeInOrder(std::move(inputs));
+    former_call_graph->set_output(new_output);
+
+    MS_LOG(DEBUG) << "Parallel call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
+                  << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
+  }
+}
+
 FuncGraphPtr Parser::ParseFuncGraph() {
   // Get ast FunctionDef node
   py::object node = ast_->GetAstNode();
@@ -196,7 +262,24 @@ FuncGraphPtr Parser::ParseFuncGraph() {
   RemoveUnnecessaryPhis();
   MS_EXCEPTION_IF_NULL(fn_block);
   CheckFuncReturn(fn_block->func_graph(), ast_);
+  TransformParallelCall();
   return fn_block->func_graph();
+}
+
+// If any mixed precision flag add a cast node after the parameter node.
+AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  TypePtr dst_type;
+  if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
+    dst_type = kFloat32;
+  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
+    dst_type = kFloat16;
+  } else {
+    return param;
+  }
+  auto cast_helper = prim::kPrimMixedPrecisionCast;
+  auto cast = func_graph->NewCNodeAfter(param, {NewValueNode(cast_helper), NewValueNode(dst_type), param});
+  return cast;
 }
 
 void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &fn_node) {
@@ -1303,26 +1386,44 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   }
 
   // Process the if-true branch
+  std::pair<FunctionBlockPtr, FunctionBlockPtr> true_branch_graphs;
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
   MS_EXCEPTION_IF_NULL(true_end->func_graph());
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
-    MS_LOG(DEBUG) << "true end jump to after.";
     true_end->Jump(after_block, {});
+    true_branch_graphs.second = true_end;
+    MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
+                  << ", true_end: " << true_end->ToString();
   }
 
   // Process the orelse branch
+  std::pair<FunctionBlockPtr, FunctionBlockPtr> false_branch_graphs;
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
   FunctionBlockPtr false_end = ParseStatements(false_block, orelseNode);
   MS_EXCEPTION_IF_NULL(false_end->func_graph());
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
-    MS_LOG(DEBUG) << "false_end jump to after.";
     false_end->Jump(after_block, {});
+    false_branch_graphs.second = false_end;
+    MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
+                  << ", false_end: " << false_end->ToString();
+  }
+  block->ConditionalJump(bool_node, true_block, false_block);
+
+  // Record the former, middle, latter graphs info.
+  if (true_branch_graphs.second != nullptr && false_branch_graphs.second != nullptr) {
+    true_branch_graphs.first = block;
+    parallel_call_graphs_.emplace_back(true_branch_graphs);
+    MS_LOG(DEBUG) << "Record tail call graphs, true: {former: " << true_branch_graphs.first->func_graph()->ToString()
+                  << ", middle: " << true_branch_graphs.second->func_graph()->ToString() << "}";
+    false_branch_graphs.first = block;
+    parallel_call_graphs_.emplace_back(false_branch_graphs);
+    MS_LOG(DEBUG) << "Record tail call graphs, false: {former: " << false_branch_graphs.first->func_graph()->ToString()
+                  << ", middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
   }
 
-  block->ConditionalJump(bool_node, true_block, false_block);
   if (after_block->prev_blocks().empty()) {
     after_block->SetAsDeadBlock();
   }

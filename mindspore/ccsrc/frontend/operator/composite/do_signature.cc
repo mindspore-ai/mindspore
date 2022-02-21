@@ -283,6 +283,19 @@ SignatureEnumRW GetSignatureEnumRW(size_t index, const std::vector<Signature> &s
   return sig;
 }
 
+namespace {
+TypePtr GetMixedPrecisionTargetType(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
+    return kFloat32;
+  } else if (func_graph->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
+    return kFloat16;
+  } else {
+    return nullptr;
+  }
+}
+}  // namespace
+
 AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
                          const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
   // args: original inputs
@@ -294,7 +307,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   std::set<size_t> write_indices;
   std::vector<TypePtr> input_types;
   op_inputs.push_back(NewValueNode(function));
-  auto cast_type = parse::GetMixedPrecisionTargetType(func_graph);
+  auto cast_type = GetMixedPrecisionTargetType(func_graph);
   // Assume, the write input of op is always the first input. We check if any write op,
   // and add cast op on other inputs to keep the same type with assigned parameter.
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
