@@ -97,7 +97,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepCell(network, optimizer, sens=1.0)
 
-    Boost网络训练封装类,.
+    Boost网络训练封装类。
 
     用优化器封装网络，使用输入训练网络来获取结果。反向图在*construct*函数中自动创建，并且支持多种不同的并行模式。
 
@@ -105,18 +105,20 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     **参数：**
 
     - **network** (Cell) – 训练网络，当前网络只支持单个输出。
-    - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
+    - **optimizer** (Union[Cell]) – 用于更新网络参数的优化器。
     - **sens** (numbers.Number) – 作为反向传播输入要填充的缩放数，默认值为1.0。
 
     **输入：**
 
-    - **inputs** (Tuple(Tensor)) – 网络的所有输入组成的元组。
+    - **(*inputs)** (Tuple(Tensor))- 网络的所有输入组成的元组。
 
     **输出：**
 
-    - loss (Tensor)，标量Tensor。
-    - overflow (Tensor)，标量Tensor，类型为bool。
-    - loss scaling value (Tensor)，标量Tensor。
+    Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
+
+    - loss(Tensor)，标量Tensor。
+    - overflow(Tensor)，标量Tensor，类型为bool。
+    - loss scaling value(Tensor)，标量Tensor。
 
     **异常：**
 
@@ -162,6 +164,36 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         enable_dim_reduce (bool)，降维二阶训练算法是否生效。
 
+.. py:class:: mindspore.boost.BoostTrainOneStepWithLossScaleCell(network, optimizer, scale_sense)
+
+    使用混合精度功能的Boost训练网络。
+
+    实现了包含损失缩放（loss scale）的单次训练。它使用网络、优化器和用于更新损失缩放系数（loss scale）的Cell(或一个Tensor)作为参数。可在host侧或device侧更新损失缩放系数。
+    如果需要在host侧更新，使用Tensor作为 `scale_sense` ，否则，使用可更新损失缩放系数的Cell实例作为 `scale_sense` 。
+
+    **参数：**
+
+    - **network** (Cell) – 训练网络，当前网络只支持单个输出。
+    - **optimizer** (Union[Cell]) – 用于更新网络参数的优化器。
+    - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
+
+    **输入：**
+
+    - **(*inputs)** (Tuple(Tensor))- 网络的所有输入组成的元组。
+
+    **输出：**
+
+    Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
+
+    - loss(Tensor)，标量Tensor。
+    - overflow(Tensor)，标量Tensor，类型为bool。
+    - loss scaling value(Tensor)，标量Tensor。
+
+    **异常：**
+
+    - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。
+    - **ValueError** - `scale_sense` 的shape既不是(1,)也不是()。
+
 .. py:class:: mindspore.boost.GradientFreeze(param_groups, freeze_type, freeze_p, total_steps)
 
     梯度冻结算法，根据指定策略随机冻结某些层的梯度，来提升网络训练性能。
@@ -174,34 +206,51 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     - **freeze_p** (float) – 梯度冻结训练的概率。
     - **total_steps** (numbers.Number) – 整个训练过程的总的步数。
 
-    .. py:method:: freeze_generate(network, optimizer)
-    
-        生成梯度冻结的网络与优化器。
-    
-        **参数：**
-    
-        - **network** (Cell) – 训练网络。
-        - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
-    
     .. py:method:: generate_freeze_index_sequence(parameter_groups_number, freeze_strategy, freeze_p, total_steps)
-    
+
         生成梯度冻结每一步需要冻结的层数。
-    
+
         **参数：**
-    
+
         - **parameter_groups_number** (numbers.Number) – 梯度冻结训练的权重个数。
         - **freeze_strategy** (int) – 梯度冻结训练的策略。
         - **freeze_p** (float) – 梯度冻结训练的概率。
         - **total_steps** (numbers.Number) – 整个训练过程的总的步数。
-    
+
     .. py:method:: split_parameters_groups(net, freeze_para_groups_number)
-    
+
         拆分用于梯度冻结训练的权重。
-    
+
         **参数：**
-    
+
         - **net** (Cell) – 训练网络。
         - **freeze_para_groups_number** (numbers.Number) – 梯度冻结训练的权重个数。
+
+    .. py:method:: freeze_generate(network, optimizer)
+
+        生成梯度冻结的网络与优化器。
+
+        **参数：**
+
+        - **network** (Cell) – 训练网络。
+        - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
+
+.. py:method:: freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None,
+                             max_accumulation_step=1)
+
+    提供带梯度冻结的网络Cell。
+
+    **参数：**
+
+    - **reducer_flag** (bool): 是否多卡训练的标志位。
+    - **network** (Cell): 训练网络。
+    - **optimizer** (Cell): 优化器。
+    - **sens** (numbers.Number): 损失缩放系数。
+    - **grad** (tuple(Tensor)): 网络梯度。
+    - **use_grad_accumulation** (bool): 是否使用梯度累积。
+    - **mean** (bool): 梯度是否求平均。默认值为None。
+    - **degree** (int): device卡数。默认值为None。
+    - **max_accumulation_step** (int): 梯度累积步数。默认值为1。
 
 .. py:class:: mindspore.boost.FreezeOpt(opt, train_parameter_groups=None, train_strategy=None)
 
@@ -230,6 +279,65 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     - **network** (Cell) – 待训练的网络模型。
     - **fn_flag** (bool) – 是否将网络中最后一个全连接层替换为全归一化层。默认值：False。
+
+.. py:class:: mindspore.boost.OptimizerProcess(opt)
+
+    处理Boost的优化器，目前支持给优化器添加梯度中心化和创建新的优化器。
+
+    **参数：**
+
+    - **opt** (Cell) – 使用的优化器。
+
+    .. py:method:: add_grad_centralization(network)
+
+        添加梯度中心化。
+
+        **参数：**
+
+        - **network** (Cell) – 训练网络。
+
+    .. py:method:: build_params_dict(network)
+
+        构建网络权重的dict。
+
+        **参数：**
+
+        - **network** (Cell) – 训练网络。
+
+    .. py:method:: build_gc_params_group(params_dict, parameters)
+
+        构建网络权重的dict。
+
+        **参数：**
+
+        - **params_dict** (dict) – 训练权重的字典。
+        - **parameters** (list) – 训练权重的列表。
+
+    .. py:method:: generate_new_optimizer()
+
+        生成新的优化器。
+
+.. py:class:: mindspore.boost.ParameterProcess()
+
+    处理Boost网络的权重。当前支持创建分组参数和自动设置网络梯度切分点。
+
+    .. py:method:: assign_parameter_group(parameters, split_point=None)
+
+        设置分组权重。
+
+        **参数：**
+
+        - **parameters** (list) – 训练网络的权重。
+        - **split_point** (list) – 网络梯度切分点。默认为None。
+
+    .. py:method:: generate_group_params(parameters, origin_params)
+
+        创建分组权重。
+
+        **参数：**
+
+        - **parameters** (list) – 训练网络的新权重。
+        - **origin_params** (list) –  训练网络的初始权重。
 
 .. automodule:: mindspore.boost
     :members:
