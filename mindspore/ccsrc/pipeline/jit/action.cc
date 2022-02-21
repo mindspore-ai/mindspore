@@ -786,13 +786,10 @@ bool ExistTarget(const std::vector<AnfNodePtr> &all_nodes, const std::string &ta
   return false;
 }
 
-void SetRunMode(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
+void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto backend_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(backend_ptr);
   std::string backend = context_ptr->backend_policy();
   auto set_ctx = [&context_ptr, &backend_ptr](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
@@ -905,7 +902,7 @@ bool TaskEmitAction(const ResourcePtr &res) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
-    SetRunMode(res);
+    SetRunMode(res->func_graph(), res->GetResult(kBackend).cast<compile::BackendPtr>().get());
   } else {
     OriginSetRunMode(res);
   }
