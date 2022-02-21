@@ -1608,7 +1608,7 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
     }
     std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
     if (enable_eliminate_unused_element) {
-      sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
     }
     auto abs = std::make_shared<AbstractTuple>(args_spec_list, sequence_nodes);
     auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
@@ -1637,7 +1637,7 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
     }
     std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
     if (enable_eliminate_unused_element) {
-      sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
     }
     auto abs = std::make_shared<AbstractList>(args_spec_list, sequence_nodes);
     auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
