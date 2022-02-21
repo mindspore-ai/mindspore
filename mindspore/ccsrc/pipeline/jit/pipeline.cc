@@ -826,7 +826,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
 
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
-
+#ifdef ENABLE_DUMP_IR
+  (void)mindspore::RDR::Snapshot();
+#endif
   opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
   abstract::AnalysisContext::ClearContext();
   // Reclaim all resource used by optimizer.
