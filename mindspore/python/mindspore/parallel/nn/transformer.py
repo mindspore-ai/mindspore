@@ -16,10 +16,15 @@
 Note:
     Transformer Networks. This is interface that is subject to change or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
     TransformerOpParallelConfig, \
     EmbeddingOpParallelConfig, TransformerRecomputeConfig, \
     default_transformer_config, default_embedding_parallel_config, default_dpmp_config, default_moe_config, \
     default_transformer_recompute_config
+
+__all__ = ["AttentionMask", "VocabEmbedding", "MultiHeadAttention", "FeedForward", "TransformerEncoder",
+           "TransformerDecoder", "TransformerEncoderLayer", "TransformerDecoderLayer", "Transformer",
+           "TransformerOpParallelConfig", "EmbeddingOpParallelConfig", "TransformerRecomputeConfig",
+           "default_transformer_config", "default_embedding_parallel_config", "default_dpmp_config",
+           "default_moe_config", "default_transformer_recompute_config"]
