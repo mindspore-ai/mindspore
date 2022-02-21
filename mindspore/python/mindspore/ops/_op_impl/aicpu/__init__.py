@@ -77,6 +77,8 @@ from .log1p import _log1p_aicpu
 from .asin import _asin_aicpu
 from .asin_grad import _asin_grad_aicpu
 from .histogram import _histogram_aicpu
+from .im2col import _im2col_aicpu
+from .col2im import _col2im_aicpu
 from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu

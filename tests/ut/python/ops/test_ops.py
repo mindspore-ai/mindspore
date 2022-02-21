@@ -52,6 +52,8 @@ from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import FillDiagonal
+from mindspore.ops.operations.array_ops import Im2Col
+from mindspore.ops.operations.array_ops import Col2Im
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import CheckNumerics
 from mindspore.ops.operations.array_ops import SegmentMax
@@ -3460,6 +3462,16 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))]
         }),
+    ('Im2Col', {
+        'block': Im2Col(ksizes=[2, 2], dilations=[1, 1], strides=[2, 2],
+                        padding_mode="CALCULATED", pads=[1]),
+        'desc_inputs': [[2, 5, 16, 16]],
+        'skip': ['backward']}),
+    ('Col2Im', {
+        'block': Col2Im(kernel_size=[4, 4], dilation=[1, 1], padding=[0, 0], stride=[1, 1]),
+        'desc_inputs': [([16, 16, 16, 25], {'dtype': np.float32}),
+                        Tensor(np.array([8, 8]).astype(np.int32))],
+        'desc_bprop': [([16, 16, 8, 8], {'dtype': np.float32})]}),
     ('ConcatV2_0', {
         'block': NetForConcat1(),
         'desc_inputs': [
