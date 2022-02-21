@@ -47,6 +47,7 @@ class TrainExport {
   void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
   int LoadModel(void *buf, size_t buf_size);
   int AddTransformNode();
+  int TrainModelDrop();
 
  protected:
   virtual std::vector<uint8_t> CreateData(const mindspore::lite::Tensor *tensor);

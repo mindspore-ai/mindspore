@@ -21,6 +21,7 @@
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
+#include "tools/common/meta_graph_utils.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 
@@ -95,7 +96,7 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   const auto &mulNodeBiasTensor = graph->allTensors.at(mulNodeInputIndex.at(MUL_OP_BIAS_INDEX));
   MS_ASSERT(mulNodeBiasTensor != nullptr);
   if (mulNodeBiasTensor->nodeType != NodeType_ValueNode) {
-    // dont fusion, return
+    // don't fusion, return
     return RET_OK;
   }
   if (mulNodeBiasTensor->dataType == TypeId::kNumberTypeUInt8) {
@@ -112,7 +113,7 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
   const auto &addNodeBiasTensor = graph->allTensors.at(addNodeInputIndex.at(ADD_OP_BIAS_INDEX));
   MS_ASSERT(addNodeBiasTensor != nullptr);
   if (addNodeBiasTensor->nodeType != NodeType_ValueNode) {
-    // dont fusion, return
+    // don't fusion, return
     return RET_OK;
   }
   // scale requires scale shape tail sub of input shape, scale shape same as bias shape

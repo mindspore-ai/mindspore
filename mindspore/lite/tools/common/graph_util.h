@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
-#define MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_
 
 #include <cstdlib>
 #include <unordered_map>
@@ -47,34 +47,6 @@ using OpDefCopyer = std::function<std::unique_ptr<schema::CNodeT>(schema::CNodeT
 OpDefCopyer GetSimpleOpCopyer();
 
 int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &outputs);
-
-std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int inputIndexIdx = -1);
-
-std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                    int inputIndexIdx = -1);
-
-std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int outputIndexIdx = -1);
-
-std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                     int outputIndexIdx = -1);
-
-std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
-
-std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
-
-void ReplaceOutput(const uint32_t &old_index, const uint32_t &new_index, schema::MetaGraphT *graphT);
-
-STATUS IsolateNode(schema::MetaGraphT *subGraph, schema::CNodeT *node);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor = true);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t subGraphIdx, size_t nodeIdx, bool removeTensor = true);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, schema::CNodeT *node, bool removeTensor = true);
-
-STATUS UpdateNodeIndex(schema::CNodeT *node, uint32_t deleteIdx);
-
-STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTensorIdxes, bool forceDelete = false);
 
 STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_ptr<schema::TensorT> tensor,
                       InsertPlace place = kBefore);
@@ -320,4 +292,4 @@ bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_

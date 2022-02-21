@@ -142,7 +142,13 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_dropout.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/graph/subgraph_node_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/meta_graph_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/optimizer.cc
         )
 if(ENABLE_V0)
     set(TRAIN_SRC
