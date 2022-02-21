@@ -98,7 +98,7 @@ def create_sym_pos_matrix(shape, dtype):
     return onp.dot(a, a.T)
 
 
-def gradient_check(x, net, epsilon=1e-3):
+def gradient_check(x, net, epsilon=1e-3, enumerate_fn=onp.ndenumerate):
     # some utils
     def _tensor_to_numpy(arg: List[Tensor]) -> List[onp.ndarray]:
         return [_arg.asnumpy() for _arg in arg]
@@ -126,7 +126,7 @@ def gradient_check(x, net, epsilon=1e-3):
     x = _tensor_to_numpy(x)
     x_grad_approx = [onp.zeros_like(_x) for _x in x_grad]
     for outer, _x in enumerate(x):
-        for inner, _ in onp.ndenumerate(_x):
+        for inner, _ in enumerate_fn(_x):
             x = _add_value(x, outer, inner, epsilon)
             y_plus = net(*_numpy_to_tensor(x)).asnumpy()
 

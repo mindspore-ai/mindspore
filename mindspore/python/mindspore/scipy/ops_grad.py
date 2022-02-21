@@ -16,7 +16,6 @@
 from .. import numpy as mnp
 from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
 from .ops_wrapper import matrix_set_diag
-from .utils_const import _raise_value_error
 from ..ops import operations as P
 from ..ops import functional as F
 from ..ops._grad.grad_base import bprop_getters
@@ -61,12 +60,11 @@ def get_bprop_cholesky(self):
     matmul = P.MatMul()
     solve_triangular = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
     clean = self.clean
-    if not clean:
-        _raise_value_error(
-            "primitive Cholesky not support attribute clean to be false, right now. please set it to be true.")
 
     def bprop(a, out, dout):
         l = out
+        if not clean:
+            l = _matrix_band_part(out, -1, 0)
         eyes = _batch_eyes(l)
         l_inverse = solve_triangular(l, eyes)
         dout_middle = matmul(_adjoint(l), dout)
