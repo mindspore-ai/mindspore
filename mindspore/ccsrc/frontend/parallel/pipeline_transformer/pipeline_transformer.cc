@@ -92,7 +92,7 @@ bool PipelineTransformer::NeedGrad(const CNodePtr &cnode, const CNodePtr &graph_
   for (auto &input : cnode->inputs()) {
     auto temp = input;
     while (IsPrimitiveCNode(temp, prim::kPrimLoad) || IsPrimitiveCNode(temp, prim::kPrimCast)) {
-      auto input_cnode = input->cast<CNodePtr>();
+      auto input_cnode = temp->cast<CNodePtr>();
       temp = input_cnode->input(1);
     }
     if (temp->isa<Parameter>()) {

@@ -970,9 +970,7 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
     }
-    if (ParallelContext::GetInstance()->enable_parallel_optimizer()) {
-      use_apply = SkipTrivialNodesMoveDown(manager, use_apply);
-    }
+    use_apply = SkipTrivialNodesMoveDown(manager, use_apply);
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(prim_anf_node);
     PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
