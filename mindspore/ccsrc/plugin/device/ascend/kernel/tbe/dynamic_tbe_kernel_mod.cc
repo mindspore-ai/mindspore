@@ -31,6 +31,7 @@
 #include "runtime/mem.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "utils/ms_device_shape_transfer.h"
 #include "utils/utils.h"
 #include "register/op_tiling.h"
@@ -48,6 +49,13 @@ DynamicTbeKernelMod::DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNod
   auto cnode = anf_node_ptr->cast<CNodePtr>();
   if (cnode != nullptr) {
     op_compile_info_ = ParseCompileJson(cnode);
+  }
+}
+
+DynamicTbeKernelMod::~DynamicTbeKernelMod() {
+  if (tiling_data_ptr_ != nullptr) {
+    auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
+    mem_manager->FreeMemFromMemPool(tiling_data_ptr_);
   }
 }
 
@@ -142,8 +150,9 @@ void DynamicTbeKernelMod::InitTilingDataPtr() {
   auto kernel_json_info = kernel_pack_->kernel_json_info();
   auto op_para_size = kernel_json_info.op_para_size;
   if (op_para_size > 0) {
-    auto ret = rtMalloc(&tiling_data_ptr_, op_para_size, RT_MEMORY_HBM);
-    if (ret != RT_ERROR_NONE) {
+    auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
+    tiling_data_ptr_ = mem_manager->MallocMemFromMemPool(op_para_size, false);
+    if (tiling_data_ptr_ == nullptr) {
       MS_LOG(EXCEPTION) << "RtMalloc tiling data failed.";
     }
   }

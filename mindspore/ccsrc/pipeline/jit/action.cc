@@ -818,6 +818,13 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     return;
   }
 
+  // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
+  if (IsDynamicShapeGraph(func_graph)) {
+    MS_LOG(INFO) << "Run Graph mode with kernelbykernel(Dynamic Shape).";
+    set_ctx(false, false, false);
+    return;
+  }
+
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
   (void)graphs.insert(func_graph);
