@@ -1,5 +1,5 @@
 mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg
-=================================================
+================================================================
 
 .. py:class:: mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg(size)
 

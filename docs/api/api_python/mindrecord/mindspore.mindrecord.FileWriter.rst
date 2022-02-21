@@ -21,7 +21,7 @@
         指定schema中的字段作为索引来加速MindRecord文件的读取。schema可以通过 `add_schema` 通过来添加。
 
         .. note::
-            - 索引字段应为Primitive类型，例如`int`、`float`、`str`。
+            - 索引字段应为Primitive类型，例如 `int` 、`float` 、`str` 。
             - 如果不调用该函数，则默认将schema中所有的Primitive类型的字段设置为索引。
               请参考类的示例：`mindspore.mindrecord.FileWriter`。
 

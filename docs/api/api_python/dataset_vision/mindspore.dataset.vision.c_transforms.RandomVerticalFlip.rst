@@ -1,5 +1,5 @@
 mindspore.dataset.vision.c_transforms.RandomVerticalFlip
-=================================================
+==========================================================
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomVerticalFlip(prob=0.5)
 

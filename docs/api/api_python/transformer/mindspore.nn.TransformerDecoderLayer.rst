@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.TransformerDecoderLayer(hidden_size, ffn_hidden_size, num_heads, batch_size, src_seq_length, tgt_seq_length, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, post_layernorm_residual=False, use_past=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, hidden_act="gelu", moe_config=default_moe_config, parallel_config=default_dpmp_config)
+﻿.. py:class:: mindspore.nn.transformer.TransformerDecoderLayer(hidden_size, ffn_hidden_size, num_heads, batch_size, src_seq_length, tgt_seq_length, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, post_layernorm_residual=False, use_past=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, hidden_act="gelu", moe_config=default_moe_config, parallel_config=default_dpmp_config)
 
     Transformer的解码器层。Transformer的解码器层上的单层的实现，包括自注意力层、交叉注意力层和前馈层。当encoder_output为None时，交叉注意力将无效。
 

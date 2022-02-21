@@ -21,7 +21,7 @@ mindspore.nn.PReLU
 
     **参数：**
 
-    - **channel** (int) - 可训练参数:math:`w`的数量。它可以是int，值是1或输入Tensor `x` 的通道数。默认值：1。
+    - **channel** (int) - 可训练参数 :math:`w` 的数量。它可以是int，值是1或输入Tensor `x` 的通道数。默认值：1。
     - **w** (Union[float, list, Tensor]) - 参数的初始值。它可以是float、float list或与输入Tensor `x` 具有相同数据类型的Tensor。默认值：0.25。
 
     **输入：**

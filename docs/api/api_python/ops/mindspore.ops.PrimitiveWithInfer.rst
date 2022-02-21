@@ -9,9 +9,9 @@ mindspore.ops.PrimitiveWithInfer
 
     如果未定义__infer__()，则可以定义infer_shape()和infer_dtype()来描述shape和类型的推断逻辑。infer_value()用于常量传播。
 
-        **参数：**
+    **参数：**
 
-        - **name** (str) - 当前Primitive的名称。
+    - **name** (str) - 当前Primitive的名称。
 
     .. py:method:: infer_dtype(*args)
 
@@ -50,4 +50,4 @@ mindspore.ops.PrimitiveWithInfer
 
         **返回：**
 
-        输出的值。如果编译时无法推断该值，返回`None`。
+        输出的值。如果编译时无法推断该值，返回 `None` 。

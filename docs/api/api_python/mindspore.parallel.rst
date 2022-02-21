@@ -7,7 +7,7 @@
 
     获取算法参数配置属性。
 
-    注：
+    .. note::
         属性名称为必填项。此接口仅在AUTO_PARALLEL模式下工作。
 
     **参数：**
@@ -27,10 +27,11 @@
 
     重置算法参数属性。
 
-    注：
+    .. note::
         此接口仅在AUTO_PARALLEL模式下工作。
 
     重置后，属性值为：
+
     --fully_use_devices：True
     --elementwise_op_strategy_follow：False
     --enable_algo_approxi：False
@@ -43,7 +44,7 @@
 
     设置并行策略搜索算法中的参数。有关典型用法，请参见mindspore/tests/ut/python/parallel/test_auto_parallel_resnet.py。
 
-    注：
+    .. note::
         属性名称为必填项。此接口仅在AUTO_PARALLEL模式下工作。
 
     **参数：**

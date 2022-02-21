@@ -235,8 +235,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **network** (Cell) – 训练网络。
         - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
 
-.. py:method:: freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None,
-                             max_accumulation_step=1)
+.. py:method:: freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None, max_accumulation_step=1)
 
     提供带梯度冻结的网络Cell。
 

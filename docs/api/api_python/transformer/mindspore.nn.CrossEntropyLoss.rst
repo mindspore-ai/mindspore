@@ -1,8 +1,9 @@
-﻿.. py:class:: mindspore.parallel.nn.CrossEntropyLoss(parallel_config=default_dpmp_config)
+﻿.. py:class:: mindspore.nn.transformer.CrossEntropyLoss(parallel_config=default_dpmp_config)
 
     计算输入和输出之间的交叉熵损失。
 
     **参数：**
+
     - **parallel_config** (OpParallelConfig) - 表示并行配置。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
 
     **输入：**

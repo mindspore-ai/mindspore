@@ -47,7 +47,7 @@
 
         **参数：**
 
-        - **category_id** (int) - category ID，参考`read_category_info`函数的返回值。
+        - **category_id** (int) - category ID，参考 `read_category_info` 函数的返回值。
         - **page** (int) - 分页的索引。
         - **num_row** (int) - 每个分页的行数。
 
@@ -68,7 +68,7 @@
 
         **参数：**
 
-        - **category_name** (str) - category字段对应的字符，参考`read_category_info`函数的返回值。
+        - **category_name** (str) - category字段对应的字符，参考 `read_category_info` 函数的返回值。
         - **page** (int) - 分页的索引。
         - **num_row** (int) - 每个分页的行数。
 

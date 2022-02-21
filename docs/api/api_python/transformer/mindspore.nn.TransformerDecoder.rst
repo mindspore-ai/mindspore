@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.TransformerDecoder(num_layers, batch_size, hidden_size, ffn_hidden_size, src_seq_length, tgt_seq_length, num_heads, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, post_layernorm_residual=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, hidden_act="gelu", lambda_func=None, use_past=False, offset=0, moe_config=default_moe_config, parallel_config=default_transformer_config)
+﻿.. py:class:: mindspore.nn.transformer.TransformerDecoder(num_layers, batch_size, hidden_size, ffn_hidden_size, src_seq_length, tgt_seq_length, num_heads, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, post_layernorm_residual=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, hidden_act="gelu", lambda_func=None, use_past=False, offset=0, moe_config=default_moe_config, parallel_config=default_transformer_config)
 
     Transformer中的解码器模块，为多层堆叠的 `TransformerDecoderLayer` ，包括多头自注意力层、交叉注意力层和前馈层。
 
@@ -28,7 +28,9 @@
     - **hidden_stats** (Tensor) - shape为[batch_size, seq_length, hidden_size]或[batch_size * seq_length, hidden_size]的输入tensor。
     - **attention_mask** (Tensor) - shape为[batch_size, seq_length, seq_length]的解码器的注意力掩码。
     - **encoder_output** (Tensor) - shape为[batch_size, seq_length, hidden_size]或[batch_size * seq_length, hidden_size]的编码器的输出。
-      注：当网络位于最外层时，此参数不能通过None传递。默认值为None。
+
+      .. note::当网络位于最外层时，此参数不能通过None传递。默认值为None。
+
     - **memory_mask** (Tensor) - shape为[batch, tgt_seq_length, src_seq_length]的交叉注意力的memory掩码，其中tgt_seq_length表示解码器的长度。注：当网络位于最外层时，此参数不能通过None传递。默认值为None。
     - **init_reset** (Tensor) - shape为[1]的bool tensor，用于清除增量预测中使用的past key参数和past value参数。仅当use_past为True时有效。默认值为True。
     - **batch_valid_length** (Tensor) - shape为[batch_size]的Int32 tensor，表示过去所计算的索引。当use_past为True时，它用于增量预测。默认值为None。

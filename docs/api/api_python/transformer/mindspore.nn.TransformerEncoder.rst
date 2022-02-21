@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.TransformerEncoder(batch_size, num_layers, hidden_size, ffn_hidden_size, seq_length, num_heads, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, hidden_act="gelu", post_layernorm_residual=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, lambda_func=None, offset=0, use_past=False, moe_config=default_moe_config, parallel_config=default_transformer_config)
+﻿.. py:class:: mindspore.nn.transformer.TransformerEncoder(batch_size, num_layers, hidden_size, ffn_hidden_size, seq_length, num_heads, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, hidden_act="gelu", post_layernorm_residual=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, lambda_func=None, offset=0, use_past=False, moe_config=default_moe_config, parallel_config=default_transformer_config)
 
     Transformer中的编码器模块，具有多层堆叠的 `TransformerEncoderLayer` ，包括多头自注意力层和前馈层。
 

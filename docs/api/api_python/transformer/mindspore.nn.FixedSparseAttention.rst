@@ -1,10 +1,11 @@
-﻿.. py:class:: mindspore.parallel.nn.FixedSparseAttention(batch_size, num_heads, size_per_head, block_size, seq_length=1024, num_different_global_patterns=4, parallel_config=default_dpmp_config)
+﻿.. py:class:: mindspore.nn.transformer.FixedSparseAttention(batch_size, num_heads, size_per_head, block_size, seq_length=1024, num_different_global_patterns=4, parallel_config=default_dpmp_config)
 
     固定稀疏注意力层。
 
     此接口实现了Sparse Transformer中使用的稀疏注意力原语。更多详情，请见论文（https://arxiv.org/abs/1904.10509）。
     
     具体来说，它包括以下内容：
+
     1. 正常注意力的更快实现（不计算上三角，并且融合了许多操作）。
     2. 如论文Sparse Transformers所述，“分散”和“固定”注意力的实现。
 
