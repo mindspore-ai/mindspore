@@ -28,7 +28,7 @@ class LshProjectionCPUKernel : public InnerKernel {
   LshProjectionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {
-    param_ = reinterpret_cast<LshProjectionParameter *>(op_parameter_);
+    param_ = reinterpret_cast<LshProjectionParameter *>(parameter);
   }
   ~LshProjectionCPUKernel() = default;
 
@@ -40,11 +40,12 @@ class LshProjectionCPUKernel : public InnerKernel {
  private:
   int MallocKeys();
   void FreeKeys();
-  int GetSignBit(int32_t *feature, float *weight, float seed, LshProjectionParameter *para, char *hash_buff);
-  void LshProjectionSparse(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
-                           LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
-  void LshProjectionDense(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
-                          LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
+  int GetSignBit(const int32_t *feature, const float *weight, float seed, const LshProjectionParameter *para,
+                 char *hash_buff);
+  void LshProjectionSparse(const float *hashSeed, const int32_t *feature, const float *weight, int32_t *output,
+                           const LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
+  void LshProjectionDense(const float *hashSeed, const int32_t *feature, const float *weight, int32_t *output,
+                          const LshProjectionParameter *param, int32_t start, int32_t end, char *hash_buff);
   LshProjectionParameter *param_ = nullptr;
   float *hash_seed_ = nullptr;
   int32_t *feature_ = nullptr;

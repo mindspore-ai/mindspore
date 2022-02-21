@@ -79,8 +79,8 @@ int LshProjectionCPUKernel::Run() {
 }
 
 int LshProjectionCPUKernel::MallocKeys() {
-  param_->hash_buffs_ =
-    static_cast<char **>(ms_context_->allocator->Malloc(op_parameter_->thread_num_ * sizeof(char *)));
+  param_->hash_buffs_ = static_cast<char **>(
+    ms_context_->allocator->Malloc(static_cast<size_t>(op_parameter_->thread_num_) * sizeof(char *)));
   if (param_->hash_buffs_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
@@ -126,8 +126,8 @@ int LshProjectionCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-int LshProjectionCPUKernel::GetSignBit(int32_t *feature, float *weight, float seed, LshProjectionParameter *para,
-                                       char *hash_buff) {
+int LshProjectionCPUKernel::GetSignBit(const int32_t *feature, const float *weight, float seed,
+                                       const LshProjectionParameter *para, char *hash_buff) {
   MS_ASSERT(feature != nullptr);
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(para != nullptr);
@@ -147,9 +147,9 @@ int LshProjectionCPUKernel::GetSignBit(int32_t *feature, float *weight, float se
   return (score > 0) ? 1 : 0;
 }
 
-void LshProjectionCPUKernel::LshProjectionSparse(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
-                                                 LshProjectionParameter *para, int32_t start, int32_t end,
-                                                 char *hash_buff) {
+void LshProjectionCPUKernel::LshProjectionSparse(const float *hashSeed, const int32_t *feature, const float *weight,
+                                                 int32_t *output, const LshProjectionParameter *para, int32_t start,
+                                                 int32_t end, char *hash_buff) {
   MS_ASSERT(hashSeed != nullptr);
   MS_ASSERT(feature != nullptr);
   MS_ASSERT(weight != nullptr);
@@ -166,9 +166,9 @@ void LshProjectionCPUKernel::LshProjectionSparse(float *hashSeed, int32_t *featu
   }
 }
 
-void LshProjectionCPUKernel::LshProjectionDense(float *hashSeed, int32_t *feature, float *weight, int32_t *output,
-                                                LshProjectionParameter *para, int32_t start, int32_t end,
-                                                char *hash_buff) {
+void LshProjectionCPUKernel::LshProjectionDense(const float *hashSeed, const int32_t *feature, const float *weight,
+                                                int32_t *output, const LshProjectionParameter *para, int32_t start,
+                                                int32_t end, char *hash_buff) {
   MS_ASSERT(feature != nullptr);
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(output != nullptr);
