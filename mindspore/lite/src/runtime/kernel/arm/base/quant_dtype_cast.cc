@@ -107,7 +107,7 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     auto input_quant_arg = in_tensors_.front()->quant_params().front();
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, input_quant_arg.scale,
                                  input_quant_arg.zeroPoint, num_unit_thread);
-    if (ret) {
+    if (ret == RET_OK) {
       auto output_quant_arg = out_tensors_.front()->quant_params().front();
       if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
         ret = DoQuantizeFp32ToInt8FromUint8Source(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset,

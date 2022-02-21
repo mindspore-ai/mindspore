@@ -262,7 +262,7 @@ void InputTransform4x4Pack12(float *src_data, float *dst_data, int src_step, int
   for (int l = 0; l < 4; ++l) {
     float *src = src_data + l * pack_tile * block_tile;
     // 12 * 4 -> 4 * 12
-    float tmp_mat[pack_tile][block_tile];
+    float tmp_mat[4][12];
     for (int i = 0; i < block_tile; ++i) {
       for (int j = 0; j < pack_tile; ++j) {
         tmp_mat[j][i] = src[i * pack_tile + j];
@@ -500,7 +500,7 @@ void InputTransform6x6Pack12(float *src_data, float *dst_data, int src_step, int
   for (int l = 0; l < 6; ++l) {
     float *src = src_data + l * pack_tile * block_tile;
     // 12 * 4 -> 4 * 12
-    float tmp_mat[pack_tile][block_tile];
+    float tmp_mat[4][12];
     for (int i = 0; i < block_tile; ++i) {
       for (int j = 0; j < pack_tile; ++j) {
         tmp_mat[j][i] = src[i * pack_tile + j];
@@ -838,7 +838,7 @@ void InputTransform8x8Pack12(float *src_data, float *dst_data, int src_step, int
   for (int l = 0; l < 8; ++l) {
     float *src = src_data + l * pack_tile * block_tile;
     // 12 * 4 -> 4 * 12
-    float tmp_mat[pack_tile][block_tile];
+    float tmp_mat[4][12];
     for (int i = 0; i < block_tile; ++i) {
       for (int j = 0; j < pack_tile; ++j) {
         tmp_mat[j][i] = src[i * pack_tile + j];

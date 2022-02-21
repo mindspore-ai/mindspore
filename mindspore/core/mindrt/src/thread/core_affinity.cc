@@ -16,7 +16,8 @@
 
 #include "thread/core_affinity.h"
 #include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <string>
 #include <algorithm>
 #ifdef MS_COMPILE_IOS
 #include <sys/types.h>
