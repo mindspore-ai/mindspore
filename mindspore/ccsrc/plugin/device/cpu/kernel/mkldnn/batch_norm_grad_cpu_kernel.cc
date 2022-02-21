@@ -25,13 +25,14 @@ constexpr size_t kBatchNormGradInputsNum = 6;
 constexpr size_t kBatchNormGradOutputsNum = 3;
 constexpr size_t kBatchNormGradInputShapeSize = 4;
 constexpr size_t kBatchNormGradInputShapeSize2 = 2;
+constexpr size_t kScaleShiftNum = 2;
 }  // namespace
 
 void BatchNormGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, Y_BACKPROP);
-  size_t tensor_size = shape[C] * SCALE_SHIFT_NUM * type_size;
+  size_t tensor_size = shape[C] * kScaleShiftNum * type_size;
   input_size_list_.pop_back();
   // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
@@ -43,9 +44,9 @@ void BatchNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (x_shape.size() == NC) {
-    (void)x_shape.insert(x_shape.end(), (NCHW - NC), 1);
-  } else if (x_shape.size() != NCHW) {
+  if (x_shape.size() == NC_LEN) {
+    (void)x_shape.insert(x_shape.end(), (SHAPE_4D - NC_LEN), 1);
+  } else if (x_shape.size() != SHAPE_4D) {
     MS_LOG(EXCEPTION) << "Fused batchnorm support nc or nchw input!";
   }
   batch_size = x_shape[N];
@@ -53,7 +54,7 @@ void BatchNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   hw_size = x_shape[H] * x_shape[W];
   nhw_size = batch_size * hw_size;
   dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
-  dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({SCALE_SHIFT_NUM, channel});
+  dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({kScaleShiftNum, channel});
   auto epsilon = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
   auto is_train = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
   auto prop_kind = dnnl::prop_kind::forward_inference;

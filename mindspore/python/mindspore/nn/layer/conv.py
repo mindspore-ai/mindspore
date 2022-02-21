@@ -61,10 +61,6 @@ class _Conv(Cell):
             raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
                              f"but got the 'format' is {self.format} and "
                              f"the platform is {context.get_context('device_target')}.")
-        if context.get_context("device_target") == "CPU" and self.format == "NCDHW":
-            raise ValueError(f"For '{self.cls_name}', the \"NCDHW\" format only support in Ascend and GPU target, "
-                             f"but got the 'format' is {self.format} and "
-                             f"the platform is {context.get_context('device_target')}.")
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
             self.padding = padding
@@ -642,7 +638,7 @@ class Conv3d(_Conv):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)
@@ -882,7 +878,8 @@ class Conv3dTranspose(_Conv):
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
-        output_padding = _check_3d_int_or_tuple("output_padding", output_padding, self.cls_name, greater_zero=False)
+        self.output_padding = _check_3d_int_or_tuple("output_padding", output_padding, self.cls_name,
+                                                     greater_zero=False)
         super(Conv3dTranspose, self).__init__(
             in_channels,
             out_channels,
@@ -906,7 +903,7 @@ class Conv3dTranspose(_Conv):
                                                   stride=self.stride,
                                                   dilation=self.dilation,
                                                   group=self.group,
-                                                  output_padding=output_padding,
+                                                  output_padding=self.output_padding,
                                                   data_format=self.format)
         self.bias_add = P.BiasAdd(data_format=self.format)
         self.shape = P.Shape()

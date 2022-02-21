@@ -23,48 +23,72 @@
 
 namespace mindspore {
 namespace kernel {
-void MKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode,
-                                 const std::vector<size_t> &src_shape, const std::vector<size_t> &kernel_size,
-                                 const std::vector<int> &stride, std::vector<int> *padding_l,
-                                 std::vector<int> *padding_r, const std::vector<int> &dilation) const {
+namespace {
+void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int64_t> shape_exclude_nc,
+                               std::vector<int64_t> pad) {
+  if (padding_info.ceil_mode) {
+    MS_EXCEPTION_IF_NULL(padding_info.padding_invalid);
+  }
+  const size_t multiple = 2;
+  const size_t dim = shape_exclude_nc.size();
+  if (pad.size() != dim * multiple) {
+    MS_LOG(EXCEPTION) << "pad list should be " << (dim * multiple) << "D, but got " << pad.size() << "D!";
+  }
+  for (size_t i = 0; i < dim; ++i) {
+    size_t l_index = multiple * i;
+    size_t r_index = multiple * i + 1;
+    (void)padding_info.padding_l->push_back(pad[l_index]);
+
+    if (padding_info.ceil_mode) {
+      int64_t len = shape_exclude_nc[i] + pad[l_index] + pad[r_index] - padding_info.kernel_size[i];
+      int64_t padding_iv =
+        FloatToLong(std::ceil(LongToDouble(len) / LongToDouble(padding_info.stride[i]))) * padding_info.stride[i] - len;
+      int64_t padding_r = pad[r_index] + padding_iv;
+      if (padding_r > pad[r_index] && padding_r < padding_info.kernel_size[i]) {
+        (void)padding_info.padding_r->push_back(padding_r);
+        (void)padding_info.padding_invalid->push_back(LongToFloat(padding_iv));
+        continue;
+      }
+      (void)padding_info.padding_invalid->push_back(LongToFloat(0.0));
+    }
+    (void)padding_info.padding_r->push_back(pad[r_index]);
+  }
+}
+}  // namespace
+
+void MKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::vector<size_t> &src_shape,
+                                 const PaddingInfo &padding_info) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  MS_EXCEPTION_IF_NULL(padding_l);
-  MS_EXCEPTION_IF_NULL(padding_r);
-  auto dim = src_shape.size();
-  if (dim < 2) {
+  MS_EXCEPTION_IF_NULL(padding_info.padding_l);
+  MS_EXCEPTION_IF_NULL(padding_info.padding_r);
+  size_t src_dim = src_shape.size();
+  if (src_dim < NC_LEN) {
     MS_LOG(EXCEPTION) << "Set pad only support src dim >= 2!";
   }
-  std::vector<int> weight_height;
-  for (size_t i = 2; i < dim; ++i) {
-    (void)weight_height.emplace_back(src_shape[i]);
+  const size_t dim_exclude_nc = src_dim - NC_LEN;
+  std::vector<int64_t> shape_exclude_nc;
+  for (size_t i = NC_LEN; i < src_dim; ++i) {
+    (void)shape_exclude_nc.emplace_back(SizeToLong(src_shape[i]));
   }
 
-  MS_LOG(INFO) << "pad mode: " << pad_mode;
-  if (pad_mode == PAD_MODE_LOWER_SAME || pad_mode == PAD_MODE_UPPER_SAME) {
-    for (size_t i = 0; i < weight_height.size(); ++i) {
-      auto wh = weight_height[i];
-      int out = (wh + stride[i] - 1) / stride[i];
-      int effective_k = (SizeToInt(kernel_size[i]) - 1) * dilation[i] + 1;
-      int pad_along = std::max(0, (out - 1) * stride[i] + effective_k - wh);
-      int pad = pad_along / 2;
-      (void)padding_l->emplace_back(pad);
-      (void)padding_r->emplace_back(pad_along - pad);
+  if (padding_info.pad_mode == PAD_MODE_LOWER_SAME || padding_info.pad_mode == PAD_MODE_UPPER_SAME) {
+    for (size_t i = 0; i < dim_exclude_nc; ++i) {
+      int64_t wh = shape_exclude_nc[i];
+      int64_t out = (wh + padding_info.stride[i] - 1) / padding_info.stride[i];
+      int64_t effective_k = (SizeToLong(padding_info.kernel_size[i]) - 1) * padding_info.dilation[i] + 1;
+      int64_t pad_along = std::max(int64_t(0), (out - 1) * padding_info.stride[i] + effective_k - wh);
+      int64_t pad = pad_along / 2;
+      (void)padding_info.padding_l->push_back(pad);
+      (void)padding_info.padding_r->push_back(pad_along - pad);
     }
-  } else if (pad_mode == PAD_MODE_LOWER_VALID || pad_mode == PAD_MODE_UPPER_VALID) {
-    MS_LOG(INFO) << "pad valid";
-    for (size_t i = 0; i < dim - 2; ++i) {
-      (void)padding_l->emplace_back(0);
-      (void)padding_r->emplace_back(0);
+  } else if (padding_info.pad_mode == PAD_MODE_LOWER_VALID || padding_info.pad_mode == PAD_MODE_UPPER_VALID) {
+    for (size_t i = 0; i < dim_exclude_nc; ++i) {
+      (void)padding_info.padding_l->push_back(0);
+      (void)padding_info.padding_r->push_back(0);
     }
   } else {
-    std::vector<int> pad;
-    std::vector<int64_t> pad_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);
-    (void)std::transform(pad_me.begin(), pad_me.end(), std::back_inserter(pad),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-    for (size_t i = 0; i < dim; i += 2) {
-      (void)padding_l->emplace_back(pad[i]);
-      (void)padding_r->emplace_back(pad[i + 1]);
-    }
+    std::vector<int64_t> pad = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);
+    GeneratePaddingForPadMode(padding_info, shape_exclude_nc, pad);
   }
 }
 

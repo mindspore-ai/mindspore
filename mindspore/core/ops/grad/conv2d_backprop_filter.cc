@@ -27,33 +27,11 @@ namespace {
 constexpr size_t kConv2DBackpropFilterDoutIndex = 0;
 constexpr size_t kConv2DBackpropFilterInputIndex = 1;
 
-void TransStrideTo4D(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kConv2DBackpropFilterInputIndex);
-  auto dout_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kConv2DBackpropFilterDoutIndex);
-  if (!x_shape->IsDynamic() && !dout_shape->IsDynamic()) {
-    return;
-  }
-
-  auto stride = primitive->GetAttr(kStride);
-  MS_EXCEPTION_IF_NULL(stride);
-  auto stride_value = GetValue<std::vector<int64_t>>(stride);
-  constexpr size_t kStride2dSize = 2;
-  if (stride_value.size() == kStride2dSize) {
-    std::vector<int64_t> stride_value_4d(stride_value);
-    (void)stride_value_4d.insert(stride_value_4d.begin(), 1);
-    (void)stride_value_4d.insert(stride_value_4d.begin(), 1);
-    primitive->set_attr(kStride, MakeValue(stride_value_4d));
-  }
-  return;
-}
-
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   std::vector<int64_t> out_shape;
   abstract::ShapePtr ret_shape;
-  TransStrideTo4D(primitive, input_args);
   constexpr size_t kFilterSizeIndex = 2;
   auto filter_size = input_args[kFilterSizeIndex];
   auto filter_size_v = filter_size->BuildValue();

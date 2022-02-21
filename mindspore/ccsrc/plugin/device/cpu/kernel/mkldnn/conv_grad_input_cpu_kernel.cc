@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,40 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/mkldnn/conv_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/mkldnn/conv_grad_input_cpu_kernel.h"
 
 #include <string>
+#include <map>
 #include <algorithm>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kConvInputsNum = 2;
-constexpr size_t kConvOutputsNum = 1;
+constexpr size_t kConvGradInputInputsNum = 2;
+constexpr size_t kConvGradInputOutputsNum = 1;
 }  // namespace
 
-void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (kernel_name_ == kConv2DBackpropInputOpName) {
+    weight_index_ = 1;
+    diff_dst_index_ = 0;
+  }
+  std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, weight_index_);
+  std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, diff_dst_index_);
   size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
-    MS_LOG(EXCEPTION) << "Conv only supports 4D/5D input, but got " << src_dim << "D!";
+    MS_LOG(EXCEPTION) << "Conv grad only supports 4D/5D input, but got " << src_dim << "D!";
   }
   const auto format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
   if (src_dim == SHAPE_4D && format != NCHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with format NCHW, but got format " << format;
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 4D input with NCHW format, but got format" << format;
   }
   if (src_dim == SHAPE_5D && format != NCDHW) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with format NCDHW, but got format " << format;
+    MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format " << format;
   }
   dnnl::memory::dims kernel_size;
   (void)std::transform(weight_shape.begin() + NC_LEN, weight_shape.end(), std::back_inserter(kernel_size),
@@ -50,7 +55,7 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << kernel_name_ << " requires channels should be divided by group!";
+      MS_LOG(EXCEPTION) << "Conv grad channels should be divided by group!";
     }
     (void)weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
@@ -82,23 +87,28 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
   GetPadding(kernel_node, src_shape, padding_info);
 
-  const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
+  const auto forward_desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
     dilates, padding_l, padding_r);
-  const auto prim_desc = CreateDesc<dnnl::convolution_forward::primitive_desc>(desc, engine_);
-  primitive_ = CreatePrimitive<dnnl::convolution_forward>(prim_desc);
-  AddArgument(DNNL_ARG_SRC, src_desc);
+  const auto forward_prim_desc = CreateDesc<dnnl::convolution_forward::primitive_desc>(forward_desc, engine_);
+  const auto backward_desc = CreateDesc<dnnl::convolution_backward_data::desc>(
+    dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides, dilates, padding_l, padding_r);
+  const auto backward_prim_desc =
+    CreateDesc<dnnl::convolution_backward_data::primitive_desc>(backward_desc, engine_, forward_prim_desc);
+  primitive_ = CreatePrimitive<dnnl::convolution_backward_data>(backward_prim_desc);
+  AddArgument(DNNL_ARG_DIFF_SRC, src_desc);
+  AddArgument(DNNL_ARG_DIFF_DST, dst_desc);
   AddArgument(DNNL_ARG_WEIGHTS, weights_desc);
-  AddArgument(DNNL_ARG_DST, dst_desc);
 }
 
-bool ConvCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                              const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+bool ConvGradInputCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvGradInputInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvGradInputOutputsNum, kernel_name_);
+  SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->addr);
+  SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[weight_index_]->addr);
+  SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
   ExecutePrimitive();
   return true;
 }

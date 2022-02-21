@@ -14,31 +14,41 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV2D_GRAD_INPUT_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV2D_GRAD_INPUT_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_INPUT_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_INPUT_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
+
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class Conv2dGradInputCpuKernelMod : public MKLCpuKernelMod {
+class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
  public:
-  Conv2dGradInputCpuKernelMod() = default;
-  ~Conv2dGradInputCpuKernelMod() override = default;
+  ConvGradInputCpuKernelMod() = default;
+  ~ConvGradInputCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  size_t weight_index_{0};
+  size_t diff_dst_index_{1};
 };
 
 MS_REG_CPU_KERNEL(
   Conv2DBackpropInput,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  Conv2dGradInputCpuKernelMod);
+  ConvGradInputCpuKernelMod)
+
+MS_REG_CPU_KERNEL(
+  Conv3DBackpropInput,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ConvGradInputCpuKernelMod)
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV2D_GRAD_INPUT_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_GRAD_INPUT_CPU_KERNEL_H_

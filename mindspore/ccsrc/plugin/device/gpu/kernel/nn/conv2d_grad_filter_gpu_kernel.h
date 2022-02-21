@@ -38,9 +38,9 @@ constexpr size_t kBottom2DPadIndex = 1;
 constexpr size_t kLeft2DPadIndex = 2;
 constexpr size_t kRight2DPadIndex = 3;
 
-constexpr size_t k2DStrideSize = 2;
-constexpr size_t kHeight2DStrideIndex = 0;
-constexpr size_t kWidth2DStrideIndex = 1;
+constexpr size_t k2DStrideSize = 4;
+constexpr size_t kHeight2DStrideIndex = 2;
+constexpr size_t kWidth2DStrideIndex = 3;
 
 constexpr size_t k2DDilationSize = 4;
 constexpr size_t kHeight2DDilationIndex = 2;
@@ -353,8 +353,12 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != k2DStrideSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 4, but got "
                         << stride_.size();
+    }
+    if (stride_[0] != 1 || stride_[1] != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+                        << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != k2DDilationSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
