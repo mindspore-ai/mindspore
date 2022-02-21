@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace device {

@@ -17,6 +17,7 @@
 
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -55,7 +56,7 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
@@ -63,10 +64,11 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
       auto eltwise_input = cnode->input(kIndex1);
-      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
+      if (eltwise_input->isa<CNode>() &&
+          common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
         MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
       }
-    } else if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {
+    } else if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {
       MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, false);
     }
   }

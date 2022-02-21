@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/graph_builder.h"
+#include "include/transform/graph_ir/graph_builder.h"
 
 #include <sstream>
 

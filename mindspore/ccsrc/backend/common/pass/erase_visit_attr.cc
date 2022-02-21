@@ -18,6 +18,7 @@
 #include <memory>
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -29,7 +30,7 @@ const BaseRef EraseVisitAttr::DefinePattern() const {
 }
 
 const AnfNodePtr EraseVisitAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const {
-  AnfAlgo::EraseNodeAttr(kAttrVisited, node);
+  common::AnfAlgo::EraseNodeAttr(kAttrVisited, node);
   return nullptr;
 }
 }  // namespace opt

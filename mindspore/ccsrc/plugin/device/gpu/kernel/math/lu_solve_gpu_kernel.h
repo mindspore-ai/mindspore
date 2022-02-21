@@ -25,8 +25,9 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+
 namespace mindspore {
 namespace kernel {
 template <typename T>
@@ -36,11 +37,11 @@ class LuSolveGpuKernelMod : public NativeGpuKernelMod {
   ~LuSolveGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    auto input_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto input_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto input_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ = (CHECK_SHAPE_NULL(input_a_shape, kernel_name_, " lu solve input a") &&
                       (CHECK_SHAPE_NULL(input_b_shape, kernel_name_, " lu solve input b")));
     if (is_null_input_) {
@@ -132,8 +133,8 @@ class LuSolveGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   bool InitInputSize(const CNodePtr &kernel_node) {
-    auto input_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto input_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto input_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     constexpr size_t input_min_dim = 1;
     if (input_a_shape.size() <= input_min_dim || input_b_shape.size() <= input_min_dim) {
       MS_LOG_EXCEPTION << kernel_name_ << " LuSolveGpuKernelMod input shape size is " << input_a_shape.size()

@@ -21,9 +21,10 @@
 #include <vector>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
@@ -58,7 +59,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputIn
                                                                                       const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
+  auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
     mng_sub = Manage(sub_graph, false);
@@ -105,7 +106,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
   // Create composite op's sub-graph.
   auto new_sub_graph = std::make_shared<FuncGraph>();
   auto parameter = new_sub_graph->add_parameter();
-  auto kernel_with_index = AnfAlgo::VisitKernel(tsa_first_input.first, 0);
+  auto kernel_with_index = common::AnfAlgo::VisitKernel(tsa_first_input.first, 0);
   parameter->set_abstract(GetOutputAbstract(kernel_with_index.first, kernel_with_index.second));
   parameter->set_kernel_info(std::make_shared<device::KernelInfo>());
   std::string parameter_format;
@@ -178,7 +179,7 @@ void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
   for (const auto &outer_info : outer_infos) {
     auto &modified_input = std::get<1>(outer_info);
     auto tsa_first_input_index = std::get<2>(outer_info);
-    auto kernel_with_index = AnfAlgo::VisitKernel(modified_input, 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(modified_input, 0);
     modified_inputs_format[tsa_first_input_index] =
       AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     modified_inputs_type[tsa_first_input_index] =
@@ -199,7 +200,7 @@ void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(
 
 void TsaAtomicAddToFirstTensor::ProcessOriginCNode(
   const AnfNodePtr &composite_node, const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes) {
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
+  auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
     mng_sub = Manage(sub_graph, false);

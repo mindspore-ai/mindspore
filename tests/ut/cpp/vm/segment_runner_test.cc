@@ -28,8 +28,8 @@
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/transform.h"
 #include "ir/tensor.h"
-#include "utils/convert_utils.h"
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "base/core_ops.h"
 

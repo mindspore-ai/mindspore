@@ -26,8 +26,6 @@
 
 namespace mindspore {
 namespace abstract {
-namespace python_adapter = mindspore::parse::python_adapter;
-
 class TestEvaluatorCacheMap : public UT::Common {
  public:
   void SetUp() {}

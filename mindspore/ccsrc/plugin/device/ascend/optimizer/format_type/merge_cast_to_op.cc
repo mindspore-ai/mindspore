@@ -22,7 +22,8 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "base/core_ops.h"
 
@@ -73,7 +74,7 @@ bool GetNextNodeAndCastIndex(const FuncGraphPtr &graph, const AnfNodePtr &node, 
 
 bool CheckInputs(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuildInfo> &kernel_info) {
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (AnfAlgo::GetInputTensorNum(node) != kernel_info->GetInputNum()) {
+  if (common::AnfAlgo::GetInputTensorNum(node) != kernel_info->GetInputNum()) {
     return false;
   }
 
@@ -89,7 +90,7 @@ bool CheckInputs(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuild
 bool CheckOtherOutputs(const CNodePtr &node, const std::shared_ptr<kernel::KernelBuildInfo> &kernel_info,
                        const size_t idx) {
   MS_EXCEPTION_IF_NULL(kernel_info);
-  if (AnfAlgo::GetOutputTensorNum(node) != kernel_info->GetOutputNum()) {
+  if (common::AnfAlgo::GetOutputTensorNum(node) != kernel_info->GetOutputNum()) {
     return false;
   }
   for (size_t index = 0; index < kernel_info->GetOutputNum(); ++index) {
@@ -113,7 +114,7 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
   if (AnfAlgo::GetOutputDeviceDataType(node, 0) != kernel_info->GetOutputDeviceType(index)) {
     return false;
   }
-  if (AnfAlgo::GetOutputInferShape(node, 0).size() == kInferShapeSize &&
+  if (common::AnfAlgo::GetOutputInferShape(node, 0).size() == kInferShapeSize &&
       AnfAlgo::GetOutputFormat(node, 0) == kOpFormat_NCHW && kernel_info->GetOutputFormat(index) == kOpFormat_DEFAULT) {
     return true;
   }
@@ -123,22 +124,22 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
 void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size_t cast_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cast);
-  auto cast_dtype = AnfAlgo::GetOutputInferDataType(cast, 0);
-  auto cast_shape = AnfAlgo::GetOutputDetailShape(cast, 0);
+  auto cast_dtype = common::AnfAlgo::GetOutputInferDataType(cast, 0);
+  auto cast_shape = common::AnfAlgo::GetOutputDetailShape(cast, 0);
   std::vector<abstract::BaseShapePtr> shapes;
   std::vector<TypeId> types;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t index = 0; index < output_num; ++index) {
     if (cast_index == index) {
       (void)shapes.emplace_back(cast_shape);
       (void)types.emplace_back(cast_dtype);
       continue;
     }
-    (void)shapes.emplace_back(AnfAlgo::GetOutputDetailShape(cnode, index));
-    (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
+    (void)shapes.emplace_back(common::AnfAlgo::GetOutputDetailShape(cnode, index));
+    (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(cnode, index));
   }
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, cnode.get());
-  auto prim_op = AnfAlgo::GetCNodePrimitive(cnode);
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, cnode.get());
+  auto prim_op = common::AnfAlgo::GetCNodePrimitive(cnode);
   if (prim_op != nullptr) {
     (void)prim_op->AddAttr("cast_type", TypeIdToType(cast_dtype));
   }
@@ -157,7 +158,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   auto next_cnode = next_node->cast<CNodePtr>();
-  auto next_op_name = AnfAlgo::GetCNodeName(next_cnode);
+  auto next_op_name = common::AnfAlgo::GetCNodeName(next_cnode);
   if (next_op_name == prim::kPrimSend->name() || next_op_name == kStackPushOpName) {
     return nullptr;
   }
@@ -179,8 +180,9 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
                << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
                << (*alternative_kernel_info)->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(*alternative_kernel_info, next_cnode.get());
-  if (AnfAlgo::GetInputTensorNum(node) < kCastInputTensorNum) {
-    MS_LOG(EXCEPTION) << "Op[" << node->DebugString() << "] has wrong input num:" << AnfAlgo::GetInputTensorNum(node)
+  if (common::AnfAlgo::GetInputTensorNum(node) < kCastInputTensorNum) {
+    MS_LOG(EXCEPTION) << "Op[" << node->DebugString()
+                      << "] has wrong input num:" << common::AnfAlgo::GetInputTensorNum(node)
                       << ", should be not less than " << kCastInputTensorNum << trace::DumpSourceLines(node);
   }
   return node->input(1);
@@ -192,7 +194,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
     auto x_cnode = x_node->cast<CNodePtr>();
     *prior_op = x_cnode;
     // when x_node is tuple_getitem
-    if (AnfAlgo::GetCNodeName(x_node) == prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(x_node) == prim::kPrimTupleGetItem->name()) {
       CheckCNodeInputSize(x_cnode, kTupleGetItemInputTensorNum);
       MS_EXCEPTION_IF_NULL(output_idx);
       AnfNodePtr input1 = x_cnode->input(1);
@@ -232,8 +234,8 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
   MS_EXCEPTION_IF_NULL(prior_op);
 
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  if (AnfAlgo::GetCNodeName(prior_op) == prim::kPrimReceive->name() ||
-      AnfAlgo::GetCNodeName(prior_op) == kStackPopOpName) {
+  if (common::AnfAlgo::GetCNodeName(prior_op) == prim::kPrimReceive->name() ||
+      common::AnfAlgo::GetCNodeName(prior_op) == kStackPopOpName) {
     return nullptr;
   }
   kernel_query->Query(prior_op, &kernel_info_list);
@@ -257,11 +259,11 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
     MS_EXCEPTION_IF_NULL(x_node);
     ChangeNodeInferInfo(x_node->cast<CNodePtr>(), cur_node, 0);
   }
-  auto prior_name = AnfAlgo::GetCNodeName(prior_op);
+  auto prior_name = common::AnfAlgo::GetCNodeName(prior_op);
   if (prior_name == kFive2FourOpName) {
-    AnfAlgo::CopyNodeAttr("dst_type", "dstType", cur_node, prior_op);
+    common::AnfAlgo::CopyNodeAttr("dst_type", "dstType", cur_node, prior_op);
   } else if (prior_name == kFour2FiveOpName) {
-    AnfAlgo::CopyNodeAttr("dst_type", cur_node, prior_op);
+    common::AnfAlgo::CopyNodeAttr("dst_type", cur_node, prior_op);
   }
   return single_output ? prior_op : x_node;
 }

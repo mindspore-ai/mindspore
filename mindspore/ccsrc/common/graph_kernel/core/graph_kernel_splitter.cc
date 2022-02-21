@@ -25,7 +25,7 @@
 #include "utils/anf_utils.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"

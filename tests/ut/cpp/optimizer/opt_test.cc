@@ -30,6 +30,7 @@
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/cse.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace opt {

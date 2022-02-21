@@ -20,7 +20,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace opt {
@@ -92,7 +92,7 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   AnfVisitor::Match(prim::kPrimCast, {IsCNode, IsNode})(node);
 
   if (x_ != nullptr && t_ != nullptr) {
-    auto cast_op = parse::python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
+    auto cast_op = python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
     ValuePtr cast = parse::data_converter::PyDataToValue(cast_op);
     auto cnode = NewCNode({NewValueNode(cast), x_, t_}, node->func_graph());
     cnode->set_abstract(node->abstract());

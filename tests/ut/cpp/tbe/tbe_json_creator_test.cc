@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/fusion_tbe_json_creator.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::kernel {
 
@@ -233,7 +234,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
   EXPECT_TRUE(tbe_json_creator_select->GenJson(layer_norm, &kernel_json));
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 6545088373747371515U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(),  10583210293426000299U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 10583210293426000299U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(layer_norm, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 10583210293426000299U);
 }
@@ -288,12 +289,13 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
 
   std::vector<AnfNodePtr> input_nodes;
   std::vector<AnfNodePtr> compute_nodes = {relu1, relu2};
-  std::string full_name = "FusionOp_" + AnfAlgo::GetCNodeName(relu1) + "_" + AnfAlgo::GetCNodeName(relu2);
+  std::string full_name =
+    "FusionOp_" + common::AnfAlgo::GetCNodeName(relu1) + "_" + common::AnfAlgo::GetCNodeName(relu2);
   for (auto &node : compute_nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
-      auto real_input = AnfAlgo::VisitKernel(cnode->input(idx), 0);
+      auto real_input = common::AnfAlgo::VisitKernel(cnode->input(idx), 0);
       if (std::find(compute_nodes.begin(), compute_nodes.end(), real_input.first) == compute_nodes.end()) {
         if (auto in = cnode->input(idx); std::find(input_nodes.begin(), input_nodes.end(), in) == input_nodes.end()) {
           input_nodes.push_back(in);
@@ -347,12 +349,13 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
 
   std::vector<AnfNodePtr> input_nodes;
   std::vector<AnfNodePtr> compute_nodes = {add, conv2d};
-  std::string full_name = "FusionOp_" + AnfAlgo::GetCNodeName(add) + "_" + AnfAlgo::GetCNodeName(conv2d);
+  std::string full_name =
+    "FusionOp_" + common::AnfAlgo::GetCNodeName(add) + "_" + common::AnfAlgo::GetCNodeName(conv2d);
   for (auto &node : compute_nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
-      auto real_input = AnfAlgo::VisitKernel(cnode->input(idx), 0);
+      auto real_input = common::AnfAlgo::VisitKernel(cnode->input(idx), 0);
       if (std::find(compute_nodes.begin(), compute_nodes.end(), real_input.first) == compute_nodes.end()) {
         if (auto in = cnode->input(idx); std::find(input_nodes.begin(), input_nodes.end(), in) == input_nodes.end()) {
           input_nodes.push_back(in);

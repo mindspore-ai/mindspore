@@ -18,6 +18,7 @@
 #include "runtime/stream.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 using mindspore::ge::model_runner::StreamActiveTaskInfo;
 using StreamActiveTaskInfoPtr = std::shared_ptr<StreamActiveTaskInfo>;
@@ -31,9 +32,9 @@ StreamActiveKernel::~StreamActiveKernel() {}
 bool StreamActiveKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(INFO) << "stream active op init start";
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (!AnfAlgo::HasNodeAttr(kAttrActiveStreamList, anf_node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, anf_node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "StreamActiveKernel " << anf_node->DebugString() << "has no attr kAttrActiveStreamList";
   }
   active_streams_index_ = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrActiveStreamList));

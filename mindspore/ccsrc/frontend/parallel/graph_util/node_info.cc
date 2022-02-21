@@ -21,7 +21,7 @@
 #include "base/core_ops.h"
 #include "ir/param_info.h"
 #include "ir/meta_tensor.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"

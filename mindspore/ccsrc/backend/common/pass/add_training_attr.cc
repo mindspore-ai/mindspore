@@ -24,9 +24,7 @@
 #include "utils/hash_set.h"
 #include "ir/graph_utils.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "backend/common/session/kernel_graph.h"
-#include "kernel/common_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -38,12 +36,12 @@ bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const 
   for (const auto &node_index : manager->node_users()[cnode]) {
     auto output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimTupleGetItem)) {
+    if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimTupleGetItem)) {
       if (CheckOP(manager, output, set)) {
         return true;
       }
     } else if (output->isa<CNode>()) {
-      auto name = AnfAlgo::GetCNodeName(output);
+      auto name = common::AnfAlgo::GetCNodeName(output);
       if (set.find(name) != set.end()) {
         return true;
       }
@@ -59,7 +57,7 @@ void AddAttrTraining(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   if (manager->node_users().find(cnode) == manager->node_users().end()) {
     return;
   }
-  auto set = MarkOp[AnfAlgo::GetCNodeName(cnode)];
+  auto set = MarkOp[common::AnfAlgo::GetCNodeName(cnode)];
   if (CheckOP(manager, cnode, set)) {
     cnode->AddAttr(kAttrIsTraining, MakeValue(true));
   } else {
@@ -70,14 +68,14 @@ void AddAttrTraining(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
 
 const AnfNodePtr AddTrainingAttr::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                           const EquivPtr &) const {
-  if (node == nullptr || func_graph == nullptr || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
-      AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+  if (node == nullptr || func_graph == nullptr || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     return nullptr;
   }
   if (!node->isa<CNode>()) {
     return nullptr;
   }
-  auto name = AnfAlgo::GetCNodeName(node);
+  auto name = common::AnfAlgo::GetCNodeName(node);
   auto iter = MarkOp.find(name);
   if (iter == MarkOp.end()) {
     return nullptr;

@@ -17,8 +17,9 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
@@ -44,14 +45,14 @@ bool CheckIndex(const AnfNodePtr &index_node) {
 bool CheckBatchNorm(const FuncGraphPtr &graph, const CNodePtr &batchnorm) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnorm);
-  if (AnfAlgo::GetInputTensorNum(batchnorm) < kBnInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(batchnorm) < kBnInputTensorNum) {
     MS_LOG(DEBUG) << "BatchNorm's input number less than " << kBnInputTensorNum;
     return false;
   }
-  if (!AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnorm)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnorm)) {
     return false;
   }
-  auto is_training = AnfAlgo::GetNodeAttr<bool>(batchnorm, kAttrIsTraining);
+  auto is_training = common::AnfAlgo::GetNodeAttr<bool>(batchnorm, kAttrIsTraining);
   if (is_training) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;
@@ -99,8 +100,8 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(batchnorm->scope());
   new_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnorm, new_node);
   return new_node;
 }
 

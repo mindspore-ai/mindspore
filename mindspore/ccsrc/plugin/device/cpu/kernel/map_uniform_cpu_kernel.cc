@@ -29,7 +29,7 @@ constexpr size_t kMapUniformOutputsNum = 1;
 
 void MapUniformCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -57,7 +57,7 @@ void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
   }
-  auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   batch_size_ = 1;
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     batch_size_ *= input_x_shape[i];

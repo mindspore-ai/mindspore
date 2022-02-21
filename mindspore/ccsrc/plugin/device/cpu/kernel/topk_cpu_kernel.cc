@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/topk_cpu_kernel.h"
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -91,8 +91,8 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
 
 void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (x_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input should be greater than 0, but got empty input.";
@@ -101,7 +101,7 @@ void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     outer_size_ *= x_shape_[i];
   }
   inner_size_ = x_shape_[x_shape_.size() - 1];
-  sorted_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "sorted");
+  sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "sorted");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 

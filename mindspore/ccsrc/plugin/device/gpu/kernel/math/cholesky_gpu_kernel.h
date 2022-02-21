@@ -27,7 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,16 +46,16 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
   ~CholeskyGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     // if clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-    if (AnfAlgo::HasNodeAttr(kClean, kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kClean, kernel_node)) {
       clean_ = static_cast<bool>(GetAttr<bool>(kernel_node, kClean));
     }
-    if (AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
       lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
     }
-    if (AnfAlgo::HasNodeAttr(kSplitDim, kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kSplitDim, kernel_node)) {
       split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, kSplitDim));
     }
     // Cholesky input is sys_positive_matrix and saved by col_major in gpu backend.
@@ -68,7 +68,7 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     // Get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
-    auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
+    auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

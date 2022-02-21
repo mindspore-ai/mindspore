@@ -30,8 +30,8 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/hal/hardware/optimizer.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "plugin/device/gpu/hal/device/gpu_bucket.h"
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
@@ -40,7 +40,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #endif
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif

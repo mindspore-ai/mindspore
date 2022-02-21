@@ -155,10 +155,10 @@ void ArithmeticLogicCpuKernelMod<T>::InitComputeFunc() {
 template <typename T>
 void ArithmeticLogicCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape1_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  input_shape2_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape1_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  input_shape2_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape_.empty()) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }

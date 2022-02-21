@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_v2.h"
 #include <memory>
 #include <algorithm>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 
 namespace mindspore {

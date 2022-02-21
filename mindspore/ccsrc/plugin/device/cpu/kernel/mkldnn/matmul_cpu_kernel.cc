@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/mkldnn/matmul_cpu_kernel.h"
 #include <utility>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "plugin/device/cpu/kernel/nnacl/matmul_parameter.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/matmul_fp32.h"
@@ -35,15 +35,15 @@ using dims = dnnl::memory::dims;
 
 void MatMulCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be greater than or equal to " << kRankMin;
   }
-  bool trans_a = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
-  bool trans_b = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
+  bool trans_a = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
+  bool trans_b = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
   auto rank = a_shape.size();
   int64_t batch = 1;
   for (size_t i = 0; i < rank - kIndexOffset; ++i) {

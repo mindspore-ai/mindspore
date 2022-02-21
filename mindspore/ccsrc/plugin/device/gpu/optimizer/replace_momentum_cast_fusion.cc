@@ -16,8 +16,9 @@
 #include "plugin/device/gpu/optimizer/replace_momentum_cast_fusion.h"
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -33,28 +34,28 @@ const AnfNodePtr ReplaceMomentumCastFusion::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  auto grad_cast = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kGradIndex);
+  auto grad_cast = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kGradIndex);
   MS_EXCEPTION_IF_NULL(grad_cast);
-  auto src = AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
+  auto src = common::AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
   // momentum only support fp32/fp16 by now, do nothing if not.
   if (src != kNumberTypeFloat16 || src != kNumberTypeFloat32) {
     return nullptr;
   }
-  auto grad = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(grad_cast), 0);
+  auto grad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(grad_cast), 0);
   MS_EXCEPTION_IF_NULL(grad);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->Replace(utils::cast<CNodePtr>(grad_cast), utils::cast<CNodePtr>(grad));
   std::vector<TypeId> outputs_type;
   std::vector<std::vector<size_t>> outputs_shape;
-  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; i++) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, i));
-    outputs_shape.push_back(AnfAlgo::GetOutputInferShape(node, i));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(node, i));
   }
-  outputs_type[kGradIndex] = AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
+  outputs_type[kGradIndex] = common::AnfAlgo::GetPrevNodeOutputInferDataType(grad_cast, 0);
 
-  AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, node.get());
 
   return node;
 }

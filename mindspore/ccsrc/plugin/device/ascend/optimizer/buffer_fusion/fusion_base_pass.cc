@@ -18,6 +18,7 @@
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -74,7 +75,7 @@ size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &ker
   size_t not_updatestate_users = 0;
   for (auto &user : user_nodes) {
     auto user_node = user.first;
-    if (!AnfAlgo::CheckPrimitiveType(user_node, prim::kPrimUpdateState)) {
+    if (!common::AnfAlgo::CheckPrimitiveType(user_node, prim::kPrimUpdateState)) {
       not_updatestate_users++;
     }
   }

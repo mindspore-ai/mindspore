@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -29,7 +30,8 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   mindspore::HashSet<AnfNodePtr> record{cnode};
   auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
-  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input) && AnfAlgo::GetCNodeName(eltwise_input) == kAddNOpName) {
+  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input) &&
+      common::AnfAlgo::GetCNodeName(eltwise_input) == kAddNOpName) {
     (void)record.insert(eltwise_input);
   } else {
     return;
@@ -43,7 +45,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   if (!double_in_eltwise_input->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input)) {
     return;
   }
-  if (AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInput) &&
+  if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInput) &&
       !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {
     (void)record.insert(double_in_eltwise_input);
     candidate_fusion->push_back(record);
@@ -54,7 +56,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
     if (!double_in_eltwise_input_1->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(double_in_eltwise_input_1)) {
       return;
     }
-    if (AnfAlgo::CheckPrimitiveType(double_in_eltwise_input_1, prim::kPrimConv2DBackpropInput) &&
+    if (common::AnfAlgo::CheckPrimitiveType(double_in_eltwise_input_1, prim::kPrimConv2DBackpropInput) &&
         !fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input_1)) {
       (void)record.insert(double_in_eltwise_input_1);
       candidate_fusion->push_back(record);
@@ -69,14 +71,14 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const sess
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-        AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
+        common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
       MatchConv2DBackpropInputEltwiseEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

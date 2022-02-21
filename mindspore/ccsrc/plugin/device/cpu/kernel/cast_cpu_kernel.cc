@@ -42,7 +42,7 @@ void Cast(CastCpuKernelMod<S, T> *content, const S *in, T *out, size_t size) {
 template <typename S, typename T>
 void CastCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   source_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   target_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
 }

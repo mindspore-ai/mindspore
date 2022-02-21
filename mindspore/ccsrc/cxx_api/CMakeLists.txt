@@ -82,8 +82,7 @@ if(BUILD_LITE)
     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
     add_dependencies(mindspore_shared_lib _mindspore_transform_graph_ir_obj)
 elseif(ENABLE_ACL AND NOT ENABLE_D)
-    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
-            $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>)
+    target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_backend_graph_compiler_obj>)
 endif()
 if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
@@ -91,13 +90,14 @@ endif()
 
 if(ENABLE_D OR ENABLE_GPU)
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore::protobuf)
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core mindspore_common proto_input
+        mindspore::protobuf)
 else()
     if(BUILD_LITE)
         target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
     else()
         target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
-                mindspore mindspore_core proto_input mindspore::protobuf)
+                mindspore mindspore_core mindspore_common proto_input mindspore::protobuf)
     endif()
 endif()
 

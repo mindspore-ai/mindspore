@@ -49,14 +49,14 @@ class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
     }
 
-    std::vector<size_t> prev_node_output_shape_tmp = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    std::vector<size_t> prev_node_output_shape_tmp = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(prev_node_output_shape_tmp, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

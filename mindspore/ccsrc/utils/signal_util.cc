@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "utils/signal_util.h"
+#include "include/common/utils/signal_util.h"
 #include <csignal>
 #include "utils/log_adapter.h"
-#include "backend/common/session/kernel_build_client.h"
 
 namespace mindspore {
 SignalGuard::SignalGuard(IntHandlerFunc IntHandler) { RegisterHandlers(IntHandler); }

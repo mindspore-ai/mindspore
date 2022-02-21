@@ -19,11 +19,12 @@
 #include <memory>
 
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -42,18 +43,19 @@ void BnGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNo
   bn_update_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_update_grad->set_scope(bn_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_grad_node, 1), AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 1), AnfAlgo::GetOutputDetailShape(bn_grad_node, 2)};
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_update_grad.get());
-
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
-  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
-    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 1),
+                 common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 2)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_update_grad.get());
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
+  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_update_grad);
   } else {
-    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_update_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_update_grad);
   }
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_update_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_update_grad);
   }
   CreateMultipleOutputsOfAnfNode(graph, bn_update_grad, kBNTrainingUpdateGradOutputNum, bn_update_grad_outputs);
 }
@@ -83,26 +85,25 @@ void BnGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNo
   bn_reduce_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_reduce_grad->set_scope(bn_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_grad_node, 0)};
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_reduce_grad.get());
-
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
-  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
-    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_grad_node, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_reduce_grad.get());
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
+  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_grad_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_grad_node, bn_reduce_grad);
   } else {
-    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_reduce_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_reduce_grad);
   }
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_reduce_grad);
-    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_reduce_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_reduce_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_reduce_grad);
   }
   (*bn_reduce_grad_outputs).push_back(bn_reduce_grad);
 }
 
 CNodePtr BnGradSplit::BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
+  bool is_dynamic = common::AnfAlgo::IsDynamicShape(cnode);
   std::vector<AnfNodePtr> bn_update_grad_outputs;
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs, is_dynamic);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
@@ -129,7 +130,7 @@ CNodePtr SyncBnGradSplit::SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, 
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> bn_update_grad_outputs;
 
-  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
+  bool is_dynamic = common::AnfAlgo::IsDynamicShape(cnode);
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs, is_dynamic);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be " << kBNTrainingUpdateGradOutputNum

@@ -27,10 +27,10 @@ constexpr size_t kOutputSize = 1;
 template <typename T>
 void ROIAlignCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   //  Get the input shapes
-  auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
   auto x_shape_size = x_shape.size();
   if (x_shape_size != X_DIMS) {
@@ -44,11 +44,11 @@ void ROIAlignCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   roi_rows_ = SizeToInt(rois_shape[0]);
   roi_cols_ = SizeToInt(rois_shape[1]);
 
-  pooled_height_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_height"));
-  pooled_width_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_width"));
-  spatial_scale_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, "spatial_scale"));
-  sample_num_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
-  roi_end_mode_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "roi_end_mode"));
+  pooled_height_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_height"));
+  pooled_width_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_width"));
+  spatial_scale_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, "spatial_scale"));
+  sample_num_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
+  roi_end_mode_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "roi_end_mode"));
 
   MS_EXCEPTION_IF_ZERO("channel", channels_);
   MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height_);

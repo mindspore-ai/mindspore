@@ -32,10 +32,11 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_property_checker.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "nlohmann/json.hpp"
 #include "utils/convert_utils_base.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kName = "name";
@@ -57,7 +58,7 @@ TbeKernelSelect::TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_p
 void TbeKernelSelect::TbeMetadataInfoEx() {
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(kernel_info_list_);
-  node_name_ = AnfAlgo::GetCNodeName(cnode_ptr_);
+  node_name_ = common::AnfAlgo::GetCNodeName(cnode_ptr_);
   full_name_ = cnode_ptr_->fullname_with_scope();
 
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
@@ -92,12 +93,13 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
 void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
   auto dyn_input_sizes = GetNodeDynamicInputs();
   // get real input/output num
-  size_t real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  size_t real_input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
   const auto inputs_info = op_info.inputs_ptr();
-  size_t real_output_tensor_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  size_t real_output_tensor_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   const auto outputs_info = op_info.outputs_ptr();
   if (inputs_info.empty() && outputs_info.empty()) {
-    MS_LOG(EXCEPTION) << AnfAlgo::GetCNodeName(cnode_ptr_) << "'s op info input & output is null, please check.";
+    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(cnode_ptr_)
+                      << "'s op info input & output is null, please check.";
   }
   // create kernel build info from opinfo
   size_t kernel_build_info_num =
@@ -218,7 +220,7 @@ bool TbeKernelSelect::FilterInVaildShape(const KernelBuildInfoIter &kernel_build
   auto iter_num =
     is_dynamic_input && !kernel_build_info_inputs_format.empty() ? 1 : kernel_build_info_inputs_format.size();
   for (size_t i = 0; i < iter_num; ++i) {
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
     const auto &format = kernel_build_info_inputs_format.at(i);
     if (!IsShapeMatchFormat(shape, format)) {
       return false;
@@ -226,7 +228,7 @@ bool TbeKernelSelect::FilterInVaildShape(const KernelBuildInfoIter &kernel_build
   }
   const auto &kernel_build_info_outputs_format = (*kernel_build_info_iter)->GetAllOutputFormats();
   for (size_t j = 0; j < kernel_build_info_outputs_format.size(); ++j) {
-    auto shape = AnfAlgo::GetOutputInferShape(cnode_ptr_, j);
+    auto shape = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, j);
     const auto &format = kernel_build_info_outputs_format[j];
     if (!IsShapeMatchFormat(shape, format)) {
       return false;
@@ -287,7 +289,7 @@ void TbeKernelSelect::SetTbeBuildCommonInfo(const mindspore::kernel::OpInfo &op_
 
 std::vector<int64_t> TbeKernelSelect::GetNodeDynamicInputs() {
   // get dynamic inputs
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(primitive);
   std::vector<int64_t> dyn_input_sizes;
   if (primitive->HasAttr(kAttrDynInputSizes)) {

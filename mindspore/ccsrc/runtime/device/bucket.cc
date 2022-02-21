@@ -17,7 +17,7 @@
 #include "runtime/device/bucket.h"
 
 #include "runtime/device/kernel_runtime_manager.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/profile.h"
 
 namespace mindspore::device {

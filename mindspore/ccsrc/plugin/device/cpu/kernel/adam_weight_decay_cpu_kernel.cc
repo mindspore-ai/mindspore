@@ -90,7 +90,7 @@ void AdamWeightDecayCpuKernelMod::LaunchAdamWeightDecayNnacl(const std::vector<A
 
 void AdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 

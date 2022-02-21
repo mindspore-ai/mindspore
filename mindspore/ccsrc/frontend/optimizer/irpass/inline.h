@@ -23,7 +23,7 @@
 
 #include "utils/hash_map.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "ir/func_graph.h"
@@ -31,7 +31,7 @@
 #include "ir/tensor.h"
 #include "frontend/operator/ops.h"
 #include "abstract/abstract_value.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

@@ -26,7 +26,7 @@
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
@@ -38,12 +38,13 @@
 #include "runtime/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
-#include "utils/utils.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
@@ -179,7 +180,7 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     if (cnode_refcount.find(kernel_with_index) == cnode_refcount.end()) {
       continue;
     }
-    const auto &output_kernel_with_index = AnfAlgo::VisitKernel(output, 0);
+    const auto &output_kernel_with_index = common::AnfAlgo::VisitKernel(output, 0);
     const auto &output_node = output_kernel_with_index.first;
     const auto &output_index = output_kernel_with_index.second;
     auto out_abstract = output_node->abstract();
@@ -190,7 +191,7 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     }
     abstract::AbstractTensorPtr tensor_abstract = out_abstract->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor_abstract);
-    const auto &infer_type = AnfAlgo::GetOutputInferDataType(output_node, output_index);
+    const auto &infer_type = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
     tensor::TensorPtr stub_output_tensor =
       std::make_shared<tensor::Tensor>(infer_type, tensor_abstract->shape()->shape(), nullptr);
     const auto &output_type = AnfAlgo::GetOutputDeviceDataType(output_node, output_index);
@@ -255,7 +256,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
 #endif
       auto input_param = parameter->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(input_param);
-      if (AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
+      if (common::AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
         tensor->set_device_address(device_address);
       }
       if (kernel_graph->IsUpdatedParameter(input_param)) {
@@ -340,8 +341,8 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
       auto tensor_shape = tensor->shape();
       std::vector<size_t> shape_tmp;
       (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), LongToSize);
-      AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
-                                          input_node.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+                                                  input_node.get());
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
     if (AnfAlgo::OutputAddrExist(input_node, 0) &&
@@ -362,7 +363,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
       auto ms_context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(ms_context);
       if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-          AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
+          common::AnfAlgo::IsParameterWeight(input_param) || kernel_graph->IsUpdatedParameter(input_param)) {
         tensor->set_device_address(device_address);
       }
       if (kernel_graph->IsUpdatedParameter(input_param)) {
@@ -771,7 +772,7 @@ void AscendSession::PrepareForOutputTensor(const KernelGraphPtr &graph,
 void StoreCNodePrimitive(const KernelGraphPtr &graph) {
   const auto &nodes = graph->execution_order();
   for (auto &node : nodes) {
-    auto primitive = AnfAlgo::GetCNodePrimitive(node);
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
     MS_EXCEPTION_IF_NULL(primitive);
     auto new_primitive = std::make_shared<Primitive>(*primitive);
     node->set_input(kAnfPrimitiveIndex, NewValueNode(new_primitive));
@@ -908,7 +909,7 @@ void AscendSession::CacheCNodeOutputInfo(const KernelGraph &graph) const {
     std::vector<std::string> formats;
     std::vector<TypeId> types;
     std::vector<size_t> tensor_sizes;
-    auto output_num = AnfAlgo::GetOutputTensorNum(node);
+    auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       std::string output_format = AnfAlgo::GetOutputFormat(node, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
@@ -930,12 +931,12 @@ void AscendSession::CacheCNodeOutputInfo(const KernelGraph &graph) const {
     std::vector<std::string> formats;
     std::vector<TypeId> types;
     std::vector<size_t> tensor_sizes;
-    auto output_size = AnfAlgo::GetOutputTensorNum(input);
+    auto output_size = common::AnfAlgo::GetOutputTensorNum(input);
     for (size_t index = 0; index < output_size; index++) {
       auto format = AnfAlgo::GetOutputFormat(input, index);
       auto type_id = AnfAlgo::GetOutputDeviceDataType(input, index);
       if (type_id == kTypeUnknown) {
-        type_id = AnfAlgo::GetOutputInferDataType(input, index);
+        type_id = common::AnfAlgo::GetOutputInferDataType(input, index);
       }
       auto tensor_size = AnfAlgo::GetOutputTensorMemSize(input, index);
       formats.emplace_back(format);
@@ -952,10 +953,10 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
                                           InputTensorInfo *input_tensor_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
-  const auto input_tensor_num = AnfAlgo::GetInputTensorNum(cnode);
+  const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
-    auto kernel_with_index = AnfAlgo::VisitKernel(input, 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
     auto real_input = kernel_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
     tensor::TensorPtr tensor = nullptr;
@@ -1109,7 +1110,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   MS_LOG(INFO) << "Status record: start adjust kernel. graph id: " << kernel_graph->graph_id();
   opt::HideNopNode(kernel_graph.get());
   auto execution_order = kernel_graph->execution_order();
-  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   kernel_graph->set_execution_order(execution_order);
   // Insert CLearZero op
   // prepare for next step from json get atomic info
@@ -1170,7 +1171,7 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &kernels = kernel_graph->execution_order();
   auto iter = std::find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
-    return AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
+    return common::AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
   });
   if (iter == kernels.end()) {
     return;
@@ -1189,7 +1190,7 @@ static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint3
     MS_LOG(EXCEPTION) << "there is no node after this node:" << kernel_nodes[index]->DebugString();
   }
   auto kernel = kernel_nodes[index + 1];
-  if (AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
+  if (common::AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
     MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, node: "
                       << kernel_nodes[index]->DebugString();
   }
@@ -1210,14 +1211,14 @@ static std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &ke
     } else {
       back->emplace_back(kernel_cnodes[i]);
     }
-    if (AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
       *index = i;
       back->insert(back->end(), back_temp.begin(), back_temp.end());
       return front;
     }
-    if (AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
       back_flag = true;
-      if (!AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
+      if (!common::AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
         auto temp = HandleRecursiveCall(kernel_cnodes, back_label, &(++i), &back_temp);
         front.insert(front.end(), temp.begin(), temp.end());
       }
@@ -1236,11 +1237,11 @@ static void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
   std::vector<CNodePtr> mem_reuse_order;
   mem_reuse_order.reserve(kernel_cnodes.size());
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
-    if (!AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
       mem_reuse_order.emplace_back(kernel_cnodes[i]);
       continue;
     }
-    auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
     std::vector<CNodePtr> back;
     auto front = HandleRecursiveCall(kernel_cnodes, label_id, &i, &back);
     mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
@@ -1253,11 +1254,11 @@ static void GetSubGraphExecOrder(const KernelGraph *kernel_graph, uint32_t index
                                  std::vector<CNodePtr> *mem_reuse_order) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(mem_reuse_order);
-  auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(back_node, kAttrLabelIndex);
+  auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(back_node, kAttrLabelIndex);
   auto kernel_cnodes = kernel_graph->execution_order();
   for (auto i = index; i < kernel_cnodes.size(); i++) {
     mem_reuse_order->emplace_back(kernel_cnodes[i]);
-    if (AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], label_id)) {
+    if (common::AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], label_id)) {
       return;
     }
   }
@@ -1273,10 +1274,10 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   std::vector<CNodePtr> mem_reuse_order;
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
     mem_reuse_order.emplace_back(kernel_cnodes[i]);
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
-        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
-      auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_cnodes[i], kAttrLabelSwitchList);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_cnodes[i], kAttrLabelSwitchList);
       for (auto label_id : label_list) {
         if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
           continue;
@@ -1286,10 +1287,10 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
       }
       continue;
     }
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelGoto) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
-        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
-      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelGoto) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
       if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
         continue;
       }
@@ -1297,9 +1298,9 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
       GetSubGraphExecOrder(kernel_graph, label_id_index_map[label_id], back_node, &mem_reuse_order);
       continue;
     }
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSet) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
-      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSet) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+      auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
       if (label_id_index_map.find(label_id) != label_id_index_map.end()) {
         MS_LOG(EXCEPTION) << "Two labelsets with same label id.";
       }
@@ -1584,8 +1585,8 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
 void AscendSession::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
   for (const auto &node : nodes) {
     auto status = device::ascend::SelectKernelInfo(node);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
     if (status == device::ascend::kStatusRaisePrecision) {
       raise_precision_count_++;
     } else if (status == device::ascend::kStatusReducePrecision) {
@@ -1830,8 +1831,8 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
           tensor_device_addr_map_[tensor] = dst_device_address;
         }
 
-        if (AnfAlgo::IsDynamicShape(node)) {
-          const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+        if (common::AnfAlgo::IsDynamicShape(node)) {
+          const auto &updated_shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
           ShapeVector int_shape;
           (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
           (void)tensor->set_shape(int_shape);

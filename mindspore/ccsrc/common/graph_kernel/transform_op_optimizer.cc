@@ -28,6 +28,7 @@
 #include "debug/common.h"
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/op_register.h"
@@ -439,8 +440,8 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   auto todos = TopoSort(kernel_graph->get_return());
   bool changed = false;
   for (auto node : todos) {
-    if (!AnfAlgo::IsGraphKernel(node)) continue;
-    auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (!common::AnfAlgo::IsGraphKernel(node)) continue;
+    auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
     if (Process(litegraph)) {
       changed = true;

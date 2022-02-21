@@ -24,6 +24,7 @@
 #include "kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 
@@ -65,7 +66,7 @@ class KernelQuery {
     if (!node->isa<CNode>()) {
       return false;
     }
-    auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(node), node);
+    auto op_info = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(common::AnfAlgo::GetCNodeName(node), node);
     if (op_info != nullptr) {
       return op_info->is_ref();
     }

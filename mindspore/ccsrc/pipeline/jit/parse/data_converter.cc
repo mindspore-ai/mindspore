@@ -23,14 +23,14 @@
 #include <vector>
 #include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/cell.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace parse {

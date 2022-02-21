@@ -18,6 +18,7 @@
 #include "kernel/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -33,17 +34,17 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
   MS_EXCEPTION_IF_NULL(relu_input);
   auto add = relu_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add);
-  if (AnfAlgo::GetInputTensorNum(add) != (ELTWISE_DOUBLE_IN_INPUT_SIZE - 1)) {
+  if (common::AnfAlgo::GetInputTensorNum(add) != (ELTWISE_DOUBLE_IN_INPUT_SIZE - 1)) {
     return;
   }
   auto tuple_getitem = add->input(kIndex1);
   MS_EXCEPTION_IF_NULL(tuple_getitem);
-  if (tuple_getitem->isa<CNode>() && AnfAlgo::GetCNodeName(tuple_getitem) == prim::kPrimTupleGetItem->name()) {
+  if (tuple_getitem->isa<CNode>() && common::AnfAlgo::GetCNodeName(tuple_getitem) == prim::kPrimTupleGetItem->name()) {
     auto getitem = tuple_getitem->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(getitem);
     auto bnupdate = getitem->input(kRealInputNodeIndexInTupleGetItem);
     MS_EXCEPTION_IF_NULL(bnupdate);
-    if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
+    if (bnupdate->isa<CNode>() && common::AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
         GetNodeOutputTotalUsedNum(kernel_graph, bnupdate) == kBNTrainingUpdateOutputUsedTotalNum) {
       mindspore::HashSet<AnfNodePtr> record{cnode, relu_input, bnupdate};
       candidate_fusion->push_back(record);
@@ -58,18 +59,18 @@ void BnupdateEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const session::K
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE &&
-        AnfAlgo::GetInputTensorNum(cnode) == (ELTWISE_INPUT_SIZE - 1)) {
+        common::AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE &&
+        common::AnfAlgo::GetInputTensorNum(cnode) == (ELTWISE_INPUT_SIZE - 1)) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
-      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimAdd)) {
+      if (eltwise_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimAdd)) {
         MatchBnupdateAddRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }
     }

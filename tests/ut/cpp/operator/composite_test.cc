@@ -145,7 +145,7 @@ TEST_F(TestComposite, test_TupleSlice_arg_one_number) {
 }
 
 TEST_F(TestComposite, test_TupleSlice_arg_slice) {
-  std::shared_ptr<py::scoped_interpreter> env = parse::python_adapter::set_python_scoped();
+  std::shared_ptr<py::scoped_interpreter> env = python_adapter::set_python_scoped();
   MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
@@ -291,7 +291,7 @@ TEST_F(TestComposite, test_ListSlice_arg_one_number) {
 /// Description: Test List slice
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice) {
-  std::shared_ptr<py::scoped_interpreter> env = parse::python_adapter::set_python_scoped();
+  std::shared_ptr<py::scoped_interpreter> env = python_adapter::set_python_scoped();
   MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 

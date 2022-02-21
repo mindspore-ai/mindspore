@@ -116,7 +116,7 @@ class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kUnaryGradOpTypeMap.find(kernel_name);
     if (iter == kUnaryGradOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "
@@ -124,15 +124,15 @@ class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
                         << kernel_name;
     }
     unary_grad_op_type_ = iter->second;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -141,7 +141,7 @@ class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
-    auto dx_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto dx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ = CHECK_SHAPE_NULL(dx_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

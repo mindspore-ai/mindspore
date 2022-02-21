@@ -22,7 +22,7 @@
 #include <utility>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 
 namespace mindspore::pipeline {

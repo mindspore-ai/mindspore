@@ -24,7 +24,7 @@
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path, const bool support_relative_path) {

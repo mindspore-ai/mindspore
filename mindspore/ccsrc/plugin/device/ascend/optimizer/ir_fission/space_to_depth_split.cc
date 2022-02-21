@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -33,8 +34,8 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_x = cnode->input(kSpaceToDepthInputNum);
-  int64_t block_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, "block_size");
-  std::vector<size_t> x_shape = AnfAlgo::GetOutputInferShape(input_x, 0);
+  int64_t block_size = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, "block_size");
+  std::vector<size_t> x_shape = common::AnfAlgo::GetOutputInferShape(input_x, 0);
   int64_t input_channel = SizeToLong(x_shape[kDim1]);
   int64_t assist_input_channel = SizeToLong(x_shape[kDim1]) * block_size * block_size;
   std::vector<int64_t> assist_input_shape = {assist_input_channel, input_channel, block_size, block_size};
@@ -107,7 +108,7 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   const auto &ori_inputs = cnode->inputs();
-  TypeId x_dtype = AnfAlgo::GetOutputInferDataType(ori_inputs[kIndex1], 0);
+  TypeId x_dtype = common::AnfAlgo::GetOutputInferDataType(ori_inputs[kIndex1], 0);
   if (x_dtype != kNumberTypeFloat16) {
     MS_LOG(INFO) << "Node " << cnode->DebugString() << ": The data type of node's first input is: " << x_dtype
                  << ", not fp16, cannot do fusion.";
@@ -122,7 +123,7 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(last_input_value);
     MS_LOG(INFO) << "Split SpaceToDepth op success.";

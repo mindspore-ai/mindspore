@@ -24,6 +24,7 @@
 #include <functional>
 #include "mindspore/core/ir/anf.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/mem_reuse/mem_reuse.h"
 #include "kernel/common_utils.h"
 namespace mindspore {

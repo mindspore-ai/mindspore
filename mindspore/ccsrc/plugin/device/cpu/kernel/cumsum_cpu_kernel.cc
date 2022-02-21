@@ -29,13 +29,13 @@ constexpr size_t kCumSumOutputsNum = 1;
 
 void CumSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  dst_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  exclusive_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, EXCLUSIVE);
-  reverse_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, REVERSE);
+  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+  dst_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  exclusive_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, EXCLUSIVE);
+  reverse_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, REVERSE);
   int input_dim_length = SizeToInt(shape_.size());
   if (axis_ >= input_dim_length) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

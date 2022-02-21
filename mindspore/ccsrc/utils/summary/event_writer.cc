@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-#include "utils/summary/event_writer.h"
+#include "include/common/utils/summary/event_writer.h"
 #include <string>
+#include "utils/system/base.h"
+#include "utils/system/file_system.h"
+#include "utils/system/crc32c.h"
+#include "utils/system/env.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace summary {
+namespace py = pybind11;
+using string = std::string;
+using Env = system::Env;
+using WriteFile = system::WriteFile;
+using WriteFilePtr = std::shared_ptr<WriteFile>;
+using FileSystem = system::FileSystem;
 
 // implement the EventWriter
 EventWriter::EventWriter(const std::string &file_full_name) : filename_(file_full_name), events_write_count_(0) {
-  fs_ = system::Env::GetFileSystem();
+  fs_ = Env::GetFileSystem();
   if (fs_ == nullptr) {
     MS_LOG(EXCEPTION) << "Get the file system failed.";
   }

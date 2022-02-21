@@ -18,8 +18,9 @@
 #include <vector>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -32,15 +33,15 @@ constexpr size_t kGatherInputAxisIndex = 3;
 
 bool CheckInputs(const CNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
-  if (AnfAlgo::GetInputTensorNum(origin_node) != kGatherV2DynInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(origin_node) != kGatherV2DynInputTensorNum) {
     MS_LOG(DEBUG) << "GatherV2 in dynamic shape has wrong inputs num, not equal " << kGatherV2DynInputTensorNum
                   << ". CNode= " << origin_node->DebugString();
     return false;
   }
-  auto param_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
-  auto indice_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
+  auto param_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
+  auto indice_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
   // this optimizer only support embedding_table has dynamic shape
-  if (param_shape.empty() || indice_shape.empty() || AnfAlgo::IsDynamicShape(origin_node->input(kDim2))) {
+  if (param_shape.empty() || indice_shape.empty() || common::AnfAlgo::IsDynamicShape(origin_node->input(kDim2))) {
     return false;
   }
   if (param_shape[param_shape.size() - 1] != 1) {
@@ -80,7 +81,7 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
                       << trace::DumpSourceLines(origin_node);
   }
   shape[shape.size() - 1] = SizeToLong(pad_dim_size);
-  auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  auto type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
   MS_EXCEPTION_IF_NULL(abstract);
   if (param_dyn_shape->max_shape().size() == param_dyn_shape->shape().size() &&
@@ -104,9 +105,9 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
   auto last_padding_value = MakeValue(last_padding_vector);
   elements.push_back(last_padding_value);
   ValueTuplePtr paddings = std::make_shared<ValueTuple>(elements);
-  AnfAlgo::SetNodeAttr(kAttrPaddings, paddings, pad);
-  AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), pad);
-  AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), pad);
+  common::AnfAlgo::SetNodeAttr(kAttrPaddings, paddings, pad);
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), pad);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), pad);
   return pad;
 }
 
@@ -126,14 +127,15 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(gather_v2);
   gather_v2->set_scope(origin_node->scope());
 
-  auto shape = AnfAlgo::GetOutputInferShape(origin_node, 0);
+  auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = pad_dim_size;
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape}, gather_v2.get());
-  AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), gather_v2);
-  auto input_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrInputNames);
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), gather_v2);
-  auto output_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrOutputNames);
-  AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), gather_v2);
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
+                                              gather_v2.get());
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), gather_v2);
+  auto input_names = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrInputNames);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), gather_v2);
+  auto output_names = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrOutputNames);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), gather_v2);
   return gather_v2;
 }
 
@@ -147,10 +149,10 @@ CNodePtr GatherV2DsFission::CreateSlice(const FuncGraphPtr &graph, const CNodePt
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(gather_v2->scope());
   slice->set_abstract(gather_v2->abstract());
-  auto gather_v2_shape = AnfAlgo::GetOutputInferShape(gather_v2, 0);
+  auto gather_v2_shape = common::AnfAlgo::GetOutputInferShape(gather_v2, 0);
   std::vector<size_t> offsets(gather_v2_shape.size(), 0);
-  AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(gather_v2_shape)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(gather_v2_shape)), slice);
   return slice;
 }
 
@@ -169,7 +171,7 @@ const AnfNodePtr GatherV2DsFission::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   size_t pad_dim_size;
-  auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   constexpr auto PADSIZE32 = 8;
   constexpr auto PADSIZE16 = 16;
   if (input_dtype == kNumberTypeFloat32) {

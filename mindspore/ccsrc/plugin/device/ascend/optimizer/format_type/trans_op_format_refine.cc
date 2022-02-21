@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/format_type/trans_op_format_refine.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -30,8 +31,8 @@ const AnfNodePtr TransOpFormatRefine::Process(const FuncGraphPtr &func_graph, co
                                               const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  auto op_name = AnfAlgo::GetCNodeName(node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
   if (op_name == kTransDataOpName) {
     auto in_format = AnfAlgo::GetInputFormat(node, 0);
     auto out_format = AnfAlgo::GetOutputFormat(node, 0);
@@ -42,13 +43,13 @@ const AnfNodePtr TransOpFormatRefine::Process(const FuncGraphPtr &func_graph, co
       builder->SetInputsFormat({kOpFormat_NCDHW});
       builder->SetOutputsFormat({out_format});
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-      AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(kOpFormat_NCDHW), node);
+      common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(kOpFormat_NCDHW), node);
     }
     if (out_format == kOpFormat_DEFAULT && k3DFormatSet.find(in_format) != k3DFormatSet.end()) {
       builder->SetInputsFormat({in_format});
       builder->SetOutputsFormat({kOpFormat_NCDHW});
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-      AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(kOpFormat_NCDHW), node);
+      common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(kOpFormat_NCDHW), node);
     }
   }
   return node;

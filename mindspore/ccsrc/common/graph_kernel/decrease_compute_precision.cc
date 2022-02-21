@@ -23,6 +23,7 @@
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "runtime/device/kernel_info.h"
@@ -52,16 +53,16 @@ CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, c
     cast->set_kernel_info(kernel_info);
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
-  AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), cast);
-  AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
-  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), cast);
+  common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), cast);
+  common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), cast);
   return cast;
 }
 
 // Update Output Abatract and BuildInfo as Input Changed
 void UpdateOutputInfo(const AnfNodePtr &cnode) {
-  if (!AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+  if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     ShapeVector out_shape = GetShape(cnode);
     auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(out_shape));
     auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId::kNumberTypeFloat16), abs_shape_ptr);
@@ -81,13 +82,13 @@ void UpdateOutputInfo(const AnfNodePtr &cnode) {
 CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto mng = func_graph->manager();
-  size_t in_num = AnfAlgo::GetInputNum(cnode);  // include monads.
+  size_t in_num = common::AnfAlgo::GetInputNum(cnode);  // include monads.
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
-    auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
+    auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_index);
     if (HasAbstractMonad(cur_input)) {
       continue;
     }
-    auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, input_index);
+    auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
     auto in_node = prev_node.first;
     auto in_index = prev_node.second;
     auto ori_shape = AnfAlgo::GetOutputDeviceShape(in_node, in_index);
@@ -115,7 +116,7 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
       auto abstract =
         std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId::kNumberTypeFloat16), abs_shape_ptr);
       cast->set_abstract(abstract);
-      AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);
+      common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);
       (void)mng->Replace(cur_input, cast);
     }
   }
@@ -136,7 +137,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
   bool changed = false;
   // Cast Down CNODES
   for (auto node : todos) {
-    if (node->isa<CNode>() && !AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+    if (node->isa<CNode>() && !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       auto cnode = node->cast<CNodePtr>();
       if (IsPrimitiveCNode(cnode, prim::kPrimCast)) {
         if (AnfAlgo::GetOutputDeviceDataType(cnode->input(1), 0) == kNumberTypeFloat16) {
@@ -197,9 +198,9 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
   };
 
   std::vector<AnfNodePtr> new_inputs;
-  if (AnfAlgo::CheckPrimitiveType(old_output, prim::kPrimMakeTuple)) {
+  if (common::AnfAlgo::CheckPrimitiveType(old_output, prim::kPrimMakeTuple)) {
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    auto all_out = AnfAlgo::GetAllOutput(old_output);
+    auto all_out = common::AnfAlgo::GetAllOutput(old_output);
     for (const auto &out : all_out) {
       auto c_out = out->cast<CNodePtr>();
       if (c_out) {
@@ -229,7 +230,7 @@ bool IsCastUnAware(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   for (auto node : todos) {
     if (node->isa<CNode>()) {
-      if (std::find(cast_aware_list.begin(), cast_aware_list.end(), AnfAlgo::GetCNodePrimitive(node)) !=
+      if (std::find(cast_aware_list.begin(), cast_aware_list.end(), common::AnfAlgo::GetCNodePrimitive(node)) !=
           cast_aware_list.end()) {
         return false;
       }
@@ -251,8 +252,8 @@ bool DecreaseComputePrecision::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (const auto &node : todos) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (common::AnfAlgo::IsGraphKernel(node)) {
+      auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       MS_ERROR_IF_NULL(sub_func_graph);
       if (IsCastUnAware(sub_func_graph)) {
         changed = Process(sub_func_graph) || changed;

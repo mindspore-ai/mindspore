@@ -15,11 +15,10 @@
  */
 #include "backend/common/pass/convert_const_input_to_attr.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "base/core_ops.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "kernel/common_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,49 +31,52 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   ConstInputToAttrInfoRegister reg;
-  if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfAlgo::GetCNodeName(cnode), &reg)) {
+  if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(common::AnfAlgo::GetCNodeName(cnode), &reg)) {
     return nullptr;
   }
-  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
-      AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
-    if (!AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+  if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
+      common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
       return nullptr;
     }
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
     if (device != kGPUDevice) {
       return nullptr;
     }
   }
-  if (AnfAlgo::IsDynamicShape(cnode)) {
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
     if (device == kGPUDevice) {
-      if (DynamicShapeConstInputToAttrGPU.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttrGPU.end()) {
+      if (DynamicShapeConstInputToAttrGPU.find(common::AnfAlgo::GetCNodeName(cnode)) ==
+          DynamicShapeConstInputToAttrGPU.end()) {
         MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
         return nullptr;
       }
     } else if (device == kCPUDevice) {
-      if (DynamicShapeConstInputToAttrCPU.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttrCPU.end()) {
+      if (DynamicShapeConstInputToAttrCPU.find(common::AnfAlgo::GetCNodeName(cnode)) ==
+          DynamicShapeConstInputToAttrCPU.end()) {
         MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
         return nullptr;
       }
     } else {
-      if (DynamicShapeConstInputToAttr.find(AnfAlgo::GetCNodeName(cnode)) == DynamicShapeConstInputToAttr.end()) {
+      if (DynamicShapeConstInputToAttr.find(common::AnfAlgo::GetCNodeName(cnode)) ==
+          DynamicShapeConstInputToAttr.end()) {
         MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
         return nullptr;
       }
     }
   }
   if (device == kAscendDevice &&
-      NeedConvertToValueNodeSet.find(AnfAlgo::GetCNodeName(cnode)) != NeedConvertToValueNodeSet.end() &&
-      !AnfAlgo::HasNodeAttr(kAttrNeedConvertToValueNode, cnode)) {
+      NeedConvertToValueNodeSet.find(common::AnfAlgo::GetCNodeName(cnode)) != NeedConvertToValueNodeSet.end() &&
+      !common::AnfAlgo::HasNodeAttr(kAttrNeedConvertToValueNode, cnode)) {
     auto input_attrs = reg.GetConstInputAttrInfo();
     std::vector<size_t> need_convert_to_constant;
     std::transform(input_attrs.begin(), input_attrs.end(), std::back_inserter(need_convert_to_constant),
                    [](size_t i) { return i + 1; });
-    AnfAlgo::SetNodeAttr(kAttrNeedConvertToValueNode, MakeValue(need_convert_to_constant), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrNeedConvertToValueNode, MakeValue(need_convert_to_constant), cnode);
     return nullptr;
   }
 

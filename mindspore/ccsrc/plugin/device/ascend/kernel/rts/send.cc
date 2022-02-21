@@ -18,6 +18,7 @@
 #include "runtime/event.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 using mindspore::ge::model_runner::EventRecordTaskInfo;
 using EventRecordTaskInfoPtr = std::shared_ptr<EventRecordTaskInfo>;
@@ -30,9 +31,9 @@ SendKernel::~SendKernel() {}
 
 bool SendKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (!AnfAlgo::HasNodeAttr(kAttrEventId, anf_node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrEventId, anf_node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "SendKernel has no attr kAttrEventId";
   }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));

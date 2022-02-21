@@ -23,12 +23,12 @@ namespace mindspore {
 namespace kernel {
 void IsInfCpuKernelMod::InitKernel(const CNodePtr &kernelNode) {
   MS_EXCEPTION_IF_NULL(kernelNode);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernelNode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernelNode);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernelNode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernelNode);
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got: " << input_num;
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernelNode);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernelNode);
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got: " << output_num;
   }

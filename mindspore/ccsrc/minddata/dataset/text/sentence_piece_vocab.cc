@@ -22,7 +22,7 @@
 
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {

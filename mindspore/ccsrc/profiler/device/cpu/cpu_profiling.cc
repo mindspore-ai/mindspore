@@ -22,7 +22,7 @@
 #include "profiler/device/cpu/cpu_data_saver.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

@@ -23,7 +23,7 @@ constexpr auto kHandleAttrName = "handle";
 }  // namespace
 
 bool EnvCreateKernelMod::Init(const CNodePtr &cnode) {
-  const auto &name = AnfAlgo::GetNodeAttr<std::string>(cnode, kEnvTypeName);
+  const auto &name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kEnvTypeName);
   std::tie(handle_, env_) = EnvironmentFactory::GetInstance().Create(name);
   MS_EXCEPTION_IF_NULL(env_);
   env_->Init(cnode, nullptr);
@@ -43,7 +43,7 @@ bool EnvCreateKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 }
 
 bool EnvResetKernelMod::Init(const CNodePtr &cnode) {
-  handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
+  handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
   InitSizeLists();
@@ -61,7 +61,7 @@ bool EnvResetKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 }
 
 bool EnvStepKernelMod::Init(const CNodePtr &cnode) {
-  handle_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
+  handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
   InitSizeLists();

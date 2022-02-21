@@ -39,8 +39,8 @@ class GetCenterOfGeometryGpuKernelMod : public NativeGpuKernelMod {
     center_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "center_numbers"));
     center_numbers_inverse = static_cast<int>(GetAttr<float>(kernel_node, "center_numbers_inverse"));
 
-    auto shape_center_atoms = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_center_atoms = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
     for (size_t i = 0; i < shape_center_atoms.size(); i++) ele_center_atoms *= shape_center_atoms[i];
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];

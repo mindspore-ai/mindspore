@@ -651,10 +651,10 @@ void ParameterServer::GetEmbeddingTableParamPtr() {
     MS_EXCEPTION_IF_NULL(cnode);
     std::string cnode_name = Util::GetPrimitiveName(cnode);
     if (cnode_name == kEmbeddingLookupOpName || cnode_name == kGatherV2OpName || cnode_name == kSparseGatherV2OpName) {
-      auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
+      auto embedding_table = common::AnfAlgo::GetInputNode(cnode, 0);
       if (IsPrimitiveCNode(embedding_table, prim::kPrimLoad)) {
         auto embedding_cnode = embedding_table->cast<CNodePtr>();
-        embedding_table = AnfAlgo::GetInputNode(embedding_cnode, 0);
+        embedding_table = common::AnfAlgo::GetInputNode(embedding_cnode, 0);
       }
       MS_EXCEPTION_IF_NULL(embedding_table);
       if (embedding_table->isa<Parameter>()) {
@@ -680,10 +680,10 @@ void ParameterServer::CacheEmbeddingTableParamPtr() {
       continue;
     }
 
-    auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
+    auto embedding_table = common::AnfAlgo::GetInputNode(cnode, 0);
     if (IsPrimitiveCNode(embedding_table, prim::kPrimLoad)) {
       auto embedding_cnode = embedding_table->cast<CNodePtr>();
-      embedding_table = AnfAlgo::GetInputNode(embedding_cnode, 0);
+      embedding_table = common::AnfAlgo::GetInputNode(embedding_cnode, 0);
     }
 
     MS_EXCEPTION_IF_NULL(embedding_table);

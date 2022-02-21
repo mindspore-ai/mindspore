@@ -20,7 +20,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "transform/graph_ir/io_format_map.h"

@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/convert.h"
 
 #include <cinttypes>
 #include <algorithm>
 #include <stack>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 #include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
-#include "utils/config_manager.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/config_manager.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
-#include "transform/graph_ir/op_adapter_map.h"
+#include "include/transform/graph_ir/op_adapter_map.h"
 #include "ops/state_ops.h"
 #include "ops/array_ops.h"
 #include "ops/elewise_calculation_ops.h"
@@ -38,6 +38,8 @@
 #ifdef ENABLE_D
 #include "ops/save_ops.h"
 #endif
+#include "transform/graph_ir/op_adapter.h"
+#include "transform/graph_ir/op_adapter_desc.h"
 
 namespace mindspore {
 namespace transform {

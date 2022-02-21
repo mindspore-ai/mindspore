@@ -52,21 +52,21 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
                                "cudaStreamSynchronized failed");
 
-    std::vector<TypeId> output_types = {AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
+    std::vector<TypeId> output_types = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
     std::vector<std::vector<size_t>> output_shapes = {input_shape_};
-    AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
     }
 
-    input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
@@ -34,7 +35,7 @@ void GetOutputCastNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, 
     AnfNodePtr output = node_index.first;
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
-    if (AnfAlgo::GetCNodeName(output_cnode) != prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(output_cnode) != prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "The output of node " << node->DebugString() << " should be "
                         << prim::kPrimTupleGetItem->name() << trace::DumpSourceLines(node);
     }
@@ -46,7 +47,7 @@ void GetOutputCastNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, 
     MS_EXCEPTION_IF_NULL(transitive_output);
     auto transitive_output_cnode = transitive_output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(transitive_output_cnode);
-    if (AnfAlgo::GetCNodeName(transitive_output_cnode) == prim::kPrimCast->name()) {
+    if (common::AnfAlgo::GetCNodeName(transitive_output_cnode) == prim::kPrimCast->name()) {
       cast_nodes->push_back(transitive_output_cnode);
     }
   }
@@ -73,21 +74,21 @@ bool CheckKernelBuildInfo(const CNodePtr &cnode, const kernel::KernelBuildInfoPt
 bool CheckLayernormBetaGammaBackprop(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                      std::vector<CNodePtr> *cast_nodes) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(kAttrShapeGamma, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrShapeGamma, cnode)) {
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " has no " << kAttrShapeGamma << " attr";
     return false;
   }
-  if (AnfAlgo::GetInputTensorNum(cnode) != kLayerNormBetaGammaBackpropInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != kLayerNormBetaGammaBackpropInputTensorNum) {
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " inputs num is not equal to "
                  << kLayerNormBetaGammaBackpropInputTensorNum;
     return false;
   }
-  if (AnfAlgo::GetOutputTensorNum(cnode) != kLayerNormBetaGammaBackpropOutputNum) {
+  if (common::AnfAlgo::GetOutputTensorNum(cnode) != kLayerNormBetaGammaBackpropOutputNum) {
     MS_LOG(INFO) << "The node " << cnode->DebugString() << " outputs num is not equal to "
                  << kLayerNormBetaGammaBackpropOutputNum;
     return false;
   }
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
     if (AnfAlgo::GetInputDeviceDataType(cnode, i) != kNumberTypeFloat16) {
       MS_LOG(INFO) << "The data type of node " << cnode->DebugString() << " input " << i << " is not float16";

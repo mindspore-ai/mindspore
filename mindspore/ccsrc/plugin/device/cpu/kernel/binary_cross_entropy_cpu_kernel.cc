@@ -108,16 +108,16 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &input
 
 void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (size_t i = 0; i < input_shape.size(); i++) {
     input_size_ *= input_shape[i];
   }
 
-  const std::string reduction = AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
+  const std::string reduction = common::AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
   if (reduction == NONE) {
     reduction_ = kNone;
   } else if (reduction == MEAN) {

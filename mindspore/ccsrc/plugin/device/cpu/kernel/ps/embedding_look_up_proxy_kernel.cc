@@ -29,9 +29,9 @@ constexpr size_t kEmbeddingLookUpProxyOutputsNum = 1;
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   EmbeddingLookUpCpuKernelMod::InitKernel(kernel_node);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t axis = kShape2dDims - input_shape.size();
   if (input_shape.empty() || input_shape.size() > kShape2dDims) {
     MS_LOG(EXCEPTION) << "Input shape should not empty or greater than " << kShape2dDims << "-D, but got "
@@ -47,7 +47,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   if (mindspore::ps::PSContext::instance()->is_worker()) {
-    key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
+    key_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
   }
   std::vector<float> values;
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(values),

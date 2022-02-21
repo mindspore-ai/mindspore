@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "mindspore/ccsrc/utils/utils.h"
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/converter_flags.h"
 #include "mindspore/lite/include/context.h"

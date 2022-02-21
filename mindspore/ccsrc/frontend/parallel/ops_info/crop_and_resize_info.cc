@@ -20,7 +20,7 @@
 
 #include "frontend/parallel/ops_info/crop_and_resize_info.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {

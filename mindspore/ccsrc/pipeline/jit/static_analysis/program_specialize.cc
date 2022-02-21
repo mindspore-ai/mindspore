@@ -25,7 +25,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"
 #include "abstract/utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "debug/trace.h"

@@ -29,7 +29,7 @@
 #include "base/core_ops.h"
 #include "ir/anf.h"
 #include "ir/value.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

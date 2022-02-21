@@ -16,7 +16,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "proto/types.pb.h"
 #include "runtime/mem.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {

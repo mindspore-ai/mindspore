@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_grad_ext_fusion.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -69,8 +70,8 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(node->scope());
   fusion_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, "keepdims", sum, fusion_node);
-  AnfAlgo::CopyNodeAttr(kAttrAxis, sum, fusion_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, "keepdims", sum, fusion_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum, fusion_node);
   return fusion_node;
 }
 }  // namespace opt

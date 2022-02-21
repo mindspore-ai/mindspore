@@ -27,6 +27,7 @@
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 // Note: This file is mainly used to adapt the ME front-end operator description and
 //       the TBE back-end operator implementation difference
 namespace mindspore {
@@ -71,7 +72,7 @@ class TbeAdapter {
     if (DynamicInputAdjusted(anf_node, inputs_list, inputs_json)) {
       return;
     }
-    auto op_name = AnfAlgo::GetCNodeName(anf_node);
+    auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
     if (input_order_adjusted_ops_.find(op_name) == input_order_adjusted_ops_.end()) {
       (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
     } else {
@@ -124,10 +125,10 @@ class TbeAdapter {
   template <typename T>
   static bool DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node, std::vector<T> const &inputs_list,
                                    std::vector<T> *inputs_json) {
-    if (!AnfAlgo::IsDynamicShape(anf_node)) {
+    if (!common::AnfAlgo::IsDynamicShape(anf_node)) {
       return false;
     }
-    auto op_name = AnfAlgo::GetCNodeName(anf_node);
+    auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
     if (op_name == kConv2DBackpropInputOpName) {
       // process dynamic Conv2DBackpropInput, tbe kernel input is x, input_size and dout
       inputs_json->push_back(inputs_list[kIndex2]);

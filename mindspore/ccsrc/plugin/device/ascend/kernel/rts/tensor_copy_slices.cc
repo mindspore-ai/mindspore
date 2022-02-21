@@ -21,6 +21,7 @@
 #include <string>
 #include "abstract/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
@@ -73,9 +74,9 @@ bool TensorCopySlices::Init(const mindspore::AnfNodePtr &anf_node) {
   GetInputOutputInfo(anf_node);
   GetInputOutputTotalCount(anf_node);
 
-  auto begin = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrBegin);
-  auto end = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrEnd);
-  auto strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrStrides);
+  auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrBegin);
+  auto end = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrEnd);
+  auto strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrStrides);
 
   CheckSliceValid(begin, end, strides, input_shape_);
   auto dim_offset = CalDimOffset(input_shape_);
@@ -86,7 +87,7 @@ bool TensorCopySlices::Init(const mindspore::AnfNodePtr &anf_node) {
 
 void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 2) {
     MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2, got " << input_size;
   }
@@ -98,8 +99,8 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
                       << " output_type_id_:" << output_type_id_;
   }
 
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 0);
-  auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 1);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 0);
+  auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 1);
   auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, 0);
   CastShapeSizeToLong(input_shape, &input_shape_);
   CastShapeSizeToLong(update_shape, &update_shape_);
@@ -112,7 +113,7 @@ void *TensorCopySlices::VoidPointerOffset(void *ptr, size_t offset) const {
 
 void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != kTensorCopySlicesInputSize) {
     MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2";
   }

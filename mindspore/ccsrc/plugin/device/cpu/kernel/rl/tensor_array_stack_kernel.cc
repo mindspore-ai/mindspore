@@ -32,15 +32,15 @@ TensorArrayStackCpuKernelMod::TensorArrayStackCpuKernelMod()
 void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  auto max_element = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "max_element");
-  is_dynamic_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_dynamic_shape");
-  auto size = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
+  auto max_element = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "max_element");
+  is_dynamic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_dynamic_shape");
+  auto size = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
   for (auto i : shape) {
     shapes_.push_back(LongToSize(i));
   }
-  type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
+  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   ele_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     ele_size_ *= i;
@@ -61,7 +61,7 @@ void TensorArrayStackCpuKernelMod::PostExecute() {
   auto shape = shapes_;
   (void)shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
-  AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
 }
 
 void TensorArrayStackCpuKernelMod::ResetResource() noexcept {

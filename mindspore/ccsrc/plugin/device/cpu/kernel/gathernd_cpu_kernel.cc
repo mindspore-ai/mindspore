@@ -29,10 +29,10 @@ constexpr size_t kGatherNdOutputsNum = 1;
 template <typename T>
 void GatherNdCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 

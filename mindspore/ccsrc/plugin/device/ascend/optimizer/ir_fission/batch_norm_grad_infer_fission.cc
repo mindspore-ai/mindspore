@@ -17,6 +17,7 @@
 #include <vector>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -89,7 +90,7 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
                       << trace::DumpSourceLines(bn_grad);
   }
   bn_infer_grad->set_abstract(bn_grad_abstract_tuple->elements()[0]);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_infer_grad);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_infer_grad);
   bn_infer_grad->set_scope(bn_grad->scope());
   return bn_infer_grad;
 }
@@ -138,7 +139,7 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
                                              bn_grad_abstract_tuple->elements()[kIndex2]};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_grad->set_abstract(abstract_tuple);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_training_update_grad);
   bn_training_update_grad->set_scope(bn_grad->scope());
   return bn_training_update_grad;
 }
@@ -152,11 +153,11 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                                     const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::HasNodeAttr(kAttrIsTraining, node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, node->cast<CNodePtr>())) {
     MS_LOG(DEBUG) << "The BatchNormGrad " << node->DebugString() << " has no is_training attr, should not be changed";
     return nullptr;
   }
-  if (AnfAlgo::GetNodeAttr<bool>(node, kAttrIsTraining)) {
+  if (common::AnfAlgo::GetNodeAttr<bool>(node, kAttrIsTraining)) {
     MS_LOG(DEBUG) << "The is_training attr value of " << node->DebugString() << " is true, no need change";
     return nullptr;
   }

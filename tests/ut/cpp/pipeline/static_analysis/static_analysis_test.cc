@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace abstract {
-namespace python_adapter = mindspore::parse::python_adapter;
 namespace {
 
 AbstractBasePtr InferImplScalarAddStub(const AnalysisEnginePtr &engine, const PrimitivePtr &,

@@ -29,11 +29,11 @@ constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 
 void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> output_size = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> output_size = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be "

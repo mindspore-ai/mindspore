@@ -22,7 +22,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/instance_norm_impl.cuh"
 
 namespace mindspore {
@@ -95,7 +95,7 @@ class InstanceNormGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
 
     InitResource();
@@ -104,7 +104,7 @@ class InstanceNormGpuKernelMod : public NativeGpuKernelMod {
     exp_avg_factor_ = GetAttr<float>(kernel_node, "momentum");
 
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
     }

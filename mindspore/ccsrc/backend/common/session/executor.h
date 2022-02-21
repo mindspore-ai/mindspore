@@ -31,8 +31,8 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/any.h"
-#include "utils/comm_manager.h"
-#include "utils/contract.h"
+#include "include/common/utils/comm_manager.h"
+#include "include/common/utils/contract.h"
 
 namespace mindspore {
 namespace session {

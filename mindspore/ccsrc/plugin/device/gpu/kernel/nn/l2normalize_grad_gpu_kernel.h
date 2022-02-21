@@ -127,21 +127,21 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     (void)CheckIONumber(kernel_node);
-    int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
+    int input_dim_length = SizeToInt(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
     int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
 
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
 
     for (size_t i = 0; i < INPUT_SIZE; i++) {
-      input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
+      input_shape_list_.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
       InitSizeLists();
@@ -185,12 +185,12 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void CheckIONumber(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_SIZE) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_SIZE << ", but got "
                         << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/tensorprint_utils.h"
+#include "include/common/utils/tensorprint_utils.h"
 #include <atomic>
 #include <fstream>
 #include <memory>
@@ -21,7 +21,7 @@
 #include <vector>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
 

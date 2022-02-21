@@ -26,6 +26,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -65,12 +66,12 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     GetOpType(kernel_node);
-    auto shape1 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape3 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape2 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape3 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     is_null_input_ = CHECK_SHAPE_NULL(shape1, kernel_name_, "input_1") ||
                      CHECK_SHAPE_NULL(shape2, kernel_name_, "input_2") ||
                      CHECK_SHAPE_NULL(shape3, kernel_name_, "input_3");
@@ -78,7 +79,7 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
+    need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > kMaxShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than "
                         << kMaxShapeSize << ", but got " << shape1.size();
@@ -153,7 +154,7 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void GetOpType(const CNodePtr &kernel_node) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
 
     static std::map<std::string, BroadcastGradOpType> kBroadcastTypeMap = {
       {"MaximumGrad", BROADCAST_GRAD_TYPE_MAXIMUM},

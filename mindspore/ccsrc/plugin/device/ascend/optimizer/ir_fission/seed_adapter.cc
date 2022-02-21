@@ -20,10 +20,11 @@
 #include <memory>
 #include "backend/common/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 
@@ -75,11 +76,11 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
                       << trace::DumpSourceLines(cnode);
   }
   for (const auto &attr : attrs) {
-    if (!AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
+    if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
       MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
                         << trace::DumpSourceLines(cnode);
     }
-    auto attr_value = AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
+    auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
     auto value_node = CreateValueNode(attr_value);
     if (value_node == nullptr) {
       MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
@@ -113,7 +114,7 @@ const AnfNodePtr SeedAdapter::Process(const FuncGraphPtr &func_graph, const AnfN
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto cnode_type = AnfAlgo::GetCNodeName(node);
+  auto cnode_type = common::AnfAlgo::GetCNodeName(node);
   if (kNodeWithSeedOperators.find(cnode_type) == kNodeWithSeedOperators.end()) {
     return nullptr;
   }
@@ -128,7 +129,7 @@ const AnfNodePtr SeedAdapter::Process(const FuncGraphPtr &func_graph, const AnfN
     kernel_graph->AddValueNodeToGraph(value_node);
   }
   // 2. set visited
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   return node;
 }
 }  // namespace mindspore::opt

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "common/mem_reuse/mem_reuse_checker.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -48,7 +48,7 @@ bool MemReuseUtil::InitDynamicOutputKernelRef() {
     if (iter == kernel_output_refs_.end()) {
       auto output_sizes = kernel_mod->GetOutputSizeList();
       KernelRefCountPtrList kernel_refs;
-      bool is_comm_op = AnfAlgo::IsCommunicationOp(kernel_cnode);
+      bool is_comm_op = common::AnfAlgo::IsCommunicationOp(kernel_cnode);
       size_t output_index = 0;
       for (auto size : output_sizes) {
         total_dy_size_ += size;
@@ -182,8 +182,8 @@ void MemReuseUtil::SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_def_ptr);
   auto key = kernel.get();
-  bool is_comm_op = AnfAlgo::IsCommunicationOp(kernel);
-  size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  bool is_comm_op = common::AnfAlgo::IsCommunicationOp(kernel);
+  size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_tensor_num; ++i) {
     auto ref_ptr = GetKernelInputRef(kernel, i);
     if (ref_ptr != nullptr) {
@@ -262,9 +262,9 @@ KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, size_t output_idx
 }
 
 KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t input_idx) {
-  if (input_idx >= AnfAlgo::GetInputTensorNum(kernel)) {
+  if (input_idx >= common::AnfAlgo::GetInputTensorNum(kernel)) {
     MS_LOG(EXCEPTION) << "Input index " << input_idx << " is larger than input number "
-                      << AnfAlgo::GetInputTensorNum(kernel);
+                      << common::AnfAlgo::GetInputTensorNum(kernel);
   }
   auto input_node = kernel->input(input_idx + 1);
   // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
@@ -287,7 +287,7 @@ void MemReuseUtil::SetKernelDefMap() {
   auto kernel_cnodes = graph_->execution_order();
   for (auto &kernel : kernel_cnodes) {
     KernelDefPtr kernel_def_ptr = std::make_shared<KernelDef>();
-    kernel_def_ptr->set_kernel_name(AnfAlgo::GetCNodeName(kernel));
+    kernel_def_ptr->set_kernel_name(common::AnfAlgo::GetCNodeName(kernel));
     kernel_def_ptr->set_scope_full_name(kernel->fullname_with_scope());
     kernel_def_ptr->set_stream_id(AnfAlgo::GetStreamId(kernel));
     SetInputMap(kernel, kernel_def_ptr.get());
@@ -296,7 +296,7 @@ void MemReuseUtil::SetKernelDefMap() {
     auto key = kernel.get();
     kernel_def_ptr->set_input_refs(kernel_def_ptr->inputs_[key]);
     kernel_def_ptr->set_output_refs(kernel_def_ptr->outputs_[key]);
-    if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       kernel_def_ptr->type_ = kCommunicationNode;
     } else {
       kernel_def_ptr->type_ = kCommonNode;
@@ -317,20 +317,20 @@ void MemReuseUtil::SetKernelDefInputs() {
       MS_LOG(EXCEPTION) << "kernel [" << kernel->fullname_with_scope() << "] is not init.";
     }
     auto kernel_def = iter->second;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 0; i < input_num; ++i) {
       auto ref_ptr = GetKernelInputRef(kernel, i);
       if (ref_ptr != nullptr) {
         // set the inputs of this kernel_def
-        auto input_node = AnfAlgo::GetInputNode(kernel, i);
+        auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
         // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
         session::KernelWithIndex input;
         if (is_all_nop_node_) {
           // The graph does not remove the nop node.
-          input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+          input = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
         } else {
           // The graph removes the nop node.
-          input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+          input = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
         }
         if (IsPrimitive(input.first, prim::kPrimMakeTuple)) {
           MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
@@ -415,15 +415,15 @@ void MemReuseUtil::SetRefNodesInputRefCount() {
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
-  auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
+  auto nodes = common::AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
     session::KernelWithIndex kernel_input;
     if (is_all_nop_node_) {
       // The graph does not remove the nop node.
-      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+      kernel_input = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
     } else {
       // The graph removes the nop node.
-      kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+      kernel_input = common::AnfAlgo::VisitKernelWithReturnType(node, 0, true);
     }
     MS_EXCEPTION_IF_NULL(kernel_input.first);
     if (!kernel_input.first->isa<CNode>() || !AnfUtils::IsRealKernel(kernel_input.first)) {
@@ -482,7 +482,7 @@ uint8_t *MemReuseUtil::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) co
     auto output_ref = iter->second[index];
     ptr = mem_base_ + output_ref->offset_;
   } else {
-    MS_LOG(EXCEPTION) << "node [" << AnfAlgo::GetCNodeName(node) << "] don't exist in kernel_output_refs";
+    MS_LOG(EXCEPTION) << "node [" << common::AnfAlgo::GetCNodeName(node) << "] don't exist in kernel_output_refs";
   }
   return ptr;
 }
@@ -503,15 +503,15 @@ uint8_t *MemReuseUtil::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index)
 
 session::KernelWithIndex MemReuseUtil::VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool skip_nop_node) {
   if (!enable_visit_kernel_cache_ || i != 0) {
-    return AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node);
+    return common::AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node);
   }
 
   auto &cache =
     skip_nop_node ? visit_kernel_with_return_type_in0pos_cache_ : visit_kernel_with_return_type_in0pos_skip_nop_cache_;
   mindspore::HashMap<AnfNodePtr, session::KernelWithIndex>::iterator tag_iter;
   if (auto iter = cache.find(node); iter == cache.end()) {
-    auto tmp_item =
-      std::pair<AnfNodePtr, session::KernelWithIndex>{node, AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node)};
+    auto tmp_item = std::pair<AnfNodePtr, session::KernelWithIndex>{
+      node, common::AnfAlgo::VisitKernelWithReturnType(node, i, skip_nop_node)};
     tag_iter = cache.emplace(tmp_item).first;
   } else {
     tag_iter = iter;

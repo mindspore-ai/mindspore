@@ -106,7 +106,7 @@ class DynamicBroadcastToGpuKernelMod : public NativeGpuKernelMod {
     std::vector<size_t> output_shape;
     std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape),
                    [](const S &i) { return static_cast<size_t>(i); });
-    AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicBroadcastTo, real output shape is " << output_shape;
   }
 

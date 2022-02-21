@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -23,30 +24,30 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
                                                                          const CNodePtr &node,
                                                                          int64_t rank_size) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
+  size_t inputs_size = common::AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> split_outputs;
   size_t rank_size_t = LongToSize(rank_size);
   for (size_t i = 0; i < inputs_size; i++) {
     std::vector<AnfNodePtr> split_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimSplitV->name()))};
-    split_inputs.push_back(AnfAlgo::GetInputNode(node, i));
+    split_inputs.push_back(common::AnfAlgo::GetInputNode(node, i));
     auto split = NewCNode(split_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(split);
-    std::vector<TypeId> dtypes(rank_size, AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
+    std::vector<TypeId> dtypes(rank_size, common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
     std::vector<std::vector<size_t>> shapes;
     std::vector<int> size_splits;
     for (size_t j = 0; j < rank_size_t; j++) {
-      std::vector<size_t> output_node_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, i);
+      std::vector<size_t> output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
       output_node_shape[0] /= rank_size_t;
       shapes.push_back(output_node_shape);
       size_splits.push_back(output_node_shape[0]);
     }
-    AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
-    AnfAlgo::SetNodeAttr("split_dim", MakeValue(0L), split);
-    AnfAlgo::SetNodeAttr("num_split", MakeValue(rank_size), split);
-    AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
+    common::AnfAlgo::SetNodeAttr("split_dim", MakeValue(0L), split);
+    common::AnfAlgo::SetNodeAttr("num_split", MakeValue(rank_size), split);
+    common::AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);
     kernel_select_->SelectKernel(split);
     std::vector<AnfNodePtr> new_outputs;
-    CreateMultipleOutputsOfAnfNode(func_graph, split, AnfAlgo::GetOutputTensorNum(split), &new_outputs);
+    CreateMultipleOutputsOfAnfNode(func_graph, split, common::AnfAlgo::GetOutputTensorNum(split), &new_outputs);
     for (size_t j = 0; j < new_outputs.size(); j++) {
       split_outputs.push_back(new_outputs[j]);
     }
@@ -59,7 +60,7 @@ AnfNodePtr SplitInputsForReduceScatter::RearrangeInputsForReduceScatter(const Fu
                                                                         const std::vector<AnfNodePtr> &inputs,
                                                                         int64_t rank_size) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
+  size_t inputs_size = common::AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> reduce_scatter_inputs{
     NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceScatter->name()))};
   size_t rank_size_t = LongToSize(rank_size);
@@ -71,8 +72,8 @@ AnfNodePtr SplitInputsForReduceScatter::RearrangeInputsForReduceScatter(const Fu
   auto reduce_scatter = NewCNode(reduce_scatter_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_scatter);
   reduce_scatter->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttrs(node, reduce_scatter);
-  AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(1L), reduce_scatter);
+  common::AnfAlgo::CopyNodeAttrs(node, reduce_scatter);
+  common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(1L), reduce_scatter);
   kernel_select_->SelectKernel(reduce_scatter);
   return reduce_scatter;
 }
@@ -89,23 +90,23 @@ const AnfNodePtr SplitInputsForReduceScatter::Process(const FuncGraphPtr &func_g
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (AnfAlgo::GetInputTensorNum(node) == 1) {
-    AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(0L), node);
+  if (common::AnfAlgo::GetInputTensorNum(node) == 1) {
+    common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(0L), node);
     return nullptr;
   }
-  if (!AnfAlgo::HasNodeAttr(kAttrFusion, cnode) || !AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) || !common::AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
     return nullptr;
   }
-  auto fusion = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
+  auto fusion = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
   if (fusion <= 0) {
     return nullptr;
   }
-  if (AnfAlgo::HasNodeAttr("Fused", cnode)) {
+  if (common::AnfAlgo::HasNodeAttr("Fused", cnode)) {
     return nullptr;
   }
 
-  AnfAlgo::SetNodeAttr("Fused", MakeValue(true), node);
-  auto rank_size = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrRankSize);
+  common::AnfAlgo::SetNodeAttr("Fused", MakeValue(true), node);
+  auto rank_size = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrRankSize);
   std::vector<AnfNodePtr> split_outputs = InsertSplitForInput(func_graph, cnode, rank_size);
   return RearrangeInputsForReduceScatter(func_graph, node, split_outputs, rank_size);
 }

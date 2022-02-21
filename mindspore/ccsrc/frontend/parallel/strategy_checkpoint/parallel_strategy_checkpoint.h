@@ -24,7 +24,7 @@
 #include "utils/hash_map.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 

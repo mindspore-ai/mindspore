@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
 
@@ -81,7 +82,7 @@ AnfNodePtr BatchNormBertFission::CreateBNTrainingReduce(const FuncGraphPtr &func
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_reduce->set_abstract(abstract_tuple);
   bn_training_reduce->set_scope(bn->scope());
-  AnfAlgo::CopyNodeAttrs(bn, bn_training_reduce);
+  common::AnfAlgo::CopyNodeAttrs(bn, bn_training_reduce);
   return bn_training_reduce;
 }
 
@@ -122,7 +123,7 @@ AnfNodePtr BatchNormBertFission::CreateBNTrainingUpdateV2(
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update_v2->set_abstract(abstract_tuple);
   bn_training_update_v2->set_scope(bn->scope());
-  AnfAlgo::CopyNodeAttrs(bn, bn_training_update_v2);
+  common::AnfAlgo::CopyNodeAttrs(bn, bn_training_update_v2);
   return bn_training_update_v2;
 }
 

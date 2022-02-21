@@ -18,11 +18,12 @@
 #include <vector>
 #include <memory>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -41,11 +42,13 @@ void BatchNormGradSplit::CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, co
   bn_update_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_update_grad->set_scope(bn_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_grad_node, 1), AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(bn_grad_node, 1), AnfAlgo::GetOutputInferShape(bn_grad_node, 2)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_update_grad.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(bn_grad_node, 1),
+                 common::AnfAlgo::GetOutputInferShape(bn_grad_node, 2)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_update_grad.get());
 
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_update_grad);
   CreateMultipleOutputsOfAnfNode(graph, bn_update_grad, kBNTrainingUpdateGradOutputNum, bn_update_grad_outputs);
 }
 
@@ -75,11 +78,11 @@ void BatchNormGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, co
   bn_reduce_grad->set_kernel_info(std::make_shared<device::KernelInfo>());
   bn_reduce_grad->set_scope(bn_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(bn_grad_node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_reduce_grad.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(bn_grad_node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, bn_reduce_grad.get());
 
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
   (*bn_reduce_grad_outputs).push_back(bn_reduce_grad);
 }
 
@@ -95,13 +98,13 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
   MS_EXCEPTION_IF_NULL(func_graph);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!primitive->HasAttr(kAttrIsTraining)) {
     MS_LOG(INFO) << "Op BatchNormGrad must have attrs of is_training" << trace::DumpSourceLines(node);
     return nullptr;
   }
-  if (!AnfAlgo::GetNodeAttr<bool>(cnode, kAttrIsTraining)) {
+  if (!common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrIsTraining)) {
     MS_LOG(INFO) << "is_training must be true";
     return nullptr;
   }

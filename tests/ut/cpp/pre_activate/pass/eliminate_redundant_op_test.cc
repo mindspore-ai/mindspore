@@ -26,7 +26,7 @@
 #include "backend/common/pass/eliminate_redundant_op.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"

@@ -23,6 +23,7 @@
 #include "base/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore::graphkernel {
@@ -37,7 +38,7 @@ namespace {
  */
 std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
   // Check output includes assign
-  auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(fg_cnode);
+  auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(fg_cnode);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto out_cnode = func_graph->output()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(out_cnode);
@@ -73,7 +74,7 @@ std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
 }
 
 bool HasPathToParamUser(const AnfNodePtr &gk_node, const AnfNodePtr &param_user, const AnfNodePtr &getitem) {
-  auto mng = AnfAlgo::GetCNodeFuncGraphPtr(gk_node)->manager();
+  auto mng = common::AnfAlgo::GetCNodeFuncGraphPtr(gk_node)->manager();
   MS_EXCEPTION_IF_NULL(mng);
   bool result = false;
   auto IncludeUser = [&result, &gk_node, &getitem](const AnfNodePtr &node) {
@@ -145,7 +146,7 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
 
   bool changed = false;
   for (const auto &n : todos) {
-    if (!AnfAlgo::IsGraphKernel(n)) continue;
+    if (!common::AnfAlgo::IsGraphKernel(n)) continue;
     auto cnode = n->cast<CNodePtr>();
     auto replaceable_nodes = FindAssignAndOutputVal(cnode);
     if (replaceable_nodes.empty()) continue;
@@ -163,7 +164,7 @@ bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (const auto &n : todos) {
-    if (!AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) continue;
+    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) continue;
     changed = true;
     auto cnode = n->cast<CNodePtr>();
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimInplaceAssign), cnode->input(1), cnode->input(2), cnode->input(2)};
@@ -192,8 +193,8 @@ bool RepalceAssignByInplaceAssign(const FuncGraphPtr &func_graph) {
 
   auto changed = false;
   for (const auto &n : todos) {
-    if (!AnfAlgo::IsGraphKernel(n)) continue;
-    auto graph_kernel_fg = AnfAlgo::GetCNodeFuncGraphPtr(n);
+    if (!common::AnfAlgo::IsGraphKernel(n)) continue;
+    auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(n);
     MS_EXCEPTION_IF_NULL(graph_kernel_fg);
     changed = ReplaceAssignByInplaceAssignInGraphkernel(graph_kernel_fg) || changed;
   }

@@ -23,9 +23,10 @@
 #include "graph/debug/ge_attr_define.h"
 #undef google
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/core_ops.h"
-#include "transform/graph_ir/util.h"
+#include "include/transform/graph_ir/util.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 
 namespace mindspore::hccl {
@@ -90,13 +91,13 @@ static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const st
                      const std::string &ge_attr_name) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(ge_op);
-  if (!AnfAlgo::HasNodeAttr(anf_attr_name, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(anf_attr_name, cnode)) {
     MS_LOG(INFO) << "Node " << cnode->DebugString() << " has no attr " << anf_attr_name << ", skip.";
     return T();
   }
 
   bool ret;
-  auto attr = AnfAlgo::GetNodeAttr<T>(cnode, anf_attr_name);
+  auto attr = common::AnfAlgo::GetNodeAttr<T>(cnode, anf_attr_name);
   if constexpr (IsString<T>::value) {
     ret = ge::AttrUtils::SetStr(*ge_op, ge_attr_name, attr);
   } else if constexpr (IsVector<T>::value) {
@@ -172,8 +173,8 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
 
   ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(kStubDataStructureName, ge_node_name);
   MS_EXCEPTION_IF_NULL(op_desc);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
     std::vector<int64_t> ge_shape;
     auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);

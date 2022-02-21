@@ -16,8 +16,9 @@
 
 #include <map>
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,9 +34,9 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     bool is_recompute = cnode->GetAttr(kAttrDuplicated) != nullptr && GetValue<bool>(cnode->GetAttr(kAttrDuplicated));
-    if (AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
-        AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0 && !is_recompute) {
-      all_gather_node[AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
+    if (common::AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
+        common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0 && !is_recompute) {
+      all_gather_node[common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion)] = node;
     }
   }
   auto iter = all_gather_node.begin();
@@ -45,10 +46,10 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(next_node);
     auto next_cnode = next_node->cast<CNodePtr>();
     std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                      AnfAlgo::GetInputNode(next_cnode, 0), current_node};
+                                      common::AnfAlgo::GetInputNode(next_cnode, 0), current_node};
     auto new_input = graph->NewCNode(inputs);
-    new_input->set_abstract(AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
-    AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
+    new_input->set_abstract(common::AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
+    common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;
   }
   return changed;

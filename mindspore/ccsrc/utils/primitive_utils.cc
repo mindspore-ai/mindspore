@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "utils/primitive_utils.h"
+#include "include/common/utils/primitive_utils.h"
 
 #include <memory>
 
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "pybind_api/ir/base_ref_py.h"
 
 namespace mindspore {
@@ -29,9 +29,9 @@ py::function GetBpropFunctionByObj(const py::object &obj) {
   static const std::string get_bprop_fn = "get_bprop_fn";
   static const std::string ad_module = "mindspore.ops._grad";
   static const std::string ad_experimental_module = "mindspore.ops._grad_experimental";
-  py::function fn = parse::python_adapter::GetPyFn(ad_module, get_bprop_fn)(obj);
+  py::function fn = python_adapter::GetPyFn(ad_module, get_bprop_fn)(obj);
   if (!fn || py::isinstance<py::none>(fn)) {
-    fn = parse::python_adapter::GetPyFn(ad_experimental_module, get_bprop_fn)(obj);
+    fn = python_adapter::GetPyFn(ad_experimental_module, get_bprop_fn)(obj);
   }
   return fn;
 }
@@ -67,7 +67,7 @@ py::tuple ConvertDatatoPyTuple(const VectorRef &args) {
 py::function GetComputeFunctionWithoutPyObj(const std::string &name) {
   static const std::string vm_module = "mindspore.ops.vm_impl_registry";
   static const std::string get_vm_impl_fn = "get_vm_impl_fn";
-  py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
+  py::function get_fn = python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   if (py::isinstance<py::none>(get_fn)) {
     MS_LOG(DEBUG) << "Failed to get the function 'get_vm_impl_fn'";
     return py::none();

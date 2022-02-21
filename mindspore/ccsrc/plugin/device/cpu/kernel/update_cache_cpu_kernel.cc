@@ -27,8 +27,8 @@ constexpr size_t kMinUpdateShapeSize = 2;
 
 void UpdateCacheCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kUpdateCacheInputsNum, kernel_name_);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -64,8 +64,8 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
   if (update_shape.size() < kMinUpdateShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'update' should be at least "
                       << kMinUpdateShapeSize << "D, but got: " << update_shape.size() << "D";

@@ -20,6 +20,7 @@
 #include "ir/scalar.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) const { return x >= 0 ? x : x + static_cast<int64_t>(rank); }
@@ -83,8 +84,8 @@ bool AxisNormalizer::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (auto node : todos) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (common::AnfAlgo::IsGraphKernel(node)) {
+      auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       changed = Process(sub_func_graph) || changed;
     }
   }

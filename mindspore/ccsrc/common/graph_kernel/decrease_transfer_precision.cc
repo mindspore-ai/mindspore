@@ -20,10 +20,8 @@
 #include <memory>
 #include <utility>
 #include "base/core_ops.h"
-#include "utils/utils.h"
-#include "backend/common/optimizer/helper.h"
+#include "include/common/utils/utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "kernel/kernel_build_info.h"
@@ -41,15 +39,15 @@ int64_t ObtainGetItemIndex(const AnfNodePtr &getitem) {
 }
 
 bool IsPreNodeReduce(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out, size_t index) {
-  auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   if (is_tuple_out) {
     auto tuple_output = gk_graph->output()->cast<CNodePtr>();
-    if (AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
-      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(tuple_output);
+    if (common::AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << common::AnfAlgo::GetCNodeName(tuple_output);
     }
     auto input_node = tuple_output->input(index + 1);
-    if (AnfAlgo::GetCNodeName(input_node) == prim::kPrimReduceSum->name()) {
+    if (common::AnfAlgo::GetCNodeName(input_node) == prim::kPrimReduceSum->name()) {
       return true;
     }
   }
@@ -57,17 +55,17 @@ bool IsPreNodeReduce(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple
 }
 
 size_t GetGraphKernelSize(const AnfNodePtr &node) {
-  auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   return gk_graph->GetOrderedCnodes().size();
 }
 
 bool IsCandidateNode(const AnfNodePtr &node) {
-  bool is_gk = AnfAlgo::IsGraphKernel(node);
+  bool is_gk = common::AnfAlgo::IsGraphKernel(node);
   if (is_gk) {
     auto num = GetGraphKernelSize(node);
     if (num > GK_MIN_SIZE) {
-      auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+      auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       auto graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       if (graph_name.find("atomic") == std::string::npos) {
         return true;
@@ -144,7 +142,7 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
 
 bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out,
                                               size_t index) {
-  auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
@@ -179,7 +177,7 @@ bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNod
   if (!is_tuple_out) {
     auto old_output = gk_graph->output()->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(old_output);
-    if (AnfAlgo::GetCNodeName(old_output) == prim::kPrimCast->name() &&
+    if (common::AnfAlgo::GetCNodeName(old_output) == prim::kPrimCast->name() &&
         AnfAlgo::GetInputDeviceDataType(old_output, 0) == kNumberTypeFloat16 &&
         AnfAlgo::GetOutputDeviceDataType(old_output, 0) == kNumberTypeFloat32) {
       auto real_output = old_output->input(1);
@@ -200,8 +198,8 @@ bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNod
   } else {
     // cast for graph kernel with make tuple output
     auto tuple_output = gk_graph->output()->cast<CNodePtr>();
-    if (AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
-      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(tuple_output);
+    if (common::AnfAlgo::GetCNodeName(tuple_output) != prim::kPrimMakeTuple->name()) {
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << common::AnfAlgo::GetCNodeName(tuple_output);
     }
     auto input_node = tuple_output->input(index + 1);
     auto cnode = func_add_cast_fp16(input_node);
@@ -234,7 +232,7 @@ bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNod
 }
 
 bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) {
-  auto gk_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);

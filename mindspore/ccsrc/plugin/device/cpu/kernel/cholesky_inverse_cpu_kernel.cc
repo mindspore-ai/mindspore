@@ -24,10 +24,10 @@ constexpr size_t kDimNum = 2;
 template <typename T>
 void CholeskyInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_name_);
   if (x_shape.size() != kDimNum) {
@@ -52,7 +52,7 @@ bool CholeskyInverseCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   Eigen::Map<MatrixXd> A(input_x0, n, n);
   MatrixXd result;
-  auto upper = AnfAlgo::GetNodeAttr<bool>(node_wpt_, "upper");
+  auto upper = common::AnfAlgo::GetNodeAttr<bool>(node_wpt_, "upper");
   if (upper) {
     result = (A.transpose() * A).inverse();
   } else {

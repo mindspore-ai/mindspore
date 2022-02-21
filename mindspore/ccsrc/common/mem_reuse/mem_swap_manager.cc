@@ -17,6 +17,7 @@
 #include "common/mem_reuse/mem_swap_manager.h"
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
@@ -37,7 +38,7 @@ bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph) {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
       TensorInfo tensor_info = {output_sizes[output_idx], kernel, output_idx};
       ordered_tensors_.push_back(tensor_info);
@@ -175,7 +176,7 @@ std::vector<std::pair<size_t, size_t>> MemSwapManager::CheckDistanceBetweenKerne
 
 bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (AnfAlgo::IsCommunicationOp(kernel)) {
+  if (common::AnfAlgo::IsCommunicationOp(kernel)) {
     return true;
   }
 
@@ -189,14 +190,15 @@ bool MemSwapManager::IsCommunicationRelevantOp(const AnfNodePtr &kernel) const {
     AnfNodeIndexSet node_set = iter->second;
     adjacent_with_communication_op = std::any_of(
       node_set.begin(), node_set.end(),
-      [](const std::pair<AnfNodePtr, int> &node_pair) { return AnfAlgo::IsCommunicationOp(node_pair.first); });
+      [](const std::pair<AnfNodePtr, int> &node_pair) { return common::AnfAlgo::IsCommunicationOp(node_pair.first); });
   }
   return adjacent_with_communication_op;
 }
 
 bool MemSwapManager::IsInplaceRelevantOp(const TensorInfo &tensor) {
   MS_EXCEPTION_IF_NULL(tensor.kernel_);
-  if (AnfAlgo::IsInplaceNode(tensor.kernel_, "inplace_algo") || AnfAlgo::IsInplaceNode(tensor.kernel_, "skip")) {
+  if (common::AnfAlgo::IsInplaceNode(tensor.kernel_, "inplace_algo") ||
+      common::AnfAlgo::IsInplaceNode(tensor.kernel_, "skip")) {
     return true;
   }
 
@@ -207,11 +209,11 @@ bool MemSwapManager::IsInplaceRelevantOp(const TensorInfo &tensor) {
 
   auto users = user_map.find(tensor.kernel_);
   for (const auto &user : users->second) {
-    if (!AnfAlgo::IsInplaceNode(user.first, "aggregate")) {
+    if (!common::AnfAlgo::IsInplaceNode(user.first, "aggregate")) {
       continue;
     }
 
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user.first, IntToSize(user.second));
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(user.first, IntToSize(user.second));
     if (tensor.output_idx_ == kernel_with_index.second) {
       MS_LOG(INFO) << " [inplace optimizer] tensor: " << tensor.kernel_->DebugString()
                    << "output idx: " << tensor.output_idx_ << " used by aggregate node: " << user.first->DebugString();
@@ -239,15 +241,16 @@ void MemSwapManager::SaveUserKernelTopoOrder() {
         continue;
       }
 
-      if (opt::IsNopNode(user_kernel)) {
+      if (common::AnfAlgo::IsNopNode(user_kernel)) {
         continue;
       }
 
       size_t user_kernel_topo_sort = SearchKernelExecutionInfo(user_kernel).topo_order_;
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user_kernel, IntToSize(node_pair.second - 1));
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(user_kernel, IntToSize(node_pair.second - 1));
       auto &output_idx = kernel_with_index.second;
       if (kernel_with_index.first.get() != kernel.get()) {
-        MS_LOG(EXCEPTION) << "Save user kernel topo order failed for op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+        MS_LOG(EXCEPTION) << "Save user kernel topo order failed for op[" << common::AnfAlgo::GetCNodeName(kernel)
+                          << "]";
       }
       kernel_exec_info.node_users_map_[output_idx].push_back(user_kernel_topo_sort);
     }
@@ -294,7 +297,7 @@ void MemSwapManager::AddSwapInfo() {
       MemSwapInfo mem_swap_in_info = {SwapKind::kHostToDevice, kernel_exec_info.topo_order_, output_idx,
                                       swap_out_order};
       if (swap_in_order <= swap_out_order) {
-        MS_LOG(EXCEPTION) << "Select swap in point failed for op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+        MS_LOG(EXCEPTION) << "Select swap in point failed for op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
       }
       AddKernelMemSwapInfo(execution_order_[swap_in_order], mem_swap_in_info);
     }
@@ -417,7 +420,7 @@ void MemSwapManager::CacheCurSwapInfoSet(const AnfNodePtr &kernel) {
 void MemSwapManager::AddFirstTimeMovePos(const AnfNodePtr &kernel, size_t index, bool first_time) {
   auto iter = kernel_first_move_cache_map_.find(kernel.get());
   if (iter == kernel_first_move_cache_map_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find first time move pos info of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find first time move pos info of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   auto &first_move_list = iter->second;
   if (index >= first_move_list.size()) {
@@ -429,7 +432,7 @@ void MemSwapManager::AddFirstTimeMovePos(const AnfNodePtr &kernel, size_t index,
 bool MemSwapManager::QueryFirstTimeMovePos(const AnfNodePtr &kernel, size_t index) const {
   auto iter = kernel_first_move_cache_map_.find(kernel.get());
   if (iter == kernel_first_move_cache_map_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find first time move pos info of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find first time move pos info of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   const auto &first_move_list = iter->second;
   if (index >= first_move_list.size()) {
@@ -475,7 +478,7 @@ KernelExecutionInfo &MemSwapManager::SearchKernelExecutionInfo(const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(kernel);
   auto iter = kernel_execution_info_.find(kernel.get());
   if (iter == kernel_execution_info_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find execution info of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find execution info of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   return const_cast<KernelExecutionInfo &>(iter->second);
 }
@@ -511,7 +514,8 @@ void MemSwapManager::RemoveKernelMemSwapInfo(const AnfNodePtr &kernel, const Mem
   if (mem_swap_info.swap_kind_ == SwapKind::kHostToDevice) {
     auto map_iter = mem_swap_info_map_.find(kernel.get());
     if (map_iter == mem_swap_info_map_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find memory swap information of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+      MS_LOG(EXCEPTION) << "Can not find memory swap information of op[" << common::AnfAlgo::GetCNodeName(kernel)
+                        << "]";
     }
     MemSwapInfoSet &mem_swap_info_set = map_iter->second;
 
@@ -570,14 +574,14 @@ const PerformPair &MemSwapManager::QueryKernelSwapPerform(const AnfNodePtr &kern
   MS_EXCEPTION_IF_NULL(kernel);
   auto iter_kernel = kernel_swap_perform_.find(kernel.get());
   if (iter_kernel == kernel_swap_perform_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find swap performance data of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find swap performance data of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
 
   auto &perform_map = iter_kernel->second;
   auto iter_output = perform_map.find(output_idx);
   if (iter_output == perform_map.end()) {
     MS_LOG(EXCEPTION) << "Can not find swap performance data of output[" << output_idx << "] of op["
-                      << AnfAlgo::GetCNodeName(kernel) << "]";
+                      << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   return iter_output->second;
 }
@@ -586,7 +590,7 @@ const MemSwapInfoSet &MemSwapManager::QueryKernelMemSwapInfo(const AnfNodePtr &k
   MS_EXCEPTION_IF_NULL(kernel);
   auto iter = mem_swap_info_map_.find(kernel.get());
   if (iter == mem_swap_info_map_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find memory swap information of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find memory swap information of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   return iter->second;
 }
@@ -611,7 +615,7 @@ const HostAddress &MemSwapManager::QueryKernelHostAddr(const AnfNodePtr &kernel,
   auto &host_addrs = kernel_exec_info.host_addrs_;
   auto iter = host_addrs.find(output_idx);
   if (iter == host_addrs.end()) {
-    MS_LOG(EXCEPTION) << "Can not find host address of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find host address of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   return (iter->second).first;
 }
@@ -621,7 +625,7 @@ void MemSwapManager::AddKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t o
   auto &host_addrs = kernel_exec_info.host_addrs_;
   auto iter = host_addrs.find(output_idx);
   if (iter == host_addrs.end()) {
-    MS_LOG(EXCEPTION) << "Can not find host memory dirty info of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find host memory dirty info of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   (iter->second).second = dirty;
 }
@@ -631,7 +635,7 @@ bool MemSwapManager::QueryKernelHostAddrIsDirty(const AnfNodePtr &kernel, size_t
   auto &host_addrs = kernel_exec_info.host_addrs_;
   auto iter = host_addrs.find(output_idx);
   if (iter == host_addrs.end()) {
-    MS_LOG(EXCEPTION) << "Can not find host memory dirty info of op[" << AnfAlgo::GetCNodeName(kernel) << "]";
+    MS_LOG(EXCEPTION) << "Can not find host memory dirty info of op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
   }
   return (iter->second).second;
 }
@@ -686,18 +690,18 @@ void MemSwapManager::DumpSwapInfo() const {
     }
     auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
     MS_LOG(WARNING) << "Trigger kernel topo order[" << kernel_exec_info.topo_order_ << "] , op name["
-                    << AnfAlgo::GetCNodeName(kernel) << "]";
+                    << common::AnfAlgo::GetCNodeName(kernel) << "]";
 
     const MemSwapInfoSet &mem_swap_info_set = QueryKernelMemSwapInfo(kernel);
     for (auto &mem_swap_info : mem_swap_info_set) {
       if (mem_swap_info.swap_kind_ == SwapKind::kDeviceToHost) {
         MS_LOG(WARNING) << "    Swap Out Task: swapped kernel topo order[" << mem_swap_info.topo_order_ << "], op name["
-                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_)) << "], output idx["
-                        << mem_swap_info.output_idx_ << "]";
+                        << common::AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_))
+                        << "], output idx[" << mem_swap_info.output_idx_ << "]";
       } else {
         MS_LOG(WARNING) << "    Swap In Task: swapped kernel topo order[" << mem_swap_info.topo_order_ << "], op name["
-                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_)) << "], output idx["
-                        << mem_swap_info.output_idx_ << "]";
+                        << common::AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(mem_swap_info.topo_order_))
+                        << "], output idx[" << mem_swap_info.output_idx_ << "]";
       }
     }
   }
@@ -708,7 +712,7 @@ void MemSwapManager::DumpUserNodes() const {
     const auto &kernel_exec_info = SearchKernelExecutionInfo(kernel);
     const auto &node_users_map = kernel_exec_info.node_users_map_;
     MS_LOG(WARNING) << "Kernel topo order[" << kernel_exec_info.topo_order_ << "], op name["
-                    << AnfAlgo::GetCNodeName(kernel) << "]";
+                    << common::AnfAlgo::GetCNodeName(kernel) << "]";
     if (node_users_map.empty()) {
       MS_LOG(WARNING) << "    Kernel does not own any user node";
     }
@@ -718,7 +722,8 @@ void MemSwapManager::DumpUserNodes() const {
       auto &node_users = item.second;
       for (auto &order : node_users) {
         MS_LOG(WARNING) << "    Output index[" << output_idx << "] tensor is used by kernel["
-                        << AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(order)) << "], topo order[" << order << "]";
+                        << common::AnfAlgo::GetCNodeName(QueryKernelByTopoOrder(order)) << "], topo order[" << order
+                        << "]";
       }
     }
   }

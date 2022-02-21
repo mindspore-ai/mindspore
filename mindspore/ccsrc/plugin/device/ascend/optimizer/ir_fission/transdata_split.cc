@@ -27,7 +27,7 @@ const std::set<std::pair<string, string>> invalid_formats_pair = {
 const AnfNodePtr TransDataSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (node != nullptr && node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kTransDataOpName) {
+  if (node != nullptr && node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kTransDataOpName) {
     CheckCNodeInputSize(node->cast<CNodePtr>(), kTransOpInputTensorNum);
     if (IsFormatInvaild(node)) {
       TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
@@ -71,7 +71,7 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
   // if output_format=default transdata need split transdata->transpose else transpose->transdata
   if (output_format == kOpFormat_DEFAULT || output_format == kOpFormat_NCHW) {
     // trans input_format to hwcn
-    new_transdata_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node,
+    new_transdata_node = NewTransOpNode(func_graph, common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node,
                                         kernel_select_, false, prim::kPrimTransData->name());
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transdata_node, padding_axis);
     // trans hwcn to default_format
@@ -82,10 +82,10 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
   } else {
     // trans default to hwcn
     new_transpose_node =
-      NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node, kernel_select_, false,
+      NewTransOpNode(func_graph, common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), node, kernel_select_, false,
                      prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
     if (output_format == kOpFormat_FRACTAL_ZN_LSTM) {
-      AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
+      common::AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
     }
     RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
 

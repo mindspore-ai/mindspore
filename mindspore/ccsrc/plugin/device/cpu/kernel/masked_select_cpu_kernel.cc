@@ -26,7 +26,7 @@ constexpr size_t kMaskedSelectOutputsNum = 1;
 template <typename T>
 void MaskedSelectCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
@@ -69,12 +69,12 @@ bool MaskedSelectCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
     }
     std::vector<size_t> out_shape;
     (void)out_shape.emplace_back(j);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {
       dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
     }
-    AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
   }
   return true;
 }

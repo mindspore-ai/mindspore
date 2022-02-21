@@ -18,7 +18,7 @@
 #include <sys/time.h>
 #include <algorithm>
 #include <map>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore {

@@ -37,7 +37,7 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_generate_strategy.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
@@ -66,7 +66,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(AUTO_PARALLEL) || (parallel_mode != AUTO_PARALLEL) ||
+  if (!root->has_flag(kAutoParallel) || (parallel_mode != kAutoParallel) ||
       root->has_flag(AUTO_PARALLEL_RUN_ONCE_ONLY)) {
     return changes;
   }
@@ -103,12 +103,12 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   }
 
   // search parallelization strategy
-  if ((strategy_search_mode == DYNAMIC_PROGRAMMING) || (strategy_search_mode == SHARDING_PROPAGATION)) {
+  if ((strategy_search_mode == kDynamicProgramming) || (strategy_search_mode == kShardingPropagation)) {
     if (ParallelStrategySearch(all_nodes, root) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using " << strategy_search_mode
                         << " searching mode";
     }
-  } else if (strategy_search_mode == RECURSIVE_PROGRAMMING) {
+  } else if (strategy_search_mode == kRecursiveProgramming) {
     if (ParallelStrategyRecSearch(all_nodes, root) != SUCCESS) {
       MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
     }
@@ -376,7 +376,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();
   Status retGenStra;
-  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == DATA_PARALLEL) {
+  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == kDataParallel) {
     MS_LOG(INFO) << "generating batch parallel strategy...";
     StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
     retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
@@ -392,7 +392,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     return nullptr;
   }
 
-  bool use_sp_and_dataset = ((ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+  bool use_sp_and_dataset = ((ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
                              (ParallelContext::GetInstance()->sharding_propagation())) &&
                             (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos);
   if (use_sp_and_dataset) {
@@ -459,7 +459,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
       // Needed by rec_parser
-      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+      if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
         auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
         if (prev_cnode != nullptr) {
           entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
@@ -580,7 +580,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     if (!IsAutoParallelCareNode(cnode)) {
       // Needed by rec_parser
-      if (ParallelContext::GetInstance()->strategy_search_mode() == RECURSIVE_PROGRAMMING) {
+      if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
         auto prev_cnode = GetInternalOperatorInfo(cnode, prim_anf_node);
         if (prev_cnode != nullptr) {
           entire_costgraph->add_tuple_getitem(std::make_pair(cnode->UniqueId(), prev_cnode->UniqueId()));
@@ -690,7 +690,7 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
-  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
                 (ParallelContext::GetInstance()->sharding_propagation());
   if (use_sp && (prev_prim->name() == CAST) &&
       (configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
@@ -1054,7 +1054,7 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   }
 
   // Step 4: run the strategy searching algorithm
-  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == SHARDING_PROPAGATION) ||
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
                 (ParallelContext::GetInstance()->sharding_propagation());
   if (use_sp) {
     entire_costgraph->StrategyPropagate(configured_stra_ops_);
@@ -1213,7 +1213,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   bool is_training = true;
-  if (!root->has_flag(TRAINING)) {
+  if (!root->has_flag(kTraining)) {
     is_training = false;
   }
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training, shared_tensors_ops);

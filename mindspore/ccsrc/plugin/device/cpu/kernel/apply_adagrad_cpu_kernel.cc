@@ -30,8 +30,8 @@ constexpr size_t kApplyAdagradOutputsNum = 2;
 
 void ApplyAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  update_slots_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  update_slots_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 

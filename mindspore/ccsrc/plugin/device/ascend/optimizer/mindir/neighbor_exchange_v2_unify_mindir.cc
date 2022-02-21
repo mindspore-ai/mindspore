@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
@@ -124,11 +125,11 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
   *num_split = CalSplitAttrs(base_shape, is_first, is_last, split_dim, send_lens, &size_splits, &shapes);
 
   std::vector<TypeId> dtypes(*num_split, input_dtype);
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
-  AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
-  AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(*num_split), split_v);
-  AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue<std::vector<int64_t>>(size_splits), split_v);
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
+  common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue<int64_t>(split_dim), split_v);
+  common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue<int64_t>(*num_split), split_v);
+  common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue<std::vector<int64_t>>(size_splits), split_v);
+  common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
   return split_v;
 }
 
@@ -279,12 +280,12 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(neighbor_exchange_v2_or_grad);
   std::vector<int64_t> send_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrSendRankIds);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrSendRankIds);
   std::vector<int64_t> recv_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrRecvRankIds);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrRecvRankIds);
   std::vector<int64_t> recv_lens =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrRecvLens);
-  std::string group = AnfAlgo::GetNodeAttr<std::string>(neighbor_exchange_v2_or_grad, kAttrGroup);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_or_grad, kAttrRecvLens);
+  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(neighbor_exchange_v2_or_grad, kAttrGroup);
 
   // get split nodes output, split_outputs: [top_bottom, left_right, top_corner, bottom_corner]
   std::vector<std::vector<AnfNodePtr>> split_outputs;
@@ -321,8 +322,8 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   }
 
   // output shapes and dtypes
-  auto base_dtype = AnfAlgo::GetOutputInferDataType(base_node, 0);
-  auto base_shape = AnfAlgo::GetOutputInferShape(base_node, 0);
+  auto base_dtype = common::AnfAlgo::GetOutputInferDataType(base_node, 0);
+  auto base_shape = common::AnfAlgo::GetOutputInferShape(base_node, 0);
   if (SizeToLong(base_shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Invalid shape size " << base_shape.size() << ", only support NCHW input now!";
   }
@@ -343,15 +344,15 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   // create alltoallv node
   auto all_to_all_v = pass.NewCNode(all_to_all_v_input, graph);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, all_to_all_v.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, all_to_all_v.get());
 
-  AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(real_send_rank_ids), all_to_all_v);
-  AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(real_recv_rank_ids), all_to_all_v);
-  AnfAlgo::SetNodeAttr(kAttrRecvType, TypeIdToType(base_dtype), all_to_all_v);
-  AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(real_send_rank_ids), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(real_recv_rank_ids), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvType, TypeIdToType(base_dtype), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
 
   // add depend for input & alltoallv in send_empty condition
-  AnfAlgo::SetNodeAttr(kAttrNeedDropInput, MakeValue<bool>(need_drop_input), all_to_all_v);
+  common::AnfAlgo::SetNodeAttr(kAttrNeedDropInput, MakeValue<bool>(need_drop_input), all_to_all_v);
   if (all_to_all_input_num == 0) {
     auto input = neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx);
     std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
@@ -385,8 +386,9 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
   MS_EXCEPTION_IF_NULL(neighbor_exchange_v2);
   MS_EXCEPTION_IF_NULL(split_num);
   std::vector<int64_t> send_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrSendRankIds);
-  std::vector<int64_t> send_lens = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrSendLens);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrSendRankIds);
+  std::vector<int64_t> send_lens =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrSendLens);
 
   if (neighbor_exchange_v2->size() <= kNeighborExchangeV2InputIdx) {
     MS_LOG(EXCEPTION) << "Invalid cnode " << neighbor_exchange_v2->DebugString() << " input size "
@@ -397,8 +399,8 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
 
-  auto dtype = AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, 0);
-  auto shape = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_input, 0);
+  auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
   if (SizeToLong(shape.size()) != kShapeSize) {  // only support NCHW now
     MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
                       << trace::DumpSourceLines(neighbor_exchange_v2);
@@ -479,11 +481,11 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNode(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(graph);
   auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
-  AnfAlgo::SetOutputInferTypeAndShape(output_dtype, output_shape, concat.get());
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
-  AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
+  common::AnfAlgo::SetOutputInferTypeAndShape(output_dtype, output_shape, concat.get());
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(axis), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(input_nums), concat);
   std::vector<int64_t> dyn_input_size_empty{input_nums};
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size_empty), concat);
   return concat;
 }
 
@@ -500,7 +502,8 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
   size_t middle_ids = is_left ? 6 : 2;
   size_t last_ids = is_left ? 5 : 3;
 
-  auto single_shape = AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
+  auto single_shape =
+    common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0);
 
   if (recv_rank_ids[first_ids] != kInvalidId) {
     ++input_num;
@@ -519,7 +522,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
   }
 
   std::vector<TypeId> concat_output_dtype = {
-    AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0)};
+    common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[AllToAllRealIds(middle_ids, recv_rank_ids)], 0)};
   auto concat = CreateConcatNode(graph, concat_input, {single_shape}, concat_output_dtype, kHDim, input_num);
 
   return concat;
@@ -531,7 +534,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   int64_t input_num_all = 0;
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
-  auto single_shape = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
   size_t first_idx = concat_dim == kWDim ? 6 : 0;
   size_t last_idx = concat_dim == kWDim ? 2 : 4;
   size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
@@ -567,7 +570,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
     single_shape[concat_dim] += last_len;
   }
 
-  std::vector<TypeId> concat_output_dtype = {AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
+  std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
   auto concat_all =
     CreateConcatNode(graph, concat_input_all, {single_shape}, concat_output_dtype, concat_dim, input_num_all);
   return concat_all;
@@ -596,8 +599,9 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
   MS_EXCEPTION_IF_NULL(neighbor_exchange_v2);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
   std::vector<int64_t> recv_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrRecvRankIds);
-  std::vector<int64_t> recv_lens = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrRecvLens);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrRecvRankIds);
+  std::vector<int64_t> recv_lens =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2, kAttrRecvLens);
 
   int64_t all_to_all_output_num =
     std::count_if(recv_rank_ids.begin(), recv_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });
@@ -632,7 +636,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
-  std::vector<size_t> shape_all = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  std::vector<size_t> shape_all = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
   shape_all[kDim2] =
     recv_rank_ids[kRankIdZero] != kInvalidId ? shape_all[kDim2] + static_cast<size_t>(recv_lens[0]) : shape_all[kDim2];
   shape_all[kDim2] =
@@ -679,7 +683,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
     shape_all[kDim3] += recv_lens[kDim3];
   }
 
-  std::vector<TypeId> concat_right_output_dtype = {AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};
+  std::vector<TypeId> concat_right_output_dtype = {common::AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};
   auto concat_all =
     CreateConcatNode(graph, concat_input_all, {shape_all}, concat_right_output_dtype, kWDim, input_nums_all);
   return concat_all;
@@ -693,8 +697,9 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   MS_EXCEPTION_IF_NULL(neighbor_exchange_v2_grad);
   MS_EXCEPTION_IF_NULL(split_num);
   std::vector<int64_t> send_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendRankIds);
-  std::vector<int64_t> send_lens = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendLens);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendRankIds);
+  std::vector<int64_t> send_lens =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendLens);
 
   if (neighbor_exchange_v2_grad->size() <= kNeighborExchangeV2InputIdx) {
     MS_LOG(EXCEPTION) << "Invalid cnode " << neighbor_exchange_v2_grad->DebugString() << " input size "
@@ -703,8 +708,8 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
   }
 
   auto neighbor_exchange_v2_grad_input = neighbor_exchange_v2_grad->input(kNeighborExchangeV2InputIdx);
-  auto dtype = AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_grad_input, 0);
-  auto shape = AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_grad_input, 0);
+  auto dtype = common::AnfAlgo::GetOutputInferDataType(neighbor_exchange_v2_grad_input, 0);
+  auto shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_grad_input, 0);
   if (SizeToLong(shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Invalid shape size " << shape.size() << ", only support NCHW input now!"
                       << trace::DumpSourceLines(neighbor_exchange_v2_grad);
@@ -735,7 +740,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       MS_LOG(EXCEPTION) << "The node " << split_nodes[0]->DebugString()
                         << " should have at least one output, but got 0." << trace::DumpSourceLines(split_nodes[0]);
     }
-    size_split_h = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(split_nodes[0], kAttrSizeSplits);
+    size_split_h = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(split_nodes[0], kAttrSizeSplits);
   } else {
     // just middle
     split_outputs_top_bottom.push_back(neighbor_exchange_v2_grad_input);
@@ -792,9 +797,9 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreatePadNode(const FuncGraphPtr &gr
   for (size_t i = 0; i < shape.size(); ++i) {
     (void)paddings.emplace_back(std::vector<int64_t>{begin[i], static_cast<int64_t>(shape[i]) - begin[i] - size[i]});
   }
-  AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, pad.get());
-  AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
+  common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, pad.get());
+  common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
   return pad;
 }
 
@@ -807,14 +812,15 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(neighbor_exchange_v2_grad);
   std::vector<int64_t> send_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendRankIds);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrSendRankIds);
   std::vector<int64_t> recv_rank_ids =
-    AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrRecvRankIds);
-  std::vector<int64_t> recv_lens = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrRecvLens);
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrRecvRankIds);
+  std::vector<int64_t> recv_lens =
+    common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(neighbor_exchange_v2_grad, kAttrRecvLens);
 
   auto centerx = GetCenter(graph, neighbor_exchange_v2_grad, split_nodes, split_num, send_rank_ids);
-  auto centerx_dtype = AnfAlgo::GetOutputInferDataType(centerx, 0);
-  auto centerx_shape = AnfAlgo::GetOutputInferShape(centerx, 0);
+  auto centerx_dtype = common::AnfAlgo::GetOutputInferDataType(centerx, 0);
+  auto centerx_shape = common::AnfAlgo::GetOutputInferShape(centerx, 0);
   // empty
   int64_t all_to_all_output_num =
     std::count_if(recv_rank_ids.begin(), recv_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });
@@ -885,9 +891,9 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
   }
   auto addn = NewCNode(addn_inputs, graph);
   MS_EXCEPTION_IF_NULL(addn);
-  AnfAlgo::SetOutputInferTypeAndShape({centerx_dtype}, {centerx_shape}, addn.get());
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue<std::vector<int64_t>>({pad_num}), addn);
-  AnfAlgo::SetNodeAttr(kAttrN, MakeValue(pad_num), addn);
+  common::AnfAlgo::SetOutputInferTypeAndShape({centerx_dtype}, {centerx_shape}, addn.get());
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue<std::vector<int64_t>>({pad_num}), addn);
+  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(pad_num), addn);
   MS_LOG(DEBUG) << "Create splitvs grad nodes success.";
   return addn;
 }

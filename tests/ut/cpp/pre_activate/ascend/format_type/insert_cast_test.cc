@@ -25,7 +25,7 @@
 #include "runtime/device/kernel_info.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

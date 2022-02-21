@@ -17,17 +17,18 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "base/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "runtime/dev.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 
 namespace mindspore::kernel {
 bool TbeJsonUtils::GetInputsRealNum(const AnfNodePtr &anf_node, const std::vector<OpIOInfoPtr> &inputs_ptr,
                                     std::vector<size_t> *inputs_num) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(inputs_num);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   auto dyn_input_sizes_ptr = primitive->GetAttr(kAttrDynInputSizes);
   std::vector<int64_t> dyn_input_sizes = (dyn_input_sizes_ptr != nullptr)
@@ -53,13 +54,13 @@ bool TbeJsonUtils::GetInputsRealNum(const AnfNodePtr &anf_node, const std::vecto
 bool TbeJsonUtils::GetOutputsRealNum(const AnfNodePtr &anf_node, const std::vector<OpIOInfoPtr> &outputs_ptr,
                                      std::vector<size_t> *outputs_num) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   for (const auto &output_ptr : outputs_ptr) {
     if (output_ptr->param_type() == kJParamDynamic) {
       if (outputs_ptr.size() > 1) {
-        MS_LOG(ERROR) << "Dynamic output is unsupported multi output, node [ " << AnfAlgo::GetCNodeName(anf_node)
-                      << " ] has " << outputs_ptr.size() << "outputs, however one of the outputs param_type is "
-                      << output_ptr->param_type();
+        MS_LOG(ERROR) << "Dynamic output is unsupported multi output, node [ "
+                      << common::AnfAlgo::GetCNodeName(anf_node) << " ] has " << outputs_ptr.size()
+                      << "outputs, however one of the outputs param_type is " << output_ptr->param_type();
         return false;
       }
       outputs_num->emplace_back(real_output_num);
@@ -72,13 +73,13 @@ bool TbeJsonUtils::GetOutputsRealNum(const AnfNodePtr &anf_node, const std::vect
 
 bool TbeJsonUtils::IsNeedChangeDefaultFormat(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  return anf_node->isa<CNode>() && AnfAlgo::HasNodeAttr(kAttrFormat, anf_node->cast<CNodePtr>()) &&
-         AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrFormat) == kOpFormat_NCDHW;
+  return anf_node->isa<CNode>() && common::AnfAlgo::HasNodeAttr(kAttrFormat, anf_node->cast<CNodePtr>()) &&
+         common::AnfAlgo::GetNodeAttr<std::string>(anf_node, kAttrFormat) == kOpFormat_NCDHW;
 }
 
 std::vector<int64_t> TbeJsonUtils::GetInputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, real_idx);
+  session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, real_idx);
   return GetOutputOriShapeForTbeBuild(kernel_with_index.first, kernel_with_index.second);
 }
 
@@ -96,7 +97,7 @@ std::vector<int64_t> TbeJsonUtils::GetInputDeviceShapeForTbeBuild(const AnfNodeP
 std::vector<int64_t> TbeJsonUtils::GetOutputOriShapeForTbeBuild(const AnfNodePtr &anf_node, size_t real_idx) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::vector<int64_t> shape;
-  auto out_shape = AnfAlgo::GetOutputDetailShape(anf_node, real_idx);
+  auto out_shape = common::AnfAlgo::GetOutputDetailShape(anf_node, real_idx);
   MS_EXCEPTION_IF_NULL(out_shape);
   if (out_shape->isa<abstract::Shape>()) {
     auto shape_ptr = out_shape->cast<abstract::ShapePtr>();

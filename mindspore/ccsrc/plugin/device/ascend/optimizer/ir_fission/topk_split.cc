@@ -21,9 +21,10 @@
 #include "utils/hash_set.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 
@@ -95,7 +96,7 @@ kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
 }
 
 bool CheckInputNamesSize(const CNodePtr &cnode) {
-  auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
+  auto input_names_vec = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrInputNames);
   if (input_names_vec.size() < kTopkIndexK + 1) {
     MS_LOG(INFO) << "The input k of topk has been converted to attr";
     return false;
@@ -104,7 +105,7 @@ bool CheckInputNamesSize(const CNodePtr &cnode) {
 }
 
 bool CheckOutputShape(const AnfNodePtr &node) {
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   if (shape.empty()) {
     MS_LOG(INFO) << "The output shape of topk to split must not be empty";
     return false;
@@ -119,7 +120,7 @@ bool CheckOutputShape(const AnfNodePtr &node) {
 }
 
 bool CheckInputType(const AnfNodePtr &node) {
-  auto dtype = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   const std::set<TypeId> aicore_supported_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat};
   if (aicore_supported_types.find(dtype) == aicore_supported_types.end()) {
     MS_LOG(INFO) << "The input data type of topk to split must be float";
@@ -129,7 +130,7 @@ bool CheckInputType(const AnfNodePtr &node) {
 }
 
 bool CheckFusion(const CNodePtr &node) {
-  if (!AnfAlgo::HasNodeAttr(kAttrSorted, node) || !AnfAlgo::GetNodeAttr<bool>(node, kAttrSorted)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrSorted, node) || !common::AnfAlgo::GetNodeAttr<bool>(node, kAttrSorted)) {
     return false;
   }
   if (!CheckInputNamesSize(node)) {
@@ -155,7 +156,7 @@ const BaseRef TopKSplit::DefinePattern() const {
 const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -171,7 +172,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   CheckCNodeInputSize(new_cnode, kTopkInputTensorNum);
   // Convert the tensor input to scalar and convert it to attr
   auto input_k = new_cnode->input(kTopkIndexK + 1);

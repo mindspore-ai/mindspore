@@ -38,8 +38,8 @@ class TotalC6GetGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
 
-    auto shape_atom_lj_type = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_lj_b = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_atom_lj_type = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_lj_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
     for (size_t i = 0; i < shape_atom_lj_type.size(); i++) ele_atom_lj_type *= shape_atom_lj_type[i];
     for (size_t i = 0; i < shape_lj_b.size(); i++) ele_lj_b *= shape_lj_b[i];

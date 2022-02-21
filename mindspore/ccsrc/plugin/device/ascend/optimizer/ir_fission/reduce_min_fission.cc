@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -94,7 +95,7 @@ CNodePtr ReduceMinFission::CreateReduceMin(const FuncGraphPtr &graph, const AnfN
   CNodePtr reduce_min = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(reduce_min);
   reduce_min->set_scope(old_node->scope());
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, old_node, reduce_min);
   return reduce_min;
 }
 
@@ -107,15 +108,15 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   if (graph == nullptr || node == nullptr) {
     return nullptr;
   }
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, 1);
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-  auto dtype = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0);
-  auto prim = AnfAlgo::GetCNodePrimitive(cnode);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(prim);
   if (!prim->HasAttr(kAttrAxis) || !prim->HasAttr(kAttrKeepDims)) {
     MS_LOG(INFO) << "ReduceMin has no axis or keep_dims, no need to optimize!";
@@ -126,8 +127,8 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   if (!axis_value->isa<ValueSequence>()) {
     return nullptr;
   }
-  auto axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);
-  auto keep_dims = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
+  auto axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);
+  auto keep_dims = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
 
   if (!NeedOptimize(dtype, shape, axis)) {
     MS_LOG(INFO) << "No need to optimize for this ReduceMin. " << cnode->DebugString();
@@ -138,14 +139,14 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   CNodePtr reduce_min1 = CreateReduceMin(graph, cnode->input(1), cnode);
   std::vector<int64_t> axis_first = CalFirstAxis(shape, axis);
   std::vector<size_t> shape_first = GetInferShape(shape, axis_first, keep_dims);
-  AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape_first}, reduce_min1.get());
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_first), reduce_min1);
+  common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape_first}, reduce_min1.get());
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_first), reduce_min1);
 
   // Create reduce_min2
   CNodePtr reduce_min2 = CreateReduceMin(graph, reduce_min1, cnode);
   reduce_min2->set_abstract(cnode->abstract());
   std::vector<int64_t> axis_last = {-1};
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_last), reduce_min2);
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_last), reduce_min2);
   return reduce_min2;
 }
 }  // namespace opt

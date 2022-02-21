@@ -22,6 +22,7 @@
 #include "ir/graph_utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/common_utils.h"
 
@@ -65,7 +66,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
-  auto node_type = AnfAlgo::GetCNodeName(cnode);
+  auto node_type = common::AnfAlgo::GetCNodeName(cnode);
   if (no_need_to_convert_nodes.find(node_type) != no_need_to_convert_nodes.end()) {
     return nullptr;
   }
@@ -93,13 +94,13 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
     MS_EXCEPTION_IF_NULL(func_graph);
     auto new_cnode = NewCNode(new_inputs, func_graph);
     MS_EXCEPTION_IF_NULL(new_cnode);
-    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
+    if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimDepend)) {
       new_cnode->set_abstract(new_inputs[1]->abstract());
     } else {
       new_cnode->set_abstract(cnode->abstract());
     }
     new_cnode->set_scope(cnode->scope());
-    AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+    common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
     if (kernel_graph != nullptr) {
       kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
     }
@@ -110,8 +111,8 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
 
 const AnfNodePtr ConvertConstInputToTensorInput::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                          const EquivPtr &) const {
-  if (node == nullptr || func_graph == nullptr || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
-      AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+  if (node == nullptr || func_graph == nullptr || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     return nullptr;
   }
   if (!node->isa<CNode>()) {

@@ -25,13 +25,14 @@
 #include <utility>
 #include <vector>
 #include "debug/data_dump/dump_json_parser.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "utils/file_utils.h"
 #include "debug/data_dump/tensor_stat_dump.h"
 #include "abstract/utils.h"
@@ -164,7 +165,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
                              std::string *kernel_name, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto output_size = AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;
@@ -173,9 +174,9 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     MS_EXCEPTION_IF_NULL(addr);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes), trans_flag);
-    auto type = AnfAlgo::GetOutputInferDataType(node, j);
+    auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(node, j);
-    std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
@@ -253,9 +254,9 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
                             std::string *kernel_name, const Debugger *debugger, const KernelLaunchInfo *launch_info) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t j = 0; j < input_size; ++j) {
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, j);
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, j);
     auto input = kernel_with_index.first;
     auto index = kernel_with_index.second;
     if (!AnfAlgo::OutputAddrExist(input, index)) {
@@ -274,9 +275,9 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     }
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
-    auto type = AnfAlgo::GetOutputInferDataType(input, index);
+    auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(input, index);
-    std::string op_type = AnfAlgo::GetCNodeName(node);
+    std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = GetTimeStamp();
     uint32_t task_id = 0;
@@ -335,7 +336,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   MS_EXCEPTION_IF_NULL(addr);
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
-  auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
+  auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   auto device_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
   uint64_t timestamp = GetTimeStamp();
   uint32_t task_id = 0;

@@ -97,9 +97,9 @@ class DynamicRangeGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronize failed");
 
-    std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
+    std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
     std::vector<std::vector<size_t>> output_shape = {{static_cast<size_t>(output_shape_)}};
-    AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {
@@ -112,8 +112,8 @@ class DynamicRangeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_count;
     }

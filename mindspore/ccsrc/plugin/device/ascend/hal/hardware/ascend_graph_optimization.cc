@@ -21,7 +21,7 @@
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/session/ascend_auto_monad.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
 
@@ -128,7 +128,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   }
 
   auto execution_order = graph->execution_order();
-  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
   graph->set_execution_order(execution_order);
 
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));
@@ -306,8 +306,8 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
 void AscendGraphOptimization::SetOperatorInfo(const std::vector<CNodePtr> &nodes) {
   for (const auto &node : nodes) {
     auto status = device::ascend::SelectKernelInfo(node);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
     if (status == device::ascend::kStatusRaisePrecision) {
       raise_precision_count_++;
     } else if (status == device::ascend::kStatusReducePrecision) {

@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "ir/func_graph.h"
 #include "kernel/common_utils.h"
@@ -39,7 +40,7 @@ bool cmp_format_num(const std::pair<std::string, size_t> &a, const std::pair<std
 }
 
 TypeId GetPrimitivePrecision(const CNodePtr &cnode) {
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
 
   TypeId except_type = kTypeUnknown;
@@ -59,11 +60,11 @@ TypeId GetPrimitivePrecision(const CNodePtr &cnode) {
 }  // namespace
 
 void ResetKernelBuildInfo(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
+    auto input_kernel_node = common::AnfAlgo::GetInputNode(kernel_node, input_index);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
-    auto kernel_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(input_kernel_node, 0);
     if (!kernel::IsWeightBoundary(kernel_with_index.first)) {
       continue;
     }
@@ -182,12 +183,12 @@ void UpdateFracNZReduceOp(const CNodePtr &cnode) {
     } else {
       MS_LOG(ERROR) << "Axis attr type is not correct!";
     }
-    auto infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+    auto infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
     std::vector<int64_t> frac_nz_axis = DefaultToFracNZAxis(infer_shape, default_axis);
-    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<std::vector<int64_t>>(frac_nz_axis), cnode);
-    auto output_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<std::vector<int64_t>>(frac_nz_axis), cnode);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(cnode, 0);
     if (output_shape.size() == 1) {
-      AnfAlgo::SetNodeAttr(kAttrOutputDefault, MakeValue<bool>(true), cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrOutputDefault, MakeValue<bool>(true), cnode);
     }
   }
 }
@@ -197,9 +198,9 @@ void GetDefaultFormat(const CNodePtr &kernel_node, std::string *default_format, 
   MS_EXCEPTION_IF_NULL(default_format);
   MS_EXCEPTION_IF_NULL(use_same_format);
   std::unordered_map<std::string, size_t> all_input_formats;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_num; ++i) {
-    auto input_kernel_node = AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
+    auto input_kernel_node = common::AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     if (!input_kernel_node->isa<Parameter>()) {
       ++all_input_formats[AnfAlgo::GetPrevNodeOutputFormat(kernel_node, i)];
@@ -227,13 +228,13 @@ void GetDefaultFormat(const CNodePtr &kernel_node, std::string *default_format, 
   }
 
   for (size_t i = 0; i < input_num; ++i) {
-    auto input_kernel_node = AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
+    auto input_kernel_node = common::AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     if (!input_kernel_node->isa<Parameter>() ||
         AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) != kTypeUnknown) {
       continue;
     }
-    auto weight_infer_shape = AnfAlgo::GetOutputInferShape(input_kernel_node, 0);
+    auto weight_infer_shape = common::AnfAlgo::GetOutputInferShape(input_kernel_node, 0);
     if (weight_infer_shape.size() < kShape2dDims && *default_format == kOpFormat_FRAC_NZ) {
       *default_format = kOpFormat_DEFAULT;
       *use_same_format = true;
@@ -249,14 +250,14 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
   MS_EXCEPTION_IF_NULL(graph_input_type);
   // We set same format to all inputs of graph kernel subgraph, and process this latter.
   // We set dtype to inputs of graph kernel subgraph same as infer dtypes.
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_num; ++i) {
-    auto input_kernel_node = AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
+    auto input_kernel_node = common::AnfAlgo::VisitKernel(kernel_node->input(i + 1), 0).first;
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     if (use_same_format) {
       bool can_convert = true;
       if (default_format == kOpFormat_FRAC_NZ) {
-        auto infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+        auto infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
         if (!CanConvertDefaultShapeToNZ(infer_shape)) {
           MS_LOG(WARNING) << "Shape can't be converted to frac nz shape, so use default format instead";
           can_convert = false;
@@ -289,7 +290,7 @@ void UpdateInputsKernelInfo(const CNodePtr &kernel_node, const std::vector<AnfNo
 
     // weight parameter.
     graph_input_format->push_back(default_format);
-    graph_input_type->push_back(AnfAlgo::GetOutputInferDataType(input_kernel_node, 0));
+    graph_input_type->push_back(common::AnfAlgo::GetOutputInferDataType(input_kernel_node, 0));
   }
 
   for (size_t i = 0; i < input_num; ++i) {
@@ -320,7 +321,7 @@ void UpdateEquivFormat(const std::vector<AnfNodePtr> &node_list, const FuncGraph
     UpdateFracNZReduceOp(cnode);
     // If ReduceSum's output is 1d and not Default format, convert it to Default format
     auto out_format = AnfAlgo::GetOutputFormat(cnode, 0);
-    if (out_format == kOpFormat_DEFAULT || !AnfAlgo::HasNodeAttr(kAttrOutputDefault, cnode)) {
+    if (out_format == kOpFormat_DEFAULT || !common::AnfAlgo::HasNodeAttr(kAttrOutputDefault, cnode)) {
       continue;
     }
     // Insert EquivFormat node, then select kernel info again
@@ -328,9 +329,9 @@ void UpdateEquivFormat(const std::vector<AnfNodePtr> &node_list, const FuncGraph
     trans_inputs.push_back(NewValueNode(prim::kPrimEquivFormat));
     trans_inputs.push_back(cnode);
     CNodePtr trans_node = func_graph->NewCNode(trans_inputs);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0)},
-                                        {AnfAlgo::GetOutputInferShape(cnode, 0)}, trans_node.get());
-    AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue<std::vector<std::string>>({"x"}), trans_node);
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0)},
+                                                {common::AnfAlgo::GetOutputInferShape(cnode, 0)}, trans_node.get());
+    common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue<std::vector<std::string>>({"x"}), trans_node);
 
     if (trans_node->kernel_info() == nullptr) {
       trans_node->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -350,7 +351,7 @@ void CheckFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNod
   MS_EXCEPTION_IF_NULL(graph_input_type);
   MS_EXCEPTION_IF_NULL(need_update);
   // check graph input format and dtype use inner ops.
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (graph_input_format->size() != input_num || graph_input_type->size() != input_num ||
       need_update->size() != input_num) {
     MS_LOG(EXCEPTION) << "Graph input format size is not equal to input num of cnode[" << kernel_node->DebugString()
@@ -382,7 +383,7 @@ void CheckFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNod
         continue;
       }
 
-      TypeId default_dtype = AnfAlgo::GetOutputInferDataType(input, 0);
+      TypeId default_dtype = common::AnfAlgo::GetOutputInferDataType(input, 0);
       MS_LOG(WARNING) << "Users of input: [" << i << "][" << input->DebugString() << " of ["
                       << kernel_node->DebugString()
                       << "] selected different dtype. we use default: " << TypeIdLabel(default_dtype);
@@ -398,7 +399,7 @@ void UpdateFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNo
                             const std::vector<TypeId> &graph_input_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // update graph input format and dtype use inner ops.
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (graph_input_format.size() != input_num || graph_input_type.size() != input_num ||
       need_update.size() != input_num) {
     MS_LOG(EXCEPTION) << "Graph input format size is not equal to input num of cnode[" << kernel_node->DebugString()
@@ -429,7 +430,7 @@ void UpdateFormatsAndDtypes(const CNodePtr &kernel_node, const std::vector<AnfNo
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-    size_t cnode_input_num = AnfAlgo::GetInputTensorNum(cnode);
+    size_t cnode_input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t j = 0; j < cnode_input_num; ++j) {
       auto input_node = cnode->input(j + 1);
       MS_EXCEPTION_IF_NULL(input_node);
@@ -456,7 +457,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const std::vector<std::pair
     graph_output_format.push_back(AnfAlgo::GetOutputFormat(output.first, output.second));
     TypeId output_type(kTypeUnknown);
     if (output.first->isa<CNode>()) {
-      output_type = AnfAlgo::GetCNodeOutputPrecision(output.first);
+      output_type = common::AnfAlgo::GetCNodeOutputPrecision(output.first);
     }
     if (output_type == kTypeUnknown) {
       output_type = AnfAlgo::GetOutputDeviceDataType(output.first, output.second);
@@ -515,7 +516,7 @@ void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func
   kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
 
   // update graph input format and dtype use inner ops.
-  std::vector<bool> need_update(AnfAlgo::GetInputTensorNum(kernel_node), false);
+  std::vector<bool> need_update(common::AnfAlgo::GetInputTensorNum(kernel_node), false);
   CheckFormatsAndDtypes(kernel_node, input_list, mng, default_format, &graph_input_format, &graph_input_type,
                         &need_update);
   UpdateFormatsAndDtypes(kernel_node, node_list, input_list, need_update, graph_input_format, graph_input_type);

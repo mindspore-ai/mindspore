@@ -35,15 +35,15 @@ using DoubleMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Major
 }  // namespace
 void MatmulDoubleCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (a_shape.size() != kAMatrixDimNum || b_shape.size() != kAMatrixDimNum || out_shape.size() != kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be equal to 2.";
   }
-  trans_a_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
-  trans_b_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
+  trans_a_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
+  trans_b_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
 
   a_row_ = a_shape[kDim0];
   a_col_ = a_shape[kDim1];

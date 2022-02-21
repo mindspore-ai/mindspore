@@ -33,28 +33,28 @@ constexpr size_t kColIndex = 1;
 
 template <typename T>
 void QRCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kQRInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kQROutputsNum, kernel_name_);
 
-  const auto mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, MODE);
+  const auto mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, MODE);
   if (mode != "full" && mode != "r" && mode != "economic") {
     MS_LOG(EXCEPTION) << "mode should be in [full, r, economic], but got [" << mode << "].";
   }
 
-  auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   CHECK_KERNEL_INPUTS_NUM(a_shape.size(), kAMatrixDimNum, kernel_name_);
   a_row_ = a_shape[kDim0];
   a_col_ = a_shape[kDim1];
 
-  auto q_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto q_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   CHECK_KERNEL_INPUTS_NUM(q_shape.size(), kAMatrixDimNum, kernel_name_);
   q_row_ = q_shape[kDim0];
   q_col_ = q_shape[kDim1];
 
-  auto r_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  auto r_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
   CHECK_KERNEL_INPUTS_NUM(r_shape.size(), kAMatrixDimNum, kernel_name_);
   r_row_ = r_shape[kDim0];
   r_col_ = r_shape[kDim1];

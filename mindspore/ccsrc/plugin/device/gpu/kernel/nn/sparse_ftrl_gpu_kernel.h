@@ -61,9 +61,9 @@ class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
@@ -75,11 +75,11 @@ class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
     gradient_size_ = sizeof(T);
     indices_size_ = sizeof(S);
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "var") ||
                      CHECK_SHAPE_NULL(accumulation_shape, kernel_name, "accum") ||
                      CHECK_SHAPE_NULL(linear_shape, kernel_name, "linear") ||

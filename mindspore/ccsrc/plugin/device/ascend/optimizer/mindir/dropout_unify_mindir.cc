@@ -22,8 +22,9 @@
 #include <functional>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 /*
     DropoutGenMask：
@@ -48,7 +49,7 @@ constexpr size_t kInt64Len = 8;    // size of int64
 
 TypeId GetInputXDataType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto dropout_input_type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  auto dropout_input_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   if (dropout_input_type != kNumberTypeFloat32 && dropout_input_type != kNumberTypeFloat &&
       dropout_input_type != kNumberTypeFloat16) {
     dropout_input_type = kNumberTypeFloat16;
@@ -63,15 +64,15 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1: get keep_prob
-  if (!AnfAlgo::HasNodeAttr(kAttrKeepProb, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrKeepProb, cnode)) {
     MS_LOG(EXCEPTION) << "Dropout node does not have attr: keep_prob." << trace::DumpSourceLines(node);
   }
-  if (AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
-    if (!AnfAlgo::HasNodeAttr(kAttrSeed0, cnode) || !AnfAlgo::HasNodeAttr(kAttrSeed1, cnode)) {
+  if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrSeed0, cnode) || !common::AnfAlgo::HasNodeAttr(kAttrSeed1, cnode)) {
       MS_LOG(EXCEPTION) << "Dropout node does not have attr: seed0 or seed1." << trace::DumpSourceLines(node);
     }
   }
-  auto keep_prob = AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
+  auto keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
   MS_LOG(INFO) << "Keep_prob value: " << keep_prob;
 
   std::vector<int64_t> keep_prob_shape = {};
@@ -196,7 +197,7 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   MS_EXCEPTION_IF_NULL(gen_mask_abstract);
   dropout_gen_mask->set_abstract(gen_mask_abstract);
   dropout_gen_mask->set_scope(dropout->scope());
-  AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
+  common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
   if (dropout->HasPrimalAttr(kAttrMicro)) {
     dropout_gen_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
   }
@@ -217,7 +218,7 @@ CNodePtr CreateDropoutDoMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr
   MS_EXCEPTION_IF_NULL(dropout_do_mask);
   dropout_do_mask->set_abstract(abstract);
   dropout_do_mask->set_scope(dropout->scope());
-  AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, dropout_do_mask);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, dropout_do_mask);
   if (dropout->HasPrimalAttr(kAttrMicro)) {
     dropout_do_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
   }
@@ -279,9 +280,9 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
     for (auto &node_index : iter->second) {
       auto used_node = node_index.first;
       MS_EXCEPTION_IF_NULL(used_node);
-      if (AnfAlgo::CheckPrimitiveType(used_node, prim::kPrimTupleGetItem)) {
+      if (common::AnfAlgo::CheckPrimitiveType(used_node, prim::kPrimTupleGetItem)) {
         // check if Dropout's first output, which is used by forward, is used
-        if (AnfAlgo::GetTupleGetItemOutIndex(used_node->cast<CNodePtr>()) == 0) {
+        if (common::AnfAlgo::GetTupleGetItemOutIndex(used_node->cast<CNodePtr>()) == 0) {
           // if Dropout's first output is used, create forward DropoutDoMask
           auto do_mask_abstract1 =
             std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);

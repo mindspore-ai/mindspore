@@ -19,8 +19,9 @@
 #include <string>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/primitive.h"
 #include "ir/tensor.h"
 #include "ir/dtype/type_id.h"
@@ -57,7 +58,7 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
 
-  std::vector<size_t> logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0);
+  std::vector<size_t> logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0);
   int64_t depth = 0;
   if (!logits_shape.empty()) {
     size_t index = logits_shape.size() - 1;
@@ -101,11 +102,11 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   auto one_hot_node = pass.NewCNode(one_hot_inputs, graph);
   MS_EXCEPTION_IF_NULL(one_hot_node);
   one_hot_node->set_scope(sparse_softmax_node->scope());
-  std::vector<size_t> labels_shape = AnfAlgo ::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
+  std::vector<size_t> labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   labels_shape.emplace_back(depth);
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {labels_shape}, one_hot_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {labels_shape}, one_hot_node.get());
   if (is_convert_const_to_attr) {
-    AnfAlgo::SetNodeAttr(kAttrDepth, MakeValue(depth), one_hot_node);
+    common::AnfAlgo::SetNodeAttr(kAttrDepth, MakeValue(depth), one_hot_node);
   }
   return one_hot_node;
 }
@@ -122,7 +123,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(softmax_node);
   softmax_node->set_scope(sparse_softmax_node->scope());
 
-  std::vector<size_t> labels_shape = AnfAlgo::GetOutputInferShape(one_hot_node, 0);
+  std::vector<size_t> labels_shape = common::AnfAlgo::GetOutputInferShape(one_hot_node, 0);
   std::vector<size_t> loss_shape;
   if (!labels_shape.empty()) {
     loss_shape.emplace_back(labels_shape[0]);
@@ -130,16 +131,16 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
     MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
 
-  auto shapes = {loss_shape, AnfAlgo::GetOutputInferShape(one_hot_node, 0)};
-  auto data_types = AnfAlgo::GetOutputInferDataType(one_hot_node, 0);
+  auto shapes = {loss_shape, common::AnfAlgo::GetOutputInferShape(one_hot_node, 0)};
+  auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, 0);
   auto types = {data_types, data_types};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_node.get());
   return softmax_node;
 }
 
 std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<size_t> output_shape = AnfAlgo::GetOutputInferShape(node, 0);
+  std::vector<size_t> output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   if (output_shape.empty()) {
     MS_LOG(EXCEPTION) << node->fullname_with_scope() << "'s output shape is empty" << trace::DumpSourceLines(node);
   }
@@ -192,7 +193,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   reduce_abstract->set_shape(std::make_shared<abstract::Shape>());
   reduce_node->set_abstract(reduce_abstract);
   if (is_pynative) {
-    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_value), reduce_node);
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_value), reduce_node);
   }
   return reduce_node;
 }
@@ -220,10 +221,10 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   MS_EXCEPTION_IF_NULL(expand_dims_node);
 
   expand_dims_node->set_scope(real_div_node->scope());
-  std::vector<size_t> y_shape = AnfAlgo::GetOutputInferShape(real_div_node, 0);
+  std::vector<size_t> y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
   y_shape.emplace_back(1);
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                      expand_dims_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
+                                              expand_dims_node.get());
   return expand_dims_node;
 }
 
@@ -244,11 +245,11 @@ CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &rea
   MS_EXCEPTION_IF_NULL(expand_dims_node);
 
   expand_dims_node->set_scope(real_div_node->scope());
-  std::vector<size_t> y_shape = AnfAlgo::GetOutputInferShape(real_div_node, 0);
+  std::vector<size_t> y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
   y_shape.emplace_back(1);
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
-                                      expand_dims_node.get());
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), expand_dims_node);
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)}, {y_shape},
+                                              expand_dims_node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), expand_dims_node);
   return expand_dims_node;
 }
 
@@ -260,7 +261,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
-  auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
+  auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   std::vector<int64_t> multiple_value;
   std::transform(labels_shape.begin(), labels_shape.end(), std::back_inserter(multiple_value),
                  [](size_t label) { return static_cast<int64_t>(label); });
@@ -289,15 +290,15 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   auto tile_node = pass.NewCNode(tile_inputs, graph);
   MS_EXCEPTION_IF_NULL(tile_node);
   tile_node->set_scope(mul_node->scope());
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1)}, {labels_shape},
-                                      tile_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(mul_node, 1)},
+                                              {labels_shape}, tile_node.get());
   if (is_convert_const_to_attr) {
-    AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
+    common::AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), tile_node);
   }
   // feature map set
   std::vector<size_t> feature_map_input_indexs;
   (void)feature_map_input_indexs.emplace_back(0);
-  AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), tile_node);
+  common::AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), tile_node);
   return tile_node;
 }
 
@@ -307,7 +308,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(tile_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
-  std::vector<size_t> labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
+  std::vector<size_t> labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   if (labels_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
                       << trace::DumpSourceLines(sparse_softmax_node);
@@ -355,7 +356,7 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(softmax_output_node);
-  auto softmax_output_shape = AnfAlgo::GetOutputInferShape(softmax_output_node, 0);
+  auto softmax_output_shape = common::AnfAlgo::GetOutputInferShape(softmax_output_node, 0);
   if (softmax_output_shape.size() != softmax_output_shape_size) {
     MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits the second output shape size should be "
                       << softmax_output_shape_size << ", but got " << softmax_output_shape.size()
@@ -408,13 +409,13 @@ CNodePtr CreateCast(const FuncGraphPtr &graph, const CNodePtr &cast, const AnfNo
 
 bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse, string pass_name) {
   MS_EXCEPTION_IF_NULL(sparse);
-  if (AnfAlgo::GetCNodeName(sparse) != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
+  if (common::AnfAlgo::GetCNodeName(sparse) != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
     MS_LOG(EXCEPTION) << "The pass of " << pass_name << "'s input node should be "
-                      << kSparseSoftmaxCrossEntropyWithLogitsOpName << ", but got " << AnfAlgo::GetCNodeName(sparse)
-                      << trace::DumpSourceLines(sparse);
+                      << kSparseSoftmaxCrossEntropyWithLogitsOpName << ", but got "
+                      << common::AnfAlgo::GetCNodeName(sparse) << trace::DumpSourceLines(sparse);
   }
-  if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse)) {
-    return AnfAlgo::GetNodeAttr<bool>(sparse, kAttrIsGrad);
+  if (common::AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse)) {
+    return common::AnfAlgo::GetNodeAttr<bool>(sparse, kAttrIsGrad);
   } else {
     MS_LOG(EXCEPTION) << "Node of " << sparse->fullname_with_scope() << " does not have the attr " << kAttrIsGrad
                       << ", related pass: " << pass_name << trace::DumpSourceLines(sparse);
@@ -568,8 +569,8 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
   CreateMultipleOutputsOfAnfNode(graph, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
   // Both of the forward loss function and the backward loss function from cangjie will match this pattern,
   // the true branch is for the backward loss function, and the false branch is for the other one.
-  if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
-      AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
+      common::AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
     return softmax_node_outputs[1];
   } else {
     auto reduce_node = CreateReduceMean(graph, sparse_softmax_node, softmax_node_outputs[0], *this, true);

@@ -26,18 +26,19 @@
 #include <fstream>
 
 #include "runtime/kernel.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
 #include "ir/dtype/type.h"
 #include "runtime/dev.h"
 #include "plugin/device/ascend/hal/device/lic_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "securec/include/securec.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "mindspore/ccsrc/debug/common.h"
 #include "kernel/common_utils.h"
 
@@ -383,8 +384,8 @@ void TbeUtils::GetCompileInfo(const AnfNodePtr &node, std::string *compile_info,
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Get compile info from json file start. [" << node->fullname_with_scope() << "]";
   std::string json_name;
-  if (AnfAlgo::HasNodeAttr(kAttrJsonFileName, node->cast<CNodePtr>())) {
-    json_name = AnfAlgo::GetNodeAttr<std::string>(node, kAttrJsonFileName);
+  if (common::AnfAlgo::HasNodeAttr(kAttrJsonFileName, node->cast<CNodePtr>())) {
+    json_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrJsonFileName);
   } else {
     auto json_creator = std::make_shared<kernel::BuildTbeJsonCreator>();
     MS_EXCEPTION_IF_NULL(json_creator);

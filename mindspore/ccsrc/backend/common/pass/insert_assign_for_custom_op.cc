@@ -20,7 +20,7 @@
 #include <string>
 #include <regex>
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -30,14 +30,14 @@ constexpr auto kCustomAttrInplaceAssignOutput = "inplace_assign_output";
 
 // Used to find Custom op outputs' inplace assign index
 std::vector<std::vector<int64_t>> GetHybridInplaceIndex(const CNodePtr &cnode) {
-  if (AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType) != kCustomTypeHybrid) {
+  if (common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType) != kCustomTypeHybrid) {
     return {};
   }
 
-  if (!AnfAlgo::HasNodeAttr(kCustomAttrInplaceAssignOutput, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kCustomAttrInplaceAssignOutput, cnode)) {
     return {};
   }
-  auto inplace_index_str = AnfAlgo::GetNodeAttr<std::string>(cnode, kCustomAttrInplaceAssignOutput);
+  auto inplace_index_str = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kCustomAttrInplaceAssignOutput);
   std::regex delimiters(" ");
   std::vector<std::string> index(
     std::sregex_token_iterator(inplace_index_str.begin(), inplace_index_str.end(), delimiters, -1),
@@ -80,7 +80,7 @@ CNodePtr InsertAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, con
 CNodePtr InsertAssignAfterCustom(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto inplace_info = GetHybridInplaceIndex(cnode);
   if (inplace_info.size() != 1) return nullptr;
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   if (auto i = LongToSize(inplace_info[0][kCustomInput]); i < input_size) {
     return InsertAssign(func_graph, cnode->input(i + 1), cnode);
   } else {
@@ -102,7 +102,7 @@ CNodePtr InsertAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CNo
     auto inplace_info = GetHybridInplaceIndex(real_input);
     for (auto index : inplace_info) {
       if (index[kCustomOutput] == gt_idx && index[kCustomInput] >= 0) {
-        auto custom_input_size = AnfAlgo::GetInputTensorNum(real_input);
+        auto custom_input_size = common::AnfAlgo::GetInputTensorNum(real_input);
         if (auto i = LongToSize(index[kCustomInput]); i < custom_input_size) {
           return InsertAssign(func_graph, real_input->input(i + 1), cnode);
         }

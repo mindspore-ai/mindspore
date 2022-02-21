@@ -26,9 +26,9 @@ constexpr size_t kBroadcastToOutputsNum = 1;
 template <typename T>
 void BroadcastToCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
 

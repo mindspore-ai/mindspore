@@ -42,9 +42,9 @@ class MatrixBandPartGpuKernelMod : public NativeGpuKernelMod {
   ~MatrixBandPartGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (is_null_input_) {
       InitSizeLists();
       return true;

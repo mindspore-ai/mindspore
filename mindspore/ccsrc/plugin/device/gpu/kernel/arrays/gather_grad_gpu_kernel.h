@@ -45,15 +45,15 @@ class GatherGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
-    index_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    grad_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    index_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    grad_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(index_shapes_, kernel_name, "index") ||
                      CHECK_SHAPE_NULL(grad_shapes_, kernel_name, "grad") ||
                      CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");

@@ -16,8 +16,9 @@
 #include "plugin/device/gpu/optimizer/replace_addn_fusion.h"
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -30,11 +31,11 @@ const BaseRef ReplaceAddNFusion::DefinePattern() const {
 const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto A = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
-  auto B = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
+  auto A = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto B = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
   MS_EXCEPTION_IF_NULL(A);
   MS_EXCEPTION_IF_NULL(B);
-  int64_t num_input = AnfAlgo::GetNodeAttr<int64_t>(node, "n");
+  int64_t num_input = common::AnfAlgo::GetNodeAttr<int64_t>(node, "n");
   if (num_input == kAddNInputNum) {
     auto prim = std::make_shared<Primitive>(prim::kPrimAdd->name());
     MS_EXCEPTION_IF_NULL(prim);
@@ -43,9 +44,9 @@ const AnfNodePtr ReplaceAddNFusion::Process(const FuncGraphPtr &graph, const Anf
     MS_EXCEPTION_IF_NULL(add_new);
     std::vector<TypeId> outputs_type;
     std::vector<std::vector<size_t>> outputs_shape;
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(A, 0));
-    outputs_shape.push_back(AnfAlgo::GetOutputInferShape(A, 0));
-    AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, add_new.get());
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(A, 0));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(A, 0));
+    common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, add_new.get());
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     manager->Replace(utils::cast<CNodePtr>(node), utils::cast<CNodePtr>(add_new));

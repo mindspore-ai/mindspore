@@ -21,6 +21,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/kernel/cuda_impl/rl/discounted_return_impl.cuh"
 
 namespace mindspore {
@@ -35,10 +36,10 @@ class DiscountedReturnGpuKernelMod : public NativeGpuKernelMod {
   ~DiscountedReturnGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
-    gamma_ = AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    gamma_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << kInputNum << ", but got "
                         << input_num;

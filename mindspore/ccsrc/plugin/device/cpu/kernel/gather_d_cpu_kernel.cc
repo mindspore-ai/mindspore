@@ -67,7 +67,7 @@ void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, co
 template <typename T, typename I>
 void GatherDCpuKernelMod<T, I>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   if (input_shape_.size() != index_shape_.size()) {

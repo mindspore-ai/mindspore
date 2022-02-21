@@ -214,9 +214,9 @@ void PyObjectToRawMemorys(const py::object &object, const PyFuncArgumentInfo &ou
 }  // namespace
 
 void PyFuncCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  func_id_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
-  fake_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
-  single_scalar_output_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
+  func_id_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "fn_id");
+  fake_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "fake_output");
+  single_scalar_output_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "single_scalar_output");
   BuildFuncInfo(kernel_node);
 }
 
@@ -236,26 +236,26 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
   std::vector<std::vector<int64_t>> in_shapes;
   std::vector<std::vector<int64_t>> out_shapes;
 
-  if (AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
-    const auto &in_type_ptrs = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
+  if (common::AnfAlgo::HasNodeAttr("in_types", kernel_node)) {
+    const auto &in_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "in_types");
     (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(),
                         [&in_types](auto p) { (void)in_types.emplace_back(p->type_id()); });
   } else {
     in_types = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   }
 
-  if (AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
-    const auto &out_type_ptrs = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
+  if (common::AnfAlgo::HasNodeAttr("out_types", kernel_node)) {
+    const auto &out_type_ptrs = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "out_types");
     (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(),
                         [&out_types](auto p) { (void)out_types.emplace_back(p->type_id()); });
   } else {
     out_types = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   }
 
-  if (AnfAlgo::HasNodeAttr("in_shapes", kernel_node)) {
-    in_shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
+  if (common::AnfAlgo::HasNodeAttr("in_shapes", kernel_node)) {
+    in_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
   } else {
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel_node); i++) {
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel_node); i++) {
       std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       std::vector<int64_t> in_shape_tmp;
       (void)std::for_each(in_shape.begin(), in_shape.end(),
@@ -264,10 +264,10 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
     }
   }
 
-  if (AnfAlgo::HasNodeAttr("out_shapes", kernel_node)) {
-    out_shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
+  if (common::AnfAlgo::HasNodeAttr("out_shapes", kernel_node)) {
+    out_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
   } else {
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
+    for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
       std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
       std::vector<int64_t> out_shape_tmp;
       (void)std::for_each(out_shape.begin(), out_shape.end(),

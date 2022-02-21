@@ -20,8 +20,9 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/kernel.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
@@ -71,11 +72,11 @@ void AiCpuDynamicKernel::Initialize() {
   MS_LOG(INFO) << "Initialize node:" << cnode->fullname_with_scope();
   DynamicKernel::Initialize();
 
-  input_num_ = AnfAlgo::GetInputTensorNum(cnode);
-  output_num_ = AnfAlgo::GetOutputTensorNum(cnode);
+  input_num_ = common::AnfAlgo::GetInputTensorNum(cnode);
+  output_num_ = common::AnfAlgo::GetOutputTensorNum(cnode);
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
@@ -167,7 +168,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
     }
   }
 
-  if (AnfAlgo::IsDynamicShape(cnode) && unknow_type_ != DEPEND_COMPUTE) {
+  if (common::AnfAlgo::IsDynamicShape(cnode) && unknow_type_ != DEPEND_COMPUTE) {
     for (size_t i = 0; i < output_num_; ++i) {
       if (!ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode))) {
         MS_LOG(ERROR) << "Update output shape failed, cnode:" << cnode->fullname_with_scope() << " output:" << i;
@@ -214,7 +215,7 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
     shapes.emplace_back(size_t_shape);
   }
 
-  AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode_ptr_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode_ptr_.lock().get());
   return true;
 }
 
@@ -228,7 +229,7 @@ void AiCpuDynamicKernel::PostExecute() {
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();
   }
-  if (AnfAlgo::IsDynamicShape(cnode)) {
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
     UpdateOutputShapeFromExtInfo();
   }

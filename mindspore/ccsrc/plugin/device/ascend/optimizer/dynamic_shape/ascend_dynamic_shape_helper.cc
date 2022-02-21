@@ -18,7 +18,8 @@
 
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 
 namespace mindspore {
@@ -52,7 +53,7 @@ bool IsDynamicOp(const BaseRef &n) {
 
   CNodePtr cnode = utils::cast<CNodePtr>(n);
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   return kComputeDepend.find(op_name) != kComputeDepend.end();
 }
 
@@ -67,7 +68,7 @@ bool IsInheritedDynamicOp(const BaseRef &n) {
 
   CNodePtr cnode = utils::cast<CNodePtr>(n);
   MS_EXCEPTION_IF_NULL(cnode);
-  return AnfAlgo::IsNodeInputDynamicShape(cnode) || AnfUtils::IsNodeOutputDynamicShape(cnode);
+  return common::AnfAlgo::IsNodeInputDynamicShape(cnode) || AnfUtils::IsNodeOutputDynamicShape(cnode);
 }
 
 AnfNodePtr GenInferNode(const AnfNodePtr &node, bool fake_flag) {

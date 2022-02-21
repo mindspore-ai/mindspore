@@ -26,7 +26,7 @@
 #include "proto/ps.pb.h"
 #include "proto/fl.pb.h"
 #include "ir/anf.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/dtype/type_id.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "schema/fl_job_generated.h"
@@ -265,8 +265,8 @@ inline size_t GetTypeIdByte(const TypeId &type) {
 
 inline AddressPtr GenerateParameterNodeAddrPtr(const CNodePtr &kernel_node, size_t param_idx) {
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_node, nullptr);
-  auto param_node =
-    AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, param_idx), 0).first->cast<ParameterPtr>();
+  auto param_node = common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(kernel_node, param_idx), 0)
+                      .first->cast<ParameterPtr>();
   MS_ERROR_IF_NULL_W_RET_VAL(param_node, nullptr);
   auto param_tensor = param_node->default_param()->cast<tensor::TensorPtr>();
   MS_ERROR_IF_NULL_W_RET_VAL(param_tensor, nullptr);

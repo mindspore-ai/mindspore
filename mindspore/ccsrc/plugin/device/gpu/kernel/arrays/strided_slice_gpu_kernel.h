@@ -47,8 +47,8 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (null_output_) {
       InitSizeLists();

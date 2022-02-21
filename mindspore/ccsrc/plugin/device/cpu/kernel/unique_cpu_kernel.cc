@@ -22,17 +22,17 @@ namespace kernel {
 constexpr size_t kBucketSortThreshold = 100000;
 void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1D, but got "
                       << input_shape.size() << "D";
   }
   input_size_ = input_shape[0];
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
-    sorted_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
+  if (common::AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
+    sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
   }
 }
 
@@ -64,12 +64,13 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     }
     std::vector<size_t> out_shape;
     (void)out_shape.emplace_back(output_size_);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {
       dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
     }
-    AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, AnfAlgo::GetOutputInferShape(node_, 1)}, node_.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, common::AnfAlgo::GetOutputInferShape(node_, 1)},
+                                                node_.get());
   }
   return true;
 }

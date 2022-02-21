@@ -126,16 +126,16 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
 
   void Init(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
-      auto weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
       size_t weight_size_ = std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(T), std::multiplies<T>());
       input_size_list_.push_back(weight_size_);
     }
 
     server_num_ = ps::PSContext::instance()->server_num();
-    indices_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrIndex);
-    weight_full_names_ = AnfAlgo::GetNodeAttr<std::vector<std::string>>(kernel_node, kAttrPsKey);
+    indices_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrIndex);
+    weight_full_names_ = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(kernel_node, kAttrPsKey);
     MS_LOG(INFO) << "Weight full name as key " << weight_full_names_ << ", key index is " << indices_
                  << ", server number is " << server_num_;
     if (server_num_ == 0 || weight_full_names_.empty() || indices_.empty()) {
@@ -144,7 +144,7 @@ class FusedPullWeightKernelMod : public NativeCpuKernelMod {
            "empty or indices_ is UINT32_MAX.";
     }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < output_num; i++) {
       output_size_list_.push_back(sizeof(size_t));
     }

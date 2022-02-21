@@ -39,8 +39,8 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 template <typename T>
 void MatrixTriangularSolveCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node) {
-  auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
   size_t a_dims = a_shape.size();
   size_t aRowIndex = a_dims - kRowIndex;
@@ -60,19 +60,19 @@ void MatrixTriangularSolveCpuKernelMod<T>::InitShape(const CNodePtr &kernel_node
 
 template <typename T>
 void MatrixTriangularSolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   InitShape(kernel_node);
-  if (AnfAlgo::HasNodeAttr(ADJOINT, kernel_node)) {
+  if (common::AnfAlgo::HasNodeAttr(ADJOINT, kernel_node)) {
     // MatrixTriangularSolve attribute
-    trans_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
-    if (AnfAlgo::HasNodeAttr(TRANS, kernel_node)) {
+    trans_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
+    if (common::AnfAlgo::HasNodeAttr(TRANS, kernel_node)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the attribute 'adjoint' and 'trans' could not exist at the same time.";
     }
   } else {
-    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
-    unit_diagonal_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
-    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
+    lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+    unit_diagonal_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, UNIT_DIAGONAL);
+    const std::string trans = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
     if (trans == "N") {
       trans_ = false;
     } else if (trans == "T") {

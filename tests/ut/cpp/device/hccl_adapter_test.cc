@@ -17,6 +17,7 @@
 #include "common/common_test.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore::hccl {
@@ -32,15 +33,15 @@ class TestHcclAdapter : public UT::Common {
     all_to_all_v_input.insert(all_to_all_v_input.end(), inputs.begin(), inputs.end());
     auto all_to_all_v = graph->NewCNode(all_to_all_v_input);
     MS_EXCEPTION_IF_NULL(all_to_all_v);
-    AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(send_rank_ids), all_to_all_v);
-    AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(recv_rank_ids), all_to_all_v);
-    AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>("default_group"), all_to_all_v);
+    common::AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(send_rank_ids), all_to_all_v);
+    common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(recv_rank_ids), all_to_all_v);
+    common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>("default_group"), all_to_all_v);
     return all_to_all_v;
   }
 
   void SetOutputs(const CNodePtr &cnode, const std::vector<std::vector<size_t>> &shape,
                   const std::vector<TypeId> &data_type) {
-    AnfAlgo::SetOutputInferTypeAndShape(data_type, shape, cnode.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(data_type, shape, cnode.get());
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetFusionType(kernel::FusionType::OPAQUE);
     builder.SetProcessor(kernel::Processor::AICORE);
@@ -62,8 +63,8 @@ class TestHcclAdapter : public UT::Common {
     std::vector<AnfNodePtr> res;
     for (size_t i = 0; i < shape.size(); ++i) {
       auto node = graph->NewCNode(std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>("AnyNameOp"))});
-      AnfAlgo::SetOutputInferTypeAndShape(std::vector<TypeId>{data_type[i]}, std::vector<std::vector<size_t>>{shape[i]},
-                                          node.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape(std::vector<TypeId>{data_type[i]},
+                                                  std::vector<std::vector<size_t>>{shape[i]}, node.get());
       kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
       builder.SetFusionType(kernel::FusionType::OPAQUE);
       builder.SetProcessor(kernel::Processor::AICORE);

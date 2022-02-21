@@ -25,7 +25,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/multitype_funcgraph.h"
 #include "utils/flags.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/ordered_map.h"

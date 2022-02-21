@@ -61,8 +61,8 @@ class FtrlGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
@@ -77,10 +77,10 @@ class FtrlGpuKernelMod : public NativeGpuKernelMod {
     l2_regularization_size_ = sizeof(T);
     learning_rate_power_size_ = sizeof(T);
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
                      CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
                      CHECK_SHAPE_NULL(linear_shape, kernel_name_, "linear") ||

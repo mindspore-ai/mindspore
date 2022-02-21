@@ -26,7 +26,7 @@ constexpr size_t kEqualCountOutputsNum = 1;
 
 void EqualCountCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
 }
 
 bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -24,12 +24,12 @@
 #include <set>
 #include <algorithm>
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "utils/anf_utils.h"
 #ifdef ENABLE_D
-#include "transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/convert.h"
 #endif
 namespace mindspore {
 const char kMsConvert[] = "ms";

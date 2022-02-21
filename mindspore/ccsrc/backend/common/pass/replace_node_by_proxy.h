@@ -22,7 +22,7 @@
 #include "backend/common/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
 
 namespace mindspore {

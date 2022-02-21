@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -114,7 +115,7 @@ const AnfNodePtr LinSpaceFission::Process(const FuncGraphPtr &graph, const AnfNo
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(assist_const);
     MS_LOG(INFO) << "Split linspace op success.";

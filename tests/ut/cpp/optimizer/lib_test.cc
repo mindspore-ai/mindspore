@@ -29,6 +29,7 @@
 #include "pipeline/jit/resource.h"
 #include "debug/draw.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace opt {

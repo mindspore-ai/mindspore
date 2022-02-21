@@ -88,12 +88,12 @@ void SparseApplyFtrlCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_nod
 
 void SparseApplyFtrlCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> accum_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  std::vector<size_t> linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'var' should be at least 1-D, but got scalar or None.";
   }
@@ -136,19 +136,19 @@ void SparseApplyFtrlCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          "the first dimension value of 'indices', but got the first dimension value of 'grad': "
                       << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
   }
-  lr_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "lr");
+  lr_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "lr");
   if (lr_ <= 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'lr' should be a positive scalar, but got " << lr_;
   }
-  l1_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "l1");
+  l1_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "l1");
   if (l1_ < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'l1' should be a non-negative scalar, but got " << l1_;
   }
-  l2_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "l2");
+  l2_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "l2");
   if (l2_ < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'l2' should be a non-negative scalar, but got " << l2_;
   }
-  lr_power_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "lr_power");
+  lr_power_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "lr_power");
   if (lr_power_ > 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'lr_power' should be a non-negative scalar, but got "
                       << lr_power_;

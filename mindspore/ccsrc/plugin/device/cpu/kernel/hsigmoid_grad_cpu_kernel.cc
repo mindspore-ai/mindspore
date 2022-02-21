@@ -28,8 +28,8 @@ constexpr size_t kHSigmoidGradOutputsNum = 1;
 template <typename T>
 void HSigmoidGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   for (const uint64_t &d : x_shape_) {
     tensor_size_ *= d;
   }

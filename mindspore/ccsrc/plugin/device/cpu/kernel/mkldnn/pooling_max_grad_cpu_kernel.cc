@@ -33,13 +33,13 @@ constexpr size_t kMaxPoolingGradInputShapeSize = 4;
 
 void MaxPoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   src_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dst_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<int> kernel_sizes;
   std::vector<int> strides;
-  auto kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
-  auto strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  auto kernel_sizes_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
+  auto strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(kernel_sizes),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
@@ -49,7 +49,7 @@ void MaxPoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Pooling grad invalid input size!";
   }
   std::vector<int> padding_r;
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   kernel_size_ = {IntToSize(kernel_sizes[2]), IntToSize(kernel_sizes[3])};
   stride_.push_back(strides[2]);
   stride_.push_back(strides[3]);

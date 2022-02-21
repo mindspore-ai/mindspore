@@ -64,13 +64,13 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 template <typename T>
 void ArgMinWithValueCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
   }
-  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += static_cast<int64_t>(shape_len);
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)

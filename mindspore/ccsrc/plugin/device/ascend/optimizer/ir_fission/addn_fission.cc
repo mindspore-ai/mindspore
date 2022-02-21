@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,9 +33,9 @@ AnfNodePtr AddnFission::CreateNewAddn(const FuncGraphPtr &func_graph, const CNod
   MS_EXCEPTION_IF_NULL(new_addn);
   new_addn->set_scope(origin_addn_cnode->scope());
   new_addn->set_abstract(origin_addn_cnode->abstract());
-  AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(offset)), new_addn);
+  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(offset)), new_addn);
   std::vector<int64_t> dyn_input_sizes{SizeToLong(offset)};
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_addn);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_addn);
   return new_addn;
 }
 
@@ -70,9 +71,9 @@ const AnfNodePtr AddnFission::Process(const FuncGraphPtr &func_graph, const AnfN
     MS_EXCEPTION_IF_NULL(base_addn);
     base_addn->set_scope(new_cnode->scope());
     base_addn->set_abstract(new_cnode->abstract());
-    AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(base_addn_inputs.size() - 1)), base_addn);
+    common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(base_addn_inputs.size() - 1)), base_addn);
     std::vector<int64_t> dyn_input_sizes{SizeToLong(base_addn_inputs.size() - 1)};
-    AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_addn);
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_addn);
     new_cnode = base_addn;
     origin_input_size = base_addn->inputs().size() - 1;
   }

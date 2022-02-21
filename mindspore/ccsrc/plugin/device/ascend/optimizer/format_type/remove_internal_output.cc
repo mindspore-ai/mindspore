@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,7 +33,7 @@ bool UsedForOutputOnly(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   }
   const auto &node_set = iter->second;
   for (const auto &node_index : node_set) {
-    if (!AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimMakeTuple)) {
+    if (!common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimMakeTuple)) {
       return false;
     }
   }
@@ -54,7 +55,8 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
                                                const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCast) && !AnfAlgo::GetBooleanAttr(node, kIsBackendCast)) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCast) &&
+      !common::AnfAlgo::GetBooleanAttr(node, kIsBackendCast)) {
     return nullptr;
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -71,13 +73,13 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kTransOpInputTensorNum);
   auto input_node = cnode->input(1);
-  if (!AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimTupleGetItem)) {
+  if (!common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimTupleGetItem)) {
     kernel_graph->ReplaceInternalOutput(node, input_node);
   } else {
     auto tuple_getitem = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem);
-    size_t idx = AnfAlgo::GetTupleGetItemOutIndex(tuple_getitem);
-    AnfNodePtr real_input_node = AnfAlgo::GetTupleGetItemRealInput(tuple_getitem);
+    size_t idx = common::AnfAlgo::GetTupleGetItemOutIndex(tuple_getitem);
+    AnfNodePtr real_input_node = common::AnfAlgo::GetTupleGetItemRealInput(tuple_getitem);
     kernel_graph->ReplaceInternalOutput(node, real_input_node, 0, idx);
   }
   return input_node;

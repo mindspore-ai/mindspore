@@ -28,9 +28,9 @@ constexpr size_t kLogSoftmaxGradOutputsNum = 1;
 
 void LogSoftmaxGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  int axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  int axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis >= SizeToInt(src_shape.size())) {
     axis = SizeToInt(src_shape.size()) - 1;
   }

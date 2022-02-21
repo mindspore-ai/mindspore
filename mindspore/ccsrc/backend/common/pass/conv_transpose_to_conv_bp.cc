@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 

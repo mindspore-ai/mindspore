@@ -27,7 +27,7 @@ constexpr size_t kSubAndFilterOutputNum = 2;
 
 void SubAndFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -53,7 +53,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
                                             const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
 
   batch_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); ++i) {
@@ -78,12 +78,12 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
   std::vector<size_t> out_shape;
   (void)out_shape.emplace_back(count);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node.get());
 }
 }  // namespace kernel
 }  // namespace mindspore

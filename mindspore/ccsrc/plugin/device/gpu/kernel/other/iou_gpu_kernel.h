@@ -58,7 +58,7 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
@@ -66,9 +66,9 @@ class IOUGpuKernelMod : public NativeGpuKernelMod {
     anchor_boxes_size_ = sizeof(T);
     iou_size_ = sizeof(T);
 
-    auto gt_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto iou_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto gt_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto anchor_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto iou_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(gt_boxes_shape, kernel_name_, "anchor_boxes") ||
                      CHECK_SHAPE_NULL(anchor_boxes_shape, kernel_name_, "gt_boxes") ||
                      CHECK_SHAPE_NULL(iou_shape, kernel_name_, "output");

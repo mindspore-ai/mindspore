@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <functional>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "abstract/utils.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/check_convert_utils.h"
@@ -32,13 +33,13 @@ constexpr size_t kInputNum = 2;
 
 std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
-  auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
   if (shape_x.size() != 1) {
     MS_LOG(EXCEPTION) << "Input" << index << " must be [1-D], but got " << shape_x.size() << "-D."
                       << trace::DumpSourceLines(cnode);
   }
-  session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(cnode, index);
-  auto type_x = AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
+  session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index);
+  auto type_x = common::AnfAlgo::GetOutputInferDataType(kernel_with_index.first, kernel_with_index.second);
   if (type_x != TypeId::kNumberTypeInt64 && type_x != TypeId::kNumberTypeInt32) {
     MS_LOG(EXCEPTION) << "Input x type must be int64 or int32, but got " << TypeIdToType(type_x)
                       << trace::DumpSourceLines(cnode);
@@ -68,20 +69,20 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
 }
 
 int64_t GetArrProd(const CNodePtr &cnode) {
-  auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto arr_prod = std::accumulate(shape_x.begin(), shape_x.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   return arr_prod;
 }
 
 std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
   std::vector<int64_t> output_shapes;
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
     MS_LOG(DEBUG) << "Reshape has one input";
-    auto prim = AnfAlgo::GetCNodePrimitive(cnode);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
     ValuePtr sh = prim->GetAttr("shape");
     if (sh == nullptr) {
-      auto un_output_shapes = AnfAlgo::GetOutputInferShape(cnode, 0);
+      auto un_output_shapes = common::AnfAlgo::GetOutputInferShape(cnode, 0);
       (void)std::transform(std::begin(un_output_shapes), std::end(un_output_shapes), std::back_inserter(output_shapes),
                            [](const uint64_t &i) -> int64_t { return static_cast<int64_t>(i); });
     } else if (sh->isa<ValueTuple>()) {
@@ -134,7 +135,7 @@ void ReshapeKernel::Execute() {
   MS_EXCEPTION_IF_NULL(address_x);
 
   std::vector<int64_t> output_shapes = GetOutputShapes(cnode);
-  auto type_x = AnfAlgo::GetOutputInferDataType(cnode, 0);
+  auto type_x = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
 
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);
   // At execute reshape is noOpNode as all shapes are known so set skipNoOpNode false
@@ -170,7 +171,7 @@ void ReshapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std::ve
   auto output_addr = outputs[0]->addr;
   MS_EXCEPTION_IF_NULL(output_addr);
 
-  auto type_x = AnfAlgo::GetOutputInferDataType(cnode, 0);
+  auto type_x = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
 
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);
   // cppcheck-suppress unreadVariable

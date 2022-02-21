@@ -17,7 +17,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_reshape_fusion.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "base/core_ops.h"
 
@@ -53,7 +54,7 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(reshape_cnode);
   auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(reshape_cnode->input(1), kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(transpose_cnode);
-  if (AnfAlgo::IsDynamicShape(transpose_cnode) || AnfAlgo::IsDynamicShape(reshape_cnode)) {
+  if (common::AnfAlgo::IsDynamicShape(transpose_cnode) || common::AnfAlgo::IsDynamicShape(reshape_cnode)) {
     return nullptr;
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -61,8 +62,8 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
       (kernel_graph->IsInternalOutput(reshape_cnode, 0) || kernel_graph->IsInternalOutput(transpose_cnode, 0))) {
     return nullptr;
   }
-  std::vector<size_t> reshape_output0_shape = AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
-  std::vector<size_t> transpose_input0_shape = AnfAlgo::GetPrevNodeOutputInferShape(transpose_cnode, 0);
+  std::vector<size_t> reshape_output0_shape = common::AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
+  std::vector<size_t> transpose_input0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(transpose_cnode, 0);
   if (!CheckShapeDimInfo(reshape_output0_shape) || !CheckShapeDimInfo(transpose_input0_shape)) {
     return nullptr;
   }
@@ -72,11 +73,11 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(new_node);
 
   new_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttrs(reshape_cnode, new_node);
-  AnfAlgo::CopyNodeAttr(kAttrPerm, transpose_cnode, new_node);
-  AnfAlgo::SetNodeAttr(kAttrTransposeFirst, MakeValue(true), new_node);
-  auto reshape_output_shape = AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
-  AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(Convert2Long(reshape_output_shape)), new_node);
+  common::AnfAlgo::CopyNodeAttrs(reshape_cnode, new_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrPerm, transpose_cnode, new_node);
+  common::AnfAlgo::SetNodeAttr(kAttrTransposeFirst, MakeValue(true), new_node);
+  auto reshape_output_shape = common::AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(Convert2Long(reshape_output_shape)), new_node);
 
   return new_node;
 }

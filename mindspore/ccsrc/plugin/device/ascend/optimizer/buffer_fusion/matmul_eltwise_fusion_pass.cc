@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/matmul_eltwise_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
 
 namespace mindspore {
@@ -42,14 +43,14 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
           AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimAddN)) {
+          common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimAddN)) {
         continue;
       }
     }
@@ -57,10 +58,10 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
+        common::AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
-      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {
+      if (eltwise_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {
         MatchMatmulEltwise(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }
     }

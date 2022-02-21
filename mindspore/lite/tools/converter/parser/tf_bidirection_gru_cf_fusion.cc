@@ -18,7 +18,7 @@
 #include <set>
 #include <functional>
 #include "src/common/utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "tools/converter/ops/ops_def.h"

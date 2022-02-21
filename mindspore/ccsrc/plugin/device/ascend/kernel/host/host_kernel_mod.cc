@@ -44,8 +44,8 @@ HostKernelFactory &HostKernelFactory::Get() {
 
 bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
   for (size_t i = 0; i < input_num; i++) {
     std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
@@ -78,7 +78,7 @@ bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<Ad
 void HostKernelMod::InferOp() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::IsDynamicShape(node)) {
+  if (!common::AnfAlgo::IsDynamicShape(node)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape.";
   }
   KernelMod::InferShape();

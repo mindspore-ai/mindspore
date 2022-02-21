@@ -109,11 +109,11 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
     dropout_ = GetAttr<float>(kernel_node, "dropout");
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -169,7 +169,7 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
                                 "set rnn_desc failed");
 #endif
     const size_t kPrevOutput4th = 4;
-    auto weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput4th);
+    auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput4th);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "weight");
     if (is_null_input_) {
       InitSizeLists();

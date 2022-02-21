@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/kernel/host/dynamic_broadcast_gradient_args_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "utils/trace_base.h"
 
@@ -123,8 +124,8 @@ std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<
 
 std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, index);
-  auto shape_x = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
-  auto type_x = AnfAlgo::GetOutputInferDataType(cnode, index);
+  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+  auto type_x = common::AnfAlgo::GetOutputInferDataType(cnode, index);
   if (type_x != TypeId::kNumberTypeInt64) {
     MS_LOG(EXCEPTION) << "Input x type must be int64, but got " << type_x << trace::DumpSourceLines(cnode);
   }
@@ -193,7 +194,7 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel Start";
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "Invalid input num, should be " << kInputNum << ", but got " << input_num
                       << trace::DumpSourceLines(cnode);
@@ -210,7 +211,7 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   std::vector<size_t> r0_shp{r0_size};
   std::vector<size_t> r1_shp{r1_size};
   auto output_type = TypeId::kNumberTypeInt64;
-  AnfAlgo::SetOutputInferTypeAndShape({output_type, output_type}, {r0_shp, r1_shp}, cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({output_type, output_type}, {r0_shp, r1_shp}, cnode.get());
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel End";
 }
 

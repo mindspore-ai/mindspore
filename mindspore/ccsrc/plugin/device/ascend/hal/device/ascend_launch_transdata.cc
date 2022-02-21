@@ -20,6 +20,7 @@
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::device::ascend {
 void AscendLaunchTransData::FreeDeviceMem(void *addr) { AscendLaunchKernel::FreeDeviceMem(addr); }
@@ -98,7 +99,7 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
   if (!transdata_graph_->execution_order().empty()) {
     auto transdata_node = transdata_graph_->execution_order()[0];
     // set output infer type and shape
-    AnfAlgo::SetOutputInferTypeAndShape({dtype_}, {shape_}, transdata_node.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({dtype_}, {shape_}, transdata_node.get());
     // set build info
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     builder->SetKernelType(KernelType::TBE_KERNEL);
@@ -111,8 +112,8 @@ void AscendLaunchTransData::ConstructKernelGraphAndSetAttr() {
     builder->SetOutputsFormat(outputs_format);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transdata_node.get());
     // set attr
-    AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), transdata_node);
-    AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(src_format_), transdata_node);
+    common::AnfAlgo::SetNodeAttr(kAttrDstFormat, MakeValue(dst_format_), transdata_node);
   }
 }
 }  // namespace mindspore::device::ascend

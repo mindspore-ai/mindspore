@@ -22,14 +22,15 @@
 #include <algorithm>
 
 #include "utils/ms_context.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/split_umonad.h"
 #include "common/graph_kernel/substitute_dropout.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ir/graph_utils.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore::graphkernel {
@@ -58,7 +59,7 @@ FuncGraphPtr PyExpander::CreateExpandFuncGraph(const CNodePtr &node) {
 
   // call graph kernel ops generator.
   MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] with input json:\n" << node_desc_str;
-  auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelOpExpander, node_desc_str);
+  auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelOpExpander, node_desc_str);
   // parse result.
   if (py::isinstance<py::none>(ret)) {
     MS_LOG(ERROR) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] return invalid result, input json:\n"
@@ -151,7 +152,7 @@ ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &) {
 bool ComplexOpExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   auto cnode = node->cast<CNodePtr>();
   if (!PyExpander::ExpandJsonInfo(cnode, kernel_json)) return false;
-  (*kernel_json)["name"] = std::string("C") + AnfAlgo::GetCNodeName(cnode);
+  (*kernel_json)["name"] = std::string("C") + common::AnfAlgo::GetCNodeName(cnode);
   return true;
 }
 bool GraphKernelComplexExpander::Run(const FuncGraphPtr &func_graph) { return DoExpand(func_graph); }

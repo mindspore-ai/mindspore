@@ -16,7 +16,7 @@
 
 #include "distributed/persistent/storage/json_utils.h"
 #include "distributed/persistent/storage/file_io_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace distributed {

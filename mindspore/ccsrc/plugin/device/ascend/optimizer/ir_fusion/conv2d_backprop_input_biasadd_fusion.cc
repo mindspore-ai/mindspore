@@ -17,8 +17,9 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "plugin/device/ascend/hal/device/lic_manager.h"
 
@@ -55,7 +56,7 @@ const AnfNodePtr Conv2dBackpropInputBiasaddFusion::Process(const FuncGraphPtr &g
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
 
-  AnfAlgo::CopyNodeAttrs(conv2d_bp_input, new_node);
+  common::AnfAlgo::CopyNodeAttrs(conv2d_bp_input, new_node);
   return new_node;
 }
 }  // namespace opt

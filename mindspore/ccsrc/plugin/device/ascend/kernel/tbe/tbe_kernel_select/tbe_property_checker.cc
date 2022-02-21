@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "utils/trace_base.h"
 
@@ -35,15 +36,15 @@ constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 
 static bool CheckStridedSlice(const CNodePtr &cnode) {
   // check stride[-1] != 1
-  if (AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
-    auto strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrStrides);
+  if (common::AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
+    auto strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrStrides);
     if (!strides.empty() && strides[strides.size() - 1] != 1) {
       return false;
     }
   }
   // check reduction on the last dimension
-  if (GetCNodeFuncName(cnode) == kStridedSliceOpName && AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
-    auto shrink_axis_mask = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrShrinkAxisMask));
+  if (GetCNodeFuncName(cnode) == kStridedSliceOpName && common::AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
+    auto shrink_axis_mask = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrShrinkAxisMask));
     AnfNodePtr input = cnode->input(1);
     int input_dims = 0;
     MS_EXCEPTION_IF_NULL(input);
@@ -76,8 +77,8 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
 }
 
 static bool CheckTopK(const CNodePtr &cnode) {
-  if (AnfAlgo::HasNodeAttr(kAttrSorted, cnode)) {
-    auto sorted = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSorted);
+  if (common::AnfAlgo::HasNodeAttr(kAttrSorted, cnode)) {
+    auto sorted = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSorted);
     return sorted;
   }
   MS_LOG(EXCEPTION) << "For 'TopK', it should be have attribute 'sorted'." << trace::DumpSourceLines(cnode);
@@ -87,7 +88,7 @@ bool TbePropertyChecker::CheckTbeProperties(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   static std::map<std::string, CheckSupportFun> tbe_property_checker = {
     {kStridedSliceOpName, CheckStridedSlice}, {kStridedSliceGradOpName, CheckStridedSlice}, {kTopKOpName, CheckTopK}};
-  auto cnode_type = AnfAlgo::GetCNodeName(cnode);
+  auto cnode_type = common::AnfAlgo::GetCNodeName(cnode);
   auto find_iter = tbe_property_checker.find(cnode_type);
   if (find_iter != tbe_property_checker.end()) {
     return find_iter->second(cnode);

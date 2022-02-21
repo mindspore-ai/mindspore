@@ -16,9 +16,10 @@
 #include "backend/common/pass/convert_const_scalar_to_tensor.h"
 #include <memory>
 #include <utility>
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
@@ -57,7 +58,7 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
 
 const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                      const EquivPtr &) const {
-  if (node == nullptr || func_graph == nullptr || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+  if (node == nullptr || func_graph == nullptr || common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     return nullptr;
   }
   // input is scalar, and link to graph return

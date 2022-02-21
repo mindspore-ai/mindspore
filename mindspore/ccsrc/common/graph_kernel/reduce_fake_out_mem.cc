@@ -59,10 +59,10 @@ bool ReduceFakeOutMem::Run(const FuncGraphPtr &func_graph) {
 
   auto todos = TopoSort(func_graph->get_return());
   for (auto node : todos) {
-    if (!AnfAlgo::IsGraphKernel(node)) {
+    if (!common::AnfAlgo::IsGraphKernel(node)) {
       continue;
     }
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(sub_graph);
 
     AnfNodePtrList output_list;
@@ -72,7 +72,8 @@ bool ReduceFakeOutMem::Run(const FuncGraphPtr &func_graph) {
       auto &out = output_list[i];
       auto out_cnode = out->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(out_cnode);
-      if (AnfAlgo::HasNodeAttr(kFakeOut, out_cnode) && AnfAlgo::GetNodeAttr<bool>(out_cnode, kFakeOut)) {
+      if (common::AnfAlgo::HasNodeAttr(kFakeOut, out_cnode) &&
+          common::AnfAlgo::GetNodeAttr<bool>(out_cnode, kFakeOut)) {
         (void)fake_real_indices.insert(i);
       }
     }

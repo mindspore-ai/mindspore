@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "common/common_test.h"
 
 namespace mindspore {
@@ -24,14 +24,14 @@ class TestCommManager : public UT::Common {
 
 TEST_F(TestCommManager, TestCreate) {
   std::vector<unsigned int> devices{0, 1, 2};
-  ASSERT_TRUE(CommManager::GetInstance().CreateGroupSync(string("1-2-3"), devices));
-  ASSERT_TRUE(CommManager::GetInstance().CreateGroupSync(string("hccl_world_group"), devices));
+  ASSERT_TRUE(CommManager::GetInstance().CreateGroupSync(std::string("1-2-3"), devices));
+  ASSERT_TRUE(CommManager::GetInstance().CreateGroupSync(std::string("hccl_world_group"), devices));
 }
 
 TEST_F(TestCommManager, TestGetSize) {
   unsigned int rank_size = 0;
-  ASSERT_TRUE(CommManager::GetInstance().GetRankSize(string("1-2-3"), &rank_size));
-  ASSERT_TRUE(CommManager::GetInstance().GetRankSize(string("hccl_world_group"), &rank_size));
+  ASSERT_TRUE(CommManager::GetInstance().GetRankSize(std::string("1-2-3"), &rank_size));
+  ASSERT_TRUE(CommManager::GetInstance().GetRankSize(std::string("hccl_world_group"), &rank_size));
 }
 
 }  // namespace mindspore

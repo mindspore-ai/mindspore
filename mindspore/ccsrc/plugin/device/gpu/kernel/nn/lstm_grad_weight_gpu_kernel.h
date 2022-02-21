@@ -86,11 +86,11 @@ class LstmGradWeightGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -139,7 +139,7 @@ class LstmGradWeightGpuKernelMod : public NativeGpuKernelMod {
                                                          hidden_size_, hidden_size_, num_layers_, dropout_desc_, 0),
                                 "set rnn_desc failed");
 #endif
-    auto weight_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto weight_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
     if (is_null_input_) {
       InitSizeLists();

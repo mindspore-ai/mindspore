@@ -33,9 +33,9 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/symbolic.h"
-#include "utils/primitive_utils.h"
+#include "include/common/utils/primitive_utils.h"
 #include "utils/ms_context.h"
 #include "utils/info.h"
 #include "debug/trace.h"
@@ -441,7 +441,7 @@ FuncGraphPtr KPrim::GetPossibleBprop(const PrimitivePtr &prim) {
 FuncGraphPtr KPrim::GetFprop(const PrimitivePtr &prim) {
   static const std::string ad_module = "mindspore.ops._grad.grad_implementations";
   std::string func_name = "_fprop_" + prim->name();
-  py::function fn = parse::python_adapter::GetPyFn(ad_module, func_name);
+  py::function fn = python_adapter::GetPyFn(ad_module, func_name);
   auto func_graph = parse::ParsePythonCode(fn);
   MS_EXCEPTION_IF_NULL(func_graph);
   return BasicClone(func_graph);

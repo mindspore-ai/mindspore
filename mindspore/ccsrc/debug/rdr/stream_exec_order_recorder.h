@@ -21,6 +21,7 @@
 #include <utility>
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/rdr/base_recorder.h"
 
 using json = nlohmann::json;
@@ -64,24 +65,24 @@ class StreamExecOrderRecorder : public BaseRecorder {
         ExecNode(i, cur_cnode_ptr->fullname_with_scope(), AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()),
                  AnfAlgo::GetStreamId(cur_cnode_ptr), cur_cnode_ptr->DebugString());
 
-      if (AnfAlgo::HasNodeAttr(kAttrEventId, cur_cnode_ptr)) {
-        exec_node.SetEventId(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId));
+      if (common::AnfAlgo::HasNodeAttr(kAttrEventId, cur_cnode_ptr)) {
+        exec_node.SetEventId(common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId));
       }
 
-      if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_cnode_ptr)) {
-        exec_node.SetLabelId(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex));
+      if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_cnode_ptr)) {
+        exec_node.SetLabelId(common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex));
       }
 
-      if (AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cur_cnode_ptr)) {
-        auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrLabelSwitchList);
+      if (common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cur_cnode_ptr)) {
+        auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrLabelSwitchList);
         for (size_t j = 0; j < label_list.size(); ++j) {
           exec_node.SetLabelId(label_list[j]);
         }
       }
 
       std::string active_stream_str;
-      if (AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cur_cnode_ptr)) {
-        auto stream_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrActiveStreamList);
+      if (common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cur_cnode_ptr)) {
+        auto stream_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrActiveStreamList);
         for (size_t j = 0; j < stream_list.size(); ++j) {
           exec_node.SetActiveStreamId(stream_list[j]);
         }

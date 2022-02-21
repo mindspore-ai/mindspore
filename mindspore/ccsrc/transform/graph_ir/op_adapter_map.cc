@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "transform/graph_ir/op_adapter_map.h"
+#include "include/transform/graph_ir/op_adapter_map.h"
 #include <memory>
 #include "graph/operator.h"
+#include "transform/graph_ir/op_adapter_desc.h"
 
 namespace mindspore {
 namespace transform {
+namespace {
+mindspore::HashMap<std::string, OpAdapterDescPtr> adpt_map_ = {
+  {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>())}};
+}  // namespace
+
 template <>
 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_input_map_{};
 template <>
 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_output_map_{};
-
-mindspore::HashMap<std::string, OpAdapterDescPtr> OpAdapterMap::adpt_map_ = {
-  {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>())}};
 
 mindspore::HashMap<std::string, OpAdapterDescPtr> &OpAdapterMap::get() { return adpt_map_; }
 }  // namespace transform

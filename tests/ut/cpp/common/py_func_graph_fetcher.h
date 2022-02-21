@@ -44,11 +44,11 @@ class PyFuncGraphFetcher {
   template <class... T>
   mindspore::FuncGraphPtr CallAndParseRet(std::string func_name, T... args) {
     try {
-      py::function fn = mindspore::parse::python_adapter::CallPyFn(model_path_.c_str(), func_name.c_str(), args...);
+      py::function fn = mindspore::python_adapter::CallPyFn(model_path_.c_str(), func_name.c_str(), args...);
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
         std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
-        mindspore::parse::python_adapter::set_use_signature_in_resolve(false);
+        mindspore::python_adapter::set_use_signature_in_resolve(false);
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;
@@ -68,11 +68,11 @@ class PyFuncGraphFetcher {
       if ("" != model_path) {
         path = model_path;
       }
-      py::function fn = mindspore::parse::python_adapter::GetPyFn(path.c_str(), func_name.c_str());
+      py::function fn = mindspore::python_adapter::GetPyFn(path.c_str(), func_name.c_str());
       mindspore::FuncGraphPtr func_graph = mindspore::parse::ParsePythonCode(fn);
       if (doResolve_) {
         std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(func_graph, false);
-        mindspore::parse::python_adapter::set_use_signature_in_resolve(false);
+        mindspore::python_adapter::set_use_signature_in_resolve(false);
         mindspore::parse::ResolveAll(manager);
       }
       return func_graph;

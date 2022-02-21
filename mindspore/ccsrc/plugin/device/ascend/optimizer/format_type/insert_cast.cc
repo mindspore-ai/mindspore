@@ -23,8 +23,9 @@
 #include "backend/common/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -36,7 +37,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   MS_EXCEPTION_IF_NULL(cnode);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  auto update_states = AnfAlgo::GetUpdateStateUsers(manager, orig_cnode);
+  auto update_states = common::AnfAlgo::GetUpdateStateUsers(manager, orig_cnode);
   for (auto &update_state : update_states) {
     manager->SetEdge(update_state.first, update_state.second, cnode);
   }
@@ -47,11 +48,11 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  size_t out_num = AnfAlgo::GetOutputTensorNum(cnode);
+  size_t out_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     AnfNodePtr replace_node = nullptr;
-    const auto origin_shape = AnfAlgo::GetOutputDetailShape(cnode, output_idx);
-    const auto origin_type = AnfAlgo::GetOutputInferDataType(cnode, output_idx);
+    const auto origin_shape = common::AnfAlgo::GetOutputDetailShape(cnode, output_idx);
+    const auto origin_type = common::AnfAlgo::GetOutputInferDataType(cnode, output_idx);
     auto idx = NewValueNode(SizeToLong(output_idx));
     MS_EXCEPTION_IF_NULL(idx);
     auto imm = std::make_shared<Int64Imm>(output_idx);
@@ -69,7 +70,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
                                           origin_shape, origin_type, AnfAlgo::GetOutputReshapeType(getitem, 0));
       MS_EXCEPTION_IF_NULL(replace_node);
       replace_node->set_scope(cnode->scope());
-      AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
+      common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode, output_idx)) {
         kernel_graph->ReplaceInternalOutput(cnode, replace_node, output_idx, 0);
       }
@@ -88,7 +89,7 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
 AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetOutputTensorNum(cnode) == 0) {
+  if (common::AnfAlgo::GetOutputTensorNum(cnode) == 0) {
     return cnode;
   }
   MS_EXCEPTION_IF_NULL(cnode->Type());
@@ -96,8 +97,8 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &o
   // Single output
   if (!cnode->Type()->isa<Tuple>()) {
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, 0);
-    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(cnode, 0);
-    const TypeId origin_type = AnfAlgo::GetOutputInferDataType(cnode, 0);
+    const abstract::BaseShapePtr origin_shape = common::AnfAlgo::GetOutputDetailShape(cnode, 0);
+    const TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
     const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, 0);
     AnfNodePtr replace_node = cnode;
     if (origin_type != device_type) {
@@ -105,7 +106,7 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &o
                                           origin_shape, origin_type, AnfAlgo::GetOutputReshapeType(cnode, 0));
       MS_EXCEPTION_IF_NULL(replace_node);
       replace_node->set_scope(cnode->scope());
-      AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
+      common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(cnode, 0)) {
         kernel_graph->ReplaceInternalOutput(cnode, replace_node);
       }
@@ -128,7 +129,7 @@ const AnfNodePtr InsertCast::Process(const FuncGraphPtr &func_graph, const AnfNo
   if (!AnfUtils::IsRealCNodeKernel(node) || func_graph == nullptr) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   // process input
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);

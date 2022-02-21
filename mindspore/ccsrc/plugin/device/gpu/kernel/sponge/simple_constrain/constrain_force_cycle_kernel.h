@@ -42,13 +42,13 @@ class ConstrainForceCycleGpuKernelMod : public NativeGpuKernelMod {
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     constrain_pair_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "constrain_pair_numbers"));
 
-    auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_pair_dr = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_i_serials = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_atom_j_serials = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_constant_rs = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_constrain_ks = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_pair_dr = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_atom_i_serials = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_atom_j_serials = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_constant_rs = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_constrain_ks = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
 
     for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
     for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];

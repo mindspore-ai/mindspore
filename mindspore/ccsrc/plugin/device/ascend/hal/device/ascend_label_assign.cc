@@ -19,6 +19,7 @@
 #include <set>
 #include "plugin/device/ascend/hal/device/ascend_label_assign.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace device {
@@ -27,7 +28,7 @@ static constexpr uint32_t kLabelGotoLabelId = 1;
 static constexpr uint32_t kLabelSwitchLabelId = 2;
 
 static void UpdateLabelGoto(NotNull<CNodePtr> node) {
-  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
     return;
   }
   if (node->size() <= kLabelGotoLabelId) {
@@ -35,14 +36,14 @@ static void UpdateLabelGoto(NotNull<CNodePtr> node) {
   }
 
   auto input = node->input(kLabelGotoLabelId);
-  uint32_t goto_label_id = AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
-  AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(goto_label_id), node.get());
+  uint32_t goto_label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
+  common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(goto_label_id), node.get());
   MS_LOG(INFO) << "Node " << node->DebugString() << " goto label id " << goto_label_id;
   node->set_inputs({node->input(0)});
 }
 
 static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
-  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
     return;
   }
   if (node->size() <= kLabelGotoLabelId) {
@@ -52,15 +53,15 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
   for (size_t i = kLabelSwitchLabelId; i < node->size(); ++i) {
     auto input = node->input(i);
     MS_EXCEPTION_IF_NULL(input);
-    if (!input->isa<CNode>() || AnfAlgo::GetCNodeName(input) != kLabelSetOpName) {
+    if (!input->isa<CNode>() || common::AnfAlgo::GetCNodeName(input) != kLabelSetOpName) {
       break;
     }
 
-    uint32_t goto_label_id = AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
+    uint32_t goto_label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(input, kAttrLabelIndex);
     label_list.push_back(goto_label_id);
     MS_LOG(INFO) << "Switch " << node->DebugString() << " case " << i - kLabelSwitchLabelId << ": id " << goto_label_id;
   }
-  AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue<std::vector<uint32_t>>(label_list), node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue<std::vector<uint32_t>>(label_list), node.get());
   node->set_inputs({node->input(kAnfPrimitiveIndex), node->input(kFirstDataInputIndex)});
 }
 
@@ -82,9 +83,9 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
 
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    std::string node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == kLabelSetOpName && !AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
-      AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(*label_id), node);
+    std::string node_name = common::AnfAlgo::GetCNodeName(node);
+    if (node_name == kLabelSetOpName && !common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
+      common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue<uint32_t>(*label_id), node);
       MS_LOG(INFO) << "Node " << node->DebugString() << " assign label id " << *label_id;
       ++(*label_id);
     }

@@ -33,15 +33,15 @@ constexpr size_t kkAvgPoolingGradPadSize = 2;
 
 void AvgPoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   std::vector<int> origin_kernel_sizes;
   std::vector<int> strides;
-  std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
-  std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  std::vector<int64_t> kernel_sizes_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
+  std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(origin_kernel_sizes),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
@@ -52,7 +52,7 @@ void AvgPoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int> stride{strides[2], strides[3]};
   dnnl::memory::dims strides_dims{strides[2], strides[3]};
   dnnl::memory::dims kernels_dims{origin_kernel_sizes[2], origin_kernel_sizes[3]};
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});

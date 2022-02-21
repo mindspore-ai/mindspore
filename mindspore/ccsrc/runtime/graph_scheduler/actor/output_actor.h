@@ -30,6 +30,7 @@
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/tensor.h"
 
 namespace mindspore {

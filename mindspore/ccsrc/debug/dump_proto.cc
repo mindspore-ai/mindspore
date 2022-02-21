@@ -27,9 +27,10 @@
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "pipeline/jit/base.h"
 #include "utils/anf_utils.h"
+#include "mindspore/ccsrc/frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 class ProtoExporter {

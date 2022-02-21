@@ -50,18 +50,18 @@ void EigCpuKernelMod<T, C>::InitMatrixInfo(const std::vector<size_t> &shape) {
 
 template <typename T, typename C>
 void EigCpuKernelMod<T, C>::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   // If compute_v_ is true, then: w, v = Eig(a)
   // If compute_v_ is false, then: w = Eig(a)
-  if (AnfAlgo::HasNodeAttr(COMPUTE_V, kernel_node)) {
-    compute_v_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, COMPUTE_V);
+  if (common::AnfAlgo::HasNodeAttr(COMPUTE_V, kernel_node)) {
+    compute_v_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, COMPUTE_V);
   }
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo ::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto expect_output_num = compute_v_ ? kOutputsNumV : kOutputsNumNV;
   CHECK_KERNEL_OUTPUTS_NUM(output_num, expect_output_num, kernel_name_);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   InitMatrixInfo(input_shape);
 }
 

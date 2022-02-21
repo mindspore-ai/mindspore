@@ -24,7 +24,7 @@
 #include <memory>
 #include <mutex>
 
-#include "common/duplex_pipe.h"
+#include "include/common/duplex_pipe.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 

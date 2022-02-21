@@ -18,8 +18,9 @@
 #include <string>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -50,15 +51,15 @@ CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &r
 
   // ReluV2's 2rd output is mask whose data type is uint8
   TypeId mask_dtype = kNumberTypeUInt8;
-  if (AnfAlgo::IsDynamicShape(relu)) {
+  if (common::AnfAlgo::IsDynamicShape(relu)) {
     return nullptr;
   }
-  std::vector<size_t> mask_shape = AnfAlgo::GetOutputInferShape(relu, 0);
+  std::vector<size_t> mask_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
   if (mask_shape.size() != kMaskShapeSize) {
     MS_LOG(DEBUG) << "relu's infer shape size not equal 4";
     return nullptr;
   }
-  auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(relu, 0);
+  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(relu, 0);
   constexpr auto kMultiplierInt8 = 31;
   constexpr auto kDivisorInt8 = 32;
   constexpr auto kMultiplier = 15;
@@ -74,9 +75,9 @@ CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &r
     mask_shape.push_back(kThirdShape);
   }
 
-  auto types = {AnfAlgo::GetOutputInferDataType(relu, 0), mask_dtype};
-  auto shapes = {AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(relu, 0), mask_dtype};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
   return new_node;
 }
 
@@ -123,10 +124,10 @@ const AnfNodePtr DereluFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   // Add attr mapping from original nodes to fusion nodes
   auto original_names =
     MakeValue<std::vector<std::string>>({relu->fullname_with_scope(), relu_grad->fullname_with_scope()});
-  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_v2);
-  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_grad_v2);
-  AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_v2);
-  AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_grad_v2);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_v2);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, original_names, relu_grad_v2);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_v2);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpIsMultiop, MakeValue(true), relu_grad_v2);
 
   auto manage = graph->manager();
   MS_EXCEPTION_IF_NULL(manage);

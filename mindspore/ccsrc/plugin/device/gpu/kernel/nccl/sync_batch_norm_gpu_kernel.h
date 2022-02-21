@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/nccl/nccl_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sync_batch_norm_impl.cuh"
 
 namespace mindspore {
@@ -77,22 +77,22 @@ class SyncBatchNormGpuKernel : public NcclGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto root_rank = common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
     }
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 5) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 5, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -129,8 +129,8 @@ class SyncBatchNormGpuKernel : public NcclGpuKernelMod {
     }
     // MULTI DEVICE SPECIFICS
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    MS_LOG(INFO) << AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto comm_stream_attr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");
+    MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
+    auto comm_stream_attr = common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");
     if (comm_stream_attr) {
       comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
       MS_EXCEPTION_IF_NULL(comm_stream_);

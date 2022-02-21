@@ -21,8 +21,8 @@
 #include <vector>
 #include "runtime/rt.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
-#include "utils/runtime_error_codes.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/runtime_error_codes.h"
 
 namespace mindspore {
 namespace kernel {

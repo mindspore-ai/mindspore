@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 #include "hccl/hccl_types.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/dlopen_macro.h"
 namespace mindspore {
 namespace device {

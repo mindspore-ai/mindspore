@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
@@ -33,8 +34,8 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "kernel_size");
-  auto data_format = AnfAlgo::GetNodeAttr<std::string>(cnode, "format");
+  auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "kernel_size");
+  auto data_format = common::AnfAlgo::GetNodeAttr<std::string>(cnode, "format");
   if (data_format != kOpFormat_NCDHW) {
     MS_LOG(ERROR) << "MaxPool3DGradGrad only support NCDHW format, but got " << data_format;
   }
@@ -120,7 +121,7 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(assist_const);
     MS_LOG(INFO) << "Split MaxPool3DGradGrad op success.";

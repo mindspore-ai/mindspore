@@ -19,11 +19,13 @@
 #include <algorithm>
 #include <stack>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/dshape.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "utils/ms_context.h"
 #include "abstract/param_validator.h"
 
 namespace mindspore {
@@ -32,14 +34,14 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init Start";
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  is_dynamic_shape_ = AnfAlgo::IsDynamicShape(cnode);
+  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(cnode);
   if (!is_dynamic_shape_) {
     MS_LOG(DEBUG) << "cnode is not dynamic shape:" << cnode->fullname_with_scope();
     return;
   }
 
-  is_input_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape);
-  is_output_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape);
+  is_input_dynamic_shape_ = common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape);
+  is_output_dynamic_shape_ = common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape);
 
   auto ret = abstract::GetDependsFormMap(cnode);
   if (ret.empty()) {
@@ -67,21 +69,21 @@ void DynamicKernel::InferShape() {
   MS_EXCEPTION_IF_NULL(context);
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
     auto real_input = input_node_with_index.first;
     MS_EXCEPTION_IF_NULL(real_input);
     auto cnode_input = cnode->input(i + 1);
     MS_EXCEPTION_IF_NULL(cnode_input);
     InferShapeForNopNode(&real_input);
     if (depend_list_.find(i) != depend_list_.end()) {
-      auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
+      auto pre_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
       bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
       auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, i, skip_nop_node);
       std::vector<int64_t> shapes =
         trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
-      auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
+      auto host_type = common::AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
       auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
       MS_EXCEPTION_IF_NULL(out_tensor);
       // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
@@ -96,14 +98,14 @@ void DynamicKernel::InferShape() {
       if (real_abs->isa<abstract::AbstractTensor>()) {
         real_input->abstract()->set_value(out_tensor);
       } else if (real_abs->isa<abstract::AbstractTuple>()) {
-        auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
+        auto tuple_get_item_index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
         auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
         MS_EXCEPTION_IF_NULL(abstract_tuple);
         auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
         tuple_elements->set_value(out_tensor);
       }
     }
-    (void)AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
+    (void)common::AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   cnode->set_abstract(eval_result);
@@ -111,7 +113,7 @@ void DynamicKernel::InferShape() {
 
 void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
   MS_EXCEPTION_IF_NULL(*input_node);
-  if (!opt::IsNopNode(*input_node) || !AnfAlgo::IsDynamicShape(*input_node)) {
+  if (!common::AnfAlgo::IsNopNode(*input_node) || !common::AnfAlgo::IsDynamicShape(*input_node)) {
     MS_LOG(INFO) << "Input node is not a nop node, no need infer.";
     return;
   }
@@ -120,10 +122,10 @@ void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
   nop_road.push(*input_node);
 
   while (true) {
-    auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(*input_node, 0);
+    auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(*input_node, 0);
     auto in_node = input_node_with_idx.first;
     MS_EXCEPTION_IF_NULL(in_node);
-    if (opt::IsNopNode(in_node)) {
+    if (common::AnfAlgo::IsNopNode(in_node)) {
       nop_road.push(in_node);
       *input_node = in_node;
     } else {

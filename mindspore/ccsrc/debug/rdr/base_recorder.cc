@@ -15,8 +15,8 @@
  */
 #include "debug/rdr/base_recorder.h"
 #include "debug/common.h"
-#include "utils/utils.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/comm_manager.h"
 
 namespace mindspore {
 std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) const {

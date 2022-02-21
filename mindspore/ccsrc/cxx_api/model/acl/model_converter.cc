@@ -16,8 +16,8 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
-#include "transform/graph_ir/convert.h"
-#include "transform/graph_ir/graph_runner.h"
+#include "include/transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/graph_runner.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/api/serialization.h"
 #include "graph/model.h"

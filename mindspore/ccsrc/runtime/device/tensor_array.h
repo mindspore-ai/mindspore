@@ -22,6 +22,7 @@
 #include <memory>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
 
 namespace mindspore {

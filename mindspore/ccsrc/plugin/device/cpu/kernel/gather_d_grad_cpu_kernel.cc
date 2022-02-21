@@ -64,7 +64,7 @@ void GatherDGradCopyTask(size_t cur, std::vector<size_t> *pos, T *input, I *inde
 template <typename I, typename T>
 void GatherDGradCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape_ != index_shape_) {
@@ -72,8 +72,8 @@ void GatherDGradCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
                       << "', shape size of 'x' should be equal to 'index', but got shape size of 'x': "
                       << input_shape_.size() << ", and shape size of 'index': " << index_shape_.size();
   }
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, DIM);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, DIM);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 }
 
 template <typename I, typename T>

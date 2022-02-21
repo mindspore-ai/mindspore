@@ -26,9 +26,10 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
-#include "utils/contract.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/contract.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
@@ -57,7 +58,7 @@ constexpr size_t inplace_node_size = 2;
 
 template <typename T>
 void SetPrimAttr(AnfNodePtr inplace_node, const string &key, const T &value) {
-  auto primitive = AnfAlgo::GetCNodePrimitive(inplace_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(inplace_node);
   MS_EXCEPTION_IF_NULL(primitive);
   primitive->AddAttr(key, MakeValue(value));
 }
@@ -76,9 +77,9 @@ bool ExistRoute(const CNodePtr &src, const CNodePtr &dst) {
   to_do.push(dst);
   while (!to_do.empty()) {
     const auto &current_node = to_do.front();
-    size_t input_num = AnfAlgo::GetInputTensorNum(current_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(current_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      const AnfNodePtr &input_node = AnfAlgo::GetInputNode(current_node, input_index);
+      const AnfNodePtr &input_node = common::AnfAlgo::GetInputNode(current_node, input_index);
       const auto &cnode = input_node->cast<CNodePtr>();
       if (cnode == nullptr) {
         continue;
@@ -118,19 +119,19 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
   }
   auto first_node = inplace_node[0].node;
   auto second_node = inplace_node[1].node;
-  if (AnfAlgo::GetCNodeName(first_node) != kConv2DBackpropInputOpName ||
-      AnfAlgo::GetCNodeName(second_node) != kConv2DBackpropInputOpName) {
+  if (common::AnfAlgo::GetCNodeName(first_node) != kConv2DBackpropInputOpName ||
+      common::AnfAlgo::GetCNodeName(second_node) != kConv2DBackpropInputOpName) {
     return {0, false};
   }
 
-  auto first_node_prim = AnfAlgo::GetCNodePrimitive(first_node);
+  auto first_node_prim = common::AnfAlgo::GetCNodePrimitive(first_node);
   MS_EXCEPTION_IF_NULL(first_node_prim);
   auto first_node_channel = first_node_prim.get()->GetAttr("out_channel");
   MS_EXCEPTION_IF_NULL(first_node_channel);
   auto first_imm_ptr = first_node_channel->cast<Int64ImmPtr>();
   MS_EXCEPTION_IF_NULL(first_imm_ptr);
   size_t first_channel = first_imm_ptr->value();
-  auto second_node_prim = AnfAlgo::GetCNodePrimitive(second_node);
+  auto second_node_prim = common::AnfAlgo::GetCNodePrimitive(second_node);
   MS_EXCEPTION_IF_NULL(second_node_prim);
   auto second_node_channel = second_node_prim.get()->GetAttr("out_channel");
   MS_EXCEPTION_IF_NULL(second_node_channel);
@@ -148,14 +149,14 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
 void CopyKernelInfo(AnfNodePtr src, AnfNodePtr dst) {
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(src);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, dst.get());
-  size_t output_num = AnfAlgo::GetOutputTensorNum(src);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(src);
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
   for (size_t i = 0; i < output_num; i++) {
-    types.emplace_back(AnfAlgo::GetOutputInferDataType(src, i));
-    shapes.emplace_back(AnfAlgo::GetOutputInferShape(src, i));
+    types.emplace_back(common::AnfAlgo::GetOutputInferDataType(src, i));
+    shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(src, i));
   }
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, dst.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, dst.get());
 }
 
 void CheckInplaceNodeInputs(std::vector<AnfNodeIndex> *inplace_node, size_t cover_index, const FuncGraphPtr &graph) {
@@ -251,25 +252,25 @@ bool PatternMatch(const FuncGraphPtr &graph, const AnfNodePtr &node, AnfNodeInde
   if (!node->isa<CNode>()) {
     return false;
   }
-  auto aggregate_iter = kAggregatesOpNames.find(AnfAlgo::GetCNodeName(node));
+  auto aggregate_iter = kAggregatesOpNames.find(common::AnfAlgo::GetCNodeName(node));
   if (aggregate_iter == kAggregatesOpNames.end()) {
     return false;
   }
   aggregate->node = node;
   aggregate->index = aggregate_iter->second;
 
-  *skip_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), aggregate_iter->second);
+  *skip_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), aggregate_iter->second);
   if (*skip_node == nullptr || !(*skip_node)->isa<CNode>() ||
-      kSkipOpNames.count(AnfAlgo::GetCNodeName(*skip_node)) == 0 ||
+      kSkipOpNames.count(common::AnfAlgo::GetCNodeName(*skip_node)) == 0 ||
       GetRealNodeUsedList(graph, *skip_node)->size() >= 2) {
     return false;
   }
 
   auto cnode = (*skip_node)->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < input_num; i++) {
-    auto inplace_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(*skip_node), i);
+    auto inplace_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(*skip_node), i);
     if (!inplace_node->isa<CNode>()) {
       return false;
     }
@@ -279,11 +280,11 @@ bool PatternMatch(const FuncGraphPtr &graph, const AnfNodePtr &node, AnfNodeInde
     }
 
     // skip TupleGetItem node
-    if (AnfAlgo::GetCNodeName(inplace_node) == prim::kPrimTupleGetItem->name()) {
-      inplace_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(inplace_node), 0);
+    if (common::AnfAlgo::GetCNodeName(inplace_node) == prim::kPrimTupleGetItem->name()) {
+      inplace_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(inplace_node), 0);
     }
 
-    auto inplace_iter = kInplaceOpNames.find(AnfAlgo::GetCNodeName(inplace_node));
+    auto inplace_iter = kInplaceOpNames.find(common::AnfAlgo::GetCNodeName(inplace_node));
     if (inplace_iter == kInplaceOpNames.end()) {
       return false;
     }

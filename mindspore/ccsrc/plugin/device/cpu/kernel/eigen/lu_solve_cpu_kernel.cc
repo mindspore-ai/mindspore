@@ -37,14 +37,14 @@ constexpr size_t kColIndex = 1;
 template <typename T>
 void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kLUOutputsNum, kernel_name_);
-  auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
-  auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUbIndex);
+  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
+  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUbIndex);
   if (a_shape.empty() || b_shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " input a or b matrix shape invalid.";
   }
@@ -60,7 +60,7 @@ void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     b_row_ = b_shape.at(b_shape.size() - kRowIndex);
     b_col_ = b_shape.at(b_shape.size() - kColIndex);
   }
-  auto output_lu_shape = AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
+  auto output_lu_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
   if (output_lu_shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
   }
@@ -70,7 +70,7 @@ void LUSolverCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     out_row_ = output_lu_shape.at(output_lu_shape.size() - kRowIndex);
     out_col_ = output_lu_shape.at(output_lu_shape.size() - kColIndex);
   }
-  trans_ = AnfAlgo ::GetNodeAttr<std::string>(kernel_node, TRANS);
+  trans_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, TRANS);
 }
 
 template <typename T>

@@ -17,7 +17,7 @@
 
 #include <vector>
 #include "utils/anf_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "base/core_ops.h"
 

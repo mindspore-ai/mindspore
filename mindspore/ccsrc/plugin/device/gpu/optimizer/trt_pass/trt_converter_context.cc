@@ -21,8 +21,8 @@
 #include "plugin/device/gpu/hal/device/trt_loader.h"
 #include "plugin/device/gpu/optimizer/trt_pass/trt_op_factory.h"
 #include "plugin/device/gpu/kernel/trt/trt_utils.h"
-#include "utils/convert_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/singleton.h"
 #include "utils/ms_context.h"
 
@@ -54,7 +54,7 @@ bool TrtConverterContext::Parser() {
 
     // Transform AnfNode To Trt layer.
     // Bypass control node including Depend, Load, UpdateState, TupleGetItem, MakeTuple.
-    std::string op_name = AnfAlgo::GetCNodePrimitive(node)->name();
+    std::string op_name = common::AnfAlgo::GetCNodePrimitive(node)->name();
     if (!AnfUtils::IsRealKernel(node) && op_name != "Return") {
       continue;
     }
@@ -105,7 +105,7 @@ bool TrtConverterContext::InitInputTable() {
     }
 
     auto input = input_node->cast<ParameterPtr>();
-    if (AnfAlgo::IsParameterWeight(input)) {
+    if (common::AnfAlgo::IsParameterWeight(input)) {
       const auto &param_value = input->default_param();
       MS_EXCEPTION_IF_NULL(param_value);
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);
@@ -153,8 +153,9 @@ bool TrtConverterContext::InitValueNodeTable() {
 }
 
 bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::vector<nvinfer1::ITensor *> &nv_tensors) {
-  if (nv_tensors.size() != AnfAlgo::GetOutputTensorNum(node)) {
-    MS_LOG(INFO) << node->DebugString() << " output num not match. expect: " << AnfAlgo::GetOutputTensorNum(node)
+  if (nv_tensors.size() != common::AnfAlgo::GetOutputTensorNum(node)) {
+    MS_LOG(INFO) << node->DebugString()
+                 << " output num not match. expect: " << common::AnfAlgo::GetOutputTensorNum(node)
                  << ", while got: " << nv_tensors.size();
   }
 
@@ -179,10 +180,11 @@ bool TrtConverterContext::StoreLayerOutput(const AnfNodePtr &node, const std::ve
 LayerInput *TrtConverterContext::LoadInputOnDemand(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto input = node->cast<ParameterPtr>();
-  std::variant<bool, nvinfer1::DataType> type = TrtUtils::MsDtypeToTrtDtype(AnfAlgo::GetOutputInferDataType(node, 0));
+  std::variant<bool, nvinfer1::DataType> type =
+    TrtUtils::MsDtypeToTrtDtype(common::AnfAlgo::GetOutputInferDataType(node, 0));
   TRT_VARIANT_CHECK(type, 1UL, nullptr);
   const auto &trt_dtype = std::get<nvinfer1::DataType>(type);
-  const nvinfer1::Dims &trt_dims = TrtUtils::MsDimsToTrtDims(AnfAlgo::GetOutputInferShape(node, 0), false);
+  const nvinfer1::Dims &trt_dims = TrtUtils::MsDimsToTrtDims(common::AnfAlgo::GetOutputInferShape(node, 0), false);
   nvinfer1::ITensor *tensor = network_->addInput(input->name().c_str(), trt_dtype, trt_dims);
   const std::vector<int64_t> &shape = TrtUtils::TrtDimsToMsDims(trt_dims);
   output_map_[node][0] = LayerInput(tensor, shape);
@@ -191,7 +193,7 @@ LayerInput *TrtConverterContext::LoadInputOnDemand(const AnfNodePtr &node) {
 
 bool TrtConverterContext::LoadLayerInput(const AnfNodePtr &node, std::vector<LayerInput> *inputs) {
   std::vector<session::KernelWithIndex> real_inputs;
-  AnfAlgo::GetRealInputs(node, &real_inputs);
+  common::AnfAlgo::GetRealInputs(node, &real_inputs);
   for (auto item : real_inputs) {
     auto node_iter = output_map_.find(item.first);
     if (node_iter == output_map_.end()) {
@@ -228,7 +230,7 @@ std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
     }
 
     auto input = input_node->cast<ParameterPtr>();
-    if (!AnfAlgo::IsParameterWeight(input)) {
+    if (!common::AnfAlgo::IsParameterWeight(input)) {
       (void)graph_inputs.emplace(input->name(), input_node);
     }
   }
@@ -251,7 +253,7 @@ std::vector<AnfNodePtr> TrtConverterContext::GetGraphInputs() const {
 std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> TrtConverterContext::GetGraphOutputs()
   const {
   std::vector<session::KernelWithIndex> anf_output_list;
-  AnfAlgo::GetRealInputs(func_graph_->get_return(), &anf_output_list);
+  common::AnfAlgo::GetRealInputs(func_graph_->get_return(), &anf_output_list);
 
   std::map<size_t, size_t> anf_trt_index_map;
   std::vector<session::KernelWithIndex> trt_output_list(anf_output_list.size());

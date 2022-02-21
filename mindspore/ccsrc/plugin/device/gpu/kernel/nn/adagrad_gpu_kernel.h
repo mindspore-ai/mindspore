@@ -66,9 +66,9 @@ class AdagradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    update_slots = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    update_slots = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
     if (input_num != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << input_num;
     }
@@ -77,9 +77,9 @@ class AdagradGpuKernelMod : public NativeGpuKernelMod {
     learning_rate_size_ = sizeof(S);
     gradient_size_ = sizeof(G);
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
                      CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "grad");

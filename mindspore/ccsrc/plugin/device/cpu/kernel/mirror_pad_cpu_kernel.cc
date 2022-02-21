@@ -40,8 +40,8 @@ constexpr size_t kPadMaxSupportDim = 4;
 
 void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::string mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   pad_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   if (mode == "REFLECT") {
@@ -53,7 +53,7 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << mode;
   }
 
-  std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   shape_size_ = input_shape.size();
   (void)input_shape.insert(input_shape.begin(), kPadMaxSupportDim - shape_size_, 1);
   shape_size_ = kPadMaxSupportDim;
@@ -63,10 +63,10 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     input_shape_.push_back(SizeToLong(input_shape[i]));
   }
 
-  std::vector<size_t> padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  std::vector<size_t> padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   num_paddings_ = SizeToLong(padding_shape[0]);
 
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   for (auto x : output_shape) {
     output_size_ *= x;
     output_shape_.push_back(SizeToLong(x));

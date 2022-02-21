@@ -19,7 +19,8 @@
 #include <string>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -36,7 +37,7 @@ const std::set<std::string> kInOutOperatorSet = {kAllReduceOpName, kBroadcastOpN
 
 AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cnode, int64_t groups,
                          const size_t index = 0) {
-  if (AnfAlgo::GetOutputTensorNum(cnode) == 1) {
+  if (common::AnfAlgo::GetOutputTensorNum(cnode) == 1) {
     return cnode;
   }
   std::vector<AnfNodePtr> depend_nodes{cnode};
@@ -44,14 +45,14 @@ AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cno
     auto node = depend_nodes.back();
     depend_nodes.pop_back();
     for (auto node_index : manager->node_users()[node]) {
-      if (AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimDepend) && node_index.second == 1) {
+      if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimDepend) && node_index.second == 1) {
         (void)depend_nodes.emplace_back(node_index.first);
-      } else if (AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimTupleGetItem)) {
+      } else if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimTupleGetItem)) {
         auto getitem_cnode = node_index.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(getitem_cnode);
-        auto out_index = AnfAlgo::GetTupleGetItemOutIndex(getitem_cnode);
+        auto out_index = common::AnfAlgo::GetTupleGetItemOutIndex(getitem_cnode);
         if (out_index == index) {
-          AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), getitem_cnode);
+          common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), getitem_cnode);
           return getitem_cnode;
         }
       }
@@ -72,30 +73,30 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
   }
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    auto node_name = AnfAlgo::GetCNodeName(cnode);
+    auto node_name = common::AnfAlgo::GetCNodeName(cnode);
     if (node_name == kDependName && index != 0) {
       return true;
     }
     if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
       auto index_l = SizeToLong(index);
-      if (AnfAlgo::HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
-        auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
+      if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
+        auto fz_group_idx = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
         if (std::find(fz_group_idx.begin(), fz_group_idx.end(), index_l) != fz_group_idx.end()) {
           return true;
         }
         fz_group_idx.push_back(index_l);
-        AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
+        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(fz_group_idx), cnode);
         return false;
       } else {
-        AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(std::vector<int64_t>{index_l}), cnode);
+        common::AnfAlgo::SetNodeAttr(kAttrFracZGroupIdx, MakeValue(std::vector<int64_t>{index_l}), cnode);
       }
     }
-    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
       return true;
     }
-    AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), cnode);
     if (node_name == kTransDataOpName) {
-      AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrGroups, MakeValue(groups), cnode);
     }
     return false;
   }
@@ -104,9 +105,9 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
 
 std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPtr &manager, const CNodePtr &cnode,
                                                         size_t index, int64_t groups) {
-  auto node_name = AnfAlgo::GetCNodeName(cnode);
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   auto node_user = manager->node_users();
   std::vector<KernelWithIndex> ret;
   if (node_name == kDependName || node_name == kLoadName) {
@@ -120,9 +121,9 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
     if (AnfAlgo::GetInputFormat(cnode, i) == kOpFormat_FRAC_Z) {
       auto input = cnode->input(i + 1);
       if (node_name == kTupleGetItemName) {
-        auto item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode);
-        while (input->isa<CNode>() && AnfAlgo::GetCNodeName(input) == kDependName) {
-          AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
+        auto item_index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode);
+        while (input->isa<CNode>() && common::AnfAlgo::GetCNodeName(input) == kDependName) {
+          common::AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
           input = input->cast<CNodePtr>()->input(1);
         }
         (void)ret.emplace_back(input, item_index);
@@ -161,7 +162,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
     return ret;
   }
   auto cnode = node->cast<CNodePtr>();
-  auto node_name = AnfAlgo::GetCNodeName(cnode);
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   if (node_name == kUpdateStateName || node_name == kTransDataOpName) {
     return ret;
   } else if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
@@ -182,7 +183,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
 bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  auto groups = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrGroups);
+  auto groups = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrGroups);
   if (groups == 1) {
     return false;
   }
@@ -243,7 +244,7 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
       if (cnode == nullptr) {
         continue;
       }
-      auto node_name = AnfAlgo::GetCNodeName(cnode);
+      auto node_name = common::AnfAlgo::GetCNodeName(cnode);
       if (node_name == kConv2DOpName || node_name == kConv2DBackpropInputOpName ||
           node_name == kConv2DBackpropFilterOpName) {
         changed = SetAttrFraczGroup(func_graph, cnode) || changed;

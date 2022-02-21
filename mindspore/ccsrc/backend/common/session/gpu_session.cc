@@ -58,7 +58,7 @@
 #include "backend/common/pass/getitem_tuple.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
@@ -80,10 +80,10 @@
 #include "plugin/device/gpu/hal/device/gpu_bucket.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "utils/ms_utils.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "utils/ms_context.h"
-#include "utils/context/graph_kernel_flags.h"
-#include "utils/utils.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
+#include "include/common/utils/utils.h"
 #include "abstract/utils.h"
 #if ENABLE_CPU && ENABLE_GPU
 #include "ps/util.h"
@@ -313,8 +313,8 @@ size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::Tenso
     auto tensor_shape = tensor->shape();
     std::vector<size_t> shape_tmp;
     (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), LongToSize);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
-                                        input_node.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+                                                input_node.get());
     size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
   }
   return size;
@@ -372,7 +372,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
       MS_EXCEPTION_IF_NULL(device_address);
       bool need_sync = CheckIfNeedSync(tensor, device_address, pk_node);
       if (need_sync) {
-        if (AnfAlgo::IsParameterWeight(pk_node) || UpdatedByAssign(kernel_graph, input_node) ||
+        if (common::AnfAlgo::IsParameterWeight(pk_node) || UpdatedByAssign(kernel_graph, input_node) ||
             ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
           tensor->set_device_address(device_address);
         }
@@ -611,11 +611,11 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
         ps_mode = ps::PSContext::instance()->is_ps_mode();
 #endif
-        if (node->isa<CNode>() && !AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
+        if (node->isa<CNode>() && !common::AnfAlgo::IsCommunicationOp(node) && !ps_mode) {
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           // If a nop node is output, its previous node should be set.
-          if (opt::IsNopNode(node)) {
-            auto pre_node = AnfAlgo::GetPrevNodeOutput(node, 0, true);
+          if (common::AnfAlgo::IsNopNode(node)) {
+            auto pre_node = common::AnfAlgo::GetPrevNodeOutput(node, 0, true);
             if (!pre_node.first->isa<Parameter>()) {
               AnfAlgo::SetOutputAddr(new_address, pre_node.second, pre_node.first.get());
             }
@@ -632,8 +632,8 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
           }
         }
 
-        if (AnfAlgo::IsDynamicShape(node)) {
-          const auto &updated_shape = AnfAlgo::GetOutputInferShape(node, output_index);
+        if (common::AnfAlgo::IsDynamicShape(node)) {
+          const auto &updated_shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
           ShapeVector int_shape;
           std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
           tensor->set_shape(int_shape);

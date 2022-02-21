@@ -40,10 +40,10 @@ class RefreshBoxmaptimesGpuKernelMod : public NativeGpuKernelMod {
     // get bond_numbers
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_old_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_box_length_inverse = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_box_map_times = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_old_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_box_length_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_box_map_times = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
     for (size_t i = 0; i < shape_old_crd.size(); i++) ele_old_crd *= shape_old_crd[i];

@@ -19,9 +19,10 @@
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
 #include "backend/common/optimizer/optimizer.h"
+#include "include/common/utils/anfalgo.h"
 
 #define private public
 #define protected public
@@ -45,7 +46,7 @@ class MockMergeCastToOpKernelQuery : public KernelQuery {
   ~MockMergeCastToOpKernelQuery() override = default;
   void Query(const CNodePtr &kernel_node,
              std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) override {
-    std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (op_name == kFour2FiveOpName) {
       kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
       builder.SetInputsFormat({kOpFormat_NCHW});
@@ -153,7 +154,7 @@ TEST_F(TestHWMergeCastToOp, test_merge_cast_to_prior_op) {
   EXPECT_NE(make_tuple->input(1), nullptr);
   EXPECT_TRUE(make_tuple->input(1)->isa<CNode>());
   auto cast = make_tuple->input(1)->cast<CNodePtr>();
-  AnfAlgo::SetNodeAttr("dst_type", MakeValue("float32"), cast);
+  common::AnfAlgo::SetNodeAttr("dst_type", MakeValue("float32"), cast);
 
   // set kernel for cast
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;

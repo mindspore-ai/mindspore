@@ -30,7 +30,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 #include "runtime/device/kernel_info.h"
 
 namespace mindspore {

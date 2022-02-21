@@ -18,11 +18,12 @@
 #include <memory>
 #include <algorithm>
 #include <set>
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,7 +34,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   static const std::set<std::string> kReduceNoSupportedSet = {kOpFormat_FRAC_Z, kOpFormat_FRACTAL_Z_C04,
                                                               kOpFormat_C1HWNCoC0};
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto parallel_context_instance = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context_instance);
   if (parallel_context_instance->enable_parallel_optimizer() && op_name == kBroadcast) {
@@ -46,7 +47,7 @@ std::string GetKernelFormat(const CNodePtr &kernel_node, size_t index) {
   if (op_name != kReduceScatter && op_name != kAllGatherOpName) {
     return format;
   }
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
   if (op_name == kAllGatherOpName && input_shape.size() <= kShape4dDims) {
     auto pad_shape = trans::PaddingShapeTo4dDefault(input_shape);
     if (pad_shape[N_nchw] % kCubeSize != 0 || pad_shape[C_nchw] % kCubeSize != 0) {
@@ -67,7 +68,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
                                                         kNumberTypeFloat32, kNumberTypeInt16};
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (op_name != kAllGather && op_name != kAllReduce && op_name != kBroadcast && op_name != kReduceScatter &&
       op_name != kHcomSend && op_name != kReceive && op_name != kAllToAllv) {
     MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
@@ -86,14 +87,14 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   for (const auto &type : kHcclSupportTypes) {
     std::vector<std::string> inputs_format{};
     std::vector<TypeId> inputs_type{};
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       (void)inputs_format.emplace_back(GetKernelFormat(kernel_node, input_index));
       inputs_type.push_back(type);
     }
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       outputs_format.emplace_back(GetKernelFormat(kernel_node, output_index));
       if (op_name == kReceive) {

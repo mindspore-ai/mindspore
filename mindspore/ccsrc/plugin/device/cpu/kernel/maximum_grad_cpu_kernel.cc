@@ -34,12 +34,12 @@ void CheckShape(std::vector<size_t> *shape) {
 
 void MaximumGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  y_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  dout_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  dy_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  y_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  dout_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  dy_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   CheckShape(&x_shape_);
   CheckShape(&y_shape_);

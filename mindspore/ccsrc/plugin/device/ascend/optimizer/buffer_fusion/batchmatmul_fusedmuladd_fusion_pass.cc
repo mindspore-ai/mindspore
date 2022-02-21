@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_fusedmuladd_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -29,7 +30,7 @@ void BatchMatmulFusedMulAddFusionPass::MatchBatchMatmulFusedMulAdd(const CNodePt
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto batch_matmul = cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(batch_matmul);
-  if (batch_matmul->isa<CNode>() && AnfAlgo::CheckPrimitiveType(batch_matmul, prim::kPrimBatchMatMul)) {
+  if (batch_matmul->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(batch_matmul, prim::kPrimBatchMatMul)) {
     mindspore::HashSet<AnfNodePtr> record{cnode, batch_matmul};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -43,13 +44,13 @@ void BatchMatmulFusedMulAddFusionPass::MatchSingleFusionPattern(const session::K
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    if (AnfAlgo::GetCNodeName(cnode) == kFusedMulAddOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kFusedMulAddOpName) {
       MatchBatchMatmulFusedMulAdd(cnode, kernel_graph, candidate_fusion);
     }
   }

@@ -19,7 +19,8 @@
 #include <memory>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "base/core_ops.h"
 
@@ -38,21 +39,21 @@ const AnfNodePtr InsertPlaceholderForDynamicRNN::Process(const FuncGraphPtr &fun
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name != kDynamicRNNOpName) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   if (input_num == 0) {
     return nullptr;
   }
 
-  std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
+  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   for (size_t in_idx = 0; in_idx < input_num; in_idx++) {
-    auto input_node = AnfAlgo::GetInputNode(cnode, in_idx);
+    auto input_node = common::AnfAlgo::GetInputNode(cnode, in_idx);
     if (in_idx == kInsertIdx) {
       auto value = std::make_shared<None>();
       auto value_node = NewValueNode(value);

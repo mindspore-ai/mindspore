@@ -32,7 +32,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -45,7 +45,7 @@
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
@@ -196,7 +196,7 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
   SetCommunicationOpGroupLabel(new_node_input);
   // gradient accumulation
   if (grad_accumulation_step > 1) {
-    bool add_accu = root->has_flag(ACCUMULATION);
+    bool add_accu = root->has_flag(kAccumulation);
     // MiniStep need to do mirror at each micro step as we use the gradient accumulation sharding,
     SetMiniStepOpDoMirrorLabel(new_node_input, !add_accu, !add_accu);
   }
@@ -955,8 +955,8 @@ FuncGraphPtr PynativeParallelGraph(const FuncGraphPtr &root, const std::vector<A
 }
 
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
-  vector<std::string> last_forward_node_ids;
-  vector<size_t> last_indexs;
+  std::vector<std::string> last_forward_node_ids;
+  std::vector<size_t> last_indexs;
   auto real_graph = PynativeParallelGraph(root, all_nodes);
   FindLastNodesUniqueId(real_graph, &last_forward_node_ids, &last_indexs);
   MS_LOG(INFO) << "there are " << last_forward_node_ids.size() << " output nodes in eval/predict";
@@ -1587,7 +1587,7 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
     AddCommOpMirrorFlag(allgather, !grad_accumulation_shard);
   } else if (op_name == MINI_STEP_ALL_GATHER) {
     // We need to manually set the add_accu to be false if it's father node is MirrorMiniStep
-    bool add_accu = root->has_flag(ACCUMULATION);
+    bool add_accu = root->has_flag(kAccumulation);
     bool is_with_mirror = opt_shard_mirror_group.size() > 1;
     AddCommOpAddAccuFlag(allgather, !add_accu && !is_with_mirror);
     AddCommOpMirrorFlag(allgather, grad_accumulation_shard || !add_accu);
@@ -1826,7 +1826,8 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
 }
 
 // find previous parallel care node's next node.
-bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids, vector<size_t> *indexes, size_t curr_depth) {
+bool FindPreNodes(const AnfNodePtr &node, std::vector<std::string> *unique_ids, std::vector<size_t> *indexes,
+                  size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When find the previous node, exceeded the maximum recursion depth: " << MAX_RECURSIVE_DEPTH;
     return false;
@@ -2536,7 +2537,7 @@ void StepSplitSens(const std::pair<CNodePtr, LossNodeInfo> &sens_loss_pair) {
 bool IsPynativeParallel() {
   auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-  return (execution_mode == kPynativeMode) && (parallel_mode == SEMI_AUTO_PARALLEL || parallel_mode == AUTO_PARALLEL);
+  return (execution_mode == kPynativeMode) && (parallel_mode == kSemiAutoParallel || parallel_mode == kAutoParallel);
 }
 
 // Sens node satisfies the following conditions: cnode(sens)-->cnode(tuple_getitem)-->cnode-->cnode(J)
@@ -3019,8 +3020,8 @@ Status ParallelInit() {
     stages.push_back(device_num / split_stage_num);
   }
 
-  if ((split_stage_num > 1) && (parallel_mode != SEMI_AUTO_PARALLEL)) {
-    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << SEMI_AUTO_PARALLEL;
+  if ((split_stage_num > 1) && (parallel_mode != kSemiAutoParallel)) {
+    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << kSemiAutoParallel;
     return FAILED;
   }
 
@@ -3081,7 +3082,7 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, int64_t pipeline_stages) {
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
-    if (root->has_flag(TRAINING)) {
+    if (root->has_flag(kTraining)) {
       Reorder(root);
     } else {
       ReorderForPredict(root, manager);
@@ -3096,12 +3097,12 @@ bool IsInsertVirtualOutput(const FuncGraphPtr &root) {
   int64_t per_stage_device_num = comm_info.device_num / split_stage_num;
   int64_t current_stage = comm_info.global_rank / per_stage_device_num;
   MS_LOG(INFO) << "The current stage is: " << current_stage;
-  if (!root->has_flag(TRAINING) && !ParallelContext::GetInstance()->dataset_strategy().empty()) {
+  if (!root->has_flag(kTraining) && !ParallelContext::GetInstance()->dataset_strategy().empty()) {
     MS_LOG(WARNING) << "In eval/predict net, the output parallel strategy would not follow "
                        "the input parallel strategy when using context.set_auto_parallel_context(dataset_strategy)"
                        " to configure the input strategy.";
   }
-  return ((!root->has_flag(TRAINING) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
+  return ((!root->has_flag(kTraining) && ParallelContext::GetInstance()->dataset_strategy().empty() &&
            current_stage == split_stage_num - 1) ||
           IsPynativeParallel());
 }
@@ -3123,7 +3124,7 @@ static void HandleGroupInfo(const FuncGraphPtr &root) {
 
 static void HandleDataParallel() {
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == DATA_PARALLEL) {
+  if (parallel_mode == kDataParallel) {
     auto group_info_save_path = common::GetEnv("GROUP_INFO_FILE");
     if (!group_info_save_path.empty()) {
       std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info;
@@ -3324,7 +3325,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
+  if (!root->has_flag(kAutoParallel) || ((parallel_mode != kAutoParallel) && (parallel_mode != kSemiAutoParallel)) ||
       (root->has_flag(SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY))) {
     if (!root->has_flag(CHECK_SET_STRATEGY_VALID_ONCE_ONLY)) {
       MS_LOG(WARNING) << "Strategies would be ignored in " << parallel_mode
@@ -3345,7 +3346,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
-  if (parallel_mode != AUTO_PARALLEL) {
+  if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;
     if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
       MS_LOG(EXCEPTION) << "Parallel init failed";

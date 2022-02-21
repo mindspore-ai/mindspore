@@ -20,6 +20,7 @@
 #include <utility>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
@@ -27,8 +28,8 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "utils/ms_utils.h"
-#include "utils/json_operation_utils.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/json_operation_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 
 namespace mindspore::kernel {
@@ -303,8 +304,8 @@ void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
     MS_LOG(EXCEPTION) << "PreProcessing node attr error, node: " << anf_node->fullname_with_scope();
   }
 
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &attr_ptr : attrs_ptr) {
     std::string attr_name = attr_ptr->name();
@@ -346,7 +347,7 @@ void TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
   MS_EXCEPTION_IF_NULL(compute_json);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   nlohmann::json attrs_json;
   GenAttrsJson(cnode, op_info_ptr, &attrs_json);
@@ -370,7 +371,7 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
   MS_EXCEPTION_IF_NULL(compute_json);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(op_name, cnode);
   auto func_name = op_info_ptr->kernel_name();
   (*compute_json)[kJFuncName] = func_name;
@@ -511,8 +512,8 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_node = cnode->inputs()[real_input_index + 1];
-  if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
-    input_node = AnfAlgo::VisitKernel(input_node, 0).first;
+  if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
+    input_node = common::AnfAlgo::VisitKernel(input_node, 0).first;
   }
   MS_EXCEPTION_IF_NULL(input_node);
   if (input_node->isa<ValueNode>()) {

@@ -25,7 +25,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/step_parallel.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

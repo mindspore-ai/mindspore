@@ -19,7 +19,7 @@
 #include "common/util/error_manager/error_manager.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "profiler/device/ascend/memory_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "profiler/device/ascend/parallel_strategy_profiling.h"

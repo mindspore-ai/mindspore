@@ -45,26 +45,26 @@ class PullKernelMod : public NativeCpuKernelMod {
   }
   void Init(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but pull needs 2 inputs.";
       return;
     }
 
-    auto key_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto key_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < key_shape.size(); i++) {
       keys_size_ *= key_shape[i];
     }
-    auto var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < var_shape.size(); i++) {
       var_size_ *= var_shape[i];
     }
-    auto param_node = AnfAlgo::GetInputNode(kernel_node, 1);
+    auto param_node = common::AnfAlgo::GetInputNode(kernel_node, 1);
     MS_EXCEPTION_IF_NULL(param_node);
     param_name_ = param_node->fullname_with_scope();
 
     if (mindspore::ps::PSContext::instance()->is_worker()) {
-      key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
+      key_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
     }
     InitSizeLists();
     return;

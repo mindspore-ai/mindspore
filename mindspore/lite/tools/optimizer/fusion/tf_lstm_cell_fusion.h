@@ -21,7 +21,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "backend/common/optimizer/optimizer.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

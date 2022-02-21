@@ -23,7 +23,7 @@ namespace server {
 namespace kernel {
 bool AggregationKernelFactory::Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string cnode_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string cnode_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kNameToIdxMap.count(cnode_name) == 0) {
     MS_LOG(ERROR) << "Can't find index info for kernel " << cnode_name;
     return false;
@@ -40,7 +40,7 @@ bool AggregationKernelFactory::Matched(const ParamsInfo &params_info, const CNod
       continue;
     }
     size_t input_idx = input_name_to_idx.at(name);
-    TypeId kernel_node_input_type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
+    TypeId kernel_node_input_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_idx);
     TypeId registered_input_type = one_input_name_type.second;
     if (registered_input_type != kernel_node_input_type) {
       return false;
@@ -58,7 +58,7 @@ bool AggregationKernelFactory::Matched(const ParamsInfo &params_info, const CNod
       continue;
     }
     size_t output_idx = output_name_to_idx.at(name);
-    TypeId kernel_node_output_type = AnfAlgo::GetOutputInferDataType(kernel_node, output_idx);
+    TypeId kernel_node_output_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_idx);
     TypeId registered_output_type = one_output_name_type.second;
     if (registered_output_type != kernel_node_output_type) {
       return false;

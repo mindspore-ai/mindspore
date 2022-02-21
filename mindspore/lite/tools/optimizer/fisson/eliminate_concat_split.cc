@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include "tools/optimizer/fisson/eliminate_concat_split.h"
 #include "schema/inner/model_generated.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/split_with_overlap.h"
 #include "ops/concat.h"

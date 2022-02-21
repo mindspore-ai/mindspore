@@ -64,7 +64,7 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::string fusion_op_name = "FusionOp";
   for (auto &node : anf_nodes) {
-    fusion_op_name += '_' + AnfAlgo::GetCNodeName(node);
+    fusion_op_name += '_' + common::AnfAlgo::GetCNodeName(node);
   }
   auto fusion_op = std::make_shared<Primitive>(fusion_op_name);
   MS_EXCEPTION_IF_NULL(fusion_op);
@@ -85,12 +85,12 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   for (auto &node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
-    if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
-      auto fracz_group = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFracZGroup);
+    if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
+      auto fracz_group = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFracZGroup);
       fusion_op->set_attr(kAttrFracZGroup, MakeValue(fracz_group));
     }
-    if (AnfAlgo::HasNodeAttr(kAttrDump, cnode)) {
-      auto dump_flag = AnfAlgo::GetNodeAttr<string>(node, kAttrDump);
+    if (common::AnfAlgo::HasNodeAttr(kAttrDump, cnode)) {
+      auto dump_flag = common::AnfAlgo::GetNodeAttr<string>(node, kAttrDump);
       fusion_op->set_attr(kAttrDump, MakeValue(dump_flag));
     }
   }
@@ -115,7 +115,7 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_data_type;
   for (const auto &input : inputs_list) {
-    auto real_input = AnfAlgo::VisitKernel(input, 0);
+    auto real_input = common::AnfAlgo::VisitKernel(input, 0);
     (void)inputs_format.emplace_back(AnfAlgo::GetOutputFormat(real_input.first, real_input.second));
     (void)inputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(real_input.first, real_input.second));
   }
@@ -123,7 +123,7 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_data_type;
   for (const auto &output : outputs_list) {
-    if (AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
       auto tuple_getitem = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(tuple_getitem);
       (void)outputs_format.emplace_back(AnfAlgo::GetOutputFormat(
@@ -160,9 +160,9 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   tuple_getitem_inputs_list.push_back(idx);
   auto tuple_item = kernel_graph->NewCNode(tuple_getitem_inputs_list);
   MS_EXCEPTION_IF_NULL(tuple_item);
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(buffer_fusion_kernel, output_index)},
-                                      {AnfAlgo::GetOutputInferShape(buffer_fusion_kernel, output_index)},
-                                      tuple_item.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(
+    {common::AnfAlgo::GetOutputInferDataType(buffer_fusion_kernel, output_index)},
+    {common::AnfAlgo::GetOutputInferShape(buffer_fusion_kernel, output_index)}, tuple_item.get());
   return tuple_item;
 }
 
@@ -217,8 +217,8 @@ void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (AnfUtils::IsRealCNodeKernel(cnode) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
-      auto fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kOpAttrFusionId);
+    if (AnfUtils::IsRealCNodeKernel(cnode) && common::AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
+      auto fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kOpAttrFusionId);
       (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(cnode);
     }
   }
@@ -240,7 +240,7 @@ void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
       MS_EXCEPTION_IF_NULL(cnode);
       size_t old_input_num = fusion_info.inputs_list.size();
       for (size_t idx = 1; idx < cnode->inputs().size(); ++idx) {
-        auto real_input = AnfAlgo::VisitKernel(cnode->input(idx), 0);
+        auto real_input = common::AnfAlgo::VisitKernel(cnode->input(idx), 0);
         if (std::find(fusion_info.anf_nodes.begin(), fusion_info.anf_nodes.end(), real_input.first) ==
             fusion_info.anf_nodes.end()) {
           if (!HasAbstractMonad(cnode->input(idx))) {
@@ -306,12 +306,12 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
     for (size_t node_idx = 0; node_idx < fusion_info.anf_nodes.size(); ++node_idx) {
       const auto &node = fusion_info.anf_nodes[node_idx];
       size_t old_output_num = fusion_info.outputs_list.size();
-      if (AnfAlgo::GetOutputTensorNum(node) == 1) {
+      if (common::AnfAlgo::GetOutputTensorNum(node) == 1) {
         auto use_nodes = manager->node_users()[node];
         for (auto use_node : use_nodes) {
           // Do not think of updatestate as real output,
           // Ensuring normal fusion requires eliminating the node of the updatestate
-          if (AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {
+          if (common::AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {
             auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, use_node.first);
             (void)manager->Replace(use_node.first, new_updatestate);
             continue;
@@ -327,12 +327,12 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
         std::vector<AnfNodePtr> tuple_getitem_nodes;
         auto users = manager->node_users()[node];
         for (auto &user : users) {
-          if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
+          if (common::AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
             auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, user.first);
             (void)manager->Replace(user.first, new_updatestate);
             continue;
           }
-          if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {
+          if (common::AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {
             (void)tuple_getitem_nodes.emplace_back(user.first);
           }
         }
@@ -372,7 +372,7 @@ void SetOutputUsedNumAttr(const session::KernelGraph &kernel_graph,
     for (auto iter = fusion_nodes.begin(); iter != fusion_nodes.end() - 1; ++iter) {
       auto node = *iter;
       auto output_used_num = GetNodeOutputUsedNum(kernel_graph, node);
-      AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), node);
+      common::AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), node);
     }
   }
 }
@@ -385,8 +385,8 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
   for (size_t idx = 0; idx < outputs_list.size(); ++idx) {
     auto output = outputs_list[idx];
     MS_EXCEPTION_IF_NULL(output);
-    if (output->isa<CNode>() && AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
-      auto real_output = AnfAlgo::VisitKernel(output, 0);
+    if (output->isa<CNode>() && common::AnfAlgo::GetCNodeName(output) == prim::kPrimTupleGetItem->name()) {
+      auto real_output = common::AnfAlgo::VisitKernel(output, 0);
       auto output_cnode = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(output_cnode);
       auto input2 = output_cnode->input(kIndex2);
@@ -428,7 +428,7 @@ bool CheckCircle(const session::KernelGraph &kernel_graph, const BufferFusionInf
   bool has_circle = false;
   for (auto &inp : fusion_info.inputs_list) {
     MS_EXCEPTION_IF_NULL(inp);
-    if (!inp->isa<CNode>() || AnfAlgo::CheckPrimitiveType(inp, prim::kPrimLoad)) {
+    if (!inp->isa<CNode>() || common::AnfAlgo::CheckPrimitiveType(inp, prim::kPrimLoad)) {
       continue;
     }
 
@@ -517,18 +517,18 @@ bool UbPatternFusion::ReplaceFusionOp(mindspore::HashMap<int64_t, BufferFusionIn
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
   for (const auto &out_node : buffer_fusion_info.outputs_list) {
-    size_t out_num = AnfAlgo::GetOutputTensorNum(out_node);
+    size_t out_num = common::AnfAlgo::GetOutputTensorNum(out_node);
     for (size_t idx = 0; idx < out_num; ++idx) {
-      (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(out_node, idx));
-      (void)shapes.emplace_back(AnfAlgo::GetOutputInferShape(out_node, idx));
+      (void)types.emplace_back(common::AnfAlgo::GetOutputInferDataType(out_node, idx));
+      (void)shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(out_node, idx));
     }
   }
   if (types.empty() || shapes.empty()) {
     MS_LOG(WARNING) << "The outputs_list of buffer_fusion_info is empty.";
     return false;
   }
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());
-  AnfAlgo::SetNodeAttr(kAttrIsUBFusionOp, MakeValue(true), buffer_fusion);
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());
+  common::AnfAlgo::SetNodeAttr(kAttrIsUBFusionOp, MakeValue(true), buffer_fusion);
   SetFusionOpRefInfos(kernel_graph, buffer_fusion_info.outputs_list, buffer_fusion);
   ReplaceOldNode(buffer_fusion_infos, fusion_id, buffer_fusion, kernel_graph);
   return true;
@@ -543,7 +543,7 @@ bool UbPatternFusion::RunPass(const FuncGraphPtr &graph) {
   // clear fusion_id attr
   for (auto &node : graph->nodes()) {
     if (node != nullptr && node->isa<CNode>()) {
-      AnfAlgo::EraseNodeAttr(kAttrFusionId, node);
+      common::AnfAlgo::EraseNodeAttr(kAttrFusionId, node);
     }
   }
   return changed;

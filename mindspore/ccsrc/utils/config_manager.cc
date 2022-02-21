@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 
 #include <map>
 

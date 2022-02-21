@@ -99,7 +99,7 @@ class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_CHECK_FAIL(kernel_name == "ClipGradNorm", "Kernel name is not ClipGradNorm");
     kernel_node_ = kernel_node;
     // Init resource for cudnnreducetensor operation.
@@ -108,8 +108,8 @@ class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
       return false;
     }
     // Check input and output shape
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     size_t input_dim = input_shape.size();
     if (!CheckValidShape(input_shape, output_shape, input_dim)) {
       return true;
@@ -178,13 +178,13 @@ class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
   bool CheckIONumber(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     constexpr size_t input_num_expected = 3;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != input_num_expected) {
       MS_LOG(ERROR) << "The input number of kernel node [" << kernel_node->DebugString() << "] should be "
                     << input_num_expected << ", but got " << input_num;
       return false;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(ERROR) << "The output number of kernel node [" << kernel_node->DebugString() << "] should be " << 1
                     << ", but got " << output_num;
@@ -214,7 +214,7 @@ class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
 
   void InitAxis(const CNodePtr &kernel_node, const std::vector<size_t> &output_shape, int input_dim) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
       std::vector<int64_t> attr_axis = GetAttr<std::vector<int64_t>>(kernel_node, "axis");

@@ -42,10 +42,10 @@ class RestrainEnergyGpuKernelMod : public NativeGpuKernelMod {
     restrain_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "restrain_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     weight = static_cast<int>(GetAttr<float>(kernel_node, "weight"));
-    auto shape_restrain_list = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_crd_ref = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_restrain_list = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_crd_ref = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
     for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];

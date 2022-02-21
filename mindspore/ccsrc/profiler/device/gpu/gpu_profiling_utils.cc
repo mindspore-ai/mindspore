@@ -17,9 +17,10 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace profiler {
@@ -71,7 +72,7 @@ void ProfilingUtils::OutputStepTraceOpNameStatus() {
 
 void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order) {
   for (const auto &node : cnode_exec_order) {
-    if (AnfAlgo::IsCommunicationOp(node)) {
+    if (common::AnfAlgo::IsCommunicationOp(node)) {
       MS_EXCEPTION_IF_NULL(node);
       if (std::find(profiling_trace.trace_custom_node.begin(), profiling_trace.trace_custom_node.end(),
                     node->fullname_with_scope()) == profiling_trace.trace_custom_node.end()) {
@@ -92,7 +93,7 @@ void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_ord
 
   auto first_node = cnode_exec_order.front();
   MS_EXCEPTION_IF_NULL(first_node);
-  auto node_name = AnfAlgo::GetCNodeName(first_node);
+  auto node_name = common::AnfAlgo::GetCNodeName(first_node);
   if (node_name == kInitDatasetQueueOpName) {
     return;
   }
@@ -120,7 +121,7 @@ void ProfilingUtils::SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order
   // Contain hccl kernel (try to find the last communication op)
   auto iter = cnode_exec_order.rbegin();
   while (iter != cnode_exec_order.rend()) {
-    if (AnfAlgo::IsCommunicationOp(*iter)) {
+    if (common::AnfAlgo::IsCommunicationOp(*iter)) {
       break;
     }
     ++iter;
@@ -129,9 +130,9 @@ void ProfilingUtils::SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order
   if (iter != cnode_exec_order.rend()) {
     // store communication op input nodes' name
     std::set<std::string> ar_input_node_names;
-    size_t input_num = AnfAlgo::GetInputTensorNum(*iter);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(*iter);
     for (size_t i = 0; i < input_num; ++i) {
-      auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(*iter, i);
+      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(*iter, i);
       auto input_node = input_node_with_index.first;
       ar_input_node_names.insert(input_node->fullname_with_scope());
     }

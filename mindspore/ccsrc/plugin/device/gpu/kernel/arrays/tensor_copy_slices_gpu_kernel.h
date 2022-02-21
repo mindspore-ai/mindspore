@@ -55,21 +55,21 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
 
-    input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(update_shape, kernel_name_, "update");
     if (is_null_input_) {
@@ -103,7 +103,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void CheckAtrrAndShapeValid(const CNodePtr &kernel_node) {
-    auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     size_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' should be the same "

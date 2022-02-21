@@ -23,7 +23,7 @@
 
 #include "runtime/mem.h"
 #include "runtime/rt.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/executor/ai_cpu_dynamic_kernel.h"

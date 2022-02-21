@@ -20,6 +20,8 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/anfalgo.h"
+
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
@@ -52,7 +54,7 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
   MockInsertTransOpKernelSelectTrans4Dto5D() = default;
   ~MockInsertTransOpKernelSelectTrans4Dto5D() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
-    if (AnfAlgo::GetCNodeName(cnode) == "TransData") {
+    if (common::AnfAlgo::GetCNodeName(cnode) == "TransData") {
       KernelBuildInfoBuilder builder;
       builder.SetInputsFormat({"NCHW"});
       builder.SetInputsDeviceType({kFloat16->type_id()});

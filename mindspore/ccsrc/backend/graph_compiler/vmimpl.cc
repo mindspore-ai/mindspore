@@ -26,8 +26,8 @@
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
-#include "utils/convert_utils.h"
-#include "utils/primitive_utils.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/primitive_utils.h"
 
 namespace mindspore {
 namespace compile {

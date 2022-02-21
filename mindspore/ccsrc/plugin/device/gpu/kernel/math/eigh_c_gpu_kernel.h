@@ -30,7 +30,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/real_to_complex_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
@@ -57,10 +57,10 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
   ~EighcGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
     lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, LOWER));
     if (compute_eigen_vectors_) {

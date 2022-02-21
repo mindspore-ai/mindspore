@@ -147,7 +147,7 @@ OrderedSet<AnfNodePtr> GetLongTermNodes(const AnfNodePtrList &nodes, const AnfNo
                                         const FuncGraphManagerPtr &mng) {
   OrderedSet<AnfNodePtr> long_term_nodes;
   for (auto node : nodes) {
-    auto real_node = AnfAlgo::VisitKernelWithReturnType(node, 0).first;
+    auto real_node = common::AnfAlgo::VisitKernelWithReturnType(node, 0).first;
     // Parameter or value have long term tensors.
     if (!utils::isa<CNodePtr>(real_node)) {
       (void)long_term_nodes.insert(node);
@@ -225,10 +225,10 @@ AnfNodePtrList AutoRecompute::Filter(const AnfNodePtr &source_node, const AnfNod
   AnfNodePtrList check_inputs;
   if (IsPrimitiveCNode(end_node->cast<CNodePtr>()->input(IntToSize(edge_pos)), prim::kPrimTupleGetItem)) {
     auto out_index = GetSourceLinkOutPos(end_node, edge_pos);
-    auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(source_node);
+    auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(source_node);
     auto out = sub_graph->output();
     if (!IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
-      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << AnfAlgo::GetCNodeName(out);
+      MS_LOG(EXCEPTION) << "Expect MakeTuple node, but got " << common::AnfAlgo::GetCNodeName(out);
     }
 
     // Find subgraph's input according to edge node.
@@ -345,7 +345,7 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
   // Direct users include long term users and short term users.
   // If the short term user is graph kernel composite node, it may be absorb and reduce the local peak memory.
   for (auto user : direct_users) {
-    if (long_term_users.count(user) == 0 && AnfAlgo::IsGraphKernel(user)) {
+    if (long_term_users.count(user) == 0 && common::AnfAlgo::IsGraphKernel(user)) {
       (void)target_link_infos.emplace_back(user, user_edge_pos[user], EdgeLifeTimeType::ShortTerm);
     }
   }
@@ -441,7 +441,7 @@ void AutoRecompute::FindCandidates(const FuncGraphPtr &func_graph) {
   // 2. Memory variety between split out and origin more than threshold:
   //    `Size(gs_direct_outs_to_gt) - filter(gs_inputs, its) > threshold`.
   for (auto node : topo_nodes) {
-    if (!AnfAlgo::IsGraphKernel(node)) {
+    if (!common::AnfAlgo::IsGraphKernel(node)) {
       continue;
     }
     auto target_graphs = JudegeTargetAndCaptureSource(node, mng);
@@ -544,7 +544,7 @@ void AutoRecompute::RecomputeCandidatesLog(const std::vector<Candidate> &candida
 std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const CNodePtr &source_graph,
                                                                          const AnfNodePtrList &recompute_edges) {
   MS_EXCEPTION_IF_NULL(source_graph);
-  auto gs = AnfAlgo::GetCNodeFuncGraphPtr(source_graph);
+  auto gs = common::AnfAlgo::GetCNodeFuncGraphPtr(source_graph);
   MS_EXCEPTION_IF_NULL(gs);
   AnfNodePtrList inputs(source_graph->inputs().begin() + 1, source_graph->inputs().end());
   auto new_funcgraph = BasicClone(gs);
@@ -576,7 +576,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(
   const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
   const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func) {
   auto cloned_nodes = TopoSort(cloned_func->get_return());
-  auto gt = AnfAlgo::GetCNodeFuncGraphPtr(candidate.target_graph);
+  auto gt = common::AnfAlgo::GetCNodeFuncGraphPtr(candidate.target_graph);
   MS_EXCEPTION_IF_NULL(gt);
   auto mng = gt->manager();
   if (mng == nullptr) {
@@ -639,7 +639,7 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
   std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> edge_match_func;
   if (candidate.recompute_edges.empty()) {
     // single output, clone the whole source_graph.
-    auto gs = AnfAlgo::GetCNodeFuncGraphPtr(candidate.source_graph);
+    auto gs = common::AnfAlgo::GetCNodeFuncGraphPtr(candidate.source_graph);
     MS_EXCEPTION_IF_NULL(gs);
     new_funcgraph = BasicClone(gs);
     auto source_cnode = candidate.source_graph->cast<CNodePtr>();
@@ -669,7 +669,7 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
     new_funcgraph->set_manager(mng);
   }
 
-  if (AnfAlgo::IsGraphKernel(candidate.target_graph)) {
+  if (common::AnfAlgo::IsGraphKernel(candidate.target_graph)) {
     // the target graph is a GraphKernel, push the new_funcgraph into the target graph.
     LinkIntoTargetFuncGraph(candidate, new_funcgraph, inputs, edge_match_func);
   } else {
@@ -690,7 +690,7 @@ bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
     for (auto &c : candidates_) {
-      if (!AnfAlgo::IsGraphKernel(c.target_graph)) {
+      if (!common::AnfAlgo::IsGraphKernel(c.target_graph)) {
         continue;
       }
       std::ostringstream oss;

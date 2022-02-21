@@ -21,6 +21,7 @@
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/common/optimizer/helper.h"
 #include "framework/common/debug/log.h"
@@ -32,8 +33,8 @@
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/utils.h"
 #include "register/op_tiling.h"
 #include "nlohmann/json.hpp"
 
@@ -60,15 +61,15 @@ DynamicTbeKernelMod::~DynamicTbeKernelMod() {
 }
 
 void DynamicTbeKernelMod::InferOp() {
-  if (AnfAlgo::IsDynamicShape(anf_node_.lock())) {
+  if (common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
     auto node = anf_node_.lock();
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     need_skip_execute_ = NeedSkipExecute(cnode);
     if (need_skip_execute_) {
-      std::vector<TypeId> dtypes{AnfAlgo::GetOutputInferDataType(cnode, 0)};
-      AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
+      std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
+      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
     } else {
       KernelMod::InferShape();
     }
@@ -87,7 +88,7 @@ void DynamicTbeKernelMod::InitOp() {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
@@ -193,7 +194,7 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
 bool DynamicTbeKernelMod::NeedSkipExecute(const CNodePtr &cnode) {
   // Skip run ReduceSum when axis is a Empty Tensor
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name != kReduceSumOpName) {
     return false;
   }
@@ -237,7 +238,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   MS_EXCEPTION_IF_NULL(cnode);
 
   // is dynamic shape
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
   }
 

@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 
@@ -98,8 +99,8 @@ bool CastMatmulFusion::Run(const FuncGraphPtr &func_graph) {
   auto changed = false;
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
-    if (!AnfAlgo::IsGraphKernel(node)) continue;
-    auto graph_kernel_fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (!common::AnfAlgo::IsGraphKernel(node)) continue;
+    auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(graph_kernel_fg);
     changed = DoFuse(graph_kernel_fg) || changed;
   }

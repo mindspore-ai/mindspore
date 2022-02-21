@@ -21,7 +21,8 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "include/common/utils/anfalgo.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/executor/rts/memcpy_rts_dynamic_kernel.h"
@@ -80,7 +81,7 @@ bool MemCpyAsyncKernel::Init(const mindspore::AnfNodePtr &anf_node) {
 
 void MemCpyAsyncKernel::GetInputOutputDataType(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1, got " << input_size;
   }
@@ -89,7 +90,7 @@ void MemCpyAsyncKernel::GetInputOutputDataType(const AnfNodePtr &anf_node) {
 
 void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_size = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1, got " << input_size;
   }

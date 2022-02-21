@@ -20,12 +20,13 @@
 #include <algorithm>
 #include "plugin/device/ascend/kernel/rts/rt_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
 KernelModPtr RtOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
   (void)std::transform(op_name.begin(), op_name.end(), op_name.begin(), ::tolower);
   MS_LOG(INFO) << "Op Name(tolower)[" << op_name << "]";
   auto ker_ptr = RtKernelFactory::Create(op_name);

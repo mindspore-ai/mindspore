@@ -19,8 +19,9 @@
 #include <vector>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -68,9 +69,9 @@ const AnfNodePtr LambUpdateWithLRRuleFusion::Process(const FuncGraphPtr &graph, 
   auto lamb_update_with_lr = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(lamb_update_with_lr);
 
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lamb_update_with_lr.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lamb_update_with_lr.get());
   lamb_update_with_lr->set_scope(node->scope());
   return lamb_update_with_lr;
 }

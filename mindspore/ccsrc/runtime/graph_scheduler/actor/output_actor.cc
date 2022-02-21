@@ -68,7 +68,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
     }
     // Update output tensor's shape
     for (size_t i = 0; i < outputs_.size(); ++i) {
-      auto shape = AnfAlgo::GetOutputInferShape(output_nodes_[i].first, output_nodes_[i].second);
+      auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes_[i].first, output_nodes_[i].second);
       std::vector<int64_t> temp_shape;
       (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
       if (outputs_[i] == nullptr) {
@@ -118,9 +118,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
   std::vector<int64_t> temp_shape;
-  auto shape = AnfAlgo::GetOutputInferShape(output_node, output_index);
+  auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
   auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));

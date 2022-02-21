@@ -20,12 +20,13 @@
 #include <memory>
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
 KernelModPtr HcclOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  std::string opname = AnfAlgo::GetCNodeName(anf_node);
+  std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(INFO) << "Hccl op [" << opname << "]";
   auto kerPtr = HcclKernelFactory::Get(opname);
   if (kerPtr == nullptr) {

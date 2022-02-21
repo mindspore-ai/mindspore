@@ -62,7 +62,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (node_name == "ApplyCenteredRMSProp") {
       use_center_ = true;
     }
@@ -72,7 +72,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
       momentum_ = GetAttr<float>(kernel_node, "momentum");
       epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     }
-    auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "var");
     if (is_null_input_) {
       InitSizeLists();

@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/slice_cpu_kernel.h"
 #include <algorithm>
 #include <unordered_map>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -39,24 +39,24 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
 
 void SliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
                                                                 {kNumberTypeInt32, sizeof(int)},
                                                                 {kNumberTypeFloat32, sizeof(float)},
                                                                 {kNumberTypeFloat64, sizeof(double)}};
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > DIMENSION_8D || input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input tensor should be in range [1D, 8D], but got " << input_shape.size()
                       << "D.";
   }
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   // begin and size are const input
   if (input_num == 1) {
-    auto size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
-    auto begin = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+    auto size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+    auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the lengths of 'begin' and 'size' should be equal to "
@@ -133,9 +133,9 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   auto output_addr = outputs[0]->addr;
   if (inputs.size() == kSliceDynamicInputNum) {
     auto cnode = cnode_ptr_.lock();
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-    auto begin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
-    auto size_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+    auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimensions of 'begin' and 'size' should be 1, but got the dimension of 'begin': "

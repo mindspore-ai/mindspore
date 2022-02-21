@@ -19,17 +19,16 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 namespace {
 bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std::vector<PrimitivePtr> &black_list) {
-  auto main_primitive = AnfAlgo::GetCNodePrimitive(main);
-  auto node_primitive = AnfAlgo::GetCNodePrimitive(node);
+  auto main_primitive = common::AnfAlgo::GetCNodePrimitive(main);
+  auto node_primitive = common::AnfAlgo::GetCNodePrimitive(node);
   if (main_primitive != nullptr && node_primitive != nullptr) {
     // Some ops such as Reshape is not real op, cse these type will not get gain. And for ops fusion, keep these op
     // alone can prevent some redundant output case (input -> reshape -> output).
@@ -62,7 +61,7 @@ bool GraphKernelBackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, co
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
-  if (!AnfAlgo::IsNodeInGraphKernel(main)) {
+  if (!common::AnfAlgo::IsNodeInGraphKernel(main)) {
     return BackendCSE::CheckEqualKernelBuildInfo(main, node);
   }
 
@@ -98,7 +97,7 @@ bool GraphKernelBackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const 
   auto c_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(c_node);
 
-  if (!AnfAlgo::IsNodeInGraphKernel(c_main)) {
+  if (!common::AnfAlgo::IsNodeInGraphKernel(c_main)) {
     return BackendCSE::CheckEqualCnodeInputs(main, node);
   }
 

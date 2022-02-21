@@ -67,19 +67,19 @@ void LUCpuKernelMod<T>::InitPivotVecInfo(const std::vector<size_t> &shape, size_
 template <typename T>
 void LUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kLUOutputsNum, kernel_name_);
-  auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
+  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
   InitMatrixInfo(a_shape, &a_row_, &a_col_);
-  auto lu_shape = AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
+  auto lu_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
   InitMatrixInfo(lu_shape, &lu_row_, &lu_col_);
-  auto permutation_shape = AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex);
+  auto permutation_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex);
   InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
-  auto pivots_shape = AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
+  auto pivots_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
   InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
 }
 

@@ -31,6 +31,7 @@
 #include "debug/anf_ir_dump.h"
 #include "pipeline/jit/base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 
 namespace mindspore {
@@ -121,14 +122,14 @@ void DumpExecuteOrder(const NotNull<KernelGraphPtr> kg) {
   for (auto &cnode : kg->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     if (IsPrimitiveCNode(cnode, prim::kPrimLabelSet)) {
-      fout << "L" << AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex) << ":\n";
+      fout << "L" << common::AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex) << ":\n";
     }
     fout << "  [" << index << "], " << cnode->DebugString();
-    if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
-      fout << " : L" << AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex);
+    if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
+      fout << " : L" << common::AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex);
     }
-    if (AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
-      auto labels = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrLabelSwitchList);
+    if (common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
+      auto labels = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrLabelSwitchList);
       fout << " : ";
       for (size_t i = 0; i < labels.size(); ++i) {
         fout << ((i > 0) ? ", L" : "L") << labels[i];
@@ -419,11 +420,11 @@ class CallInfoFinder {
         // Found a node with UMonad abstract, set it as the last monad.
         last_monad = node;
         call_info->return_monad_ = last_monad;
-      } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
+      } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall)) {
         MakeCallSite(node->cast<CNodePtr>(), last_monad, call_info);
         call_info->return_monad_ = nullptr;
-      } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
-                 AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
+      } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
+                 common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
         MakeSwitchCallSite(node->cast<CNodePtr>(), last_monad, call_info);
         call_info->return_monad_ = nullptr;
       }
@@ -731,8 +732,8 @@ class AscendAutoMonadConverter {
     kernel_graph_->SetExecOrderByDefault();
     if (call_info_.recursive) {
       const auto &nodes = kernel_graph_->execution_order();
-      AnfAlgo::SetNodeAttr(kAttrRecursiveStart, prim::kValueOne, *nodes.begin());
-      AnfAlgo::SetNodeAttr(kAttrRecursiveEnd, prim::kValueOne, *nodes.rbegin());
+      common::AnfAlgo::SetNodeAttr(kAttrRecursiveStart, prim::kValueOne, *nodes.begin());
+      common::AnfAlgo::SetNodeAttr(kAttrRecursiveEnd, prim::kValueOne, *nodes.rbegin());
     }
     for (auto &call_site : call_info_.call_sites) {
       if (need_stackops_ && call_site.recursive) {
@@ -762,7 +763,7 @@ class AscendAutoMonadConverter {
       if (!AnfUtils::IsRealCNodeKernel(*iter)) {
         continue;
       }
-      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
+      if (common::AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
         const auto &last_call_site = context->call_info_map[kg].call_sites.back();
         for (auto &branch : last_call_site.callees) {
           if (memo.find(branch.graph) != memo.end()) {
@@ -772,7 +773,7 @@ class AscendAutoMonadConverter {
         }
         break;
       }
-      AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
+      common::AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
       MS_LOG(INFO) << "Set profiling iter-end points: " << (*iter)->DebugString();
       return;
     }
@@ -792,16 +793,17 @@ class AscendAutoMonadConverter {
       if (!AnfUtils::IsRealCNodeKernel(*iter)) {
         continue;
       }
-      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) && AnfAlgo::HasNodeAttr(kAttrReturn, *iter)) {
+      if (common::AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) &&
+          common::AnfAlgo::HasNodeAttr(kAttrReturn, *iter)) {
         continue;
       }
-      if (AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) ||
-          AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSwitch) ||
-          AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
+      if (common::AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelGoto) ||
+          common::AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSwitch) ||
+          common::AnfAlgo::CheckPrimitiveType(*iter, prim::kPrimLabelSet)) {
         MS_LOG(INFO) << "this node is Labelxxxx, do not found iter end.";
         break;
       }
-      AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
+      common::AnfAlgo::SetNodeAttr(ITEREND, prim::kValueOne, *iter);
       MS_LOG(INFO) << "Set profiling iter-end points: " << (*iter)->DebugString();
       return;
     }
@@ -858,7 +860,7 @@ class AscendAutoMonadConverter {
     std::vector<CNodePtr> stack_pushs;
     bool find_call_point = false;
     for (auto &node : exec_order) {
-      auto node_name = AnfAlgo::GetCNodeName(node);
+      auto node_name = common::AnfAlgo::GetCNodeName(node);
       if (node == call_point) {
         find_call_point = true;
         continue;
@@ -887,7 +889,7 @@ class AscendAutoMonadConverter {
                      std::vector<CNodePtr> *stack_pushs) {
     MS_EXCEPTION_IF_NULL(node);
     uint32_t start_index = 1;
-    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimAssign)) {
+    if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimAssign)) {
       start_index = kInputIndex;
     }
     for (uint32_t i = start_index; i < node->inputs().size(); i++) {
@@ -998,7 +1000,7 @@ class AscendAutoMonadConverter {
 
     // For Switch, we reverse the graphes and labels, so that the false branch
     // is the first one, since for kernel LabelSwitch, false is the first branch.
-    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+    if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
       std::reverse(graphes.begin(), graphes.end());
       std::reverse(labels.begin(), labels.end());
     }
@@ -1007,7 +1009,7 @@ class AscendAutoMonadConverter {
     auto label_goto_switch = MakeLabelGotoSwitch(cnode, graphes, labels);
     call_site->conversion_cnode = label_goto_switch;
     if (call_site->recursive) {
-      AnfAlgo::SetNodeAttr(kAttrRecursive, prim::kValueOne, label_goto_switch);
+      common::AnfAlgo::SetNodeAttr(kAttrRecursive, prim::kValueOne, label_goto_switch);
     }
 
     // Setup return label and output if required.
@@ -1082,15 +1084,15 @@ class AscendAutoMonadConverter {
   CNodePtr MakeLabelGotoSwitch(const CNodePtr &cnode, const std::vector<KernelGraphPtr> &graphes,
                                const std::vector<uint32_t> &labels) {
     // Create LabelGoto or LabelSwitch according the cnode type.
-    const bool is_call = AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall);
+    const bool is_call = common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall);
     auto label_goto_switch = (is_call ? LabelGoto(labels.front()) : LabelSwitch(cnode->input(1), labels));
 
     // Set child graph attribute for the LabelGoto or LabelSwitch node.
     SetChildGrapAttr(label_goto_switch, graphes);
 
     // Mark the label_switch node is for 'switch_layer' if it is.
-    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
-      AnfAlgo::SetNodeAttr(kAttrSwitchLayer, prim::kValueOne, label_goto_switch);
+    if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
+      common::AnfAlgo::SetNodeAttr(kAttrSwitchLayer, prim::kValueOne, label_goto_switch);
     }
     return label_goto_switch;
   }
@@ -1114,7 +1116,7 @@ class AscendAutoMonadConverter {
       // Insert label_goto for return.
       auto &return_point = return_points.front();
       auto return_goto = LabelGoto(return_point.call_site->return_label);
-      AnfAlgo::SetNodeAttr(kAttrReturn, prim::kValueOne, return_goto);
+      common::AnfAlgo::SetNodeAttr(kAttrReturn, prim::kValueOne, return_goto);
       kernel_graph_->set_end_goto(return_goto);
       return;
     }
@@ -1128,9 +1130,9 @@ class AscendAutoMonadConverter {
     auto &label_param = call_info_.label_param;
     MS_EXCEPTION_IF_NULL(label_param);
     auto return_switch = LabelSwitch(label_param, return_labels);
-    AnfAlgo::SetNodeAttr(kAttrReturn, prim::kValueOne, return_switch);
+    common::AnfAlgo::SetNodeAttr(kAttrReturn, prim::kValueOne, return_switch);
     if (!call_info_.recursive) {
-      AnfAlgo::SetNodeAttr(kAttrMultiCallEnd, prim::kValueOne, return_switch);
+      common::AnfAlgo::SetNodeAttr(kAttrMultiCallEnd, prim::kValueOne, return_switch);
     }
     kernel_graph_->set_end_goto(return_switch);
     context_.SetSubGraphMultiCall(true);
@@ -1249,29 +1251,29 @@ class AscendAutoMonadConverter {
 
   // AissgnAll support tuple to tuple assign.
   AnfNodePtr AssignAll(const AnfNodePtr &target, const AnfNodePtr &source, bool link, bool keep, bool output) {
-    if (!AnfAlgo::CheckPrimitiveType(target, prim::kPrimMakeTuple)) {
+    if (!common::AnfAlgo::CheckPrimitiveType(target, prim::kPrimMakeTuple)) {
       // Assign single value.
       return Assign(target, source, link, keep, output);
     }
     // Assign tuple.
-    std::vector<AnfNodePtr> targets = AnfAlgo::GetAllOutput(target);
-    std::vector<AnfNodePtr> sources = AnfAlgo::GetAllOutput(source);
+    std::vector<AnfNodePtr> targets = common::AnfAlgo::GetAllOutput(target);
+    std::vector<AnfNodePtr> sources = common::AnfAlgo::GetAllOutput(source);
     if (targets.size() != sources.size()) {
       MS_LOG(EXCEPTION) << "Target size " << targets.size() << " != source size " << sources.size();
     }
     AnfNodePtrList tuple_inputs;
-    auto source_item_with_index = AnfAlgo::VisitKernelWithReturnType(source, 0);
+    auto source_item_with_index = common::AnfAlgo::VisitKernelWithReturnType(source, 0);
     MS_EXCEPTION_IF_NULL(source_item_with_index.first);
     auto source_cnode = source_item_with_index.first->cast<CNodePtr>();
     auto target_cnode = target->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(source_cnode);
     MS_EXCEPTION_IF_NULL(target_cnode);
-    if (!AnfAlgo::CheckPrimitiveType(source_cnode, prim::kPrimMakeTuple)) {
+    if (!common::AnfAlgo::CheckPrimitiveType(source_cnode, prim::kPrimMakeTuple)) {
       MS_LOG(WARNING) << "Source : " << source_cnode->DebugString() << " is not MakeTuple.";
     }
     tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 1; i < target_cnode->inputs().size(); ++i) {
-      if (AnfAlgo::IsTupleOutput(target_cnode->input(i))) {
+      if (common::AnfAlgo::IsTupleOutput(target_cnode->input(i))) {
         tuple_inputs.emplace_back(AssignAll(target_cnode->input(i), source_cnode->input(i), link, keep, output));
       } else {
         tuple_inputs.emplace_back(Assign(target_cnode->input(i), source_cnode->input(i), link, keep, output));
@@ -1354,7 +1356,7 @@ class AscendAutoMonadConverter {
     auto monad = GetMonad();
     auto label_goto = NewPrimitive(prim::kPrimLabelGoto);
     auto cnode = kernel_graph_->NewCNode({label_goto, monad});
-    AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(label_id), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(label_id), cnode);
     cnode->set_abstract(monad->abstract());
     monad_ = cnode;
     return cnode;
@@ -1365,7 +1367,7 @@ class AscendAutoMonadConverter {
     auto monad = GetMonad();
     auto label_set = NewPrimitive(prim::kPrimLabelSet);
     auto cnode = kernel_graph_->NewCNode({label_set, monad});
-    AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(label_id), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(label_id), cnode);
     cnode->set_abstract(monad->abstract());
     monad_ = cnode;
     return cnode;
@@ -1377,7 +1379,7 @@ class AscendAutoMonadConverter {
     auto label_switch = NewPrimitive(prim::kPrimLabelSwitch);
     auto cnode = kernel_graph_->NewCNode({label_switch, cond, monad});
     auto label_list = MakeValue(labels);
-    AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, label_list, cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, label_list, cnode);
     cnode->set_abstract(monad->abstract());
     monad_ = cnode;
     return cnode;
@@ -1385,7 +1387,7 @@ class AscendAutoMonadConverter {
 
   // Set child graph attribute for label_goto/label_switch node.
   void SetChildGrapAttr(const AnfNodePtr &node, const std::vector<KernelGraphPtr> &graphs) {
-    AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue(graphs), node);
+    common::AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue(graphs), node);
   }
 
   // Make a StackInit node.
@@ -1393,7 +1395,7 @@ class AscendAutoMonadConverter {
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_init = NewPrimitive(prim::kPrimStackInit);
     auto cnode = kg->NewCNode({stack_init, monad});
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
     cnode->set_abstract(monad->abstract());
     return cnode;
   }
@@ -1403,7 +1405,7 @@ class AscendAutoMonadConverter {
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_destroy = NewPrimitive(prim::kPrimStackDestroy);
     auto cnode = kg->NewCNode({stack_destroy, monad});
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
     cnode->set_abstract(monad->abstract());
     return cnode;
   }
@@ -1413,9 +1415,9 @@ class AscendAutoMonadConverter {
     auto monad = AnfAlgo::MakeMonadValueNode(kernel_graph_);
     auto stack_push = NewPrimitive(prim::kPrimStackPush);
     auto cnode = kernel_graph_->NewCNode({stack_push, input, monad});
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
     auto op_name = std::to_string(kernel_graph_->graph_id()) + "_stack_push_" + std::to_string(name_index_++);
-    AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
     cnode->set_abstract(monad->abstract());
     return cnode;
   }
@@ -1425,9 +1427,9 @@ class AscendAutoMonadConverter {
     auto monad = AnfAlgo::MakeMonadValueNode(kernel_graph_);
     auto stack_pop = NewPrimitive(prim::kPrimStackPop);
     auto cnode = kernel_graph_->NewCNode({stack_pop, monad});
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue<int64_t>(0), cnode);
     auto op_name = std::to_string(kernel_graph_->graph_id()) + "_stack_pop_" + std::to_string(name_index_++);
-    AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrStackOpName, MakeValue(op_name), cnode);
     cnode->set_abstract(monad->abstract());  // need to refresh output's abstract().
     return cnode;
   }
@@ -1482,8 +1484,8 @@ class ExecuteOrderGenerator {
   uint32_t FindMaxLabelId(const std::vector<CNodePtr> &nodes) {
     uint32_t max_label = 0;
     for (auto &node : nodes) {
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
-        auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+      if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
+        auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
         max_label = std::max(label_id, max_label);
       }
     }
@@ -1493,7 +1495,7 @@ class ExecuteOrderGenerator {
   void HandleLabelSwitch(const AnfNodePtr &node, std::vector<uint32_t> *labels, std::vector<uint32_t> *switch_labels,
                          std::multimap<uint32_t, uint32_t> *labels_multimap) {
     bool is_new_labels = false;
-    auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
+    auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
     std::vector<uint32_t> new_labels;
     new_labels.reserve(label_list.size());
     for (auto label_id : label_list) {
@@ -1511,19 +1513,19 @@ class ExecuteOrderGenerator {
     }
     (void)switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
     if (is_new_labels) {
-      AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
+      common::AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
     }
   }
 
   void HandleLabelGoto(const AnfNodePtr &node, std::vector<uint32_t> *labels, std::vector<uint32_t> *switch_labels,
                        std::multimap<uint32_t, uint32_t> *labels_multimap) {
-    auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+    auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
     auto iter = std::find(switch_labels->begin(), switch_labels->end(), label_id);
     if (iter == switch_labels->end()) {
       (void)labels->emplace_back(label_id);
       return;
     }
-    AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(++max_label_), node);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(++max_label_), node);
     (void)labels_multimap->emplace(*iter, max_label_);
     (void)labels->emplace_back(max_label_);
   }
@@ -1536,11 +1538,11 @@ class ExecuteOrderGenerator {
     std::multimap<uint32_t, uint32_t> labels_multimap;
     max_label_ = FindMaxLabelId(nodes);
     for (auto &node : nodes) {
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
+      if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSwitch)) {
         HandleLabelSwitch(node, &labels, &switch_labels, &labels_multimap);
         continue;
       }
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
+      if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelGoto)) {
         HandleLabelGoto(node, &labels, &switch_labels, &labels_multimap);
         continue;
       }
@@ -1555,10 +1557,10 @@ class ExecuteOrderGenerator {
       auto old_label = labels.first;
       auto new_label = labels.second;
       auto iter = std::find_if(nodes->begin(), nodes->end(), [old_label](auto node) {
-        if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
+        if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
           return false;
         }
-        auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+        auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
         return label_id == old_label;
       });
       if (iter == nodes->end()) {
@@ -1566,8 +1568,8 @@ class ExecuteOrderGenerator {
       }
       auto label_set = NewValueNode(std::make_shared<Primitive>(prim::kPrimLabelSet->name()));
       auto cnode = graph_->NewCNode({label_set});
-      AnfAlgo::CopyNodeAttrs(*iter, cnode);
-      AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(new_label), cnode);
+      common::AnfAlgo::CopyNodeAttrs(*iter, cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrLabelIndex, MakeValue(new_label), cnode);
       auto monad = graph_->NewValueNode(kUMonad->ToAbstract(), kUMonad);
       cnode->set_abstract(monad->abstract());
       (void)device::ascend::SelectKernelInfo(cnode);
@@ -1580,10 +1582,10 @@ class ExecuteOrderGenerator {
     execution_order->insert(execution_order->end(), order.begin(), order.end());
   }
 
-  bool HasSubGraphs(const CNodePtr &cnode) { return (cnode && AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode)); }
+  bool HasSubGraphs(const CNodePtr &cnode) { return (cnode && common::AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode)); }
 
   std::vector<KernelGraphPtr> GetSubGraphs(const CNodePtr &cnode) {
-    return AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cnode, kAttrChildGraph);
+    return common::AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cnode, kAttrChildGraph);
   }
 
   void EraseNodeFromExecOrder(const AnfNodePtr &node, const NotNull<std::vector<CNodePtr> *> exec_order) {
@@ -1612,7 +1614,7 @@ class ExecuteOrderGenerator {
       // and then append them to current execution order list.
       if (HasSubGraphs(cnode)) {
         auto sub_graphs = GetSubGraphs(cnode);
-        if (!AnfAlgo::HasNodeAttr(kAttrSwitchLayer, cnode)) {
+        if (!common::AnfAlgo::HasNodeAttr(kAttrSwitchLayer, cnode)) {
           // For Switch, we use reversed order to generate sub-graph's execution order,
           // because the true branch of LabelSwitch is the second one, but
           // we want to make true branch ahead of false branch in the generated
@@ -1628,7 +1630,7 @@ class ExecuteOrderGenerator {
           AppendGraphOrder(&execution_order, sub_graph);
         }
         // Clear ChildGraph attribute after execute order generated.
-        AnfAlgo::EraseNodeAttr(kAttrChildGraph, cnode);
+        common::AnfAlgo::EraseNodeAttr(kAttrChildGraph, cnode);
       }
     }
     // Save generated execution order into the graph.
@@ -1762,10 +1764,10 @@ class ExecuteOrderGenerator {
                            return {p.first.first, {p.first.second, p.second.first, p.second.second}};
                          });
     auto validate_ref_parameter = [](AnfNodePtr node) -> AnfNodePtr {
-      if (node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(node, prim::kPrimTransData)) {
+      if (node->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTransData)) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
-        auto first_input = AnfAlgo::VisitKernelWithReturnType(cnode->input(kFirstDataInputIndex), 0, true);
+        auto first_input = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kFirstDataInputIndex), 0, true);
         MS_EXCEPTION_IF_NULL(first_input.first);
         return first_input.first;
       }
@@ -1794,7 +1796,7 @@ class ExecuteOrderGenerator {
         (void)refed_parameters.insert(validate_ref_parameter(std::get<1>(iter->second)));
       }
       for (auto &in : node->inputs()) {
-        auto visit_node = AnfAlgo::VisitKernelWithReturnType(in, 0).first;
+        auto visit_node = common::AnfAlgo::VisitKernelWithReturnType(in, 0).first;
         visit_node = validate_ref_parameter(visit_node);
         if (!visit_node->isa<Parameter>() || root_inputs.find(visit_node) != root_inputs.end()) {
           continue;
@@ -1836,16 +1838,16 @@ class ExecuteOrderGenerator {
     for (auto iter = exec_order.begin(); iter != exec_order.end();) {
       auto &node = *iter;
       if (IsPrimitiveCNode(node, prim::kPrimLabelSwitch)) {
-        auto labels = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
+        auto labels = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
         for (auto label : labels) {
           label_used.insert(label);
         }
       } else if (IsPrimitiveCNode(node, prim::kPrimLabelGoto)) {
-        auto label = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+        auto label = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
         auto next = std::next(iter);
         if (next != exec_order.end() && IsPrimitiveCNode(*next, prim::kPrimLabelSet)) {
           // The LabelGoto that jump to next node can be removed.
-          auto next_label = AnfAlgo::GetNodeAttr<uint32_t>(*next, kAttrLabelIndex);
+          auto next_label = common::AnfAlgo::GetNodeAttr<uint32_t>(*next, kAttrLabelIndex);
           if (next_label == label) {
             iter = exec_order.erase(iter);
             continue;
@@ -1859,7 +1861,7 @@ class ExecuteOrderGenerator {
     for (auto iter = exec_order.begin(); iter != exec_order.end();) {
       auto &node = *iter;
       if (IsPrimitiveCNode(node, prim::kPrimLabelSet)) {
-        auto label = AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
+        auto label = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
         if (label_used.find(label) == label_used.end()) {
           iter = exec_order.erase(iter);
           continue;

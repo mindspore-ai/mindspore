@@ -28,8 +28,9 @@
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 // operator which follows commutative rules
@@ -634,8 +635,8 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   bool do_simplify = false;
   expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (common::AnfAlgo::IsGraphKernel(node)) {
+      auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;

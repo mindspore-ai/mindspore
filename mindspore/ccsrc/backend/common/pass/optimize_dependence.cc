@@ -18,13 +18,12 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <utility>
 #include "backend/common/optimizer/helper.h"
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 #include "backend/common/session/kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,15 +51,15 @@ CNodePtr CreateNewDependNode(const FuncGraphPtr &func_graph, const CNodePtr &cno
 
 CNodePtr CheckIsolatedVirtualNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDepend->name() &&
-      AnfAlgo::GetCNodeName(cnode) != prim::kPrimLoad->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDepend->name() &&
+      common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimLoad->name()) {
     return nullptr;
   }
-  auto virtual_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependVirtualInputIndex);
+  auto virtual_input_op = common::AnfAlgo::GetInputNode(cnode, kIsolatedDependVirtualInputIndex);
   if (!HasAbstractMonad(virtual_input_op)) {
     return nullptr;
   }
-  auto real_input_op = AnfAlgo::GetInputNode(cnode, kIsolatedDependRealInputIndex);
+  auto real_input_op = common::AnfAlgo::GetInputNode(cnode, kIsolatedDependRealInputIndex);
   MS_EXCEPTION_IF_NULL(real_input_op);
   if (!real_input_op->isa<CNode>()) {
     return nullptr;
@@ -96,7 +95,7 @@ AnfNodePtr GetReplaceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node
   if (isolated_cnode != nullptr) {
     replace_cnode = isolated_cnode;
   }
-  string op_name = AnfAlgo::GetCNodeName(replace_cnode);
+  string op_name = common::AnfAlgo::GetCNodeName(replace_cnode);
   // Currently we only eliminate transdata or cast nodes.
   if (op_name != kTransDataOpName && op_name != prim::kPrimCast->name()) {
     return nullptr;
@@ -115,14 +114,14 @@ AnfNodePtr GetReplaceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node
 AnfNodePtr ReplaceMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimMakeTuple->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimMakeTuple->name()) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_make_tuple_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
+  std::vector<AnfNodePtr> new_make_tuple_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   bool need_update = false;
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t index = 0; index < input_num; ++index) {
-    auto input = AnfAlgo::GetInputNode(cnode, index);
+    auto input = common::AnfAlgo::GetInputNode(cnode, index);
     AnfNodePtr replace_input = GetReplaceNode(func_graph, input);
     // If replace input is not null, it will be the input of the TransData or Cast.
     if (replace_input == nullptr) {
@@ -166,9 +165,9 @@ std::vector<size_t> SearchTransDataAndCast(const CNodePtr &cnode) {
   std::vector<size_t> result;
   for (size_t i = 1; i < cnode->size(); ++i) {
     auto &input = cnode->input(i);
-    if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
-        AnfAlgo::CheckPrimitiveType(input, prim::kPrimTransData) ||
-        AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCast) ||
+        common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimTransData) ||
+        common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       (void)result.emplace_back(i);
     }
   }

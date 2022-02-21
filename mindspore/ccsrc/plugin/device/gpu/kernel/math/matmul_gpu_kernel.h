@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_impl.cuh"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -95,13 +95,13 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_a_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     dtype_b_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
     dtype_c_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0)));
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (dtype_a_ != dtype_b_ || dtype_a_ != dtype_c_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input and output types are not the same in " << node_name;
     }
@@ -109,8 +109,8 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
       algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    auto input1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input1_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -144,7 +144,7 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
     transpose = GetAttr<bool>(kernel_node, "transpose_x2");
     transpose_x2_ = transpose ? CUBLAS_OP_T : CUBLAS_OP_N;
 
-    const std::string &kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    const std::string &kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == kFusedMatMulBiasAddName) {
       is_fused_matmul_biasadd_ = true;
     }

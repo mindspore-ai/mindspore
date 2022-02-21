@@ -19,7 +19,7 @@
 #include "utils/symbolic.h"
 #include "debug/common.h"
 #include "pipeline/jit/base.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace abstract {

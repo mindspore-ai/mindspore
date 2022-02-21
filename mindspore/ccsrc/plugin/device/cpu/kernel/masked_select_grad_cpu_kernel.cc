@@ -26,7 +26,7 @@ constexpr size_t kMaskedSelectGradOutputsNum = 1;
 template <typename T>
 void MaskedSelectGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, INPUT);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, MASK);
   grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, GRAD);

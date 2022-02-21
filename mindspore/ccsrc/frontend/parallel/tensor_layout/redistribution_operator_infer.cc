@@ -19,7 +19,7 @@
 #include <utility>
 
 #include "frontend/parallel/device_manager.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {

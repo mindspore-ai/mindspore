@@ -23,7 +23,7 @@
 #include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "utils/symbolic.h"
 

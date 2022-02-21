@@ -24,16 +24,16 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/ms_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_manager.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_copy_manager.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "ir/dtype.h"
 #ifndef ENABLE_SECURITY
 #include "profiler/device/gpu/gpu_profiling.h"
@@ -168,13 +168,13 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 
   if (debugger->debugger_enabled() || dump_json_parser.InputNeedDump()) {
     // get inputs
-    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+    auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
       MS_EXCEPTION_IF_NULL(input_kernel);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       auto addr = kernel_inputs[j];
-      auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+      auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
       // For example, this happens with the Depend op
       if (type == kMetaTypeNone) {
         continue;
@@ -194,14 +194,14 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 
   if (debugger->debugger_enabled() || dump_json_parser.OutputNeedDump()) {
     // get outputs
-    auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
-    auto node_name = AnfAlgo::GetCNodeName(kernel);
+    auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel);
 
     std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
 
     for (int j : real_outputs) {
       auto addr = kernel_outputs[j];
-      auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
+      auto type = common::AnfAlgo::GetOutputInferDataType(kernel, j);
       // For example, this happens with the Depend op
       if (type == kMetaTypeNone) {
         continue;
@@ -320,10 +320,10 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
   std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
   auto kernel_cnodes = graph->execution_order();
   for (auto &kernel : kernel_cnodes) {
-    if (!AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
+    if (!common::AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
       continue;
     }
-    auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
     MS_EXCEPTION_IF_NULL(primitive);
     auto group_attr = primitive->GetAttr("inplace_group");
     MS_EXCEPTION_IF_NULL(group_attr);
@@ -338,7 +338,7 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
       continue;
     }
 
-    auto primitive = AnfAlgo::GetCNodePrimitive(item[0]);
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(item[0]);
     MS_EXCEPTION_IF_NULL(primitive);
     auto output_index = GetValue<uint32_t>(primitive->GetAttr("inplace_output_index"));
     auto device_address = GetMutableOutputAddr(item[0], output_index, false);
@@ -357,7 +357,7 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
     }
 
     for (auto &node : item) {
-      auto prim = AnfAlgo::GetCNodePrimitive(node);
+      auto prim = common::AnfAlgo::GetCNodePrimitive(node);
       MS_EXCEPTION_IF_NULL(prim);
       auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
       AnfAlgo::SetOutputAddr(device_address, index, node.get());
@@ -369,7 +369,7 @@ bool GPUKernelRuntime::IsDistributedTraining(const session::KernelGraph *graph) 
   MS_EXCEPTION_IF_NULL(graph);
   const auto &kernels = graph->execution_order();
   return std::any_of(kernels.begin(), kernels.end(),
-                     [](const AnfNodePtr &kernel) { return AnfAlgo::IsCommunicationOp(kernel); });
+                     [](const AnfNodePtr &kernel) { return common::AnfAlgo::IsCommunicationOp(kernel); });
 }
 
 void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
@@ -384,7 +384,7 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(kernel_mode);
     auto kernel = cnode->cast<AnfNodePtr>();
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       continue;
     }
     const auto &input_size_list = kernel_mode->GetInputSizeList();
@@ -400,7 +400,7 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
     }
 
     // Free the input of kernel by reference count.
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     if (input_num != input_size_list.size()) {
       continue;
     }
@@ -658,7 +658,7 @@ void GPUKernelRuntime::InitKernelWorkspaceAddress(const session::KernelGraph *gr
 void GPUKernelRuntime::SaveGraphOutputNode(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_id = graph->graph_id();
-  const auto &output_nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  const auto &output_nodes = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : output_nodes) {
     graph_output_map_[graph_id].insert(node);
   }
@@ -728,7 +728,7 @@ CNodePtr GetLastKernel(const session::KernelGraph *graph) {
   const auto &kernels = graph->execution_order();
   CNodePtr last_kernel;
   for (const auto &kernel : kernels) {
-    if (AnfAlgo::IsInplaceNode(kernel, "skip")) {
+    if (common::AnfAlgo::IsInplaceNode(kernel, "skip")) {
       continue;
     } else {
       last_kernel = kernel;
@@ -763,7 +763,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    if (AnfAlgo::IsInplaceNode(kernel, "skip")) {
+    if (common::AnfAlgo::IsInplaceNode(kernel, "skip")) {
       continue;
     }
 
@@ -1110,7 +1110,7 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
@@ -1122,12 +1122,12 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
     }
 
     // Get in-place output_address
-    if (AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
-      auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    if (common::AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
+      auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
       MS_EXCEPTION_IF_NULL(primitive);
       auto input_index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
       if (i == input_index) {
-        auto skip_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(kernel), input_index);
+        auto skip_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(kernel), input_index);
         device_address = GetPrevNodeMutableOutputAddr(skip_node, 0, false);
       }
     }
@@ -1150,7 +1150,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
   UpdateHostSwapOutQueue(mock);
-  if (AnfAlgo::IsCommunicationOp(kernel)) {
+  if (common::AnfAlgo::IsCommunicationOp(kernel)) {
     AllocCommunicationOpOutputDynamicRes(kernel);
   }
   auto output_sizes = kernel_mod.GetOutputSizeList();
@@ -1204,8 +1204,8 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsCommunicationOp(kernel) && AnfAlgo::GetCNodeName(kernel) != kHcomSendOpName &&
-        AnfAlgo::GetCNodeName(kernel) != kReceiveOpName) {
+    if (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kHcomSendOpName &&
+        common::AnfAlgo::GetCNodeName(kernel) != kReceiveOpName) {
       AllocCommunicationOpInputDynamicRes(kernel);
     }
   }
@@ -1285,14 +1285,14 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Can not free the input addr of communication op when enable multi stream
-  if (AnfAlgo::IsCommunicationOp(kernel)) {
+  if (common::AnfAlgo::IsCommunicationOp(kernel)) {
     return;
   }
   // Free the input of kernel by reference count.
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
-    if (AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
-      auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    if (common::AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
+      auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
       MS_EXCEPTION_IF_NULL(primitive);
       auto index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
       if (i == index) {
@@ -1323,7 +1323,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
     }
   }
   // Free the output of kernel, if output has no reference.
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
   for (size_t i = 0; i < output_num; ++i) {
     auto kernel_ref_count_ptr = mem_reuse_util_->GetRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
@@ -1356,13 +1356,13 @@ DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr
   auto &addr_cache = skip_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
   std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>>::iterator addr_iter;
   if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
-    addr_iter = addr_cache.insert({node, {AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
+    addr_iter = addr_cache.insert({node, {common::AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
   } else {
     addr_iter = iter;
   }
 
   if (addr_iter->second[i].first == nullptr) {
-    addr_iter->second[i] = AnfAlgo::GetPrevNodeOutput(node, i, skip_nop_node);
+    addr_iter->second[i] = common::AnfAlgo::GetPrevNodeOutput(node, i, skip_nop_node);
   }
 
   session::KernelWithIndex prev_node_with_index = addr_iter->second[i];
@@ -1406,18 +1406,18 @@ DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, 
 
 session::KernelWithIndex GPUKernelRuntime::GetPrevNodeOutput(const AnfNodePtr &node, size_t i) {
   if (!enable_relation_cache_) {
-    return AnfAlgo::GetPrevNodeOutput(node, i);
+    return common::AnfAlgo::GetPrevNodeOutput(node, i);
   }
 
   std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>>::iterator addr_iter;
   if (auto iter = prev_node_output_cache_.find(node); iter == prev_node_output_cache_.end()) {
-    addr_iter = prev_node_output_cache_.insert({node, {AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
+    addr_iter = prev_node_output_cache_.insert({node, {common::AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
   } else {
     addr_iter = iter;
   }
 
   if (addr_iter->second[i].first == nullptr) {
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
     addr_iter->second[i] = kernel_with_index;
   }
 

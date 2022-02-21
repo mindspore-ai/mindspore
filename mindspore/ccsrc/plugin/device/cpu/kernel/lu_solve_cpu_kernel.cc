@@ -33,9 +33,9 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 template <typename T1, typename T2>
 void LuSolveCpuKernelMod<T1, T2>::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputNum, kernel_name_);
   auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);

@@ -40,12 +40,12 @@ void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::Addres
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDynamicStitchOutputNum, kernel_name_);
   auto node_ = cnode_ptr_.lock();
   int first_dim_size = 0;
-  size_t input_count = AnfAlgo::GetInputTensorNum(node_);
+  size_t input_count = common::AnfAlgo::GetInputTensorNum(node_);
   input_tuple_num_ = input_count / 2;
   int max_index = -1;
   for (size_t i = 0; i < input_tuple_num_; ++i) {
     auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
-    auto shape_size = GetShapeSize(AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
+    auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
     for (size_t j = 0; j < shape_size; ++j) {
       max_index = std::max(indice[j], max_index);
     }
@@ -54,12 +54,12 @@ void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::Addres
 
   std::vector<TypeId> dtypes{AnfAlgo::GetOutputDeviceDataType(node_, 0)};
   std::vector<size_t> result_shape{IntToSize(first_dim_size)};
-  auto data0_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, input_tuple_num_);
-  auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0).size();
+  auto data0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, input_tuple_num_);
+  auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0).size();
   for (size_t d = indice_dims; d < data0_shape.size(); ++d) {
     result_shape.emplace_back(data0_shape[d]);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {result_shape}, node_.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {result_shape}, node_.get());
 
   size_t num_out_dims = 2;
   std::vector<size_t> out_dims(num_out_dims, 0);
@@ -76,7 +76,7 @@ void DynamicStitchCpuKernelMod<T>::LaunchKernel(const std::vector<kernel::Addres
   for (size_t i = 0; i < input_tuple_num_; i++) {
     auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
     auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->addr);
-    auto shape_size = GetShapeSize(AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
+    auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
     for (size_t j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);
       if (ret != 0) {

@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/dynamic_shape/ascend_dynamic_shape_helper.h"
 
@@ -86,9 +87,9 @@ bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *d
   if (custom_nodes.infer_node == nullptr) {
     return changed;
   }
-  size_t input_num = AnfAlgo::GetInputNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputNum(cnode);
   for (size_t i = 0; i < input_num; ++i) {
-    auto prev = AnfAlgo::GetPrevNodeOutput(cnode, i);
+    auto prev = common::AnfAlgo::GetPrevNodeOutput(cnode, i);
     const auto &prev_node = prev.first;
     if (prev_node == nullptr || !CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
       continue;
@@ -124,7 +125,7 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
   }
 
   for (auto depend_index : dynamic_shape_depends) {
-    auto prev = AnfAlgo::GetPrevNodeOutput(cnode, depend_index);
+    auto prev = common::AnfAlgo::GetPrevNodeOutput(cnode, depend_index);
     const auto &prev_node = prev.first;
     if (prev_node == nullptr || !CustomActorNodeManager::Instance().IsRegistered(prev_node)) {
       continue;

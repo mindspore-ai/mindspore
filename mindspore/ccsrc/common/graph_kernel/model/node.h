@@ -26,7 +26,7 @@
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
 #include "utils/shape_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel::inner {
 enum class NType {

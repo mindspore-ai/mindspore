@@ -40,7 +40,7 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodeP
 
 void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dnnl::memory::dims mem_dims;
   (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());

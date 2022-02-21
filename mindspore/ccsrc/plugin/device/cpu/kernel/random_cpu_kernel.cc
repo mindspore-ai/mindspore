@@ -97,7 +97,7 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &, const
 
 void RandomCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -107,7 +107,7 @@ void RandomCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     random_op_type_ = iter->second;
   }
 
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   seed_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed")));
   seed2_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed2")));

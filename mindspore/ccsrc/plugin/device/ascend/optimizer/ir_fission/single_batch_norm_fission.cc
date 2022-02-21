@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
 
@@ -83,7 +84,7 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingUpdateV3(
   }
   bn_training_update_v3->set_abstract(bn->abstract());
   bn_training_update_v3->set_scope(bn->scope());
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update_v3);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update_v3);
   return bn_training_update_v3;
 }
 

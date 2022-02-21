@@ -22,7 +22,7 @@
 #include "ir/tensor.h"
 #include "ir/manager.h"
 #include "debug/anf_ir_dump.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
 #include "backend/common/optimizer/optimizer.h"
 

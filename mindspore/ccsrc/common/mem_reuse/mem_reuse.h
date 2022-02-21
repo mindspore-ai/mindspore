@@ -22,6 +22,7 @@
 #include "utils/hash_map.h"
 #include "common/mem_reuse/kernel_refcount.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "utils/ms_context.h"

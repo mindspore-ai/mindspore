@@ -19,7 +19,7 @@
 #include <string>
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_fusion.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/step_parallel.h"
@@ -39,7 +39,7 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
+  if (!root->has_flag(kAutoParallel) || ((parallel_mode != kAutoParallel) && (parallel_mode != kSemiAutoParallel)) ||
       ((!enable_all_reduce_fusion) && (!enable_all_gather_fusion) && (!enable_reduce_scatter_fusion)) ||
       (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY)) || graph_set.size() < 1) {
     return changes;
@@ -66,8 +66,8 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(ret);
 
   AllCommFusion allcomm_fusion;
-  vector<std::string> comm_ops = {ALL_REDUCE, ALL_GATHER, REDUCE_SCATTER};
-  vector<bool> fusionlist = {enable_all_reduce_fusion, enable_all_gather_fusion, enable_reduce_scatter_fusion};
+  std::vector<std::string> comm_ops = {ALL_REDUCE, ALL_GATHER, REDUCE_SCATTER};
+  std::vector<bool> fusionlist = {enable_all_reduce_fusion, enable_all_gather_fusion, enable_reduce_scatter_fusion};
   for (size_t i = 0; i < comm_ops.size(); i++) {
     if (fusionlist[i]) {
       if (allcomm_fusion.ProcessCommOpsFusion(ret, comm_ops[i]) != SUCCESS) {

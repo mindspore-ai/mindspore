@@ -26,7 +26,7 @@ void EnvironGetCpuKernelMod::InitKernel(const CNodePtr &node) {
     MS_LOG(EXCEPTION) << "The input checks invalid, kernel: " << node->fullname_with_scope();
   }
 
-  value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
+  value_type_attr_ = TypeId(common::AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
   MS_LOG(INFO) << "The EnvironGet kernel " << node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);
@@ -77,7 +77,7 @@ bool EnvironGetCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
     value_type = env_value->value_type_;
   } else {
     auto node = cnode_ptr_.lock();
-    const std::string &prim_name = (node == nullptr) ? "" : AnfAlgo::GetCNodeName(node);
+    const std::string &prim_name = (node == nullptr) ? "" : common::AnfAlgo::GetCNodeName(node);
     MS_LOG(INFO) << "Use the default input value for kernel: " << prim_name << ", env handle: " << host_handle
                  << ", env key: " << host_key;
   }

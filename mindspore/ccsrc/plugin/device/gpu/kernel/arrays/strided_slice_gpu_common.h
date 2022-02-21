@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -31,9 +32,9 @@ class StridedSliceGpuCommon {
   ~StridedSliceGpuCommon() = default;
 
   void CollectInfo(const CNodePtr &kernel_node) {
-    begin_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-    end_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-    strides_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+    begin_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
+    end_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
+    strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
     FillEmptyDims(kernel_node, &begin_, &end_, &strides_, &input_shape_);
     ParseStrideSliceMasks(kernel_node, &begin_, &end_, &strides_, input_shape_);
     FillOutputDim();

@@ -14,7 +14,7 @@
  * Limitations under the License.
  */
 
-#include "transform/graph_ir/graph_runner.h"
+#include "include/transform/graph_ir/graph_runner.h"
 #include <algorithm>
 #include <string>
 #include <memory>
@@ -23,12 +23,12 @@
 #include "pybind11/pybind11.h"
 #endif
 #include "utils/log_adapter.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "sys/time.h"
-#include "utils/utils.h"
-#include "utils/callbacks.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/callbacks.h"
 #ifdef ENABLE_D
-#include "utils/callbacks_ge.h"
+#include "include/common/utils/callbacks_ge.h"
 #endif
 #include "utils/ms_context.h"
 

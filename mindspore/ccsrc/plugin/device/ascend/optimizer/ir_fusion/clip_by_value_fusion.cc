@@ -20,8 +20,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -39,7 +40,7 @@ bool GetMinimumOp(const AnfNodePtr &input0, const AnfNodePtr &input1, CNodePtr *
     cnode = input1->cast<CNodePtr>();
     *is_first_input = false;
   } else if (input0->isa<CNode>() && input1->isa<CNode>()) {
-    if (AnfAlgo::GetCNodeName(input0) == prim::kPrimMinimum->name()) {
+    if (common::AnfAlgo::GetCNodeName(input0) == prim::kPrimMinimum->name()) {
       cnode = input0->cast<CNodePtr>();
       *is_first_input = true;
     } else {
@@ -50,7 +51,7 @@ bool GetMinimumOp(const AnfNodePtr &input0, const AnfNodePtr &input1, CNodePtr *
     return false;
   }
 
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimMinimum->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimMinimum->name()) {
     return false;
   }
   *minimum = cnode;
@@ -79,7 +80,7 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(minimum);
-  if (AnfAlgo::GetInputTensorNum(minimum) != kMinimumInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(minimum) != kMinimumInputTensorNum) {
     return nullptr;
   }
 
@@ -89,9 +90,9 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
                                     is_first_input ? maximum_input1 : maximum_input0, minimum->input(kIndex2)};
   auto clip_by_value = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(clip_by_value);
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, clip_by_value.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, clip_by_value.get());
   clip_by_value->set_scope(node->scope());
   return clip_by_value;
 }

@@ -24,8 +24,8 @@ template <typename T>
 void HSVToRGBCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const size_t kNumDims = 3;
-  const size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  const size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  const size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  const size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "Needs " << kInputNum << " input, but got " << input_num << ".";
   }

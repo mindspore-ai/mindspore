@@ -16,6 +16,7 @@
 
 #include "kernel/akg/akg_kernel_metadata.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
 
@@ -26,7 +27,7 @@ void AkgMetadataInfo(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   for (size_t i = 0; i < support_devices.size(); i++) {
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAKG);
     if (op_info_ptr == nullptr) {

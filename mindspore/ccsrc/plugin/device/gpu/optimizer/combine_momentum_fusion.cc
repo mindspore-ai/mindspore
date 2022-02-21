@@ -15,8 +15,9 @@
  */
 #include "plugin/device/gpu/optimizer/combine_momentum_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -27,9 +28,9 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
   std::vector<AnfNodePtr> momentum_decay;
   for (auto &momentum_node : node_list) {
     if (momentum_node != nullptr && momentum_node->isa<CNode>()) {
-      if (AnfAlgo::GetCNodeName(momentum_node) == kFusedScaleApplyMomentum) {
+      if (common::AnfAlgo::GetCNodeName(momentum_node) == kFusedScaleApplyMomentum) {
         momentum.push_back(momentum_node);
-      } else if (AnfAlgo::GetCNodeName(momentum_node) == kFusedWeightScaleApplyMomentum) {
+      } else if (common::AnfAlgo::GetCNodeName(momentum_node) == kFusedWeightScaleApplyMomentum) {
         momentum_decay.push_back(momentum_node);
       }
     }
@@ -61,7 +62,7 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
     }
     // 2 create node momentum
     std::vector<AnfNodePtr> inputs = {};
-    if (AnfAlgo::GetCNodeName(momentums[0]) == kFusedScaleApplyMomentum) {
+    if (common::AnfAlgo::GetCNodeName(momentums[0]) == kFusedScaleApplyMomentum) {
       auto prim = std::make_shared<Primitive>("CombineMomentum");
       MS_EXCEPTION_IF_NULL(prim);
       inputs.push_back(NewValueNode(prim));
@@ -71,12 +72,12 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
       inputs.push_back(NewValueNode(prim));
     }
     // set inputs for momentum
-    size_t input_num = AnfAlgo::GetInputTensorNum(momentums[0]);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(momentums[0]);
     for (auto mom : momentums) {
       for (size_t i = 0; i < input_num; i++) {
         auto cnode = utils::cast<CNodePtr>(mom);
         MS_EXCEPTION_IF_NULL(cnode);
-        inputs.push_back(AnfAlgo::GetInputNode(cnode, i));
+        inputs.push_back(common::AnfAlgo::GetInputNode(cnode, i));
       }
     }
     TraceGuard guard(std::make_shared<TraceOpt>(momentums[0]->debug_info()));
@@ -96,7 +97,7 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
     auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
     MS_EXCEPTION_IF_NULL(abstract_tuple);
     combine_mom->set_abstract(abstract_tuple);
-    AnfAlgo::SetNodeAttr("n", MakeValue(momentums.size()), combine_mom);
+    common::AnfAlgo::SetNodeAttr("n", MakeValue(momentums.size()), combine_mom);
     // 3 replace all the cast by momentum
     for (size_t idx = 0; idx < momentums.size(); ++idx) {
       if (!manager->Replace(momentums[idx], combine_mom)) {

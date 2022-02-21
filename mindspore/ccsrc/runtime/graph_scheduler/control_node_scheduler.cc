@@ -28,7 +28,7 @@ std::string GetActorName(const AnfNodePtr &node) {
     debug_name = debug_name.substr(0, index);
   }
 
-  if (AnfAlgo::IsCallNode(node)) {
+  if (common::AnfAlgo::IsCallNode(node)) {
     return "Call_" + node->UniqueName() + "_" + debug_name;
   } else {
     return node->UniqueName() + "_" + debug_name;
@@ -49,7 +49,7 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
   // Find the real input node, include the monad node and make tuple node.
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
                                                   prim::kPrimMakeTuple};
-  const auto &node_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_types);
+  const auto &node_with_index = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_types);
   auto real_node = node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_node);
   if (!real_node->isa<CNode>()) {
@@ -61,7 +61,7 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
   const auto &real_inputs = real_cnode->inputs();
 
   // Make tuple node needs to be expanded.
-  if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
+  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
     for (size_t i = 1; i < real_inputs.size(); ++i) {
       MS_EXCEPTION_IF_NULL(real_inputs[i]);
       FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
@@ -71,15 +71,15 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
 
   const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
-  if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
-      AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
+  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
     FetchRealDependNodeByAutoMonad(real_inputs[kDependAttachNodeIndex], depend_nodes);
     // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
     // node in this scene.
     if (IsOneOfPrimitiveCNode(real_inputs[kRealInputIndexInDepend], recursion_prims)) {
       FetchRealDependNodeByAutoMonad(real_inputs[kRealInputIndexInDepend], depend_nodes);
     }
-  } else if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
+  } else if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
     for (size_t i = kUpdateStateRealInput; i < real_inputs.size(); ++i) {
       FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
     }
@@ -141,13 +141,14 @@ std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return {};
   }
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState) ||
-      AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad)) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad)) {
     return {node};
   }
 
   std::vector<AnfNodePtr> results;
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     for (const auto &input : cnode->inputs()) {
@@ -183,8 +184,8 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
 
   for (const auto &control_node : control_nodes) {
     // Switch node and switch layer node will be converted to switch actor.
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
-        AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
+    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
+        common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &switch_actor =
@@ -236,7 +237,7 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
 
   for (const auto &control_node : control_nodes) {
     // Partial node and call node will be converted to gather actor.
-    if (IsValidPartialCNode(control_node) || AnfAlgo::IsCallNode(control_node)) {
+    if (IsValidPartialCNode(control_node) || common::AnfAlgo::IsCallNode(control_node)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &gather_actor =
@@ -245,7 +246,7 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
       InsertActor(gather_actor.get());
 
       // The gather actor corresponding to a call node needs to set the branch id.
-      if (AnfAlgo::IsCallNode(control_node)) {
+      if (common::AnfAlgo::IsCallNode(control_node)) {
         gather_actor->output_branch_id_ = parser->FetchBranchIDByCallNode(control_node);
       }
 
@@ -275,7 +276,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
   std::vector<EntranceActorPtr> entrance_actors;
   const auto &control_nodes = graph_compiler_info.control_nodes_;
   for (const auto &control_node : control_nodes) {
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
@@ -286,7 +287,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(const Gra
       for (const auto &parameter : func_graph->parameters()) {
         const auto &abstract = parameter->abstract();
         MS_EXCEPTION_IF_NULL(abstract);
-        size_t output_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+        size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(abstract);
         for (size_t i = 0; i < output_num; ++i) {
           (void)formal_parameters.emplace_back(parameter, i);
         }
@@ -330,7 +331,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
   // The exit actor is used in 2 places:
   // 1.funcgraph output, that is the output of the return node.
   for (const auto &control_node : control_nodes) {
-    if (AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
       const auto &func_graph = control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kExitActorNameSuffix;
@@ -449,14 +450,14 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 
     // Fetch the control actor of control node.
     std::string control_actor_name = "";
-    if (AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimReturn)) {
+    if (common::AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimReturn)) {
       const auto &func_graph = need_stack_control_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       control_actor_name = func_graph->ToString() + kExitActorNameSuffix;
-    } else if (AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimPartial) ||
-               AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimSwitch) ||
-               AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimSwitchLayer) ||
-               AnfAlgo::IsCallNode(need_stack_control_node)) {
+    } else if (common::AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimPartial) ||
+               common::AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimSwitch) ||
+               common::AnfAlgo::CheckPrimitiveType(need_stack_control_node, prim::kPrimSwitchLayer) ||
+               common::AnfAlgo::IsCallNode(need_stack_control_node)) {
       control_actor_name = GetActorName(need_stack_control_node);
     } else {
       MS_LOG(EXCEPTION) << "Invalid control node:" << need_stack_control_node->DebugString();
@@ -675,7 +676,8 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
 
     // Fetch the arrow type of input.
     if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr && from_node->isa<CNode>() &&
-        (!AnfAlgo::IsCallNode(from_node)) && (!AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) &&
+        (!common::AnfAlgo::IsCallNode(from_node)) &&
+        (!common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) &&
         to_actor->GetAID().Name().find(
           parser->FetchGroupNameByKernelGraph(parser->FetchKernelGraphByFrontNode(from_node))) != std::string::npos) {
       LinkArrowByKernel(from_node, to_actor, formal_parameter, {to_actor->node_, to_index}, graph_compiler_info);
@@ -708,12 +710,12 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
   } else if (from_node->isa<Parameter>()) {
     LinkArrowByParameter(from_node, to_actor, from_node_with_index, to_node_with_index,
                          graph_compiler_info.control_node_parser_);
-  } else if (AnfAlgo::IsCallNode(from_node)) {
+  } else if (common::AnfAlgo::IsCallNode(from_node)) {
     // Link arrow by call node.
     LinkArrowByCallNode(from_node, to_actor, from_node_with_index, to_node_with_index,
                         graph_compiler_info.control_node_parser_);
-  } else if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
-             AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
+  } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
+             common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
     // Link arrow from switch actor.
     const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
@@ -721,7 +723,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     const auto &switch_actor = dynamic_cast<SwitchActor *>(actor);
     MS_EXCEPTION_IF_NULL(switch_actor);
     LinkPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
-  } else if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
+  } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
     // Link arrow from gather actor
     const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);
@@ -1017,7 +1019,7 @@ void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const acto
     for (const auto &node : nodes) {
       // Fetch the source actor of control arrow.
       MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+      if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
         actor_name = func_graph->ToString() + kExitActorNameSuffix;
       } else {
         actor_name = GetActorName(node);
@@ -1155,7 +1157,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
     auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
 
     std::vector<AbstractActor *> from_actors;
-    if (AnfAlgo::IsCallNode(depend_node)) {
+    if (common::AnfAlgo::IsCallNode(depend_node)) {
       int branch_id = parser->FetchBranchIDByCallNode(depend_node);
       const auto &func_graphs = parser->FetchFuncGraphbyCallNode(depend_node);
       if (func_graphs.empty()) {
@@ -1296,10 +1298,10 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
     if ((!graph->is_executing_sink()) && (IsSkippedKernelActor(kernel) || !IsKernelActor(kernel))) {
       continue;
     }
-    for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
-      auto input_node = AnfAlgo::GetInputNode(kernel, i);
+    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
+      auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       MS_EXCEPTION_IF_NULL(input_node);
-      auto input_with_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+      auto input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       auto input = input_with_index.first;
       MS_EXCEPTION_IF_NULL(input);
       if (sink_input_node_linked.count(input) > 0 || HasAbstractMonad(input) || parser == nullptr ||
@@ -1315,7 +1317,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
         from_node_with_index = tuple_node_with_index;
       }
 
-      if (AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
+      if (common::AnfAlgo::CheckPrimitiveType(from_node_with_index.first, prim::kPrimTupleGetItem)) {
         MS_LOG(WARNING) << "Input node:" << from_node_with_index.first->DebugString()
                         << " for graph:" << graph->ToString() << " is a tuple get item";
         from_node_with_index = FetchRealNodeByGetItem(from_node_with_index);
@@ -1330,8 +1332,8 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       auto to_actor = FetchActor(type, "", kernel, graph);
       MS_EXCEPTION_IF_NULL(to_actor);
       size_t from_index = 0;
-      if (AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
-          AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
+      if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
+          common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
         const auto &actor_name = GetActorName(from_node);
         auto actor = FetchActor(actor_name);
         MS_EXCEPTION_IF_NULL(actor);

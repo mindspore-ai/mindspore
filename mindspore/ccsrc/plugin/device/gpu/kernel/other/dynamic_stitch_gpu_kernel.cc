@@ -31,7 +31,7 @@ DynamicStitchKernelMod::~DynamicStitchKernelMod() {}
 bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   // Inputs: (indexlist, datalist)
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   n_ = input_num / kDivNum2;
 
   auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
@@ -63,7 +63,7 @@ void DynamicStitchKernelMod::PostExecute() {
   auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node_.lock(), 0);
   output_shape[0] = max_index_ + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
-  AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   MS_LOG(DEBUG) << "Run PostExecute for dynamicstitch, real output shape is " << output_shape;
 }
 

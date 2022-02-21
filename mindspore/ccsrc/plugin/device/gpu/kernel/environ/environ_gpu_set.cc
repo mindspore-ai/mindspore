@@ -36,7 +36,7 @@ bool EnvironSetGpuKernelMod::Init(const CNodePtr &kernel_node) {
     return false;
   }
 
-  value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
+  value_type_attr_ = TypeId(common::AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
   MS_LOG(INFO) << "The EnvironSet kernel " << kernel_node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);

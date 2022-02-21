@@ -24,7 +24,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -255,7 +255,8 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   auto shape = input_tensor->shape();
   std::vector<size_t> shape_tmp;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp}, input_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+                                              input_node.get());
 }
 
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
@@ -461,7 +462,7 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
       if (!AnfAlgo::OutputAddrExist(input_node, 0, false)) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
         if (output_type_id == kTypeUnknown) {
-          output_type_id = AnfAlgo::GetOutputInferDataType(input_node, 0);
+          output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
         }
         size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
         auto device_address = device_context->CreateDeviceAddress(

@@ -65,19 +65,19 @@ class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    weight_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    pos_weight_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    weight_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    pos_weight_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "logits") ||
                      CHECK_SHAPE_NULL(weight_shape_, kernel_name_, "weight") ||
                      CHECK_SHAPE_NULL(pos_weight_shape_, kernel_name_, "pos_weight");

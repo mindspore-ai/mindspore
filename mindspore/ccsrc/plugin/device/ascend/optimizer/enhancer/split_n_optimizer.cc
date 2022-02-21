@@ -20,7 +20,8 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -92,9 +93,9 @@ bool InputCheck(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto in_nums = AnfAlgo::GetInputTensorNum(node);
+  auto in_nums = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < in_nums; i++) {
-    auto in_node = VisitSplitKernel(AnfAlgo::GetInputNode(cnode, i), 0).first;
+    auto in_node = VisitSplitKernel(common::AnfAlgo::GetInputNode(cnode, i), 0).first;
     MS_EXCEPTION_IF_NULL(in_node);
     if (in_node->isa<Parameter>() || in_node->isa<ValueNode>()) {
       MS_LOG(INFO) << "Input is a Parameter or ValueNode, can not optimizer.";
@@ -103,8 +104,8 @@ bool InputCheck(const AnfNodePtr &node) {
     if (in_node->isa<CNode>()) {
       auto in_cnode = in_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(in_cnode);
-      auto in_node_name = AnfAlgo::GetCNodeName(in_cnode);
-      auto trans_input = AnfAlgo::VisitKernel(in_node, 0).first;
+      auto in_node_name = common::AnfAlgo::GetCNodeName(in_cnode);
+      auto trans_input = common::AnfAlgo::VisitKernel(in_node, 0).first;
       MS_EXCEPTION_IF_NULL(trans_input);
       if (in_node_name == kTransDataOpName && (trans_input->isa<Parameter>() || trans_input->isa<ValueNode>())) {
         MS_LOG(INFO) << "Data->TransData->split, can not optimizer.";
@@ -113,8 +114,9 @@ bool InputCheck(const AnfNodePtr &node) {
       if (in_node_name == prim::kPrimDepend->name() || in_node_name == prim::kPrimLoad->name()) {
         return false;
       }
-      if ((AnfAlgo::HasNodeAttr("non_task", in_cnode) && AnfAlgo::GetNodeAttr<bool>(in_node, "non_task")) ||
-          opt::IsNopNode(in_cnode)) {
+      if ((common::AnfAlgo::HasNodeAttr("non_task", in_cnode) &&
+           common::AnfAlgo::GetNodeAttr<bool>(in_node, "non_task")) ||
+          common::AnfAlgo::IsNopNode(in_cnode)) {
         MS_LOG(INFO) << "Input is nop node or has non_task attr, can not optimizer.";
         return false;
       }
@@ -141,16 +143,16 @@ bool OutputCheck(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
       MS_LOG(INFO) << "Next node is not a AICore node, can not optimizer.";
       return false;
     }
-    if (func_graph->output() == item || AnfAlgo::CheckPrimitiveType(item, prim::kPrimReturn)) {
+    if (func_graph->output() == item || common::AnfAlgo::CheckPrimitiveType(item, prim::kPrimReturn)) {
       MS_LOG(INFO) << "Next node is graph output or return, can not optimizer.";
       return false;
     }
-    auto op_name = AnfAlgo ::GetCNodeName(item);
-    if (InvalidOps.find(op_name) != InvalidOps.end() || AnfAlgo::IsCommunicationOp(item)) {
+    auto op_name = common::AnfAlgo::GetCNodeName(item);
+    if (InvalidOps.find(op_name) != InvalidOps.end() || common::AnfAlgo::IsCommunicationOp(item)) {
       MS_LOG(INFO) << "Next node is " << item->fullname_with_scope() << ", not a invalid node, can not optimizer.";
       return false;
     }
-    if (!AnfAlgo::GetOutputTensorNum(item)) {
+    if (!common::AnfAlgo::GetOutputTensorNum(item)) {
       MS_LOG(INFO) << "Next node has no output, can not optimizer.";
       return false;
     }
@@ -163,17 +165,17 @@ bool NeedSkip(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   FuncGraphManagerPtr func_manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(func_manager);
   int64_t split_dim = -1;
-  auto op_name = AnfAlgo::GetCNodeName(node);
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
   if (op_name == prim::kPrimSplit->name()) {
-    split_dim = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrAxis);
+    split_dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrAxis);
   } else if (op_name == prim::kPrimSplitV->name()) {
-    split_dim = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrSplitDim);
+    split_dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrSplitDim);
   }
   if (split_dim != 0) {
     MS_LOG(INFO) << "Split_dim is not 0, can not optimizer.";
     return true;
   }
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     MS_LOG(INFO) << "Split is dynamic shape, can not optimizer.";
     return true;
   }
@@ -202,14 +204,14 @@ const AnfNodePtr SplitOpOptimizer::Process(const FuncGraphPtr &func_graph, const
   if (!AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  auto op_name = AnfAlgo::GetCNodeName(node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  auto op_name = common::AnfAlgo::GetCNodeName(node);
   if (op_name != prim::kPrimSplit->name() && op_name != prim::kPrimSplitV->name()) {
     return nullptr;
   }
 
   if (!NeedSkip(func_graph, node)) {
-    AnfAlgo::SetNodeAttr("non_task", MakeValue(true), node);
+    common::AnfAlgo::SetNodeAttr("non_task", MakeValue(true), node);
     return node;
   }
   return nullptr;

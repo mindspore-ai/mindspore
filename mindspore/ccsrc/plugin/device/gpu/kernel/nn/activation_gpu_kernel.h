@@ -52,7 +52,7 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kernel_map.find(node_name);
     if (iter == kernel_map.end()) {
       MS_LOG(EXCEPTION) << "Only support these activations: ReLU6, Tanh, Elu, Sigmoid currently, but got " << node_name;
@@ -61,7 +61,7 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
 
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << node_name << "', the number of inputs should be 1, but got " << input_num;
     }

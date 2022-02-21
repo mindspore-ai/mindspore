@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <tuple>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

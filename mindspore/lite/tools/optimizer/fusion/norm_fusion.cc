@@ -19,7 +19,7 @@
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "mindspore/core/ops/instance_norm.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"

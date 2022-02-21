@@ -27,9 +27,10 @@
 #include "debug/dump_data_builder.h"
 #endif
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/kernel.h"
 #include "debug/data_dump/e2e_dump.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "backend/common/session/session_basic.h"
 
 constexpr int kFailure = 1;
@@ -73,12 +74,12 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
                 const DeviceContext *device_context) {
   // get inputs
   auto kernel_inputs = launch_info->inputs_;
-  auto input_size = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t j = 0; j < input_size; ++j) {
     auto input_kernel = cnode->input(j + 1);
     std::string input_kernel_name = GetKernelNodeName(input_kernel);
     auto addr = kernel_inputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+    auto type = common::AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;
@@ -107,14 +108,14 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
                  uint32_t root_graph_id, const DeviceContext *device_context) {
   // get outputs
   auto kernel_outputs = launch_info->outputs_;
-  auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
-  auto node_name = AnfAlgo::GetCNodeName(cnode);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(cnode);
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
   std::vector<size_t> real_outputs = CheckRealOutput(node_name, output_size);
 
   for (size_t j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto type = common::AnfAlgo::GetOutputInferDataType(cnode, j);
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;
@@ -209,7 +210,7 @@ void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info,
   }
   if (IsDeviceTargetGPU()) {
     // check if the node is last kernel
-    bool last_kernel = !AnfAlgo::IsInplaceNode(cnode, "skip");
+    bool last_kernel = !common::AnfAlgo::IsInplaceNode(cnode, "skip");
     debugger->PostExecuteNode(cnode, last_kernel);
   }
 }

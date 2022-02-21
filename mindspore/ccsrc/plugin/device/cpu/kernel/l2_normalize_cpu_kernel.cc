@@ -29,11 +29,11 @@ constexpr size_t kL2NormalizeOutputsNum = 1;
 template <typename T>
 void L2NormalizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  epsilon_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, EPSILON));
-  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  epsilon_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, EPSILON));
+  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {

@@ -37,7 +37,7 @@ namespace {
 constexpr auto kParamDynamic = "dynamic";
 
 bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
-  auto input_node = AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
+  auto input_node = common::AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
   MS_EXCEPTION_IF_NULL(input_node);
   if (input_node->isa<Parameter>() || input_node->isa<ValueNode>()) {
     return true;
@@ -46,15 +46,15 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
 }
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    TypeId dtype = AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
+    TypeId dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     output_types->emplace_back(dtype);
   }
 }
 
 void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *output_formats) {
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -62,12 +62,12 @@ void GetOutputFormat(const CNodePtr &kernel_node, std::vector<std::string> *outp
 
 void GetInputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *input_types,
                     std::vector<size_t> *input_no_cnode_indexes) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     TypeId dtype = kTypeUnknown;
     if (IsInputNotCNode(kernel_node, input_index)) {
       input_no_cnode_indexes->emplace_back(input_index);
-      dtype = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index);
+      dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index);
     } else {
       dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
     }
@@ -76,7 +76,7 @@ void GetInputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *input_type
 }
 
 void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input_formats) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     input_formats->emplace_back(kOpFormat_DEFAULT);
   }
@@ -84,7 +84,7 @@ void GetInputFormat(const CNodePtr &kernel_node, std::vector<std::string> *input
 
 void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const KernelAttr &kernel_attr,
                                std::vector<std::string> *output_formats, std::vector<TypeId> *output_types) {
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).second);
     auto dtype = kernel_attr.GetOutputAttr(output_index).first;
@@ -147,7 +147,7 @@ int GetInputDtypeFormatMatchedNum(const KernelAttr &kernel_attr, const std::vect
 void ExpandKernelAttr(const CNodePtr &kernel_node, KernelAttr *kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_attr);
   size_t attr_num = kernel_attr->GetInputSize();
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (attr_num == 0) {
     MS_LOG(EXCEPTION) << "Input size is empty";
     return;  // To pass the CI Check_Cppcheck
@@ -166,7 +166,7 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, KernelAttr *kernel_attr) {
   kernel_attr->SetInputAttrList(attr_list);
 
   TypeId output_dtype = kernel_attr->GetOutputAttr(0).first;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t i = 1; i < output_num; ++i) {
     kernel_attr->AddOutputAttr(output_dtype);
   }
@@ -186,10 +186,10 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
 
 void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<TypeId> &input_types,
                                const std::vector<TypeId> &infer_output_types) {
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   std::stringstream operator_info;
   operator_info << "Operator[" << kernel_name << "] ";
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num > 0) {
     operator_info << " input(";
     for (size_t i = 0; i < input_num; ++i) {
@@ -200,7 +200,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
     }
     operator_info << ") ";
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num > 0) {
     operator_info << "output(";
     for (size_t i = 0; i < output_num; ++i) {
@@ -218,7 +218,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
 }
 
 void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
-  const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
+  const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   MS_LOG(INFO) << "Operator name: " << op_name;
   // Set kernel build info
   std::vector<TypeId> input_types;
@@ -240,8 +240,8 @@ void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
   for (size_t j = 0; j < output_types.size(); j++) {
     attr.AddInputAttr(output_types[j]);
   }
-  std::vector<KernelAttr> kernel_attrs =
-    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+  std::vector<KernelAttr> kernel_attrs = kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(
+    common::AnfAlgo::GetCNodeName(kernel_node));
   kernel_attrs.emplace_back(attr);
   kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
   return;
@@ -249,13 +249,14 @@ void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
 
 void AddKernelAttr(const CNodePtr &kernel_node, const KernelAttr &kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<KernelAttr> kernel_attrs =
-    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+  std::vector<KernelAttr> kernel_attrs = kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(
+    common::AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.size() == 1 && kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0) {
     kernel_attrs.clear();
   }
   kernel_attrs.emplace_back(kernel_attr);
-  kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(AnfAlgo::GetCNodeName(kernel_node), kernel_attrs);
+  kernel::NativeCpuKernelModFactory::GetInstance().UpdateKernelAttrs(common::AnfAlgo::GetCNodeName(kernel_node),
+                                                                     kernel_attrs);
 }
 
 void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
@@ -284,14 +285,14 @@ void UpdateCustomKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
   KernelAttr attr;
   if (input_types.size() != input_formats.size()) {
     MS_LOG(EXCEPTION) << "input types size " << input_types.size() << " is not equal to input formats size "
-                      << input_formats.size() << " in op: " << AnfAlgo::GetCNodeName(kernel_node);
+                      << input_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
   }
   for (size_t i = 0; i < input_types.size(); ++i) {
     attr.AddInputAttr(input_types[i], input_formats[i]);
   }
   if (output_types.size() != output_formats.size()) {
     MS_LOG(EXCEPTION) << "output types size " << output_types.size() << " is not equal to output formats size "
-                      << output_formats.size() << " in op: " << AnfAlgo::GetCNodeName(kernel_node);
+                      << output_formats.size() << " in op: " << common::AnfAlgo::GetCNodeName(kernel_node);
   }
   for (size_t i = 0; i < output_types.size(); ++i) {
     attr.AddOutputAttr(output_types[i], output_formats[i]);
@@ -374,12 +375,12 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_attr);
   MS_EXCEPTION_IF_NULL(matched);
-  MS_LOG(DEBUG) << "Select kernel for op: " << AnfAlgo::GetCNodeName(kernel_node);
+  MS_LOG(DEBUG) << "Select kernel for op: " << common::AnfAlgo::GetCNodeName(kernel_node);
   for (auto kernel_attr : kernel_attrs) {
     if (kernel_attr.GetAllSame()) {
       ExpandKernelAttr(kernel_node, &kernel_attr);
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
       MS_LOG(DEBUG) << "Output num is not equal!";
       continue;
@@ -403,10 +404,10 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
 
 void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
+  const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     if (!kernel::NativeCpuKernelModFactory::GetInstance().SearchRegisteredOp(op_name)) {
-      auto tp = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+      auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
       if (tp == kCustomTypePyfunc) {
         kernel::NativeCpuKernelRegistrar(op_name, KernelAttr(),
                                          []() { return std::make_shared<kernel::PyFuncCpuKernelMod>(); });
@@ -441,8 +442,8 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<TypeId> output_types;
   std::vector<TypeId> selected_output_types;
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << op_name;
-  auto kernel_attrs =
-    kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
+  auto kernel_attrs = kernel::NativeCpuKernelModFactory::GetInstance().GetSupportedKernelAttrList(
+    common::AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty() || (kernel_attrs[0].GetInputSize() == 0 && kernel_attrs[0].GetOutputSize() == 0)) {
     MS_LOG(DEBUG) << "Operator[" << op_name << "] will get ops attr info.";
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU);

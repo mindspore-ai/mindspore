@@ -55,22 +55,22 @@ void CholeskyCpuKernelMod<T>::InitMatrixInfo(const std::vector<size_t> &shape, s
 template <typename T>
 void CholeskyCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
   // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
-  if (AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
-    clean_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
+  if (common::AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
+    clean_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
   }
-  if (AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
-    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+  if (common::AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
+    lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   }
 }
 

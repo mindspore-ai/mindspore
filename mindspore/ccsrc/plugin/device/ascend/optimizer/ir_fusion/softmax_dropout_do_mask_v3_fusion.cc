@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/softmax_dropout_do_mask_v3_fusion.h"
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -52,12 +53,13 @@ const AnfNodePtr SoftmaxDropoutDoMaskV3Fusion::Process(const FuncGraphPtr &graph
     dropout->input(kIndex2)};
   auto softmax_dropout = NewCNode(softmax_dropout_inputs, graph);
   MS_EXCEPTION_IF_NULL(softmax_dropout);
-  auto types = {AnfAlgo::GetOutputInferDataType(softmax, 0), AnfAlgo::GetOutputInferDataType(dropout, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(softmax, 0), AnfAlgo::GetOutputInferShape(dropout, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_dropout.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(softmax, 0),
+                common::AnfAlgo::GetOutputInferDataType(dropout, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(softmax, 0), common::AnfAlgo::GetOutputInferShape(dropout, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, softmax_dropout.get());
   softmax_dropout->set_scope(softmax->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, softmax, softmax_dropout);
-  AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, softmax_dropout);
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, softmax, softmax_dropout);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepProb, dropout, softmax_dropout);
 
   // replace softmax's output
   std::vector<AnfNodePtr> softmax_dropout_outputs;

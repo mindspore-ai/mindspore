@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -31,7 +32,7 @@ CNodePtr TensorScatterUpdateFission::CreateTensorMove(const FuncGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(tensor_move);
   tensor_move->set_scope(tensor_scatter_update->scope());
   tensor_move->set_abstract(tensor_scatter_update->abstract());
-  AnfAlgo::SetNodeAttr(kAttrUseLocking, MakeValue(false), tensor_move);
+  common::AnfAlgo::SetNodeAttr(kAttrUseLocking, MakeValue(false), tensor_move);
   return tensor_move;
 }
 

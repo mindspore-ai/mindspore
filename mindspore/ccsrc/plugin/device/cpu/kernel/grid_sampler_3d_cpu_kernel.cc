@@ -46,9 +46,9 @@ void GridSampler3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   stride_compute(x_stride_, x_shape_);
   stride_compute(grid_stride_, grid_shape_);
   stride_compute(output_stride_, output_shape_);
-  interpolation_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
-  padding_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
-  align_corners = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  interpolation_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
+  padding_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");
+  align_corners = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
 }
 
 bool GridSampler3DCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

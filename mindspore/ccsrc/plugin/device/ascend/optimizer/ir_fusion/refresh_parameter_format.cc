@@ -16,7 +16,8 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/refresh_parameter_format.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -24,9 +25,9 @@ namespace mindspore {
 namespace opt {
 void DoRefresh(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
-    auto input_kernel_node = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(cnode, input_index), 0).first;
+    auto input_kernel_node = common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(cnode, input_index), 0).first;
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     if (input_kernel_node->isa<Parameter>()) {
       std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
@@ -58,7 +59,7 @@ bool RefreshParameterFormat::Run(const FuncGraphPtr &func_graph) {
     if (cnode == nullptr) {
       continue;
     }
-    auto node_name = AnfAlgo::GetCNodeName(cnode);
+    auto node_name = common::AnfAlgo::GetCNodeName(cnode);
     if (node_name == kBNTrainingUpdateOpName) {
       DoRefresh(cnode);
     }

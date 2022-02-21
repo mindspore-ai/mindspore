@@ -30,11 +30,11 @@ constexpr size_t kDropoutOutputsNum = 2;
 
 void DropoutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  mask_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-  keep_prob_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  mask_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' should be in (0.0, 1.0], but got " << keep_prob_;
   }

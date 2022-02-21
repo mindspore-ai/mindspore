@@ -19,12 +19,13 @@
 #include <vector>
 #include <memory>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -61,10 +62,10 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolWithArgmax(const FuncGraphPtr &
 
   // MaxPoolWithArgmax's second output is argmax, whose datatype is uint16 and with same shape as first output
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto types = {AnfAlgo::GetOutputInferDataType(maxpool, 0), argmax_dtype};
-  auto out_shape = AnfAlgo::GetOutputInferShape(maxpool, 0);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool, 0), argmax_dtype};
+  auto out_shape = common::AnfAlgo::GetOutputInferShape(maxpool, 0);
   auto shapes = {out_shape, out_shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_argmax.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_argmax.get());
   return maxpool_argmax;
 }
 
@@ -92,8 +93,8 @@ CNodePtr MaxPool2MaxPoolWithArgmax::CreateMaxPoolGradWithArgmax(
 void MaxPool2MaxPoolWithArgmax::SetNodeAttrs(const CNodePtr &maxpool, const CNodePtr &maxpool_grad,
                                              const CNodePtr &maxpool_argmax,
                                              const CNodePtr &maxpool_grad_argmax) const {
-  auto strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrStrides);
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrKernelSize);
+  auto strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrStrides);
+  auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrKernelSize);
   if (strides.size() != kMaxPoolAttrAxisNum) {
     MS_LOG(EXCEPTION) << "MaxPool's attr strides has wrong axis number, should be " << kMaxPoolAttrAxisNum
                       << ", but got " << strides.size() << trace::DumpSourceLines(maxpool);
@@ -111,12 +112,12 @@ void MaxPool2MaxPoolWithArgmax::SetNodeAttrs(const CNodePtr &maxpool, const CNod
   ksize[kIndex2] = ksize[kIndex3];
   ksize[kIndex3] = 1;
 
-  AnfAlgo::CopyNodeAttrs(maxpool, maxpool_argmax);
-  AnfAlgo::CopyNodeAttrs(maxpool_grad, maxpool_grad_argmax);
-  AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_argmax);
-  AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_grad_argmax);
-  AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_argmax);
-  AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_grad_argmax);
+  common::AnfAlgo::CopyNodeAttrs(maxpool, maxpool_argmax);
+  common::AnfAlgo::CopyNodeAttrs(maxpool_grad, maxpool_grad_argmax);
+  common::AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_argmax);
+  common::AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_grad_argmax);
+  common::AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_argmax);
+  common::AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_grad_argmax);
 }
 
 const BaseRef MaxPool2MaxPoolWithArgmax::DefinePattern() const {

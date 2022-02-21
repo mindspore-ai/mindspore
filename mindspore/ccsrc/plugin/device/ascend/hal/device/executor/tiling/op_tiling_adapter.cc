@@ -19,8 +19,9 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "external/graph/tensor.h"
 #include "external/register/op_tiling_registry.h"
 #include "graph/utils/graph_utils.h"
@@ -81,14 +82,14 @@ std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t 
 void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_size; i++) {
     // ms info
     auto real_index = AnfAlgo::GetRealInputIndex(node, i);
-    auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(node, real_index);
+    auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(node, real_index);
     auto input_node = input_node_with_idx.first;
     auto input_index = input_node_with_idx.second;
-    auto ms_ori_shape = AnfAlgo::GetOutputInferShape(input_node, input_index);
+    auto ms_ori_shape = common::AnfAlgo::GetOutputInferShape(input_node, input_index);
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
     auto ms_format = AnfAlgo::GetOutputFormat(input_node, input_index);
     auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
@@ -117,10 +118,10 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge
 void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
-  auto output_size = AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_size; i++) {
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(node, i);
-    auto ms_ori_shape = AnfAlgo::GetOutputInferShape(node, i);
+    auto ms_ori_shape = common::AnfAlgo::GetOutputInferShape(node, i);
     auto ms_format = AnfAlgo::GetOutputFormat(node, i);
     auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(node, i);
 
@@ -160,7 +161,7 @@ ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const 
   MS_EXCEPTION_IF_NULL(tensor_data);
   ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(name, CONSTANTOP);
   auto ms_format = AnfAlgo::GetPrevNodeOutputFormat(node, index);
-  auto ms_ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, index);
+  auto ms_ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   auto ms_dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(node, index);
   auto ms_shape = AnfAlgo::GetInputDeviceShape(node, index);
 
@@ -197,12 +198,12 @@ std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::Conv
     MS_LOG(INFO) << "The node " << op_name_ << " has no infer depend ";
     return {};
   }
-  auto has_input_name_attr = AnfAlgo::HasNodeAttr("input_names", node);
+  auto has_input_name_attr = common::AnfAlgo::HasNodeAttr("input_names", node);
   if (!has_input_name_attr) {
     MS_LOG(EXCEPTION) << "Node should has attr: input_names. " << node->fullname_with_scope();
   }
 
-  auto input_names_attr = AnfAlgo ::GetNodeAttr<std::vector<std::string>>(node, "input_names");
+  auto input_names_attr = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(node, "input_names");
   std::vector<std::string> op_infer_depends;
   std::vector<std::tuple<std::size_t, ge::NodePtr>> constant_ops;
   for (auto index : depends_list_me) {
@@ -242,7 +243,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_LOG(INFO) << "Get the every input name of " << op_name_;
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name_, node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
-  auto primitive = AnfAlgo::GetCNodePrimitive(node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto inputs_ptr = op_info_ptr->inputs_ptr();
   size_t dynamic_input_index = 0;
@@ -279,7 +280,7 @@ ge::Operator OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
   const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
   const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
-  op_name_ = AnfAlgo::GetCNodeName(node);
+  op_name_ = common::AnfAlgo::GetCNodeName(node);
   MS_LOG(INFO) << "Convert anf node :" << op_name_ << " to ge node.";
   op_compile_info_ = op_compile_info;
   auto op_type = GetRealOpType(op_name_);

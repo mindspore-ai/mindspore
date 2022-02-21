@@ -33,10 +33,10 @@ void MatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputSize, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputSize, kernel_name_);
 }
 
@@ -69,7 +69,7 @@ void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<Ad
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output);
   // Check if it's a square array
-  auto dims = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto dims = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   if (dims.size() < kNumber2) {
     MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
   }

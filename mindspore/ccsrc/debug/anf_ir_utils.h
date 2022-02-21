@@ -29,13 +29,13 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/meta_func_graph.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/composite/composite.h"
 #include "utils/symbolic.h"
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 

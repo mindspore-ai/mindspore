@@ -30,8 +30,8 @@ constexpr size_t kSearchSortedOutputsNum = 1;
 template <typename S, typename T>
 void SearchSortedCpuKernelMod<S, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  right_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "right");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  right_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "right");
   sequence_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   search_len = sequence_shape_.back();

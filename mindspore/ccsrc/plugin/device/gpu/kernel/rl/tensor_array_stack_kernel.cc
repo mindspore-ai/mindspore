@@ -67,7 +67,7 @@ void TensorArrayStackKernelMod::PostExecute() {
   auto shape = shapes_;
   shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
-  AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
 }
 
 void TensorArrayStackKernelMod::ResetResource() noexcept {

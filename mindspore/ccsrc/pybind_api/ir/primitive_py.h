@@ -25,7 +25,6 @@
 
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "ir/primitive.h"
 #include "ir/signature.h"
 #include "pybind11/pybind11.h"

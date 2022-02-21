@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -24,13 +25,13 @@ namespace opt {
 namespace {
 void SetAttrForSplitVNode(const AnfNodePtr &splitv, const std::vector<int64_t> &size_splits, int64_t split_dim,
                           int64_t num_split) {
-  AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(size_splits), splitv);
-  AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue(split_dim), splitv);
-  AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(num_split), splitv);
+  common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(size_splits), splitv);
+  common::AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue(split_dim), splitv);
+  common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(num_split), splitv);
 }
 
 size_t GetSmallSplitSize(const AnfNodePtr &split_node, int64_t split_dim, int64_t num_split) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(split_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(split_node, 0);
   if (split_dim < 0) {
     split_dim += SizeToLong(input_shape.size());
   }
@@ -68,12 +69,12 @@ void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
                                 std::vector<std::vector<size_t>> *new_output_shapes) {
   MS_EXCEPTION_IF_NULL(new_type_ids);
   MS_EXCEPTION_IF_NULL(new_output_shapes);
-  auto output_shape = AnfAlgo::GetOutputInferShape(origin_cnode, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(origin_cnode, 0);
   if (split_dim < 0) {
     split_dim += SizeToLong(output_shape.size());
   }
   output_shape[LongToSize(split_dim)] = LongToSize(split_size);
-  TypeId type_id = AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
+  TypeId type_id = common::AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
   for (int64_t i = 0; i < num_split; ++i) {
     new_type_ids->emplace_back(type_id);
     new_output_shapes->emplace_back(output_shape);
@@ -85,8 +86,8 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
                                      const std::vector<int64_t> &size_splits_base, int64_t split_dim,
                                      int64_t num_split) {
   SetAttrForSplitVNode(base_splitv, size_splits_base, split_dim, num_split);
-  auto output_shape = AnfAlgo::GetOutputInferShape(origin_cnode, 0);
-  TypeId type_id = AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(origin_cnode, 0);
+  TypeId type_id = common::AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
   std::vector<TypeId> base_type_ids(num_split, type_id);
   std::vector<std::vector<size_t>> base_output_shapes_base;
   if (split_dim < 0) {
@@ -100,9 +101,9 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
   for (size_t i = 0; i < num_split_l; ++i) {
     output_shape[split_dim_l] = LongToSize(size_splits_base[i]);
     base_output_shapes_base.emplace_back(output_shape);
-    AnfAlgo::SetOutputInferTypeAndShape({type_id}, {output_shape}, base_splitv_outputs[i].get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({type_id}, {output_shape}, base_splitv_outputs[i].get());
   }
-  AnfAlgo::SetOutputInferTypeAndShape(base_type_ids, base_output_shapes_base, base_splitv.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(base_type_ids, base_output_shapes_base, base_splitv.get());
 }
 }  // namespace
 
@@ -148,7 +149,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
     base_splitv_outputs.push_back(tuple_getitem);
     CNodePtr new_splitv = CreateSplitVNode(func_graph, tuple_getitem);
     SetAttrForSplitVNode(new_splitv, size_splits_new, split_dim, divisor);
-    AnfAlgo::SetOutputInferTypeAndShape(new_type_ids, new_output_shapes, new_splitv.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(new_type_ids, new_output_shapes, new_splitv.get());
     AddNewOutputs(func_graph, new_splitv, divisor, &make_tuple_inputs);
     cur_output_index += divisor;
     size_splits_base.emplace_back(base_split_size);
@@ -167,7 +168,7 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
       std::vector<std::vector<size_t>> last_new_output_shapes;
       CreateOutputShapeAndTypeId(cnode, split_dim, small_split_size, last_node_num_split, &last_new_type_ids,
                                  &last_new_output_shapes);
-      AnfAlgo::SetOutputInferTypeAndShape(last_new_type_ids, last_new_output_shapes, new_splitv.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape(last_new_type_ids, last_new_output_shapes, new_splitv.get());
       AddNewOutputs(func_graph, new_splitv, last_node_num_split, &make_tuple_inputs);
       size_splits_base.emplace_back(last_node_num_split * small_split_size);
     } else {
@@ -192,20 +193,21 @@ const BaseRef SplitFission::DefinePattern() const {
 
 const AnfNodePtr SplitFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Check output num
-  if (!AnfAlgo::HasNodeAttr(kAttrOutputNum, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrOutputNum, cnode)) {
     return nullptr;
   }
-  auto num_split = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrOutputNum);
+  auto num_split = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrOutputNum);
   if (num_split <= outputs_divisor_) {
     return nullptr;
   }
-  return DoFission(func_graph, cnode, num_split, outputs_divisor_, AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrAxis));
+  return DoFission(func_graph, cnode, num_split, outputs_divisor_,
+                   common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrAxis));
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -41,7 +41,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const 
 
 void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> label_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (label_shape.size() > 1) {
@@ -57,7 +57,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr 
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }
-  is_grad_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, IS_GRAD);
+  is_grad_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, IS_GRAD);
   auto mem_desc = CreateDesc<dnnl::memory::desc>(mem_dims, dnnl::memory::data_type::f32, dnnl::memory::format_tag::nc);
 
   auto desc = CreateDesc<dnnl::softmax_forward::desc>(dnnl::prop_kind::forward_training, mem_desc, 1);

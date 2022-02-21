@@ -39,9 +39,9 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be not null, but got empty value.";
   }
   if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
-    *axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
+    *axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
   } else if (axis_addr->isa<Int64Imm>()) {
-    (void)axis->emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+    (void)axis->emplace_back(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name
                       << "', the type of 'axis' should be tuple, list, or int, but got invalid type.";
@@ -51,10 +51,10 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
 template <typename T>
 void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   axis_.clear();
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
   size_t dimension = input_shape_.size();
@@ -64,7 +64,7 @@ void ReduceCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   // Delete the duplicate axis.
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
 
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == prim::kPrimReduceAll->name()) {

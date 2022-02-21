@@ -17,7 +17,7 @@
 #include "include/api/context.h"
 #include "cxx_api/model/model_impl.h"
 #include "cxx_api/factory.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 Status Model::Build(GraphCell graph_cell, const std::shared_ptr<Context> &model_context,

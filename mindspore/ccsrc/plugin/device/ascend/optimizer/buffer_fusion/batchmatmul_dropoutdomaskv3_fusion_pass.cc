@@ -17,6 +17,7 @@
 #include "kernel/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -29,7 +30,7 @@ void BatchMatmulDropoutDoMaskV3FusionPass::MatchBatchMatmulDropoutDoMaskV3(
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto batch_matmul = cnode->input(1);
   MS_EXCEPTION_IF_NULL(batch_matmul);
-  if (batch_matmul->isa<CNode>() && AnfAlgo::CheckPrimitiveType(batch_matmul, prim::kPrimBatchMatMul)) {
+  if (batch_matmul->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(batch_matmul, prim::kPrimBatchMatMul)) {
     mindspore::HashSet<AnfNodePtr> record{cnode, batch_matmul};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -42,13 +43,13 @@ void BatchMatmulDropoutDoMaskV3FusionPass::MatchSingleFusionPattern(const sessio
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    if (AnfAlgo::GetCNodeName(cnode) == kDropoutDoMaskV3OpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutDoMaskV3OpName) {
       MatchBatchMatmulDropoutDoMaskV3(cnode, kernel_graph, candidate_fusion);
     }
   }

@@ -41,12 +41,12 @@ class BondForceCudaGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     bond_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "bond_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
-    auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_atom_a = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_b = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_bond_k = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_bond_r0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_atom_a = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_atom_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_bond_k = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_bond_r0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
 
     for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
     for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];

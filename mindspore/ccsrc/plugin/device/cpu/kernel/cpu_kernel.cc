@@ -43,7 +43,7 @@ void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_size_list_.clear();
   output_size_list_.clear();
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
@@ -53,7 +53,7 @@ void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
     tensor_size = std::max(tensor_size, type_size);
     (void)input_size_list_.emplace_back(tensor_size);
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
     size_t type_size = GetTypeByte(TypeIdToType(type_id));

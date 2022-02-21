@@ -19,7 +19,7 @@
 #include <functional>
 #include <algorithm>
 #include <unordered_map>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
 
@@ -44,24 +44,24 @@ int NormalizePos(int pos, int dim_len, PosType pos_type) {
 
 void StridedSliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'input_x' should be in range [1D, 8D], but got " << input_shape_.size()
                       << "D.";
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 1) {
     return;
   }
   // for begin, end, stride are const input
-  auto begin = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-  auto end = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-  auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+  auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
+  auto end = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
+  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
   InitSliceParam(kernel_node, &begin, &end, &stride);
 
   parallel_ = MatchParallelPattern();
@@ -210,12 +210,12 @@ bool StridedSliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
   auto output_addr = reinterpret_cast<uint8_t *>(outputs[0]->addr);
 
   auto cnode = cnode_ptr_.lock();
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num == kStridedSliceDynamicInputsNum) {
     // for begin, end, stride are not const input
-    auto begin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
-    auto end_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
-    auto stride_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
+    auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
+    auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimension of 'begin', 'end', 'strides' should be equal "

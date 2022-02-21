@@ -25,6 +25,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/any.h"
 #include "profiler/device/cpu/cpu_profiling.h"
 namespace mindspore {

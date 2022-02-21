@@ -19,7 +19,7 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "backend/common/session/single_kernel_graph.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore::device::ascend {
 void AscendLaunchMul::FreeDeviceMem(void *addr) { AscendLaunchKernel::FreeDeviceMem(addr); }

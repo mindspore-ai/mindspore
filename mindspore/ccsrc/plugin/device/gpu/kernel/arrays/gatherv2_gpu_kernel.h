@@ -23,6 +23,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -60,10 +61,10 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == 3) {
       is_dynamic_shape_ = true;
       MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Dynamic Mode.";
@@ -109,14 +110,14 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
-    size_t size = AnfAlgo::TensorSizeInByte<T>(input_shapes_);
+    size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
     input_size_list_.push_back(size);
-    size = AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
+    size = common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
     input_size_list_.push_back(size);
     if (is_dynamic_shape_) {
       input_size_list_.push_back(sizeof(int64_t));
     }
-    size = AnfAlgo::TensorSizeInByte<T>(output_shapes_);
+    size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
     output_size_list_.push_back(size);
   }
 

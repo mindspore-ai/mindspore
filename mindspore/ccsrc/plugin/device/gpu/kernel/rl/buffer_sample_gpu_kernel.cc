@@ -38,7 +38,7 @@ BufferSampleKernelMod::~BufferSampleKernelMod() {
 void BufferSampleKernelMod::ReleaseResource() {}
 
 bool BufferSampleKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
   auto shapes = GetAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
   auto types = GetAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");

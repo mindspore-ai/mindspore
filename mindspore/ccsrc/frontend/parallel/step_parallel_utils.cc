@@ -31,7 +31,7 @@
 #include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -42,7 +42,7 @@
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
@@ -466,7 +466,7 @@ TypePtr FindChildCastWithFP32ToFP16(const CNodePtr &cnode_ptr, const NodeUsersMa
 // Return the new cast node with pre_node as the inputs.
 AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, const TypePtr &compute_node_type) {
   const char kOpsFunctionModelName[] = "mindspore.ops.functional";
-  static py::object cast_prim = parse::python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+  static py::object cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(cast_prim);
   MS_EXCEPTION_IF_NULL(adapter);
   MS_EXCEPTION_IF_NULL(compute_node_type);

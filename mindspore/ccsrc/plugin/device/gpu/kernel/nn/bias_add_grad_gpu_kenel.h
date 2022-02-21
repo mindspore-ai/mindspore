@@ -84,9 +84,9 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

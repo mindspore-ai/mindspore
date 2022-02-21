@@ -83,12 +83,12 @@ void SparseApplyLazyAdamCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel
 
 void SparseApplyLazyAdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> m_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> v_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
-  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> m_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  std::vector<size_t> v_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
+  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'var' should be at least 1-D, but got scalar or None.";
@@ -130,8 +130,8 @@ void SparseApplyLazyAdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          "the first dimension value of 'indices', but got the first dimension value of 'grad': "
                       << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
   }
-  if (AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
+  if (common::AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
+    use_nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
   }
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 10);
 }

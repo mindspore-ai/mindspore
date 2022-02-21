@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/matmul_confusiontranspose_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -29,8 +30,8 @@ void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNode
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto matmul = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul);
-  if (matmul->isa<CNode>() && (AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul) ||
-                               AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimBatchMatMul))) {
+  if (matmul->isa<CNode>() && (common::AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul) ||
+                               common::AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimBatchMatMul))) {
     mindspore::HashSet<AnfNodePtr> record{cnode, matmul};
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -43,13 +44,13 @@ void MatmulConfusionTranposeFusionPass::MatchSingleFusionPattern(const session::
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    if (AnfAlgo::GetCNodeName(cnode) == kConfusionTransposeDOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kConfusionTransposeDOpName) {
       MatchMatmulConfusionTranpose(cnode, kernel_graph, candidate_fusion);
     }
   }

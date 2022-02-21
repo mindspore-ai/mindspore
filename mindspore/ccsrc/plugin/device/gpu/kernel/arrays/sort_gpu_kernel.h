@@ -113,13 +113,13 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
     }
 
-    size_t output_count = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_count;
     }

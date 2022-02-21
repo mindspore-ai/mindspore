@@ -17,6 +17,7 @@
 #include "debug/data_dump/cpu_e2e_dump.h"
 #include <map>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/common.h"
 
@@ -84,9 +85,9 @@ void CPUE2eDump::DumpCNodeOutputs(const CNodePtr &node, const std::string &dump_
 void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_path, std::string *kernel_name) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t j = 0; j < input_size; ++j) {
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, j);
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, j);
     auto input = kernel_with_index.first;
     auto index = kernel_with_index.second;
     if (!AnfAlgo::OutputAddrExist(input, index)) {
@@ -95,8 +96,8 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     auto addr = AnfAlgo::GetOutputAddr(input, index);
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
-    auto type = AnfAlgo::GetOutputInferDataType(input, index);
-    std::string op_type = AnfAlgo::GetCNodeName(node);
+    auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
+    std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = GetTimeStamp();
     const uint32_t kTaskId = 0;
@@ -111,7 +112,7 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
 void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_path, std::string *kernel_name) {
   MS_EXCEPTION_IF_NULL(node);
   GetFileKernelName(NOT_NULL(kernel_name));
-  auto output_size = AnfAlgo::GetOutputTensorNum(node);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
     if (!AnfAlgo::OutputAddrExist(node, j)) {
       continue;
@@ -120,8 +121,8 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     MS_EXCEPTION_IF_NULL(addr);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
-    auto type = AnfAlgo::GetOutputInferDataType(node, j);
-    std::string op_type = AnfAlgo::GetCNodeName(node);
+    auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
+    std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     const uint32_t kTaskId = 0;
     const uint32_t kStreamId = 0;
@@ -167,7 +168,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   }
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes));
-  auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
+  auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
   uint64_t timestamp = GetTimeStamp();
   const uint32_t kTaskId = 0;

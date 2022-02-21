@@ -21,7 +21,7 @@
 
 #include "pybind11/pybind11.h"
 
-#include "utils/scoped_long_running.h"
+#include "include/common/utils/scoped_long_running.h"
 
 namespace py = pybind11;
 

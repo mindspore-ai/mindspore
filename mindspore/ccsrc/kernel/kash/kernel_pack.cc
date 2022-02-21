@@ -20,7 +20,7 @@
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/system/sha256.h"
 #include "kernel/common_utils.h"
 namespace mindspore {

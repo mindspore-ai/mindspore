@@ -36,7 +36,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #endif
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #ifndef ENABLE_SECURITY
 #include "profiler/device/ascend/memory_profiling.h"
 
@@ -409,7 +409,7 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph *graph) {
 
     // Node
     NodeType type = kCommonNode;
-    if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       type = kCommunicationNode;
     }
     auto node = std::make_shared<SomasNode>(node_index, type, stream);
@@ -500,7 +500,7 @@ void Somas::InitSomasInputTensors(const session::KernelGraph *graph) {
   static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
   auto kernel_cnodes = graph->execution_order();
   for (const auto &kernel : kernel_cnodes) {
-    if (AnfAlgo::GetCNodeName(kernel) != kAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) != kAtomicAddrCleanOpName) {
       InitCommonNodeInputs(is_all_nop_node, kernel);
     } else {
       InitAtomicCleanInputs(enable_fusion_clear, kernel);
@@ -516,24 +516,24 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(stream);
 
   // Input Tensor
-  auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
   size_t real_input_index = 0;
   for (size_t i = 0; i < input_tensor_num; i++) {
     auto input_node = kernel->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
     session::KernelWithIndex prenode_index;
     if (is_all_nop_node) {
-      prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+      prenode_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
     } else {
-      prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+      prenode_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
     }
-    if (AnfAlgo::CheckPrimitiveType(prenode_index.first, prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(prenode_index.first, prim::kPrimMakeTuple)) {
       MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
     }
     MS_EXCEPTION_IF_NULL(prenode_index.first);
     if (!AnfUtils::IsRealCNodeKernel(prenode_index.first)) {
-      auto op_name = AnfAlgo::GetCNodeName(kernel);
-      TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel, i);
+      auto op_name = common::AnfAlgo::GetCNodeName(kernel);
+      TypeId input_origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel, i);
       if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
         continue;
       }
@@ -588,7 +588,7 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
   auto stream = node->GetStream();
   MS_EXCEPTION_IF_NULL(stream);
 
-  auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_tensor_num; i++) {
     MS_EXCEPTION_IF_NULL(kernel->inputs()[i + 1]);
     auto pre_node = kernel->input(i + 1)->cast<CNodePtr>();
@@ -600,8 +600,8 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
     auto pre_somas_node = iter->second.at(0);
     MS_EXCEPTION_IF_NULL(pre_somas_node);
     // set clean output tensors
-    if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-      auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+    if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+      auto clean_output_indexs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
       for (auto index : clean_output_indexs) {
         if (index > pre_somas_node->output_tensors_.size()) {
           MS_LOG(EXCEPTION) << "Output index " << index << " exceed input node [" << pre_node->fullname_with_scope()
@@ -618,8 +618,9 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
       }
     }
     // set clean workspace tensors
-    if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-      auto clean_workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+      auto clean_workspace_indexs =
+        common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
       for (const auto &index : clean_workspace_indexs) {
         if (index > pre_somas_node->output_tensors_.size()) {
           MS_LOG(EXCEPTION) << "Workspace index " << index << " exceed input node [" << pre_node->fullname_with_scope()
@@ -645,7 +646,7 @@ void Somas::InitSomasEventInfos() {
   send_recv_map = device::ascend::AscendStreamAssign::GetInstance().get_event_map();
 #endif
   for (auto &send_recv : send_recv_map) {
-    size_t event_id = AnfAlgo::GetNodeAttr<uint32_t>(send_recv.first, kAttrEventId);
+    size_t event_id = common::AnfAlgo::GetNodeAttr<uint32_t>(send_recv.first, kAttrEventId);
     event_map_[event_id] = std::make_pair(send_recv.first, send_recv.second);
   }
 
@@ -748,7 +749,7 @@ void Somas::GetNextOutputProcess(const session::KernelGraph *graph) {
   auto kernel_cnodes = graph->execution_order();
   size_t total_size = 0;
   for (const auto &kernel : kernel_cnodes) {
-    if (AnfAlgo::GetCNodeName(kernel) != kGetNextOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) != kGetNextOpName) {
       continue;
     }
     auto iter = nodes_map_.find(kernel.get());
@@ -809,7 +810,7 @@ void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
   for (auto &node_item : summary_nodes) {
     auto origin_node = node_item.second.first;
     size_t origin_index = IntToSize(node_item.second.second);
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(origin_node, origin_index, true);
+    auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(origin_node, origin_index, true);
     auto node = item_with_index.first;
     size_t index = item_with_index.second;
     auto iter = nodes_map_.find(node.get());
@@ -895,8 +896,8 @@ void Somas::NonTaskSplitProcess(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_cnodes = graph->execution_order();
   for (const auto &kernel : kernel_cnodes) {
-    auto op_name = AnfAlgo::GetCNodeName(kernel);
-    if (AnfAlgo::IsNonTaskOp(kernel)) {
+    auto op_name = common::AnfAlgo::GetCNodeName(kernel);
+    if (common::AnfAlgo::IsNonTaskOp(kernel)) {
       std::vector<size_t> refnode_input_output;
       auto node = nodes_map_[kernel.get()].at(0);
       MS_EXCEPTION_IF_NULL(node);
@@ -1815,7 +1816,7 @@ uint8_t *Somas::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {
     auto output_tensor = somas_node->output_tensors_[index];
     ptr = mem_base_addr_ + output_tensor->offset_;
   } else {
-    MS_LOG(EXCEPTION) << "node [" << AnfAlgo::GetCNodeName(node) << "] don't exist in nodes_map";
+    MS_LOG(EXCEPTION) << "node [" << common::AnfAlgo::GetCNodeName(node) << "] don't exist in nodes_map";
   }
   return ptr;
 }

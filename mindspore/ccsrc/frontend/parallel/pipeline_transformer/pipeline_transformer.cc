@@ -26,7 +26,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
 #include "frontend/parallel/parameter_manager.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/graph_util/node_info.h"
@@ -35,7 +35,7 @@
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "base/core_ops.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 
@@ -57,7 +57,7 @@ static bool IsInWhiteList(const CNodePtr &cnode) {
 }
 
 void PipelineTransformer::MainGraph() {
-  if (!root_->has_flag(TRAINING)) {
+  if (!root_->has_flag(kTraining)) {
     main_graph_ = root_;
     return;
   }
@@ -147,7 +147,7 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph, const C
 }
 
 void PipelineTransformer::LabelMicroBatch() {
-  if (!root_->has_flag(TRAINING)) {
+  if (!root_->has_flag(kTraining)) {
     return;
   }
   MS_EXCEPTION_IF_NULL(main_graph_);
@@ -194,7 +194,7 @@ void PipelineTransformer::Coloring() {
   while (need_coloring) {
     need_coloring = false;
     for (auto &fg : manager_->func_graphs()) {
-      if (fg == root_ && root_->has_flag(TRAINING)) {
+      if (fg == root_ && root_->has_flag(kTraining)) {
         continue;
       }
       auto value_nodes = fg->value_nodes();
@@ -869,7 +869,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
   auto stage_num = g_device_manager->stage_num();
-  if (root_->has_flag(TRAINING) && (stage_num > micro_size_)) {
+  if (root_->has_flag(kTraining) && (stage_num > micro_size_)) {
     MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
   }
   for (auto &node : all_nodes) {
@@ -896,7 +896,7 @@ void PipelineTransformer::CutGraph() {
   if (IsLastStage()) {
     return;
   }
-  if (send_ops.empty() && !root_->has_flag(TRAINING)) {
+  if (send_ops.empty() && !root_->has_flag(kTraining)) {
     return;
   }
   (void)make_tuple_inputs.insert(make_tuple_inputs.end(), send_ops.begin(), send_ops.end());

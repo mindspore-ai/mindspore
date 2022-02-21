@@ -31,7 +31,7 @@
 #include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
@@ -41,7 +41,7 @@
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
@@ -380,7 +380,7 @@ static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node
 
 void HandleFullySplitParameters(const FuncGraphPtr &root) {
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  if ((grad_accumulation_step <= 1) || root->has_flag(ACCUMULATION)) {
+  if ((grad_accumulation_step <= 1) || root->has_flag(kAccumulation)) {
     return;
   }
 

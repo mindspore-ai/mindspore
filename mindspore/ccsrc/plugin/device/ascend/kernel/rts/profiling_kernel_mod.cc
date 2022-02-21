@@ -19,6 +19,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/executor/rts/profiling_rts_dynamic_kernel.h"
 
 using ProfilerTraceTaskInfo = mindspore::ge::model_runner::ProfilerTraceTaskInfo;
@@ -29,7 +30,7 @@ namespace mindspore {
 namespace kernel {
 bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "[profiling] init profiling kernel mod";
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
 
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr notify_ptr = primitive->GetAttr(ProfilingUtils::kNotify);

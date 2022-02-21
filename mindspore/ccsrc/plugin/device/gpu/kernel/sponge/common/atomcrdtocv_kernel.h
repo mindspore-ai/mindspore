@@ -42,9 +42,9 @@ class AtomCrdToCVGpuKernelMod : public NativeGpuKernelMod {
     end_serial = static_cast<int>(GetAttr<int64_t>(kernel_node, "end_serial"));
     number = static_cast<int>(GetAttr<int64_t>(kernel_node, "number"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_old_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_box = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_old_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_box = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
     for (size_t i = 0; i < shape_old_crd.size(); i++) ele_old_crd *= shape_old_crd[i];

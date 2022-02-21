@@ -38,11 +38,11 @@ void CopyGraphOutputTypeAndShape(const std::vector<session::KernelWithIndex> &gr
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
   for (const auto &item : graph_outputs) {
-    types.push_back(AnfAlgo::GetOutputInferDataType(item.first, item.second));
-    shapes.push_back(AnfAlgo::GetOutputInferShape(item.first, item.second));
+    types.push_back(common::AnfAlgo::GetOutputInferDataType(item.first, item.second));
+    shapes.push_back(common::AnfAlgo::GetOutputInferShape(item.first, item.second));
   }
 
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, trt_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, trt_node.get());
   return;
 }
 
@@ -84,9 +84,9 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
     MS_EXCEPTION_IF_NULL(tuple_getitem_cnode);
 
     // Set tuple_getitem_cnode abstract.
-    std::vector<TypeId> types = {AnfAlgo::GetOutputInferDataType(trt_node, trt_index)};
-    std::vector<std::vector<size_t>> shapes = {AnfAlgo::GetOutputInferShape(trt_node, trt_index)};
-    AnfAlgo::SetOutputInferTypeAndShape(types, shapes, tuple_getitem_cnode.get());
+    std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(trt_node, trt_index)};
+    std::vector<std::vector<size_t>> shapes = {common::AnfAlgo::GetOutputInferShape(trt_node, trt_index)};
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, tuple_getitem_cnode.get());
 
     // Build make tuple inputs.
     make_tuple_inputs.push_back(tuple_getitem_cnode);
@@ -96,7 +96,7 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
 
   const CNodePtr &make_tuple_cnode = root->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple_cnode);
-  AnfAlgo::SetOutputInferTypeAndShape(make_tuple_types, make_tuple_shapes, make_tuple_cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(make_tuple_types, make_tuple_shapes, make_tuple_cnode.get());
 
   return make_tuple_cnode;
 }
@@ -172,7 +172,7 @@ void GraphConverter::RemoveParameterWithoutUser(const FuncGraphPtr &graph) {
     const auto &input = inputs[i];
 
     // Keep inputs of graph.
-    if (!input->isa<Parameter>() || !AnfAlgo::IsParameterWeight(input->cast<ParameterPtr>())) {
+    if (!input->isa<Parameter>() || !common::AnfAlgo::IsParameterWeight(input->cast<ParameterPtr>())) {
       graph_inputs.push_back(input);
       continue;
     }
@@ -210,7 +210,7 @@ bool GraphConverter::ReplaceSubgraphWithTrtNode(const FuncGraphPtr &root, const 
   auto manager = root->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (outputs.size() == 1) {
-    if (AnfAlgo::CheckPrimitiveType(outputs[0], prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(outputs[0], prim::kPrimMakeTuple)) {
       const CNodePtr &make_tuple_cnode = BuildMakeTupleNode(root, anf_trt_index_map, trt_node);
       manager->Replace(outputs[0], make_tuple_cnode);
     } else {

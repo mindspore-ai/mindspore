@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore::graphkernel {
 std::string CommonDimInfo::ToString() {
@@ -37,7 +37,7 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) const {
   }
 
   auto json_desc_str = json_desc.dump();
-  auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelGetNodeCalAmount, json_desc_str);
+  auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelGetNodeCalAmount, json_desc_str);
   if (py::isinstance<py::none>(ret)) {
     MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
                       << json_desc_str;
@@ -57,7 +57,7 @@ std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFu
   }
 
   auto json_desc_str = json_desc.dump();
-  auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelEstimateOps, json_desc_str);
+  auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelEstimateOps, json_desc_str);
   if (py::isinstance<py::none>(ret)) {
     MS_LOG(EXCEPTION) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
                       << json_desc_str;

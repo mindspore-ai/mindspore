@@ -5,6 +5,7 @@ endif()
 
 if(ENABLE_GPU)
     list(APPEND DEVICE_SRC_LIST "distribution/collective_init.cc")
+    list(APPEND DEVICE_SRC_LIST "gpu_comm_manager.cc")
 else()
     list(APPEND DEVICE_SRC_LIST "distribution/collective_fake_init.cc")
 endif()

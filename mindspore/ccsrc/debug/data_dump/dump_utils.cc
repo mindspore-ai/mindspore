@@ -18,13 +18,14 @@
 #include <vector>
 #include <algorithm>
 
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "debug/common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 
@@ -106,7 +107,7 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
   auto ref_node = device_addr->GetNodeIndex().first;
   MS_EXCEPTION_IF_NULL(ref_node);
   GetDumpIntShape(ref_node, PARAMETER_OUTPUT_INDEX, int_shapes, trans_flag);
-  *host_type = AnfAlgo::GetOutputInferDataType(ref_node, PARAMETER_OUTPUT_INDEX);
+  *host_type = common::AnfAlgo::GetOutputInferDataType(ref_node, PARAMETER_OUTPUT_INDEX);
   *device_type = AnfAlgo::GetOutputDeviceDataType(ref_node, PARAMETER_OUTPUT_INDEX);
   return device_addr;
 }

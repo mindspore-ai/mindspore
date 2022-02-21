@@ -26,11 +26,12 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
 #include "ir/cell.h"
-#include "parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "abstract/abstract_value.h"
 #include "frontend/parallel/costmodel_context.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
+#include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -91,7 +92,7 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
-                     [](const AnfNodePtr &node) { return AnfAlgo::IsDynamicShape(node); });
+                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
 }
 
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.
@@ -107,7 +108,7 @@ void DisableMindRT(const ResourcePtr &res) {
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
-  bool is_parallel_mode = parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL;
+  bool is_parallel_mode = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
   bool enable_old_runtime = (common::GetEnv("MS_DEV_ENABLE_CLOSURE") == "0");
   bool use_old_vm_for_dynamic_shape = func_graph->exist_multi_target() && IsDynamicShapeGraph(func_graph);
   bool use_old_vm_for_control_parallel =
@@ -377,8 +378,8 @@ bool ParseAction(const ResourcePtr &res) {
   py::module path = py::module::import("os.path");
   std::string dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
 
-  parse::python_adapter::set_python_env_flag(true);
-  parse::python_adapter::SetPythonPath(dir);
+  python_adapter::set_python_env_flag(true);
+  python_adapter::SetPythonPath(dir);
 
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(input, &converted_ret, true);

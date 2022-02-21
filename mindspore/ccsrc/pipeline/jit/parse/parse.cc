@@ -34,7 +34,7 @@
 #include "utils/interpret_node_recorder.h"
 #include "debug/trace.h"
 #include "mindspore/core/ir/cell.h"
-#include "mindspore/ccsrc/utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace parse {

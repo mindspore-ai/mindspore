@@ -16,7 +16,7 @@
 
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include <memory>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "nnacl/op_base.h"

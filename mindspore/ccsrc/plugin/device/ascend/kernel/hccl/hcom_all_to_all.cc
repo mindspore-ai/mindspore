@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::kernel {
 HcomAllToAllKernel::HcomAllToAllKernel() {}
@@ -35,12 +36,12 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
-    need_drop_input_ = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+  if (common::AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
+    need_drop_input_ = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
   }
 
   if (hccl_data_type_list_.empty()) {
-    auto recv_type = AnfAlgo::GetNodeAttr<TypePtr>(anf_node, kAttrRecvType);
+    auto recv_type = common::AnfAlgo::GetNodeAttr<TypePtr>(anf_node, kAttrRecvType);
     MS_EXCEPTION_IF_NULL(recv_type);
     data_type_ = HcomUtil::ConvertHcclType(recv_type->type_id());
   } else {

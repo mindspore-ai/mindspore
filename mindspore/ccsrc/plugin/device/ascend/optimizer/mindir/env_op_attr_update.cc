@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/optimizer/mindir/env_op_attr_update.h"
 #include <set>
 #include <string>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,9 +36,9 @@ const AnfNodePtr EnvOpAttrUpdate::Process(const FuncGraphPtr &graph, const AnfNo
   if (!node->isa<CNode>()) {
     return node;
   }
-  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(node);
   if (kEnvOpNames.find(kernel_name) != kEnvOpNames.end()) {
-    AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
+    common::AnfAlgo::SetNodeAttr(kAttrCustAicpu, MakeValue(kEnvOpSoNames), node);
   }
 
   return node;

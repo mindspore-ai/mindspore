@@ -18,7 +18,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,7 +30,7 @@ constexpr size_t kGatherInputParamsMaxDim = 4;
 
 template <typename T>
 void GatherV2CpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num == kGatherInputsNum + 1) {
     is_dynamic_shape_ = true;
     MS_LOG(DEBUG) << " GatherV2CPUKernel running in Dynamic Mode.";
@@ -45,16 +45,16 @@ template <typename T>
 void GatherV2CpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  indices_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > kGatherInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
                       << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
   }
   if (!is_dynamic_shape_) {
-    axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+    axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   }
 }
 

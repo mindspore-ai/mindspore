@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"
 #include "runtime/op_builder/op_lazy_builder.h"
@@ -30,15 +30,15 @@
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "pybind_api/pybind_patch.h"
-#include "utils/callbacks.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/callbacks.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
-#include "utils/scoped_long_running.h"
+#include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_D
-#include "utils/callbacks_ge.h"
+#include "include/common/utils/callbacks_ge.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
@@ -196,7 +196,7 @@ void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::GetCNodeName(kernel) == op_run_info->op_name) {
+    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->op_name) {
       op_run_info->abstract = kernel->abstract();
     }
   }
@@ -206,9 +206,9 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   MS_EXCEPTION_IF_NULL(output_node);
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-  auto type_id = AnfAlgo::GetOutputInferDataType(output_node, output_index);
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
   std::vector<int64_t> temp_shape;
-  const auto &shape = AnfAlgo::GetOutputInferShape(output_node, output_index);
+  const auto &shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
   auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
@@ -263,7 +263,7 @@ void UpdateInputDeviceAddress(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+    if (node->isa<Parameter>() && (!common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
       AnfAlgo::SetOutputAddr(nullptr, 0, node.get());
     }
   }
@@ -277,7 +277,7 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
   }
 
   const auto &node = graph->execution_order().back();
-  auto input_num = AnfAlgo::GetInputTensorNum(node);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(node);
   // No value node in graph
   if (input_num == tensors_without_value_node.size()) {
     return new_input_tensors;
@@ -287,7 +287,7 @@ std::vector<tensor::TensorPtr> GetRealValueNodeTensorFromGraph(
 
   std::map<size_t, tensor::TensorPtr> value_node_pos;
   for (size_t i = 0; i < input_num; ++i) {
-    auto input = AnfAlgo::GetInputNode(node, i);
+    auto input = common::AnfAlgo::GetInputNode(node, i);
     MS_EXCEPTION_IF_NULL(input);
     if (input->isa<ValueNode>()) {
       auto value_node = input->cast<ValueNodePtr>();
@@ -453,7 +453,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   real_execution_mode_ = ms_execution_mode_;
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  auto is_parallel = (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL);
+  auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
 
   // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
   if (ms_execution_mode_ == kPynativeMode &&
@@ -573,8 +573,8 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
     MS_EXCEPTION_IF_NULL(cut_node);
     MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->DebugString();
     control_nodes_.push_back(cut_node);
-    if (AnfAlgo::IsCallNode(cut_node) || AnfAlgo::CheckPrimitiveType(cut_node, prim::kPrimSwitch) ||
-        AnfAlgo::CheckPrimitiveType(cut_node, prim::kPrimSwitchLayer)) {
+    if (common::AnfAlgo::IsCallNode(cut_node) || common::AnfAlgo::CheckPrimitiveType(cut_node, prim::kPrimSwitch) ||
+        common::AnfAlgo::CheckPrimitiveType(cut_node, prim::kPrimSwitchLayer)) {
       const auto &func_graph = cut_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       (void)func_graph_to_kernel_graph_ids_[func_graph].emplace_back(std::vector<GraphId>());
@@ -629,7 +629,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
       continue;
     }
     // Hook single-input or single-output.
-    auto real_input = AnfAlgo::VisitKernel(input_node, 0).first;
+    auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
     MS_EXCEPTION_IF_NULL(real_input);
     if (!real_input->isa<ValueNode>()) {
       auto tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
@@ -870,7 +870,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
-      if (!AnfAlgo::IsControlOpExecInBackend(kernel)) {
+      if (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
         OpRunInfo op_run_info;
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
@@ -893,7 +893,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
 
       // Save grad node to Bucket
-      if (graph->is_bprop() && (!AnfAlgo::IsControlOpExecInBackend(kernel)) && !kernel->is_parallel()) {
+      if (graph->is_bprop() && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) && !kernel->is_parallel()) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }
@@ -1002,7 +1002,7 @@ BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(output_position);
 
-  size_t outputs_num = AnfAlgo::GetOutputNumByAbstract(abstract);
+  size_t outputs_num = common::AnfAlgo::GetOutputNumByAbstract(abstract);
   if (*output_position + outputs_num > output_tensors.size()) {
     MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position << " need:" << outputs_num
                       << " total:" << output_tensors.size();
@@ -1070,14 +1070,14 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
   }
 
   // The depend node need get the real node.
-  if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
+  if (common::AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimDepend)) {
     auto depend_node = output_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_node);
     ConstructOutputs(depend_node->input(kRealInputIndexInDepend), output_tensors, output_position, outputs);
     return;
   }
 
-  auto outputs_num = AnfAlgo::GetOutputTensorNum(output_node);
+  auto outputs_num = common::AnfAlgo::GetOutputTensorNum(output_node);
   // The value node uses the value to be output, to avoid the host memory of value free due to value node destruction.
   if (output_node->isa<ValueNode>()) {
     auto value = output_node->cast<ValueNodePtr>()->value();
@@ -1093,7 +1093,7 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
     return;
   }
 
-  if (AnfAlgo::IsCallNode(output_node)) {
+  if (common::AnfAlgo::IsCallNode(output_node)) {
     auto abstract = output_node->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
     outputs->emplace_back(ConstructOutputByAbstract(abstract, output_tensors, output_position));
@@ -1176,9 +1176,9 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
 
   runtime::KernelMapPosition outputs_order;
   const auto &root_output =
-    AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
+    common::AnfAlgo::VisitKernelWithReturnType(root_graph->output(), 0, false, {prim::kPrimTupleGetItem}).first;
   size_t position = 0;
-  auto outputs = AnfAlgo::GetAllOutputWithIndex(root_output);
+  auto outputs = common::AnfAlgo::GetAllOutputWithIndex(root_output);
   size_t outputs_num = outputs.size();
   for (const auto &output : outputs) {
     if (outputs_order.count(output) == 0) {
@@ -1209,7 +1209,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
     (void)graphs.emplace_back(graph);
     (void)device_contexts.emplace_back(graph_info_to_context.second);
 
-    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
+    auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output : outputs) {
       if (outputs_order.count(output) == 0) {
         outputs_order[output] = {position++};
@@ -1276,7 +1276,7 @@ void MindRTBackend::RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInf
   const auto &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (kOpCacheBlackList.find(AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
+    if (kOpCacheBlackList.find(common::AnfAlgo::GetCNodeName(kernel)) != kOpCacheBlackList.end()) {
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       if (kernel_mod) {
         kernel_mod->ReleaseResource();
@@ -1485,7 +1485,7 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
-    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+    if (common::AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
       continue;
     }
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);

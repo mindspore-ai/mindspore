@@ -15,8 +15,9 @@
  */
 #include "plugin/device/gpu/optimizer/combine_cast_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -24,7 +25,7 @@ namespace opt {
 namespace {
 bool IsParameter(const mindspore::AnfNodePtr &node) {
   return node->isa<Parameter>() || (IsPrimitiveCNode(node, prim::kPrimLoad) &&
-                                    (AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0))->isa<Parameter>());
+                                    (common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0))->isa<Parameter>());
 }
 bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
   MS_EXCEPTION_IF_NULL(deal_list);
@@ -40,10 +41,10 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
     if (!IsPrimitiveCNode(cast_node, prim::kPrimCast)) {
       continue;
     }
-    auto input0 = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
+    auto input0 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
     if (IsParameter(input0)) {
-      auto dst = AnfAlgo::GetOutputInferDataType(cast_node, 0);
-      auto src = AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
+      auto dst = common::AnfAlgo::GetOutputInferDataType(cast_node, 0);
+      auto src = common::AnfAlgo::GetPrevNodeOutputInferDataType(cast_node, 0);
       if (dst == kNumberTypeFloat16 && src == kNumberTypeFloat32) {
         cast_32to16_list.push_back(cast_node);
         if (IsPrimitiveCNode(input0, prim::kPrimLoad)) {
@@ -96,7 +97,7 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
     for (size_t idx = 0; idx < cast_list.size(); ++idx) {
       auto cnode = utils::cast<CNodePtr>(cast_list[idx]);
       MS_EXCEPTION_IF_NULL(cnode);
-      inputs.push_back(AnfAlgo::GetInputNode(cnode, 0));
+      inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 0));
     }
     if (cast_list.size() > 0) {
       TraceGuard guard(std::make_shared<TraceOpt>(cast_list[0]->debug_info()));
@@ -116,7 +117,7 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
       auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
       MS_EXCEPTION_IF_NULL(abstract_tuple);
       cast_all->set_abstract(abstract_tuple);
-      AnfAlgo::SetNodeAttr("n", MakeValue(cast_list.size()), cast_all);
+      common::AnfAlgo::SetNodeAttr("n", MakeValue(cast_list.size()), cast_all);
       // 3 replace all the cast by CastAllv tuplegetitem[castall, idx]
       for (size_t idx = 0; idx < cast_list.size(); ++idx) {
         std::vector<AnfNodePtr> tuple_getitem_input;

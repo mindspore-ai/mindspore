@@ -21,7 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "include/errorcode.h"
 #include "ops/attention.h"
 

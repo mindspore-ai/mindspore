@@ -19,7 +19,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {

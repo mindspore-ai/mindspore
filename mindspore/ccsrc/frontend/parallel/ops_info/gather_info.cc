@@ -24,7 +24,7 @@
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "utils/ms_context.h"

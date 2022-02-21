@@ -34,7 +34,7 @@ void EnvironSetCpuKernelMod::InitKernel(const CNodePtr &node) {
     MS_LOG(EXCEPTION) << "The output handle checks invalid, kernel: " << node->fullname_with_scope();
   }
 
-  value_type_attr_ = TypeId(AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
+  value_type_attr_ = TypeId(common::AnfAlgo::GetNodeAttr<int>(node, kEnvValueTypeAttr));
   MS_LOG(INFO) << "The EnvironSet kernel " << node->fullname_with_scope() << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
   key_size_ = sizeof(int64_t);

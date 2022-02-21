@@ -18,8 +18,9 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -36,20 +37,20 @@ const AnfNodePtr RemoveRedundantFormatTransform::Process(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Process node:" << node->fullname_with_scope();
-  auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(input_node);
   AnfNodePtr first_transpose = nullptr;
   auto used_node_list = GetRealNodeUsedList(graph, input_node);
   MS_EXCEPTION_IF_NULL(used_node_list);
   for (size_t j = 0; j < used_node_list->size(); j++) {
     auto used_node = used_node_list->at(j).first;
-    if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTranspose->name()) {
+    if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTranspose->name()) {
       first_transpose = used_node;
       break;
     }
   }
-  auto first_transpose_perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(first_transpose, "perm");
-  auto node_perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
+  auto first_transpose_perm = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(first_transpose, "perm");
+  auto node_perm = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
   if ((first_transpose != node) && (first_transpose_perm == node_perm)) {
     return first_transpose;
   }

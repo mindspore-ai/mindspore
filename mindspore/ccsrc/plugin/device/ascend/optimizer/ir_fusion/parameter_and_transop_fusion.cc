@@ -17,7 +17,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/parameter_and_transop_fusion.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/helper.h"
@@ -33,7 +34,7 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    auto op_name = AnfAlgo::GetCNodeName(cnode);
+    auto op_name = common::AnfAlgo::GetCNodeName(cnode);
     auto manager = func_graph->manager();
     if (manager == nullptr) {
       return nullptr;
@@ -47,7 +48,7 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
       MS_EXCEPTION_IF_NULL(trans_road);
       trans_road->push_back(cnode);
       first_flag = false;
-      auto next_node = AnfAlgo::GetInputNode(cnode, 0);
+      auto next_node = common::AnfAlgo::GetInputNode(cnode, 0);
       MS_EXCEPTION_IF_NULL(next_node);
       if (next_node->isa<Parameter>() || next_node->isa<ValueNode>()) {
         return next_node;
@@ -95,21 +96,22 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto node_name = AnfAlgo::GetCNodeName(cnode);
+    auto node_name = common::AnfAlgo::GetCNodeName(cnode);
     if (node_name == prim::kPrimCast->name() || node_name == prim::kPrimTranspose->name() ||
         node_name == prim::kPrimReshape->name() || node_name == kTransDataOpName) {
       MS_LOG(DEBUG) << "Skip trans op";
       continue;
     }
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; input_index++) {
       std::vector<CNodePtr> trans_road;
       bool first_flag = true;
-      auto final_node = ParamTransRoad(func_graph, AnfAlgo::GetInputNode(cnode, input_index), first_flag, &trans_road);
+      auto final_node =
+        ParamTransRoad(func_graph, common::AnfAlgo::GetInputNode(cnode, input_index), first_flag, &trans_road);
       if (final_node != nullptr && trans_road.size() == kTransRoadSize &&
-          AnfAlgo::GetCNodeName(trans_road[kIndex0]) == kTransDataOpName &&
-          AnfAlgo::GetCNodeName(trans_road[kIndex1]) == prim::kPrimCast->name() &&
-          AnfAlgo::GetCNodeName(trans_road[kIndex2]) == kTransDataOpName) {
+          common::AnfAlgo::GetCNodeName(trans_road[kIndex0]) == kTransDataOpName &&
+          common::AnfAlgo::GetCNodeName(trans_road[kIndex1]) == prim::kPrimCast->name() &&
+          common::AnfAlgo::GetCNodeName(trans_road[kIndex2]) == kTransDataOpName) {
         auto cur_transop = trans_road[kIndex0];
         auto format = AnfAlgo::GetOutputFormat(cur_transop, 0);
         auto dtype = AnfAlgo::GetOutputDeviceDataType(cur_transop, 0);

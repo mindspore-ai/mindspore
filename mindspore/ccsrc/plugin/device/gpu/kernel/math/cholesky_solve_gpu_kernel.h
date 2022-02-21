@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,9 +44,9 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
   ~CholeskySolveGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    if (AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kLower, kernel_node)) {
       lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, kLower));
     }
     // Gpu input is col major default, so need to change row major.
@@ -59,8 +59,8 @@ class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
     }
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
-    auto in_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0);
-    auto in_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1);
+    auto in_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0);
+    auto in_b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1);
     is_null_input_ =
       CHECK_SHAPE_NULL(in_a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(in_b_shape, kernel_name_, "input_b");
     if (is_null_input_) {

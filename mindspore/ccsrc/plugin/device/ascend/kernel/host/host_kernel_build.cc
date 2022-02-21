@@ -18,6 +18,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/common_utils.h"
 
@@ -25,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 KernelModPtr HostOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  std::string opname = AnfAlgo::GetCNodeName(anf_node);
+  std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(INFO) << "Host op [" << opname << "]";
   auto kerPtr = HostKernelFactory::Get(opname);
   if (kerPtr == nullptr) {

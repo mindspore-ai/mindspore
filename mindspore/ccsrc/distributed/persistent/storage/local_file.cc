@@ -26,7 +26,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "distributed/persistent/storage/constants.h"
 
 namespace mindspore {

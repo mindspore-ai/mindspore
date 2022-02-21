@@ -29,7 +29,7 @@ constexpr size_t kEleGradOutputsNum = 1;
 
 void EluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   if (dtype_ != dtype_1) {

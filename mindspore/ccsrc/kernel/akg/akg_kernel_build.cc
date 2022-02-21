@@ -34,10 +34,11 @@
 #include "nlohmann/json.hpp"
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -587,8 +588,8 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     MS_EXCEPTION_IF_NULL(cnode);
     bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom) || IsCustomCSROP(cnode);
     // Graph kernel node and Custom node need to generate composite json
-    if (AnfAlgo::IsGraphKernel(cnode) || is_custom_node) {
-      FuncGraphPtr func_graph = is_custom_node ? cnode->func_graph() : AnfAlgo::GetCNodeFuncGraphPtr(cnode);
+    if (common::AnfAlgo::IsGraphKernel(cnode) || is_custom_node) {
+      FuncGraphPtr func_graph = is_custom_node ? cnode->func_graph() : common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
       MS_EXCEPTION_IF_NULL(func_graph);
       auto mng = func_graph->manager();
       if (mng == nullptr) {

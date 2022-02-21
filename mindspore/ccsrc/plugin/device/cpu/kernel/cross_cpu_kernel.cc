@@ -33,7 +33,7 @@ void CrossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input2_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   input1_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  dim_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
+  dim_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
   int64_t default_dim = -65530;
   if (dim_ == default_dim) {
     size_t dim_size_value = 3;

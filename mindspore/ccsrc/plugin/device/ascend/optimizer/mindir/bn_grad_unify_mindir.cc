@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,16 +41,19 @@ AnfNodePtr BatchNormGradUnifyMindIR::CreateNewBatchNormGrad(const FuncGraphPtr &
   auto new_bn_grad = NewCNode(bn_grad_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_bn_grad);
   new_bn_grad->set_scope(bn_grad_node->scope());
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_grad_node, 0), AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
-                AnfAlgo::GetOutputInferDataType(bn_grad_node, 2),
-                AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 3),
-                AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 4)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(bn_grad_node, 0), AnfAlgo::GetOutputInferShape(bn_grad_node, 1),
-                 AnfAlgo::GetOutputInferShape(bn_grad_node, 2), AnfAlgo::GetPrevNodeOutputInferShape(bn_grad_node, 3),
-                 AnfAlgo::GetPrevNodeOutputInferShape(bn_grad_node, 4)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_bn_grad.get());
-  AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
-  AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1),
+                common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2),
+                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 3),
+                common::AnfAlgo::GetPrevNodeOutputInferDataType(bn_grad_node, 4)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(bn_grad_node, 0),
+                 common::AnfAlgo::GetOutputInferShape(bn_grad_node, 1),
+                 common::AnfAlgo::GetOutputInferShape(bn_grad_node, 2),
+                 common::AnfAlgo::GetPrevNodeOutputInferShape(bn_grad_node, 3),
+                 common::AnfAlgo::GetPrevNodeOutputInferShape(bn_grad_node, 4)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_bn_grad.get());
+  common::AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
+  common::AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);
   return new_bn_grad;
 }
 
@@ -66,7 +70,7 @@ const AnfNodePtr BatchNormGradUnifyMindIR::Process(const FuncGraphPtr &func_grap
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrUnifyIRPassed, cnode)) {
     return nullptr;
   }
   return CreateNewBatchNormGrad(func_graph, cnode);

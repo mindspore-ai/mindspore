@@ -25,7 +25,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/node_info.h"
 #include "utils/parallel_node_check.h"
@@ -454,7 +454,7 @@ PipelinePair Deduplicate(const std::vector<AnfNodePtr> &node_vector, const FuncG
   auto manager = root->manager();
   for (int64_t i = 0; i <= micro_max; ++i) {
     temp_vec.clear();
-    if (!root->has_flag(TRAINING)) {
+    if (!root->has_flag(kTraining)) {
       temp_vec = node_vector;
     } else {
       for (auto &node : node_vector) {
@@ -744,7 +744,7 @@ void Reorder(const FuncGraphPtr &root) {
   GetBorderNode(&forward_start, &forward_end, &backward_start, &backward_end, &forward_params, &backward_params,
                 &allreduce_params, root);
   int64_t micro_max = 0;
-  if (root->has_flag(TRAINING)) {
+  if (root->has_flag(kTraining)) {
     auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
     auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
     MS_EXCEPTION_IF_NULL(micro_size);

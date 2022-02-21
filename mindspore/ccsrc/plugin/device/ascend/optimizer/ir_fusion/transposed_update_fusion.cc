@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/trace_base.h"
 
@@ -27,7 +28,7 @@ namespace {
 constexpr size_t kInt32Len = 4;
 
 tensor::TensorPtr CreatePermTensor(const CNodePtr &transposed) {
-  auto perm_attr = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(transposed, kAttrPerm);
+  auto perm_attr = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(transposed, kAttrPerm);
   std::vector<int32_t> perm;
   (void)std::transform(perm_attr.begin(), perm_attr.end(), std::back_inserter(perm), LongToInt);
   std::vector<int64_t> perm_shape = {SizeToLong(perm.size())};
@@ -78,7 +79,8 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(transposed);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (AnfAlgo::HasNodeAttr(kAttrNopOp, transposed) && AnfAlgo::GetNodeAttr<bool>(transposed, kAttrNopOp)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, transposed) &&
+      common::AnfAlgo::GetNodeAttr<bool>(transposed, kAttrNopOp)) {
     MS_LOG(INFO) << "Node [" << transposed->fullname_with_scope() << "] is a nop op, skip update.";
     return nullptr;
   }
@@ -108,7 +110,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   builder->SetOutputsFormat({output_format});
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), transpose.get());
   kernel_graph->AddValueNodeToGraph(perm_vnode);
-  AnfAlgo::CopyNodeAttrs(transposed, transpose);
+  common::AnfAlgo::CopyNodeAttrs(transposed, transpose);
   return transpose;
 }
 }  // namespace opt

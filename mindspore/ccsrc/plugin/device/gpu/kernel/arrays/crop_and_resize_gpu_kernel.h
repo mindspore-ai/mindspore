@@ -78,21 +78,21 @@ class CropAndResizeGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     // input image
-    auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_image_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto input_box_index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto input_crop_size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_image_shape, kernel_name, "x") ||
                      CHECK_SHAPE_NULL(input_boxes_shape, kernel_name, "boxes") ||
                      CHECK_SHAPE_NULL(input_box_index_shape, kernel_name, "boxes_index") ||

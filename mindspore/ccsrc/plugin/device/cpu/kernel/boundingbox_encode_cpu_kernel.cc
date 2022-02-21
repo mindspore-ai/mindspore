@@ -22,18 +22,18 @@ namespace kernel {
 template <typename T>
 void BoundingBoxEncodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
   }
 
   const size_t coordinate_size = 4;
-  if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueTuple>() ||
-      AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
-    means_ = AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "means");
-  } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
-    float mean = AnfAlgo::GetNodeAttr<float>(kernel_node, "means");
+  if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueTuple>() ||
+      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
+    means_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "means");
+  } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
+    float mean = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "means");
     for (size_t i = 0; i < coordinate_size; i++) {
       means_.emplace_back(mean);
     }
@@ -42,11 +42,11 @@ void BoundingBoxEncodeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
                       << "', the input 'means' should be a tuple or a list, and dtype should be float, but got is not.";
   }
 
-  if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
-      AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
-    stds_ = AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "stds");
-  } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
-    float std = AnfAlgo::GetNodeAttr<float>(kernel_node, "stds");
+  if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
+      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
+    stds_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "stds");
+  } else if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
+    float std = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "stds");
     for (size_t i = 0; i < coordinate_size; i++) {
       stds_.emplace_back(std);
     }

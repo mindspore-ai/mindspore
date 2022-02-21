@@ -23,12 +23,13 @@
 #include <utility>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/config_manager.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/config_manager.h"
 #include "utils/ms_utils.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "runtime/base.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -54,7 +55,7 @@ void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &k
   std::vector<CNodePtr> getnext_list;
   std::vector<CNodePtr> other_list;
   for (const auto &cnode : origin_cnode_list) {
-    if (AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
       getnext_list.emplace_back(cnode);
     } else {
       other_list.emplace_back(cnode);
@@ -86,7 +87,7 @@ CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::Kern
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), send_node_ptr.get());
-  AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   MS_EXCEPTION_IF_NULL(abstract_none);
   send_node_ptr->set_abstract(abstract_none);
@@ -106,7 +107,7 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), recv_node_ptr.get());
-  AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   MS_EXCEPTION_IF_NULL(abstract_none);
   recv_node_ptr->set_abstract(abstract_none);
@@ -117,7 +118,7 @@ bool KernelAdjust::ExistGetNext(const std::shared_ptr<session::KernelGraph> &ker
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &cnode_list = kernel_graph_ptr->execution_order();
   for (const auto &cnode : cnode_list) {
-    if (AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
       return true;
     }
   }
@@ -147,8 +148,9 @@ void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelG
   MS_EXCEPTION_IF_NULL(independent_switch_app);
   uint32_t independent_switch_stream_id = resource_manager.ApplyNewStream();
   AnfAlgo::SetStreamId(independent_switch_stream_id, independent_switch_app.get());
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), independent_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kIndependentStreamSwitch), independent_switch_app);
+  common::AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), independent_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kIndependentStreamSwitch),
+                               independent_switch_app);
   (*exec_order).push_back(independent_switch_app);
   MS_LOG(INFO) << "Independent op loop insert Stream Switch " << independent_switch_app->fullname_with_scope();
 }
@@ -167,10 +169,10 @@ void KernelAdjust::InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::Ker
   CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kFpBpStreamSwitch);
   MS_EXCEPTION_IF_NULL(fpbp_switch_app);
   AnfAlgo::SetStreamId(*fpbp_switch_stream_id, fpbp_switch_app.get());
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
+  common::AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), fpbp_switch_app);
   // update fpbp loop stream switch true_branch_stream attr
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*fpbp_stream_id), fpbp_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kFpBpStreamSwitch), fpbp_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*fpbp_stream_id), fpbp_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kFpBpStreamSwitch), fpbp_switch_app);
   (*exec_order).push_back(fpbp_switch_app);
   MS_LOG(INFO) << "FpBp loop insert Stream Switch " << fpbp_switch_app->fullname_with_scope();
 }
@@ -184,9 +186,9 @@ void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &k
   CNodePtr cur_cnode = nullptr;
   for (size_t idx = order_index + 1; idx < orders.size(); idx++) {
     cur_cnode = orders[idx];
-    if (AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
       auto pre_node = orders[idx - 1];
-      auto pre_kernel_name = AnfAlgo::GetCNodeName(pre_node);
+      auto pre_kernel_name = common::AnfAlgo::GetCNodeName(pre_node);
       if (pre_kernel_name == kAtomicAddrCleanOpName) {
         (*other_list).pop_back();
         (*memcpy_list).push_back(pre_node);
@@ -216,8 +218,8 @@ void KernelAdjust::InsertGetNextLoopStreamActive(const std::shared_ptr<session::
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr getnext_active_app = CreateStreamActiveOp(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(getnext_active_app);
-  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(getnext_active_streams),
-                       getnext_active_app);
+  common::AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(getnext_active_streams),
+                               getnext_active_app);
   (*exec_order).push_back(getnext_active_app);
   MS_LOG(INFO) << "FpBp loop insert GetNext loop Stream Active " << getnext_active_app->fullname_with_scope();
 }
@@ -253,7 +255,7 @@ void KernelAdjust::InsertCurrentLoopAssignAdd(const std::shared_ptr<session::Ker
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr cur_assign_add = CreateStreamAssignAddnOP(kernel_graph_ptr, switch_loop_input, true);
   MS_EXCEPTION_IF_NULL(cur_assign_add);
-  AnfAlgo::SetNodeAttr(kAttrFpBpEnd, MakeValue<bool>(true), cur_assign_add);
+  common::AnfAlgo::SetNodeAttr(kAttrFpBpEnd, MakeValue<bool>(true), cur_assign_add);
   (*exec_order).push_back(cur_assign_add);
   MS_LOG(INFO) << "FpBp loop insert current loop AssignAdd " << cur_assign_add->fullname_with_scope();
 }
@@ -265,7 +267,8 @@ void KernelAdjust::InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<sessio
   MS_EXCEPTION_IF_NULL(exec_order);
   CNodePtr fpbp_active_app = CreateStreamActiveOp(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(fpbp_active_app);
-  AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(fpbp_active_streams), fpbp_active_app);
+  common::AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(fpbp_active_streams),
+                               fpbp_active_app);
   (*exec_order).push_back(fpbp_active_app);
   MS_LOG(INFO) << "FpBp loop insert FpBp loop and Eos loop Stream Active " << fpbp_active_app->fullname_with_scope();
 }
@@ -285,9 +288,9 @@ void KernelAdjust::InsertGetNextLoopStreamSwitch(
   MS_EXCEPTION_IF_NULL(getnext_switch_app);
   AnfAlgo::SetStreamId(*getnext_switch_stream_id, getnext_switch_app.get());
   // update getnext loop stream switch true_branch_stream attr
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), getnext_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*getnext_stream_id), getnext_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kGetNextStreamSwitch), getnext_switch_app);
+  common::AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), getnext_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*getnext_stream_id), getnext_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kGetNextStreamSwitch), getnext_switch_app);
   (*exec_order).push_back(getnext_switch_app);
   MS_LOG(INFO) << "GetNext loop insert Stream Switch " << getnext_switch_app->fullname_with_scope();
 }
@@ -300,7 +303,7 @@ void KernelAdjust::SetBeforeGetNextStreamID(std::vector<CNodePtr> *exec_order, c
     auto node = orders[*order_index];
     (*exec_order).push_back(node);
     AnfAlgo::SetStreamId(getnext_stream_id, (*exec_order)[(*exec_order).size() - 1].get());
-    if (AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
+    if (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName) {
       getnext_cnode = node;
       break;
     }
@@ -349,10 +352,10 @@ void KernelAdjust::InsertEosStreamSwitch(const std::shared_ptr<session::KernelGr
   CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kEosStreamSwitch);
   MS_EXCEPTION_IF_NULL(eos_switch_app);
   AnfAlgo::SetStreamId(*eos_switch_stream_id, eos_switch_app.get());
-  AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), eos_switch_app);
+  common::AnfAlgo::SetNodeAttr(kStreamNeedActivedFirst, MakeValue<bool>(true), eos_switch_app);
   // update eos loop stream switch true_branch_stream attr
-  AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*eos_stream_id), eos_switch_app);
-  AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kEosStreamSwitch), eos_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrTrueBranchStream, MakeValue<uint32_t>(*eos_stream_id), eos_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrStreamSwitchKind, MakeValue<uint32_t>(kEosStreamSwitch), eos_switch_app);
   (*exec_order).push_back(eos_switch_app);
   MS_LOG(INFO) << "EoS loop insert Stream Switch " << eos_switch_app->fullname_with_scope();
 }
@@ -529,11 +532,11 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   // set attr: cond_ RT_LESS
   int condition = static_cast<int>(RT_LESS_OR_EQUAL);
   ValuePtr cond = MakeValue(condition);
-  AnfAlgo::SetNodeAttr(kAttrSwitchCondition, cond, stream_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrSwitchCondition, cond, stream_switch_app);
   // set attr:data_type
   int data_type = static_cast<int>(RT_SWITCH_INT64);
   ValuePtr dt = MakeValue(data_type);
-  AnfAlgo::SetNodeAttr(kAttrDataType, dt, stream_switch_app);
+  common::AnfAlgo::SetNodeAttr(kAttrDataType, dt, stream_switch_app);
   // set distinction label and graph id
   return stream_switch_app;
 }
@@ -563,9 +566,9 @@ CNodePtr KernelAdjust::CreatTupleGetItemNode(const std::shared_ptr<session::Kern
   CNodePtr tuple_getitem = kernel_graph_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
-  std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
-  TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+  TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
+  common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
 }
 
@@ -594,10 +597,10 @@ CNodePtr KernelAdjust::CreateEndOfSequenceOP(const std::shared_ptr<session::Kern
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), end_of_sequence_node.get());
   std::vector<std::string> input_names = {"x"};
   ValuePtr input_names_v = MakeValue(input_names);
-  AnfAlgo::SetNodeAttr("input_names", input_names_v, end_of_sequence_node);
+  common::AnfAlgo::SetNodeAttr("input_names", input_names_v, end_of_sequence_node);
   std::vector<std::string> output_names = {"y"};
   ValuePtr output_names_v = MakeValue(output_names);
-  AnfAlgo::SetNodeAttr("output_names", output_names_v, end_of_sequence_node);
+  common::AnfAlgo::SetNodeAttr("output_names", output_names_v, end_of_sequence_node);
   end_of_sequence_node->set_abstract(tuple_get_item->abstract());
   return end_of_sequence_node;
 }
@@ -628,14 +631,15 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
   std::vector<std::string> output_names = {"output"};
   ValuePtr input_names_v = MakeValue(input_names);
   ValuePtr output_names_v = MakeValue(output_names);
-  AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_one);
-  AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_one);
+  common::AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_one);
+  common::AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_one);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
   MS_EXCEPTION_IF_NULL(switch_loop_input.at(kCurLoopCountName));
   assign_add_one->set_abstract(switch_loop_input.at(kCurLoopCountName)->abstract());
   // add AssignAdd op to kernel ref node map
   session::AnfWithOutIndex final_pair = std::make_pair(assign_add_one, 0);
-  session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(assign_add_one, 0), 0);
+  session::KernelWithIndex kernel_with_index =
+    common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(assign_add_one, 0), 0);
   kernel_graph_ptr->AddRefCorrespondPairs(final_pair, kernel_with_index);
   return assign_add_one;
 }
@@ -738,7 +742,7 @@ CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::Kerne
   MS_EXCEPTION_IF_NULL(npu_alloc_cnode);
   npu_alloc_cnode->set_scope(kDefaultScope);
   std::vector<size_t> npu_output_shape = {kNPUShape};
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {npu_output_shape}, npu_alloc_cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {npu_output_shape}, npu_alloc_cnode.get());
 
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetFusionType(kernel::FusionType::OPAQUE);
@@ -772,12 +776,13 @@ CNodePtr KernelAdjust::CreateAssignAdd(const std::shared_ptr<session::KernelGrap
   std::vector<std::string> output_names = {"output"};
   ValuePtr input_names_v = MakeValue(input_names);
   ValuePtr output_names_v = MakeValue(output_names);
-  AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_cnode);
-  AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_cnode);
+  common::AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_cnode);
+  common::AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_cnode);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
 
   session::AnfWithOutIndex final_pair = std::make_pair(assign_add_cnode, 0);
-  session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(assign_add_cnode, 0), 0);
+  session::KernelWithIndex kernel_with_index =
+    common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(assign_add_cnode, 0), 0);
   kernel_graph_ptr->AddRefCorrespondPairs(final_pair, kernel_with_index);
   return assign_add_cnode;
 }
@@ -821,12 +826,13 @@ CNodePtr KernelAdjust::CreateAssign(const std::shared_ptr<session::KernelGraph> 
   std::vector<std::string> output_names = {"output"};
   ValuePtr input_names_v = MakeValue(input_names);
   ValuePtr output_names_v = MakeValue(output_names);
-  AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_cnode);
-  AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_cnode);
+  common::AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_cnode);
+  common::AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_cnode);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
 
   session::AnfWithOutIndex final_pair = std::make_pair(assign_cnode, 0);
-  session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(assign_cnode, 0), 0);
+  session::KernelWithIndex kernel_with_index =
+    common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(assign_cnode, 0), 0);
   kernel_graph_ptr->AddRefCorrespondPairs(final_pair, kernel_with_index);
   return assign_cnode;
 }

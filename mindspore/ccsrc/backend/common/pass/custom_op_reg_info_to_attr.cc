@@ -20,9 +20,9 @@
 #include <vector>
 #include <unordered_set>
 
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "kernel/oplib/opinfo.h"
 #include "kernel/oplib/oplib.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -87,10 +87,10 @@ void ParseAttrDefaultValue(const std::string &op_name, const std::string &attr_n
 void AddMissingAttrs(const CNodePtr &cnode, kernel::OpImplyType imply_type,
                      const std::unordered_set<std::string> &missing_attrs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   primitive = primitive->Clone();
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto all_attrs = op_info_ptr->attrs_ptr();
@@ -131,9 +131,9 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
     return nullptr;
   }
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto func_type = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
+  auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
   // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
   if (kCustomTypeAkg.find(func_type) == kCustomTypeAkg.end() || func_type == kCustomTypeAICPU) {
     return nullptr;

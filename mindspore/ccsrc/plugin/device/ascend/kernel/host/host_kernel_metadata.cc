@@ -20,6 +20,7 @@
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -29,23 +30,23 @@ void HostMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
-  if (!AnfAlgo::IsHostKernel(kernel_node)) {
+  if (!common::AnfAlgo::IsHostKernel(kernel_node)) {
     MS_LOG(DEBUG) << "Host dose not have op [" << kernel_node->DebugString() << "]";
     return;
   }
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_format.emplace_back(kOpFormat_DEFAULT);
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
   auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
   builder.SetInputsFormat(inputs_format);

@@ -21,8 +21,8 @@
 #include <memory>
 #include "pipeline/jit/pipeline_split.h"
 #include "utils/ms_context.h"
-#include "utils/comm_manager.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/comm_manager.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
@@ -139,7 +139,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     }
     auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     FuncGraphPtr fun_graph = nullptr;
-    if (!root->has_flag(mindspore::parallel::TRAINING)) {
+    if (!root->has_flag(mindspore::parallel::kTraining)) {
       graph_sets.insert(root);
     }
     if (expect_prim->name() == mindspore::parallel::J || expect_prim->name() == mindspore::parallel::SHARD) {
@@ -199,7 +199,7 @@ void GenerateDefaultStrategy(const ValueNodePtr &axes, const std::vector<AnfNode
   for (auto &strategy : strategies) {
     auto node = nodes[i];
     if (strategy->isa<None>()) {
-      auto node_size = AnfAlgo::GetOutputInferShape(node, 0).size();
+      auto node_size = common::AnfAlgo::GetOutputInferShape(node, 0).size();
       std::vector<int64_t> current_d_strategy(node_size, 1);
       if (node_size >= 1) {
         current_d_strategy[0] = device_num;
@@ -338,7 +338,7 @@ void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &out_axes,
 
   for (size_t i = 0; i < output_nodes.size(); ++i) {
     auto node = output_nodes[i];
-    auto output_shape = AnfAlgo::GetOutputInferShape(node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
     if (output_shape.size() != output_strategy[i].size()) {
       MS_LOG(EXCEPTION) << "Output dimension: " << output_shape.size()
                         << " is not equal to out_axes dimension: " << output_strategy[i].size() << " at index " << i;
@@ -383,7 +383,7 @@ void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_axes, c
     if (parameter->cast<ParameterPtr>()->name() == "u" || parameter->cast<ParameterPtr>()->name() == "io") {
       continue;
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(parameter, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(parameter, 0);
     if (output_shape.size() != input_strategy[i].size()) {
       MS_LOG(EXCEPTION) << "Input dimension: " << output_shape.size()
                         << " is not equal to in_axes dimension: " << input_strategy[i].size() << " at index " << i;
@@ -457,7 +457,7 @@ bool PipelineSplit(const ResourcePtr &res) {
 #endif
   MS_EXCEPTION_IF_NULL(res);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode != parallel::SEMI_AUTO_PARALLEL && parallel_mode != parallel::AUTO_PARALLEL) {
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
     MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pipeline split.";
     return true;
   }
@@ -469,7 +469,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
   if ((execution_mode == kPynativeMode) &&
-      (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL)) {
+      (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel)) {
     if (!parallel::ParallelContext::GetInstance()->device_num_is_set()) {
       MS_LOG(EXCEPTION) << "device_num must be set when use shard function";
     }
@@ -528,7 +528,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   // step4: Cut Graph
   transformer->CutGraph();
   // step5: Handle Sens
-  if (root->has_flag(parallel::TRAINING)) {
+  if (root->has_flag(parallel::kTraining)) {
     transformer->CoverSensShape();
   }
   // step6: Elim Graph stages and no used parameter

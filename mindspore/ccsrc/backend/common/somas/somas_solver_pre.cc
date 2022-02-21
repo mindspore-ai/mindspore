@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 #include "backend/common/somas/somas_solver_core.h"
 #include "backend/common/somas/somas_solver_pre.h"

@@ -22,6 +22,7 @@
 
 #include "utils/hash_map.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 namespace mindspore {
 namespace opt {
@@ -36,15 +37,16 @@ const AnfNodePtr ConvertCastFormat::Process(const FuncGraphPtr &func_graph, cons
   if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  auto node_name = AnfAlgo::GetCNodeName(node);
+  auto node_name = common::AnfAlgo::GetCNodeName(node);
   if (node_name == prim::kPrimCast->name()) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto input_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, input_index), 0).first;
+    auto input_node =
+      common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(cnode, input_index), 0).first;
     MS_EXCEPTION_IF_NULL(input_node);
     if (!input_node->isa<CNode>()) {
       continue;
@@ -69,14 +71,15 @@ void ConvertCastFormat::SetCastFormat(const CNodePtr &cast_node, const string &f
 void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGraphPtr &func_graph) const {
   MS_EXCEPTION_IF_NULL(cast_node);
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto input_node_name = AnfAlgo::GetCNodeName(cast_node);
+  auto input_node_name = common::AnfAlgo::GetCNodeName(cast_node);
   if (input_node_name != prim::kPrimCast->name()) {
     return;
   }
-  if (AnfAlgo::HasNodeAttr(kAttrVisited, cast_node) && AnfAlgo::GetNodeAttr<bool>(cast_node, kAttrVisited)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrVisited, cast_node) &&
+      common::AnfAlgo::GetNodeAttr<bool>(cast_node, kAttrVisited)) {
     return;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast_node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast_node);
   auto used_cast_node_list = GetRealNodeUsedList(func_graph, cast_node);
   MS_EXCEPTION_IF_NULL(used_cast_node_list);
   mindspore::HashMap<string, size_t> format_counter = CalculateFormat(used_cast_node_list, cast_node);
@@ -119,10 +122,11 @@ mindspore::HashMap<string, size_t> ConvertCastFormat::CalculateFormat(
     MS_EXCEPTION_IF_NULL(node_info.first);
     auto cast_out_node = node_info.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cast_out_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cast_out_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cast_out_node);
     for (size_t index = 0; index < input_num; ++index) {
-      if (AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cast_out_node->cast<CNodePtr>(), index), 0).first !=
-          cast_node) {
+      if (common::AnfAlgo::VisitKernelWithReturnType(
+            common::AnfAlgo::GetInputNode(cast_out_node->cast<CNodePtr>(), index), 0)
+            .first != cast_node) {
         continue;
       }
       auto format = AnfAlgo::GetInputFormat(cast_out_node, index);

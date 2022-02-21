@@ -102,9 +102,9 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
     const auto &data_kernel = device_queue_ds_actor->data_kernel();
     MS_EXCEPTION_IF_NULL(data_kernel);
     ofs << "\t\tdata_kernel_name:" << data_kernel->fullname_with_scope()
-        << "\tinput_number:" << AnfAlgo::GetInputTensorNum(data_kernel)
-        << "\toutput_number:" << AnfAlgo::GetOutputTensorNum(data_kernel) << "\n";
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(data_kernel); ++i) {
+        << "\tinput_number:" << common::AnfAlgo::GetInputTensorNum(data_kernel)
+        << "\toutput_number:" << common::AnfAlgo::GetOutputTensorNum(data_kernel) << "\n";
+    for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(data_kernel); ++i) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_kernel, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
@@ -138,9 +138,10 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
 
   const auto &kernel = actor->kernel();
   MS_EXCEPTION_IF_NULL(kernel);
-  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope() << "\tinputs_num:" << AnfAlgo::GetInputTensorNum(kernel)
-      << "\toutputs_num:" << AnfAlgo::GetOutputTensorNum(kernel) << "\n";
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
+  ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
+      << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
+      << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel) << "\n";
+  for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ofs << "\t\t\toutput_index:" << i << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()

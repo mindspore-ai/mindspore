@@ -23,7 +23,7 @@
 #include "kernel/kernel_build_info.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "utils/trace_base.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
@@ -33,6 +33,7 @@
 #include "backend/common/pass/erase_visit_attr.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "profiler/device/cpu/cpu_profiling.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
@@ -165,17 +166,17 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     (void)inputs_format.emplace_back(kOpFormat_DEFAULT);
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     (void)outputs_format.emplace_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
 
   auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -191,7 +192,7 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 void CPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!AnfAlgo::IsControlOpExecInBackend(node)) {
+    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
       SetKernelInfo(node);
     } else {
       SetControlOpInfo(node);
@@ -205,7 +206,7 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfAlgo::IsControlOpExecInBackend(node)) {
+    if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
       continue;
     }
     if (session::AnfRuntimeAlgorithm::GetKernelType(node) == KernelType::AKG_KERNEL) {
@@ -215,7 +216,7 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       akg_nodes.push_back(node);
       continue;
     }
-    std::string kernel_name = AnfAlgo::GetCNodeName(node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
       kernel::NativeCpuKernelModFactory::GetInstance().Create(kernel_name, node);
     if (!cpu_kernel) {
@@ -258,7 +259,7 @@ void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) con
   MS_EXCEPTION_IF_NULL(graph);
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();
-  AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
+  common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
   graph->set_execution_order(execution_order);
 }
 
@@ -272,7 +273,8 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 
   // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
   // launch.
-  if (kOpNotSupportMultiThreadExecList.find(AnfAlgo::GetCNodeName(kernel)) != kOpNotSupportMultiThreadExecList.end()) {
+  if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(kernel)) !=
+      kOpNotSupportMultiThreadExecList.end()) {
     auto cpu_kernel_mod = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
     cpu_kernel_mod->InitKernel(kernel);

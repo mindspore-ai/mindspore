@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/scatter_nd_update_cpu_kernel.h"
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -60,10 +60,10 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 
 void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

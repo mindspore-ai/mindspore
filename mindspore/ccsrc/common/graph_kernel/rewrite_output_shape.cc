@@ -20,6 +20,7 @@
 #include "ir/scalar.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
@@ -101,7 +102,7 @@ bool RewriteOutputShape::Run(const FuncGraphPtr &func_graph) {
     Process(output->input(i), 0, abs_tuple->elements()[i - 1]);
   }
   // remove the MakeTuple node if it was added by SaveOutputShape
-  auto prim = AnfAlgo::GetCNodePrimitive(output);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(output);
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->HasAttr("graph_kernel")) {
     auto mng = func_graph->manager();

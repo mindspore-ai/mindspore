@@ -20,8 +20,9 @@
 #include <algorithm>
 #include <functional>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -47,14 +48,14 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
   builder.SetInputsDeviceType(inputs_type);
@@ -75,17 +76,17 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(relu->scope());
 
-  if (AnfAlgo::IsDynamicShape(relu)) {
+  if (common::AnfAlgo::IsDynamicShape(relu)) {
     return nullptr;
   }
-  std::vector<size_t> output_shape = AnfAlgo::GetOutputInferShape(relu, 0);
+  std::vector<size_t> output_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
   auto element_num =
     std::accumulate(output_shape.begin(), output_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
 
   std::vector<size_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
-  auto shapes = {AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
-  auto types = {AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(relu, 0), mask_shape};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
 
   auto build_info = GenerateKernelBuildInfo(new_node);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, new_node.get());
@@ -106,13 +107,13 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
 
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(relu_grad);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(relu_grad);
   for (size_t i = 0; i < output_num; i++) {
-    types.push_back(AnfAlgo::GetOutputInferDataType(relu_grad, i));
-    shapes.push_back(AnfAlgo::GetOutputInferShape(relu_grad, i));
+    types.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, i));
+    shapes.push_back(common::AnfAlgo::GetOutputInferShape(relu_grad, i));
   }
 
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
   new_node->set_scope(relu_grad->scope());
 
   auto build_info = GenerateKernelBuildInfo(new_node);

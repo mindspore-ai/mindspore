@@ -54,10 +54,10 @@ class PushKernelMod : public NativeCpuKernelMod {
   }
 
   void Init(const CNodePtr &kernel_node) {
-    key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
+    key_ = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
     auto optim_input_shapes =
-      AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "optim_input_shapes");
-    auto only_shape_indices = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "only_shape_indices");
+      common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "optim_input_shapes");
+    auto only_shape_indices = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "only_shape_indices");
     MS_LOG(INFO) << "Key " << key_ << " optimizer input shapes are:" << optim_input_shapes;
     MS_LOG(INFO) << "Only init shape indices are " << only_shape_indices;
     for (size_t i = 0; i < optim_input_shapes.size(); i++) {

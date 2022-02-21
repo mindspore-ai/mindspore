@@ -75,25 +75,25 @@ class PsROIPoolingBackGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     // Get the number of input args
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPoolingBackGpuKernelMod needs 3 input.";
       return false;
     }
 
     // Get the number of output args
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != OUTPUT_NUM) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPoolingBackGpuKernelMod needs 1 output.";
       return false;
     }
 
     // Get the input shapes
-    auto dx_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto mapping_channel_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto dx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto mapping_channel_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
 
     is_null_input_ = CHECK_SHAPE_NULL(dx_shape, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(rois_shape, kernel_name, "rois") ||

@@ -21,7 +21,7 @@
 #include "common/backend_common_test.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

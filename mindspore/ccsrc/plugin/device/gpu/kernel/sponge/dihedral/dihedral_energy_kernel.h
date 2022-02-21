@@ -35,17 +35,17 @@ class DihedralEnergyGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     dihedral_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "dihedral_numbers"));
-    auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_atom_a = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_b = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_atom_c = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_atom_d = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_ipn = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
-    auto shape_pk = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
-    auto shape_gamc = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
-    auto shape_gams = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
-    auto shape_pn = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
+    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_atom_a = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_atom_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_atom_c = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_atom_d = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_ipn = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    auto shape_pk = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
+    auto shape_gamc = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
+    auto shape_gams = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
+    auto shape_pn = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
 
     for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
     for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];

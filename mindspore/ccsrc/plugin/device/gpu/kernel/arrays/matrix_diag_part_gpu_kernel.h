@@ -46,9 +46,9 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
   ~MatrixDiagPartGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (is_null_input_) {
       InitSizeLists();
       return true;
@@ -64,7 +64,7 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
     }
     matrix_size_ = out_range_size_ * m_ * n_;
     InitSizeLists();
-    alignment_ = GetAlignments(AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
+    alignment_ = GetAlignments(common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
     kernel_node_ = kernel_node;
     return true;
   }
@@ -78,7 +78,7 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
       output_shape.erase(output_shape.begin() + shapes_.size() - kDim2);
     }
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
-    AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {

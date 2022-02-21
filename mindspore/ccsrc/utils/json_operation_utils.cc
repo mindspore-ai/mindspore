@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>

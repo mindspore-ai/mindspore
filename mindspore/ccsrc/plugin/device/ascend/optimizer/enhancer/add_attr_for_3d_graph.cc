@@ -29,11 +29,11 @@ const AnfNodePtr AddIoFormatAttrFor3DGraph::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   if (AnfUtils::IsRealKernel(node)) {
-    AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+    common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
     auto formats = AnfAlgo::GetAllOutputFormats(node);
     if (std::any_of(formats.begin(), formats.end(),
                     [](const std::string &format) { return k3DFormatSet.find(format) != k3DFormatSet.end(); })) {
-      AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCDHW), node);
+      common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCDHW), node);
     }
     return node;
   }

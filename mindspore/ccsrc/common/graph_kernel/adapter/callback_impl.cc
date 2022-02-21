@@ -22,6 +22,7 @@
 #include <memory>
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
 #if ENABLE_D
@@ -50,14 +51,14 @@ ShapeVector CallbackImpl::GetOutputShape(const AnfNodePtr &node, size_t i) {
 }
 
 ShapeVector CallbackImpl::GetInputInferShape(const AnfNodePtr &node, size_t i) {
-  auto vec = AnfAlgo::GetPrevNodeOutputInferShape(node, i);
+  auto vec = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
   ShapeVector ret;
   (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
 }
 
 ShapeVector CallbackImpl::GetOutputInferShape(const AnfNodePtr &node, size_t i) {
-  auto vec = AnfAlgo::GetOutputInferShape(node, i);
+  auto vec = common::AnfAlgo::GetOutputInferShape(node, i);
   ShapeVector ret;
   (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
   return ret;
@@ -70,11 +71,11 @@ TypeId CallbackImpl::GetOutputType(const AnfNodePtr &node, size_t i) {
 }
 
 TypeId CallbackImpl::GetInputInferType(const AnfNodePtr &node, size_t i) {
-  return AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
+  return common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
 }
 
 TypeId CallbackImpl::GetOutputInferType(const AnfNodePtr &node, size_t i) {
-  return AnfAlgo::GetOutputInferDataType(node, i);
+  return common::AnfAlgo::GetOutputInferDataType(node, i);
 }
 
 std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) { return AnfAlgo::GetInputFormat(node, i); }
@@ -135,7 +136,7 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
     outputs.push_back(fg->output());
   }
   for (size_t i = 0; i < outputs.size(); ++i) {
-    auto kernel_with_index = AnfAlgo::VisitKernel(outputs[i], 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(outputs[i], 0);
     graph_output_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
     graph_output_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
   }
@@ -160,7 +161,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   if (cnode != nullptr) {
     auto &inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(inputs[i], 0);
       auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
       input_formats.push_back(input_format);
       auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);

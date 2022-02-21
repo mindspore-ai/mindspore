@@ -65,21 +65,21 @@ void CholeskySolveCpuKernelMod<T>::InitLeftMatrixInfo(const std::vector<size_t> 
 template <typename T>
 void CholeskySolveCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputAIndex);
+  auto input_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputAIndex);
   InitRightMatrixInfo(input_a_shape, &input_a_row_, &input_a_col_);
-  auto input_b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputBIndex);
+  auto input_b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputBIndex);
   const bool is_right_equal_left = input_a_shape.size() == input_b_shape.size();
   InitLeftMatrixInfo(input_b_shape, is_right_equal_left, &input_b_row_, &input_b_col_);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitLeftMatrixInfo(output_shape, is_right_equal_left, &output_row_, &output_col_);
-  if (AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
-    lower_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
+  if (common::AnfAlgo::HasNodeAttr(LOWER, kernel_node)) {
+    lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   }
   if (input_a_row_ != input_a_col_ || input_a_row_ != input_b_row_) {
     MS_LOG_EXCEPTION << kernel_name_ << " llt solve input a row is not match to b row: " << input_a_row_ << " vs "

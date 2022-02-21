@@ -19,12 +19,14 @@
 #include <algorithm>
 #include <map>
 #include <utility>
+#include <fstream>
 #include "pipeline/jit/parse/data_converter.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "debug/common.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "utils/system/sha256.h"
+#include "include/common/utils/utils.h"
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_context.h"
@@ -240,7 +242,7 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
   // Determine whether to load parallel information.
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   bool has_parallel_info = false;
-  if ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL)) {
+  if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel)) {
     has_parallel_info = true;
   }
   // Load the compilation cache file.

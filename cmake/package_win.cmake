@@ -74,7 +74,7 @@ install(
 )
 
 install(
-  TARGETS mindspore_core
+  TARGETS mindspore_core mindspore_common
   DESTINATION ${INSTALL_LIB_DIR}
   COMPONENT mindspore
 )

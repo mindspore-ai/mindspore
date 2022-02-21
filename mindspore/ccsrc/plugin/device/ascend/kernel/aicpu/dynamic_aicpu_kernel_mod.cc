@@ -22,14 +22,15 @@
 #include <algorithm>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/kernel.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,7 +38,7 @@ DynamicAicpuOpKernelMod::DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr)
   unknow_type_ = device::ascend::UnknowShapeOpType::DEPEND_IN_SHAPE;
   auto cnode = anf_node_ptr->cast<CNodePtr>();
   if (cnode != nullptr) {
-    auto op_name = AnfAlgo::GetCNodeName(cnode);
+    auto op_name = common::AnfAlgo::GetCNodeName(cnode);
     if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
       unknow_type_ = device::ascend::UnknowShapeOpType::DEPEND_COMPUTE;
     }
@@ -54,7 +55,7 @@ DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
 void DynamicAicpuOpKernelMod::InferOp() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!AnfAlgo::IsDynamicShape(node)) {
+  if (!common::AnfAlgo::IsDynamicShape(node)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape.";
   }
   KernelMod::InferShape();
@@ -65,13 +66,13 @@ void DynamicAicpuOpKernelMod::InitOp() {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
   MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   if (input_num == 0 && output_num == 0) {
     MS_LOG(INFO) << "Node:" << cnode->fullname_with_scope() << " no need to update output shape";
     return;
@@ -138,7 +139,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   MS_LOG(INFO) << "Start launch of node: " << cnode->fullname_with_scope();
 
   // is dynamic shape
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
   }
 
@@ -188,7 +189,7 @@ void DynamicAicpuOpKernelMod::UpdateOp() {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Aicpu " << cnode->fullname_with_scope() << " PostExecute";
   // is dynamic shape
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(EXCEPTION) << "The cnode is not dynamic shape:" << cnode->fullname_with_scope();
   }
 
@@ -214,7 +215,7 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
 
   std::vector<TypeId> type_ids;
   std::vector<std::vector<size_t>> shapes;
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<int64_t> shape;
     TypeId type_id;
@@ -225,7 +226,7 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
     shapes.emplace_back(size_t_shape);
   }
 
-  AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
   return true;
 }
 }  // namespace kernel

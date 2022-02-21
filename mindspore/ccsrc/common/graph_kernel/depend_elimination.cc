@@ -15,7 +15,7 @@
  */
 
 #include "common/graph_kernel/depend_elimination.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {
 bool DependElimination::Run(const FuncGraphPtr &func_graph) {

@@ -34,18 +34,18 @@
 #include "ir/cell.h"
 #include "ir/tensor.h"
 #include "utils/any.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
-#include "utils/context/context_extends.h"
-#include "utils/config_manager.h"
-#include "utils/convert_utils_py.h"
-#include "utils/scoped_long_running.h"
+#include "runtime/device/context_extends.h"
+#include "include/common/utils/config_manager.h"
+#include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/scoped_long_running.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -136,7 +136,7 @@ inline ValuePtr PyObjToValue(const py::object &obj) {
 }
 
 std::string GetPyObjId(const py::handle &obj) {
-  py::object out = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
   if (py::isinstance<py::none>(out)) {
     MS_LOG(EXCEPTION) << "Get pyobj failed";
   }
@@ -725,7 +725,7 @@ void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::Tens
     MS_EXCEPTION_IF_NULL(output_vnode);
     grad_graph->AddValueNode(output_vnode);
     MS_LOG(DEBUG) << "Original output value node: " << output_vnode << " info: " << output_vnode->ToString();
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
                         << ", but the current index: " << index << ", output num: " << output_num;
@@ -1285,7 +1285,7 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
 
 py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name,
                                        size_t index) {
-  static py::object cast_prim = parse::python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
+  static py::object cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
   const auto &op_exec_info = std::make_shared<OpExecInfo>();
   op_exec_info->op_name = prim::kPrimCast->name();
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(cast_prim);
@@ -1504,7 +1504,7 @@ AnfNodePtr GradExecutor::GetInput(const py::object &obj, bool op_mask) {
   if (op_mask) {
     MS_LOG(DEBUG) << "Cell parameters(weights)";
     // get the parameter name from parameter object
-    auto name_attr = parse::python_adapter::GetPyObjAttr(obj, "name");
+    auto name_attr = python_adapter::GetPyObjAttr(obj, "name");
     if (py::isinstance<py::none>(name_attr)) {
       MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
     }
@@ -2020,7 +2020,7 @@ py::tuple ForwardExecutor::RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_ex
 MsBackendPolicy ForwardExecutor::GetBackendPolicy(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(DEBUG) << "RunOp start, op name is: " << op_exec_info->op_name;
-  parse::python_adapter::set_python_env_flag(true);
+  python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 
@@ -2599,7 +2599,7 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
     return;
   }
   MS_LOG(DEBUG) << "Do grad for custom bprop";
-  size_t par_number = py::tuple(parse::python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
+  size_t par_number = py::tuple(python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
   if (par_number > 0) {
     MS_LOG(EXCEPTION) << "When user defines the net bprop, the 'Parameter' data type is not supported in the net.";
   }
@@ -2740,7 +2740,7 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   resource->SetResult(pipeline::kBackend, compile::CreateBackend());
   MS_LOG(DEBUG) << "Start task emit action";
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL) {
+  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
     MarkMsFunctionNodes(resource);
   }
   TaskEmitAction(resource);
@@ -2784,7 +2784,7 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
       w_args.emplace_back(para_node);
       continue;
     }
-    const auto &name_attr = parse::python_adapter::GetPyObjAttr(param, "name");
+    const auto &name_attr = python_adapter::GetPyObjAttr(param, "name");
     if (py::isinstance<py::none>(name_attr)) {
       MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
     }
@@ -3292,7 +3292,7 @@ py::object GradExecutor::GradMsFunction(const py::object &out, const py::args &a
   MS_EXCEPTION_IF_NULL(grad_graph);
   GradMsFunctionInner(phase, out, args, ms_func_graph, grad_graph);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL) {
+  if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {
     for (auto &parameter : ms_func_graph->parameters()) {
       auto param = parameter->cast<ParameterPtr>();
       if (param->has_default()) {

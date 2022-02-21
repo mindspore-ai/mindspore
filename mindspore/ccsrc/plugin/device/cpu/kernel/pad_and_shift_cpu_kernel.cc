@@ -25,17 +25,17 @@ constexpr size_t kPadAndShiftOutputsNum = 1;
 
 void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   batch_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); ++i) {
     batch_size_ *= indices_shape[i];
   }
   MS_LOG(INFO) << "PadAndShift batch_size:" << batch_size_;
-  auto cum_sum_arr_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto cum_sum_arr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (cum_sum_arr_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'cum_sum_arr' should be 1, but got "
                   << cum_sum_arr_shape.size() << ".";
@@ -89,12 +89,12 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   if (!node_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
   }
-  auto output_nums = AnfAlgo::GetOutputTensorNum(node_);
+  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_nums);
   for (size_t i = 0; i < output_nums; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
 }
 }  // namespace kernel
 }  // namespace mindspore

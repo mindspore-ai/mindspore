@@ -38,12 +38,12 @@ class MapCenterOfMassGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     residue_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "residue_numbers"));
 
-    auto shape_start = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_end = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_center_of_mass = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_box_length = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_no_wrap_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_start = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_end = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_center_of_mass = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_box_length = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_no_wrap_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
 
     for (size_t i = 0; i < shape_start.size(); i++) ele_start *= shape_start[i];
     for (size_t i = 0; i < shape_end.size(); i++) ele_end *= shape_end[i];

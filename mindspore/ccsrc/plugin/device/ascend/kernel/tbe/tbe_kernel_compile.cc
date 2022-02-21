@@ -33,6 +33,7 @@
 #include "plugin/device/ascend/kernel/tbe/dynamic_tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "common/util/error_manager/error_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -40,8 +41,8 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
-#include "utils/utils.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/json_operation_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -553,7 +554,7 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
     }
     auto kernel_info_json = kernel_pack->kernel_json_info();
     std::shared_ptr<TbeKernelMod> kernel_mod_ptr;
-    if (AnfAlgo::IsDynamicShape(node)) {
+    if (common::AnfAlgo::IsDynamicShape(node)) {
       kernel_mod_ptr = std::make_shared<DynamicTbeKernelMod>(kernel_pack, node);
     } else {
       kernel_mod_ptr = std::make_shared<TbeKernelMod>(kernel_pack, node);
@@ -660,7 +661,7 @@ void TbeKernelCompileManager::DistributePreBuildTask(const std::vector<CNodePtr>
     pre_build_single_processed_kernels_.insert(json_name);
     JsonAssemble(kPreCompile, kernel_json, &build_json);
     auto task_id = GetJsonValue<int>(build_json, kJobId);
-    auto is_dynamic = AnfAlgo::IsDynamicShape(node);
+    auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
     SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
 
     // save pair<task_id, node> for exception print and get node trace
@@ -689,7 +690,8 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     MS_EXCEPTION_IF_NULL(node);
     kernel_json.clear();
     build_json.clear();
-    if (AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, node) && AnfAlgo::GetNodeAttr<bool>(node, kAttrIsUBFusionOp)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, node) &&
+        common::AnfAlgo::GetNodeAttr<bool>(node, kAttrIsUBFusionOp)) {
       // skip fusion op, if node has the attr: kAttrIsUBFusionOp, means already done fusion compile, can not do single
       // op compile
       continue;
@@ -701,8 +703,8 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     auto json_name = json_creator->GetJsonName();
     auto full_name = node->fullname_with_scope();
     full_name_to_json_name_[full_name] = json_name;
-    if (AnfAlgo::IsDynamicShape(node)) {
-      AnfAlgo::SetNodeAttr(kAttrJsonFileName, MakeValue(json_name), node);
+    if (common::AnfAlgo::IsDynamicShape(node)) {
+      common::AnfAlgo::SetNodeAttr(kAttrJsonFileName, MakeValue(json_name), node);
     }
     // save all task io size info for gen kernel mod
     SaveIOSizeInfo(kernel_json, json_name);
@@ -720,7 +722,7 @@ void TbeKernelCompileManager::DistributeCompileTask(const std::vector<CNodePtr> 
     auto build_str = build_json.dump(indent);
     TbeUtils::SaveJsonInfo(json_name, build_str);
     auto task_id = GetJsonValue<int>(build_json, kJobId);
-    auto is_dynamic = AnfAlgo::IsDynamicShape(node);
+    auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
     SaveTaskInfo(is_dynamic, build_json, json_name, full_name, task_id, INT64_MAX);
 
     // save pair<task_id, node> for exception print and get node trace

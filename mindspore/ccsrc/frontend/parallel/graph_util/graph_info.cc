@@ -22,6 +22,7 @@
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
 #include "pipeline/jit/pipeline.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 
 namespace mindspore {
 namespace parallel {

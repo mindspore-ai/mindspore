@@ -28,10 +28,10 @@ constexpr size_t kEmbeddingLookupCommGradOutputsNum = 1;
 
 void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  split_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  split_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
   MS_LOG(INFO) << "split_num: " << split_num_;
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (split_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' should be greater than 0, but got 0.";
   }

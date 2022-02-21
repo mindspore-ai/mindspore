@@ -21,8 +21,9 @@
 
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,12 +34,12 @@ void ReducePrecision(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i
   MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(prim::kPrimCast->name());
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
   auto cast = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cast);
   prim->AddAttr(kAttrDstType, TypeIdToType(cast_type));
   auto cast_shape = {AnfAlgo::GetInputDeviceShape(node, i)};
-  AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->SetEdge(node, i + 1, cast);
@@ -60,7 +61,7 @@ void ProcessTupleGetItem(const FuncGraphPtr &graph, const AnfNodePtr &node, size
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
-    if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "TupleGetItem connect with TupleGetItem.";
     }
     ReducePrecision(graph, used_node, used_node_index, src_type, cast_type);
@@ -73,19 +74,19 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
   for (auto node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
     if (node != nullptr && node->isa<CNode>() && AnfUtils::IsRealKernel(node)) {
-      size_t input_num = AnfAlgo::GetInputTensorNum(node);
-      size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+      size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
       for (size_t i = 0; i < input_num; i++) {
-        auto inferType = AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
+        auto inferType = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
         auto deviceType = AnfAlgo::GetInputDeviceDataType(node, i);
         if (inferType == kNumberTypeInt64 && deviceType == kNumberTypeInt32) {
           ReducePrecision(graph, node, i, inferType, deviceType);
-          MS_LOG(WARNING) << "Reduce precision for [" << AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node))
+          MS_LOG(WARNING) << "Reduce precision for [" << common::AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node))
                           << "] input " << i;
         }
       }
       for (size_t i = 0; i < output_num; i++) {
-        auto inferType = AnfAlgo::GetOutputInferDataType(node, i);
+        auto inferType = common::AnfAlgo::GetOutputInferDataType(node, i);
         auto deviceType = AnfAlgo::GetOutputDeviceDataType(node, i);
         if (inferType != kNumberTypeInt64 || deviceType != kNumberTypeInt32) {
           continue;
@@ -95,7 +96,7 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
         for (size_t j = 0; j < used_node_list->size(); j++) {
           auto used_node = used_node_list->at(j).first;
           auto used_node_index = used_node_list->at(j).second - 1;
-          if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+          if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
             ProcessTupleGetItem(graph, used_node, used_node_index, deviceType, inferType);
           } else {
             ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);

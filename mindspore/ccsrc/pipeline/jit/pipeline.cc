@@ -36,17 +36,17 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "utils/config_manager.h"
-#include "utils/convert_utils.h"
-#include "utils/convert_utils_py.h"
-#include "utils/context/context_extends.h"
+#include "include/common/utils/config_manager.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/convert_utils_py.h"
+#include "runtime/device/context_extends.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "utils/crypto.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/interpret_node_recorder.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
@@ -79,9 +79,9 @@
 
 #ifdef ENABLE_D
 #include "pipeline/jit/pipeline_ge.h"
-#include "transform/graph_ir/convert.h"
-#include "transform/graph_ir/df_graph_manager.h"
-#include "transform/graph_ir/op_adapter_map.h"
+#include "include/transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
+#include "include/transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #endif
@@ -672,8 +672,8 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   info_[phase]->func_graph = func_graph;
 
-  if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
-      ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
+  if ((func_graph != nullptr) && func_graph->has_flag(parallel::kAutoParallel) &&
+      ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
     auto res = info_[phase]->resource;
     // When using frontend compile cache, model parallel parameter layout graph is not saved.
@@ -1313,7 +1313,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
 #endif
   MS_LOG(INFO) << "Start InitDataSet Entry";
-  mindspore::parse::python_adapter::set_python_env_flag(true);
+  mindspore::python_adapter::set_python_env_flag(true);
   ShapeVector int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
                        [](int64_t item) { return static_cast<int64_t>(item); });
@@ -1420,7 +1420,7 @@ void InitHccl() {
   }
 #endif
 
-  mindspore::parse::python_adapter::set_python_env_flag(true);
+  mindspore::python_adapter::set_python_env_flag(true);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 #if ENABLE_D
   bool task_sink = true;
@@ -1526,7 +1526,7 @@ void ReleaseGeTsd() {
 void InitPipeline() {
   // set python env flag
   RecordInitStatus();
-  mindspore::parse::python_adapter::set_python_env_flag(true);
+  mindspore::python_adapter::set_python_env_flag(true);
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1641,7 +1641,7 @@ void ClearResAtexit() {
 
   ReleaseGeTsd();
   MS_LOG(INFO) << "Start clear python_adapter...";
-  parse::python_adapter::ResetPythonScope();
+  python_adapter::ResetPythonScope();
   MS_LOG(INFO) << "End clear python_adapter.";
 
   MS_LOG(INFO) << "Start clear AnalysisResultCacheMgr...";

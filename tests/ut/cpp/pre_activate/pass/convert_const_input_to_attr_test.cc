@@ -21,7 +21,8 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "backend/common/pass/convert_const_input_to_attr.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -88,7 +89,7 @@ TEST_F(TestHWConstInputToAttr, test_onehot) {
   EXPECT_NE(ret->input(1), nullptr);
   EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
   auto cnode = ret->input(1)->cast<CNodePtr>();
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("depth", cnode));
+  EXPECT_FALSE(common::AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_FALSE(CheckEqualGraph(g, g_after));
 
   std::vector<int64_t> shp_x{16};
@@ -106,7 +107,7 @@ TEST_F(TestHWConstInputToAttr, test_onehot) {
   EXPECT_NE(make_tuple->input(1), nullptr);
   EXPECT_NE(make_tuple->input(1)->cast<CNodePtr>(), nullptr);
   cnode = make_tuple->input(1)->cast<CNodePtr>();
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("depth", cnode));
+  EXPECT_TRUE(common::AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
 }  // namespace opt

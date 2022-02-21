@@ -20,9 +20,10 @@
 #include <string>
 #include "utils/hash_set.h"
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/anf_ir_dump.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
@@ -43,7 +44,7 @@ enum CastType { CAST_UP, CAST_DOWN, CAST_OTHER };
 CastType GetCastType(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsPrimitiveCNode(node, prim::kPrimCast)) {
-    MS_LOG(EXCEPTION) << "Expect Cast node, but got " << AnfAlgo::GetCNodeName(node);
+    MS_LOG(EXCEPTION) << "Expect Cast node, but got " << common::AnfAlgo::GetCNodeName(node);
   }
   TypeId input_type = AnfAlgo::GetInputDeviceDataType(node, 0);
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
@@ -89,8 +90,8 @@ void SetNodeInfo(const CNodePtr &orig_node, const CNodePtr &new_node, const Node
   MS_EXCEPTION_IF_NULL(orig_node);
   MS_EXCEPTION_IF_NULL(new_node);
 
-  auto node_name = AnfAlgo::GetCNodeName(new_node);
-  auto orig_node_name = AnfAlgo::GetCNodeName(orig_node);
+  auto node_name = common::AnfAlgo::GetCNodeName(new_node);
+  auto orig_node_name = common::AnfAlgo::GetCNodeName(orig_node);
   if (orig_node_name != node_name) {
     MS_LOG(EXCEPTION) << "Can not process on different nodes " << orig_node_name << " and " << node_name;
   }
@@ -100,7 +101,7 @@ void SetNodeInfo(const CNodePtr &orig_node, const CNodePtr &new_node, const Node
     MS_LOG(EXCEPTION) << "Can not set empty output type of new node from " << orig_node->fullname_with_scope();
   }
   if (node_name == "Cast") {
-    auto node_input = AnfAlgo::GetInputNode(new_node, 0);
+    auto node_input = common::AnfAlgo::GetInputNode(new_node, 0);
     MS_EXCEPTION_IF_NULL(node_input);
     MS_EXCEPTION_IF_NULL(node_input->abstract());
     new_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(node_io_info.outputs_type[0]),
@@ -114,7 +115,7 @@ void SetNodeInfo(const CNodePtr &orig_node, const CNodePtr &new_node, const Node
   // Set abstract info
   new_node->set_abstract(new_abstract);
   // Set attrs
-  AnfAlgo::CopyNodeAttrs(orig_node, new_node);
+  common::AnfAlgo::CopyNodeAttrs(orig_node, new_node);
   // Set kernel build info
   new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
@@ -213,7 +214,7 @@ bool ReorderOps::ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, 
   auto small_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
   auto pattern_output_format = AnfAlgo::GetOutputFormat(node, 0);
 
-  auto node_input = AnfAlgo::GetInputNode(node, 0);
+  auto node_input = common::AnfAlgo::GetInputNode(node, 0);
   auto type_insens_node = node_input->cast<CNodePtr>();
   // Limitation:
   //   Find type insensitive node before cast node.
@@ -232,7 +233,7 @@ bool ReorderOps::ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, 
   std::vector<AnfNodePtr> new_cast_nodes;
   for (const auto &index : op_input_indexes) {
     auto new_cast_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
-                                               AnfAlgo::GetInputNode(type_insens_node, index)});
+                                               common::AnfAlgo::GetInputNode(type_insens_node, index)});
     NodeIOInfo cast_io_info;
     cast_io_info.inputs_format.push_back(AnfAlgo::GetInputFormat(type_insens_node, index));
     cast_io_info.outputs_format = cast_io_info.inputs_format;
@@ -270,13 +271,13 @@ bool ReorderOps::ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, co
   std::vector<AnfNodePtr> cast_input_nodes;
   auto op_input_indexes = GetOpDataInputIndexes(node);
   for (const auto &index : op_input_indexes) {
-    auto node_input = AnfAlgo::GetInputNode(node, index);
+    auto node_input = common::AnfAlgo::GetInputNode(node, index);
     auto cast_node = node_input->cast<CNodePtr>();
     if (cast_node != nullptr && IsPrimitiveCNode(cast_node, prim::kPrimCast) && GetCastType(cast_node) == CAST_UP &&
         AnfAlgo::GetInputFormat(node, 0) == AnfAlgo::GetOutputFormat(node, 0) &&
         mng->node_users()[cast_node].size() == 1) {
       cast_nodes.push_back(cast_node);
-      cast_input_nodes.push_back(AnfAlgo::GetInputNode(cast_node, 0));
+      cast_input_nodes.push_back(common::AnfAlgo::GetInputNode(cast_node, 0));
     }
   }
   if (cast_nodes.empty() || cast_nodes.size() != op_input_indexes.size()) {
@@ -356,8 +357,8 @@ bool ReorderOps::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (common::AnfAlgo::IsGraphKernel(node)) {
+      auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       bool need_traverse = true;
       while (need_traverse) {
         need_traverse = ReorderCastTypeInsensitive(sub_func_graph);

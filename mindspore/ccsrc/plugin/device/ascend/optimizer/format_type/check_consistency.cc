@@ -19,9 +19,10 @@
 #include <memory>
 #include <vector>
 
-#include "utils/utils.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "include/common/utils/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -30,14 +31,14 @@ namespace {
 bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
   MS_EXCEPTION_IF_NULL(node);
   // get prior node's device output format
-  auto prev_node = AnfAlgo::GetPrevNodeOutput(node, input_index);
+  auto prev_node = common::AnfAlgo::GetPrevNodeOutput(node, input_index);
   string pre_output_format = AnfAlgo::GetOutputFormat(prev_node.first, prev_node.second);
   string selected_input_format = AnfAlgo::GetInputFormat(node, input_index);
   if (pre_output_format == selected_input_format) {
     if (selected_input_format == kOpFormat_FRAC_Z &&
         (prev_node.first->isa<CNode>() || prev_node.first->isa<Parameter>())) {
-      auto pre_groups = AnfAlgo::GetAttrGroups(prev_node.first, prev_node.second);
-      auto cur_groups = AnfAlgo::GetAttrGroups(node, input_index);
+      auto pre_groups = common::AnfAlgo::GetAttrGroups(prev_node.first, prev_node.second);
+      auto cur_groups = common::AnfAlgo::GetAttrGroups(node, input_index);
       if (pre_groups != cur_groups) {
         MS_LOG(ERROR) << "Found inconsistent format! input format " << input_index << ": " << pre_output_format
                       << " with groups " << pre_groups << ", selected input format: " << selected_input_format
@@ -47,7 +48,7 @@ bool CheckFormatForConsistency(const CNodePtr &node, const size_t input_index) {
     }
     return true;
   }
-  auto input_origin_shape = AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
+  auto input_origin_shape = common::AnfAlgo::GetOutputInferShape(prev_node.first, prev_node.second);
   if (pre_output_format == kOpFormat_DEFAULT || selected_input_format == kOpFormat_DEFAULT) {
     string checking_format = (pre_output_format == kOpFormat_DEFAULT) ? selected_input_format : pre_output_format;
     // when input shape size is 1D, default format and NC1HWC0 are compatible
@@ -92,10 +93,10 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
 
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t in_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < in_num; ++i) {
     if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {
-      MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << AnfAlgo::GetCNodeName(cnode) << "["
+      MS_LOG(EXCEPTION) << "Found inconsistent format or data type! Op: " << common::AnfAlgo::GetCNodeName(cnode) << "["
                         << cnode->DebugString() << "], fullname: " << node->fullname_with_scope();
     }
   }

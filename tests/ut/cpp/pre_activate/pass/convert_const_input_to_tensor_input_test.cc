@@ -22,7 +22,8 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "backend/common/pass/convert_const_input_to_tensor_input.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -59,7 +60,7 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_fg) {
   EXPECT_NE(ret->input(1), nullptr);
   EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
   auto cnode = ret->input(1)->cast<CNodePtr>();
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("depth", cnode));
+  EXPECT_FALSE(common::AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_TRUE(IsValueNode<tensor::Tensor>(cnode->input(2)));
 }
 
@@ -80,7 +81,7 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_kg) {
   EXPECT_NE(ret->input(1), nullptr);
   EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
   auto cnode = ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("depth", cnode));
+  EXPECT_TRUE(common::AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
 
@@ -98,7 +99,7 @@ TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   EXPECT_NE(ret->input(1), nullptr);
   EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
   auto cnode = ret->input(1)->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
-  EXPECT_EQ(AnfAlgo::GetCNodeName(cnode), prim::kPrimDropoutGenMask->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(cnode), prim::kPrimDropoutGenMask->name());
   auto input1 = cnode->input(1);
   ASSERT_TRUE(input1 != nullptr);
   EXPECT_TRUE(IsValueNode<tensor::Tensor>(input1));

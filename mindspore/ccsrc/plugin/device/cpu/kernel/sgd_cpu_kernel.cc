@@ -27,10 +27,10 @@ constexpr size_t kSGDOutputsNum = 1;
 template <typename T>
 void SGDCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  dampening_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
-  weight_decay_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "weight_decay");
-  nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "nesterov");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  dampening_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
+  weight_decay_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "weight_decay");
+  nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "nesterov");
 }
 
 template <typename T>

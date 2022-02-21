@@ -70,7 +70,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
@@ -89,7 +89,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
-    input_num_ = SizeToInt(AnfAlgo::GetInputTensorNum(kernel_node));
+    input_num_ = SizeToInt(common::AnfAlgo::GetInputTensorNum(kernel_node));
     inputs_host_ = std::make_unique<T *[]>(input_num_);
     len_axis_ = std::make_unique<int[]>(input_num_);
     int current_dim = 0;
@@ -145,7 +145,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   bool CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }

@@ -21,10 +21,11 @@
 #include <memory>
 
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/tensor.h"
 #include "kernel/kernel_build_info.h"
 #include "runtime/device/kernel_info.h"
@@ -66,7 +67,7 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   uniform_real_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
   auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
   SetNodeAttrSafely("seed", MakeValue(seed), uniform_real_node);
-  AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);
+  common::AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);
   uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_i64));
   // Set kernel_info for uniform_real node
   auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -81,7 +82,7 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   // Create a GKDropout node with uniform_real as its second input.
   AnfNodePtrList gkdropout_inputs = {NewValueNode(prim::kPrimGkDropout), cnode->input(1), uniform_real_node};
   auto new_dropout_node = func_graph->NewCNode(gkdropout_inputs);
-  SetNodeAttrSafely("keep_prob", MakeValue(AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_dropout_node);
+  SetNodeAttrSafely("keep_prob", MakeValue(common::AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_dropout_node);
   // the output info is unchanged.
   new_dropout_node->set_abstract(node->abstract());
   auto old_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);

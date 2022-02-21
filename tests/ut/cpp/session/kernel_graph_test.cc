@@ -20,7 +20,8 @@
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "mindspore/ccsrc/runtime/device/kernel_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace session {
@@ -50,8 +51,8 @@ TEST_F(KernelGraphTest, NewValueNode) {
   mutable_kernel_info->set_select_kernel_build_info(builder->Build());
   auto new_value = kernel_graph->NewValueNode(add_value);
   EXPECT_NE(new_value, nullptr);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(new_value, 0)[0], 1);
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(new_value, 0), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(new_value, 0)[0], 1);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(new_value, 0), kFloat32->type_id());
   EXPECT_EQ(AnfAlgo::GetOutputFormat(new_value, 0), kOpFormat_DEFAULT);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceDataType(new_value, 0), kTypeUnknown);
 }
@@ -74,8 +75,8 @@ TEST_F(KernelGraphTest, NewParameter) {
   auto new_non_weight_parameter = kernel_graph->NewParameter(non_weight_parameter);
   EXPECT_NE(new_non_weight_parameter, nullptr);
   new_non_weight_parameter->set_name("non_weight_parameter");
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(new_non_weight_parameter, 0)[1], 32);
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(new_non_weight_parameter, 0), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(new_non_weight_parameter, 0)[1], 32);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(new_non_weight_parameter, 0), kFloat32->type_id());
   EXPECT_EQ(AnfAlgo::GetOutputFormat(new_non_weight_parameter, 0), kOpFormat_DEFAULT);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceDataType(new_non_weight_parameter, 0), kFloat32->type_id());
   EXPECT_EQ(new_non_weight_parameter->name(), "non_weight_parameter");
@@ -88,8 +89,8 @@ TEST_F(KernelGraphTest, NewParameter) {
   auto new_weight_parameter_node = kernel_graph->NewParameter(weight_parameter_node);
   EXPECT_NE(new_weight_parameter_node, nullptr);
   EXPECT_TRUE(new_weight_parameter_node->has_default());
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(new_weight_parameter_node, 0)[2], 224);
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(new_weight_parameter_node, 0), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(new_weight_parameter_node, 0)[2], 224);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(new_weight_parameter_node, 0), kFloat32->type_id());
   EXPECT_EQ(AnfAlgo::GetOutputFormat(new_weight_parameter_node, 0), kOpFormat_DEFAULT);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceDataType(new_weight_parameter_node, 0), kTypeUnknown);
 }
@@ -100,9 +101,9 @@ TEST_F(KernelGraphTest, NewCNode) {
   std::vector<AnfNodePtr> inputs = {add_value};
   auto new_cnode = kernel_graph->NewCNode(inputs);
   EXPECT_NE(new_cnode, nullptr);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(new_cnode), prim::kPrimAdd->name());
-  EXPECT_TRUE(AnfAlgo::GetOutputInferShape(new_cnode, 0).empty());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(new_cnode, 0), kMetaTypeNone);
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(new_cnode), prim::kPrimAdd->name());
+  EXPECT_TRUE(common::AnfAlgo::GetOutputInferShape(new_cnode, 0).empty());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(new_cnode, 0), kMetaTypeNone);
 }
 
 TEST_F(KernelGraphTest, MutableInputs) {
@@ -169,18 +170,18 @@ TEST_F(KernelGraphTest, SetExecOrderByDefault) {
   // test outputs() function
   auto outputs = kernel_graph->outputs();
   EXPECT_EQ(outputs.size(), 1);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(outputs[0]), prim::kPrimMul->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(outputs[0]), prim::kPrimMul->name());
   // test SetExecOrderByDefault() function
   kernel_graph->SetExecOrderByDefault();
   auto execution_order = kernel_graph->execution_order();
   EXPECT_EQ(execution_order.size(), 2);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[1]), prim::kPrimMul->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(execution_order[1]), prim::kPrimMul->name());
   // test set_execution_order() function
   kernel_graph->set_execution_order({add});
   execution_order = kernel_graph->execution_order();
   EXPECT_EQ(execution_order.size(), 1);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
 }
 
 TEST_F(KernelGraphTest, SetGraphId) {

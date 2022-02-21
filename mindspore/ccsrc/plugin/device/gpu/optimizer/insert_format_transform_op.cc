@@ -20,8 +20,9 @@
 #include <string>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
@@ -62,8 +63,8 @@ bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int
 void SetTransposeOpBuildInfo(const std::string &input_format, const std::string &output_format,
                              const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto input_type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
-  auto output_type = AnfAlgo::GetOutputInferDataType(node, 0);
+  auto input_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  auto output_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   builder.SetInputsFormat({input_format});
   builder.SetInputsDeviceType({input_type});
@@ -99,15 +100,15 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   auto transpose_op = graph->NewCNode(transpose_input);
   MS_EXCEPTION_IF_NULL(transpose_op);
   // 3.Set the output info of transpose.
-  auto transpose_type = {AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
-  auto transpose_shape = AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
-  AnfAlgo::SetOutputInferTypeAndShape(transpose_type, {transpose_shape}, transpose_op.get());
+  auto transpose_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(used_node, used_node_index)};
+  auto transpose_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(used_node, used_node_index);
+  common::AnfAlgo::SetOutputInferTypeAndShape(transpose_type, {transpose_shape}, transpose_op.get());
   if (is_fake) {
     std::vector<int64_t> shape;
     std::transform(transpose_shape.begin(), transpose_shape.end(), std::back_inserter(shape), SizeToLong);
-    AnfAlgo::SetNodeAttr("shape", MakeValue(shape), transpose_op);
+    common::AnfAlgo::SetNodeAttr("shape", MakeValue(shape), transpose_op);
   } else {
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
+    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   }
   // 4. Set the new edge of transpose op.
   FuncGraphManagerPtr manager = graph->manager();
@@ -125,7 +126,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
   if (!AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-  auto iter = device::gpu::kKernelFormatPositionMap.find(AnfAlgo::GetCNodeName(node));
+  auto iter = device::gpu::kKernelFormatPositionMap.find(common::AnfAlgo::GetCNodeName(node));
   if (iter == device::gpu::kKernelFormatPositionMap.end()) {
     return nullptr;
   }
@@ -138,7 +139,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
   auto inputs_format = AnfAlgo::GetAllInputFormats(node);
   for (size_t i = 0; i < inputs_format.size(); i++) {
     if ((inputs_format[i] != kOpFormat_DEFAULT) && (inputs_format[i] != origin_data_format)) {
-      auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
+      auto input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
       MS_EXCEPTION_IF_NULL(input_node);
       auto input_transpose_perm = TransposeAxis(origin_data_format, inputs_format[i]);
       auto input_transpose_op = InsertTransposeOp(graph, input_node, node, i, input_transpose_perm);
@@ -157,7 +158,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
         auto used_node = used_node_list->at(j).first;
         auto used_node_index = used_node_list->at(j).second - 1;
         auto output_transpose_perm = TransposeAxis(outputs_format[i], origin_data_format);
-        if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+        if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
           MS_LOG(DEBUG) << "The used node of [" << node->fullname_with_scope() << "] is tuple item.";
           // The tuple item need get next used nodes again.
           ProcessForTupleItem(graph, used_node, used_node_index, output_transpose_perm, outputs_format[i]);
@@ -179,7 +180,7 @@ void InsertFormatTransformOp::ProcessForTupleItem(const FuncGraphPtr &graph, con
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
-    if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "The used node of tuple item can't be tuple item.";
     }
     auto transpose_op = InsertTransposeOp(graph, node, used_node, used_node_index, transpose_perm);

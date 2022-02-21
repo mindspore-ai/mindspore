@@ -20,7 +20,7 @@
 #include <memory>
 #include <map>
 #include "backend/common/session/kernel_graph.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 
 namespace mindspore {
 namespace device {

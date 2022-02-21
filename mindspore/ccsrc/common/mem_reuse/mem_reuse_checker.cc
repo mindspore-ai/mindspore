@@ -26,12 +26,12 @@ MemReuseChecker &MemReuseChecker::GetInstance() {
 }
 
 void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) {
-  std::string node_name = AnfAlgo::GetCNodeName(c_node);
+  std::string node_name = common::AnfAlgo::GetCNodeName(c_node);
   if (node_name == kSendOpName || node_name == kRecvOpName) {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
     // get op's info && check
-    MS_LOG(INFO) << "op: " << node_name << " in_num: " << AnfAlgo::GetInputTensorNum(c_node)
-                 << " out_num: " << AnfAlgo::GetOutputTensorNum(c_node);
+    MS_LOG(INFO) << "op: " << node_name << " in_num: " << common::AnfAlgo::GetInputTensorNum(c_node)
+                 << " out_num: " << common::AnfAlgo::GetOutputTensorNum(c_node);
   }
 }
 
@@ -44,7 +44,7 @@ void MemReuseChecker::CheckWorkSpace(const std::vector<size_t> &max_list) {
 void MemReuseChecker::CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx) {
   auto key = c_node.get();
   auto iter = kernel_refs.find(key);
-  auto node_name = AnfAlgo::GetCNodeName(c_node);
+  auto node_name = common::AnfAlgo::GetCNodeName(c_node);
   if (iter == kernel_refs.end()) {
     MS_LOG(EXCEPTION) << "kernel [" << node_name << "] has no output tensor, node: " << c_node->DebugString()
                       << " output index: " << output_idx;
@@ -63,12 +63,12 @@ int64_t MemReuseChecker::CalculOriInput(const KernelGraph *graph) const {
     if (!item->isa<Parameter>()) {
       continue;
     }
-    auto output_size = AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId ou_type = AnfAlgo::GetOutputDeviceDataType(item, index);
       // parameter has not init by a cnode
       if (ou_type == kTypeUnknown) {
-        ou_type = AnfAlgo::GetOutputInferDataType(item, index);
+        ou_type = common::AnfAlgo::GetOutputInferDataType(item, index);
       }
       size_t type_size = GetTypeByte(TypeIdToType(ou_type));
       std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(item, index);
@@ -211,12 +211,12 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
   // set real graph output node to be special who's refcount equal kMaxRefCount
   for (const auto &output : graph->outputs()) {
     MS_EXCEPTION_IF_NULL(output);
-    size_t input_num = AnfAlgo::GetInputTensorNum(output);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(output);
     for (size_t i = 0; i < input_num; ++i) {
       if (output->isa<CNode>()) {
         auto cnode = output->cast<CNodePtr>();
         auto input_node = cnode->input(i + 1);
-        auto kernel_input_with_idx = AnfAlgo::VisitKernel(input_node, 0);
+        auto kernel_input_with_idx = common::AnfAlgo::VisitKernel(input_node, 0);
         auto kernel_input = kernel_input_with_idx.first;
         MS_EXCEPTION_IF_NULL(kernel_input);
         auto kernel_mod = AnfAlgo::GetKernelMod(kernel_input);
@@ -362,7 +362,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
   const auto &cnodes = graph->execution_order();
   for (const auto &node : cnodes) {
     std::vector<const void *> curr_ous;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       auto it = AnfAlgo::GetOutputAddr(node, i);
       MS_EXCEPTION_IF_NULL(it);
@@ -373,17 +373,17 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
     }
     (void)node_ous_.emplace(node.get(), curr_ous);
     std::vector<const void *> curr_ins;
-    size_t input_num = AnfAlgo::GetInputTensorNum(node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
       if (i + 1 >= node->inputs().size()) {
         MS_LOG(EXCEPTION) << "Input index: " << i
-                          << " is larger than input number: " << AnfAlgo::GetInputTensorNum(node)
+                          << " is larger than input number: " << common::AnfAlgo::GetInputTensorNum(node)
                           << trace::DumpSourceLines(node);
       }
       auto real_input_index = AnfAlgo::GetRealInputIndex(node, i);
       auto input = node->input(real_input_index + 1);
       MS_EXCEPTION_IF_NULL(input);
-      auto kernel_with_index = AnfAlgo::VisitKernel(input, 0);
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(input, 0);
       if (kernel_with_index.first->isa<Parameter>()) {
         continue;
       }

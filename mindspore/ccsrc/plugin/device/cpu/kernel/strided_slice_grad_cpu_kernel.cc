@@ -25,12 +25,12 @@ namespace mindspore {
 namespace kernel {
 void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   param_ = (struct StridedSliceParameter *)malloc(sizeof(struct StridedSliceParameter));
   if (param_ == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', malloc StridedSliceGradParameter failed.";
   }
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   switch (dtype_) {
     case kNumberTypeFloat32:
@@ -44,14 +44,14 @@ void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
   param_->num_axes_ = input_shape_me.size();
   param_->in_shape_length_ = input_shape_me.size();
-  std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+  std::vector<int64_t> begin_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
-  std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-  std::vector<int64_t> end_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+  std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  std::vector<int64_t> end_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),

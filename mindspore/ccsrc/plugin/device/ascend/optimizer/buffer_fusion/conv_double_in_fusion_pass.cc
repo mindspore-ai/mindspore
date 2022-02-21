@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv_double_in_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -56,14 +57,14 @@ void ConvDoubleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE &&
-        !AnfAlgo::CheckPrimitiveType(node, prim::kPrimReluV2)) {
+        !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReluV2)) {
       MatchConvDoubleInEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

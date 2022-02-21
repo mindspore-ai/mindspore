@@ -22,6 +22,7 @@
 #include <memory>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace device {
@@ -41,8 +42,10 @@ struct StreamSwitchNode {
     if (offset < n.offset) {
       return true;
     } else if (offset == n.offset) {
-      return (AnfAlgo::GetCNodeName(cnode) == kRecvOpName && AnfAlgo::GetCNodeName(n.cnode) == kSendOpName) ? false
-                                                                                                            : true;
+      return (common::AnfAlgo::GetCNodeName(cnode) == kRecvOpName &&
+              common::AnfAlgo::GetCNodeName(n.cnode) == kSendOpName)
+               ? false
+               : true;
     } else {
       return false;
     }

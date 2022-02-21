@@ -20,6 +20,7 @@
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "ir/anf.h"
@@ -29,11 +30,11 @@
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "runtime/device/kernel_info.h"
-#include "utils/convert_utils.h"
-#include "utils/convert_utils_py.h"
-#include "utils/utils.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -190,10 +191,10 @@ class CNodeDecoder {
     // then the node's output is a feature map output
     const auto &inputs = cnode_->inputs();
     for (size_t index = 1; index < inputs.size(); ++index) {
-      auto node = AnfAlgo::VisitKernel(inputs[index], 0);
+      auto node = common::AnfAlgo::VisitKernel(inputs[index], 0);
       if ((node.first)->isa<Parameter>()) {
         auto parameter = (node.first)->cast<ParameterPtr>();
-        bool is_weight = AnfAlgo::IsParameterWeight(parameter);
+        bool is_weight = common::AnfAlgo::IsParameterWeight(parameter);
         kernel_info->set_feature_map_flag(!is_weight);
         if (!is_weight) {
           feature_map_input_indexs.push_back(index - 1);
@@ -203,15 +204,15 @@ class CNodeDecoder {
         feature_map_input_indexs.push_back(index - 1);
       }
     }
-    if (AnfAlgo::GetCNodeName(cnode_) == prim::kPrimCast->name()) {
-      AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode_);
+    if (common::AnfAlgo::GetCNodeName(cnode_) == prim::kPrimCast->name()) {
+      common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode_);
     }
     if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
       kernel_info->set_feature_map_flag(true);
     }
     if (AnfUtils::IsRealCNodeKernel(cnode_)) {
-      AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode_);
-      AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode_);
+      common::AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode_);
+      common::AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode_);
     }
     cnode_->set_kernel_info(kernel_info);
     // create kernel_build_info.

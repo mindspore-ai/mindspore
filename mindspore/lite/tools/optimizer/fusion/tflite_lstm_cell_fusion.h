@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

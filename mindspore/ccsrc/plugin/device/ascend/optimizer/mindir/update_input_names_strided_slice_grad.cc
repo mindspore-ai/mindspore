@@ -18,7 +18,8 @@
 #include <vector>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -37,14 +38,14 @@ const AnfNodePtr StridedSliceGradUpdateInputNames::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(strided_slice_grad);
 
   const size_t shapex_index = 1;
-  if (AnfAlgo::IsDynamicShape(strided_slice_grad)) {
-    auto primitive = AnfAlgo::GetCNodePrimitive(strided_slice_grad);
+  if (common::AnfAlgo::IsDynamicShape(strided_slice_grad)) {
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(strided_slice_grad);
     MS_EXCEPTION_IF_NULL(primitive);
     auto input_names_ptr = primitive->GetAttr(kAttrInputNames);
     MS_EXCEPTION_IF_NULL(input_names_ptr);
     auto input_names_vec = GetValue<std::vector<std::string>>(input_names_ptr);
     input_names_vec[shapex_index] = "shape";
-    AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_vec), strided_slice_grad);
+    common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_vec), strided_slice_grad);
   }
   return nullptr;
 }

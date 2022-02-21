@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/optimizer/format_type/rectify_do_mask_kernel_info.h"
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -41,14 +42,14 @@ const AnfNodePtr RectifyDoMaskKernelInfo::Process(const FuncGraphPtr &graph, con
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return RectifyKernelInfoInPynativeProcess(node);
   }
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutGenMask->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutGenMask->name()) {
     return nullptr;
   }
   std::vector<CNodePtr> do_mask_node_list;
   auto gen_mask_output_nodes = GetRealNodeUsedList(graph, cnode);
   MS_EXCEPTION_IF_NULL(gen_mask_output_nodes);
   for (const auto &output_node : *gen_mask_output_nodes) {
-    if (AnfAlgo::GetCNodeName(output_node.first) == prim::kPrimDropoutDoMask->name()) {
+    if (common::AnfAlgo::GetCNodeName(output_node.first) == prim::kPrimDropoutDoMask->name()) {
       MS_EXCEPTION_IF_NULL(output_node.first);
       auto output_cnode = output_node.first->cast<CNodePtr>();
       do_mask_node_list.push_back(output_cnode);
@@ -127,7 +128,7 @@ AnfNodePtr RectifyDoMaskKernelInfo::RectifyKernelInfoInPynativeProcess(const Anf
   if (cnode == nullptr) {
     return nullptr;
   }
-  if (AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutDoMask->name()) {
+  if (common::AnfAlgo::GetCNodeName(cnode) != prim::kPrimDropoutDoMask->name()) {
     return nullptr;
   }
   auto do_mask_input_format = AnfAlgo::GetInputFormat(node, 0);
@@ -158,8 +159,8 @@ void RectifyDoMaskKernelInfo::ReSelecChildNodeKernelInfo(const CNodePtr &cnode, 
       if ((*new_build_info) != (*ori_build_info)) {
         ReSelecChildNodeKernelInfo(out_node, graph);
       }
-    } else if (AnfAlgo::GetCNodeName(out_node) == prim::kPrimTupleGetItem->name() ||
-               AnfAlgo::GetCNodeName(out_node) == prim::kPrimDepend->name()) {
+    } else if (common::AnfAlgo::GetCNodeName(out_node) == prim::kPrimTupleGetItem->name() ||
+               common::AnfAlgo::GetCNodeName(out_node) == prim::kPrimDepend->name()) {
       ReSelecChildNodeKernelInfo(out_node, graph);
     } else {
       MS_LOG(INFO) << "Reselected the node " << cnode->DebugString() << " failed";

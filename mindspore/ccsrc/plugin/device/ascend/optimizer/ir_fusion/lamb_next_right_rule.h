@@ -18,7 +18,7 @@
 
 #include <memory>
 #include "backend/common/optimizer/optimizer.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
