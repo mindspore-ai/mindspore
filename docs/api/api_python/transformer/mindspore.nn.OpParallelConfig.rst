@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.OpParallelConfig(data_parallel=1, model_parallel=1)
+﻿.. py:class:: mindspore.nn.transformer.OpParallelConfig(data_parallel=1, model_parallel=1)
 
     用于设置数据并行和模型并行的OpParallelConfig。
 

@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.MultiHeadAttention(batch_size, src_seq_length, tgt_seq_length, hidden_size, num_heads, hidden_dropout_rate=0.1, attention_dropout_rate=0.1, compute_dtype=mstype.float16, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, use_past=False, parallel_config=default_dpmp_config)
+﻿.. py:class:: mindspore.nn.transformer.MultiHeadAttention(batch_size, src_seq_length, tgt_seq_length, hidden_size, num_heads, hidden_dropout_rate=0.1, attention_dropout_rate=0.1, compute_dtype=mstype.float16, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, use_past=False, parallel_config=default_dpmp_config)
 
     论文 `Attention Is All You Need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 中所述的多头注意力的实现。给定src_seq_length长度的query向量，tgt_seq_length长度的key向量和value，注意力计算流程如下：
 
@@ -43,5 +43,4 @@
     Tuple，表示一个包含(`output`, `layer_present`)的元组。
 
     - **output** (Tensor) - Tensor。use_past为False或is_first_iteration为True时，表示shape为(batch_size, src_seq_length, hidden_size)或(batch_size * src_seq_length, hidden_size)的层输出的float tensor。否则，shape将为(batch_size, 1, hidden_size)。
-
     - **layer_present** (Tuple) - 表示shape为((batch_size, num_heads, size_per_head, tgt_seq_length)或(batch_size, num_heads, tgt_seq_length, size_per_head))的投影key向量和value向量的Tensor的元组。

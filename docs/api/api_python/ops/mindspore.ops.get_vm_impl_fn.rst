@@ -14,4 +14,4 @@ mindspore.ops.get_vm_impl_fn
 
     **返回：**
 
-        函数，虚拟实现函数。
+    函数，虚拟实现函数。

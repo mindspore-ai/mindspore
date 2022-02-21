@@ -1,5 +1,5 @@
 mindspore.dataset.vision.c_transforms.SlicePatches
-=================================================
+===================================================
 
 .. py:class:: mindspore.dataset.vision.c_transforms.SlicePatches(num_height=1, num_width=1, slice_mode=SliceMode.PAD, fill_value=0)
 

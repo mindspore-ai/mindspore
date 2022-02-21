@@ -1,5 +1,5 @@
 mindspore.dataset.vision.c_transforms.RandomResizedCropWithBBox
-=================================================
+================================================================
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomResizedCropWithBBox(size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), interpolation=Inter.BILINEAR, max_attempts=10)
 

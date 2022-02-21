@@ -1,5 +1,5 @@
 mindspore.dataset.vision.c_transforms.RandomRotation
-=================================================
+=====================================================
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomRotation(degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0)
 

@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.parallel.nn.VocabEmbedding(vocab_size, embedding_size, parallel_config=default_embedding_parallel_config, param_init="normal")
+﻿.. py:class:: mindspore.nn.transformer.VocabEmbedding(vocab_size, embedding_size, parallel_config=default_embedding_parallel_config, param_init="normal")
 
     根据输入的索引查找参数表中的行作为返回值。当设置并行模式为 `AUTO_PARALLEL_MODE` 时，如果parallel_config.vocab_emb_dp为True时，那么embedding lookup表采用数据并行的方式，数据并行度为 `parallel_config.data_parallel` ，否则按 `parallel_config.model_parallel` 对embedding表中的第0维度进行切分。
 
@@ -6,8 +6,8 @@
 
     - **vocab_size** （int) - 表示查找表的大小。
     - **embedding_size** （int）- 表示查找表中每个嵌入向量的大小。
-    - **param_init** （Union[Tensor, str, Initializer, numbers.Number]）- 表示embedding_table的Initializer。当指定字符串时，请参见 `initializer` 类了解字符串的值。默认值：'normal'
-        - **parallel_config** (EmbeddingOpParallelConfig) - 表示网络的并行配置。默认值为 `default_embedding_parallel_config` ，表示带有默认参数的 `EmbeddingOpParallelConfig` 实例。
+    - **param_init** （Union[Tensor, str, Initializer, numbers.Number]）- 表示embedding_table的Initializer。当指定字符串时，请参见 `initializer` 类了解字符串的值。默认值：'normal'。
+    - **parallel_config** (EmbeddingOpParallelConfig) - 表示网络的并行配置。默认值为 `default_embedding_parallel_config` ，表示带有默认参数的 `EmbeddingOpParallelConfig` 实例。
 
     **输入：**
 
