@@ -132,12 +132,11 @@ class SyncBatchNormGrad(PrimitiveWithInfer):
     """Performs grad of SyncBatchNorm operation."""
 
     @prim_attr_register
-    def __init__(self, epsilon=1e-5, group="group0", device_num=2, data_format='NCHW'):
+    def __init__(self, epsilon=1e-5, group="group0", device_num=2):
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         if not isinstance(group, str):
             raise TypeError("The group attr of SyncBatchNormGrad should be str.")
         validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
-        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
 
     def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape):
         validator.check("BatchNorm y_backprop_shape", y_backprop_shape, "BatchNorm x_shape", x_shape)
