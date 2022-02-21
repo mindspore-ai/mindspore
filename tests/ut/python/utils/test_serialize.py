@@ -128,7 +128,7 @@ def test_load_checkpoint_error_filename():
     """
     context.set_context(mode=context.GRAPH_MODE, print_file_path="print/print.pb")
     ckpt_file_name = 1
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         load_checkpoint(ckpt_file_name)
 
 
