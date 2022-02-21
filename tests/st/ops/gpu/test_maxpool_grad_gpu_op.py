@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.composite import GradOperation
 
 
 class Net_Pool_Grad(nn.Cell):
@@ -31,6 +32,16 @@ class Net_Pool_Grad(nn.Cell):
 
     def construct(self, x, a, d):
         return self.maxpool_grad_fun(x, a, d)
+
+
+class Grad(nn.Cell):
+    def __init__(self, network):
+        super(Grad, self).__init__()
+        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, x1, out, dout, grad):
+        return self.grad(self.network)(x1, out, dout, grad)
 
 
 @pytest.mark.level0
@@ -69,7 +80,19 @@ def test_maxpool2d_grad():
     output = maxpool2d_grad(x, a, d)
     assert (output.asnumpy() == expect_result).all()
 
+    maxpool2d_grad_grad = Grad(maxpool2d_grad)
+    outputs = maxpool2d_grad_grad(x, a, d, x)
+    assert (outputs[0].asnumpy() == 0).all()
+    assert (outputs[1].asnumpy() == 0).all()
+    assert (outputs[2].asnumpy() == a).all()
+
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     maxpool2d_grad = Net_Pool_Grad()
     output = maxpool2d_grad(x, a, d)
     assert (output.asnumpy() == expect_result).all()
+
+    maxpool2d_grad_grad = Grad(maxpool2d_grad)
+    outputs = maxpool2d_grad_grad(x, a, d, x)
+    assert (outputs[0].asnumpy() == 0).all()
+    assert (outputs[1].asnumpy() == 0).all()
+    assert (outputs[2].asnumpy() == a).all()
