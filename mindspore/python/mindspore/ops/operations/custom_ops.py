@@ -48,61 +48,81 @@ class Custom(ops.PrimitiveWithInfer):
               2. A TBE operator implementation function.
               3. A pure python function
 
-            - str: If func is of str type, then str should be a path of binary file along with a function name.
-              This could only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
-              "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
-              operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
-              and offer the path of the file along with a function name.
+            - str: If func is of str type, then str should be a path of file along with a function name.
+              This could be used when func_type is "aot" or "julia".
 
-              - "xxx.so" file generation:
+              1. for "aot":
+                Currently "aot" supports GPU/CPU(linux only) platform.
+                "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
+                operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
+                and offer the path of the file along with a function name.
 
-                1) GPU Platform: Given user defined "xxx.cu" file (ex. "{path}/add.cu"), use nvcc command to compile
-                it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
+                - "xxx.so" file generation:
 
-                2) CPU Platform: Given user defined "xxx.cc" file (ex. "{path}/add.cc"), use g++/gcc command to compile
-                it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
+                  1) GPU Platform: Given user defined "xxx.cu" file (ex. "{path}/add.cu"), use nvcc command to compile
+                  it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
 
-              - Define a "xxx.cc"/"xxx.cu" file:
+                  2) CPU Platform: Given user defined "xxx.cc" file (ex. "{path}/add.cc"), use g++/gcc command to
+                  compile it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
 
-                "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same args.
-                Typically, the function should be as:
+                - Define a "xxx.cc"/"xxx.cu" file:
 
-                .. code-block::
+                  "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same args.
+                  Typically, the function should be as:
 
-                    int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
-                             void *stream, void *extra)
+                  .. code-block::
 
-                Parameters:
+                      int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes,
+                               void *stream, void *extra)
 
-                - nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3 outputs,
-                  then nparam=5
-                - params(void \*\*): a pointer to the array of inputs and outputs' pointer; the pointer type of inputs
-                  and outputs is void \* ; suppose the operator has 2 inputs and 3 outputs, then the first input's
-                  pointer is params[0] and the second output's pointer is params[3]
-                - ndims(int \*): a pointer to the array of inputs and outputs' dimension num; suppose params[i] is a
-                  1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
-                - shapes(int64_t \*\*): a pointer to the array of inputs and outputs' shapes(int64_t \*); the ith
-                  input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i] is a 2x3 tensor and
-                  params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
-                - dtypes(const char \*\*): a pointer to the array of inputs and outputs' types(const char \*);
-                  (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64", "uint",
-                  "uint8", "uint16", "uint32", "uint64", "bool")
-                - stream(void \*): stream pointer, only used in cuda file
-                - extra(void \*): used for further extension
+                  Parameters:
 
-                Return Value(int):
+                  - nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3 outputs,
+                    then nparam=5
+                  - params(void \*\*): a pointer to the array of inputs and outputs' pointer; the pointer type of inputs
+                    and outputs is void \* ; suppose the operator has 2 inputs and 3 outputs, then the first input's
+                    pointer is params[0] and the second output's pointer is params[3]
+                  - ndims(int \*): a pointer to the array of inputs and outputs' dimension num; suppose params[i] is a
+                    1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
+                  - shapes(int64_t \*\*): a pointer to the array of inputs and outputs' shapes(int64_t \*); the ith
+                    input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i] is a 2x3 tensor and
+                    params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
+                  - dtypes(const char \*\*): a pointer to the array of inputs and outputs' types(const char \*);
+                    (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64", "uint",
+                    "uint8", "uint16", "uint32", "uint64", "bool")
+                  - stream(void \*): stream pointer, only used in cuda file
+                  - extra(void \*): used for further extension
 
-                - 0: MindSpore will continue to run if this aot kernel is successfully executed
-                - others: MindSpore will raise exception and exit
+                  Return Value(int):
 
-                Examples: see details in tests/st/ops/graph_kernel/custom/aot_test_files/
+                  - 0: MindSpore will continue to run if this aot kernel is successfully executed
+                  - others: MindSpore will raise exception and exit
 
-              - Use it in Custom:
+                  Examples: see details in tests/st/ops/graph_kernel/custom/aot_test_files/
 
-                .. code-block::
+                - Use it in Custom:
 
-                    Custom(func="{dir_path}/{file_name}:{func_name}",...)
-                    (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32))
+                  .. code-block::
+
+                      Custom(func="{dir_path}/{file_name}:{func_name}",...)
+                      (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_dtype=mstype.float32,
+                      "aot")
+
+              2. for "julia":
+                Currently "julia" supports CPU(linux only) platform.
+                For julia use JIT compiler, and julia support c api to call julia code.
+                The Custom can directly launches user defined "xxx.jl" file as an operator.
+                Users need to write a "xxx.jl" file which include modules and functions,
+                and offer the path of the file along with a module name and function name.
+
+                Examples: see details in tests/st/ops/graph_kernel/custom/julia_test_files/
+
+                - Use it in Custom:
+
+                  .. code-block::
+
+                      Custom(func="{dir_path}/{file_name}:{module_name}:{func_name}",...)
+                      (ex. Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia")
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
             `func`.
@@ -127,6 +147,7 @@ class Custom(ops.PrimitiveWithInfer):
             - "tbe": supports ["Ascend"].
             - "aot": supports ["GPU", "CPU"].
             - "pyfunc": supports ["CPU"].
+            - "julia": supports ["CPU"].
 
         bprop (function): The back propagation function of `func`. Default: None.
         reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
@@ -273,6 +294,22 @@ class Custom(ops.PrimitiveWithInfer):
         ...         self.func = ops.Custom(func_multi_output, lambda x, _: (x, x), lambda x, _: (x, x), "pyfunc")
         ...     def construct(self, x1, x2):
         ...         return self.func(x1, x2)
+        >>>
+        >>> # Example, func_type = "julia"
+        >>> # julia code:
+        >>> # add.jl
+        >>> # module Add
+        >>> # function add(x, y, z)
+        >>> #   z .= x + y
+        >>> #   return z
+        >>> # end
+        >>> # end
+        >>> class JULIASingleOutputNet(Cell):
+        ...     def __init__(self, out_shapes, out_types):
+        ...         super(JULIASingleOutputNet, self).__init__()
+        ...         self.program = ops.Custom("./add.jl:Add:add", out_shapes, out_types, "julia")
+        ...     def construct(self, x, y):
+        ...         return self.program(x, y)
     """
 
     registered_func = {}

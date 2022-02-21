@@ -24,6 +24,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <thread>
 #include <condition_variable>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -272,17 +273,32 @@ class JuliaAPI {
   }
 
   bool RunJuliaKernel() {
-    // include julia file
-    JlEvalString("Base.include(Main, \"" + file_ + "\")");
-    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
-    // using julia module
-    JlEvalString("using Main." + module_);
-    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
-    jl_module_t *jmod = reinterpret_cast<jl_module_t *>(JlEvalString("Main." + module_));
-    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
-    // get julia function from module
-    jl_function_t *jfunc = JlGetFunction(jmod, func_);
-    RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+    if (!jl_file_caches_.count(file_)) {
+      // include julia file
+      JlEvalString("Base.include(Main, \"" + file_ + "\")");
+      RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+      jl_file_caches_.insert(file_);
+    }
+    jl_module_t *jmod = nullptr;
+    if (!jl_module_caches_.count(file_ + module_)) {
+      // using julia module
+      JlEvalString("using Main." + module_);
+      RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+      jmod = reinterpret_cast<jl_module_t *>(JlEvalString("Main." + module_));
+      RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+      jl_module_caches_[file_ + module_] = jmod;
+    } else {
+      jmod = jl_module_caches_[file_ + module_];
+    }
+    jl_function_t *jfunc = nullptr;
+    if (!jl_file_caches_.count(file_ + module_ + func_)) {
+      // get julia function from module
+      jfunc = JlGetFunction(jmod, func_);
+      RETURN_FALSE_IF_GET_JULIA_EXCEPTION();
+      jl_function_caches_[file_ + module_ + func_] = jfunc;
+    } else {
+      jfunc = jl_function_caches_[file_ + module_ + func_];
+    }
     // convert kernel inputs to julia type
     std::vector<jl_value_t *> args(nparam_);
     for (int i = 0; i < nparam_; i++) {
@@ -382,6 +398,11 @@ class JuliaAPI {
   std::vector<int> ndims_;
   std::vector<int64_t *> shapes_;
   std::vector<const char *> dtypes_;
+
+  // julia cache
+  std::unordered_set<std::string> jl_file_caches_;
+  std::unordered_map<std::string, jl_module_t *> jl_module_caches_;
+  std::unordered_map<std::string, jl_function_t *> jl_function_caches_;
 
   // about julia shared library
   void *handle_;
