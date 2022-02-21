@@ -103,7 +103,9 @@ int SocketOperation::CreateServerSocket(sa_family_t family) {
 
   ret = SetSocketOptions(fd);
   if (ret < 0) {
-    close(fd);
+    if (close(fd) != 0) {
+      MS_LOG(EXCEPTION) << "Failed to close fd: " << fd;
+    }
     return -1;
   }
   return fd;
@@ -136,18 +138,23 @@ std::string SocketOperation::GetIP(const std::string &url) {
     return "";
   }
 
-  std::string ip = url.substr(index1, index2 - index1);
-  SocketAddress addr;
+  if (index2 >= url.size()) {
+    MS_LOG(ERROR) << "Invalid url: " << url;
+    return "";
+  } else {
+    std::string ip = url.substr(index1, index2 - index1);
+    SocketAddress addr;
 
-  int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
-  if (result <= 0) {
-    result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+    int result = inet_pton(AF_INET, ip.c_str(), &addr.saIn.sin_addr);
     if (result <= 0) {
-      MS_LOG(INFO) << "Parse ip failed, result: " << result << ", url:" << url.c_str();
-      return "";
+      result = inet_pton(AF_INET6, ip.c_str(), &addr.saIn6.sin6_addr);
+      if (result <= 0) {
+        MS_LOG(INFO) << "Parse ip failed, result: " << result << ", url:" << url.c_str();
+        return "";
+      }
     }
+    return ip;
   }
-  return ip;
 }
 
 bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
@@ -176,8 +183,13 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
     return false;
   }
 
+  size_t idx = index2 + sizeof(URL_IP_PORT_SEPARATOR) - 1;
+  if (idx >= url.size()) {
+    MS_LOG(ERROR) << "The size of url is invalid";
+    return false;
+  }
   try {
-    port = (uint16_t)std::stoul(url.substr(index2 + sizeof(URL_IP_PORT_SEPARATOR) - 1));
+    port = (uint16_t)std::stoul(url.substr(idx));
   } catch (const std::system_error &e) {
     MS_LOG(ERROR) << "Couldn't find port in url: " << url.c_str();
     return false;
@@ -237,7 +249,9 @@ std::string SocketOperation::GetPeer(int sock_fd) {
 
   char ipdotdec[IP_LEN_MAX];
   if (isa.sa.sa_family == AF_INET) {
-    inet_ntop(AF_INET, reinterpret_cast<void *>(&isa.saIn.sin_addr), ipdotdec, IP_LEN_MAX);
+    if (inet_ntop(AF_INET, reinterpret_cast<void *>(&isa.saIn.sin_addr), ipdotdec, IP_LEN_MAX) == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to call inet_ntop kernel func.";
+    }
     peer = std::string(ipdotdec) + ":" + std::to_string(ntohs(isa.saIn.sin_port));
   } else if (isa.sa.sa_family == AF_INET6) {
     inet_ntop(AF_INET6, reinterpret_cast<void *>(&isa.saIn6.sin6_addr), ipdotdec, IP_LEN_MAX);
@@ -287,14 +301,18 @@ int SocketOperation::Listen(const std::string &url) {
   // bind
   if (::bind(listenFd, (struct sockaddr *)&addr, sizeof(SocketAddress))) {
     MS_LOG(ERROR) << "Failed to call bind, url: " << url.c_str();
-    close(listenFd);
+    if (close(listenFd) != 0) {
+      MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
+    }
     return -1;
   }
 
   // listen
   if (::listen(listenFd, SOCKET_LISTEN_BACKLOG)) {
     MS_LOG(ERROR) << "Failed to call listen, fd: " << listenFd << ", errno: " << errno << ", url: " << url.c_str();
-    close(listenFd);
+    if (close(listenFd) != 0) {
+      MS_LOG(EXCEPTION) << "Failed to close fd:" << listenFd;
+    }
     return -1;
   }
   return listenFd;

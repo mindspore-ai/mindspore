@@ -91,11 +91,11 @@ class EventLoop {
 
   // Operate the soft deleted events.
   void AddDeletedEvent(Event *event);
-  int FindDeletedEvent(const Event *event);
+  int FindDeletedEvent(Event *event);
   void RemoveDeletedEvents();
 
   // Event operations.
-  void HandleEvent(const struct epoll_event *events, int nevent);
+  void HandleEvent(struct epoll_event *events, int nevent);
   void DeleteEvent(int fd);
   Event *FindEvent(int fd);
 
