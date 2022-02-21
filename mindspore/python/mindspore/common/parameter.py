@@ -17,7 +17,6 @@
 from copy import copy
 import numbers
 import numpy as np
-from mindspore import log as logger
 from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .. import context
@@ -333,9 +332,6 @@ class Parameter(Tensor_):
                 raise RuntimeError("The dims of parameter '{}' must be 2, but got {}."
                                    .format(self.name, len(self.shape)))
             _reinsert_hash_table_size(name_, self.param_info.name, self.shape[0], self.shape[1])
-        if name_ == PARAMETER_NAME_DEFAULT:
-            logger.warning("The parameter definition is deprecated.\n"
-                           "Please set a unique name for the parameter '{}'.". format(self))
         self.param_info.name = name_
 
     @property
