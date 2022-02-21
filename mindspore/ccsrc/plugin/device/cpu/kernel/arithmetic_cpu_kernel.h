@@ -89,6 +89,12 @@ MS_REG_CPU_KERNEL_T(
   Mul, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   ArithmeticCpuKernelMod, double);
 MS_REG_CPU_KERNEL_T(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  ArithmeticCpuKernelMod, uint8_t);
+MS_REG_CPU_KERNEL_T(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCpuKernelMod, bool);
+MS_REG_CPU_KERNEL_T(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   ArithmeticCpuKernelMod, int32_t);
 MS_REG_CPU_KERNEL_T(

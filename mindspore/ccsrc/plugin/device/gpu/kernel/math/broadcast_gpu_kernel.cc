@@ -472,5 +472,9 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   BroadcastOpGpuKernelMod, bool)
+// uint64
+MS_REG_GPU_KERNEL_ONE(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernelMod, bool)
 }  // namespace kernel
 }  // namespace mindspore
