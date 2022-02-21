@@ -548,6 +548,19 @@ class ScatterNdMax(nn.Cell):
         return out
 
 
+class ScatterNdMin(nn.Cell):
+    """ScatterNdMin net definition"""
+
+    def __init__(self, ref_shape, dtype=np.float32):
+        super(ScatterNdMin, self).__init__()
+        self.scatter_nd_min = P.ScatterNdMin()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_nd_min(self.ref, indices, updates)
+        return out
+
+
 class ScatterSub(nn.Cell):
     """ScatterSub net definition"""
 
@@ -3349,6 +3362,12 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
+    ('ScatterNdMin', {
+        'block': ScatterNdMin((8,)),
+        'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
+        'skip': ['backward']}),
+
     ('ScatterNdSub', {
         'block': ScatterNdAdd((8,)),
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
