@@ -637,13 +637,7 @@ class Shape(Primitive):
 
 class TensorShape(Primitive):
     """
-    Returns the shape of the input tensor. And it used to be dynamic shape.
-
-    Note:
-        Dynamic shape: After the graph is running, as the tensor flows in the graph, the specific shape of the tensor
-        on each node on the graph can be inferred according to the structure of the graph.
-        This shape is called a dynamic shape. As the input shape of the graph is different,
-        the dynamic shape of the tensor in the graph will change.
+    Returns the shape of the input tensor.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -671,32 +665,8 @@ class TensorShape(Primitive):
 
 class DynamicShape(Primitive):
     """
-    Returns the shape of the input tensor. And it used to be dynamic shape.
-
-    Note:
-        Dynamic shape: After the graph is running, as the tensor flows in the graph, the specific shape of the tensor
-        on each node on the graph can be inferred according to the structure of the graph.
-        This shape is called a dynamic shape. As the input shape of the graph is different,
-        the dynamic shape of the tensor in the graph will change.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        Tensor[int], 1-dim Tensor of type int32
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = ops.DynamicShape()
-        >>> output = shape(input_x)
-        >>> print(output)
-        [3 2 1]
+    Same as operator TensorShape. DynamicShape will be deprecated in the future.
+    Please use TensorShape instead.
     """
 
     @deprecated("1.7", "TensorShape", True)
