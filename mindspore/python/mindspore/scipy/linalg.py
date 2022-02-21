@@ -17,11 +17,12 @@ from .ops import Cholesky
 from .ops import EighNet
 from .ops import LU
 from .ops import SolveTriangular
-from .utils import _nd_transpose
+from .utils import _nd_transpose, _value_op_check, _value_in_check, _type_is_check, _type_in_check, _is_tensor_check
 from .utils_const import _raise_value_error, _raise_type_error, _type_check
 from .. import numpy as mnp
 from .. import ops
 from ..common import dtype as mstype
+from ..common import Tensor
 from ..ops import functional as F
 from ..ops import operations as P
 
@@ -173,29 +174,31 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         >>> print(mnp.dot(a, x))  # Check the result
         [4. 2. 4. 2.]
     """
-    _type_check('trans', trans, (int, str), 'solve_triangular')
-    _type_check('lower', lower, [bool], 'solve_triangular')
-    _type_check('overwrite_b', overwrite_b, [bool], 'solve_triangular')
-    _type_check('check_finite', check_finite, [bool], 'solve_triangular')
-    if debug is not None:
-        _raise_value_error("For 'solve_triangular', currently only case debug=None of solve_triangular Implemented.")
-    if F.dtype(a) == F.dtype(b) and F.dtype(a) in (mstype.int32, mstype.int64):
+    _type_is_check(trans, (int, str), "solve_triangular", "trans")
+    _type_is_check(lower, bool, "solve_triangular", "lower")
+    _type_is_check(overwrite_b, bool, "solve_triangular", "overwrite_b")
+    _type_is_check(check_finite, bool, "solve_triangular", "check_finite")
+    _is_tensor_check(a, (F.typeof(a), Tensor), "solve_triangular", "a")
+    _type_in_check(a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                   'solve_triangular', ("data type", "a"))
+    _is_tensor_check(b, (F.typeof(b), Tensor), "solve_triangular", "'b")
+    _type_in_check(b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                   'solve_triangular', ("data type", "b"))
+    _type_in_check(a.dtype, b.dtype, "solve_triangular", ("data type", "a", "b"), fmt="match")
+
+    _value_op_check('is', debug, None,
+                    msg="For 'solve_triangular', currently only case debug=None of solve_triangular implemented.")
+    _value_in_check(a.ndim, 2, 'solve_triangular', ("dimension", "a"))
+    _value_in_check(b.ndim, (1, 2), 'solve_triangular', ("dimension", "b"))
+    _value_in_check(a.shape[0], a.shape[1], 'solve_triangular', 'a', fmt="square")
+    _value_in_check(a.shape[1], b.shape[0],
+                    msg=("For 'solve_triangular', the last two dimensions of 'a' and 'b' should be matched, ",
+                         "but got shape of ", a.shape, " and ", b.shape, ". ",
+                         "Please make sure that the shape of 'a' and 'b' be like (N, N) X (N, M) or (N, N) X (N)."))
+    _value_in_check(trans, (0, 1, 2, 'N', 'T', 'C'), 'solve_triangular', ("value", "trans"))
+    if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
         b = F.cast(b, mstype.float64)
-    if a.ndim != 2:
-        _raise_value_error("For 'solve_triangular', the dimension of `a` should be 2, but got ", a.ndim, ".")
-    if b.ndim != 1 and b.ndim != 2:
-        _raise_value_error("For 'solve_triangular', the dimension of `b` should be 1 or 2, but got ", b.ndim, ".")
-    if a.shape[0] != a.shape[1]:
-        _raise_value_error("For 'solve_triangular', the matrix `a` should be a square matrix like (N, N), "
-                           "but got ", a.shape, ".")
-    if a.shape[1] != b.shape[0]:
-        _raise_value_error("For 'solve_triangular', the last two dimensions of `a` and `b` should be matched, "
-                           "but got shape of ", a.shape, " and ", b.shape,
-                           ". Please make sure that the shape of `a` and `b` be like (N, N) X (N, M) or (N, N) X (N).")
-    if trans not in (0, 1, 2, 'N', 'T', 'C'):
-        _raise_value_error("For 'solve_triangular', the value of `trans` should be one of (0, 1, 2, 'N', 'T', 'C'), "
-                           "but got ", trans, ".")
     if isinstance(trans, int):
         trans_table = ['N', 'T', 'C']
         trans = trans_table[trans]
@@ -543,10 +546,10 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     _type_check('turbo', turbo, [bool], 'eigh')
     _type_check('check_finite', check_finite, [bool], 'eigh')
     if b is not None:
-        _raise_value_error("Currently only case b=None of eigh is Implemented. "
+        _raise_value_error("Currently only case b=None of eigh is implemented. "
                            "Which means that b must be identity matrix.")
     if eigvals is not None:
-        _raise_value_error("Currently only case eigvals=None of eighis Implemented.")
+        _raise_value_error("Currently only case eigvals=None of eighis implemented.")
     eigh_net = EighNet(not eigvals_only, lower=lower)
     return eigh_net(a)
 
