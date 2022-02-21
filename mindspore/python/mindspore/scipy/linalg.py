@@ -97,7 +97,7 @@ def block_diag(*arrs):
 
 
 def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
-                     overwrite_b=False, debug=None, check_finite=False):
+                     overwrite_b=False, debug=None, check_finite=True):
     """
     Assuming a is a batched triangular matrix, solve the equation
 
@@ -128,7 +128,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         debug (None): Not implemented now. Default: None.
         check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
             Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: False.
+            (crashes, non-termination) if the inputs do contain infinities or NaNs. Default: True.
 
     Returns:
         Tensor of shape :math:`(M,)` or :math:`(M, N)`,
