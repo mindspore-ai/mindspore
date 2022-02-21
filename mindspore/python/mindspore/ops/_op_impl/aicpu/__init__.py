@@ -93,6 +93,8 @@ from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
+from .asinh import _asinh_aicpu
+from .asinh_grad import _asinh_grad_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
 from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
 from .resize_bilinear import _resize_bilinear_aicpu

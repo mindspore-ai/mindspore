@@ -234,6 +234,16 @@ void Cosh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size)
 }
 
 template <typename T>
+void ComplexAsinh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(asinh(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void Asinh(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -391,6 +401,7 @@ void ArithmeticSelfCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPt
                                   std::function<void(ArithmeticSelfCpuKernelMod *, const T *, T *, size_t)>>
     arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
                           {prim::kPrimAcosh->name(), ComplexAcosh<T>},
+                          {prim::kPrimAsinh->name(), ComplexAsinh<T>},
                           {prim::kPrimNeg->name(), Neg<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {

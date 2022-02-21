@@ -65,12 +65,13 @@ class AsinGrad(Primitive):
         """Initialize AsinGrad"""
 
 
-class AsinhGrad(PrimitiveWithInfer):
+class AsinhGrad(Primitive):
     """Performs grad of Asinh operation."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize AsinhGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class ReciprocalGrad(Primitive):

@@ -1268,6 +1268,10 @@ test_case_math_ops = [
         'block': P.Asinh(),
         'desc_inputs': [[3, 4, 5]],
         'desc_bprop': [[3, 4, 5]]}),
+    ('AsinhGrad', {
+        'block': G.AsinhGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Tan', {
         'block': P.Tan(),
         'desc_inputs': [[2, 3]],

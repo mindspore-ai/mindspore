@@ -191,6 +191,20 @@ void EltWiseGradCpuKernelMod<T>::AsinhGrad(const T *input1, const T *input2, T *
 }
 
 template <typename T>
+void EltWiseGradCpuKernelMod<T>::ComplexAsinhGrad(const T *input1, const T *input2, T *out, size_t start,
+                                                  size_t end) const {
+  for (size_t i = start; i < end; i++) {
+    T dividend = input2[i];
+    T divisor = std::conj(cosh(input1[i]));
+    if (divisor == static_cast<T>(0)) {
+      out[i] = std::numeric_limits<T>::quiet_NaN();
+      continue;
+    }
+    out[i] = dividend / divisor;
+  }
+}
+
+template <typename T>
 void EltWiseGradCpuKernelMod<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
@@ -291,7 +305,8 @@ void EltWiseGradCpuKernelMod<T>::InitComputeFunc() {
   if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuKernelMod *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCpuKernelMod<T>::ComplexAcoshGrad}};
+      elt_map{{prim::kPrimAcoshGrad->name(), &EltWiseGradCpuKernelMod<T>::ComplexAcoshGrad},
+              {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuKernelMod<T>::ComplexAsinhGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCpuKernelMod does not support " << kernel_name_;
     }
