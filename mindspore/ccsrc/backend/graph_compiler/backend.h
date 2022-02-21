@@ -163,9 +163,8 @@ class MindRTBackend : public Backend {
   void EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph);
 
   // Run op immediately when the single_op_cache hit and the queue of OpLazyBuilder is empty in PyNative mode.
-  void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<session::KernelWithIndex> &output_nodes,
-                        const OpRunInfo &op_run_info, const GraphCompilerInfo *graph_compiler_info,
-                        DeviceContext *device_context);
+  void RunSingleOpGraph(const KernelGraphPtr &graph, const OpRunInfo &op_run_info,
+                        const GraphCompilerInfo *graph_compiler_info);
 
   // Execute OpBuildTask and OpRunTask when the OpLazyBuilder queue is full in PyNative mode.
   void LazyExecuteTaskCallback();
