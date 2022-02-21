@@ -324,7 +324,7 @@ class HeNormal(Initializer):
     For details of HeUniform algorithm, please check `<https://arxiv.org/abs/1502.01852>`_.
 
     Args:
-        negative_slope (int, float, bool): The negative slope of the rectifier used after this layer
+        negative_slope (int, float): The negative slope of the rectifier used after this layer
             (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
         mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
             variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
@@ -703,11 +703,15 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore
+        >>> from mindspore import Tensor
         >>> from mindspore.common.initializer import initializer, One
-        >>> tensor1 = initializer('ones', [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor3 = initializer(0, [1, 2, 3], mindspore.float32)
+        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
+        >>> tensor1 = initializer(data, [1, 2, 3], mindspore.float32)
+        >>> tensor2 = initializer('ones', [1, 2, 3], mindspore.float32)
+        >>> tensor3 = initializer(One(), [1, 2, 3], mindspore.float32)
+        >>> tensor4 = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError("The type of the 'init' argument should be 'Tensor', 'number', 'string' "
