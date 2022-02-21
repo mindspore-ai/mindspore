@@ -480,6 +480,14 @@ class ToVectors(TextTensorOperation):
             original case will be looked up; if True, each token in the original case will be looked up first, if not
             found in the keys of the property stoi, the token in the lower case will be looked up (default=False).
 
+    Raises:
+        TypeError: If `unk_init` is not of type sequence.
+        TypeError: If elements of `unk_init` is not of type float or int.
+        TypeError: If `lower_case_backup` is not of type bool.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # Load vectors from file
         >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
@@ -763,6 +771,21 @@ if platform.system().lower() != 'windows':
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
+        Raises:
+            TypeError: If `vocab` is not of type text.Vocab.
+            TypeError: If `suffix_indicator` is not of type string.
+            TypeError: If `max_bytes_per_token` is not of type int.
+            ValueError: If `max_bytes_per_token` is a negative number.
+            TypeError: If `unknown_token` is not of type string.
+            TypeError: If `lower_case` is not of type bool.
+            TypeError: If `keep_whitespace` is not of type bool.
+            TypeError: If `normalization_form` is not of type NormalizeForm.
+            TypeError: If `preserve_unused_token` is not of type bool.
+            TypeError: If `with_offsets` is not of type bool.
+
+        Supported Platforms:
+            ``CPU``
+
         Examples:
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
@@ -843,6 +866,9 @@ if platform.system().lower() != 'windows':
 
         Note:
             FilterWikipediaXML is not supported on Windows platform yet.
+
+        Supported Platforms:
+            ``CPU``
 
         Examples:
             >>> replace_op = text.FilterWikipediaXML()

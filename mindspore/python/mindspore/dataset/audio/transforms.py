@@ -71,6 +71,17 @@ class AllpassBiquad(AudioTensorOperation):
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: 0.707.
 
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -113,6 +124,19 @@ class AmplitudeToDB(AudioTensorOperation):
             be greater than zero. Default: 1e-10.
         top_db (float, optional): Minimum cut-off decibels, which must be non-negative. Default: 80.0.
 
+    Raises:
+        TypeError: If `stype` is not of type ScaleType.
+        TypeError: If `ref_value` is not of type float.
+        ValueError: If `ref_value` is not a positive number.
+        TypeError: If `amin` is not of type float.
+        ValueError: If `amin` is not a positive number.
+        TypeError: If `top_db` is not of type float.
+        ValueError: If `top_db` is not a positive number.
+        RuntimeError: If input tensor is not in shape of <..., freq, time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore.dataset.audio import ScaleType
@@ -141,6 +165,12 @@ class Angle(AudioTensorOperation):
     Note:
         The dimension of the audio waveform to be processed needs to be (..., complex=2).
         The first dimension represents the real part while the second represents the imaginary.
+
+    Raises:
+        RuntimeError: If input tensor is not in shape of <..., complex=2>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -175,6 +205,18 @@ class BandBiquad(AudioTensorOperation):
             in range of (0, 1]. Default: 0.707.
         noise (bool, optional) : If True, uses the alternate mode for un-pitched audio (e.g. percussion).
             If False, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music. Default: False.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        TypeError: If `noise` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -224,6 +266,18 @@ class BandpassBiquad(AudioTensorOperation):
         const_skirt_gain (bool, optional) : If True, uses a constant skirt gain (peak gain = Q);
             If False, uses a constant 0dB peak gain. Default: False.
 
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        TypeError: If `const_skirt_gain` is not of type bool.
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -267,6 +321,17 @@ class BandrejectBiquad(AudioTensorOperation):
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: 0.707.
 
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -307,6 +372,18 @@ class BassBiquad(AudioTensorOperation):
         central_freq (float, optional): Central frequency (in Hz). Default: 100.0.
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: 0.707.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `gain` is not of type float.
+        TypeError: If `central_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -371,6 +448,14 @@ class ComplexNorm(AudioTensorOperation):
 
     Args:
         power (float, optional): Power of the norm, which must be non-negative. Default: 1.0.
+
+    Raises:
+        TypeError: If `power` is not of type float.
+        ValueError: If `power` is a negative number.
+        RuntimeError: If input tensor is not in shape of <..., complex=2>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -450,6 +535,14 @@ class Contrast(AudioTensorOperation):
         enhancement_amount (float, optional): Controls the amount of the enhancement,
             in range of [0, 100]. Default: 75.0. Note that `enhancement_amount` equal
             to 0 still gives a significant contrast enhancement.
+
+    Raises:
+        TypeError: If `enhancement_amount` is not of type float.
+        ValueError: If `enhancement_amount` is not in range [0, 100].
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -774,6 +867,19 @@ class FrequencyMasking(AudioTensorOperation):
             in frequency domain. Default: 0.
         mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.
 
+    Raises:
+        TypeError: If `iid_masks` is not of type bool.
+        TypeError: If `freq_mask_param` is not of type integer.
+        ValueError: If `freq_mask_param` is out of range of the length of audio waveform in frequency domain.
+        TypeError: If `mask_start` is not of type integer.
+        ValueError: If `mask_start` is out of range.
+        TypeError: If `mask_value` is not of type float.
+        ValueError: If `mask_value` is a negative number.
+        RuntimeError: If input tensor is not in shape of <..., freq, time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -905,6 +1011,17 @@ class LowpassBiquad(AudioTensorOperation):
         cutoff_freq (float): Filter cutoff frequency (in Hz).
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: 0.707.
+
+    Raises:
+        TypeError: If `sample_rate` is not of type integer.
+        ValueError: If `sample_rate` is 0.
+        TypeError: If `cutoff_freq` is not of type float.
+        TypeError: If `Q` is not of type float.
+        ValueError: If `Q` is not in range of (0, 1].
+        RuntimeError: If input tensor is not in shape of <..., time>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -1372,6 +1489,19 @@ class TimeMasking(AudioTensorOperation):
             in time domain. Default: 0.
         mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.
 
+    Raises:
+        TypeError: If `iid_masks` is not of type bool.
+        TypeError: If `time_mask_param` is not of type integer.
+        ValueError: If `time_mask_param` is out of range of the length of audio waveform in time domain.
+        TypeError: If `mask_start` is not of type integer.
+        ValueError: If `mask_start` is out of range.
+        TypeError: If `mask_value` is not of type float.
+        ValueError: If `mask_value` is a negative number.
+        RuntimeError: If input tensor is not in shape of <..., freq, time>.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>>
@@ -1410,6 +1540,18 @@ class TimeStretch(AudioTensorOperation):
         n_freq (int, optional): Number of filter banks from STFT. Default: 201.
         fixed_rate (float, optional): Rate to speed up or slow down by. Default: None, will keep
             the original rate.
+
+    Raises:
+        TypeError: If `hop_length` is not of type integer.
+        ValueError: If `hop_length` is not a positive number.
+        TypeError: If `n_freq` is not of type integer.
+        ValueError: If `n_freq` is not a positive number.
+        TypeError: If `fixed_rate` is not of type float.
+        ValueError: If `fixed_rate` is not a positive number.
+        RuntimeError: If input tensor is not in shape of <..., freq, num_frame, complex=2>.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
