@@ -31,7 +31,7 @@ echo "cur_path is "$cur_path
 fail_not_return="OFF"
 
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_tflite" || $backend == "arm64_mindir" || \
-      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" ]]; then
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_quant" ]]; then
     sh $cur_path/scripts/run_benchmark_arm64.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     arm64_status=$?
     if [[ $arm64_status -ne 0 ]]; then
@@ -69,7 +69,8 @@ if [[ $backend == "all" || $backend == "npu" ]]; then
 fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_onnx" || $backend == "x86_tf" || \
-      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" || $backend == "linux_arm64_tflite" ]]; then
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" || $backend == "linux_arm64_tflite" || \
+      $backend == "x86_quant"  ]]; then
     sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -p $fail_not_return
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
