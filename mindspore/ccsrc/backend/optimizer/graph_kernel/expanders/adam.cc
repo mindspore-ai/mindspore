@@ -52,7 +52,7 @@ class Adam : public OpDesc {
     const auto &epsilon = inputs[8];
     const auto &grad = inputs[9];
 
-    // m_new <- beta1 * m + (1 - beta1) * grad
+    // step1:  m_new <- beta1 * m + (1 - beta1) * grad
     auto m_b = gb.Emit("Mul", {beta1, m});
     tensor::TensorPtr data = std::make_shared<tensor::Tensor>(static_cast<double>(1.0), TypeIdToType(var->type));
     auto const_one = gb.Value(data);
@@ -60,20 +60,20 @@ class Adam : public OpDesc {
     auto m_g = gb.Emit("Mul", {m1_beta1, grad});
     auto m_new = gb.Emit("Add", {m_b, m_g});
 
-    // v_new <- beta2 * v + (1 - beta2) * grad * grad
+    // step2: v_new <- beta2 * v + (1 - beta2) * grad * grad
     auto v_b = gb.Emit("Mul", {beta2, v});
     auto m1_beta2 = gb.Emit("Sub", {const_one, beta2});
     auto grad_mul = gb.Emit("Mul", {grad, grad});
     auto v_g = gb.Emit("Mul", {m1_beta2, grad_mul});
     auto v_new = gb.Emit("Add", {v_b, v_g});
-    // lr_t <- lr * sqrt(1 - beta2_power) / (1 - beta1_power);
+    // step3: lr_t <- lr * sqrt(1 - beta2_power) / (1 - beta1_power)
     auto m1_beta2_power = gb.Emit("Sub", {const_one, beta2_power});
     auto m1_beta2_power_sqrt = gb.Emit("Sqrt", {m1_beta2_power});
     auto m1_beta1_power = gb.Emit("Sub", {const_one, beta1_power});
     auto power_div = gb.Emit("RealDiv", {m1_beta2_power_sqrt, m1_beta1_power});
     auto lr_t = gb.Emit("Mul", {lr, power_div});
 
-    // if use_nesterov: var_new <- var - lr_t * (m_new * beta1 + (1 - beta1) * grad) / (epsilon + sqrt(v_new))
+    // step4: if use_nesterov: var_new <- var - lr_t * (m_new * beta1 + (1 - beta1) * grad) / (epsilon + sqrt(v_new))
     // if not use_nesterov: var_new <- var - lr_t * m_new / (epsilon + sqrt(v_new))
     auto v_new_sqrt = gb.Emit("Sqrt", {v_new});
     auto v_new_sqrt_e = gb.Emit("Add", {epsilon, v_new_sqrt});

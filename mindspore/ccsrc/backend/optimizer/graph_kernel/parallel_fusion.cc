@@ -420,7 +420,7 @@ void DumpParallelFusionDetail(const AnfNodePtrList &source, const AnfNodePtr &ta
   MS_LOG(INFO) << buf.str();
 }
 
-inline bool ParameterLimit(const AnfNodePtrList &nodes) {
+bool ParameterLimit(const AnfNodePtrList &nodes) {
   if (nodes.empty()) {
     MS_LOG(EXCEPTION) << "Nodes is empty, can not check condition.";
   }

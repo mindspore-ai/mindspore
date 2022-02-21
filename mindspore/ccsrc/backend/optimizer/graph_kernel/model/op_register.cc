@@ -20,12 +20,14 @@ namespace mindspore::graphkernel::inner {
 namespace {
 class OpRegister {
  public:
-  OpRegister(const std::string &name, const CreatorFunc &func) { OpRegistry::Instance().Register(name, func); }
+  OpRegister(const std::string &name, const CreatorFunc &func) : name_(name) {
+    OpRegistry::Instance().Register(name_, func);
+  }
   ~OpRegister() = default;
 
- protected:
+ private:
   // for pclint-plus
-  bool rev_{false};
+  std::string name_;
 };
 
 #define JOIN(x, y) x##y

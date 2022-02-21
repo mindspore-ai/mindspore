@@ -21,12 +21,15 @@ class SigmoidCrossEntropyWithLogits(Expander):
     """SigmoidCrossEntropyWithLogits expander"""
 
     def _expand(self, graph_builder):
+        r"""
+        Calculate sigmoid_cross_entropy_with_logits(logits, labels)
+        formula of sigmoid_cross_entropy_with_logits is
+        formula1: -(labels * log(sigmoid(logits)) + (1 - labels) * log(1-sigmoid(logits)))
+        To ensure stability and avoid overflow, the formula equal to
+        formula2: max(logits, 0) - logits * labels + log(1 + exp(-abs(logits)))
+        """
         logits, labels = self.inputs
-        # Calculate sigmoid_cross_entropy_with_logits(logits, labels)
-        # formula of sigmoid_cross_entropy_with_logits is:
-        #     -(labels * log(sigmoid(logits)) + (1 - labels) * log(1 - sigmoid(logits)))
-        # To ensure stability and avoid overflow, the formula equal to :
-        #     max(logits, 0) - logits * labels + log(1 + exp(-abs(logits)))
+
         const_one = graph_builder.value(logits.dtype, 1.0)
         const_zero = graph_builder.value(logits.dtype, 0.0)
         max_logits = graph_builder.emit('Maximum', [logits, const_zero])

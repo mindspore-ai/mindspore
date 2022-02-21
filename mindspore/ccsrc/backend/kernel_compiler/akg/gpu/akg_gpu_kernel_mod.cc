@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
 
+#include <algorithm>
 #include "nlohmann/json.hpp"
 #include "utils/ms_utils.h"
 
@@ -29,6 +30,12 @@ const int MAX_REGISTER_PER_THREAD_BLOCK = 65536;
 const int REGISTER_UNIT_IN_WARP = 256;
 const int WARP_SIZE = 32;
 const int WARP_ALLOC_GRAN = 4;
+const int BLOCKIDX_X_INDEX = 0;
+const int BLOCKIDX_Y_INDEX = 1;
+const int BLOCKIDX_Z_INDEX = 2;
+const int THREADIDX_X_INDEX = 3;
+const int THREADIDX_Y_INDEX = 4;
+const int THREADIDX_Z_INDEX = 5;
 
 GpuKernelManagerPtr GpuKernelMod::kernelmanager_ = std::make_shared<GpuKernelManager>();
 GpuKernelManager::GpuKernelManager() {}
@@ -127,8 +134,9 @@ bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
                          [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
   }
-  result = cuLaunchKernel(kernel_addr, thread_info[0], thread_info[1], thread_info[2], thread_info[3], thread_info[4],
-                          thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),
+  result = cuLaunchKernel(kernel_addr, thread_info[BLOCKIDX_X_INDEX], thread_info[BLOCKIDX_Y_INDEX],
+                          thread_info[BLOCKIDX_Z_INDEX], thread_info[THREADIDX_X_INDEX], thread_info[THREADIDX_Y_INDEX],
+                          thread_info[THREADIDX_Z_INDEX], 0, reinterpret_cast<CUstream>(stream_ptr),
                           reinterpret_cast<void **>(&runtimeargs[0]), 0);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;

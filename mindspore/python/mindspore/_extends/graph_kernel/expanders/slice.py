@@ -26,9 +26,9 @@ class Slice(Expander):
         size = self.attrs['size']
         end = []
         strides = []
-        for i in range(len(begin)):
+        for i, elem in enumerate(begin):
             strides.append(1)
-            end.append(begin[i] + size[i])
+            end.append(elem + size[i])
         output = graph_builder.tensor(size, input_x.dtype, input_x.data_format)
         graph_builder.op('StridedSlice', output, [input_x], attrs={'begin': begin, 'end': end, 'strides': strides})
 
