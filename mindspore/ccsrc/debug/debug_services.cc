@@ -780,7 +780,7 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
         if (candidate.find(file_n + ".") != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
           // we found a converted file for this op
           std::string found_file = dump_key + "/" + candidate;
-          result_list->insert(found_file);
+          (void)result_list->insert(found_file);
         }
       }
     }
@@ -891,13 +891,13 @@ void DebugServices::ProcessConvertList(const std::string &prefix_dump_file_name,
     }
     if (file_name.rfind(kNpyExt) == std::string::npos) {
       std::size_t second_dot = file_name.find(".", file_name.find(prefix_dump_file_name + ".", type_pos + 1));
-      file_name_w_o_perfix.replace(type_pos + 1, second_dot - type_pos - 1, prefix_dump_file_name);
+      (void)file_name_w_o_perfix.replace(type_pos + 1, second_dot - type_pos - 1, prefix_dump_file_name);
       // if file matches prefix and is in device format add to candidate files to convert.
       (*dir_to_files_map)[specific_dump_dir].push_back(std::make_pair(file_name, file_name_w_o_perfix));
     } else {
       // otherwise, if file matches prefix and already has been converted to host format
       // add to result of converted files.
-      result_list->insert(file_path);
+      (void)result_list->insert(file_path);
     }
   }
   (void)closedir(d);
@@ -1568,7 +1568,7 @@ uint32_t DebugServices::GetPrevIteration(const std::shared_ptr<TensorData> &tens
                   << " is the first run iteration for tensor: " << tensor->GetName();
     return UINT32_MAX;
   }
-  it--;
+  (void)it--;
   prev_iter = *it;
   tensor->SetPrevIteration(prev_iter);
   return prev_iter;

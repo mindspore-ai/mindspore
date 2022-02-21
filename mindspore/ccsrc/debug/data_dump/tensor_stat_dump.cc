@@ -17,6 +17,7 @@
 #include "debug/data_dump/tensor_stat_dump.h"
 
 #include <memory>
+#include <map>
 #include "utils/file_utils.h"
 #include "debug/common.h"
 #include "debug/debug_services.h"
@@ -65,14 +66,14 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   }
   if (first_time_opening) {
     file_ << header;
-    file_.flush();
+    (void)file_.flush();
     file_path_str_ = path;
   }
   MS_LOG(INFO) << "Opened file: " << file_path_value;
   return true;
 }
 
-void CsvWriter::CloseFile() {
+void CsvWriter::CloseFile() noexcept {
   if (file_.is_open()) {
     file_.close();
     ChangeFileMode(file_path_str_, S_IRUSR);
@@ -85,7 +86,7 @@ void CsvWriter::WriteToCsv(const T &val, bool end_line) {
   file_ << val;
   if (end_line) {
     file_ << kEndLine;
-    file_.flush();
+    (void)file_.flush();
   } else {
     file_ << kSeparator;
   }
@@ -156,7 +157,7 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &original_kernel_na
   return DumpTensorStatsToFile(dump_path, data);
 }
 
-bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, std::shared_ptr<TensorData> data) {
+bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const std::shared_ptr<TensorData> data) {
   if (data == nullptr) {
     MS_LOG(INFO) << "Tensor data is empty, skipping current statistics";
     return false;
