@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRSM_SOLVE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRSM_SOLVE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATRIX_TRIANGULAR_SOLVE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATRIX_TRIANGULAR_SOLVE_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <type_traits>
@@ -39,10 +39,10 @@ constexpr size_t kIndexBBuffer = 2;
 constexpr size_t kIndexBTransposeShape = 3;
 constexpr size_t kIndexBTransposeAxis = 4;
 template <typename T>
-class SolveTriangularGpuKernelMod : public NativeGpuKernelMod {
+class MatrixTriangularSolveGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SolveTriangularGpuKernelMod() = default;
-  ~SolveTriangularGpuKernelMod() = default;
+  MatrixTriangularSolveGpuKernelMod() = default;
+  ~MatrixTriangularSolveGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -159,32 +159,33 @@ class SolveTriangularGpuKernelMod : public NativeGpuKernelMod {
     lda_ = SizeToInt(m_);
     ldb_ = SizeToInt(m_);
 
-    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
-    // converting row major to col major is the same as reverting the trans flag
-    if (trans == "N") {
-      trans_ = CUBLAS_OP_T;
-    } else if (trans == "T") {
-      trans_ = CUBLAS_OP_N;
-    } else if (trans == "C") {
-      trans_ = CUBLAS_OP_N;
+    if (AnfAlgo::HasNodeAttr("adjoint", kernel_node)) {
+      // MatrixTriangularSolve attribute
+      bool trans = AnfAlgo::GetNodeAttr<bool>(kernel_node, "adjoint");
+      // converting row major to col major is the same as reverting the trans flag
+      trans_ = trans ? CUBLAS_OP_N : CUBLAS_OP_T;
+      if (AnfAlgo::HasNodeAttr("trans", kernel_node)) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the attribute 'adjoint' and 'trans' could not exist at the same time.";
+      }
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', trans should be in [N, T, C], but got [" << trans << "].";
-    }
-
-    bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
-    // reverting the trans flag by default, so also flip the lower flag
-    lower = !lower;
-    if (lower) {
-      uplo_ = CUBLAS_FILL_MODE_LOWER;
-    } else {
-      uplo_ = CUBLAS_FILL_MODE_UPPER;
-    }
-
-    bool unit_diagonal = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
-    if (unit_diagonal) {
-      unit_diagonal_ = CUBLAS_DIAG_UNIT;
-    } else {
-      unit_diagonal_ = CUBLAS_DIAG_NON_UNIT;
+      bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
+      // reverting the trans flag by default, so also flip the lower flag
+      lower = !lower;
+      uplo_ = lower ? CUBLAS_FILL_MODE_LOWER : CUBLAS_FILL_MODE_UPPER;
+      bool unit_diagonal = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
+      unit_diagonal_ = unit_diagonal ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
+      const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
+      // converting row major to col major is the same as reverting the trans flag
+      if (trans == "N") {
+        trans_ = CUBLAS_OP_T;
+      } else if (trans == "T") {
+        trans_ = CUBLAS_OP_N;
+      } else if (trans == "C") {
+        trans_ = CUBLAS_OP_N;
+      } else {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', trans should be in [N, T, C], but got [" << trans << "].";
+      }
     }
 
     InitSizeLists();
@@ -263,4 +264,4 @@ class SolveTriangularGpuKernelMod : public NativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_TRSM_SOLVE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATRIX_TRIANGULAR_SOLVE_GPU_KERNEL_H_
