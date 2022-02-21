@@ -58,11 +58,17 @@ class AcoshGrad(Primitive):
 
 
 class AsinGrad(Primitive):
-    """Performs grad of Asin operation."""
+    """
+    Computes AsinGrad of input element-wise.
+
+    Returns:
+        Tensor, has the same type as input.
+    """
 
     @prim_attr_register
     def __init__(self):
         """Initialize AsinGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class AsinhGrad(Primitive):

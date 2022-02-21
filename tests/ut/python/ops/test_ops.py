@@ -1264,6 +1264,10 @@ test_case_math_ops = [
         'block': P.Asin(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('AsinGrad', {
+        'block': G.AsinGrad(),
+        'desc_inputs': [[2, 3], [2, 3]],
+        'skip': ['backward']}),
     ('Asinh', {
         'block': P.Asinh(),
         'desc_inputs': [[3, 4, 5]],

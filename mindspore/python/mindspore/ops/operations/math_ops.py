@@ -4627,14 +4627,14 @@ class Asin(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32.
+          The data type should be one of the following types: float16, float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of x is not float16 or float32.
+        TypeError: If dtype of `x` is not float16, float32, float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4644,13 +4644,13 @@ class Asin(Primitive):
         >>> x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
         >>> output = asin(x)
         >>> print(output)
-        [0.8330927  0.04001068  0.30469266  0.59438497]
+        [0.8330704  0.04001067 0.30469266 0.5943858 ]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Asin"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class NMSWithMask(PrimitiveWithInfer):

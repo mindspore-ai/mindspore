@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <algorithm>
-#include <set>
-#include <vector>
-#include <memory>
-#include <map>
 #include "ops/asin.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -29,39 +23,38 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const size_t InputNum = 1;
+
 abstract::ShapePtr AsinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("Asin input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                           prim_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
+
 TypePtr AsinInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("Asin input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                           prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
-  const std::set valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
-  return x_type;
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  return input_args[kInputIndex0]->BuildType();
 }
 }  // namespace
 
 AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  auto type = AsinInferType(primitive, input_args);
-  auto shape = AsinInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shape, type);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, InputNum, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto types = AsinInferType(primitive, input_args);
+  auto shapes = AsinInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Asin, prim::kPrimAsin, AsinInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
