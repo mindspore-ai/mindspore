@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,9 @@ static std::string GetProcName() {
 }
 
 static std::string GetLogLevel(MsLogLevel level) {
-#define _TO_STRING(x) #x
   static const char *const level_names[] = {
     "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
   };
-#undef _TO_STRING
   if (level > this_thread_max_log_level) {
     level = this_thread_max_log_level;
   }

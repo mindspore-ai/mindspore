@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include <numeric>
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace system {
@@ -76,7 +77,7 @@ bool Padding(std::string *message) {
     message->push_back(0x00);
   }
   for (int i = size_append - 1; i >= 0; --i) {
-    message->push_back(static_cast<uint8_t>((bits_message >> static_cast<uint32_t>(i * kBitNumber)) & 0xff));
+    message->push_back(static_cast<char>((bits_message >> static_cast<uint32_t>(i * kBitNumber)) & 0xff));
   }
   return true;
 }
@@ -87,17 +88,17 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
   }
   uint32_t w[kIterationNumber] = {0};
   for (int i = 0; i < 16; ++i) {
-    w[i] = (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4]) & 0xff) << 24) |
-           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 1]) & 0xff) << 16) |
-           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 2]) & 0xff) << 8) |
-           (static_cast<uint32_t>(static_cast<uint8_t>(message[bias + i * 4 + 3]) & 0xff));
+    w[i] = (static_cast<uint32_t>(static_cast<uint8_t>(message[IntToSize(bias + i * 4)]) & 0xff) << 24) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[IntToSize(bias + i * 4 + 1)]) & 0xff) << 16) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[IntToSize(bias + i * 4 + 2)]) & 0xff) << 8) |
+           (static_cast<uint32_t>(static_cast<uint8_t>(message[IntToSize(bias + i * 4 + 3)]) & 0xff));
   }
   for (int i = 16; i < kIterationNumber; ++i) {
     w[i] = sigma3(w[i - 2]) + w[i - 7] + sigma2(w[i - 15]) + w[i - 16];
   }
 
   std::vector<uint32_t> hash(digest_size);
-  size_t mem_size = digest_size * sizeof(uint32_t);
+  size_t mem_size = IntToSize(digest_size) * sizeof(uint32_t);
   auto ret = memcpy_s(hash.data(), mem_size, digest, mem_size);
   if (ret != EOK) {
     return false;
@@ -107,15 +108,15 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
     uint32_t t2 = sigma0(hash[0]) + ma(hash[0], hash[1], hash[2]);
     for (int j = digest_size - 1; j >= 0; --j) {
       if (j == 4) {
-        hash[j] = hash[j - 1] + t1;
+        hash[IntToSize(j)] = hash[IntToSize(j - 1)] + t1;
       } else if (j == 0) {
-        hash[j] = t1 + t2;
+        hash[IntToSize(j)] = t1 + t2;
       } else {
-        hash[j] = hash[j - 1];
+        hash[IntToSize(j)] = hash[IntToSize(j - 1)];
       }
     }
   }
-  for (int i = 0; i < digest_size; ++i) {
+  for (size_t i = 0; i < IntToSize(digest_size); ++i) {
     digest[i] += hash[i];
   }
   return true;
@@ -188,9 +189,9 @@ std::string GetHashFromDir(const std::string &dir) {
     if (d_name == "." || d_name == ".." || filename->d_type != DT_REG) {
       continue;
     }
-    file_hashes.emplace_back(GetHashFromFile(std::string(dir) + "/" + filename->d_name));
+    (void)file_hashes.emplace_back(GetHashFromFile(std::string(dir) + "/" + filename->d_name));
   }
-  closedir(open_dir);
+  (void)closedir(open_dir);
   std::sort(file_hashes.begin(), file_hashes.end());
   auto dir_hash = std::accumulate(file_hashes.begin(), file_hashes.end(), std::string{});
   return dir_hash;
