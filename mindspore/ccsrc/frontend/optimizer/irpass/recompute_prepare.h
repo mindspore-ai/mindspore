@@ -64,20 +64,61 @@ class SetCellOutputNoRecompute : public AnfVisitor {
   void GetRealOutputNodes(const AnfNodePtr &output, mindspore::HashSet<CNodePtr> *real_outputs) {
     MS_EXCEPTION_IF_NULL(output);
     MS_EXCEPTION_IF_NULL(real_outputs);
-    if (!output->isa<CNode>()) {
+    auto output_cnode = output->cast<CNodePtr>();
+    if (output_cnode == nullptr) {
       return;
     }
-    auto output_cnode = output->cast<CNodePtr>();
-    if (IsPrimitiveCNode(output_cnode, prim::kPrimDepend) || IsPrimitiveCNode(output_cnode, prim::kPrimTupleGetItem)) {
+    auto input0 = output_cnode->input(0);
+    MS_EXCEPTION_IF_NULL(input0);
+    if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimTupleGetItem)) {
       GetRealOutputNodes(output_cnode->input(kRealInputIndexInDepend), real_outputs);
-    } else if (IsPrimitiveCNode(output_cnode, prim::kPrimMakeTuple)) {
+    } else if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
       auto &inputs = output_cnode->inputs();
       for (size_t i = 1; i < inputs.size(); ++i) {
         GetRealOutputNodes(output_cnode->input(i), real_outputs);
       }
+    } else if (IsValueNode<FuncGraph>(input0)) {
+      auto fg = GetValueNode<FuncGraphPtr>(input0);
+      GetRealOutputNodes(fg->output(), real_outputs);
+    } else if (input0->isa<CNode>()) {
+      auto abs = input0->abstract();
+      if (abs == nullptr || !abs->isa<abstract::AbstractFunction>()) {
+        return;
+      }
+      auto abs_func = abs->cast<abstract::AbstractFunctionPtr>();
+      if (abs_func->isa<abstract::AbstractFuncUnion>()) {
+        auto visit_fn = [this, &real_outputs](const abstract::AbstractFuncAtomPtr &poss) {
+          auto abs_fg = GetAbstractFuncGraph(poss);
+          if (abs_fg != nullptr) {
+            GetRealOutputNodes(abs_fg->output(), real_outputs);
+          }
+        };
+        abs_func->Visit(visit_fn);
+        return;
+      }
+      auto fg = GetAbstractFuncGraph(abs_func);
+      if (fg != nullptr) {
+        GetRealOutputNodes(fg->output(), real_outputs);
+      }
     } else {
       real_outputs->insert(output_cnode);
     }
+  }
+
+  FuncGraphPtr GetAbstractFuncGraph(const abstract::AbstractFunctionPtr &abs) {
+    if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+      auto abstract_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+      return abstract_func_graph->func_graph();
+    }
+    if (abs->isa<abstract::PartialAbstractClosure>()) {
+      auto abstract_partial_func = abs->cast<abstract::PartialAbstractClosurePtr>();
+      auto abstract_fn = abstract_partial_func->fn();
+      if (abstract_fn != nullptr && abstract_fn->isa<abstract::FuncGraphAbstractClosure>()) {
+        auto abstract_func_graph = abstract_fn->cast<abstract::FuncGraphAbstractClosurePtr>();
+        return abstract_func_graph->func_graph();
+      }
+    }
+    return nullptr;
   }
 };
 }  // namespace irpass
