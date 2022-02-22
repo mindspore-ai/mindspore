@@ -203,7 +203,6 @@ int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map
     const auto &map = maps.at(kMicroParam);
     std::map<std::string, std::string &> parse_map{{"target", micro_param_string_.target},
                                                    {"codegen_mode", micro_param_string_.codegen_mode},
-                                                   {"output_path", micro_param_string_.output_path},
                                                    {"debug_mode", micro_param_string_.debug_mode},
                                                    {"support_parallel", micro_param_string_.support_parallel},
                                                    {"enable_micro", micro_param_string_.enable_micro}};

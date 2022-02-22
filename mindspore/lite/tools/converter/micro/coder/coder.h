@@ -24,7 +24,6 @@
 
 namespace mindspore::lite::micro {
 constexpr size_t kFlatbuffersBuilderInitSize = 1024;
-class CoderFlags;
 
 class Coder final {
  public:

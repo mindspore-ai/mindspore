@@ -30,7 +30,6 @@ class MicroParamParser {
  private:
   STATUS ParseEnableMicro(const std::string &enable_micro, micro::MicroParam *micro_param);
   STATUS ParseTarget(const std::string &target, micro::MicroParam *micro_param);
-  STATUS ParseOutputPath(const std::string &output_path, micro::MicroParam *micro_param);
   STATUS ParseCodeGenMode(const std::string &codegen_mode, micro::MicroParam *micro_param);
   STATUS ParseSupportParallel(const std::string &support_parallel, micro::MicroParam *micro_param);
   STATUS ParseDebugMode(const std::string &debug_mode, micro::MicroParam *micro_param);
