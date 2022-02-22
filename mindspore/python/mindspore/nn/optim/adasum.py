@@ -16,6 +16,10 @@
 import copy
 import hashlib
 import math
+import mindspore.nn as nn
+import mindspore.log as logger
+from mindspore import context
+from mindspore._checkparam import Validator as validator
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.parallel._utils import _get_global_rank, _get_stage_device_num
@@ -353,25 +357,47 @@ _clone_weight = C.MultitypeFuncGraph("_clone_weight")
 def _clone_weight_process(scale, weight):
     return scale_mul(weight, scale)
 
+def _parallel_check():
+    if context.get_auto_parallel_context("parallel_mode") not in ["semi_auto_parallel",
+                                                                  "auto_parallel", "data_parallel"]:
+        raise RuntimeError("Stand alone and hybrid parallel mode is not supported to apply adasum.")
+    if context.get_auto_parallel_context("parallel_mode") == "data_parallel":
+        logger.warning("For data parallel mode, it is recommended to using mindspore.boost to enable adasum.")
+    if context.get_auto_parallel_context("enable_parallel_optimizer"):
+        raise RuntimeError("Currently, the optimizer shard is not supported with applying adasum.")
+    if context.get_auto_parallel_context("pipeline_stages") > 1:
+        raise RuntimeError("Currently, the pipeline parallel is not supported with applying adasum.")
+
 class AdaSumByGradWrapCell(Cell):
     r"""
     Enable the adasum in "auto_parallel/semi_auto_parallel" mode.
 
     Args:
-        optimizer (Union[Cell]): Optimizer for updating the weights.
+        optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer
+            requires only one input.
 
     Inputs:
         - **grads** (Tuple(Tensor)) - Tuple of gradients.
+
+    Examples:
+        >>> from mindspore import nn
+        >>> from mindspore.nn import AdaSumByGradWrapCell
+        >>> net = Net()
+        >>> optim = AdaSumByGradWrapCell(nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9))
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
         super(AdaSumByGradWrapCell, self).__init__(auto_prefix=False)
+        _device_number = 8
+        _parallel_check()
         self.optimizer = optimizer
+        validator.check_value_type('optimizer', optimizer, (nn.Optimizer,))
         self.parameters = optimizer.parameters
         self.hyper_map = C.HyperMap()
-        _device_number = 8
         group_number = _get_stage_device_num() // _device_number
         self.grad_clone = ParameterTuple(self.parameters)
-        self.adasum = _AdaSumByGrad(_get_global_rank, _device_number, group_number, self.grad_clone)
+        self.adasum = _AdaSumByGrad(_get_global_rank(), _device_number, group_number, self.grad_clone)
         self.sync_tensor = Parameter(Tensor(0, dtype=mstype.int32))
 
     def construct(self, grads):
@@ -386,14 +412,25 @@ class AdaSumByDeltaWeightWrapCell(Cell):
     Enable the adasum in "auto_parallel/semi_auto_parallel" mode.
 
     Args:
-        optimizer (Union[Cell]): Optimizer for updating the weights.
+        optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer
+            requires only one input.
 
     Inputs:
         - **grads** (Tuple(Tensor)) - Tuple of gradients.
+
+    Examples:
+        >>> from mindspore import nn
+        >>> from mindspore.nn import AdaSumByDeltaWeightWrapCell
+        >>> net = Net()
+        >>> optim = AdaSumByGradWrapCell(nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9))
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
         super(AdaSumByDeltaWeightWrapCell, self).__init__(auto_prefix=False)
+        _parallel_check()
         self.optimizer = optimizer
+        validator.check_value_type('optimizer', optimizer, (nn.Optimizer,))
         self.parameters = optimizer.parameters
         self.hyper_map = C.HyperMap()
         _device_number = 8
