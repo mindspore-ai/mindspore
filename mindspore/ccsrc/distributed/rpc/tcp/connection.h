@@ -56,7 +56,7 @@ struct MessageHeader {
  */
 struct SendMetrics {
   // Records the message number and max body size.
-  void UpdateMax(int size) {
+  void UpdateMax(size_t size) {
     accum_msg_count++;
     if (size > max_msg_size) {
       max_msg_size = size;
@@ -84,10 +84,10 @@ struct SendMetrics {
   }
 
   // The total number of bytes sent already.
-  int accum_msg_count{0};
+  size_t accum_msg_count{0};
 
   // The max message body size sent in bytes.
-  int max_msg_size{0};
+  size_t max_msg_size{0};
   int error_code{0};
 
   std::string last_succ_msg_name;
@@ -222,7 +222,7 @@ struct Connection {
   std::string GenerateHttpMessage(MessageBase *msg);
 
   // Change the header body from network byte order to host byte order.
-  void ReorderHeader(MessageHeader *header);
+  void ReorderHeader(MessageHeader *header) const;
 
   std::string advertise_addr_;
 };

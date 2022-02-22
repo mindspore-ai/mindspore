@@ -53,7 +53,9 @@ int DoConnect(const std::string &to, Connection *conn, ConnectionCallBack event_
 
   int ret = TCPComm::Connect(conn, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
-    close(sock_fd);
+    if (close(sock_fd) != 0) {
+      MS_LOG(ERROR) << "Failed to close fd:" << sock_fd;
+    }
     conn->socket_fd = -1;
     return -1;
   }
@@ -116,7 +118,9 @@ void OnAccept(int server, uint32_t events, void *arg) {
   if (conn == nullptr) {
     MS_LOG(ERROR) << "Failed to create new connection, server fd:" << server << ", events: " << events
                   << ", accept fd: " << acceptFd;
-    close(acceptFd);
+    if (close(acceptFd) != 0) {
+      MS_LOG(ERROR) << "Failed to close fd: " << acceptFd;
+    }
     acceptFd = -1;
     return;
   }
@@ -126,7 +130,9 @@ void OnAccept(int server, uint32_t events, void *arg) {
   if (conn->send_metrics == nullptr) {
     MS_LOG(ERROR) << "Failed to create connection metrics, server fd: " << server << ", events: " << events
                   << ", accept fd: " << acceptFd;
-    close(acceptFd);
+    if (close(acceptFd) != 0) {
+      MS_LOG(ERROR) << "Failed to close fd: " << acceptFd;
+    }
     acceptFd = -1;
     delete conn;
     return;
@@ -148,7 +154,9 @@ void OnAccept(int server, uint32_t events, void *arg) {
   if (retval != RPC_OK) {
     MS_LOG(ERROR) << "Failed to add accept fd event, server fd: " << server << ", events: " << events
                   << ", accept fd: " << acceptFd;
-    close(acceptFd);
+    if (close(acceptFd) != 0) {
+      MS_LOG(ERROR) << "Failed to close fd: " << acceptFd;
+    }
     acceptFd = -1;
     delete conn->send_metrics;
     delete conn;
@@ -198,7 +206,7 @@ TCPComm::~TCPComm() {
 void TCPComm::SendExitMsg(const std::string &from, const std::string &to) {
   if (message_handler_ != nullptr) {
     std::unique_ptr<MessageBase> exit_msg = std::make_unique<MessageBase>(MessageBase::Type::KEXIT);
-    RPC_OOM_EXIT(exit_msg);
+    MS_EXCEPTION_IF_NULL(exit_msg);
 
     exit_msg->SetFrom(AID(from));
     exit_msg->SetTo(AID(to));
@@ -245,14 +253,7 @@ bool TCPComm::Initialize() {
     return false;
   }
 
-  if (g_httpKmsgEnable < 0) {
-    char *httpKmsgEnv = getenv("LITERPC_HTTPKMSG_ENABLED");
-    if (httpKmsgEnv != nullptr) {
-      if (std::string(httpKmsgEnv) == "true" || std::string(httpKmsgEnv) == "1") {
-        is_http_msg_ = true;
-      }
-    }
-  } else {
+  if (g_httpKmsgEnable >= 0) {
     is_http_msg_ = (g_httpKmsgEnable == 0) ? false : true;
   }
 
@@ -380,7 +381,7 @@ int TCPComm::SetConnectedHandler(Connection *conn) {
 
 int TCPComm::Connect(Connection *conn, const struct sockaddr *sa, socklen_t saLen) {
   int retval = 0;
-  uint16_t localPort = -1;
+  uint16_t localPort = 0;
 
   retval = SocketOperation::Connect(conn->socket_fd, sa, saLen, &localPort);
   if (retval != RPC_OK) {
@@ -458,7 +459,7 @@ void TCPComm::Send(MessageBase *msg, const TCPComm *tcpmgr, bool remoteLink, boo
   if (conn->total_send_len == 0) {
     conn->FillSendMessage(msg, advertise_url_.data(), is_http_msg_);
   } else {
-    conn->send_message_queue.emplace(msg);
+    (void)conn->send_message_queue.emplace(msg);
   }
 
   // Send the message.
@@ -468,7 +469,7 @@ void TCPComm::Send(MessageBase *msg, const TCPComm *tcpmgr, bool remoteLink, boo
 }
 
 void TCPComm::SendByRecvLoop(MessageBase *msg, const TCPComm *tcpmgr, bool remoteLink, bool isExactNotRemote) {
-  recv_event_loop_->AddTask(
+  (void)recv_event_loop_->AddTask(
     [msg, tcpmgr, remoteLink, isExactNotRemote] { TCPComm::Send(msg, tcpmgr, remoteLink, isExactNotRemote); });
 }
 
@@ -518,7 +519,7 @@ int TCPComm::Send(MessageBase *msg, bool remoteLink, bool isExactNotRemote) {
     if (conn->total_send_len == 0) {
       conn->FillSendMessage(msg, advertise_url_.data(), is_http_msg_);
     } else {
-      conn->send_message_queue.emplace(msg);
+      (void)conn->send_message_queue.emplace(msg);
     }
 
     if (conn->state == ConnectionState::kConnected) {
@@ -528,7 +529,7 @@ int TCPComm::Send(MessageBase *msg, bool remoteLink, bool isExactNotRemote) {
 }
 
 void TCPComm::CollectMetrics() {
-  send_event_loop_->AddTask([this] {
+  (void)send_event_loop_->AddTask([this] {
     Connection::conn_mutex.lock();
     Connection *maxConn = ConnectionPool::GetConnectionPool()->FindMaxConnection();
     Connection *fastConn = ConnectionPool::GetConnectionPool()->FindFastConnection();
@@ -567,7 +568,7 @@ int TCPComm::Send(std::unique_ptr<MessageBase> &&msg, bool remoteLink, bool isEx
 }
 
 void TCPComm::Link(const AID &source, const AID &destination) {
-  recv_event_loop_->AddTask([source, destination, this] {
+  (void)recv_event_loop_->AddTask([source, destination, this] {
     std::string to = destination.Url();
     std::lock_guard<std::mutex> lock(Connection::conn_mutex);
 
@@ -612,7 +613,7 @@ void TCPComm::Link(const AID &source, const AID &destination) {
 }
 
 void TCPComm::UnLink(const AID &destination) {
-  recv_event_loop_->AddTask([destination] {
+  (void)recv_event_loop_->AddTask([destination] {
     std::string to = destination.Url();
     std::lock_guard<std::mutex> lock(Connection::conn_mutex);
     if (is_http_msg_) {
@@ -649,7 +650,9 @@ void TCPComm::DoReConnectConn(Connection *conn, std::string to, const AID &sourc
 
   *oldFd = conn->socket_fd;
 
-  conn->recv_event_loop->DeleteEpollEvent(conn->socket_fd);
+  if (conn->recv_event_loop->DeleteEpollEvent(conn->socket_fd) == RPC_ERROR) {
+    MS_LOG(ERROR) << "Failed to delete epoll event: " << conn->socket_fd;
+  }
   conn->socket_operation->Close(conn);
 
   conn->socket_fd = -1;
@@ -688,7 +691,7 @@ Connection *TCPComm::CreateDefaultConn(std::string to) {
 }
 
 void TCPComm::Reconnect(const AID &source, const AID &destination) {
-  send_event_loop_->AddTask([source, destination, this] {
+  (void)send_event_loop_->AddTask([source, destination, this] {
     std::string to = destination.Url();
     std::lock_guard<std::mutex> lock(Connection::conn_mutex);
     Connection *conn = ConnectionPool::GetConnectionPool()->FindConnection(to, false, is_http_msg_);
@@ -696,7 +699,7 @@ void TCPComm::Reconnect(const AID &source, const AID &destination) {
       conn->state = ConnectionState::kClose;
     }
 
-    recv_event_loop_->AddTask([source, destination, this] {
+    (void)recv_event_loop_->AddTask([source, destination, this] {
       std::string to = destination.Url();
       int oldFd = -1;
       std::lock_guard<std::mutex> lock(Connection::conn_mutex);
@@ -755,7 +758,9 @@ void TCPComm::Finalize() {
   }
 
   if (server_fd_ > 0) {
-    close(server_fd_);
+    if (close(server_fd_) != 0) {
+      MS_LOG(ERROR) << "Failed to close fd: " << server_fd_;
+    }
     server_fd_ = -1;
   }
 }
