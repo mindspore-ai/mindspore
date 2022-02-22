@@ -77,8 +77,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto device_addr = device_context->CreateDeviceAddress(addr->addr, addr->size, format, type);
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto ret = device_addr->LoadMemToHost(input_tensor_name, exec_order, format, int_shapes, type, 0, true,
-                                          UintToInt(root_graph_id));
+    auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), format, int_shapes, type, 0, true,
+                                          root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << input_tensor_name << ", host_format:" << format << ".!";
@@ -108,7 +108,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes = trans::GetRuntimePaddingShape(cnode, j);
     auto ret =
-      device_addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, j, false, UintToInt(root_graph_id));
+      device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), format, int_shapes, type, j, false, root_graph_id);
     if (!ret) {
       MS_LOG(ERROR) << "LoadMemToHost:"
                     << ", tensor_name:" << tensor_name << ", host_format:" << format << ".!";

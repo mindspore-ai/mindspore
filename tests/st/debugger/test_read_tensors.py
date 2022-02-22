@@ -19,9 +19,9 @@ Read tensor test script for offline debugger APIs.
 import os
 import json
 import tempfile
-import mindspore.offline_debug.dbg_services as d
-import numpy as np
 import pytest
+import numpy as np
+import mindspore.offline_debug.dbg_services as d
 from tests.security_utils import security_off_wrap
 from dump_test_utils import build_dump_structure, write_tensor_to_json
 

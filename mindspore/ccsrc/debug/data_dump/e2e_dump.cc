@@ -354,7 +354,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string node_name = GetKernelNodeName(anf_node);
-  if (!anf_node->isa<Parameter>() || !dump_json_parser.NeedDump(node_name)) {
+  if (!anf_node->isa<Parameter>() || !dump_json_parser.NeedDump(node_name) || !dump_json_parser.OutputNeedDump()) {
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(node_name);
@@ -737,7 +737,7 @@ uint64_t UnpackUint64Value(char *ptr) {
 #if defined(__APPLE__)
   return *reinterpret_cast<const uint64_t *>(ptr);
 #else
-  return le16toh(*reinterpret_cast<const uint64_t *>(ptr));
+  return le64toh(*reinterpret_cast<const uint64_t *>(ptr));
 #endif
 }
 

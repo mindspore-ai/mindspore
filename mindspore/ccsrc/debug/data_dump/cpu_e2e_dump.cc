@@ -179,6 +179,10 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
 
 void CPUE2eDump::DumpParameters(const session::KernelGraph *graph, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(graph);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.OutputNeedDump()) {
+    return;
+  }
   MS_LOG(INFO) << "Start e2e dump parameters.";
   const std::string &dump_path = GenerateDumpPath(graph_id);
 
@@ -198,6 +202,10 @@ void CPUE2eDump::DumpParametersData() {
 
 void CPUE2eDump::DumpConstants(const session::KernelGraph *graph, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(graph);
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (!dump_json_parser.OutputNeedDump()) {
+    return;
+  }
   MS_LOG(INFO) << "Start e2e dump constant.";
   uint32_t cur_iteration = DumpJsonParser::GetInstance().cur_dump_iter();
   if (cur_iteration != 0) {
