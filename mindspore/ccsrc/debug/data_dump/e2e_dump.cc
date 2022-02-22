@@ -186,7 +186,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     if (DumpJsonParser::GetInstance().IsStatisticDump() &&
         (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
       TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, false, j, j);
-      stat_dump.DumpTensorStatsToFile(GetKernelNodeName(node), dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(GetKernelNodeName(node), dump_path, debugger);
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
       if (IsDeviceTargetGPU()) {
@@ -287,7 +287,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     if (DumpJsonParser::GetInstance().IsStatisticDump() &&
         (IsDeviceTargetGPU() || Debugger::GetInstance()->GetAscendKernelByKernelFlag())) {
       TensorStatDump stat_dump(op_type, op_name, task_id, stream_id, timestamp, true, j, slot);
-      stat_dump.DumpTensorStatsToFile(tensor_name, dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(tensor_name, dump_path, debugger);
     }
     if (DumpJsonParser::GetInstance().IsTensorDump()) {
       if (IsDeviceTargetGPU()) {
@@ -345,7 +345,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   if (IsDeviceTargetGPU()) {
     if (dump_json_parser.IsStatisticDump()) {
       TensorStatDump stat_dump("Parameter", dump_name, task_id, stream_id, timestamp, false, 0, 0);
-      stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
       DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
@@ -367,7 +367,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
   MS_EXCEPTION_IF_NULL(anf_node);
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   std::string node_name = GetKernelNodeName(anf_node);
-  if (!anf_node->isa<Parameter>() || !dump_json_parser.NeedDump(node_name)) {
+  if (!anf_node->isa<Parameter>() || !dump_json_parser.NeedDump(node_name) || !dump_json_parser.OutputNeedDump()) {
     return;
   }
   DumpJsonParser::GetInstance().MatchKernel(node_name);
@@ -388,7 +388,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
   if (IsDeviceTargetGPU()) {
     if (dump_json_parser.IsStatisticDump()) {
       TensorStatDump stat_dump("Parameter", node_name, task_id, stream_id, timestamp, false, 0, 0);
-      stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
     }
     if (dump_json_parser.IsTensorDump()) {
       DumpGPUMemToFile(file_path, node_name, *addr, int_shapes, type, device_type, trans_flag, 0, debugger);
@@ -534,8 +534,8 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
     // dump history for all iterations in the epoch
     Debugger::GetInstance()->UpdateGraphIterMap(graph->graph_id(), iter_num);
     auto graph_iter_map = Debugger::GetInstance()->GetGraphIterMap();
-    auto step_per_epoch = graph_iter_map[graph->graph_id()];
-    for (int i = 0; i < step_per_epoch; i++) {
+    auto step_per_epoch = IntToSize(graph_iter_map[graph->graph_id()]);
+    for (size_t i = 0; i < step_per_epoch; i++) {
       auto step = (json_parser.cur_dump_iter() * step_per_epoch) + i;
       fout << (std::to_string(step) + "\n");
     }
@@ -567,7 +567,7 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     MS_LOG(INFO) << "Current graph id is " << graph_id;
     std::string dump_path = GenerateDumpPath(graph_id, rank_id);
     if (dump_json_parser.IsStatisticDump()) {
-      TensorStatDump::OpenStatisticsFile(dump_path);
+      (void)TensorStatDump::OpenStatisticsFile(dump_path);
     }
     DumpInput(graph, dump_path, debugger);
     DumpOutput(graph, dump_path, debugger);
@@ -799,7 +799,7 @@ uint64_t UnpackUint64Value(char *ptr) {
 #if defined(__APPLE__)
   return *reinterpret_cast<const uint64_t *>(ptr);
 #else
-  return le16toh(*reinterpret_cast<const uint64_t *>(ptr));
+  return le64toh(*reinterpret_cast<const uint64_t *>(ptr));
 #endif
 }
 
@@ -811,7 +811,7 @@ std::string IntToHexString(const uint64_t value) {
 
 nlohmann::json E2eDump::ParseOverflowInfo(char *data_ptr) {
   uint32_t index = 0;
-  uint64_t model_id = UnpackUint64Value(data_ptr + index);
+  uint64_t model_id = UnpackUint64Value(data_ptr);
   index += kUint64Size;
   uint64_t stream_id = UnpackUint64Value(data_ptr + index);
   index += kUint64Size;
