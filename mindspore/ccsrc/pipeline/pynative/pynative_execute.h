@@ -241,8 +241,8 @@ class GradExecutor {
   void PopCellStack();
   TopCellInfoPtr PopHighOrderGraphStack();
   void HandleInputArgsForTopCell(const py::args &args, bool is_bprop_top);
-  void InitResourceAndDfBuilder(const std::string &cell_id, const py::args &args);
-  void MakeNewTopGraph(const string &cell_id, const py::args &args, bool is_topest);
+  void InitResourceAndDfBuilder(const std::string &cell_id, const py::object &cell, const py::args &args);
+  void MakeNewTopGraph(const string &cell_id, const py::object &cell, const py::args &args, bool is_topest);
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
   // Manage resource when run grad process.
   bool IsBpropGraph(const std::string &cell_id);
