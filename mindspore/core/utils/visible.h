@@ -21,14 +21,17 @@
 #ifdef BUILDING_DLL
 #define MS_CORE_API __declspec(dllexport)
 #define MS_EXPORT __declspec(dllexport)
+#define GVAR_DEF(type, name, value) MS_CORE_API inline const type name = value;
 #else
 #define MS_CORE_API __declspec(dllimport)
 #define MS_EXPORT __declspec(dllimport)
+#define GVAR_DEF(type, name, value) MS_CORE_API extern const type name;
 #endif
 #define MS_LOCAL
 #else
 #define MS_CORE_API __attribute__((visibility("default")))
 #define MS_EXPORT __attribute__((visibility("default")))
 #define MS_LOCAL __attribute__((visibility("hidden")))
+#define GVAR_DEF(type, name, value) MS_CORE_API inline const type name = value;
 #endif
 #endif  // MINDSPORE_CORE_UTILS_VISIBLE_H_

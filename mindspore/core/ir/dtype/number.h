@@ -228,24 +228,24 @@ class MS_CORE_API Complex : public Number {
   std::string DumpText() const override { return std::string("C") + std::to_string(nbits()); }
 };
 
-MS_CORE_API inline const TypePtr kBool = std::make_shared<Bool>();
-MS_CORE_API inline const TypePtr kInt8 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits8));
-MS_CORE_API inline const TypePtr kInt16 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits16));
-MS_CORE_API inline const TypePtr kInt32 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits32));
-MS_CORE_API inline const TypePtr kInt64 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits64));
-MS_CORE_API inline const TypePtr kUInt8 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits8));
-MS_CORE_API inline const TypePtr kUInt16 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits16));
-MS_CORE_API inline const TypePtr kUInt32 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits32));
-MS_CORE_API inline const TypePtr kUInt64 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits64));
-MS_CORE_API inline const TypePtr kFloat16 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits16));
-MS_CORE_API inline const TypePtr kFloat32 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits32));
-MS_CORE_API inline const TypePtr kFloat64 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits64));
-MS_CORE_API inline const TypePtr kInt = std::make_shared<Int>();
-MS_CORE_API inline const TypePtr kUInt = std::make_shared<UInt>();
-MS_CORE_API inline const TypePtr kFloat = std::make_shared<Float>();
-MS_CORE_API inline const TypePtr kNumber = std::make_shared<Number>();
-MS_CORE_API inline const TypePtr kComplex64 = std::make_shared<Complex>(static_cast<int>(BitsNum::eBits64));
-MS_CORE_API inline const TypePtr kComplex128 = std::make_shared<Complex>(static_cast<int>(BitsNum::eBits128));
+GVAR_DEF(TypePtr, kBool, std::make_shared<Bool>());
+GVAR_DEF(TypePtr, kInt8, std::make_shared<Int>(static_cast<int>(BitsNum::eBits8)));
+GVAR_DEF(TypePtr, kInt16, std::make_shared<Int>(static_cast<int>(BitsNum::eBits16)));
+GVAR_DEF(TypePtr, kInt32, std::make_shared<Int>(static_cast<int>(BitsNum::eBits32)));
+GVAR_DEF(TypePtr, kInt64, std::make_shared<Int>(static_cast<int>(BitsNum::eBits64)));
+GVAR_DEF(TypePtr, kUInt8, std::make_shared<UInt>(static_cast<int>(BitsNum::eBits8)));
+GVAR_DEF(TypePtr, kUInt16, std::make_shared<UInt>(static_cast<int>(BitsNum::eBits16)));
+GVAR_DEF(TypePtr, kUInt32, std::make_shared<UInt>(static_cast<int>(BitsNum::eBits32)));
+GVAR_DEF(TypePtr, kUInt64, std::make_shared<UInt>(static_cast<int>(BitsNum::eBits64)));
+GVAR_DEF(TypePtr, kFloat16, std::make_shared<Float>(static_cast<int>(BitsNum::eBits16)));
+GVAR_DEF(TypePtr, kFloat32, std::make_shared<Float>(static_cast<int>(BitsNum::eBits32)));
+GVAR_DEF(TypePtr, kFloat64, std::make_shared<Float>(static_cast<int>(BitsNum::eBits64)));
+GVAR_DEF(TypePtr, kInt, std::make_shared<Int>());
+GVAR_DEF(TypePtr, kUInt, std::make_shared<UInt>());
+GVAR_DEF(TypePtr, kFloat, std::make_shared<Float>());
+GVAR_DEF(TypePtr, kNumber, std::make_shared<Number>());
+GVAR_DEF(TypePtr, kComplex64, std::make_shared<Complex>(static_cast<int>(BitsNum::eBits64)));
+GVAR_DEF(TypePtr, kComplex128, std::make_shared<Complex>(static_cast<int>(BitsNum::eBits128)));
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_

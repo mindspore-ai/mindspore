@@ -108,7 +108,7 @@ class MS_CORE_API NoShape final : public BaseShape {
   bool IsDimUnknown() const override { return false; }
 };
 
-MS_CORE_API inline const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
+GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
 
 /// \brief Shape defines dimensions of tensor.
 class MS_CORE_API Shape final : public BaseShape {

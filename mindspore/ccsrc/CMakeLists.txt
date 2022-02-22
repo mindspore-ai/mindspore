@@ -42,7 +42,6 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
-    add_compile_definitions(BUILDING_DLL)
 endif()
 
 if(ENABLE_MPI)
