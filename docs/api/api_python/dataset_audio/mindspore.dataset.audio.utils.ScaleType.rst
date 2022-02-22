@@ -1,7 +1,7 @@
 mindspore.dataset.audio.utils.ScaleType
 =================================================
 
-.. py:class:: mindspore.dataset.audio.utils.ScaleType(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.audio.utils.ScaleType
 
     音频标度枚举类。
 

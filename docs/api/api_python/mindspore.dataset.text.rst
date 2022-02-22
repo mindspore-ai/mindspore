@@ -1,9 +1,14 @@
 mindspore.dataset.text
 ======================
 
-This module is to support text processing for NLP. It includes two parts: transforms and utils. transforms is a high performance NLP text processing module which is developed with ICU4C and cppjieba. utils provides some general methods for NLP text processing.
+此模块用于文本数据增强，包括 `transforms` 和 `utils` 两个子模块。
 
-Common imported modules in corresponding API examples are as follows:
+`transforms` 是一个高性能文本数据增强模块，支持常见的文本数据增强处理。
+
+`utils` 提供了一些文本处理的工具方法。
+
+
+在API示例中，常用的模块导入方法如下：
 
 .. code-block::
 
@@ -13,7 +18,7 @@ Common imported modules in corresponding API examples are as follows:
 mindspore.dataset.text.transforms
 ---------------------------------
 
-.. msnoteautosummary::
+.. mscnnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst
@@ -41,7 +46,7 @@ mindspore.dataset.text.transforms
 mindspore.dataset.text.utils
 ----------------------------
 
-.. msnoteautosummary::
+.. mscnnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst

@@ -18,7 +18,7 @@
     - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
     - **softmax_compute_type** (dtype.Number) - 表示注意力中softmax的计算类型。其值应为dtype.float32或dtype.float16。默认值为mstype.float32。
     - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
-    - **offset** (int) - 表示`decoder`的初始层索引偏移值。其用于设置梯度聚合的融合值和流水线并行的stage值，使其不与编码器层的相关属性重叠。
+    - **offset** (int) - 表示 `decoder` 的初始层索引偏移值。其用于设置梯度聚合的融合值和流水线并行的stage值，使其不与编码器层的相关属性重叠。
     - **lambda_func** - 表示确定梯度融合索引、pipeline阶段和重计算属性的函数。如果用户想确定pipeline阶段和梯度聚合融合，用户可以传递一个接受 `network` 、 `layer_id` 、 `offset` 、 `parallel_config` 和 `layers` 的函数。 `network(Cell)` 表示transformer块， `layer_id(int)` 表示当前模块的层索引，从零开始计数， `offset(int)` 表示如果网络中还有其他模块，则layer_index需要一个偏置。pipeline的默认设置为： `(layer_id + offset) // (layers / pipeline_stage)` 。默认值：None
     - **moe_config** (MoEConfig) - 表示MoE (Mixture of Expert)的配置。
     - **parallel_config** (TransformerOpParallelConfig) - 表示并行配置。默认值为 `default_transformer_config` ，表示带有默认参数的 `TransformerOpParallelConfig` 实例。

@@ -1,7 +1,7 @@
 mindspore.dataset.vision.SliceMode
 ==================================
 
-.. py:class:: mindspore.dataset.vision.SliceMode()
+.. py:class:: mindspore.dataset.vision.SliceMode
 	
     Tensor切片方式枚举类。
 

@@ -30,6 +30,7 @@ mindspore.train.callback
 .. include:: train/mindspore.train.callback.SummaryLandscape.rst
 
 .. automodule:: mindspore.train.callback
+    :exclude-members: FederatedLearningManager
     :members:
 
 mindspore.train.train_thor

@@ -30,4 +30,4 @@
 
     .. py:method:: transform()
 
-        :func: `mindspore.mindrecord.CsvToMR.run` 函数的包装函数来保证异常时正常退出。
+        :func:`mindspore.mindrecord.CsvToMR.run` 函数的包装函数来保证异常时正常退出。
