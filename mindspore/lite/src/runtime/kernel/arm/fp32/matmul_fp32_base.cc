@@ -37,164 +37,65 @@ int MatmulRun(const void *cdata, int task_id, float, float) {
 }
 
 MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
-  FreeResizeBufA();
-  FreeResizeBufB();
+  // packed const-matrix will be delete by framework.
   if (out_need_aligned_ && output_data_ != nullptr) {
     free(output_data_);
     output_data_ = nullptr;
   }
-  FreeBiasBuf();
-}
-
-void MatmulFp32BaseCPUKernel::InitParameter() {
-  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[kInputIndex]);
-  NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[kWeightIndex]);
-  params_->a_const_ = in_tensors_[kInputIndex]->IsConst();
-  params_->b_const_ = in_tensors_[kWeightIndex]->IsConst();
-
-  if (op_parameter_->is_train_session_) {
-    params_->a_const_ = false;
-    params_->b_const_ = false;
+  if (matrix_c_.pack_ptr != nullptr) {
+    free(matrix_c_.pack_ptr);
+    matrix_c_.pack_ptr = nullptr;
   }
 }
 
-int MatmulFp32BaseCPUKernel::InitBufferA() {
-  if (a_pack_ptr_ != nullptr) {
-    return RET_OK;
-  }
-  if (vec_matmul_) {
-    a_pack_ptr_ = reinterpret_cast<float *>(in_tensors().at(0)->data());
-  } else {
+int MatmulFp32BaseCPUKernel::BackupConstMatrix(MatrixInfo *matrix_info, int index) {
+  MS_CHECK_TRUE_MSG(index < static_cast<int>(in_tensors_.size()), RET_ERROR, "matrix is not existing.");
+  auto element_num = in_tensors_[index]->ElementsNum();
+  MS_CHECK_TRUE_MSG(element_num > 0, RET_ERROR, "matrix is invalid.");
+  matrix_info->origin_ptr = reinterpret_cast<float *>(ms_context_->allocator->Malloc(element_num * sizeof(float)));
+  MS_CHECK_TRUE_MSG(matrix_info->origin_ptr != nullptr, RET_ERROR, "matrix is invalid.");
+  auto src_ptr = in_tensors_[index]->data();
+  MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix is invalid.");
+  memcpy(matrix_info->origin_ptr, src_ptr, element_num * sizeof(float));
+  matrix_info->has_origin = true;
+  return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::PackMatrixA() {
+  if (!params_->a_const_) {
+    if (!matrix_a_.need_pack) {
+      matrix_a_.pack_ptr = reinterpret_cast<float *>(in_tensors_[FIRST_INPUT]->data());
+      return RET_OK;
+    }
     if (op_parameter_->is_train_session_) {
-      a_pack_ptr_ = reinterpret_cast<float *>(workspace());
+      matrix_a_.pack_ptr = reinterpret_cast<float *>(workspace());
     } else {
-#ifdef SERVER_INFERENCE
-      if (!params_->a_const_) {
-        a_pack_ptr_ = reinterpret_cast<float *>(
-          ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_pack_size_) * sizeof(float)));
-      } else {
-        auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
-          in_tensors()[0], static_cast<size_t>(matrix_a_pack_size_) * sizeof(float));
-        a_pack_ptr_ = reinterpret_cast<float *>(a_packed.second);
-        a_is_packed_ = a_packed.first;
-      }
-#else
-      a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
-#endif
+      matrix_a_.pack_ptr =
+        reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_.pack_size * sizeof(float)));
     }
-  }
-  if (a_pack_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int MatmulFp32BaseCPUKernel::InitBufferB() {
-  if (b_pack_ptr_ != nullptr) {
-    return RET_OK;
-  }
-  if (op_parameter_->is_train_session_) {
-    b_pack_ptr_ = reinterpret_cast<float *>(workspace()) + matrix_a_pack_size_;
   } else {
 #ifdef SERVER_INFERENCE
-    if (params_->b_const_) {
-      auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
-        in_tensors()[1], static_cast<size_t>(matrix_b_pack_size_) * sizeof(float));
-      b_pack_ptr_ = reinterpret_cast<float *>(b_packed.second);
-      b_is_packed_ = b_packed.first;
-    } else {
-      b_pack_ptr_ = reinterpret_cast<float *>(
-        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
+    auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors()[FIRST_INPUT], static_cast<size_t>(matrix_a_.pack_size) * sizeof(float));
+    matrix_a_.pack_ptr = reinterpret_cast<float *>(a_packed.second);
+    if (a_packed.first == lite::PACKED) {
+      return RET_OK;
+    }
+    if (a_packed.first == lite::MALLOC && matrix_a_.pack_ptr == nullptr) {
+      matrix_a_.pack_ptr = reinterpret_cast<float *>(
+        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_.pack_size) * sizeof(float)));
     }
 #else
-    b_pack_ptr_ = reinterpret_cast<float *>(
-      ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_pack_size_) * sizeof(float)));
+    matrix_a_.pack_ptr = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_.pack_size * sizeof(float)));
 #endif
   }
-  if (b_pack_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int MatmulFp32BaseCPUKernel::CalBroadCastBiasDataElements() {
-  lite::Tensor *bias_tensor = in_tensors_.at(2);
-  int max_bias_data = UP_ROUND(bias_tensor->ElementsNum(), col_tile_);
-  if (!params_->b_const_) {
-    MS_LOG(WARNING) << "matmul do not support broadcast bias data";
-  } else {
-    lite::Tensor *const_tensor = in_tensors_.at(1);
-    size_t shape_size = const_tensor->shape().size();
-    if (params_->b_transpose_) {
-      MS_CHECK_TRUE_RET(shape_size >= kBiasIndex, max_bias_data);
-      max_bias_data = UP_ROUND(const_tensor->shape()[shape_size - kBiasIndex], col_tile_);
-    } else {
-      MS_CHECK_TRUE_RET(shape_size >= kWeightIndex, max_bias_data);
-      max_bias_data = UP_ROUND(const_tensor->shape()[shape_size - kWeightIndex], col_tile_);
-    }
-  }
-  return max_bias_data;
-}
-
-int MatmulFp32BaseCPUKernel::InitBiasData() {
-  if (in_tensors_.size() != FOURTH_INPUT) {
-    return RET_OK;
-  }
-  auto bias_tensor = in_tensors_[THIRD_INPUT];
-  if (bias_tensor == nullptr) {
-    MS_LOG(ERROR) << "bias_tensor invalid";
-    return RET_ERROR;
-  }
-  if (bias_tensor->data() == nullptr) {
-    MS_LOG(ERROR) << "bias_tensor data invalid";
-    return RET_ERROR;
-  }
-  auto bias_num = static_cast<size_t>(bias_tensor->ElementsNum());
-  MS_CHECK_TRUE_RET(bias_num > 0, RET_ERROR);
-  if (bias_num == 1) {
-    // broadcast bias data
-    size_t max_bias_data = CalBroadCastBiasDataElements();
-    bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
-      MS_LOG(ERROR) << "malloc bias_ptr_ failed";
-      return RET_ERROR;
-    }
-    float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data()))[0];
-    // broadcast bias data
-    for (size_t i = 0; i < max_bias_data; ++i) {
-      bias_ptr_[i] = broadcast_data;
-    }
-    return RET_OK;
-  }
-
-  auto max_bias_data = static_cast<size_t>(UP_ROUND(bias_num, col_tile_));
-  // malloc addr need to aligned to 32 bytes
-  bias_ptr_ = reinterpret_cast<float *>(malloc(max_bias_data * static_cast<int>(sizeof(float))));
-  if (bias_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias_ptr_ failed";
-    return RET_ERROR;
-  }
-  CHECK_NULL_RETURN(bias_tensor->data());
-  (void)memcpy(bias_ptr_, bias_tensor->data(), bias_num * static_cast<int>(sizeof(float)));
-  memset(bias_ptr_ + bias_num, 0, (max_bias_data - bias_num) * sizeof(float));
-  return RET_OK;
-}
-
-int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) const {
-  if (in_tensors().at(FIRST_INPUT) == nullptr || in_tensors().at(FIRST_INPUT)->data_type() != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "Invalid param in matmul";
-    return RET_ERROR;
-  }
-
-  CHECK_NULL_RETURN(src_ptr);
-  if (vec_matmul_) {
-    return RET_OK;
-  }
+  auto src_ptr =
+    matrix_a_.has_origin ? matrix_a_.origin_ptr : reinterpret_cast<float *>(in_tensors_[FIRST_INPUT]->data());
+  MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-a source ptr is a nullptr.");
+  MS_CHECK_TRUE_MSG(matrix_a_.pack_ptr != nullptr, RET_ERROR, "matrix-a pack ptr is a nullptr.");
   for (int i = 0; i < a_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
-    float *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
+    float *dst = matrix_a_.pack_ptr + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
       matrix_a_pack_fun_(src, dst, params_->deep_, params_->row_);
     } else {
@@ -204,16 +105,48 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) const {
-  if (in_tensors().at(SECOND_INPUT) == nullptr || in_tensors().at(SECOND_INPUT)->data_type() != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "Invalid param in matmul";
-    return RET_ERROR;
+void MatmulFp32BaseCPUKernel::FreePackedMatrixA() {
+  if (matrix_a_.need_pack && !op_parameter_->is_train_session_ && matrix_a_.pack_ptr != nullptr) {
+    ms_context_->allocator->Free(matrix_a_.pack_ptr);
   }
+  matrix_a_.pack_ptr = nullptr;
+}
 
-  CHECK_NULL_RETURN(src_ptr);
+int MatmulFp32BaseCPUKernel::PackMatrixB() {
+  if (!params_->b_const_) {
+    if (!matrix_b_.need_pack) {
+      matrix_b_.pack_ptr = reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());
+      return RET_OK;
+    }
+    if (op_parameter_->is_train_session_) {
+      matrix_b_.pack_ptr = reinterpret_cast<float *>(workspace()) + matrix_a_.pack_size;
+    } else {
+      matrix_b_.pack_ptr =
+        reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
+    }
+  } else {
+#ifdef SERVER_INFERENCE
+    auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors()[SECOND_INPUT], static_cast<size_t>(matrix_b_.pack_size) * sizeof(float));
+    matrix_b_.pack_ptr = reinterpret_cast<float *>(b_packed.second);
+    if (b_packed.first == lite::PACKED) {
+      return RET_OK;
+    }
+    if (b_packed.first == lite::MALLOC && matrix_b_.pack_ptr == nullptr) {
+      matrix_b_.pack_ptr = reinterpret_cast<float *>(
+        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_.pack_size) * sizeof(float)));
+    }
+#else
+    matrix_b_.pack_ptr = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
+#endif
+  }
+  auto src_ptr =
+    matrix_b_.has_origin ? matrix_b_.origin_ptr : reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());
+  MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-b source ptr is a nullptr.");
+  MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
   for (int i = 0; i < b_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
-    float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
+    float *dst = matrix_b_.pack_ptr + i * params_->deep_ * params_->col_align_;
     if (params_->b_transpose_) {
       matrix_b_pack_fun_(src, dst, params_->col_, params_->deep_);
     } else {
@@ -223,37 +156,50 @@ int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) const {
   return RET_OK;
 }
 
-void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
+void MatmulFp32BaseCPUKernel::FreePackedMatrixB() {
+  if (matrix_b_.need_pack && !op_parameter_->is_train_session_ && matrix_b_.pack_ptr != nullptr) {
+    ms_context_->allocator->Free(matrix_b_.pack_ptr);
   }
+  matrix_b_.pack_ptr = nullptr;
 }
 
-void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
-  if (!vec_matmul_ && !op_parameter_->is_train_session_ && a_pack_ptr_ != nullptr && is_pack_) {
-#ifdef SERVER_INFERENCE
-    if (a_is_packed_ == lite::MALLOC) {
-#endif
-      ms_context_->allocator->Free(a_pack_ptr_);
-#ifdef SERVER_INFERENCE
-    }
-#endif
+int MatmulFp32BaseCPUKernel::PackBiasMatrix() {
+  if (in_tensors_.size() != FOURTH_INPUT) {
+    return RET_OK;
   }
-  a_pack_ptr_ = nullptr;
-}
-
-void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
-  if (!op_parameter_->is_train_session_ && b_pack_ptr_ != nullptr && is_pack_) {
-#ifdef SERVER_INFERENCE
-    if (b_is_packed_ == lite::MALLOC) {
-#endif
-      ms_context_->allocator->Free(b_pack_ptr_);
-#ifdef SERVER_INFERENCE
+  if (matrix_c_.has_packed) {
+    if (matrix_c_.pack_size < params_->col_align_) {
+      MS_LOG(ERROR) << "matmul don't support that column is dynamic.";
+      return RET_ERROR;
     }
-#endif
+    return RET_OK;
   }
-  b_pack_ptr_ = nullptr;
+  auto bias_tensor = in_tensors_[THIRD_INPUT];
+  if (bias_tensor == nullptr) {
+    MS_LOG(ERROR) << "bias_tensor invalid";
+    return RET_ERROR;
+  }
+  auto bias_src = matrix_c_.has_origin ? matrix_c_.origin_ptr : reinterpret_cast<float *>(bias_tensor->data());
+  MS_CHECK_TRUE_MSG(bias_src != nullptr, RET_ERROR, "matrix-c is a nullptr.");
+  auto bias_num = bias_tensor->ElementsNum();
+  MS_CHECK_TRUE_MSG(bias_num > 0 && params_->col_align_ >= bias_num, RET_ERROR, "matrix-c is invalid.");
+  matrix_c_.pack_size = params_->col_align_;
+  matrix_c_.pack_ptr = reinterpret_cast<float *>(malloc(static_cast<size_t>(matrix_c_.pack_size) * sizeof(float)));
+  MS_CHECK_TRUE_MSG(matrix_c_.pack_ptr != nullptr, RET_ERROR, "matrix-c malloc failed.");
+  if (bias_num == 1) {
+    for (int i = 0; i < matrix_c_.pack_size; ++i) {
+      matrix_c_.pack_ptr[i] = bias_src[0];
+    }
+  } else {
+    (void)memcpy(matrix_c_.pack_ptr, bias_src, bias_num * static_cast<int>(sizeof(float)));
+    memset(matrix_c_.pack_ptr + bias_num, 0, (matrix_c_.pack_size - bias_num) * sizeof(float));
+  }
+  if (matrix_c_.has_origin) {
+    ms_context_->allocator->Free(matrix_c_.origin_ptr);
+    matrix_c_.origin_ptr = nullptr;
+    matrix_c_.has_origin = false;
+  }
+  return RET_OK;
 }
 
 int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
@@ -261,12 +207,12 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
 
   for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = a_pack_ptr_ + a_offset_[index] * params_->row_align_ * params_->deep_;
-    const float *b = b_pack_ptr_ + b_offset_[index] * params_->deep_ * params_->col_align_;
+    const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_align_ * params_->deep_;
+    const float *b = matrix_b_.pack_ptr + b_offset_[index] * params_->deep_ * params_->col_align_;
     float *c = output_data_ + index * params_->row_ * col_step_;
 
-    auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_;
-    if (vec_matmul_) {
+    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr;
+    if (params_->row_ == 1) {
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
       gemvCalFun(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_);
 #elif defined(ENABLE_ARM64)
@@ -300,17 +246,18 @@ int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
     return RET_OK;
   }
 #if defined(ENABLE_AVX512)
-  const float *input = a_pack_ptr_ + start_row * params_->deep_;
+  const float *input = matrix_a_.pack_ptr + start_row * params_->deep_;
   float *output = output_data_ + start_row * params_->col_align_;
-  MatMulAvx512Fp32(input, b_pack_ptr_, output, bias_ptr_, params_->act_type_, params_->deep_, params_->col_align_,
-                   params_->col_align_, row_num);
+  MatMulAvx512Fp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
+                   params_->col_align_, params_->col_align_, row_num);
 #elif defined(ENABLE_AVX)
-  const float *input = a_pack_ptr_ + start_row * params_->deep_;
+  const float *input = matrix_a_.pack_ptr + start_row * params_->deep_;
   float *output = output_data_ + start_row * params_->col_align_;
-  MatMulAvxFp32(input, b_pack_ptr_, output, bias_ptr_, params_->act_type_, params_->deep_, params_->col_align_,
-                params_->col_align_, row_num);
+  MatMulAvxFp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
+                params_->col_align_, params_->col_align_, row_num);
 #elif defined(ENABLE_ARM64)
-  GemmIsNotPackByRow(a_pack_ptr_, b_pack_ptr_, output_data_, bias_ptr_, start_row, end_row, params_->deep_);
+  GemmIsNotPackByRow(matrix_a_.pack_ptr, matrix_b_.pack_ptr, output_data_, matrix_c_.pack_ptr, start_row, end_row,
+                     params_->deep_);
 #endif
   return RET_OK;
 }
@@ -320,12 +267,12 @@ int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
   float bias = 0;
-  if (bias_ptr_ != nullptr) {
-    bias = bias_ptr_[0];
+  if (matrix_c_.pack_ptr != nullptr) {
+    bias = matrix_c_.pack_ptr[0];
   }
   for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = a_pack_ptr_ + a_offset_[index] * params_->row_ * params_->deep_;
-    const float *b = b_pack_ptr_ + b_offset_[index] * params_->deep_ * params_->col_;
+    const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_ * params_->deep_;
+    const float *b = matrix_b_.pack_ptr + b_offset_[index] * params_->deep_ * params_->col_;
     float *c = output_data_ + index * params_->row_ * params_->col_;
     gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_);
   }
@@ -339,42 +286,45 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   if (cur_oc <= 0) {
     return RET_OK;
   }
-
-  auto b = batch_b_ptr_ + current_start_oc * params_->deep_;
-  auto c = batch_c_ptr_ + current_start_oc;
-  auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + current_start_oc;
-  if (vec_matmul_) {
+  for (int i = 0; i < params_->batch; ++i) {
+    auto a = matrix_a_.pack_ptr + a_offset_[i] * params_->row_align_ * params_->deep_;
+    auto b =
+      matrix_b_.pack_ptr + b_offset_[i] * params_->deep_ * params_->col_align_ + current_start_oc * params_->deep_;
+    auto c = output_data_ + i * params_->row_ * col_step_ + current_start_oc;
+    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + current_start_oc;
+    if (params_->row_ == 1) {
 #ifdef ENABLE_AVX512
-    MatVecMulAvx512Fp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
+      MatVecMulAvx512Fp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
 #elif defined(ENABLE_AVX)
-    MatVecMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
+      MatVecMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
 #elif defined(ENABLE_ARM64)
-    int rest_align_col = MSMIN(params_->col_align_ - current_start_oc, oc_stride_ * col_tile_);
-    MatVecMulFp32Neon64(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, rest_align_col);
+      int rest_align_col = MSMIN(params_->col_align_ - current_start_oc, oc_stride_ * col_tile_);
+      MatVecMulFp32Neon64(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, rest_align_col);
 #elif defined(ENABLE_ARM32)
-    MatVecMulFp32Block4(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
+      MatVecMulFp32Block4(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #else
-    MatVecMulFp32Block8(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
+      MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif
-  } else {
+    } else {
 #ifdef ENABLE_AVX512
-    MatMulAvx512Fp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_,
-                     params_->row_);
+      MatMulAvx512Fp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_, params_->row_);
 #elif defined(ENABLE_AVX)
-    MatMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_,
-                  params_->row_);
+      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_, params_->row_);
 #else
-    MatMulOpt(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_,
-              OutType_Nhwc);
+      MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_, OutType_Nhwc);
 #endif
+    }
   }
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::init_global_variable() {
+void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
+  matrix_a_.need_pack = true;
+  matrix_b_.need_pack = true;
 #ifdef ENABLE_AVX512
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col64Major : RowMajor2Row64Major;
+  matrix_a_.need_pack = params_->a_transpose_;
   row_tile_ = C1NUM;
   col_tile_ = C16NUM;
   gemmCalFun = MatMulAvx512Fp32;
@@ -383,6 +333,7 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
 #elif defined(ENABLE_AVX)
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col32Major : RowMajor2Row32Major;
+  matrix_a_.need_pack = params_->a_transpose_;
   row_tile_ = C1NUM;
   col_tile_ = C8NUM;
   gemmCalFun = MatMulAvxFp32;
@@ -404,102 +355,57 @@ int MatmulFp32BaseCPUKernel::init_global_variable() {
   row_tile_ = C12NUM;
   col_tile_ = C8NUM;
 #endif
-  if (params_->col_ == 1 && !params_->a_const_) {
-    is_pack_ = false;
-    out_need_aligned_ = false;
-    row_tile_ = 1;
-    col_tile_ = 1;
-    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-  }
-  params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
-  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
-  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
-  matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  col_step_ = params_->col_align_;
-#else
-  // need not aligned
-  col_step_ = params_->col_;
-#endif
-  return RET_OK;
 }
 
 int MatmulFp32BaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  init_global_variable();
-  if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
-    MS_LOG(ERROR) << "Matrix pack size is negative "
-                  << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size=" << matrix_b_pack_size_;
-    return RET_ERROR;
+  MS_CHECK_TRUE_MSG(in_tensors_[FIRST_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
+                    "matrix-a's data type is invalid.");
+  MS_CHECK_TRUE_MSG(in_tensors_[SECOND_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
+                    "matrix-b's data type is invalid.");
+  if (in_tensors_.size() == FOURTH_INPUT) {
+    MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst(), RET_ERROR, "matrix-c must be const when existing.");
+    MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
+                      "matrix-c's data type is invalid.");
   }
-  auto ret = InitBiasData();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "InitBiasData failed";
-    return ret;
-  }
-
+  auto ret = InitParameter();
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Init parameters failed.");
   if (params_->a_const_) {
-    auto a_tensor = in_tensors_[0];
-    CHECK_NULL_RETURN(a_tensor);
-    if (InitBufferA() != RET_OK) {
-      return RET_ERROR;
-    }
-#ifdef SERVER_INFERENCE
-    if (a_is_packed_ != lite::PACKED) {
-#endif
-      ret = InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data()));
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InitMatrixA failed!";
-        return ret;
-      }
-#ifdef SERVER_INFERENCE
-    }
-#endif
+    ret = PackMatrixA();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "pack const-matrix a failed.");
+    matrix_a_.has_packed = true;
   }
   if (params_->b_const_) {
-    auto b_tensor = in_tensors_[1];
-    CHECK_NULL_RETURN(b_tensor);
-    if (InitBufferB() != RET_OK) {
-      return RET_ERROR;
+    ret = PackMatrixB();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "pack const-matrix b failed.");
+    matrix_b_.has_packed = true;
+  }
+  if (!InferShapeDone()) {
+    if (in_tensors_.size() == FOURTH_INPUT && !op_parameter_->is_train_session_) {
+      ret = BackupConstMatrix(&matrix_c_, THIRD_INPUT);
+      MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "backup matrix-c failed.");
     }
-#ifdef SERVER_INFERENCE
-    if (b_is_packed_ != lite::PACKED) {
-#endif
-      if (InitMatrixB(static_cast<float *>(b_tensor->data())) != RET_OK) {
-        MS_LOG(ERROR) << "InitMatrixB failed!";
-        return RET_ERROR;
-      }
-#ifdef SERVER_INFERENCE
-    }
-#endif
+    return RET_OK;
   }
   return RET_OK;
 }
 
 int MatmulFp32BaseCPUKernel::ReSize() {
-  ResizeParameter();
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(a_batch_, params_->row_), RET_ERROR);
-  row_num_ = a_batch_ * params_->row_;
-  matrix_a_pack_size_ = a_batch_ * params_->row_align_ * params_->deep_;
-  matrix_b_pack_size_ = b_batch_ * params_->col_align_ * params_->deep_;
-  if (matrix_a_pack_size_ < 0 || matrix_b_pack_size_ < 0) {
-    MS_LOG(ERROR) << "Matrix pack size is negative "
-                  << "matrix_a_pack_size=" << matrix_a_pack_size_ << "matrix_b_pack_size=" << matrix_b_pack_size_;
-    return RET_ERROR;
-  }
+  auto ret = InitParameter();
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Init parameters failed.");
   if (op_parameter_->is_train_session_) {
-    set_workspace_size((matrix_a_pack_size_ + matrix_b_pack_size_) * static_cast<int>(sizeof(float)));
+    set_workspace_size((matrix_a_.pack_size + matrix_b_.pack_size) * static_cast<int>(sizeof(float)));
   }
-  auto ret = GetThreadCuttingPolicy();
+  ret = GetThreadCuttingPolicy();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ThreadCuttingPolicy error!";
     return ret;
+  }
+  if (!matrix_c_.has_packed) {
+    ret = PackBiasMatrix();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "pack const-matrix c failed.");
+    matrix_c_.has_packed = true;
   }
   ret = InitTmpOutBuffer();
   if (ret != RET_OK) {
@@ -509,16 +415,48 @@ int MatmulFp32BaseCPUKernel::ReSize() {
   return RET_OK;
 }
 
-void MatmulFp32BaseCPUKernel::ResizeParameter() {
-  init_global_variable();
+int MatmulFp32BaseCPUKernel::InitParameter() {
+  InitGlobalVariable();
   if (params_->row_ == 1) {
-    vec_matmul_ = true;
     row_tile_ = 1;
-  } else {
-    vec_matmul_ = false;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_a_.need_pack = false;
+  }
+  if (params_->col_ == 1 && !params_->a_const_) {
+    out_need_aligned_ = false;
+    row_tile_ = 1;
+    col_tile_ = 1;
+    matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+    matrix_a_.need_pack = params_->a_transpose_ && params_->row_ != 1;
+    matrix_b_.need_pack = false;
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
+  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->row_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->row_align_, params_->deep_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_, params_->col_align_, RET_ERROR);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(a_batch_ * params_->col_align_, params_->deep_, RET_ERROR);
+  auto a_pack_size = a_batch_ * params_->row_align_ * params_->deep_;
+  auto b_pack_size = b_batch_ * params_->col_align_ * params_->deep_;
+  if ((matrix_a_.has_packed && matrix_a_.pack_size != a_pack_size) ||
+      (matrix_b_.has_packed && matrix_b_.pack_size != b_pack_size)) {
+    MS_LOG(ERROR) << "matmul don't support dynamic packing if matrix is a constant.";
+    return RET_ERROR;
+  }
+  matrix_a_.pack_size = a_pack_size;
+  matrix_b_.pack_size = b_pack_size;
+#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
+  col_step_ = params_->col_align_;
+#else
+  // need not aligned
+  col_step_ = params_->col_;
+#endif
+  params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   out_need_aligned_ = (out_need_aligned_ && ((params_->col_ % col_tile_) != 0));
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(a_batch_, params_->row_), RET_ERROR);
+  row_num_ = a_batch_ * params_->row_;
+  return RET_OK;
 }
 
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
@@ -541,15 +479,12 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if (params_->batch >= op_parameter_->thread_num_ || (params_->col_ == 1 && !params_->a_const_)) {
+  if (params_->batch >= op_parameter_->thread_num_ || params_->col_ == 1) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
-    batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
   } else if (CheckThreadCuttingByRow()) {
 #if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-    is_pack_ = !params_->b_const_;
-    batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
     GetThreadCuttingInfoByRow();
 #else
@@ -563,12 +498,9 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
 #else
     oc_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
 #endif
-    batch_split_ = false;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
   if (params_->col_ == 1 && !params_->a_const_) {
-    is_pack_ = false;
-    batch_split_ = true;
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
     if (params_->deep_ == 1) {
       gemmIsNotPackFun = GemmIsNotPack;
@@ -640,56 +572,21 @@ int MatmulFp32BaseCPUKernel::Run() {
   if (!out_need_aligned_) {
     output_data_ = out_data;
   }
-  if (!params_->b_const_) {
-    auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->data());
-    CHECK_NULL_RETURN(b_ptr);
-    if (!is_pack_) {
-      b_pack_ptr_ = b_ptr;
-    } else {
-      if (InitBufferB() != RET_OK) {
-        return RET_ERROR;
-      }
-      auto ret = InitMatrixB(b_ptr);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InitMatrixB failed!";
-        return ret;
-      }
-    }
-  }
   if (!params_->a_const_) {
-    auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
-    CHECK_NULL_RETURN(a_ptr);
-    if (is_pack_ || (params_->a_transpose_ && params_->deep_ != 1)) {
-      if (InitBufferA() != RET_OK) {
-        return RET_ERROR;
-      }
-      auto ret = InitMatrixA(a_ptr);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "InitMatrixA failed!";
-        return ret;
-      }
-    } else {
-      a_pack_ptr_ = a_ptr;
-    }
+    auto ret = PackMatrixA();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "pack const-matrix a failed.");
   }
+  if (!params_->b_const_) {
+    auto ret = PackMatrixB();
+    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "pack const-matrix b failed.");
+  }
+  MS_CHECK_TRUE_MSG(matrix_a_.pack_ptr != nullptr, RET_ERROR, "matrix-a pack ptr is a nullptr.");
+  MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
 
-  if (batch_split_) {
-    auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MatmulRun failed in split by batch";
-      return ret;
-    }
-  } else {
-    for (int i = 0; i < params_->batch; ++i) {
-      batch_a_ptr_ = a_pack_ptr_ + a_offset_[i] * params_->row_align_ * params_->deep_;
-      batch_b_ptr_ = b_pack_ptr_ + b_offset_[i] * params_->deep_ * params_->col_align_;
-      batch_c_ptr_ = output_data_ + i * params_->row_ * col_step_;
-      auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "MatmulRun failed in split by oc";
-        return ret;
-      }
-    }
+  auto ret = ParallelLaunch(this->ms_context_, MatmulRun, this, thread_count_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "MatmulRun failed in split by batch";
+    return ret;
   }
 
   if (out_need_aligned_) {
@@ -698,20 +595,12 @@ int MatmulFp32BaseCPUKernel::Run() {
     output_data_ = nullptr;
   }
   if (!params_->a_const_) {
-    if (is_pack_ || (params_->a_transpose_ && params_->deep_ != 1)) {
-      FreeResizeBufA();
-    } else {
-      a_pack_ptr_ = nullptr;
-    }
+    FreePackedMatrixA();
   }
 
   if (!params_->b_const_) {
-    if (is_pack_) {
-      FreeResizeBufB();
-    } else {
-      b_pack_ptr_ = nullptr;
-    }
+    FreePackedMatrixB();
   }
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 }  // namespace mindspore::kernel
