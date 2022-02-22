@@ -37,15 +37,16 @@ namespace server {
 std::shared_ptr<ps::core::CommunicatorBase> g_communicator_with_server = nullptr;
 std::vector<std::shared_ptr<ps::core::CommunicatorBase>> g_communicators_with_worker = {};
 void SignalHandler(int signal) {
-  MS_LOG(WARNING) << "SIGTERM captured: " << signal;
   (void)std::for_each(g_communicators_with_worker.begin(), g_communicators_with_worker.end(),
                       [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
-                        MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
-                        (void)communicator->Stop();
+                        if (communicator != nullptr) {
+                          (void)communicator->Stop();
+                        }
                       });
 
-  MS_ERROR_IF_NULL_WO_RET_VAL(g_communicator_with_server);
-  (void)g_communicator_with_server->Stop();
+  if (g_communicator_with_server != nullptr) {
+    (void)g_communicator_with_server->Stop();
+  }
 }
 
 void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const std::vector<RoundConfig> &rounds_config,

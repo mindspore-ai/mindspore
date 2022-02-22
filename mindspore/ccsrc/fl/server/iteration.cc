@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <unordered_map>
 #include "fl/server/model_store.h"
 #include "fl/server/server.h"
 

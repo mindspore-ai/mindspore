@@ -27,7 +27,7 @@ from mindspore.schema import (RequestFLJob, ResponseFLJob, ResponseCode,
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--pid", type=int, default=0)
-parser.add_argument("--http_ip", type=str, default="10.113.216.106")
+parser.add_argument("--http_ip", type=str, default="127.0.0.1")
 parser.add_argument("--http_port", type=int, default=6666)
 parser.add_argument("--use_elb", type=bool, default=False)
 parser.add_argument("--server_num", type=int, default=1)
