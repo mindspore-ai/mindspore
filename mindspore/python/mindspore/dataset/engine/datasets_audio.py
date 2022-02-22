@@ -64,13 +64,13 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     Raises:
         RuntimeError: If source raises an exception during execution.
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - CMUArctic dataset doesn't support PKSampler.
@@ -199,13 +199,13 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
 
     Raises:
         RuntimeError: If source raises an exception during execution.
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - GTZAN doesn't support PKSampler.
@@ -334,13 +334,13 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
 
     Raises:
         RuntimeError: If source raises an exception during execution.
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - LibriTTS dataset doesn't support PKSampler.
@@ -472,19 +472,19 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -617,13 +617,13 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -748,19 +748,19 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain stm files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain stm files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -949,13 +949,13 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.

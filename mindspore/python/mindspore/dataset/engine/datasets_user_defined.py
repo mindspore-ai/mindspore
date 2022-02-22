@@ -476,7 +476,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             Random accessible input is required. When this argument is specified, `num_samples` reflects the maximum
             sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy (default=True).
@@ -486,12 +486,12 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
     Raises:
         RuntimeError: If source raises an exception during execution.
         RuntimeError: If len of column_names does not match output len of source.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If sampler and shuffle are specified at the same time.
         ValueError: If sampler and sharding are specified at the same time.
         ValueError: If num_shards is specified but shard_id is None.
-        ValueError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If shard_id is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - Input `source` accept user defined Python function(PyFuncs), Do not add network computing operators from
@@ -801,7 +801,7 @@ class NumpySlicesDataset(GeneratorDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             Random accessible input is required. When this argument is specified, `num_samples` reflects the max
             sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This argument must be specified only
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument must be specified only
             when num_shards is also specified. Random accessible input is required.
 
     Note:
@@ -836,12 +836,12 @@ class NumpySlicesDataset(GeneratorDataset):
 
     Raises:
         RuntimeError: If len of column_names does not match output len of data.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If sampler and shuffle are specified at the same time.
         ValueError: If sampler and sharding are specified at the same time.
         ValueError: If num_shards is specified but shard_id is None.
-        ValueError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If shard_id is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> # 1) Input data can be a list

@@ -557,9 +557,9 @@ class Dataset:
             >>> # and drops the last incomplete batch if there is one.
             >>> dataset = dataset.batch(100, True)
             >>> # resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
-            >>> def np_resize(col, batchInfo):
+            >>> def np_resize(col, BatchInfo):
             ...     output = col.copy()
-            ...     s = (batchInfo.get_batch_num() + 1) ** 2
+            ...     s = (BatchInfo.get_batch_num() + 1) ** 2
             ...     index = 0
             ...     for c in col:
             ...         img = Image.fromarray(c.astype('uint8')).convert('RGB')

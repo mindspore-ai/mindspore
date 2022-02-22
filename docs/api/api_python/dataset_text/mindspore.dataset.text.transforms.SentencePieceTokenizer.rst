@@ -16,5 +16,5 @@ mindspore.dataset.text.transforms.SentencePieceTokenizer
 
     **异常：**
 
-    - **TypeError** - 参数 `mode` 的类型不是string或SentencePieceVocab。
-    - **TypeError** - 参数 `out_type` 的类型不是SPieceTokenizerOutType。
+    - **TypeError** - 参数 `mode` 的类型不是string或 :class:`mindspore.dataset.text.SentencePieceVocab`。
+    - **TypeError** - 参数 `out_type` 的类型不是 :class::`mindspore.dataset.text.SPieceTokenizerOutType`。

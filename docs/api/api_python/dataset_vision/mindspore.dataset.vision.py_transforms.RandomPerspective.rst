@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.RandomPerspective
 ========================================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.RandomPerspective(distortion_scale=0.5, prob=0.5, interpolation=<Inter.BICUBIC: 3>)
+.. py:class:: mindspore.dataset.vision.py_transforms.RandomPerspective(distortion_scale=0.5, prob=0.5, interpolation=Inter.BICUBIC)
 
     按照指定的概率对输入PIL图像进行透视变换。
 

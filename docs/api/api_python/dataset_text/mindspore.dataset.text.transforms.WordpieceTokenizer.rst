@@ -21,4 +21,4 @@ mindspore.dataset.text.transforms.WordpieceTokenizer
     - **TypeError** - 参数 `max_bytes_per_token` 的类型不为int。
     - **TypeError** - 参数 `unknown_token` 的类型不为string。
     - **TypeError** - 参数 `with_offsets` 的类型不为bool。
-    - **TypeError** - 参数 `max_bytes_per_token` 的值为非负数。
+    - **ValueError** - 参数 `max_bytes_per_token` 的值为负数。

@@ -5,7 +5,7 @@ mindspore.dataset.DIV2KDataset
 
     读取和解析DIV2K数据集的源文件构建数据集。
 
-    生成的数据集有两列 `[hr_image, lr_image]` 。'hr_image` 列和 `lr_image` 列的数据类型都为uint8。
+    生成的数据集有两列 `[hr_image, lr_image]` 。 `hr_image` 列和 `lr_image` 列的数据类型都为uint8。
 
     **参数：**
 
@@ -28,13 +28,15 @@ mindspore.dataset.DIV2KDataset
     - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
     - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
     - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `dataset_dir` 路径非法或不存在。
     - **ValueError** - `usage` 参数取值不为'train'、'valid'或'all'。
     - **ValueError** - `downgrade` 参数取值不为'bicubic'、'unknown'、'mild'、'difficult'或'wild'。
     - **ValueError** - `scale` 参数取值不在给定的字段中，或与 `downgrade` 参数的值不匹配。
+    - **ValueError** - `scale` 参数取值为8，但 `downgrade` 参数的值不为 'bicubic'。
+    - **ValueError** - `downgrade` 参数取值为'mild'、'difficult'或'wild'，但 `scale` 参数的值不为4。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
     
 

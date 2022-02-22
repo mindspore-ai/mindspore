@@ -62,8 +62,8 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, 'num_samples' reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -154,18 +154,18 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the  mindspore.dataset.config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> amazon_review_dataset_dir = "/path/to/amazon_review_dataset_dir"
@@ -245,8 +245,8 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -396,10 +396,10 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         ValueError: If dataset_files are not valid or do not exist.
         ValueError: task is not in 'AFQMC', 'TNEWS', 'IFLYTEK', 'CMNLI', 'WSC' or 'CSL'.
         ValueError: usage is not in 'train', 'test' or 'eval'.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
@@ -479,18 +479,18 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> conll2000_dataset_dir = "/path/to/conll2000_dataset_dir"
@@ -541,17 +541,17 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> dbpedia_dataset_dir = "/path/to/dbpedia_dataset_directory"
@@ -630,8 +630,8 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
@@ -705,19 +705,19 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If sampler and shuffle are specified at the same time.
-        RuntimeError: If sampler and sharding are specified at the same time.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `sampler` and `shuffle` are specified at the same time.
+        RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - The shape of the test column.
@@ -855,18 +855,18 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
@@ -976,18 +976,18 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> iwslt2017_dataset_dir = "/path/to/iwslt207_dataset_dir"
@@ -1075,18 +1075,18 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If usage is not 'train', 'test', 'valid' or 'all'.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        RuntimeError: If `usage` is not 'train', 'test', 'valid' or 'all'.
         RuntimeError: If the length of language_pair is not equal to 2.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
         RuntimeError: If num_samples is less than 0.
 
     Examples:
@@ -1174,8 +1174,8 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, 'num_samples' reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -1261,18 +1261,18 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
@@ -1353,16 +1353,16 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> squad_dataset_dir = "/path/to/squad_dataset_file"
@@ -1457,17 +1457,17 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
@@ -1514,18 +1514,18 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> udpos_dataset_dir = "/path/to/udpos_dataset_dir"
@@ -1570,8 +1570,8 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, 'num_samples' reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -1654,17 +1654,17 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> yahoo_answers_dataset_dir = "/path/to/yahoo_answers_dataset_directory"
@@ -1745,18 +1745,18 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
             - Shuffle.FILES: Shuffle files only.
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
-        RuntimeError: If dataset_dir does not contain data files.
-        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
+        RuntimeError: If `dataset_dir` does not contain data files.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
     Examples:
         >>> yelp_review_dataset_dir = "/path/to/yelp_review_dataset_dir"

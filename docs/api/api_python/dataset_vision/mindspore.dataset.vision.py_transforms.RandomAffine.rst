@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.RandomAffine
 ===================================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.RandomAffine(degrees, translate=None, scale=None, shear=None, resample=<Inter.NEAREST: 0>, fill_value=0)
+.. py:class:: mindspore.dataset.vision.py_transforms.RandomAffine(degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0)
 
     对输入PIL图像进行随机仿射变换。
 
