@@ -118,25 +118,13 @@ def _nd_transpose(a):
     return ops.transpose(a, axes)
 
 
-def _value_op_check(op, arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
-    return _super_check(op, arg_value, valid_value, prim_name, arg_name, fmt, msg, True)
+def _value_in_check(func_name, arg1, arg2, arg_name='', attr_name='', op="in", fmt="attr", msg=None):
+    return _super_check((arg1, arg2), (func_name, arg_name, attr_name), op, fmt, msg, True)
 
 
-def _value_in_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
-    return _super_check("in", arg_value, valid_value, prim_name, arg_name, fmt, msg, True)
+def _type_is_check(func_name, arg1, arg2, arg_name='', op="isinstance", fmt="type", msg=None):
+    return _super_check((arg1, arg2), (func_name, arg_name), op, fmt, msg, False)
 
 
-def _type_op_check(op, arg_value, valid_value, prim_name=None, arg_name=None, fmt="type", msg=None):
-    return _super_check(op, arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
-
-
-def _type_in_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="attr", msg=None):
-    return _super_check("in", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
-
-
-def _type_is_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="type", msg=None):
-    return _super_check("isinstance", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
-
-
-def _is_tensor_check(arg_value, valid_value, prim_name=None, arg_name=None, fmt="tensor", msg=None):
-    return _super_check("istensor", arg_value, valid_value, prim_name, arg_name, fmt, msg, False)
+def _type_in_check(func_name, arg1, arg2, arg_name='', attr_name='', op="in", fmt="attr", msg=None):
+    return _super_check((arg1, arg2), (func_name, arg_name, attr_name), op, fmt, msg, False)

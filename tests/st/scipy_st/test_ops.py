@@ -21,7 +21,7 @@ import scipy as scp
 from scipy.linalg import solve_triangular, eig, eigvals
 
 from mindspore import Tensor, context
-from mindspore.scipy.ops import EighNet, Eig, Cholesky, SolveTriangular
+from mindspore.scipy.ops import Eigh, Eig, Cholesky, SolveTriangular
 from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
@@ -150,7 +150,7 @@ def test_batch_eig(shape, data_type, rtol, atol):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [4, 6, 9, 10])
-def test_eigh_net(n: int):
+def test_eigh(n: int):
     """
     Feature: ALL To ALL
     Description: test cases for eigen decomposition test cases for Ax= lambda * x /( A- lambda * E)X=0
@@ -161,9 +161,9 @@ def test_eigh_net(n: int):
     atol = 1e-4
 
     a = create_sym_pos_matrix((n, n), np.float32)
-    msp_eigh = EighNet(True, True)
+    msp_eigh = Eigh(True, True)
     msp_wl, msp_vl = msp_eigh(Tensor(np.array(a).astype(np.float32)))
-    msp_eigh = EighNet(True, False)
+    msp_eigh = Eigh(True, False)
     msp_wu, msp_vu = msp_eigh(Tensor(np.array(a).astype(np.float32)))
     sym_al = (np.tril((np.tril(a) - np.tril(a).T)) + np.tril(a).T)
     sym_au = (np.triu((np.triu(a) - np.triu(a).T)) + np.triu(a).T)
@@ -176,9 +176,9 @@ def test_eigh_net(n: int):
     a = np.random.rand(n, n)
     rtol = 1e-5
     atol = 1e-8
-    msp_eigh = EighNet(True, True)
+    msp_eigh = Eigh(True, True)
     msp_wl, msp_vl = msp_eigh(Tensor(np.array(a).astype(np.float64)))
-    msp_eigh = EighNet(True, False)
+    msp_eigh = Eigh(True, False)
     msp_wu, msp_vu = msp_eigh(Tensor(np.array(a).astype(np.float64)))
     sym_al = (np.tril((np.tril(a) - np.tril(a).T)) + np.tril(a).T)
     sym_au = (np.triu((np.triu(a) - np.triu(a).T)) + np.triu(a).T)
@@ -187,9 +187,9 @@ def test_eigh_net(n: int):
     assert np.allclose(sym_au @ msp_vu.asnumpy() - msp_vu.asnumpy() @ np.diag(msp_wu.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
     # test for real scalar float64 no vector
-    msp_eigh = EighNet(False, True)
+    msp_eigh = Eigh(False, True)
     msp_wl0 = msp_eigh(Tensor(np.array(a).astype(np.float64)))
-    msp_eigh = EighNet(False, False)
+    msp_eigh = Eigh(False, False)
     msp_wu0 = msp_eigh(Tensor(np.array(a).astype(np.float64)))
     assert np.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), np.zeros((n, n)), rtol, atol)
     assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)
@@ -206,9 +206,9 @@ def test_eigh_net(n: int):
                 a[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
     sym_al = (np.tril((np.tril(a) - np.tril(a).T)) + np.tril(a).conj().T)
     sym_au = (np.triu((np.triu(a) - np.triu(a).T)) + np.triu(a).conj().T)
-    msp_eigh = EighNet(True, True)
+    msp_eigh = Eigh(True, True)
     msp_wl, msp_vl = msp_eigh(Tensor(np.array(a).astype(np.complex64)))
-    msp_eigh = EighNet(True, False)
+    msp_eigh = Eigh(True, False)
     msp_wu, msp_vu = msp_eigh(Tensor(np.array(a).astype(np.complex64)))
     assert np.allclose(sym_al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
@@ -227,9 +227,9 @@ def test_eigh_net(n: int):
                 a[i][j] = complex(np.random.rand(1, 1), np.random.rand(1, 1))
     sym_al = (np.tril((np.tril(a) - np.tril(a).T)) + np.tril(a).conj().T)
     sym_au = (np.triu((np.triu(a) - np.triu(a).T)) + np.triu(a).conj().T)
-    msp_eigh = EighNet(True, True)
+    msp_eigh = Eigh(True, True)
     msp_wl, msp_vl = msp_eigh(Tensor(np.array(a).astype(np.complex128)))
-    msp_eigh = EighNet(True, False)
+    msp_eigh = Eigh(True, False)
     msp_wu, msp_vu = msp_eigh(Tensor(np.array(a).astype(np.complex128)))
     assert np.allclose(sym_al @ msp_vl.asnumpy() - msp_vl.asnumpy() @ np.diag(msp_wl.asnumpy()), np.zeros((n, n)), rtol,
                        atol)
@@ -237,9 +237,9 @@ def test_eigh_net(n: int):
                        atol)
 
     # test for real scalar complex128 no vector
-    msp_eigh = EighNet(False, True)
+    msp_eigh = Eigh(False, True)
     msp_wl0 = msp_eigh(Tensor(np.array(a).astype(np.complex128)))
-    msp_eigh = EighNet(False, False)
+    msp_eigh = Eigh(False, False)
     msp_wu0 = msp_eigh(Tensor(np.array(a).astype(np.complex128)))
     assert np.allclose(msp_wl.asnumpy() - msp_wl0.asnumpy(), np.zeros((n, n)), rtol, atol)
     assert np.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), np.zeros((n, n)), rtol, atol)

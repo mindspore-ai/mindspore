@@ -14,11 +14,11 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .ops import Cholesky
-from .ops import EighNet
+from .ops import Eigh
 from .ops import LU
 from .ops import SolveTriangular
-from .utils import _nd_transpose, _value_op_check, _value_in_check, _type_is_check, _type_in_check, _is_tensor_check
-from .utils_const import _raise_value_error, _raise_type_error, _type_check
+from .utils import _nd_transpose, _value_in_check, _type_is_check, _type_in_check
+from .utils_const import _raise_value_error, _tensor_check, _square_check, _solve_check
 from .. import numpy as mnp
 from .. import ops
 from ..common import dtype as mstype
@@ -174,28 +174,26 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
         >>> print(mnp.dot(a, x))  # Check the result
         [4. 2. 4. 2.]
     """
-    _type_is_check(trans, (int, str), "solve_triangular", "trans")
-    _type_is_check(lower, bool, "solve_triangular", "lower")
-    _type_is_check(overwrite_b, bool, "solve_triangular", "overwrite_b")
-    _type_is_check(check_finite, bool, "solve_triangular", "check_finite")
-    _is_tensor_check(a, (F.typeof(a), Tensor), "solve_triangular", "a")
-    _type_in_check(a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                   'solve_triangular', ("data type", "a"))
-    _is_tensor_check(b, (F.typeof(b), Tensor), "solve_triangular", "'b")
-    _type_in_check(b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
-                   'solve_triangular', ("data type", "b"))
-    _type_in_check(a.dtype, b.dtype, "solve_triangular", ("data type", "a", "b"), fmt="match")
+    func_name = 'solve_triangular'
+    trsm_type_check = F.partial(_type_is_check, func_name)
+    trsm_value_check = F.partial(_value_in_check, func_name)
+    trsm_type_in_check = F.partial(_type_in_check, func_name)
 
-    _value_op_check('is', debug, None,
-                    msg="For 'solve_triangular', currently only case debug=None of solve_triangular implemented.")
-    _value_in_check(a.ndim, 2, 'solve_triangular', ("dimension", "a"))
-    _value_in_check(b.ndim, (1, 2), 'solve_triangular', ("dimension", "b"))
-    _value_in_check(a.shape[0], a.shape[1], 'solve_triangular', 'a', fmt="square")
-    _value_in_check(a.shape[1], b.shape[0],
-                    msg=("For 'solve_triangular', the last two dimensions of 'a' and 'b' should be matched, ",
-                         "but got shape of ", a.shape, " and ", b.shape, ". ",
-                         "Please make sure that the shape of 'a' and 'b' be like (N, N) X (N, M) or (N, N) X (N)."))
-    _value_in_check(trans, (0, 1, 2, 'N', 'T', 'C'), 'solve_triangular', ("value", "trans"))
+    _tensor_check(func_name, a, F.typeof(a), Tensor, 'a')
+    _tensor_check(func_name, b, F.typeof(b), Tensor, 'b')
+    trsm_type_check(trans, (int, str), 'trans')
+    trsm_type_check(lower, bool, 'lower')
+    trsm_type_check(overwrite_b, bool, 'overwrite_b')
+    trsm_type_check(check_finite, bool, 'check_finite')
+    trsm_type_in_check(a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                       'a', 'data type')
+    trsm_type_in_check(b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                       'b', 'data type')
+
+    _solve_check(func_name, a.shape, b.shape)
+    trsm_value_check(debug, None, 'debug', op='is', fmt='todo')
+    trsm_value_check(trans, (0, 1, 2, 'N', 'T', 'C'), "trans", "value")
+
     if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
         b = F.cast(b, mstype.float64)
@@ -211,11 +209,12 @@ def inv(a, overwrite_a=False, check_finite=True):
     Compute the inverse of a matrix.
 
     Note:
-        `inv` is not supported on Windows platform yet.
+        - `inv` is not supported on Windows platform yet.
+        - Only `float32`, `float64`, `int32`, `int64` are supported Tensor dtypes. If Tensor with dtype `int32` or
+          `int64` is passed, it will be cast to :class:`mstype.float64`.
 
     Args:
-        a (Tensor): Square matrix to be inverted. Note that if the input tensor is not a `float`,
-            then it will be cast to :class:`mstype.float32`.
+        a (Tensor): Square matrix to be inverted.
         overwrite_a (bool, optional): Discard data in `a` (may improve performance). Default: False.
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
             Disabling may give a performance gain, but may result in problems (crashes, non-termination)
@@ -244,15 +243,15 @@ def inv(a, overwrite_a=False, check_finite=True):
         [[1.0000000e+00 0.0000000e+00]
          [8.8817842e-16 1.0000000e+00]]
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'inv')
-    _type_check('check_finite', check_finite, [bool], 'inv')
-    if F.dtype(a) not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.inv only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if F.dtype(a) not in (mstype.float32, mstype.float64):
-        a = F.cast(a, mstype.float32)
+    func_name = "inv"
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _square_check(func_name, a.shape)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
 
+    if F.dtype(a) in (mstype.int32, mstype.int64):
+        a = F.cast(a, mstype.float64)
     matrix_inverse = P.MatrixInverse(adjoint=False)
     return matrix_inverse(a)
 
@@ -308,21 +307,16 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
          [ 1.          5.          2.2933078   0.8559526 ]
          [ 5.          1.          2.          1.5541857 ]]
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'cho_factor')
-    _type_check('check_finite', check_finite, [bool], 'cho_factor')
-    _type_check('lower', lower, [bool], 'cho_factor')
-    a_type = F.dtype(a)
-    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.cho_factor input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if a_type not in (mstype.float32, mstype.float64):
+    func_name = "cho_factor"
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _type_is_check(func_name, lower, bool, 'lower')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _square_check(func_name, a.shape)
+
+    if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
-    a_shape = a.shape
-    if a.ndim < 2:
-        _raise_value_error("mindspore.scipy.linalg.cho_factor input a must be equal to 2 dimensions.")
-    if a_shape[-1] != a_shape[-2]:
-        _raise_value_error("mindspore.scipy.linalg.cho_factor input a must be a square matrix.")
     cholesky_net = Cholesky(clean=False)
     c = cholesky_net(a)
     if not lower:
@@ -372,22 +366,16 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         [[1. 0.]
          [2. 1.]]
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'cholesky')
-    _type_check('check_finite', check_finite, [bool], 'cholesky')
-    _type_check('lower', lower, [bool], 'cholesky')
-    a_type = F.dtype(a)
-    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.cholesky input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if a_type not in (mstype.float32, mstype.float64):
-        a = F.cast(a, mstype.float64)
-    a_shape = a.shape
-    if a.ndim != 2:
-        _raise_value_error("mindspore.scipy.linalg.cholesky input a must be equal to 2 dimensions.")
+    func_name = "cholesky"
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _type_is_check(func_name, lower, bool, 'lower')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _square_check(func_name, a.shape)
 
-    if a_shape[-1] != a_shape[-2]:
-        _raise_value_error("mindspore.scipy.linalg.cholesky input a must be a square matrix.")
+    if F.dtype(a) in (mstype.int32, mstype.int64):
+        a = F.cast(a, mstype.float64)
     cholesky_net = Cholesky(clean=True)
     c = cholesky_net(a)
     if not lower:
@@ -431,19 +419,22 @@ def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
         >>> print(x)
         [-0.01749266  0.11953348  0.01166185  0.15743434]
     """
-    _type_check('overwrite_b', overwrite_b, [bool], 'cho_solve')
-    _type_check('check_finite', check_finite, [bool], 'cho_solve')
+    func_name = "cho_solve"
     (c, lower) = c_and_lower
-    c_type = F.dtype(c)
-    if c_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.cho_solve input c only support (Tensor[int32], Tensor[int64], Tensor[float32],"
-            " Tensor[float64]).")
-    if c_type not in (mstype.float32, mstype.float64):
+    _type_is_check(func_name, overwrite_b, bool, 'overwrite_b')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _type_is_check(func_name, lower, bool, 'lower')
+    _tensor_check(func_name, c, F.typeof(c), Tensor, 'c')
+    _tensor_check(func_name, b, F.typeof(b), Tensor, 'b')
+    _type_in_check(func_name, c.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'c', 'data type')
+    _type_in_check(func_name, b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'b', 'data type')
+    _type_in_check(func_name, c.dtype, b.dtype, ('c', 'b'), 'data type', fmt='match')
+
+    _solve_check(func_name, c.shape, b.shape, 'c', 'b')
+
+    if F.dtype(c) in (mstype.int32, mstype.int64):
         c = F.cast(c, mstype.float64)
-        c_type = mstype.float64
-    if F.dtype(b) != c_type:
-        b = F.cast(b, c_type)
+        b = F.cast(b, mstype.float64)
     # Do not support complex, so trans is chosen from ('T', 'N')
     if lower:
         l_trans = 'N'
@@ -517,14 +508,15 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
             definite positive. Note that if input matrices are not symmetric or Hermitian, no error will
             be reported but results will be wrong.
         TypeError: If `a` is not Tensor.
-        RuntimeError: If `a` is not square matrix.
-        ValueError: If `b` is not None.
         TypeError: If `lower` is not bool.
         TypeError: If `eigvals_only` is not bool.
         TypeError: If `overwrite_a` is not bool.
         TypeError: If `overwrite_b` is not bool.
         TypeError: If `turbo` is not bool.
         TypeError: If `check_finite` is not bool.
+        ValueError: If `a` is not square matrix.
+        ValueError: If `b` is not None.
+        ValueError: If `eigvals` is not None.
 
     Supported Platforms:
         ``CPU`` ``GPU``
@@ -539,18 +531,28 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
         >>> print(onp.allclose(mnp.dot(a, v).asnumpy(), mnp.dot(v, mnp.diag(w)).asnumpy(), 1e-5, 1e-8))
         True
     """
-    _type_check('lower', lower, [bool], 'eigh')
-    _type_check('eigvals_only', eigvals_only, [bool], 'eigh')
-    _type_check('overwrite_a', overwrite_a, [bool], 'eigh')
-    _type_check('overwrite_b', overwrite_b, [bool], 'eigh')
-    _type_check('turbo', turbo, [bool], 'eigh')
-    _type_check('check_finite', check_finite, [bool], 'eigh')
-    if b is not None:
-        _raise_value_error("Currently only case b=None of eigh is implemented. "
-                           "Which means that b must be identity matrix.")
-    if eigvals is not None:
-        _raise_value_error("Currently only case eigvals=None of eighis implemented.")
-    eigh_net = EighNet(not eigvals_only, lower=lower)
+    func_name = 'eigh'
+    eigh_type_check = F.partial(_type_is_check, func_name)
+    eigh_value_check = F.partial(_value_in_check, func_name)
+
+    eigh_type_check(lower, bool, 'lower')
+    eigh_type_check(eigvals_only, bool, 'eigvals_only')
+    eigh_type_check(overwrite_a, bool, 'overwrite_a')
+    eigh_type_check(overwrite_b, bool, 'overwrite_b')
+    eigh_type_check(turbo, bool, 'turbo')
+    eigh_type_check(check_finite, bool, 'check_finite')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _type_in_check(func_name, a.dtype,
+                   [mstype.int32, mstype.int64, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128],
+                   'a', 'data type')
+
+    _square_check(func_name, a.shape)
+    eigh_value_check(b, None, 'b', op='is', fmt='todo')
+    eigh_value_check(eigvals, None, 'eigvals', op='is', fmt='todo')
+
+    if F.dtype(a) in (mstype.int32, mstype.int64):
+        a = F.cast(a, mstype.float64)
+    eigh_net = Eigh(not eigvals_only, lower=lower)
     return eigh_net(a)
 
 
@@ -571,24 +573,6 @@ def lu_pivots_to_permutation(pivots, permutation_size: int):
         permutation[..., i] = y
         permutation[loc + (j,)] = x
     return permutation
-
-
-def check_lu_shape(in_lu, b):
-    """ check lu input shape"""
-    if len(in_lu.shape) < 2 or in_lu.shape[-1] != in_lu.shape[-2]:
-        _raise_value_error("last two dimensions of LU decomposition must be equal.")
-
-    if b.shape is None:
-        _raise_value_error(" LU decomposition input b's rank must >=1.")
-
-    rhs_vector = in_lu.ndim == b.ndim + 1
-    if rhs_vector:
-        if b.shape[-1] != in_lu.shape[-1]:
-            _raise_value_error("LU decomposition: lu matrix and b must have same number of dimensions")
-        mnp.expand_dims(b, axis=1)
-    else:
-        if b.shape[-2] != in_lu.shape[-1]:
-            _raise_value_error("LU decomposition: lu matrix and b must have same number of dimensions")
 
 
 def lu_factor(a, overwrite_a=False, check_finite=True):
@@ -643,16 +627,14 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
         >>> print(piv)
         [2 2 3 3]
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'lu_factor')
-    _type_check('check_finite', check_finite, [bool], 'lu_factor')
-    a_type = F.dtype(a)
-    if len(a.shape) < 2 or (a.shape[-1] != a.shape[-2]):
-        _raise_value_error("input matrix of lu_factor must be square.")
-    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.lu_factor only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if a_type not in (mstype.float32, mstype.float64):
+    func_name = "lu_factor"
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _square_check(func_name, a.shape)
+
+    if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
     msp_lu = LU()
     m_lu, pivots, _ = msp_lu(a)
@@ -722,18 +704,17 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
          [ 0.          0.         -1.03999996  3.07999992]
          [ 0.         -0.         -0.          7.46153831]]
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'lu')
-    _type_check('check_finite', check_finite, [bool], 'lu')
-    _type_check('permute_l', permute_l, [bool], 'lu')
-    a_type = F.dtype(a)
-    if len(a.shape) < 2:
-        _raise_value_error("mindspore.scipy.linalg.lu input a's dimension must larger than 2D.")
-    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.lu input a only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if a_type not in (mstype.float32, mstype.float64):
+    func_name = "lu"
+    _type_is_check(func_name, permute_l, bool, 'permute_l')
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
+    _value_in_check(func_name, a.ndim, 2, 'a', 'dimension')
+
+    if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
+
     msp_lu = LU()
     m_lu, _, p = msp_lu(a)
     m = a.shape[-2]
@@ -741,7 +722,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
     if m > n:
         _raise_value_error("last two dimensions of LU decomposition must be row less or equal to col.")
     k = min(m, n)
-    l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=a_type)
+    l = mnp.tril(m_lu, -1)[..., :k] + mnp.eye(m, k, dtype=F.dtype(a))
     u = mnp.triu(m_lu)[:k, :]
     if permute_l:
         return mnp.dot(p, l), u
@@ -789,33 +770,38 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
         >>> print(lu_solve((lu, piv), b))
         [ 0.05154639, -0.08247423,  0.08247423,  0.09278351]
     """
-    _type_check('overwrite_b', overwrite_b, [bool], 'lu_solve')
-    _type_check('check_finite', check_finite, [bool], 'lu_solve')
-    _type_check('trans', trans, [int], 'lu_solve')
-    m_lu, pivots = lu_and_piv
-    m_lu_type = F.dtype(m_lu)
-    if m_lu_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.lu_solve only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if m_lu_type not in (mstype.float32, mstype.float64):
-        m_lu = F.cast(m_lu, mstype.float64)
-    # 1. Check shape
-    check_lu_shape(m_lu, b)
-    # here permutation array has been calculated, just use it.
-    # 2. Calculate permutation
-    permutation = lu_pivots_to_permutation(pivots, pivots.size)
-    # 3. Get rhs_vector
-    rhs_vector = m_lu.ndim == b.ndim + 1
+    func_name = "lu_solve"
+    lu_matrix, pivot = lu_and_piv
+    _type_is_check(func_name, overwrite_b, bool, 'overwrite_b')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _tensor_check(func_name, lu_matrix, F.typeof(lu_matrix), Tensor)
+    _tensor_check(func_name, b, F.typeof(b), Tensor)
+    _tensor_check(func_name, pivot, F.typeof(pivot), Tensor)
+    _type_in_check(func_name, lu_matrix.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                   'lu_matrix', 'data type')
+    _type_in_check(func_name, b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
+                   'b', 'data type')
+    _type_in_check(func_name, pivot.dtype, [mstype.int32], 'pivot', 'data type')
+    _type_in_check(func_name, lu_matrix.dtype, b.dtype, ('lu_matrix', 'b'), 'data type', fmt='match')
+
+    _solve_check(func_name, lu_matrix.shape, b.shape, 'lu_matrix', 'b')
+    _value_in_check(func_name, pivot.ndim, 1, 'pivot', 'dimension')
+    _value_in_check(func_name, lu_matrix.shape, pivot.shape, 'lu_matrix', 'pivot', op='solve', fmt='solve')
+    _value_in_check(func_name, trans, (0, 1, 2), 'trans', 'value')
+
+    if F.dtype(lu_matrix) in (mstype.int32, mstype.int64):
+        lu_matrix = F.cast(lu_matrix, mstype.float64)
+        b = F.cast(b, mstype.float64)
+
+    permutation = lu_pivots_to_permutation(pivot, pivot.size)
+    rhs_vector = lu_matrix.ndim == b.ndim + 1
     x = b[permutation, :]
     if trans == 0:
-        x = SolveTriangular(lower=True, unit_diagonal=True, trans='N')(m_lu, x)
-        x = SolveTriangular(lower=False, unit_diagonal=False, trans='N')(m_lu, x)
-    elif trans in (1, 2):
-        x = SolveTriangular(lower=False, unit_diagonal=False, trans='T')(m_lu, x)
-        x = SolveTriangular(lower=True, unit_diagonal=True, trans='T')(m_lu, x)
+        x = SolveTriangular(lower=True, unit_diagonal=True, trans='N')(lu_matrix, x)
+        x = SolveTriangular(lower=False, unit_diagonal=False, trans='N')(lu_matrix, x)
     else:
-        _raise_value_error("mindspore.scipy.linalg.lu_solve input trans must be 0,1 or 2, but got ", trans)
+        x = SolveTriangular(lower=False, unit_diagonal=False, trans='T')(lu_matrix, x)
+        x = SolveTriangular(lower=True, unit_diagonal=True, trans='T')(lu_matrix, x)
     x = mnp.reshape(x, b.shape)
     return x[..., 0] if rhs_vector else x
 
@@ -877,23 +863,21 @@ def det(a, overwrite_a=False, check_finite=True):
         >>> print(det(a))
         3.0
     """
-    _type_check('overwrite_a', overwrite_a, [bool], 'det')
-    _type_check('check_finite', check_finite, [bool], 'det')
-    # special case
-    if a.ndim >= 2 and a.shape[-1] == 2 and a.shape[-2] == 2:
-        return _det_2x2(a)
-    if a.ndim >= 2 and a.shape[-1] == 3 and a.shape[-2] == 3:
-        return _det_3x3(a)
-    if a.ndim < 2 or a.shape[-1] != a.shape[-2]:
-        _raise_value_error("Arguments to det must be [..., n, n], but got shape ", a.shape, ".")
+    func_name = "det"
+    _type_is_check(func_name, overwrite_a, bool, 'overwrite_a')
+    _type_is_check(func_name, check_finite, bool, 'check_finite')
+    _tensor_check(func_name, a, F.typeof(a), Tensor)
+    _square_check(func_name, a.shape)
+    _type_in_check(func_name, a.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64], 'a', 'data type')
 
-    a_type = F.dtype(a)
-    if a_type not in (mstype.int32, mstype.int64, mstype.float32, mstype.float64):
-        _raise_type_error(
-            "mindspore.scipy.linalg.det only support (Tensor[int32], Tensor[int64], Tensor[float32], "
-            "Tensor[float64]).")
-    if a_type not in (mstype.float32, mstype.float64):
+    if F.dtype(a) in (mstype.int32, mstype.int64):
         a = F.cast(a, mstype.float64)
+    # special case
+    if a.shape[-2] == 2:
+        return _det_2x2(a)
+    if a.shape[-2] == 3:
+        return _det_3x3(a)
+
     lu_matrix, pivot = lu_factor(a)
     diag = lu_matrix.diagonal(axis1=-2, axis2=-1)
     pivot_not_equal = (pivot != mnp.arange(a.shape[-1])).astype(mstype.int64)

@@ -16,7 +16,8 @@
 from collections.abc import Iterable
 from ..ops.primitive import constexpr
 from .._c_expression import typing
-from ..common.dtype import tensor_type
+from ..common import Tensor, CSRTensor
+from ..common.dtype import tensor_type, csr_tensor_type
 
 
 @constexpr
@@ -39,7 +40,7 @@ def _raise_value_error(*info):
     Raise ValueError in both graph/pynative mode
 
     Args:
-        info(tuple): info contains any object that can be recognized by graph mode.
+        info: info contains any object that can be recognized by graph mode.
             All info's objects will be concatenated into a string to display.
     """
     info_str = ""
@@ -54,41 +55,13 @@ def _raise_type_error(*info):
     Raise TypeError in both graph/pynative mode
 
     Args:
-        info(tuple): info contains any object that can be recognized by graph mode.
+        info: info contains any object that can be recognized by graph mode.
             All info's objects will be concatenated into a string to display.
     """
     info_str = ""
     for obj in info:
         info_str = info_str + f"{obj}"
     raise TypeError(info_str)
-
-
-@constexpr
-def _type_check(arg_name, arg_value, valid_types, prim_name=None):
-    """
-    Checks whether a value is instance of some types.
-    The same as mindspore._checkparam.Validator.check_value_type.
-    This copy is to make it work in graph mode.
-    """
-    valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
-
-    def raise_error_msg():
-        """func for raising error message when check failed"""
-        type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
-        num_types = len(valid_types)
-        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-        raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                        f'{type_names if num_types > 1 else type_names[0]}, '
-                        f'but got \'{arg_value}\' with type {type(arg_value).__name__}.')
-
-    # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
-    #         `check_value_type('x', True, [bool, int])` will check pass
-    if isinstance(arg_value, bool) and bool not in tuple(valid_types):
-        raise_error_msg()
-    if not isinstance(arg_value, tuple(valid_types)):
-        raise_error_msg()
-
-    return arg_value
 
 
 class StringDict:
@@ -114,47 +87,80 @@ class StringDict:
 
 
 def _tuple(x):
-    x = x if isinstance(x, Iterable) else (x,)
-    return tuple(x)
+    if not isinstance(x, (tuple, list)):
+        return (x,)
+
+    tuple_x = ()
+    for _x in x:
+        tuple_x = tuple_x + _tuple(_x)
+
+    return tuple_x
+
+
+def pytype_to_mstype(type_):
+    return {
+        Tensor: tensor_type,
+        CSRTensor: csr_tensor_type,
+    }.get(type_)
 
 
 _op_dict = StringDict()
-_op_dict.register("in", lambda x, y: x in _tuple(y))
-_op_dict.register("is", lambda x, y: x is y)
-_op_dict.register("isinstance", lambda x, y: isinstance(x, _tuple(y)))
-_op_dict.register("istensor", lambda _, y: isinstance(y[0], tensor_type))
+_op_dict.register("in", lambda x: x[0] in _tuple(x[1]))
+_op_dict.register("is", lambda x: x[0] is x[1])
+_op_dict.register("isinstance", lambda x: isinstance(x[0], _tuple(x[1])))
+_op_dict.register("solve", lambda x: x[0][1] == x[1][0])
 
 
-def _attr(arg_name, arg_value, valid_value, prim_name):
-    attr, arg = arg_name
+def _attr(args, names):
+    func_name, arg_name, attr_name = _tuple(names)
+    arg_value, valid_value = args
     num_values = len(valid_value) if isinstance(valid_value, Iterable) else 1
-    return f"For '{prim_name}', the {attr} of '{arg}' should be {'one of ' if num_values > 1 else ''}" + \
+    return f"For '{func_name}', the {attr_name} of '{arg_name}' should be {'one of ' if num_values > 1 else ''}" + \
            f"{valid_value if num_values > 1 else valid_value}, " + \
            f"but got {arg_value}."
 
 
-def _type(arg_name, arg_value, valid_value, prim_name):
+def _type(args, names):
+    arg_value, valid_value = args
+    func_name, arg_name = names
     valid_value = valid_value if isinstance(valid_value, Iterable) else (valid_value,)
     type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_value]
     num_values = len(valid_value)
-    return f"For '{prim_name}', the type of '{arg_name}' should be {'one of ' if num_values > 1 else ''}" + \
+    return f"For '{func_name}', the type of '{arg_name}' should be {'one of ' if num_values > 1 else ''}" + \
            f"{type_names if num_values > 1 else type_names[0]}, " + \
            f"but got '{arg_value}' with type {type(arg_value).__name__}."
 
 
-def _square(arg_name, arg_value, valid_value, prim_name):
-    return f"For '{prim_name}', the matrix '{arg_name}' should be a square matrix like (N, N), " + \
-           f"but got ({arg_value}, {valid_value})."
+def _square(args, names):
+    func_name, arg_name, *_ = names
+    return f"For '{func_name}', the matrix '{arg_name}' should be a square matrix like (N, N), " + \
+           f"but got {args}."
 
 
-def _match(arg_name, arg_value, valid_value, prim_name):
-    attr, arg1, arg2 = arg_name
-    return f"For '{prim_name}', the {attr} of '{arg1}' and '{arg2}' should be the same, but got " + \
-           f"the {attr} of '{arg1}' is {arg_value} and the {attr} of '{arg2}' is {valid_value}."
+def _match(args, names):
+    arg1_value, arg2_value = args
+    func_name, arg1_name, arg2_name, attr_name = _tuple(names)
+    return f"For '{func_name}', the {attr_name} of '{arg1_name}' and '{arg2_name}' should be the same, but got " + \
+           f"the {attr_name} of '{arg1_name}' is {arg1_value} and the {attr_name} of '{arg2_name}' is {arg2_value}."
 
 
-def _tensor(arg_name, arg_value, valid_value, prim_name):
-    return _type(arg_name, arg_value, valid_value[1], prim_name)
+def _tensor(_, names):
+    arg, tgt_type, func_name, arg_name = names
+    return _type((arg, tgt_type), (func_name, arg_name))
+
+
+def _not_support(args, names):
+    _, valid_value = args
+    func_name, arg_name, *_ = names
+    return f"For '{func_name}', currently only case {arg_name}={valid_value} of '{func_name}' is implemented."
+
+
+def _solve(args, names):
+    a_shape, b_shape = args
+    func_name, a_name, b_name = names
+    return f"For '{func_name}', the last two dimensions of '{a_name}' and '{b_name}' should be matched, " + \
+           f"but got shape of {a_shape} and {b_shape}. " + \
+           f"Please make sure that the shape of '{a_name}' and '{b_name}' be like (N, N) X (N, M) or (N, N) X (N)."
 
 
 _fmt_dict = StringDict()
@@ -163,20 +169,60 @@ _fmt_dict.register("square", _square)
 _fmt_dict.register("type", _type)
 _fmt_dict.register("match", _match)
 _fmt_dict.register("tensor", _tensor)
+_fmt_dict.register("todo", _not_support)
+_fmt_dict.register("solve", _solve)
 
 
 @constexpr
-def _super_check(op, arg_value, valid_value, prim_name, arg_name, fmt, msg, val_err):
-    """Checks whether an input is valid."""
+def _super_check(args, names, op, fmt, msg, val_err):
+    """
+    A flexible function is used to check whether type or value of variables is valid,
+    which supports in both graph/pynative mode.
+
+    Args:
+        args(any): 'args' is used as one of argument for operation function and format function.
+        names(any): 'names' is used as one of argument for format function.
+        op(str): 'op' is a string to specify an operation. This operation will be obtained
+            an actual function from a StringDict object, with 'args' as argument.
+        fmt(str): 'fmt' is a string to specify a format. This format will be obtained
+            an actual function from a StringDict object, with 'args' and 'names' as arguments.
+        msg(str, tuple): 'msg' is used the case where format function is not necessary. When 'msg' is
+            not None, we will throw the 'msg' as the error message.
+        val_err(bool): Determine the type of TypeError/ValueError. When 'val_err' is True, raises
+            ValueError, otherwise TypeError.
+
+    Note:
+        This function does not contain any parameter checks.
+    """
     op_fn = _op_dict.get(op)
-    if not op_fn(arg_value, valid_value):
+    if not op_fn(args):
         if not msg:
             fmt_fn = _fmt_dict.get(fmt)
-            msg = fmt_fn(arg_name, arg_value, valid_value, prim_name)
+            msg = fmt_fn(args, names)
 
         if val_err:
             _raise_value_error(*_tuple(msg))
         else:
             _raise_type_error(*_tuple(msg))
 
-    return arg_value
+    return args
+
+
+@constexpr
+def _tensor_check(func_name, arg, arg_type, tgt_type, arg_name='a'):
+    ms_type = pytype_to_mstype(tgt_type)
+    return _super_check((arg_type, ms_type), (arg, tgt_type, func_name, arg_name), "isinstance", "tensor", None, False)
+
+
+@constexpr
+def _square_check(func_name, arg, arg_name='a'):
+    _super_check((len(arg), 2), (func_name, arg_name, 'dimension'), 'in', 'attr', None, True)
+    _super_check(arg, (func_name, arg_name), 'in', 'square', None, True)
+    return arg
+
+
+@constexpr
+def _solve_check(func_name, arg1, arg2, arg1_name='a', arg2_name='b'):
+    _square_check(func_name, arg1, arg1_name)
+    _super_check((len(arg2), (1, 2)), (func_name, arg2_name, 'dimension'), 'in', 'attr', None, True)
+    _super_check((arg1, arg2), (func_name, arg1_name, arg2_name), 'solve', 'solve', None, True)

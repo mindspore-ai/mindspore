@@ -16,8 +16,6 @@
 from ..ops import PrimitiveWithInfer, prim_attr_register
 from .._checkparam import Validator as validator
 from ..common import dtype as mstype
-from .. import nn
-from ..ops import functional as F
 
 
 class SolveTriangular(PrimitiveWithInfer):
@@ -242,23 +240,6 @@ class Eigh(PrimitiveWithInfer):
                 'value': None
             }
         return output
-
-
-class EighNet(nn.Cell):
-    """
-    EigenValue /eigenvector solver for symmetric/Hermitian matrix
-    Ax = lambda * x
-    """
-
-    def __init__(self, bv=True, lower=True):
-        super(EighNet, self).__init__()
-        self.bv = bv
-        self.eigh = Eigh(bv, lower)
-
-    def construct(self, A):
-        if F.dtype(A) in (mstype.int32, mstype.int64):
-            A = F.cast(A, mstype.float64)
-        return self.eigh(A)
 
 
 class Eig(PrimitiveWithInfer):
