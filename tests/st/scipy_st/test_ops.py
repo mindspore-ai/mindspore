@@ -23,8 +23,7 @@ from scipy.linalg import solve_triangular, eig, eigvals
 from mindspore import Tensor, context
 from mindspore.scipy.ops import EighNet, Eig, Cholesky, SolveTriangular
 from mindspore.scipy.utils import _nd_transpose
-from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition, \
-    match_exception_info
+from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
 np.random.seed(0)
 
@@ -360,7 +359,7 @@ def test_solve_triangular_batched(n: int, batch, dtype, lower: bool, unit_diagon
     assert np.allclose(expect, output, rtol=rtol, atol=atol)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -373,30 +372,22 @@ def test_solve_triangular_error_dims():
     # matrix a is 1D
     a = create_random_rank_matrix((10,), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the dimension of `a` should be at least 2, but got 1 dimensions."
-    match_exception_info(err, msg)
 
     # matrix a is not square matrix
     a = create_random_rank_matrix((4, 5), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the last two dimensions of `a` should be the same, " \
-          "but got shape of [4, 5]. Please make sure that the shape of `a` be like [..., N, N]"
-    match_exception_info(err, msg)
 
     a = create_random_rank_matrix((3, 5, 4, 5), dtype=np.float32)
     b = create_random_rank_matrix((3, 5, 10,), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the last two dimensions of `a` should be the same," \
-          " but got shape of [3, 5, 4, 5]. Please make sure that the shape of `a` be like [..., N, N]"
-    match_exception_info(err, msg)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -409,49 +400,27 @@ def test_solve_triangular_error_dims_mismatched():
     # dimension of a and b is not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10,), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the dimension of `b` should be 'a.dim' or 'a.dim' - 1, " \
-          "which is 4 or 3, but got 2 dimensions."
-    match_exception_info(err, msg)
 
     # last two dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the last two dimensions of `a` and `b` should be matched, " \
-          "but got shape of [3, 4, 5, 5] and [5, 10, 4]. Please make sure that the shape of `a` " \
-          "and `b` be like [..., N, N] X [..., N, M] or [..., N, N] X [..., N]."
-    match_exception_info(err, msg)
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4, 1), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the last two dimensions of `a` and `b` should be matched, " \
-          "but got shape of [3, 4, 5, 5] and [5, 10, 4, 1]. Please make sure that the shape of `a` " \
-          "and `b` be like [..., N, N] X [..., N, M] or [..., N, N] X [..., N]."
-    print(err.value)
-    match_exception_info(err, msg)
 
     # batch dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the batch dimensions of `a` and `b` should all be the same, " \
-          "but got shape of [3, 4, 5, 5] and [5, 10, 5]. Please make sure that " \
-          "the shape of `a` and `b` be like [a, b, c, ..., N, N] X [a, b, c, ..., N, M] " \
-          "or [a, b, c, ..., N, N] X [a, b, c, ..., N]."
-    match_exception_info(err, msg)
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5, 1), dtype=np.float32)
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError):
         SolveTriangular()(Tensor(a), Tensor(b))
-    msg = "For 'SolveTriangular', the batch dimensions of `a` and `b` should all be the same, " \
-          "but got shape of [3, 4, 5, 5] and [5, 10, 5, 1]. Please make sure that " \
-          "the shape of `a` and `b` be like [a, b, c, ..., N, N] X [a, b, c, ..., N, M] " \
-          "or [a, b, c, ..., N, N] X [a, b, c, ..., N]."
-    match_exception_info(err, msg)
