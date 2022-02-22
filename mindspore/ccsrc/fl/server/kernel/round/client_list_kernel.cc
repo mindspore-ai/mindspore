@@ -34,8 +34,12 @@ void ClientListKernel::InitKernel(size_t) {
 }
 
 sigVerifyResult ClientListKernel::VerifySignature(const schema::GetClientList *get_clients_req) {
-  std::string fl_id = get_clients_req->fl_id()->str();
-  std::string timestamp = get_clients_req->timestamp()->str();
+  auto fbs_fl_id = get_clients_req->fl_id();
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_fl_id, sigVerifyResult::FAILED);
+  std::string fl_id = fbs_fl_id->str();
+  auto fbs_timestamp = get_clients_req->timestamp();
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_timestamp, sigVerifyResult::FAILED);
+  std::string timestamp = fbs_timestamp->str();
   int iteration = get_clients_req->iteration();
   std::string iter_str = std::to_string(iteration);
   auto fbs_signature = get_clients_req->signature();

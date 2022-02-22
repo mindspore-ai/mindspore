@@ -1032,7 +1032,7 @@ bool StartServerAction(const ResourcePtr &res) {
 
   float share_secrets_ratio = ps::PSContext::instance()->share_secrets_ratio();
   uint64_t cipher_time_window = ps::PSContext::instance()->cipher_time_window();
-  size_t reconstruct_secrets_threshold = ps::PSContext::instance()->reconstruct_secrets_threshold() + 1;
+  size_t minimum_clients_for_reconstruct = ps::PSContext::instance()->reconstruct_secrets_threshold() + 1;
 
   size_t exchange_keys_threshold =
     std::max(static_cast<size_t>(std::ceil(start_fl_job_threshold * share_secrets_ratio)), update_model_threshold);
@@ -1043,11 +1043,11 @@ bool StartServerAction(const ResourcePtr &res) {
   size_t get_secrets_threshold =
     std::max(static_cast<size_t>(std::ceil(share_secrets_threshold * share_secrets_ratio)), update_model_threshold);
   size_t client_list_threshold = std::max(static_cast<size_t>(std::ceil(update_model_threshold * share_secrets_ratio)),
-                                          reconstruct_secrets_threshold);
+                                          minimum_clients_for_reconstruct);
   size_t push_list_sign_threshold = std::max(
-    static_cast<size_t>(std::ceil(client_list_threshold * share_secrets_ratio)), reconstruct_secrets_threshold);
+    static_cast<size_t>(std::ceil(client_list_threshold * share_secrets_ratio)), minimum_clients_for_reconstruct);
   size_t get_list_sign_threshold = std::max(
-    static_cast<size_t>(std::ceil(push_list_sign_threshold * share_secrets_ratio)), reconstruct_secrets_threshold);
+    static_cast<size_t>(std::ceil(push_list_sign_threshold * share_secrets_ratio)), minimum_clients_for_reconstruct);
 #ifdef ENABLE_ARMOUR
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
   if (encrypt_type == ps::kPWEncryptType) {
@@ -1057,7 +1057,7 @@ bool StartServerAction(const ResourcePtr &res) {
     rounds_config.push_back({"shareSecrets", true, cipher_time_window, true, share_secrets_threshold});
     rounds_config.push_back({"getSecrets", true, cipher_time_window, true, get_secrets_threshold});
     rounds_config.push_back({"getClientList", true, cipher_time_window, true, client_list_threshold});
-    rounds_config.push_back({"reconstructSecrets", true, cipher_time_window, true, reconstruct_secrets_threshold});
+    rounds_config.push_back({"reconstructSecrets", true, cipher_time_window, true, minimum_clients_for_reconstruct});
     if (ps::PSContext::instance()->pki_verify()) {
       rounds_config.push_back({"pushListSign", true, cipher_time_window, true, push_list_sign_threshold});
       rounds_config.push_back({"getListSign", true, cipher_time_window, true, get_list_sign_threshold});
@@ -1069,10 +1069,11 @@ bool StartServerAction(const ResourcePtr &res) {
     rounds_config.push_back({"getKeys", true, cipher_time_window, true, get_keys_threshold});
   }
 #endif
-  fl::server::CipherConfig cipher_config = {
-    share_secrets_ratio,     cipher_time_window,           exchange_keys_threshold, get_keys_threshold,
-    share_secrets_threshold, get_secrets_threshold,        client_list_threshold,   push_list_sign_threshold,
-    get_list_sign_threshold, reconstruct_secrets_threshold};
+  fl::server::CipherConfig cipher_config = {share_secrets_ratio,     cipher_time_window,
+                                            exchange_keys_threshold, get_keys_threshold,
+                                            share_secrets_threshold, get_secrets_threshold,
+                                            client_list_threshold,   push_list_sign_threshold,
+                                            get_list_sign_threshold, minimum_clients_for_reconstruct};
 
   size_t executor_threshold = 0;
   if (server_mode_ == ps::kServerModeFL || server_mode_ == ps::kServerModeHybrid) {

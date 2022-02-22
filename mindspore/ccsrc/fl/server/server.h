@@ -107,8 +107,8 @@ class Server {
         cipher_get_clientlist_cnt_(0),
         cipher_push_list_sign_cnt_(0),
         cipher_get_list_sign_cnt_(0),
-        cipher_reconstruct_secrets_up_cnt_(0),
-        cipher_reconstruct_secrets_down_cnt_(0),
+        minimum_clients_for_reconstruct(0),
+        minimum_secret_shares_for_reconstruct(0),
         cipher_time_window_(0) {}
   ~Server() = default;
   Server(const Server &) = delete;
@@ -244,8 +244,8 @@ class Server {
   size_t cipher_get_clientlist_cnt_;
   size_t cipher_push_list_sign_cnt_;
   size_t cipher_get_list_sign_cnt_;
-  size_t cipher_reconstruct_secrets_up_cnt_;
-  size_t cipher_reconstruct_secrets_down_cnt_;
+  size_t minimum_clients_for_reconstruct;
+  size_t minimum_secret_shares_for_reconstruct;
   uint64_t cipher_time_window_;
 };
 }  // namespace server

@@ -222,8 +222,8 @@ void Server::InitIteration() {
     cipher_get_clientlist_cnt_ = cipher_config_.client_list_threshold;
     cipher_push_list_sign_cnt_ = cipher_config_.push_list_sign_threshold;
     cipher_get_list_sign_cnt_ = cipher_config_.get_list_sign_threshold;
-    cipher_reconstruct_secrets_up_cnt_ = cipher_config_.reconstruct_secrets_threshold;
-    cipher_reconstruct_secrets_down_cnt_ = cipher_config_.reconstruct_secrets_threshold - 1;
+    minimum_clients_for_reconstruct = cipher_config_.minimum_clients_for_reconstruct;
+    minimum_secret_shares_for_reconstruct = cipher_config_.minimum_clients_for_reconstruct - 1;
     cipher_time_window_ = cipher_config_.cipher_time_window;
 
     MS_LOG(INFO) << "Initializing cipher:";
@@ -234,8 +234,8 @@ void Server::InitIteration() {
                  << " cipher_get_clientlist_cnt_: " << cipher_get_clientlist_cnt_
                  << " cipher_push_list_sign_cnt_: " << cipher_push_list_sign_cnt_
                  << " cipher_get_list_sign_cnt_: " << cipher_get_list_sign_cnt_
-                 << " cipher_reconstruct_secrets_up_cnt_: " << cipher_reconstruct_secrets_up_cnt_
-                 << " cipher_reconstruct_secrets_down_cnt_: " << cipher_reconstruct_secrets_down_cnt_
+                 << " minimum_clients_for_reconstruct: " << minimum_clients_for_reconstruct
+                 << " minimum_secret_shares_for_reconstruct: " << minimum_secret_shares_for_reconstruct
                  << " cipher_time_window_: " << cipher_time_window_;
   }
 #endif
@@ -254,7 +254,7 @@ void Server::InitCipher() {
 #ifdef ENABLE_ARMOUR
   cipher_init_ = &armour::CipherInit::GetInstance();
 
-  int cipher_t = SizeToInt(cipher_reconstruct_secrets_down_cnt_);
+  int cipher_t = SizeToInt(minimum_secret_shares_for_reconstruct);
   unsigned char cipher_p[SECRET_MAX_LEN] = {0};
   const int cipher_g = 1;
   float dp_eps = ps::PSContext::instance()->dp_eps();
@@ -301,7 +301,7 @@ void Server::InitCipher() {
   }
   if (!cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
                           cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_push_list_sign_cnt_,
-                          cipher_get_list_sign_cnt_, cipher_reconstruct_secrets_up_cnt_)) {
+                          cipher_get_list_sign_cnt_, minimum_clients_for_reconstruct)) {
     MS_LOG(EXCEPTION) << "cipher init fail.";
   }
 #endif
