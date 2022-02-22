@@ -186,7 +186,7 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
   return false;
 }
 
-AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, FuncGraphPtr fg) {
+AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(input);
   TypePtr input_type = input->Type();
   if (input_type == nullptr || !input_type->isa<TensorType>()) {

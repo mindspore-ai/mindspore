@@ -125,7 +125,7 @@ AnfNodePtr GetTransformedKeyNode(const AnfNodePtr &old_key_node, SymbolicKeyConv
   } else {
     static int64_t key_counter = 0;
     transformed_key = ++key_counter;
-    symbolic_key_map.emplace(std::make_pair(symbolic_key_inst, transformed_key));
+    (void)symbolic_key_map.emplace(std::make_pair(symbolic_key_inst, transformed_key));
   }
   auto tensor_key = std::make_shared<mindspore::tensor::Tensor>(transformed_key);
   auto transformed_key_node = NewValueNode(tensor_key);
@@ -152,7 +152,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   SymbolicKeyConversionMap symbolic_key_map;
   static AbstractBasePtr scalar_abs = std::make_shared<abstract::AbstractScalar>(kAnyValue, kInt64);
   static AbstractBasePtr tensor_abs = std::make_shared<abstract::AbstractTensor>(scalar_abs);
-  static std::string attr_name = "value_type";
+  static const std::string attr_name = "value_type";
   const int kPrimitiveOffset = 0;
   const int kEnvironTypeOffset = 1;
   const int kSymbolicKeyOffset = 2;
@@ -171,7 +171,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     const auto &type_id = GetValueType(cnode);
     if (type_id == kObjectTypeMonad) {
       if (IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
-        txn.Replace(cnode, cnode->input(kEnvironTypeOffset));
+        (void)txn.Replace(cnode, cnode->input(kEnvironTypeOffset));
         continue;
       } else {
         MS_LOG(EXCEPTION) << "Should be eliminated, but node: " << cnode->DebugString();

@@ -95,7 +95,7 @@ mindspore::HashSet<std::string> GetSerializableBpropList() {
   auto ops_list = serializable_bprop_ops_attr.cast<py::list>();
   for (auto op : ops_list) {
     if (py::isinstance<py::str>(op)) {
-      serializable_bprop_list.insert(op.cast<std::string>());
+      (void)serializable_bprop_list.insert(op.cast<std::string>());
       continue;
     }
     py::object prim_name = op.attr("__name__");
@@ -103,7 +103,7 @@ mindspore::HashSet<std::string> GetSerializableBpropList() {
       MS_LOG(WARNING) << "The name of obj " << py::str(op) << " to be exported to mindir should be a string";
       continue;
     }
-    serializable_bprop_list.insert(prim_name.cast<std::string>());
+    (void)serializable_bprop_list.insert(prim_name.cast<std::string>());
   }
   return serializable_bprop_list;
 }
@@ -145,7 +145,7 @@ void GetFilesHash(const std::string &dir, mindspore::HashMap<std::string, std::s
     auto real_path = std::string(dir) + "/" + filename->d_name;
     (void)bprop_hash_to_file->emplace(system::sha256::GetHashFromFile(real_path), real_path);
   }
-  closedir(open_dir);
+  (void)closedir(open_dir);
 }
 
 mindspore::HashMap<std::string, std::string> GetAllBpropFileHash() {

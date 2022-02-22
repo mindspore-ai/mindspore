@@ -86,7 +86,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
   func_graph->set_parameters(new_paras);
 }
 
-bool IsDynamicShapeGraph(FuncGraphPtr func_graph) {
+bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
@@ -1246,7 +1246,7 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
     (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
   } else {
     // Use InferMindir which will find c++ infer in eval_map and backend_eval_map;
-    InferMindir(res->func_graph(), args_spec_list, true);
+    (void)InferMindir(res->func_graph(), args_spec_list, true);
   }
   auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
   auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();

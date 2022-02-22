@@ -97,7 +97,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
   manager_ptr->AddFuncGraph(func_graph);
 
   FuncGraphPtr grad_fg = func_graph;
-  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
+  static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
   if (enable_closure) {
     if (func_graph->func_graphs_used().size() != 0 && optimzer->is_first_order_j()) {
       lift_fv_before_grad = true;
