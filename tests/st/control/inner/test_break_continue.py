@@ -285,7 +285,7 @@ def test_if_after_for_in_for_break():
     graph_backward_res = net(x)
 
     assert graph_forward_res == Tensor(106, mstype.int32)
-    assert graph_backward_res == (Tensor(10, mstype.int32),)
+    assert graph_backward_res == (Tensor(16, mstype.int32),)
 
 
 class WhileAfterWhileInWhileBreakForwardNet(nn.Cell):
