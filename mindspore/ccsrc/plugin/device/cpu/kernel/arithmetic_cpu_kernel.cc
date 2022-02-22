@@ -148,7 +148,11 @@ void ArithmeticCpuKernelMod<T>::Mul(const T *input1, const T *input2, T *out) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(input1[iter.GetInputPosA()] * input2[iter.GetInputPosB()]);
+      if constexpr (std::is_same_v<T, bool>) {
+        out[i] = static_cast<T>(input1[iter.GetInputPosA()] && input2[iter.GetInputPosB()]);
+      } else {
+        out[i] = static_cast<T>(input1[iter.GetInputPosA()] * input2[iter.GetInputPosB()]);
+      }
       iter.GenNextPos();
     }
   };
@@ -368,7 +372,11 @@ void ArithmeticCpuKernelMod<T>::SquaredDifference(const T *input1, const T *inpu
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
       T diff = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
-      out[i] = static_cast<T>(diff * diff);
+      if constexpr (std::is_same_v<T, bool>) {
+        out[i] = static_cast<T>(diff);
+      } else {
+        out[i] = static_cast<T>(diff * diff);
+      }
       iter.GenNextPos();
     }
   };

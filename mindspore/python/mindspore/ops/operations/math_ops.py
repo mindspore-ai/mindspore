@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1677,6 +1677,7 @@ class Neg(Primitive):
         """Initialize Neg"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
+
 class InplaceAdd(PrimitiveWithInfer):
     """
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
@@ -1914,6 +1915,10 @@ class Mul(_MathBinaryOp):
         >>> print(output)
         [ 4. 10. 18.]
     """
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        mul_valid_type = mstype.number_type + (mstype.bool_,)
+        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mul_valid_type, self.name)
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
@@ -3495,6 +3500,7 @@ class Asinh(Primitive):
     def __init__(self):
         """Initialize Asinh"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
 
 class Sinh(Primitive):
     r"""
