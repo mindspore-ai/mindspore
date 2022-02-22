@@ -36,8 +36,8 @@ void FuncGraphLoopBreaker::BreakLoop() {
   std::list<FuncGraphBasePtr> func_list;
 
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
-  std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
-                 [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
+  (void)std::transform(func_set_.begin(), func_set_.end(), std::back_inserter(func_list),
+                       [](FuncGraphBase *fun) -> FuncGraphBasePtr { return fun->shared_from_base<FuncGraphBase>(); });
   for (auto &item : func_list) {
     item->DoBreakLoop();
   }

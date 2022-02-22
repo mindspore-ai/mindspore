@@ -255,9 +255,9 @@ AbstractBasePtr InferImplNonZero(const AnalysisEnginePtr &, const PrimitivePtr &
   int64_t rank_base = SizeToLong(x_shape->shape().size());
   int64_t max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
 
-  y_shape.emplace_back(rank_base);
+  (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
-  y_shape.emplace_back(Shape::SHP_ANY);
+  (void)y_shape.emplace_back(Shape::SHP_ANY);
 
   ShapeVector min_shape = {rank_base, 1};
   ShapeVector max_shape = {rank_base, max_size};
@@ -838,7 +838,6 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
       (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
                            [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
     } else if (sh->isa<tensor::Tensor>()) {
-      auto tensor_value = sh->cast<tensor::TensorPtr>();
       shape = CheckAndConvertUtils::CheckTensorIntValue("shape", sh, "Reshape");
     } else {
       MS_EXCEPTION(ValueError) << "In stage of execution， the primitive[Reshape]'s input['shape'] must be a tuple or "
@@ -926,19 +925,20 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   ValuePtr axis = primitive->GetAttr("axis");
   int64_t axis_value_pos = CheckAxis(op_name, "axis", axis, -(rank + 1), rank, "input_x");
   int64_t output_num_value = GetValue<int64_t>(primitive->GetAttr("output_num"));
-  if ((x_shape[axis_value_pos] != Shape::SHP_ANY) && (x_shape[axis_value_pos] % output_num_value != 0)) {
-    MS_LOG(EXCEPTION) << "x_shape[" << axis_value_pos << "] = " << x_shape[axis_value_pos]
+  size_t pos = LongToSize(axis_value_pos);
+  if ((x_shape[pos] != Shape::SHP_ANY) && (x_shape[pos] % output_num_value != 0)) {
+    MS_LOG(EXCEPTION) << "x_shape[" << pos << "] = " << x_shape[pos]
                       << " must be divisible by output_num = " << output_num_value;
   }
 
   ShapeVector output_shape = x_shape;
-  if (output_shape[axis_value_pos] != Shape::SHP_ANY) {
-    output_shape[axis_value_pos] = static_cast<int>(x_shape[axis_value_pos] / output_num_value);
+  if (output_shape[pos] != Shape::SHP_ANY) {
+    output_shape[pos] = static_cast<int>(x_shape[pos] / output_num_value);
   }
   ShapeVector output_shape_min = x_shape_min;
-  output_shape_min[axis_value_pos] = static_cast<int>(x_shape_min[axis_value_pos] / output_num_value);
+  output_shape_min[pos] = static_cast<int>(x_shape_min[pos] / output_num_value);
   ShapeVector output_shape_max = x_shape_max;
-  output_shape_max[axis_value_pos] = static_cast<int>(x_shape_max[axis_value_pos] / output_num_value);
+  output_shape_max[pos] = static_cast<int>(x_shape_max[pos] / output_num_value);
 
   AbstractBasePtrList output_list;
   for (int64_t i = 0; i < output_num_value; ++i) {

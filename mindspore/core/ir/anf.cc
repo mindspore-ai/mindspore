@@ -141,21 +141,21 @@ void CNode::AddFusedDebugInfo(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   auto node_fused_debug_infos = cnode->fused_debug_infos();
   if (!node_fused_debug_infos.empty()) {
-    std::for_each(node_fused_debug_infos.begin(), node_fused_debug_infos.end(),
-                  [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
+    (void)std::for_each(node_fused_debug_infos.begin(), node_fused_debug_infos.end(),
+                        [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
   } else {
     this->AddFusedDebugInfo(cnode->debug_info());
   }
 
   auto primal_debug_infos = cnode->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
-    std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
-                  [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
+    (void)std::for_each(primal_debug_infos.begin(), primal_debug_infos.end(),
+                        [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
   }
 }
 
 void CNode::AddFusedDebugInfoList(const std::vector<AnfNodePtr> &nodes) {
-  std::for_each(nodes.begin(), nodes.end(), [this](const AnfNodePtr &node) { this->AddFusedDebugInfo(node); });
+  (void)std::for_each(nodes.begin(), nodes.end(), [this](const AnfNodePtr &node) { this->AddFusedDebugInfo(node); });
 }
 
 void CNode::AddFusedDebugInfo(const NodeDebugInfoPtr &debug_info) {
@@ -166,15 +166,15 @@ void CNode::AddFusedDebugInfo(const NodeDebugInfoPtr &debug_info) {
 }
 
 void CNode::AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos) {
-  std::for_each(debug_infos.begin(), debug_infos.end(),
-                [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
+  (void)std::for_each(debug_infos.begin(), debug_infos.end(),
+                      [this](const NodeDebugInfoPtr &debug_info) { this->AddFusedDebugInfo(debug_info); });
 }
 
 NodeDebugInfoSet CNode::primal_debug_infos() const { return primal_debug_infos_; }
 
 void CNode::set_primal_debug_infos(const NodeDebugInfoSet &debug_infos) {
-  std::for_each(debug_infos.begin(), debug_infos.end(),
-                [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
+  (void)std::for_each(debug_infos.begin(), debug_infos.end(),
+                      [this](const NodeDebugInfoPtr &debug_info) { this->AddPrimalDebugInfo(debug_info); });
 }
 
 void CNode::AddPrimalDebugInfo(const NodeDebugInfoPtr &debug_info) { (void)primal_debug_infos_.emplace(debug_info); }
@@ -693,8 +693,8 @@ void SetSequenceElementsUseFlags(const AbstractBasePtr &abs, bool new_flag) {
     auto flags = GetSequenceNodeElementsUseFlags(sequence_node);
     if (flags != nullptr) {
       auto &all_flags = (*flags);
-      std::transform(all_flags.begin(), all_flags.end(), all_flags.begin(),
-                     [&new_flag](bool) -> bool { return new_flag; });
+      (void)std::transform(all_flags.begin(), all_flags.end(), all_flags.begin(),
+                           [&new_flag](bool) -> bool { return new_flag; });
     }
   }
 }

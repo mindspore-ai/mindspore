@@ -529,7 +529,7 @@ void AbstractSequence::InsertSequenceNode(const AnfNodePtr &sequence_node) {
     std::find_if(sequence_nodes_->begin(), sequence_nodes_->end(),
                  [&sequence_node](const AnfNodeWeakPtr &weak_node) { return sequence_node == weak_node.lock(); });
   if (iter == sequence_nodes_->end()) {
-    sequence_nodes_->emplace_back(sequence_node);
+    (void)sequence_nodes_->emplace_back(sequence_node);
     CheckSequenceNodesValid(*sequence_nodes_);
   } else {
     MS_LOG(DEBUG) << "Fail to insert node \'" << sequence_node->DebugString() << "\' into sequence nodes.";
