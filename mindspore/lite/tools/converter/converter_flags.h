@@ -27,6 +27,7 @@
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
+#include "micro/coder/config.h"
 
 namespace mindspore {
 namespace lite {
@@ -90,12 +91,14 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string graphInputFormatStr;
   std::string device;
   mindspore::Format graphInputFormat = mindspore::NHWC;
+  bool enable_micro = false;
 
   lite::quant::CommonQuantParam commonQuantParam;
   lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;
   lite::quant::FullQuantParam fullQuantParam;
   lite::preprocess::DataPreProcessParam dataPreProcessParam;
   lite::acl::AclModelOptionCfg aclModelOptionCfgParam;
+  lite::micro::MicroParam microParam;
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);

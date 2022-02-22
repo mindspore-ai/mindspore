@@ -72,6 +72,7 @@ add_subdirectory(registry)
 add_subdirectory(preprocess)
 add_subdirectory(config_parser)
 add_subdirectory(${CORE_DIR} mindspore_core)
+add_subdirectory(micro/coder)
 
 if(MSLITE_ENABLE_ACL)
     set(MODE_ASCEND_ACL ON)
@@ -219,6 +220,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include_directories(${SRC_DIR}/runtime/kernel/opencl)
     target_link_libraries(converter_lite PRIVATE opencl_kernel_mid)
 endif()
+
 target_link_libraries(converter_lite PRIVATE
         ccsrc_src_mid
         converter_src_mid
@@ -242,6 +244,7 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::protobuf
         preprocess_mid
         config_parser_mid
+        coder_mid
         )
 
 if(MSLITE_ENABLE_ACL)

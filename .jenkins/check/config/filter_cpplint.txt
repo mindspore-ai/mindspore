@@ -38,7 +38,7 @@
 # Lite
 "mindspore/mindspore/lite/include/lite_utils.h"                                                    "build/include_what_you_use"
 "mindspore/mindspore/lite/nnacl/"                                                                  "readability/casting"
-"mindspore/mindspore/lite/micro/coder/wrapper/"                                                    "readability/casting"
+"mindspore/mindspore/lite/tools/converter/micro/coder/wrapper/"                                    "readability/casting"
 "mindspore/mindspore/lite/tools/converter/parser/tflite/tflite_node_parser.h"                      "runtime/references"
 "mindspore/mindspore/lite/tools/converter/model_parser.h"                                          "build/namespaces"
 "mindspore/mindspore/lite/tools/converter/parser/caffe/caffe_node_parser.cc"                       "readability/casting"

@@ -29,6 +29,7 @@ constexpr auto kMixedBitWeightQuantParam = "mixed_bit_weight_quant_param";
 constexpr auto kDataPreprocessParam = "data_preprocess_param";
 constexpr auto kRegistry = "registry";
 constexpr auto kAclOptionParam = "acl_option_cfg_param";
+constexpr auto kMicroParam = "micro_param";
 }  // namespace
 int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
   std::map<std::string, std::map<std::string, std::string>> maps;
@@ -73,6 +74,13 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
     MS_LOG(ERROR) << "ParseAclOptionCfgString failed.";
     return ret;
   }
+  ret = ParseMicroParamString(maps);
+  (void)maps.erase(kMicroParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseMicroParamString failed.";
+    return ret;
+  }
+
   for (const auto &config_info : maps) {
     ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
   }
@@ -186,6 +194,20 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
       {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path},
       {"dynamic_image_size", acl_option_cfg_string_.dynamic_image_size}};
     return SetMapData(map, parse_map, kAclOptionParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kMicroParam) != maps.end()) {
+    const auto &map = maps.at(kMicroParam);
+    std::map<std::string, std::string &> parse_map{{"target", micro_param_string_.target},
+                                                   {"codegen_mode", micro_param_string_.codegen_mode},
+                                                   {"output_path", micro_param_string_.output_path},
+                                                   {"debug_mode", micro_param_string_.debug_mode},
+                                                   {"support_parallel", micro_param_string_.support_parallel},
+                                                   {"enable_micro", micro_param_string_.enable_micro}};
+    return SetMapData(map, parse_map, kMicroParam);
   }
   return RET_OK;
 }

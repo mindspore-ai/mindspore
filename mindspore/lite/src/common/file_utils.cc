@@ -207,7 +207,7 @@ std::string RealPath(const char *path) {
   char *real_path = realpath(path, resolved_path.get());
 #endif
   if (real_path == nullptr || strlen(real_path) == 0) {
-    MS_LOG(ERROR) << "file path is not valid : " << path;
+    MS_LOG(ERROR) << "file path not exists: " << path;
     return "";
   }
   std::string res = resolved_path.get();

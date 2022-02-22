@@ -32,6 +32,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/mindspore_importer.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/micro/coder/coder.h"
 namespace mindspore {
 namespace lite {
 namespace {
@@ -211,17 +212,31 @@ int RunConverter(int argc, const char **argv) {
     status = RET_ERROR;
     return status;
   }
-
   //   save graph to file
   meta_graph->version = Version();
-  status = MetaGraphSerializer::Save(*meta_graph, flags->outputFile);
-  if (status != RET_OK) {
-    delete meta_graph;
-    oss.clear();
-    oss << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
-    MS_LOG(ERROR) << oss.str();
-    std::cout << oss.str() << std::endl;
-    return status;
+
+  if (flags->microParam.enable_micro) {
+    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, flags->outputFile, flags->microParam.codegen_mode,
+                                                     flags->microParam.target, flags->microParam.support_parallel,
+                                                     flags->microParam.debug_mode);
+    if (status != RET_OK) {
+      delete meta_graph;
+      oss.clear();
+      oss << "MICRO CODEGEN FAILED:" << status << " " << GetErrorInfo(status);
+      MS_LOG(ERROR) << oss.str();
+      std::cout << oss.str() << std::endl;
+      return status;
+    }
+  } else {
+    status = MetaGraphSerializer::Save(*meta_graph, flags->outputFile);
+    if (status != RET_OK) {
+      delete meta_graph;
+      oss.clear();
+      oss << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
+      MS_LOG(ERROR) << oss.str();
+      std::cout << oss.str() << std::endl;
+      return status;
+    }
   }
 
   delete meta_graph;

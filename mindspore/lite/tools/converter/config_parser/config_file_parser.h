@@ -78,6 +78,15 @@ struct AclOptionCfgString {
   std::string dynamic_image_size;
 };
 
+struct MicroParamString {
+  std::string output_path;
+  std::string codegen_mode;
+  std::string target;
+  std::string support_parallel;
+  std::string debug_mode;
+  std::string enable_micro;
+};
+
 class ConfigFileParser {
  public:
   int ParseConfigFile(const std::string &config_file_path);
@@ -88,6 +97,7 @@ class ConfigFileParser {
   FullQuantString GetFullQuantString() const { return this->full_quant_string_; }
   RegistryInfoString GetRegistryInfoString() const { return this->registry_info_string_; }
   AclOptionCfgString GetAclOptionCfgString() { return this->acl_option_cfg_string_; }
+  MicroParamString GetMicroParamString() { return this->micro_param_string_; }
 
  private:
   int ParseDataPreProcessString(const std::map<std::string, std::map<std::string, std::string>> &maps);
@@ -98,6 +108,7 @@ class ConfigFileParser {
   int ParseAclOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int SetMapData(const std::map<std::string, std::string> &input_map,
                  const std::map<std::string, std::string &> &parse_map, const std::string &section);
+  int ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps);
 
  private:
   DataPreProcessString data_pre_process_string_;
@@ -106,6 +117,7 @@ class ConfigFileParser {
   FullQuantString full_quant_string_;
   RegistryInfoString registry_info_string_;
   AclOptionCfgString acl_option_cfg_string_;
+  MicroParamString micro_param_string_;
 };
 
 }  // namespace lite
