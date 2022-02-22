@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,10 @@ namespace mindspore {
 // generate a graph corresponding to these types.
 class MetaFuncGraph : public FuncGraphBase {
  public:
-  explicit MetaFuncGraph(const std::string &name) : name_(name) { cache_.clear(); }
+  explicit MetaFuncGraph(const std::string &name) : name_(name) {
+    cache_.clear();
+    debug_info_ = std::make_shared<DebugInfo>();
+  }
 
   ~MetaFuncGraph() override = default;
 
@@ -61,7 +64,12 @@ class MetaFuncGraph : public FuncGraphBase {
   }
 
   std::string name() { return name_; }
-  std::string ToString() const override { return name_; }
+  std::string ToString() const override {
+    std::ostringstream buffer;
+    buffer << name_;
+    buffer << "." << debug_info_->get_id();
+    return buffer.str();
+  }
   std::size_t hash() const override { return tid(); }
 
   virtual bool operator==(const MetaFuncGraph &other) const { return &other == this; }
@@ -84,6 +92,9 @@ class MetaFuncGraph : public FuncGraphBase {
   std::string name_;
   std::vector<Signature> signatures_;
   std::unordered_map<TypePtrList, FuncGraphPtr, TypeListHasher, TypeListEqual> cache_;
+
+ private:
+  DebugInfoPtr debug_info_{nullptr};
 };
 
 using MetaFuncGraphPtr = std::shared_ptr<MetaFuncGraph>;
