@@ -173,7 +173,7 @@ int MatmulDynamicBaseInt8CPUKernel::TransferB() {
 
 int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
   if (pack_a_ptr_ != nullptr) {
-    delete pack_a_ptr_;
+    free(pack_a_ptr_);
     pack_a_ptr_ = nullptr;
   }
   pack_a_ptr_ = reinterpret_cast<int8_t *>(malloc(param_->row_align_ * param_->deep_align_ * sizeof(int8_t)));
@@ -182,7 +182,7 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
     return RET_ERROR;
   }
   if (input_sums_ != nullptr) {
-    delete pack_a_ptr_;
+    free(input_sums_);
     input_sums_ = nullptr;
   }
   input_sums_ = reinterpret_cast<int *>(malloc(param_->row_align_ * sizeof(int)));
@@ -197,7 +197,7 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixABuffer() {
 
 int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
   if (pack_b_ptr_ != nullptr) {
-    delete pack_b_ptr_;
+    free(pack_b_ptr_);
     pack_b_ptr_ = nullptr;
   }
   pack_b_ptr_ =
@@ -207,7 +207,7 @@ int MatmulDynamicBaseInt8CPUKernel::InitMatrixBBuffer() {
     return RET_ERROR;
   }
   if (weight_sums_ != nullptr) {
-    delete weight_sums_;
+    free(weight_sums_);
     weight_sums_ = nullptr;
   }
   weight_sums_ = reinterpret_cast<int *>(malloc(param_->batch * param_->col_align_ * sizeof(int)));

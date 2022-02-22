@@ -72,6 +72,10 @@ function Convert() {
         quant_type="PostTraining"
         output_file=${output_file}"_posttraining"
         config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
+      elif [[ ${cfg_file_name} =~ "dynamic_quant" ]]; then
+        quant_type="DynamicQuant"
+        output_file=${output_file}"_dynamic_quant"
+        config_file="${quant_config_path}/dynamic_quant.cfg"
       elif [[ ${cfg_file_name} =~ "awaretraining" || ${extra_info} =~ "aware_training" ]]; then
         in_dtype="FLOAT"
         out_dtype="FLOAT"
@@ -100,7 +104,7 @@ function Convert() {
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
           model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
           if [[ -n ${calib_size} ]];then
-            if [[ ${model_size} -gt ${calib_size} ]]; then
+            if [ ${model_size} -gt ${calib_size} ]; then
               echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
               converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
               if [[ $6 != "ON" ]]; then
@@ -204,6 +208,8 @@ function Run_Benchmark() {
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
         model_name=${model_name}"_posttraining"
+      elif [[ ${cfg_file_name} =~ "_dynamic_quant" ]]; then
+        infix="_dynamic_quant"
       elif [[ ${cfg_file_name} =~ "_process_only" ]]; then
         benchmark_mode="loop"
       elif [[ ${cfg_file_name} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
