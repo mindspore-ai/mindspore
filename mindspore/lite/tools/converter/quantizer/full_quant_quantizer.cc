@@ -142,6 +142,7 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
       return RET_ERROR;
     } else {
       auto quant_param_holder = GetCNodeQuantHolder(primitive);
+      MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
       quant_param_holder->set_input_quant_param(input_index - 1, iter->second);
       return RET_NO_CHANGE;
     }
@@ -215,6 +216,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto op_name = cnode->fullname_with_scope();
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
+  MS_ASSERT(cnode->inputs().size() - 1 <= (*inputs_diverg_info)[op_name].size());
   int ret;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
@@ -230,6 +232,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     } else if (input_node->isa<mindspore::CNode>()) {
       auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+      MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr.");
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
         MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
@@ -556,6 +559,7 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
 }
 
 int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
+  MS_ASSERT(func_graph != nullptr);
   MS_LOG(INFO) << "start to parse config file";
   if (flags_.dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";

@@ -277,6 +277,9 @@ static int GenerateCvData(mindspore::tensor::MSTensor *tensor) {
 
 int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags, SessionModel *sm,
                                              int *origin_model_size) {
+  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(sm);
+  CHECK_NULL_RETURN(origin_model_size);
   FuncGraphPtr func_graph_bak;
   auto ret = CloneFuncGraph(func_graph, flags, &func_graph_bak);
   if (ret != RET_OK) {

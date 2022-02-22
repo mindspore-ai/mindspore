@@ -78,6 +78,7 @@ int Normalize(cv::Mat *image, const std::vector<double> &mean, const std::vector
   std::vector<cv::Mat> channels(image->channels());
   cv::split(*image, channels);
   for (size_t i = 0; i < channels.size(); i++) {
+    MS_ASSERT(standard_deviation[i] > 0);
     channels[i].convertTo(channels[i], CV_32FC1, 1.0 / standard_deviation[i], (0.0 - mean[i]) / standard_deviation[i]);
   }
   cv::merge(channels, *image);

@@ -52,6 +52,7 @@ int Calibrator::ComputeThreshold() {
     auto &input_infos = kv.second;
     for (size_t i = 0; i < input_infos.size(); i++) {
       auto cnode = input_infos[i]->GetCNode();
+      MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "cnode is nullptr.");
       bool already_computed = false;
       auto input = cnode->input(i + 1);
       if (input->isa<mindspore::CNode>()) {
@@ -116,7 +117,9 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
   int index = 0;
   for (size_t i = 1; i < input_size; i++) {
     if (opt::CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple)) {
-      auto make_tuple_size = cnode->input(i)->cast<CNodePtr>()->size() - 1;
+      auto input_cnode = cnode->input(i)->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode is nullptr.");
+      auto make_tuple_size = input_cnode->size() - 1;
       for (size_t j = 0; j < make_tuple_size; j++) {
         std::unique_ptr<DataDistribution> input_diverg = std::make_unique<DataDistribution>(
           cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetry_);
@@ -160,6 +163,7 @@ int Calibrator::CollectDataDistribution(
   const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
   std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
   CollectType collect_type) {
+  MS_CHECK_TRUE_MSG(diverg_info_map != nullptr, RET_ERROR, "diverg_info_map is nullptr.");
   if (diverg_info_map->find(node_name) == diverg_info_map->end()) {
     return RET_OK;
   }

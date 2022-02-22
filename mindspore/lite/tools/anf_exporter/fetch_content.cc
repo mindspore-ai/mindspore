@@ -517,6 +517,7 @@ int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter)
 }
 
 int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::string, OpParameter *> *op_parameters) {
+  MS_CHECK_TRUE_MSG(op_parameters != nullptr, RET_NULL_PTR, "op_parameters is nullptr.");
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (opt::IsSpecialType(cnode)) {

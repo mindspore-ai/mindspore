@@ -154,6 +154,8 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
 FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags,
                             std::map<FuncGraphPtr, FuncGraphPtr> *cloned_func_graph) {
   MS_ASSERT(graph != nullptr);
+  MS_ASSERT(flags != nullptr);
+  MS_ASSERT(cloned_func_graph != nullptr);
   auto cloned_func_graph_iter = cloned_func_graph->find(graph);
   if (cloned_func_graph_iter != cloned_func_graph->end()) {
     return cloned_func_graph_iter->second;

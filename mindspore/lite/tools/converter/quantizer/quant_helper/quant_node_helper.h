@@ -22,6 +22,8 @@
 #include "schema/inner/model_generated.h"
 
 namespace mindspore::lite {
+constexpr int kInputIndexOne = 1;
+constexpr int kInputIndexTwo = 2;
 class QuantNodeBase {
  public:
   void UpdateQuantParamsNum(const schema::MetaGraphT &graph, const schema::CNodeT &node);

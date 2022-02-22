@@ -166,9 +166,11 @@ template <typename T>
 float KLDivergence(std::vector<T> p, std::vector<T> q) {
   auto sum = 0.0f;
   std::for_each(p.begin(), p.end(), [&sum](T item) { sum += item; });
+  MS_ASSERT(sum > DBL_EPSILON);
   std::for_each(p.begin(), p.end(), [sum](T &item) { item /= sum; });
   sum = 0.0f;
   std::for_each(q.begin(), q.end(), [&sum](T item) { sum += item; });
+  MS_ASSERT(sum > DBL_EPSILON);
   std::for_each(q.begin(), q.end(), [sum](T &item) { item /= sum; });
 
   float result = 0.0f;
