@@ -338,11 +338,11 @@ AbstractBasePtr InferImplCTCGreedyDecoder(const AnalysisEnginePtr &, const Primi
 
 AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
   auto arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto input_shp = arg->shape()->shape();
-  MS_EXCEPTION_IF_NULL(primitive);
   auto padding_attr = primitive->GetAttr("paddings");
   MS_EXCEPTION_IF_NULL(padding_attr);
   if (!padding_attr->isa<ValueTuple>()) {
