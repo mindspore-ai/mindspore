@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,13 +92,11 @@ class Iterator:
         self.__index = 0
 
         self.offload_model = None
-        offload_model = offload.GetOffloadModel(consumer)
+        offload_model = offload.GetOffloadModel(consumer, self.__ori_dataset.get_col_names())
 
         # See if GetOffloadModel identified any operations set to be offloaded.
         if offload_model.transform_list != []:
             offload.check_concat_zip_dataset(self.__ori_dataset)
-            # Verify input columns on offload transforms exist in dataset
-            offload.check_map_offload_input_columns(self.get_col_names(), offload_model.transform_list)
             self.offload_model = offload_model
 
         ITERATORS_LIST.append(weakref.ref(self))

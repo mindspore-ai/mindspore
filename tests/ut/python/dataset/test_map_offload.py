@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,6 +93,64 @@ def test_offload_column_validation():
         for (_, _) in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
             continue
     assert str(excinfo.value) == error_msg
+
+
+def test_offload_multi_column():
+    """
+    Feature: Test the offload functionality with datasets with more than 2 columns.
+    Description: Input is an image dataset, copy the image column and apply map operations to both images.
+    Expectation: Output should be same with both offload activated and deactivated.
+    """
+    def copy_column(x, y):
+        return x, x, y
+
+    dataset = ds.ImageFolderDataset(DATA_DIR)
+    dataset = dataset.map(operations=copy_column, input_columns=["image", "label"],
+                          output_columns=["image1", "image2", "label"],
+                          column_order=["image1", "image2", "label"])
+    dataset = dataset.map(operations=[C.Decode()], input_columns="image1")
+    dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image1")
+    dataset = dataset.map(operations=[C.Decode()], input_columns="image2")
+    dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image2")
+    dataset = dataset.batch(8, drop_remainder=True)
+
+    dataset_offload = ds.ImageFolderDataset(DATA_DIR)
+    dataset_offload = dataset_offload.map(operations=copy_column, input_columns=["image", "label"],
+                                          output_columns=["image1", "image2", "label"],
+                                          column_order=["image1", "image2", "label"])
+    dataset_offload = dataset_offload.map(operations=[C.Decode()], input_columns="image1")
+    dataset_offload = dataset_offload.map(operations=[C.HWC2CHW()], input_columns="image1", offload=True)
+    dataset_offload = dataset_offload.map(operations=[C.Decode()], input_columns="image2")
+    dataset_offload = dataset_offload.map(operations=[C.HWC2CHW()], input_columns="image2", offload=True)
+    dataset_offload = dataset_offload.batch(8, drop_remainder=True)
+
+    for (img1, img2, _), (img1_offload, img2_offload, _) in \
+        zip(dataset.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                dataset_offload.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_array_equal(img1, img1_offload)
+        np.testing.assert_array_equal(img2, img2_offload)
+
+
+def test_offload_column_mapping():
+    """
+    Feature: Test the dataset column mapping for offloaded operations
+    Description: Input is an image dataset, copy the image column, then apply offload to only copied column.
+    Expectation: The offload model dataset column index value is 1 (second column).
+    """
+    def copy_column(x, y):
+        return x, x, y
+
+    dataset = ds.ImageFolderDataset(DATA_DIR)
+    dataset = dataset.map(operations=copy_column, input_columns=["image", "label"],
+                          output_columns=["image1", "image2", "label"], column_order=["image1", "image2", "label"])
+    dataset = dataset.map(operations=[C.Decode()], input_columns="image2")
+    dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image2", offload=True)
+
+    dataset_iterator = dataset.create_tuple_iterator(num_epochs=1, output_numpy=True)
+
+    offload_col_idxs = dataset_iterator.offload_model.transform_list[0].col_idxs
+    # assert there is only one column index in the offload model, and that it is 1 (second column)
+    np.testing.assert_((len(offload_col_idxs) == 1) and (offload_col_idxs[0] == 1))
 
 
 def test_offload_concat_dataset_1():
@@ -263,6 +321,8 @@ if __name__ == "__main__":
     test_offload()
     test_auto_offload()
     test_offload_column_validation()
+    test_offload_column_mapping()
+    test_offload_multi_column()
     test_offload_concat_dataset_1()
     test_offload_concat_dataset_2()
     test_offload_normalize_op()

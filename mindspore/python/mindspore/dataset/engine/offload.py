@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,13 +36,6 @@ def check_add_offload_sink_mode(dataset, dataset_helper, network):
     # See if the offload pass identified any operations to be offloaded
     if offload_model.transform_list != []:
         check_concat_zip_dataset(dataset.__transfer_dataset__)
-        # A temporary solution to ensure there are two columns in dataset.
-        dataset_types, _ = dataset_helper.types_shapes()
-        if len(dataset_types) != 2:
-            raise RuntimeError("Offload can currently only use datasets with two columns.")
-        # Check if offloaded input columns exist in the dataset
-        ds_cols = dataset.__transfer_dataset__.get_col_names()
-        check_map_offload_input_columns(ds_cols, offload_model.transform_list)
         network = ApplyPreTransform(offload_model, network)
     return network
 
@@ -60,35 +53,43 @@ def check_concat_zip_dataset(dataset):
         dataset = dataset.children
 
 
-def check_map_offload_input_columns(ds_columns, transform_list):
+def get_col_idxs(node_cols, ds_cols):
     """
-    Check if the input columns of the offloaded map ops exist in the dataset.
+    Get the index(es) of the input column(s) from the dataset
     """
-    # Loop through each offloaded map node
-    for transform_model in transform_list:
-        non_exist_columns = []
-        input_columns = transform_model.input_cols
-        for column_name in input_columns:
-            if column_name not in ds_columns:
-                non_exist_columns.append(column_name)
-        if non_exist_columns:
-            raise RuntimeError(
-                ("The following input column(s) for an offloaded map operation "
-                 "do not exist: {}").format(non_exist_columns))
+    col_idxs = []
+    non_exist_cols = []
+    # temporary error if multiple node columns
+    if len(node_cols) > 1:
+        raise RuntimeError(
+            "Offload hardware accelerator currently does not support map operations with multiple input columns")
+    for node_col in node_cols:
+        if node_col in ds_cols:
+            col_idxs.append(ds_cols.index(node_col))
+        else:
+            non_exist_cols.append(node_col)
+    if non_exist_cols:
+        raise RuntimeError(
+            ("The following input column(s) for an offloaded map operation "
+             "do not exist: {}").format(non_exist_cols))
+
+    return col_idxs
 
 
 def apply_offload_iterators(data, offload_model):
     """
     Apply offload for non sink mode pipeline.
     """
-    if len(data) != 2:
-        # A temporary solution to ensure there are two columns in dataset.
-        raise RuntimeError("Offload can currently only use datasets with two columns.")
-    if isinstance(data[0], Tensor) is True:
-        data[0] = offload_model(data[0])
-    else:
-        data[0] = Tensor(data[0], dtype=mstype.float32)
-        data[0] = offload_model(data[0]).asnumpy()
+    non_tensor_idxs = []
+    for i, _ in enumerate(data):
+        if not isinstance(data[i], Tensor):
+            data[i] = Tensor(data[i], dtype=mstype.float32)
+            non_tensor_idxs.append(i)
+
+    data = offload_model(data)
+    data = list(data)
+    for idx in non_tensor_idxs:
+        data[idx] = data[idx].asnumpy()
 
     return data
 
@@ -114,10 +115,15 @@ class ApplyPreTransform(nn.Cell):
         self.transform = transform
         self.model = model
 
-    def construct(self, x, label):
-        x = self.transform(x)
-        x = self.model(x, label)
-        return x
+    def construct(self, *x):
+        data = []
+        for data_col in x:
+            data.append(data_col)
+
+        data = self.transform(data)
+        data = self.model(*data)
+
+        return data
 
 
 class IdentityCell(nn.Cell):
@@ -387,13 +393,13 @@ class GetModelFromJson2Col(nn.Cell):
     Generates offload ME model from offload JSON file for a single map op.
     """
 
-    def __init__(self, json_offload):
+    def __init__(self, json_offload, col_idxs):
         super(GetModelFromJson2Col, self).__init__()
+        self.col_idxs = col_idxs
         self.me_ops = []
         self.input_cols = []
         if json_offload is not None:
             offload_ops = json_offload["operations"]
-            self.input_cols = json_offload["input_columns"]
             for op in offload_ops:
                 name = op["tensor_op_name"]
                 args = op["tensor_op_params"]
@@ -410,7 +416,11 @@ class GetModelFromJson2Col(nn.Cell):
         self.cell = nn.SequentialCell(self.me_ops)
 
     def construct(self, x):
-        return self.cell(x)
+        # apply single column
+        col_idx = self.col_idxs[0]
+        x[col_idx] = self.cell(x[col_idx])
+
+        return x
 
 
 class GetOffloadModel(nn.Cell):
@@ -418,14 +428,15 @@ class GetOffloadModel(nn.Cell):
     Generates offload ME model.
     """
 
-    def __init__(self, dataset_consumer):
+    def __init__(self, dataset_consumer, ds_cols):
         super(GetOffloadModel, self).__init__()
         self.transform_list = []
         json_offload = json.loads(dataset_consumer.GetOffload())
         if json_offload is not None:
             for node in json_offload:
                 if node["op_type"] == 'Map':
-                    self.transform_list.append(GetModelFromJson2Col(node))
+                    ds_col_idxs = get_col_idxs(node["input_columns"], ds_cols)
+                    self.transform_list.append(GetModelFromJson2Col(node, ds_col_idxs))
             self.transform_list.reverse()
 
     def construct(self, x):

@@ -3383,11 +3383,11 @@ class _ToDevice:
     def __deepcopy__(self, memodict):
         return self
 
-    def get_offload_model(self):
+    def get_offload_model(self, col_names):
         """
         Get offload model containing removed offload ops from pipeline.
         """
-        offload_model = GetOffloadModel(self._to_device)
+        offload_model = GetOffloadModel(self._to_device, col_names)
         return offload_model
 
 
@@ -3469,7 +3469,7 @@ class TransferDataset(Dataset):
 
     def get_offload_model(self):
         if self._to_device is not None:
-            return self._to_device.get_offload_model()
+            return self._to_device.get_offload_model(self.get_col_names())
 
         raise RuntimeError("get_offload_model, _to_device is None")
 
