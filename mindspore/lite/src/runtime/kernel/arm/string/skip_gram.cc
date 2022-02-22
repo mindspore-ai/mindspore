@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ int SkipGramCPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
+  MS_CHECK_TRUE_RET(in_tensors_[0]->data_type() == kObjectTypeString, RET_ERROR);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -92,14 +93,15 @@ int SkipGramCPUKernel::Run() {
     } else {
       if (index > 0 && ((skip_gram_parameter_->include_all_ngrams && index <= skip_gram_parameter_->ngram_size) ||
                         (!skip_gram_parameter_->include_all_ngrams && index == skip_gram_parameter_->ngram_size))) {
-        std::vector<StringPack> gram(2 * index - 1);
+        const int twice = 2;
+        std::vector<StringPack> gram(twice * index - 1);
         char blank[1] = {' '};
         StringPack blank_str = {1, blank};
-        for (int i = 0; i < 2 * index - 2; i += 2) {
-          gram.at(i) = words.at(stack.at(i / 2));
+        for (int i = 0; i < twice * index - twice; i += twice) {
+          gram.at(i) = words.at(stack.at(i / twice));
           gram.at(i + 1) = blank_str;
         }
-        gram.at(2 * index - 2) = words.at(stack.at(index - 1));
+        gram.at(twice * index - twice) = words.at(stack.at(index - 1));
         result.push_back(gram);
       }
       index--;
