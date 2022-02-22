@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ test grad ops """
+from dataclasses import dataclass
+
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore import ms_function
@@ -115,3 +117,46 @@ def test_high_order_with_params():
     first_grad = Grad(net)
     second_grad = GradSec(first_grad)
     assert second_grad(x) == (expected,)
+
+
+def test_reftoembed_with_two_weights():
+    """
+    Feature: RefToEmbed can be properly be evaluated.
+    Description: Multiple weights with same shape and type can be evaluatd properly
+                 even SimplifyDataStructures (one more round of Renormalize) takes effect.
+    Expectation: return expected value.
+    """
+    @dataclass
+    class SimpleData:
+        a: int
+
+        def get_data(self):
+            return self.a
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.weight = Parameter(Tensor([2], mstype.int32), name="weight", requires_grad=True)
+            self.bias = Parameter(Tensor([3], mstype.int32), name="bias", requires_grad=True)
+
+        def construct(self, x):
+            simple = SimpleData(x)
+            r = self.weight * self.bias * simple.get_data()
+            return r
+
+    class Grad(nn.Cell):
+        def __init__(self, network):
+            super(Grad, self).__init__()
+            self.grad = ops.GradOperation(get_by_list=True, sens_param=False)
+            self.network = network
+            self.params = ParameterTuple(network.trainable_params())
+
+        def construct(self, x):
+            output = self.grad(self.network, self.params)(x)
+            return output
+
+    expected_weight_grad = Tensor([15], mstype.int32)
+    expected_bias_grad = Tensor([10], mstype.int32)
+    net = Net()
+    first_grad = Grad(net)
+    assert first_grad(x) == (expected_weight_grad, expected_bias_grad)
