@@ -63,7 +63,7 @@ class OneHot(TensorOperation):
             It should be larger than the largest label number in the dataset.
 
     Raises:
-        TypeError: num_classes is not of type int.
+        TypeError: `num_classes` is not of type int.
         RuntimeError: Input tensor is not of type int.
         RuntimeError: Input tensor is not a 1-D tensor.
 
@@ -275,6 +275,14 @@ class Mask(TensorOperation):
             Constant will be cast to the type of the input tensor.
         dtype (mindspore.dtype, optional): Type of the generated mask (Default mstype.bool\_).
 
+    Raises:
+        TypeError: `operator` is not of type Relational.
+        TypeError: `constant` is not of type string int, float or bool.
+        TypeError: `dtype` is not of type mindspore.dtype.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> from mindspore.dataset.transforms.c_transforms import Relational
         >>> # Data before
@@ -435,6 +443,12 @@ class Unique(TensorOperation):
     Note:
         Call batch op before calling this function.
 
+    Raises:
+        RuntimeError: If given tensor has two columns.
+
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> # Data before
         >>> # |  x                 |
@@ -576,6 +590,14 @@ class Plugin(TensorOperation):
         lib_path (str): Path to .so file which is compiled to support MindData plugin.
         func_name (str): Name of the function to load from the .so file.
         user_args (str, optional): Serialized args to pass to the plugin. Only needed if "func_name" requires one.
+
+    Raises:
+        TypeError: If `lib_path` is of type string.
+        TypeError: If `func_name` not of type string.
+        TypeError: If `user_args` not of type string.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> plugin = c_transforms.Plugin("pluginlib.so", "PluginDecode")
