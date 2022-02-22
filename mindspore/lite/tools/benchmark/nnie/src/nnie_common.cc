@@ -920,7 +920,6 @@ int NnieCommRun(NnieRunCfg *nnie_run_cfg, bool run_box) {
     LOGE("seg num err!\n");
     return RET_ERROR;
   }
-  // NniePrintReportResultInputSeg(&nnie_run_cfg->param_, segidx);
   nnie_run_cfg->run_idx_.node_idx_ = 0;
   if (run_box) {
     ret =
