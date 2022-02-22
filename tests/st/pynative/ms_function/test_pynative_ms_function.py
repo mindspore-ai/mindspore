@@ -289,3 +289,101 @@ def test_pynative_ms_function_mix_execute():
     b = Tensor(2)
     output = net(a, b)
     assert output == 8
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_empty_graph():
+    """
+    Feature: PyNative ms_function.
+    Description: Empty ms_function graph.
+    Expectation: The calculation result is correct.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, x, y):
+            super().__init__()
+            self.x = x
+            self.y = y
+            self.relu = P.ReLU()
+
+        @ms_function
+        def max(self):
+            if self.x > self.y:
+                return self.x
+            return self.y
+
+        def construct(self):
+            a = self.max()
+            return self.relu(a)
+
+    net = Net(Tensor(5, ms.float32), Tensor(10, ms.float32))
+    output = net()
+    assert output.asnumpy() == 10
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_control_flow_if_break():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with control flow.
+    Expectation: The calculation result is correct.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = P.ReLU()
+            self.add = P.TensorAdd()
+
+        @ms_function
+        def construct(self, x, y, z):
+            out = z
+            for _ in range(5):
+                if 2 * x < y:
+                    if 3 * x < y:
+                        out = self.add(out, out)
+                        x = x + 1
+                    out = self.relu(out)
+                if x + 6 == y:
+                    break
+            out = self.relu(out)
+            return out
+
+    net = Net()
+    x = Tensor(2, ms.int32)
+    y = Tensor(10, ms.int32)
+    z = Tensor(np.ones([4, 4, 4]), ms.float32)
+    output = net(x, y, z)
+    assert (output.asnumpy() == z.asnumpy() * 4).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_with_dynamic_shape():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with dynamic shape.
+    Expectation: The calculation result is correct.
+    """
+
+    @ms_function()
+    def test(x):
+        return ms.numpy.unique(x, return_inverse=True)
+
+    x = Tensor([[1, 1, 2], [3, 3, 5]], ms.int32)
+    output = test(x)
+    assert (output[0].asnumpy() == np.array([1, 2, 3, 5])).all()
