@@ -140,7 +140,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   }
   mindspore::HashSet<AnfNodePtr> eqv_keys;
   for (auto &e : eqv) {
-    eqv_keys.emplace(e.first);
+    (void)eqv_keys.emplace(e.first);
   }
   auto mgr = lst[0]->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(mgr);

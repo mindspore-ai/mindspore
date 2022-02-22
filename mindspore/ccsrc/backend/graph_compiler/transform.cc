@@ -396,7 +396,7 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   for (size_t i = size - 1; i > 0; i--) {
     const auto iter = slots_.find(inputs[i]);
     if (iter != slots_.end() && iter->second >= height_) {
-      slots_.erase(inputs[i]);
+      (void)slots_.erase(inputs[i]);
     }
   }
   return RET_SUCCESS;

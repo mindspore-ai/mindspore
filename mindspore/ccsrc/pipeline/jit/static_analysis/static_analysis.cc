@@ -1087,7 +1087,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     if (anf_node != nullptr) {
       SetSequenceNodeElementsUseFlags(anf_node, std::make_shared<std::vector<bool>>(sequence_abs->elements().size()));
       std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
-      sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));
+      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(anf_node));
       sequence_abs->set_sequence_nodes(sequence_nodes);
     }
     return abs;
