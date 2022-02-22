@@ -21,7 +21,7 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 namespace mindspore {
 namespace lite {
 namespace {
-int CheckPoolingParam(PoolingParameter *param) {
+int CheckPoolingParam(const PoolingParameter *param) {
   const int max_pooling_pad = 50;
   if (param->pad_u_ > max_pooling_pad || param->pad_d_ > max_pooling_pad || param->pad_l_ > max_pooling_pad ||
       param->pad_r_ > max_pooling_pad) {
