@@ -23,7 +23,7 @@
         **参数：**
 
         - **fields** (list[str]，可选) - 索引字段的列表，例如['fine_label', 'coarse_label']。默认值：None。
-          索引字段的设置请参考函数 :func: `mindspore.mindrecord.FileWriter.add_index` 。
+          索引字段的设置请参考函数 :func:`mindspore.mindrecord.FileWriter.add_index` 。
 
         **返回：**
 
@@ -32,12 +32,12 @@
 
     .. py:method:: transform(fields=None)
 
-        :func: `mindspore.mindrecord.Cifar100ToMR.run` 函数的包装函数来保证异常时正常退出。
+        :func:`mindspore.mindrecord.Cifar100ToMR.run` 函数的包装函数来保证异常时正常退出。
 
         **参数：**
 
         - **fields** (list[str]，可选) - 索引字段的列表，例如['fine_label', 'coarse_label']。默认值：None。
-          索引字段的设置请参考函数 :func: `mindspore.mindrecord.FileWriter.add_index` 。
+          索引字段的设置请参考函数 :func:`mindspore.mindrecord.FileWriter.add_index` 。
 
         **返回：**
 

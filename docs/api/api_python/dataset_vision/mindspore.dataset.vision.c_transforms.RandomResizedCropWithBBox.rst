@@ -16,4 +16,4 @@ mindspore.dataset.vision.c_transforms.RandomResizedCropWithBBox
       - Inter.NEAREST，最近邻插值。
       - Inter.BICUBIC，双三次插值。
 
-     - **max_attempts** (int, optional):  生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪，默认值：10。
+    - **max_attempts** (int, optional):  生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪，默认值：10。

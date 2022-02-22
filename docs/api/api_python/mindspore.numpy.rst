@@ -23,7 +23,7 @@ Numpy-like interfaces in mindspore.
 Array Generation
 ----------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -74,7 +74,7 @@ Array Generation
 Array Operation
 ---------------
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -127,7 +127,7 @@ Array Operation
 Logic
 -----
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
@@ -159,7 +159,7 @@ Logic
 Math
 ----
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst

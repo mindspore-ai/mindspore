@@ -1,9 +1,13 @@
 mindspore.dataset.transforms
 ============================
 
-This module is to support common augmentations. C_transforms is a high performance image augmentation module which is developed with C++ OpenCV. Py_transforms provide more kinds of image augmentations which are developed with Python PIL.
+此模块用于通用数据增强，包括 `c_transforms` 和 `py_transforms` 两个子模块。
 
-Common imported modules in corresponding API examples are as follows:
+`c_transforms` 是一个高性能数据增强模块，基于C++实现。
+
+而 `py_transforms` 提供了一种基于Python和NumPy的实现方式。
+
+在API示例中，常用的模块导入方法如下：
 
 .. code-block::
 

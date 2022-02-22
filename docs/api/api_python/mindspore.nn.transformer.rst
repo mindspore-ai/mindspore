@@ -2,7 +2,7 @@ mindspore.nn.transformer
 ========================
 
 .. note::
-    Transformer Networks. This is an experimental interface that is subject to change or deletion.
+    Transformer网络。这些是实验性接口，可能会修改或删除。
 
 .. include:: transformer/mindspore.nn.AttentionMask.rst
 .. include:: transformer/mindspore.nn.VocabEmbedding.rst

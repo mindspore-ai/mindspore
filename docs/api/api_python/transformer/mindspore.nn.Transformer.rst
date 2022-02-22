@@ -1,6 +1,6 @@
 ﻿.. py:class:: mindspore.nn.transformer.Transformer(hidden_size, batch_size, ffn_hidden_size, src_seq_length, tgt_seq_length, encoder_layers=3, decoder_layers=3, num_heads=2, attention_dropout_rate=0.1, hidden_dropout_rate=0.1, hidden_act="gelu", post_layernorm_residual=False, layernorm_compute_type=mstype.float32, softmax_compute_type=mstype.float32, param_init_type=mstype.float32, lambda_func=None, use_past=False, moe_config=default_moe_config, parallel_config=default_transformer_config)
 
-    Transformer模块，包括编码器和解码器。与原始的实现方式的区别在于该模块在实行层归一化之前使用了残差加法。默认的激活层为`gelu`。
+    Transformer模块，包括编码器和解码器。与原始的实现方式的区别在于该模块在实行层归一化之前使用了残差加法。默认的激活层为 `gelu` 。
     详细信息可参考 `Attention Is All You Need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 。
 
     .. note::
@@ -9,8 +9,8 @@
     **参数：**
 
     - **batch_size** (int) - 表示输入的批次大小。
-    - **encoder_layers** (int) - 表示`TransformerEncoderLayer`的层数。
-    - **decoder_layers** (int) - 表示`TransformerDecoderLayer`的层数。
+    - **encoder_layers** (int) - 表示 `TransformerEncoderLayer` 的层数。
+    - **decoder_layers** (int) - 表示 `TransformerDecoderLayer` 的层数。
     - **hidden_size** (int) - 表示输入向量的大小。
     - **ffn_hidden_size** (int) - 表示前馈层中bottleneck的隐藏大小。
     - **src_seq_length** (int) - 表示编码器的输入Tensor的seq_length。
