@@ -496,6 +496,11 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         self.get_status = P.NPUGetFloatStatus()
         self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
+        if self.parallel_mode not in [ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL]:
+            raise ValueError(f"ParallelMode should be one of "
+                             f"[ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL], but found "
+                             f"{self.parallel_mode}.")
+        self.allreduce = P.AllReduce()
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -534,7 +539,9 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         else:
             accu_grads = self.grad_reducer(self.accu_grads)
             grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads, accu_grads)
-        cond = self.less_equal(self.base, flag_sum)
+        # sum overflow flag over devices
+        flag_reduce = self.allreduce(flag_sum)
+        cond = self.less_equal(self.base, flag_reduce)
         overflow = cond
         if self.loss_scaling_manager is not None:
             overflow = self.loss_scaling_manager(self.scale_sense, cond)
