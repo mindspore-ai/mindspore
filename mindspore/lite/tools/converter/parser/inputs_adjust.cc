@@ -131,7 +131,7 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
     } else if (opt::CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
       MS_LOG(INFO) << "Adjust ReduceFusion";
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", kBuildInputFlagTwo);
-    } else if (opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimPad) || opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       MS_LOG(INFO) << "Adjust PadFusion";
       status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", kBuildInputFlagThree);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimPowFusion)) {

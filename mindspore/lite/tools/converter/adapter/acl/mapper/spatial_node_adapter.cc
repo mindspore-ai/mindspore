@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,18 +45,14 @@ const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kName
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input_cnode) {
   CNodePtr get_item_cnode = nullptr;
   auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
-  if (tuple_get_item_prim_ptr == nullptr) {
-    MS_LOG(ERROR) << "New TupleGetItem failed";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(tuple_get_item_prim_ptr != nullptr, nullptr, "New TupleGetItem failed.");
   auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+  MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, nullptr, "tuple_prim is nullptr.");
   auto get_item_value = NewValueNode(MakeValue<int64_t>(0));
+  MS_CHECK_TRUE_MSG(get_item_value != nullptr, nullptr, "item_value is nullptr.");
   AnfNodePtrList inputs{tuple_get_item_prim, input_cnode, get_item_value};
   get_item_cnode = func_graph->NewCNode(inputs);
-  if (get_item_cnode == nullptr) {
-    MS_LOG(ERROR) << "New get item cnode failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(get_item_cnode != nullptr, nullptr, "New get item cnode failed.");
 
   std::vector<int64_t> shape;
   if (acl::GetShapeVectorFromCNode(input_cnode, &shape) != lite::RET_OK) {
@@ -65,10 +61,7 @@ CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &
   }
   TypeId type = acl::GetTypeFromNode(input_cnode);
   auto get_item_abstract = CreateTensorAbstract(shape, type);
-  if (get_item_abstract == nullptr) {
-    MS_LOG(ERROR) << "Create tensor abstract failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(get_item_abstract != nullptr, nullptr, "Create tensor abstract failed.");
   get_item_cnode->set_abstract(get_item_abstract);
   get_item_cnode->set_fullname_with_scope(input_cnode->fullname_with_scope() + "_getitem");
   return get_item_cnode;
@@ -83,10 +76,12 @@ static STATUS AdapteNodeWithMultiOutputs(const FuncGraphPtr &func_graph, const C
 
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto input = cnode->input(i);
+    MS_CHECK_TRUE_MSG(input != nullptr, lite::RET_ERROR, "input is nullptr.");
     if (!utils::isa<CNode>(input)) {
       continue;
     }
     auto input_cnode = input->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(input_cnode != nullptr, lite::RET_ERROR, "input_cnode is nullptr.");
     std::string input_func_name = GetCNodeFuncName(input_cnode);
     if (kCNodeWithMultiOutputs.find(input_func_name) != kCNodeWithMultiOutputs.end()) {
       MS_LOG(DEBUG) << "Input " << input_func_name << " of cnode " << cnode_func_name << " has multioutputs";
@@ -111,20 +106,14 @@ static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const C
   }
   MS_LOG(DEBUG) << "Adapter cnode with dynamic input: " << cnode_func_name;
   auto make_tuple_val_node = NewValueNode(prim::kPrimMakeTuple);
-  if (make_tuple_val_node == nullptr) {
-    MS_LOG(ERROR) << "New make tuple val node failed.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(make_tuple_val_node != nullptr, lite::RET_ERROR, "New make tuple val node failed.");
   AnfNodePtrList new_inputs = {make_tuple_val_node};
   auto cnode_inputs = cnode->inputs();
   if (cnode_inputs.size() >= kCnodeInputMinNum) {
     new_inputs.insert(new_inputs.end(), cnode_inputs.begin() + 1, cnode_inputs.end());
   }
   auto make_tuple_cnode = func_graph->NewCNode(new_inputs);
-  if (make_tuple_cnode == nullptr) {
-    MS_LOG(ERROR) << "New make tuple cnode failed.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, lite::RET_ERROR, "New make tuple cnode failed.");
 
   const std::vector<AnfNodePtr> replace_node = {cnode_inputs[0], make_tuple_cnode};
   cnode->set_inputs(replace_node);
@@ -134,10 +123,7 @@ static STATUS AdapteNodeWithDynamicInput(const FuncGraphPtr &func_graph, const C
 STATUS AdapteSpatialNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
-    if (cnode == nullptr) {
-      MS_LOG(ERROR) << "Cnode is nullptr.";
-      return lite::RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "Cnode is nullptr.");
     if (AdapteNodeWithMultiOutputs(func_graph, cnode, manager) != lite::RET_OK) {
       MS_LOG(ERROR) << "Adapter node with multioutput failed.";
       return lite::RET_ERROR;

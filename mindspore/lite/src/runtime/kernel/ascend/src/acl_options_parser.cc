@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ STATUS AclOptionsParser::ParseAclOptions(const mindspore::Context *ctx, AclModel
   CHECK_NULL_RETURN(acl_options);
 
   auto context = const_cast<mindspore::Context *>(ctx);
+  CHECK_NULL_RETURN(context);
   auto device_infos = context->MutableDeviceInfo();
   if (device_infos.size() < 1) {
     MS_LOG(WARNING) << "Context is not set device info, please check.";

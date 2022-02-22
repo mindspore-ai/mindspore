@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "ops/relu6.h"
 #include "ops/sigmoid.h"
 #include "ops/tanh.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -44,10 +45,7 @@ STATUS ActivationMapper::Mapper(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto activate_prim = dynamic_cast<ops::Activation *>(src_prim.get());
-  if (activate_prim == nullptr) {
-    MS_LOG(ERROR) << "Dynamic cast activation failed.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(activate_prim != nullptr, lite::RET_ERROR, "Dynamic cast activation failed.");
   PrimitivePtr dst_prim = nullptr;
   ActivationType type = activate_prim->get_activation_type();
   if (activation_type_map.find(type) != activation_type_map.end()) {
