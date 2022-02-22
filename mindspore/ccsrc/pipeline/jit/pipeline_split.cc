@@ -263,8 +263,8 @@ bool PipelineSplit(const ResourcePtr &res) {
     transformer->CoverSensShape();
   }
   // step6: Elim Graph stages and no used parameter
+  transformer->ModifyParameterList();
   transformer->ElimGraphStage();
-  transformer->ElimParameter();
   return true;
 }
 }  // namespace pipeline

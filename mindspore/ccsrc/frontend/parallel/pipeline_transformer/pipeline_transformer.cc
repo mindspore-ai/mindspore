@@ -25,6 +25,7 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/node_check.h"
@@ -782,6 +783,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
       manager_->SetEdge(use_node, SizeToInt(pos), recv);
       return nullptr;
     }
+    parameter_color_map[argument].insert(user_stage);
     return InsertReceive(main_graph_, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
   }
   // insert send
@@ -974,7 +976,92 @@ void PipelineTransformer::CoverSensShape() {
   manager_->Replace(sens_cnode, new_sens_node);
 }
 
+void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
+                                         mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map) {
+  auto node_users = manager_->node_users()[node];
+  for (auto &node_user_pair : node_users) {
+    auto cnode = node_user_pair.first->cast<CNodePtr>();
+    // node->UpdateState, replaced node wiht U.
+    auto fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (fg->stage() != -1) {
+      continue;
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
+      auto u_node = NewValueNode(kUMonad);
+      manager_->SetEdge(cnode, node_user_pair.second, u_node);
+      continue;
+    }
+    // node->make_tuple, record with a map, Unified deleted later.
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+      if (make_tuple_map->find(cnode) == (*make_tuple_map).end()) {
+        (*make_tuple_map)[cnode] = {node};
+      } else {
+        (*make_tuple_map)[cnode].push_back(node);
+      }
+    } else {
+      RedundancyNode(node_user_pair.first, make_tuple_map);
+    }
+  }
+}
+
+bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
+  // RedundancyParameter: other stage's parameters included corresponding cloned parameters.
+  auto parameters = root_->parameters();
+  auto param_ptr = parameter->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param_ptr);
+  if (!param_ptr->has_default()) {
+    return false;
+  }
+  auto param_name = param_ptr->name();
+  for (auto &param : parameters) {
+    if (ParameterIsCloned(param)) {
+      continue;
+    }
+    auto non_cloned_param = param->cast<ParameterPtr>();
+    if (param_name.find(non_cloned_param->name()) == std::string::npos) {
+      continue;
+    }
+    auto stage_set = parameter_color_map.at(param);
+    if (stage_set.empty()) {
+      return false;
+    }
+    return !stage_set.count(stage_);
+  }
+  return false;
+}
+
 void PipelineTransformer::ElimParameter() {
+  auto parameters = root_->parameters();
+  mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> make_tuple_map;
+  for (auto &parameter : parameters) {
+    if (!IsRedundancyParameter(parameter)) {
+      continue;
+    }
+    RedundancyNode(parameter, &make_tuple_map);
+  }
+  for (auto &temp : make_tuple_map) {
+    auto make_tuple = temp.first;
+    auto fg = make_tuple->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    auto remove_vector = temp.second;
+    if (remove_vector.empty()) {
+      continue;
+    }
+    auto make_tuple_inputs = make_tuple->inputs();
+    std::vector<AnfNodePtr> new_inputs;
+    for (auto &input : make_tuple_inputs) {
+      if (std::find(remove_vector.begin(), remove_vector.end(), input) == remove_vector.end()) {
+        new_inputs.push_back(input);
+      }
+    }
+    auto new_make_tuple = fg->NewCNode(new_inputs);
+    manager_->Replace(make_tuple, new_make_tuple);
+  }
+}
+
+void PipelineTransformer::ModifyParameterList() {
+  ElimParameter();
   auto parameters = root_->parameters();
   std::vector<AnfNodePtr> parameter_list;
   for (auto &parameter : parameters) {
