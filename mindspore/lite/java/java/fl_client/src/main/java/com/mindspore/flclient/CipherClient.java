@@ -994,7 +994,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1010,7 +1010,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1034,7 +1034,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1050,7 +1050,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1075,7 +1075,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1098,7 +1098,7 @@ public class CipherClient {
             waitTryTime = 0;
             while (curStatus == FLClientStatus.WAIT) {
                 waitTryTime += 1;
-                if (ifWaitTryTimeExceedsLimit()) {
+                if (waitTryTimeExceedsLimit()) {
                     curStatus = FLClientStatus.FAILED;
                     break;
                 }
@@ -1115,7 +1115,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1192,7 +1192,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1209,7 +1209,7 @@ public class CipherClient {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -1475,9 +1475,9 @@ public class CipherClient {
         return pemCerts;
     }
 
-    private Boolean ifWaitTryTimeExceedsLimit() {
+    private Boolean waitTryTimeExceedsLimit() {
         if (waitTryTime > MAX_WAIT_TRY_TIME) {
-            LOGGER.severe(Common.addTag("[ifWaitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+            LOGGER.severe(Common.addTag("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
                     "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
             return true;
         }
