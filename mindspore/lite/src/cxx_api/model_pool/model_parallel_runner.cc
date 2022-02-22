@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/cxx_api/model_pool/model_parallel_runner.h"
+#include "include/api/model_parallel_runner.h"
 #include "src/cxx_api/model_pool/model_pool.h"
 #include "src/common/log.h"
 

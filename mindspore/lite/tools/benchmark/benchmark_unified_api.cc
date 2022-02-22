@@ -42,7 +42,7 @@
 #include "include/mpi_vb.h"
 #endif
 #ifdef SERVER_INFERENCE
-#include "src/cxx_api/model_pool/model_pool.h"
+#include <thread>
 #endif
 namespace mindspore {
 constexpr size_t kDataToStringMaxNum = 40;
@@ -220,7 +220,7 @@ int BenchmarkUnifiedApi::LoadInput() {
 
 int BenchmarkUnifiedApi::GenerateInputData() {
 #ifdef SERVER_INFERENCE
-  if (flags_->model_pool_) {
+  if (flags_->enable_parallel_predict_) {
     std::vector<MSTensor> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
       auto tensor_name = ms_inputs_for_api_[i].Name();
@@ -247,6 +247,7 @@ int BenchmarkUnifiedApi::GenerateInputData() {
       auto new_tensor =
         mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
       inputs.push_back(*new_tensor);
+      delete new_tensor;
     }
     all_inputs_.push_back(inputs);
     return RET_OK;
@@ -296,7 +297,7 @@ void BenchmarkUnifiedApi::UpdateConfigInfo() {
 
 int BenchmarkUnifiedApi::ReadInputFile() {
 #ifdef SERVER_INFERENCE
-  if (flags_->model_pool_) {
+  if (flags_->enable_parallel_predict_) {
     std::vector<MSTensor> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
       size_t size;
@@ -324,6 +325,7 @@ int BenchmarkUnifiedApi::ReadInputFile() {
       auto new_tensor =
         mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
       inputs.push_back(*new_tensor);
+      delete new_tensor;
     }
     all_inputs_.push_back(inputs);
     return RET_OK;
@@ -895,7 +897,7 @@ int BenchmarkUnifiedApi::PrintInputData() {
   for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
     mindspore::MSTensor input;
 #ifdef SERVER_INFERENCE
-    if (flags_->model_pool_) {
+    if (flags_->enable_parallel_predict_) {
       input = all_inputs_[0][i];
     } else {
       input = ms_inputs_for_api_[i];
@@ -946,9 +948,14 @@ int BenchmarkUnifiedApi::PrintInputData() {
 }
 #ifdef SERVER_INFERENCE
 int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> context) {
+  if (flags_->resize_dims_.empty()) {
+    MS_LOG(ERROR) << "use parallel predict, inputShapes can not use empty.";
+    return RET_ERROR;
+  }
   // model pool init
   ModelParallelRunner model_pool;
-  auto runner_config = std::make_shared<RunnerConfig>(context, flags_->num_model_);
+  auto runner_config = std::make_shared<RunnerConfig>();
+  runner_config->context = context;
   auto model_init_start = GetTimeUs();
   auto ret = model_pool.Init(flags_->model_file_, runner_config);
   if (ret != kSuccess) {
@@ -958,6 +965,10 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   auto model_init_end = GetTimeUs();
   // load data
   ms_inputs_for_api_ = model_pool.GetInputs();
+  if (ms_inputs_for_api_.empty()) {
+    MS_LOG(ERROR) << "model pool input is empty.";
+    return RET_ERROR;
+  }
   for (int i = 0; i < flags_->num_require_ + flags_->warm_up_loop_count_; i++) {
     auto status = LoadInput();
     if (status != RET_OK) {
@@ -989,7 +1000,7 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
       MS_LOG(ERROR) << "model pool predict failed.";
     }
     auto predict_end = GetTimeUs();
-    MS_LOG(ERROR) << "run predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms";
+    std::cout << "run predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
     if (!flags_->benchmark_data_file_.empty()) {
       auto status = CompareOutputForModelPool(&output);
       if (status != RET_OK) {
@@ -1004,18 +1015,22 @@ int BenchmarkUnifiedApi::RunModelPool(std::shared_ptr<mindspore::Context> contex
   for (auto &warm_up_thread : model_thread_warm_up) {
     warm_up_thread.join();
   }
-  MS_LOG(DEBUG) << "================ end warm up ================";
+  std::cout << "================ end warm up ================";
   auto all_start = GetTimeUs();
-  std::vector<std::thread> model_thread_run;
-  for (int i = 0; i < flags_->num_require_; i++) {
-    model_thread_run.push_back(std::thread(model_pool_run, i + flags_->warm_up_loop_count_));
-  }
-  for (auto &run_thread : model_thread_run) {
-    run_thread.join();
+  for (int loop_count_num = 0; loop_count_num < flags_->loop_count_; loop_count_num++) {
+    std::vector<std::thread> model_thread_run;
+    for (int i = 0; i < flags_->num_require_; i++) {
+      model_thread_run.push_back(std::thread(model_pool_run, i + flags_->warm_up_loop_count_));
+    }
+    for (auto &run_thread : model_thread_run) {
+      run_thread.join();
+    }
   }
   auto all_end = GetTimeUs();
+  std::cout << "=================================" << std::endl;
   std::cout << "model pool init time: " << (model_init_end - model_init_start) / kFloatMSEC << " ms\n";
-  std::cout << "model pool all run time: " << (all_end - all_start) / kFloatMSEC << " ms\n";
+  std::cout << "model pool all run time: " << (all_end - all_start) / kFloatMSEC / flags_->loop_count_ << " ms\n";
+  std::cout << "=================================" << std::endl;
   return RET_OK;
 }
 #endif
@@ -1064,7 +1079,7 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 
   UpdateConfigInfo();
 #ifdef SERVER_INFERENCE
-  if (flags_->model_pool_) {
+  if (flags_->enable_parallel_predict_) {
     status = RunModelPool(context);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model pool failed.";

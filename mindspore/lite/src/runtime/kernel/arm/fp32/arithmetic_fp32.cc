@@ -164,11 +164,11 @@ int ArithmeticCPUKernel::InitIndexOffsetInfo() {
         delta = delta % batch_size[j];
       }
       if (j < last_batch_axis) {
-        a_offset += (delta / batch_size[j + 1] * a_shape[j] / MSMAX(a_shape[j], b_shape[j])) * a_batch_size[j + 1];
-        b_offset += (delta / batch_size[j + 1] * b_shape[j] / MSMAX(a_shape[j], b_shape[j])) * b_batch_size[j + 1];
+        a_offset += (delta / batch_size[j + 1] * a_shape[j] / c_shape[j]) * a_batch_size[j + 1];
+        b_offset += (delta / batch_size[j + 1] * b_shape[j] / c_shape[j]) * b_batch_size[j + 1];
       } else {
-        a_offset += (delta * a_shape[j] / MSMAX(a_shape[j], b_shape[j]));
-        b_offset += (delta * b_shape[j] / MSMAX(a_shape[j], b_shape[j]));
+        a_offset += (delta * a_shape[j] / c_shape[j]);
+        b_offset += (delta * b_shape[j] / c_shape[j]);
       }
     }
     a_offset_[i] = a_offset;
@@ -368,22 +368,22 @@ int ArithmeticCPUKernel::CalcArithmeticByBatch(int task_id) {
   int batch_per_thread = UP_DIV(out_batch_, op_parameter_->thread_num_);
   int start_batch = batch_per_thread * task_id;
   int end_batch = MSMIN(start_batch + batch_per_thread, out_batch_);
-  int ret = RET_ERROR;
   for (int i = start_batch; i < end_batch; i++) {
-    batch_a_ptr_ = static_cast<uint8_t *>(input0_ptr_) + a_offset_[i] * a_stride_size_ * data_type_len_;
-    batch_b_ptr_ = static_cast<uint8_t *>(input1_ptr_) + b_offset_[i] * b_stride_size_ * data_type_len_;
-    batch_c_ptr_ = static_cast<uint8_t *>(output_ptr_) + i * c_stride_size_ * data_type_len_;
+    int ret = RET_ERROR;
+    auto batch_a_ptr = static_cast<uint8_t *>(input0_ptr_) + a_offset_[i] * a_stride_size_ * data_type_len_;
+    auto batch_b_ptr = static_cast<uint8_t *>(input1_ptr_) + b_offset_[i] * b_stride_size_ * data_type_len_;
+    auto batch_c_ptr = static_cast<uint8_t *>(output_ptr_) + i * c_stride_size_ * data_type_len_;
     if (batch_scalar_) {
-      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, true);
+      ret = DoExecute(batch_a_ptr, batch_b_ptr, batch_c_ptr, c_stride_size_, true);
     } else {
-      ret = DoExecute(batch_a_ptr_, batch_b_ptr_, batch_c_ptr_, c_stride_size_, false);
+      ret = DoExecute(batch_a_ptr, batch_b_ptr, batch_c_ptr, c_stride_size_, false);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "failed to calculate.";
       return RET_ERROR;
     }
   }
-  return ret;
+  return RET_OK;
 }
 
 int ArithmeticCPUKernel::DoArithmetic(int task_id) {

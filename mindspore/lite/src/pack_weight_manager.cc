@@ -26,6 +26,18 @@ PackWeightManager *PackWeightManager::GetInstance() {
   return &instance;
 }
 
+void PackWeightManager::InitWeightManagerByBuf(const char *model_buf) {
+  MS_CHECK_TRUE_RET_VOID(model_buf != nullptr);
+  if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
+    auto *model_const_weight = new (std::nothrow) ModelConstWeight();
+    if (model_const_weight == nullptr) {
+      MS_LOG(ERROR) << "model_const_weight is nullptr.";
+      return;
+    }
+    buf_model_weight_[model_buf] = model_const_weight;
+  }
+}
+
 void PackWeightManager::InitWeightManagerByPath(const std::string &model_path, const char *model_buf) {
   MS_CHECK_TRUE_RET_VOID(model_buf != nullptr);
   if (path_model_buf_.find(model_path) == path_model_buf_.end()) {
@@ -49,7 +61,13 @@ STATUS PackWeightManager::StoreLiteModel(const char *model_buf, const Model *mod
       return RET_OK;
     }
   }
-
+  {
+    if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
+      MS_LOG(ERROR) << "set model failed.";
+      return RET_ERROR;
+    }
+    buf_model_weight_[model_buf]->lite_models.push_back(model);
+  }
   return RET_OK;
 }
 
@@ -66,6 +84,19 @@ void *PackWeightManager::GetTensorData(const LiteModel *model, const SchemaTenso
       }
       path_model_weight_[path]->origin_weight[tensor_index] = origin_tensor->data();
       path_model_weight_[path]->origin_data_index[origin_tensor->data()] = tensor_index;
+      return nullptr;
+    }
+  }
+  for (auto &item : buf_model_weight_) {
+    auto &model_buf = item.first;
+    auto &model_weight = item.second;
+    auto &models = model_weight->lite_models;
+    if (find(models.begin(), models.end(), model) != models.end()) {
+      if (model_weight->packed_weight.find(tensor_index) != model_weight->packed_weight.end()) {
+        return model_weight->packed_weight[tensor_index];
+      }
+      buf_model_weight_[model_buf]->origin_weight[tensor_index] = origin_tensor->data();
+      buf_model_weight_[model_buf]->origin_data_index[origin_tensor->data()] = tensor_index;
       return nullptr;
     }
   }
@@ -113,6 +144,13 @@ std::pair<PackStatus, void *> PackWeightManager::GetPackedTensor(const Tensor *t
       return packed_tensor_pair;
     }
   }
+  for (auto &item : buf_model_weight_) {
+    auto &model_weight = item.second;
+    auto packed_tensor_pair = FindPackedTensor(model_weight, tensor, round_size);
+    if (packed_tensor_pair.second != nullptr) {
+      return packed_tensor_pair;
+    }
+  }
   MS_LOG(DEBUG) << "not const tensor, need pack in kernel.";
   return std::make_pair(MALLOC, nullptr);
 }
@@ -121,6 +159,13 @@ void PackWeightManager::DeleteSavedModelPtr(LiteModel *delete_model) {
   std::unique_lock<std::mutex> weight_lock(mtx_weight_);
   MS_CHECK_TRUE_RET_VOID(delete_model != nullptr);
   for (auto &item : path_model_weight_) {
+    auto &weight = item.second;
+    auto it = find(weight->lite_models.begin(), weight->lite_models.end(), delete_model);
+    if (it != weight->lite_models.end()) {
+      weight->lite_models.erase(it);
+    }
+  }
+  for (auto &item : buf_model_weight_) {
     auto &weight = item.second;
     auto it = find(weight->lite_models.begin(), weight->lite_models.end(), delete_model);
     if (it != weight->lite_models.end()) {
@@ -153,6 +198,10 @@ PackWeightManager::~PackWeightManager() {
   for (auto &item : path_model_weight_) {
     FreePackedWeight(item.second);
     path_model_weight_.erase(item.first);
+  }
+  for (auto &item : buf_model_weight_) {
+    FreePackedWeight(item.second);
+    buf_model_weight_.erase(item.first);
   }
 }
 }  // namespace mindspore::lite
