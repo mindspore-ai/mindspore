@@ -23,6 +23,7 @@
 #include <string>
 #include "pipeline/jit/resource.h"
 #include "backend/graph_compiler/segment_runner.h"
+#include "backend/graph_compiler/backend.h"
 
 namespace mindspore {
 extern const char kMsConvert[];
@@ -60,6 +61,7 @@ FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_
                                const abstract::AnalysisContextPtr &context);
 FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_spec);
+void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr);
 }  // namespace pipeline
 }  // namespace mindspore
 

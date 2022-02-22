@@ -24,6 +24,7 @@
 #include "runtime/op_builder/op_lazy_builder.h"
 #include "backend/common/optimizer/helper.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
@@ -451,6 +452,15 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   real_execution_mode_ = ms_execution_mode_;
 
+  // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
+  if (ms_execution_mode_ == kPynativeMode &&
+      (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1)) {
+    real_execution_mode_ = kGraphMode;
+    context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+    pipeline::SetRunMode(func_graph, this);
+    MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
+  }
+
   // Compile root graph.
   graph_id_to_device_context_.clear();
   func_graph_to_kernel_graph_ids_.clear();
@@ -469,16 +479,20 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
 
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
-
-  if (real_execution_mode_ == kGraphMode) {
+  MS_EXCEPTION_IF_NULL(graph_compiler_info);
+  if (real_execution_mode_ == kGraphMode && graph_compiler_info->graphs_.size() != 0) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
   }
-  MS_EXCEPTION_IF_NULL(graph_compiler_info);
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_func_graph);
+
+  if (ms_execution_mode_ != real_execution_mode_) {
+    context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
+  }
+
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
   return actor_info;
@@ -507,12 +521,12 @@ bool MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
 
   // Foreach the segments to compile graph.
   for (const auto &segment : new_segments) {
-    CompileGraph(segment, contain_multi_target, func_graph->is_bprop());
+    CompileGraph(segment);
   }
   return true;
 }
 
-void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target, bool run_in_pynative) {
+void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
   MS_EXCEPTION_IF_NULL(segment);
   // Compile the normal nodes, which doesn't contain the cut node.
   if (segment->nodes_.size() == 0) {
@@ -537,19 +551,9 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
 
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
-    // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
-    if ((contain_multi_target || !run_in_pynative) && ms_execution_mode_ == kPynativeMode) {
-      real_execution_mode_ = kGraphMode;
-      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-      MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
-    }
-
     // Compile graph.
-    auto graph_id = graph_compiler_->CompileGraph(segment, outputs, device_context, run_in_pynative);
-
-    if (ms_execution_mode_ != real_execution_mode_) {
-      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
-    }
+    auto graph_id =
+      graph_compiler_->CompileGraph(segment, outputs, device_context, real_execution_mode_ == kPynativeMode);
 
     graph_id_to_device_context_[graph_id] = device_context;
 
