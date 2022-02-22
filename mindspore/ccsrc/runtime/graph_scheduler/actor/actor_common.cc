@@ -128,6 +128,15 @@ bool IsSkippedKernelActor(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsRpcActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsKernelActor(node) &&
+      (AnfAlgo::GetCNodeName(node) == kRpcSendOpName || AnfAlgo::GetCNodeName(node) == kRpcRecvOpName)) {
+    return true;
+  }
+  return false;
+}
+
 bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {

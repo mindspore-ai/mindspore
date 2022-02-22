@@ -28,13 +28,16 @@ namespace runtime {
 // RecvActor inherits from RpcActor and it's used to receive data from other processes.
 class RecvActor : public RpcActor {
  public:
-  RecvActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
-            const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
-            GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
-            const std::set<size_t> &modifiable_ref_output_indexes)
+  explicit RecvActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
+                     const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
+                     GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
+                     const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor) {}
   ~RecvActor() override = default;
+
+  void SetRouteInfo(uint32_t src_rank, const std::string &src_role, const std::string &src_node_name,
+                    const std::string &dst_node_name) override;
 
  private:
   friend class GraphScheduler;
