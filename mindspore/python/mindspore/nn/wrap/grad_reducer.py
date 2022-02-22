@@ -393,7 +393,7 @@ class DistributedGradReducer(Cell):
                                                                                  fusion_type)
             if not param_fusion:
                 self.split_fusion = False
-                self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
+                self.allreduce = AllReduce('sum', group).add_prim_attr('fusion', fusion_type)
         self.allgather = AllGather(group)
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)

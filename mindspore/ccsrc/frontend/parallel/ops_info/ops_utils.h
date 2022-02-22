@@ -511,6 +511,8 @@ constexpr char REF_TO_EMBED[] = "RefToEmbed";
 constexpr char STOP_GRADIENT[] = "stop_gradient";
 constexpr char UPDATESTATE[] = "UpdateState";
 constexpr char LOAD[] = "Load";
+constexpr char OPPOSITE_RANK[] = "opposite_rank";
+constexpr char TARGET_PARAM[] = "target_param";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
