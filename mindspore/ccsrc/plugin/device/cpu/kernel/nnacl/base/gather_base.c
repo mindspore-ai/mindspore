@@ -16,28 +16,28 @@
 #include <stdio.h>
 #include "nnacl/base/gather_base.h"
 
-int Gather(const void *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
-           void *output, int data_size) {
+int Gather(const void *input, int64_t outer_size, int64_t inner_size, int64_t limit, const int *indices,
+           int64_t index_num, void *output, int64_t out_stride) {
   if (input == NULL || output == NULL || indices == NULL) {
     return NNACL_NULL_PTR;
   }
   const int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
-
-  for (int m = 0; m < outer_size; ++m) {
-    const int8_t *int8_in_m = int8_in + inner_size * m * limit * data_size;
-    int8_t *int8_out_m = int8_out + inner_size * m * indices_element_size * data_size;
-
-    for (int i = 0; i < indices_element_size; ++i) {
+  int64_t in_stride = inner_size * limit;
+  for (int64_t m = 0; m < outer_size; ++m) {
+    int8_t *int8_out_m = int8_out;
+    for (int64_t i = 0; i < index_num; ++i) {
       int index = indices[i];
-      if (index < -limit || index >= limit) {
-        memset(int8_out_m + i * inner_size * data_size, 0, data_size * inner_size);
-        continue;
-      }
       index = index < 0 ? index + limit : index;
-      memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + index * inner_size * data_size,
-             data_size * inner_size);
+      if (index < 0 || index >= limit) {
+        memset(int8_out_m, 0, inner_size);
+      } else {
+        memcpy(int8_out_m, int8_in + index * inner_size, inner_size);
+      }
+      int8_out_m += inner_size;
     }
+    int8_in += in_stride;
+    int8_out += out_stride;
   }
   return NNACL_OK;
 }
