@@ -176,7 +176,7 @@ int64_t CheckAxis(const std::string &op, const std::string &args_name, const Val
                       << "), but got " << axis_value;
   }
   if (axis_value < 0) {
-    axis_value = axis_value + SizeToLong(max);
+    axis_value = axis_value + max;
   }
   return axis_value;
 }

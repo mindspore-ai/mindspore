@@ -231,7 +231,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   for (auto &cnode : cnodes) {
     auto parent = cnode.first->first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(parent);
-    const auto &valuenode = parent->input(cnode.first->second);
+    const auto &valuenode = parent->input(IntToSize(cnode.first->second));
     CloneFuncGraphValueNode(valuenode, target_func_graph);
   }
 }
@@ -378,26 +378,28 @@ namespace {
 void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inputs, AnfNodePtr *possible_u_monad,
                       AnfNodePtr *possible_io_monad) {
   AnfNodePtr local_u_monad = nullptr, local_io_monad = nullptr;
-  std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
-               [&local_u_monad, &local_io_monad](const auto &input) -> bool {
-                 if (HasAbstractUMonad(input)) {
-                   if (local_u_monad != nullptr) {
-                     MS_LOG(EXCEPTION) << "Cannot have multiple U Monad in one call, first: "
-                                       << local_u_monad->ToString() << ", second: " << input->ToString();
-                   }
-                   local_u_monad = input;
-                   return false;
-                 }
-                 if (HasAbstractIOMonad(input)) {
-                   if (local_io_monad != nullptr) {
-                     MS_LOG(EXCEPTION) << "Cannot have multiple IO Monad in one call, first: "
-                                       << local_io_monad->ToString() << ", second: " << input->ToString();
-                   }
-                   local_io_monad = input;
-                   return false;
-                 }
-                 return true;
-               });
+  (void)std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
+                     [&local_u_monad, &local_io_monad](const auto &input) -> bool {
+                       if (HasAbstractUMonad(input)) {
+                         if (local_u_monad != nullptr) {
+                           MS_LOG(EXCEPTION)
+                             << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
+                             << ", second: " << input->ToString();
+                         }
+                         local_u_monad = input;
+                         return false;
+                       }
+                       if (HasAbstractIOMonad(input)) {
+                         if (local_io_monad != nullptr) {
+                           MS_LOG(EXCEPTION)
+                             << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
+                             << ", second: " << input->ToString();
+                         }
+                         local_io_monad = input;
+                         return false;
+                       }
+                       return true;
+                     });
   *possible_u_monad = local_u_monad;
   *possible_io_monad = local_io_monad;
 }
@@ -447,7 +449,7 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   for (size_t i = caller_first_arg_index; i < inputs.size(); i++) {
     auto pos = std::find(add_params.begin(), add_params.end(), inputs[i]);
     if (pos != add_params.end()) {
-      add_params.erase(pos);
+      (void)add_params.erase(pos);
     }
   }
   if (input_u_monad != nullptr && param_u_monad != nullptr && input_u_monad != param_u_monad) {
@@ -458,7 +460,7 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
     MS_LOG(EXCEPTION) << "Cannot have multiple IO Monad in one call, first: " << input_io_monad->ToString()
                       << ", second: " << param_io_monad->ToString();
   }
-  inputs.insert(inputs.end(), add_params.begin(), add_params.end());
+  (void)inputs.insert(inputs.end(), add_params.begin(), add_params.end());
   auto &u_monad = (input_u_monad != nullptr ? input_u_monad : param_u_monad);
   auto &io_monad = (input_io_monad != nullptr ? input_io_monad : param_io_monad);
   if (u_monad != nullptr) {
@@ -795,7 +797,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   for (auto &param : func_graph->parameters()) {
     MS_EXCEPTION_IF_NULL(param);
     auto param_debug_info = CloneNodeDebugInfo(param->debug_info());
-    (void)new_func_graph->add_parameter(std::move(param_debug_info))->set_abstract(param->abstract());
+    new_func_graph->add_parameter(std::move(param_debug_info))->set_abstract(param->abstract());
   }
 
   Cloner cloner{};

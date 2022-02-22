@@ -438,7 +438,7 @@ AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = nnz_vec[0] / dense_shape[0];
+  int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
 
@@ -474,7 +474,7 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = nnz_vec[0] / dense_shape[0];
+  int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
 
@@ -524,7 +524,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
   auto nnz_vec = sparse->indices()->shape()->shape();
-  int csr_avg_rows = nnz_vec[0] / sparse_shape[0];
+  int csr_avg_rows = SizeToInt(nnz_vec[0] / sparse_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
 
