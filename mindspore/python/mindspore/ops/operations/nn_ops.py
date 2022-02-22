@@ -425,7 +425,7 @@ class Softplus(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class Softsign(PrimitiveWithInfer):
+class Softsign(Primitive):
     r"""
     Softsign activation function.
 
@@ -461,13 +461,6 @@ class Softsign(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Softsign"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid('input_x', input_x, [mstype.float16, mstype.float32], self.name)
-        return input_x
 
 
 class ReLU(Primitive):

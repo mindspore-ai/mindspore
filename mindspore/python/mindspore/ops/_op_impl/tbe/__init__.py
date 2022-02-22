@@ -232,6 +232,7 @@ from .tanh_grad_ds import _tanh_grad_ds_tbe
 from .softmax import _softmax_tbe
 from .softmax_ds import _softmax_ds_tbe
 from .softsign import _softsign_tbe
+from .softsign_ds import _softsign_ds_tbe
 from .softplus import _softplus_tbe
 from .softplus_ds import _softplus_ds_tbe
 from .softplus_grad import _softplus_grad_tbe
