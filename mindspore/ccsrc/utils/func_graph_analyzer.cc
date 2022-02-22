@@ -25,8 +25,6 @@
 namespace mindspore {
 const int64_t kGetAll = -1;
 
-using FuncClosurePtr = std::shared_ptr<FuncClosure>;
-
 class ValueGetter;
 using ValueGetterPtr = std::shared_ptr<ValueGetter>;
 
@@ -76,7 +74,7 @@ class ValueManager : public std::enable_shared_from_this<ValueManager> {
     int64_t param_index = -1;
     for (size_t i = 0; i < parameters.size(); i++) {
       if (parameters[i] == param) {
-        param_index = i;
+        param_index = static_cast<int64_t>(i);
       }
     }
     if (param_index == -1) {
@@ -95,7 +93,7 @@ class ValueManager : public std::enable_shared_from_this<ValueManager> {
                           << ", args size: " << args.size() << ". Parameter: " << param->DebugString()
                           << ", call: " << call_cnode->DebugString();
       }
-      ret_args.emplace_back(args[param_index]);
+      (void)ret_args.emplace_back(args[param_index]);
     }
     return ret_args;
   }
@@ -128,14 +126,14 @@ class ValueManager : public std::enable_shared_from_this<ValueManager> {
     if (map_it != caller_closures_.end()) {
       bool change = false;
       auto &closures = map_it->second;
-      std::copy_if(func_closures.begin(), func_closures.end(), std::back_inserter(closures),
-                   [&closures, &change](const FuncClosurePtr &fg_closure) {
-                     if (!fg_closure->ExistInList(closures)) {
-                       change = true;
-                       return true;
-                     }
-                     return false;
-                   });
+      (void)std::copy_if(func_closures.begin(), func_closures.end(), std::back_inserter(closures),
+                         [&closures, &change](const FuncClosurePtr &fg_closure) {
+                           if (!fg_closure->ExistInList(closures)) {
+                             change = true;
+                             return true;
+                           }
+                           return false;
+                         });
       return change;
     }
     caller_closures_[call] = func_closures;
@@ -146,7 +144,7 @@ class ValueManager : public std::enable_shared_from_this<ValueManager> {
 class ValueGetter {
  public:
   ValueGetter(const AnfNodePtr &anf_node, const ValueManagerPtr &manager) : anf_node_(anf_node), manager_(manager) {}
-  ~ValueGetter() = default;
+  virtual ~ValueGetter() = default;
   virtual ValueGetterPtr Visit(int64_t index, const std::shared_ptr<HashSet<AnfNodePtr>> &visit_path);
   virtual std::vector<FuncClosurePtr> GetFuncGraphs();
 
@@ -320,10 +318,10 @@ std::vector<FuncClosurePtr> PartialValueGetter::GetFuncGraphs() {
     auto arg_indexes = closure->arg_indexes_;
     auto arg_users = closure->arg_users_;
     for (size_t i = arg_start_idx; i < partial->inputs().size(); i++) {
-      arg_indexes.emplace_back(i);
-      arg_users.emplace_back(partial);
+      (void)arg_indexes.emplace_back(i);
+      (void)arg_users.emplace_back(partial);
     }
-    closures.emplace_back(std::make_shared<FuncClosure>(closure->func_graph_, arg_indexes, arg_users));
+    (void)closures.emplace_back(std::make_shared<FuncClosure>(closure->func_graph_, arg_indexes, arg_users));
   }
   return closures;
 }
@@ -496,8 +494,8 @@ std::vector<FuncClosurePtr> DirectValueGetter::GetFuncGraphs() {
     MS_LOG(EXCEPTION) << "Expect a func graph value node, but got an illegal value node:" << anf_node_->DebugString();
   }
   if (func_graphs_.empty()) {
-    func_graphs_.emplace_back(std::make_shared<FuncClosure>(GetValueNode<FuncGraphPtr>(anf_node_),
-                                                            std::vector<size_t>(), std::vector<CNodePtr>()));
+    (void)func_graphs_.emplace_back(std::make_shared<FuncClosure>(GetValueNode<FuncGraphPtr>(anf_node_),
+                                                                  std::vector<size_t>(), std::vector<CNodePtr>()));
   }
   return func_graphs_;
 }
@@ -548,8 +546,8 @@ ValueGetterPtr CreateValueGetter(const AnfNodePtr &node, const ValueManagerPtr &
 std::vector<AnfNodePtr> GetAllCallNodes(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> calls;
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
-  std::copy_if(all_nodes.begin(), all_nodes.end(), std::back_inserter(calls),
-               [](const AnfNodePtr &node) { return IsFuncGraphCallNode(node); });
+  (void)std::copy_if(all_nodes.begin(), all_nodes.end(), std::back_inserter(calls),
+                     [](const AnfNodePtr &node) { return IsFuncGraphCallNode(node); });
   return calls;
 }
 
@@ -560,7 +558,7 @@ bool FuncClosure::ExistInList(const std::vector<std::shared_ptr<FuncClosure>> &l
 std::vector<AnfNodePtr> FuncClosure::GetArgs() const {
   std::vector<AnfNodePtr> args;
   for (size_t i = 0; i < arg_indexes_.size(); i++) {
-    args.emplace_back(arg_users_[i]->input(arg_indexes_[i]));
+    (void)args.emplace_back(arg_users_[i]->input(arg_indexes_[i]));
   }
   return args;
 }
@@ -616,7 +614,7 @@ std::vector<FuncGraphPtr> FuncGraphAnalyzer::GetCallerFuncGraphs(const AnfNodePt
   std::vector<FuncGraphPtr> func_graphs;
   for (const auto &closure : closures) {
     if (std::find(func_graphs.begin(), func_graphs.end(), closure->func_graph_) == func_graphs.end()) {
-      func_graphs.emplace_back(closure->func_graph_);
+      (void)func_graphs.emplace_back(closure->func_graph_);
     }
   }
   return func_graphs;
