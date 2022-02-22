@@ -1245,8 +1245,20 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "RefToEmbed input Ref key value is nullptr.";
       return nullptr;
     }
+    // Check if the input of RefEmbed is a weight parameter, if not, don't create the
+    // specific SymbolicKey.
+    // Notes: when different weight parameter have same type and shape passed as parameter to same funcgraph
+    // which has RefToEmbed CNode, that funcgraph will not be specialized to different funcgraph, so the
+    // RefToEmbed CNode in that funcgraph also should not be evaluated to specific SymbolicKey.
+    // Only after that funcgrpah is inlined, the RefToEmbed CNode should be evaluated to specific SymbolicKey.
+    bool ifEmbedIsWeight = false;
+    if (node_conf->node() != nullptr && node_conf->node()->isa<Parameter>()) {
+      auto param = node_conf->node()->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(param);
+      ifEmbedIsWeight = param->has_default();
+    }
     auto refkey = key_value->cast<RefKeyPtr>();
-    if (refkey == nullptr) {
+    if (refkey == nullptr || !ifEmbedIsWeight) {
       auto ret = std::make_shared<AbstractScalar>(type);
       auto ref_value = ref_abs->ref();
       MS_EXCEPTION_IF_NULL(ref_value);
