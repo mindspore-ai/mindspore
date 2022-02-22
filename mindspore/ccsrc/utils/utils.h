@@ -170,6 +170,8 @@ constexpr auto kStreamActiveOpName = "StreamActive";
 constexpr auto kAssignAddOpName = "AssignAdd";
 constexpr auto kSendOpName = "StreamSend";
 constexpr auto kRecvOpName = "StreamRecv";
+constexpr auto kRpcSendOpName = "RpcSend";
+constexpr auto kRpcRecvOpName = "RpcRecv";
 constexpr auto kReluV2OpName = "ReLUV2";
 constexpr auto kReluGradV2OpName = "ReluGradV2";
 constexpr auto kAddOpName = "Add";
@@ -525,6 +527,14 @@ constexpr auto kAttrPlaceHolderIndex = "placeholder_index";
 constexpr auto kAttrMicro = "micro";
 constexpr auto kAttrJsonFileName = "json_file_name";
 constexpr auto kAttrNeedDropInput = "need_drop_input";
+constexpr auto kAttrSendSrcNodeName = "send_src_node_name";
+constexpr auto kAttrSendDstNodeName = "send_dst_node_name";
+constexpr auto kAttrSendDstRanks = "send_dst_ranks";
+constexpr auto kAttrSendDstRoles = "send_dst_roles";
+constexpr auto kAttrRecvSrcNodeName = "recv_src_node_name";
+constexpr auto kAttrRecvDstNodeName = "recv_dst_node_name";
+constexpr auto kAttrRecvSrcRanks = "recv_src_ranks";
+constexpr auto kAttrRecvSrcRoles = "recv_src_roles";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

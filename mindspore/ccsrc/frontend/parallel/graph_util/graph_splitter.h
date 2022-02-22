@@ -31,16 +31,19 @@
 
 namespace mindspore {
 namespace parallel {
+// The distributed label of the operators(kernel) used to split graph with send/recv nodes.
 struct OperatorLabel {
   uint32_t rank_id;
   std::string ms_role;
 
+  bool operator<(const OperatorLabel &label) const;
   bool operator==(const OperatorLabel &label) const;
   bool operator!=(const OperatorLabel &label) const;
   std::string to_string() const;
 };
 
-// The judging functions for different modes because the logic will change under different execution modes.
+// The judging functions for different modes because the logic will change under different execution modes. If labels
+// are not matched, the send and recv nodes should be inserted.
 using LabelMatchingFunc = std::function<bool(const OperatorLabel &, const OperatorLabel &)>;
 inline bool MatchLabelForPSMode(const OperatorLabel &label1, const OperatorLabel &label2) {
   // In Parameter Server training mode, Workers have the same labels regardless of their rank id.
@@ -117,15 +120,21 @@ class GraphSplitter {
   // Node-In-->Node-X-->Node-Out.
   // After send and recv op is inserted, the graph should be:
   // Node-In-->Send-->Recv-->Node-X-->Send-->Recv-->Node-Out.
-  // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X, while
-  // GenerateInterProcessOpsForNodeOutputs is for generating Send-Recv pair between Node-X and Node-Out.
+  // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
   InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
-  InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeOutputs(const AnfNodePtr &node);
 
-  // For Send node, its input is the node which will send its output.
-  // For Recv node, its input should be the corresponding Send node and its output stores the data received.
-  CNodePtr GenerateSendNode(const AnfNodePtr &input);
+  // The inter-process edge between two nodes should be like this:
+  // input-->Send-->Recv-->peer.
+  // Send node takes 'input' node as one input, its output's abstract is the same as a scalar value tensor's to save
+  // memory. Recv node takes a scalar value tensor as one input, its output's abstract is the same as the 'input'
+  // node's.
+  CNodePtr GenerateSendNode(const AnfNodePtr &input, const AnfNodePtr &peer);
   CNodePtr GenerateRecvNode(const AnfNodePtr &input, const AnfNodePtr &peer);
+
+  // Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
+  // etc.
+  void SetSendNodeAttr(const AnfNodePtr &send_node, const AnfNodePtr &send_from_node, const AnfNodePtr &send_to_node);
+  void SetRecvNodeAttr(const AnfNodePtr &recv_node, const AnfNodePtr &recv_from_node, const AnfNodePtr &recv_to_node);
 
   // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
   // should be connected with control edges in case that the nodes are optimized out.
@@ -136,6 +145,11 @@ class GraphSplitter {
 
   // Judge whether two nodes have the same distributed label.
   bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
+
+  // This method creates a scalar tensor. Its type is the same as the origin_node's output if use_origin_node is set
+  // true.
+  // Normally it is used to connect the edges for send/recv nodes.
+  ValueNodePtr GenerateMockValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
 
   FuncGraphPtr func_graph_;
 
