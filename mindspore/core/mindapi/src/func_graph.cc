@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,8 +154,8 @@ std::vector<std::pair<AnfNodePtr, int>> FuncGraphManager::GetUsers(const AnfNode
   auto &users_impl = iter->second;
   std::vector<std::pair<AnfNodePtr, int>> users;
   users.reserve(users_impl.size());
-  std::transform(users_impl.begin(), users_impl.end(), std::back_inserter(users),
-                 [](const auto &user) { return std::make_pair(ToWrapper<AnfNode>(user.first), user.second); });
+  (void)std::transform(users_impl.begin(), users_impl.end(), std::back_inserter(users),
+                       [](const auto &user) { return std::make_pair(ToWrapper<AnfNode>(user.first), user.second); });
   return users;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,8 +116,8 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      todo_.insert(node);
-      node_input_depends_[node] = cnode->inputs().size();
+      (void)todo_.insert(node);
+      node_input_depends_[node] = SizeToInt(cnode->inputs().size());
     } else if (node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(param);
@@ -127,7 +127,7 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
         ready_.push_back(node);
       } else {
         node_input_depends_[node] = 1;
-        todo_.insert(node);
+        (void)todo_.insert(node);
       }
     } else {
       // Value Node
@@ -192,7 +192,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   AbstractBasePtrList args_spec_list;
   // Args has been resolved by partial
   if (args != nullptr) {
-    args_spec_list.insert(args_spec_list.end(), args->begin(), args->end());
+    (void)args_spec_list.insert(args_spec_list.end(), args->begin(), args->end());
   } else {
     (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(args_spec_list),
                          [this](const AnfNodePtr &arg) { return infer_resut_[arg]; });
@@ -244,7 +244,7 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
       MS_LOG(EXCEPTION) << (*args)[0]->ToString() << " is not a function abstract.";
     }
     AbstractBasePtrList partial_args_list;
-    partial_args_list.insert(partial_args_list.end(), args->begin() + 1, args->end());
+    (void)partial_args_list.insert(partial_args_list.end(), args->begin() + 1, args->end());
     auto partial_func = std::make_shared<abstract::PartialAbstractClosure>(real_func, partial_args_list, node);
     SaveNodeInferResult(node, partial_func);
     return;
@@ -270,14 +270,14 @@ void MindIREngine::EvalPartialAbastract(const abstract::PartialAbstractClosurePt
   AbstractBasePtrListPtr partial_args_list = std::make_shared<AbstractBasePtrList>();
   // Join arguments in partial and the rest arguments from args_conf_list.
   auto func_args = func->args();
-  partial_args_list->insert(partial_args_list->end(), func_args.begin(), func_args.end());
+  (void)partial_args_list->insert(partial_args_list->end(), func_args.begin(), func_args.end());
   if (args == nullptr) {
     // Not Recursive
     (void)std::transform(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(*partial_args_list),
                          [this](const AnfNodePtr &arg) { return infer_resut_[arg]; });
   } else {
     // Recursive
-    partial_args_list->insert(partial_args_list->end(), args->begin(), args->end());
+    (void)partial_args_list->insert(partial_args_list->end(), args->begin(), args->end());
   }
 
   // Get real function
@@ -337,7 +337,7 @@ bool MindIREngine::CheckCNodeNotReady(const CNodePtr &node) {
     depend += infer_resut_.find(input) != infer_resut_.end() ? 0 : 1;
   }
   this->node_input_depends_[node] = depend;
-  return depend;
+  return depend != 0;
 }
 
 void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosurePtr &func, const CNodePtr &node,
@@ -364,7 +364,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
       for (size_t i = 0; i < func_inputs.size(); ++i) {
         infer_resut_[func_inputs[i]] =
           (*args)[i];  // Not use SaveNodeInferResult because this function has been evaluated.
-        todo_.erase(func_inputs[i]);
+        (void)todo_.erase(func_inputs[i]);
       }
       return;
     }
@@ -376,7 +376,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
     }
     for (size_t i = 0; i < func_inputs.size(); ++i) {
       infer_resut_[func_inputs[i]] = infer_resut_[cnode_inputs[i + 1]];
-      todo_.erase(func_inputs[i]);
+      (void)todo_.erase(func_inputs[i]);
     }
     return;
   }
@@ -384,7 +384,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   // Be handling
   auto visitIt = func_graph_visited_.find(funcName);
   if (visitIt != func_graph_visited_.end()) {
-    visitIt->second.insert(node);
+    (void)visitIt->second.insert(node);
     return;
   }
   func_graph_visited_[funcName] = std::set<AnfNodePtr>({node});
@@ -477,7 +477,7 @@ void MindIREngine::EvalAbstractFunction(const abstract::AbstractFuncAtomPtr &fun
 }
 
 void MindIREngine::UpdateReady(const AnfNodePtr &node) {
-  todo_.erase(node);
+  (void)todo_.erase(node);
   auto it = nodeuser_map_.find(node);
   if (it == nodeuser_map_.end()) {
     return;

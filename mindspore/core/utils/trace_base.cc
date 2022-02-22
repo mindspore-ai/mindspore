@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,14 +188,14 @@ void GetSourceLineFromDebugInfo(const DebugInfoPtr &debug_info, std::vector<std:
 
 void GetFusedDebugInfos(const NodeDebugInfoSet &fused_debug_infos, std::vector<std::string> *result) {
   MS_EXCEPTION_IF_NULL(result);
-  result->push_back("Corresponding code candidate:\n");
+  (void)result->emplace_back("Corresponding code candidate:\n");
   // Flag to mark whether fused_debug_infos has valid print.
   bool is_empty = true;
   for (const auto &debug_info : fused_debug_infos) {
     std::vector<std::string> debug_info_vec_str;
     GetSourceLineFromDebugInfo(debug_info, &debug_info_vec_str, kSectionPrefix);
     if (!debug_info_vec_str.empty()) {
-      result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
+      (void)result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
       is_empty = false;
     }
   }
@@ -210,12 +210,12 @@ void GetPrimalDebugInfos(const CNodePtr &cnode, std::vector<std::string> *result
   MS_EXCEPTION_IF_NULL(result);
   auto primal_debug_infos = cnode->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
-    result->emplace_back("Corresponding forward node candidate:\n");
+    (void)result->emplace_back("Corresponding forward node candidate:\n");
     for (const auto &primal_debug_info : primal_debug_infos) {
       std::vector<std::string> debug_info_vec_str;
       GetSourceLineFromDebugInfo(primal_debug_info, &debug_info_vec_str, kSectionPrefix);
       if (!debug_info_vec_str.empty()) {
-        result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
+        (void)result->insert(result->end(), debug_info_vec_str.begin(), debug_info_vec_str.end());
       }
     }
   }

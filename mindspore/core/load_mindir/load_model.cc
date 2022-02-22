@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
-        ret = get_all_files(name, files);
+        ret = static_cast<int>(get_all_files(name, files));
         if (!ret) {
           MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
           closedir(open_dir);
@@ -196,7 +196,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   /* mindir -> func_graph
    * only support lite */
   mind_ir::ModelProto model;
-  auto ret = model.ParseFromArray(buffer, size);
+  auto ret = model.ParseFromArray(buffer, SizeToInt(size));
   if (!ret) {
     MS_LOG(ERROR) << "ParseFromArray failed.";
     return nullptr;
@@ -255,7 +255,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
     std::ifstream ifs(var_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
-      get_all_files(var_path, &files);
+      (void)get_all_files(var_path, &files);
     } else {
       MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;
