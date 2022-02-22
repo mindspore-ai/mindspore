@@ -746,7 +746,7 @@ bool MSANFModelParser::GetAttrValueForCNodeWithType(const PrimitivePtr &prim,
           MS_LOG(ERROR) << "Failed to get the tensor for ValueNode.";
           return false;
         }
-        prim->AddAttr(attr_name, tensor_info);
+        (void)prim->AddAttr(attr_name, tensor_info);
       } else {
         // For data type.
         const int attr_tensor_type = tensor_proto.data_type();
@@ -755,12 +755,12 @@ bool MSANFModelParser::GetAttrValueForCNodeWithType(const PrimitivePtr &prim,
           MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
           return false;
         }
-        prim->AddAttr(attr_name, TypeIdToType(iter->second));
+        (void)prim->AddAttr(attr_name, TypeIdToType(iter->second));
       }
       break;
     }
     case mind_ir::AttributeProto_AttributeType_NONE: {
-      prim->AddAttr(attr_name, kNone);
+      (void)prim->AddAttr(attr_name, kNone);
       break;
     }
     case mind_ir::AttributeProto_AttributeType_TUPLE:
@@ -770,7 +770,7 @@ bool MSANFModelParser::GetAttrValueForCNodeWithType(const PrimitivePtr &prim,
         MS_LOG(ERROR) << "Failed to get sequence value for " << attr_name;
         return false;
       }
-      prim->AddAttr(attr_name, sequence_value);
+      (void)prim->AddAttr(attr_name, sequence_value);
       break;
     }
     default: {
@@ -781,19 +781,20 @@ bool MSANFModelParser::GetAttrValueForCNodeWithType(const PrimitivePtr &prim,
       }
       const std::string &op_type = prim->name();
       if (!IsLite()) {
-        (void)CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
+        CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
       }
       if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
         auto str_dtype = GetValue<std::string>(value);
         if (str_dtype == "int32") {
-          prim->AddAttr(attr_name, MakeValue<int64_t>(3));
+          int64_t index = 3;
+          (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
           break;
         }
         MS_EXCEPTION(NotSupportError)
           << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
           << value->ToString();
       }
-      prim->AddAttr(attr_name, value);
+      (void)prim->AddAttr(attr_name, value);
     }
   }
   return true;
@@ -819,25 +820,26 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
         if (!IsLite()) {
-          (void)CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
+          CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         }
         if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && res->isa<StringImm>()) {
           auto str_dtype = GetValue<std::string>(res);
           if (str_dtype == "int32") {
-            prim->AddAttr(attr_name, MakeValue<int64_t>(3));
+            int64_t index = 3;
+            (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
             break;
           }
           MS_EXCEPTION(NotSupportError)
             << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
             << res->ToString();
         }
-        prim->AddAttr(attr_name, res);
+        (void)prim->AddAttr(attr_name, res);
         break;
       } else if (ref_attr_name.find("Tuple[]") != std::string::npos) {
-        prim->AddAttr(attr_name, std::make_shared<ValueTuple>(std::vector<ValuePtr>()));
+        (void)prim->AddAttr(attr_name, std::make_shared<ValueTuple>(std::vector<ValuePtr>()));
         break;
       } else if (ref_attr_name.find("List[]") != std::string::npos) {
-        prim->AddAttr(attr_name, std::make_shared<ValueList>(std::vector<ValuePtr>()));
+        (void)prim->AddAttr(attr_name, std::make_shared<ValueList>(std::vector<ValuePtr>()));
         break;
       }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
@@ -848,7 +850,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       break;
     }
     case FORM_PARSE_NONE: {
-      prim->AddAttr(attr_name, kNone);
+      (void)prim->AddAttr(attr_name, kNone);
       break;
     }
     default:
@@ -859,10 +861,10 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
   if (type == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
     if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
-      prim->AddAttr(attr_name, value_tuple_ptr);
+      (void)prim->AddAttr(attr_name, value_tuple_ptr);
     } else {
       auto value_list_ptr = ParserScalarAttrValue<ValueList>(ref_attr_name, multi_value_map);
-      prim->AddAttr(attr_name, value_list_ptr);
+      (void)prim->AddAttr(attr_name, value_list_ptr);
     }
   }
   return true;
@@ -1105,7 +1107,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       }
       if (ref_attr_name.find("Tuple[value") != std::string::npos && attr_proto.tensors_size() > 1) {
         MS_LOG(INFO) << "Build TupleTensor ValueNode for primitive.";
-        ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto);
+        (void)ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto);
         break;
       }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
@@ -1485,9 +1487,10 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
   size_t hyper_param_count = 0;
   auto parameters = topGraph->parameters();
   for (int i = parameters.size() - 1; i >= 0; --i) {
-    auto parameter = parameters[i]->cast<ParameterPtr>();
+    size_t index = IntToSize(i);
+    auto parameter = parameters[index]->cast<ParameterPtr>();
     if (parameter == nullptr) {
-      MS_LOG(ERROR) << "AnfNode " << parameters[i]->DebugString() << " should be Parameter.";
+      MS_LOG(ERROR) << "AnfNode " << parameters[index]->DebugString() << " should be Parameter.";
       return false;
     }
     auto type = parameter->Type();
@@ -1584,7 +1587,7 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
     const std::string name = layout_proto.name();
     std::vector<int64_t> device_arrangement;
     for (int num = 0; num < layout_proto.device_arrangement_int_size(); ++num) {
-      device_arrangement.emplace_back(layout_proto.device_arrangement_int(num));
+      (void)device_arrangement.emplace_back(layout_proto.device_arrangement_int(num));
     }
     std::vector<int64_t> tensor_map;
     for (int num = 0; num < layout_proto.tensor_map_int_size(); ++num) {
@@ -1592,7 +1595,7 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
     }
     std::vector<int64_t> slice_shape;
     for (int num = 0; num < layout_proto.slice_shape_int_size(); ++num) {
-      slice_shape.emplace_back(layout_proto.slice_shape_int(num));
+      (void)slice_shape.emplace_back(layout_proto.slice_shape_int(num));
     }
     int64_t field_size = layout_proto.field_size();
     bool uniform_spilt = layout_proto.uniform_split();

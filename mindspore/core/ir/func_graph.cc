@@ -668,7 +668,7 @@ std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
   for (const auto &node : nodes) {
     auto cnode = dyn_cast<CNode>(node);
     if (cnode != nullptr) {
-      cnodes.emplace_back(std::move(cnode));
+      (void)cnodes.emplace_back(std::move(cnode));
     }
   }
   return cnodes;

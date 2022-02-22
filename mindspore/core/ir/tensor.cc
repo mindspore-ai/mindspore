@@ -721,7 +721,7 @@ abstract::AbstractBasePtr CSRTensor::ToAbstract() {
   abs_csr_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
 
   std::vector<abstract::AbstractBasePtr> abstract_shape;
-  std::transform(
+  (void)std::transform(
     shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
     [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
   abs_csr_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
@@ -750,7 +750,7 @@ abstract::AbstractBasePtr COOTensor::ToAbstract() {
   abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
 
   std::vector<abstract::AbstractBasePtr> abstract_shape;
-  std::transform(
+  (void)std::transform(
     shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
     [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
   abs_sparse_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
