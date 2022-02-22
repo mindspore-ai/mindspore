@@ -279,10 +279,11 @@ AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   AbstractBasePtrList items;
-  std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(items), [](const AbstractAttribute &item) {
-    return std::make_shared<AbstractTuple>(
-      AbstractBasePtrList{std::make_shared<AbstractScalar>(item.first), item.second});
-  });
+  (void)std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(items),
+                       [](const AbstractAttribute &item) {
+                         return std::make_shared<AbstractTuple>(
+                           AbstractBasePtrList{std::make_shared<AbstractScalar>(item.first), item.second});
+                       });
   return std::make_shared<AbstractList>(items);
 }
 
@@ -296,7 +297,7 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
   AbstractBasePtr item = dyn_cast<AbstractBase>(args_spec_list[1]);
   MS_EXCEPTION_IF_NULL(item);
   auto new_list = AbstractBasePtrList(list->elements());
-  new_list.emplace_back(item);
+  (void)new_list.emplace_back(item);
   MS_LOG(DEBUG) << "ListAppend, new size: " << new_list.size() << ", for " << list->ToString();
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   if (enable_eliminate_unused_element && list->sequence_nodes() != nullptr) {
@@ -308,7 +309,7 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
       }
       // Add one element in flag list.
       auto flags = GetSequenceNodeElementsUseFlags(node);
-      flags->emplace_back(false);
+      (void)flags->emplace_back(false);
     }
   }
   return std::make_shared<AbstractList>(new_list, list->sequence_nodes());

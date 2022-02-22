@@ -49,7 +49,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
   res.reserve(kVecReserve);
   size_t seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  todo.emplace_back(root);
+  (void)todo.emplace_back(root);
   while (!todo.empty()) {
     AnfNodePtr &node = todo.back();
     if (node->extra_seen_ == seen) {  // We use extra_seen_ as finish flag
@@ -60,7 +60,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     if (node->seen_ == seen) {  // We use seen_ as checking flag
       node->extra_seen_ = seen;
       if (incl != EXCLUDE) {
-        res.emplace_back(std::move(node));
+        (void)res.emplace_back(std::move(node));
       }
       todo.pop_back();
       continue;
@@ -72,7 +72,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
           continue;
         }
         if (next->seen_ != seen) {
-          todo.emplace_back(std::move(next));
+          (void)todo.emplace_back(std::move(next));
           continue;
         }
         auto fg = next->func_graph();
@@ -98,7 +98,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
   vec.reserve(kVecReserve);
   auto seen = NewSeenGeneration();
   start->seen_ = seen;
-  vec.emplace_back(start);
+  (void)vec.emplace_back(start);
   for (size_t i = 0; i < vec.size(); ++i) {
     CNodePtr &node = vec[i];
     auto &inputs = node->inputs();
@@ -109,7 +109,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
       input->seen_ = seen;
       auto input_cnode = input->cast<CNodePtr>();
       if (input_cnode != nullptr) {
-        vec.emplace_back(std::move(input_cnode));
+        (void)vec.emplace_back(std::move(input_cnode));
       }
     }
   }

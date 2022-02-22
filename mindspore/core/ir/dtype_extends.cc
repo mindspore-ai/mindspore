@@ -147,7 +147,8 @@ std::string TypeIdToString(TypeId id, bool to_lower) {
   }
   auto type = TypeIdToType(id)->ToString();
   if (to_lower) {
-    std::transform(type.begin(), type.end(), type.begin(), [](auto c) { return static_cast<char>(std::tolower(c)); });
+    (void)std::transform(type.begin(), type.end(), type.begin(),
+                         [](auto c) { return static_cast<char>(std::tolower(c)); });
   }
   return type;
 }
