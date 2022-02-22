@@ -135,7 +135,7 @@ class TransitionPrimEvaluator : public PrimEvaluator {
                     const AnfNodeConfigPtr &out_conf) final;
   // Parameter in_conf0 : the first element in args_conf_list;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                                 const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) = 0;
+                                 const ConfigPtr &in_conf, const AnfNodeConfigPtr &out_conf) = 0;
 };
 
 class SymbolicPrimEvaluator : public PrimEvaluator {

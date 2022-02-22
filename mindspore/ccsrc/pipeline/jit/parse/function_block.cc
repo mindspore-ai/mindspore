@@ -491,7 +491,7 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
 
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
-void FunctionBlock::ConditionalJump(AnfNodePtr cond_node, const AnfNodePtr &true_block_call,
+void FunctionBlock::ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
                                     const AnfNodePtr &false_block_call) {
   MS_EXCEPTION_IF_NULL(true_block_call);
   MS_EXCEPTION_IF_NULL(false_block_call);
@@ -505,7 +505,7 @@ void FunctionBlock::ConditionalJump(AnfNodePtr cond_node, const AnfNodePtr &true
   func_graph_->set_output(switch_app_new);
 }
 
-void FunctionBlock::ConditionalJump(AnfNodePtr cond_node, const FunctionBlockPtr &true_block,
+void FunctionBlock::ConditionalJump(const AnfNodePtr &cond_node, const FunctionBlockPtr &true_block,
                                     const FunctionBlockPtr &false_block) {
   MS_EXCEPTION_IF_NULL(true_block);
   MS_EXCEPTION_IF_NULL(false_block);

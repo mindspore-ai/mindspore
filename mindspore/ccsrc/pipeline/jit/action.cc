@@ -86,7 +86,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
   func_graph->set_parameters(new_paras);
 }
 
-bool IsDynamicShapeGraph(FuncGraphPtr func_graph) {
+bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
@@ -631,7 +631,7 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 bool VmOptimizeAction(const ResourcePtr &res) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
-    kVmPasses.push_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
+    (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
   }
 #endif
   auto ret = OptimizeAction(res, kVmPasses);
@@ -794,7 +794,6 @@ void SetRunMode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto backend_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(backend_ptr);
-  std::string backend = context_ptr->backend_policy();
   auto set_ctx = [&context_ptr, &backend_ptr](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
     context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
@@ -824,7 +823,7 @@ void SetRunMode(const ResourcePtr &res) {
 
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
-  graphs.insert(func_graph);
+  (void)graphs.insert(func_graph);
   bool exist_func = ExistControlFlow(func_graph) ? HasIncorporateCall(all_nodes) : false;
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
@@ -1247,7 +1246,7 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
     (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
   } else {
     // Use InferMindir which will find c++ infer in eval_map and backend_eval_map;
-    InferMindir(res->func_graph(), args_spec_list, true);
+    (void)InferMindir(res->func_graph(), args_spec_list, true);
   }
   auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
   auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();
