@@ -207,7 +207,10 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.c
     mindspore/lite/src/runtime/infer_manager.cc
     mindspore/lite/src/ops/populate/populate_register.cc
+    mindspore/lite/src/ops/populate/custom_populate.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/shape_fusion_infer.c
+    mindspore/lite/src/runtime/kernel/arm/fp32/shape_fusion_fp32.cc
     mindspore/core/utils/status.cc
   )
   # save train files

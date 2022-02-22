@@ -51,7 +51,7 @@ int ReshapeBaseCPUKernel::Run() {
 
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       in_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
-      op_parameter_->is_train_session_) {
+      in_tensor->allocator()->RefCount(in_tensor->data()) == -1 || op_parameter_->is_train_session_) {
     CHECK_NULL_RETURN(out_tensor->data());
     CHECK_NULL_RETURN(in_tensor->data());
     MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);
