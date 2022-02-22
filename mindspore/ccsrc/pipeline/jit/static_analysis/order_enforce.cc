@@ -319,7 +319,7 @@ class OrderEnforcer {
   using PredFunc = std::function<bool(const AnfNodePtr &)>;
 
   // Find user nodes for the given node.
-  mindspore::HashSet<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, PredFunc pred = nullptr) {
+  mindspore::HashSet<AnfNodePtr> FindNodeUsers(const AnfNodePtr &node, const PredFunc &pred = nullptr) {
     auto &node_users = manager_->node_users();
     auto iter = node_users.find(node);
     if (iter == node_users.end()) {
@@ -418,7 +418,7 @@ class OrderEnforcer {
 
   std::vector<CNodePtr> GetNeedInsertLoads() {
     auto check_nodes = TopoSort(func_graph_->get_return());
-    static bool enable_all_load = common::GetEnv("MS_DEV_ENABLE_LOAD_INSERT_TENSORMOVE") == "1";
+    static const bool enable_all_load = common::GetEnv("MS_DEV_ENABLE_LOAD_INSERT_TENSORMOVE") == "1";
     // Insert TensorMove for all Load nodes
     if (enable_all_load) {
       return GetAllLoads(check_nodes);
@@ -480,7 +480,7 @@ class OrderEnforcer {
     auto real_load = func_graph_->NewCNode(new_inputs);
     real_load->set_abstract(node->abstract());
     MS_LOG(DEBUG) << "Insert TensorMove " << real_load->DebugString() << " for load " << node->DebugString();
-    manager_->Replace(node, real_load);
+    (void)manager_->Replace(node, real_load);
   }
 
   const FuncGraphPtr &func_graph_;

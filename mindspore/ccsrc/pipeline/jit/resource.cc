@@ -264,7 +264,12 @@ Resource::Resource(const py::object &obj)
 Resource::~Resource() {
   MS_LOG(DEBUG) << "Resource clear";
 
-  mindspore::HashMap<std::string, Any>().swap(results_);
+  try {
+    mindspore::HashMap<std::string, Any>().swap(results_);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Exception when cleaning resource. Error info " << e.what();
+  }
+
   // If exit normally, these global variables will be cleaned
   // in Resource::Clean call by MsPipeline::Compile, but if exit with MS_LOGEXCEPTION,
   // these global variables may not being cleaned, it may

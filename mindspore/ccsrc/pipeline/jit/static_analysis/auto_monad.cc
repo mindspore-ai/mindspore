@@ -308,7 +308,15 @@ struct SwitchLayerCall {
 class NodeStackGuard {
  public:
   NodeStackGuard(OrderedSet<AnfNodePtr> *stack, const AnfNodePtr &node) : stack_(stack) { stack_->push_front(node); }
-  ~NodeStackGuard() { (void)stack_->pop(); }
+  ~NodeStackGuard() {
+    try {
+      (void)stack_->pop();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Exception when pop. Error info " << e.what();
+    }
+
+    stack_ = nullptr;
+  }
 
  private:
   OrderedSet<AnfNodePtr> *stack_;
@@ -486,9 +494,9 @@ class SideEffectFinder {
     for (size_t i = caller->size() - 1; i > 0; --i) {
       auto &input = caller->input(i);
       if (HasAbstractUMonad(input)) {
-        AddMonadParameter(branch, "u", input->abstract());
+        (void)AddMonadParameter(branch, "u", input->abstract());
       } else if (HasAbstractIOMonad(input)) {
-        AddMonadParameter(branch, "io", input->abstract());
+        (void)AddMonadParameter(branch, "io", input->abstract());
       }
     }
   }
@@ -744,7 +752,7 @@ class SideEffectFinder {
     if (called_graph) {
       // Save the caller of the graph, so that we can update
       // monad parameters for it when requires.
-      graph_callers_[called_graph].emplace(cnode);
+      (void)graph_callers_[called_graph].emplace(cnode);
       return TraceEffectInfo(called_graph->output());
     }
 
@@ -903,7 +911,7 @@ class SideEffectFinder {
     if (func_graph) {
       // Save the caller of the graph, so that we can update
       // monad parameters for it when requires.
-      graph_callers_[func_graph].emplace(cnode);
+      (void)graph_callers_[func_graph].emplace(cnode);
       return GetEffectInfo(func_graph);
     }
 
@@ -1053,11 +1061,11 @@ class SideEffectFinder {
       // The cnode is the switch caller.
       if (is_multi_branches) {
         // Caller to branches.
-        switch_calls_.emplace(cnode, branches);
+        (void)switch_calls_.emplace(cnode, branches);
       }
       for (auto &branch : branches) {
         // Branch to caller.
-        graph_callers_[branch].emplace(cnode);
+        (void)graph_callers_[branch].emplace(cnode);
       }
     }
   }

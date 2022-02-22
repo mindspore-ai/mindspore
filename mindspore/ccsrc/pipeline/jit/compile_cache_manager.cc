@@ -58,7 +58,7 @@ std::string GetUserDefinedCachePath() {
 
 std::string GetCompileCacheDir() {
   static const std::string user_defined_path = GetUserDefinedCachePath();
-  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
   static const std::string compile_cache_dir =
     user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
   return compile_cache_dir;

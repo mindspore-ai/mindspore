@@ -344,7 +344,7 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
   // It index is a value node, get the item of index directly.
   const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
   const std::string module = "mindspore._extends.parse.parser";
-  int index = imm_value->value();
+  auto index = imm_value->value();
   py::object item_obj = parse::python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
   return item_obj;
 }

@@ -252,7 +252,7 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
     }
     AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden);
     args_spec.push_back(ptr);
-    cur_convert_input_.emplace(args[i].ptr(), ptr);
+    (void)cur_convert_input_.emplace(args[i].ptr(), ptr);
   }
 
   // If cache matched no need CheckArgsValid
@@ -515,9 +515,9 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   auto res = iter->second->resource;
   if (res->HasResult(kStepParallelGraph)) {
     std::string layout_graph = phase + kStepParallelGraph;
-    info_.erase(layout_graph);
+    (void)info_.erase(layout_graph);
   }
-  info_.erase(phase);
+  (void)info_.erase(phase);
   MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
 }
 
@@ -1075,7 +1075,7 @@ void Pipeline::Run() {
 
 bool Pipeline::NeedCreateBackend() {
   return std::any_of(actions_.begin(), actions_.end(),
-                     [](ActionItem action) { return action.first == "task_emit" || action.first == "execute"; });
+                     [](const ActionItem &action) { return action.first == "task_emit" || action.first == "execute"; });
 }
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
