@@ -19,6 +19,7 @@
 #include "sys/stat.h"
 
 #include "debug/dump_proto.h"
+#include "debug/common.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/device_manager.h"
 #include "profiler/device/ascend/options.h"
@@ -92,8 +93,8 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
   // Note: Only parallel mode is AUTO_PARALLEL or SEMI_AUTO_PARALLEL, the
   // g_device_manager is not nullptr;
   if (parallel::g_device_manager != nullptr) {
-    auto rank_id = parallel::g_device_manager->global_rank();
-    auto stage_id = parallel::g_device_manager->stage_id();
+    auto rank_id = static_cast<uint32_t>(parallel::g_device_manager->global_rank());
+    auto stage_id = static_cast<uint32_t>(parallel::g_device_manager->stage_id());
     config->set_rank_id(rank_id);
     config->set_stage_id(stage_id);
 
@@ -119,7 +120,7 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
     if (!ret) {
       MS_LOG(EXCEPTION) << "The given RANK_ID is an invalid digit string.";
     }
-    config->set_rank_id(rank_id_int);
+    config->set_rank_id(static_cast<uint32_t>(rank_id_int));
   }
 
   has_got_parallel_strategy_data = true;
@@ -164,12 +165,12 @@ void SaveParallelStrategyToFile() {
   std::ofstream ofs(file_path);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file '" << file_path << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+                  << " Errno:" << errno << " ErrInfo:" << ErrnoToString(errno);
     return;
   }
 
   std::string profiling_parallel_str;
-  google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &profiling_parallel_str);
+  (void)google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &profiling_parallel_str);
   ofs << profiling_parallel_str;
   ofs.close();
 

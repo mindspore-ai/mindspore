@@ -1140,7 +1140,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         logger.info('Initiating timeline...')
         all_reduce_names = []
         for info in communication_info:
-            # stream_{stream_id}_{stream_op_index}_{opname}
+            # The communication info format is "stream_{stream_id}_{stream_op_index}_{opname}"
             all_reduce_name = info[0][info[0].rindex('_')+1:]
             if all_reduce_name not in all_reduce_names:
                 all_reduce_names.append(all_reduce_name)
