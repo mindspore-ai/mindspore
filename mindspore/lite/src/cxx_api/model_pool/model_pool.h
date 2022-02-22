@@ -24,7 +24,7 @@
 #include "include/api/status.h"
 #include "include/api/context.h"
 #include "include/api/model_parallel_runner.h"
-#include "src/cxx_api/model_pool/model_thread.h"
+#include "src/cxx_api/model_pool/model_worker.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 class ModelPool {

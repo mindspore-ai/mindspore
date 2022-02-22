@@ -42,7 +42,6 @@ void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_li
     return;
   }
   int core_num = GetCoreNum();
-  num_models_ = core_num / thread_num;
   int core_id = 0;
   for (size_t i = 0; i < num_models_; i++) {
     std::vector<int> bind_id;
@@ -80,22 +79,23 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
       MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
       return nullptr;
     }
-    if (device->GetDeviceType() == kGPU) {
-      num_models_ = 1;
-    }
     auto cpu_context = device->Cast<CPUDeviceInfo>();
     auto enable_fp16 = cpu_context->GetEnableFP16();
     if (enable_fp16) {
       MS_LOG(ERROR) << "model pool not support enable fp16.";
       return nullptr;
     }
-    num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
+    if (device->GetDeviceType() == kGPU) {
+      num_models_ = 1;
+    } else {
+      num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
+    }
   } else {
     MS_LOG(DEBUG) << "use default config.";
     num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
     model_context->SetThreadNum(kNumThreads);
-    model_context->SetEnableParallel(false);
-    model_context->SetThreadAffinity(lite::NO_BIND);
+    model_context->SetEnableParallel(true);
+    model_context->SetThreadAffinity(lite::HIGHER_CPU);
     auto &device_list = model_context->MutableDeviceInfo();
     auto device_info = std::make_shared<CPUDeviceInfo>();
     device_info->SetEnableFP16(false);
