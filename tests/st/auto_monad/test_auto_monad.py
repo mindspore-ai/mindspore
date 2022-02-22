@@ -1518,3 +1518,47 @@ def test_multi_abs_add_assign():
     outputs = [r2.asnumpy(), r1.asnumpy(), net.p.data.asnumpy(), tmp.asnumpy()]
     expects = numpy_out(p, i0, i1, i2)
     np.testing.assert_array_equal(outputs, expects)
+
+
+@security_off_wrap
+def test_print_assign_print():
+    """
+    Feature: Auto Monad
+    Description: Test load eliminate when umonad and iomona both exist.
+    Expectation: No exception.
+    """
+    class Print(Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+            self.assign = P.Assign()
+            self.param = Parameter(Tensor(1, dtype=ms.int32), name='param')
+
+        def func(self):
+            self.assign(self.param, self.param * 5)
+            return self.param + 5
+
+        def construct(self, value):
+            param = self.param
+            self.print("param_1:", param)
+            res = self.func()
+            self.print("res:", res)
+            self.print("param_2:", param)
+            self.param = value
+            self.print("param_3:", param)
+            return res
+
+    cap = Capture()
+    with capture(cap):
+        input_x = Tensor(3, dtype=ms.int32)
+        expect = Tensor(10, dtype=ms.int32)
+        net = Print()
+        out = net(input_x)
+        time.sleep(0.1)
+
+    patterns = {'param_1:\nTensor(shape=[], dtype=Int32, value=1)\n'
+                'res:\nTensor(shape=[], dtype=Int32, value=10)\n'
+                'param_2:\nTensor(shape=[], dtype=Int32, value=5)\n'
+                'param_3:\nTensor(shape=[], dtype=Int32, value=3)'}
+    check_output(cap.output, patterns)
+    np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
