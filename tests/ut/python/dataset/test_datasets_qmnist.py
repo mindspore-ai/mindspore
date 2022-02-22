@@ -66,7 +66,6 @@ def load_qmnist(path, usage, compat=True):
             image_file.read(16)
             image = np.fromfile(image_file, dtype=np.uint8)
             image = image.reshape(-1, 28, 28, 1)
-            image[image > 0] = 255  # Perform binarization to maintain consistency with our API
             images.append(image)
         with open(label_path[i], 'rb') as label_file:
             label_file.read(12)

@@ -241,9 +241,6 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
   TensorShape label_tensor_shape = TensorShape({kQMnistLabelLength});
   for (int64_t data_index = 0; data_index != num_images; data_index++) {
     auto image = &images_buf[data_index * image_size];
-    for (int64_t image_index = 0; image_index < image_size; image_index++) {
-      image[image_index] = (image[image_index] == 0) ? 0 : 255;
-    }
     std::shared_ptr<Tensor> image_tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(image_tensor_shape, data_schema_->Column(0).Type(),
                                               reinterpret_cast<unsigned char *>(image), &image_tensor));

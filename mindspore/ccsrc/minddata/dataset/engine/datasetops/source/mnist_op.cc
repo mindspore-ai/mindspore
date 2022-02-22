@@ -192,9 +192,6 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   TensorShape img_tensor_shape = TensorShape({kMnistImageRows, kMnistImageCols, 1});
   for (int64_t j = 0; j != num_images; ++j) {
     auto pixels = &images_buf[j * size];
-    for (int64_t m = 0; m < size; ++m) {
-      pixels[m] = (pixels[m] == 0) ? 0 : 255;
-    }
     std::shared_ptr<Tensor> image;
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(img_tensor_shape, data_schema_->Column(0).Type(),
                                               reinterpret_cast<unsigned char *>(pixels), &image));
