@@ -169,6 +169,12 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
 
   if (mode == InterpolationMode::kCubicPil) {
+    if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS ||
+        input_cv->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
+      RETURN_STATUS_UNEXPECTED("Resize: Interpolation mode PILCUBIC only supports image with 3 channels, but got: " +
+                               input_cv->shape().ToString());
+    }
+
     LiteMat imIn, imOut;
     std::shared_ptr<Tensor> output_tensor;
     TensorShape new_shape = TensorShape({output_height, output_width, 3});
@@ -710,6 +716,13 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     cv::Mat cv_in = input_cv->mat();
 
     if (mode == InterpolationMode::kCubicPil) {
+      if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS ||
+          input_cv->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
+        RETURN_STATUS_UNEXPECTED(
+          "CropAndResize: Interpolation mode PILCUBIC only supports image with 3 channels, but got: " +
+          input_cv->shape().ToString());
+      }
+
       cv::Mat input_roi = cv_in(roi);
       std::shared_ptr<CVTensor> input_image;
       RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_roi, input_cv->Rank(), &input_image));
