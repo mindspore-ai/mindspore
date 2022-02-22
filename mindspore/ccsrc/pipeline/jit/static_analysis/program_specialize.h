@@ -116,9 +116,18 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 
   const NodeToNodeMap &cloned_nodes() const { return cloner_->cloned_nodes(); }
 
-  inline AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node);
+  inline AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node) {
+    return engine_->MakeConfig(node, context_, func_graph_);  // 'func_graph_' is dummy here.
+  }
+
   inline AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const BaseFuncGraphEvaluatorPtr &evaluator,
-                                        const AbstractBasePtrList &args_spec_list);
+                                        const AbstractBasePtrList &args_spec_list) {
+    AbstractBasePtrList normalized_args_spec_list = evaluator->NormalizeArgs(args_spec_list);
+    FuncGraphPtr fg = evaluator->GetFuncGraph(engine, normalized_args_spec_list);
+    MS_EXCEPTION_IF_NULL(evaluator->parent_context());
+    AnalysisContextPtr new_context = evaluator->parent_context()->NewContext(fg, normalized_args_spec_list);
+    return new_context;
+  }
 
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
   inline void AddTodoItem(const std::vector<AnfNodePtr> &nodes) {
