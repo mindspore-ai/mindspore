@@ -168,7 +168,7 @@ using GraphExecutorPyPtr = std::shared_ptr<GraphExecutorPy>;
 
 std::string GetJitLevel();
 
-void CheckArgsValid(const py::tuple &args);
+void CheckArgsValid(const py::object &source_obj, const py::tuple &args);
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs);
 
 bool InitDistribute(const std::map<std::string, std::string> &options);
