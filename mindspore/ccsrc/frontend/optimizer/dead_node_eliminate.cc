@@ -160,7 +160,7 @@ std::vector<AnfNodePtr> GenerateOutputTempGetItems(const FuncGraphPtr &func_grap
     MS_EXCEPTION_IF_NULL(node->abstract());
     if (!node->abstract()->isa<abstract::AbstractTuple>()) {
       if (node != func_graph->output()) {
-        output_tmp_getitems.emplace_back(node);
+        (void)output_tmp_getitems.emplace_back(node);
       }
       continue;
     }
@@ -204,7 +204,7 @@ bool EraseNode(const CNodePtr &cnode, size_t input_idx, const FuncGraphManagerPt
   }
   MS_LOG(WARNING) << "Erase dead node: " << dead_node->DebugString() << ", user: " << cnode->DebugString();
   // Can't use `Replace`, must use `SetEdge`.
-  manager->SetEdge(cnode, input_idx, MakeScalarZero());
+  manager->SetEdge(cnode, SizeToInt(input_idx), MakeScalarZero());
   return true;
 }
 
@@ -335,7 +335,7 @@ std::shared_ptr<HashSet<size_t>> GetUsedParameters(const FuncGraphPtr &func_grap
   for (const auto &parameter : parameters) {
     const auto &node_users_it = manager_node_users.find(parameter);
     if (node_users_it != manager_node_users.end() && !node_users_it->second.empty()) {
-      used_parameter_indexes->insert(index);
+      (void)used_parameter_indexes->insert(index);
     }
     index++;
   }
@@ -452,7 +452,7 @@ bool EraseGraphCaller(const FuncGraphPtr &func_graph, const FuncGraphAnalyzer &a
     // instead of arg user here.
     for (const auto &closure : call_closures) {
       for (size_t i = 0; i < closure->arg_users_.size(); i++) {
-        EraseArg(closure->arg_indexes_[i], closure->arg_users_[i], manager);
+        (void)EraseArg(closure->arg_indexes_[i], closure->arg_users_[i], manager);
       }
     }
     change = true;
@@ -515,8 +515,9 @@ std::shared_ptr<HashMap<std::string, std::vector<AnfNodePtr>>> SearchVisitNodes(
 
 std::shared_ptr<OrderedSet<FuncGraphPtr>> GetAllFuncGraphs(const std::vector<AnfNodePtr> &value_nodes) {
   auto func_graphs = std::make_shared<OrderedSet<FuncGraphPtr>>();
-  std::for_each(value_nodes.begin(), value_nodes.end(),
-                [&func_graphs](const AnfNodePtr &node) { func_graphs->insert(GetValueNode<FuncGraphPtr>(node)); });
+  (void)std::for_each(value_nodes.begin(), value_nodes.end(), [&func_graphs](const AnfNodePtr &node) {
+    func_graphs->insert(GetValueNode<FuncGraphPtr>(node));
+  });
   return func_graphs;
 }
 

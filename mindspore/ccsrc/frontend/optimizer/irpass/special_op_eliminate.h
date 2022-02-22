@@ -648,6 +648,7 @@ class AllReduceConstElim : public OptimizerCaller {
       auto prim_cnode = pattern.GetOriginalNode();
       MS_EXCEPTION_IF_NULL(prim_cnode);
       auto primitive = GetCNodePrimitive(prim_cnode);
+      MS_EXCEPTION_IF_NULL(primitive);
       auto reduce_op = primitive->GetAttr("op");
       auto group = primitive->GetAttr("group")->ToString();
       // For sum operation, multiply constant tensor by number of devices
