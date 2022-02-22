@@ -18,21 +18,34 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                      SliceFwdGpuKernelMod, double)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      SliceFwdGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-                      SliceFwdGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-                      SliceFwdGpuKernelMod, int64_t)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      SliceFwdGpuKernelMod, int32_t)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-                      SliceFwdGpuKernelMod, int16_t)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-                      SliceFwdGpuKernelMod, uchar)
-MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      SliceFwdGpuKernelMod, bool)
+#define REG_SLICE_GPU(MS_DTYPE, DTYPE) \
+  MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(MS_DTYPE).AddOutputAttr(MS_DTYPE), SliceFwdGpuKernelMod, DTYPE)
+
+#define REG_SLICE_GPU_DTYPES(F) \
+  F(kNumberTypeFloat64, double) \
+  F(kNumberTypeFloat32, float)  \
+  F(kNumberTypeFloat16, half)   \
+  F(kNumberTypeInt64, int64_t)  \
+  F(kNumberTypeInt32, int32_t)  \
+  F(kNumberTypeInt16, int16_t)  \
+  F(kNumberTypeUInt8, uchar)    \
+  F(kNumberTypeBool, bool)
+
+REG_SLICE_GPU_DTYPES(REG_SLICE_GPU)
+
+#define REG_DYNAMIC_SLICE_GPU_ATTR(T0_MS_DTYPE, T0_DTYPE, T1_MS_DTYPE) \
+  MS_REG_GPU_KERNEL_ONE(Slice,                                         \
+                        KernelAttr()                                   \
+                          .AddInputAttr(T0_MS_DTYPE)                   \
+                          .AddInputAttr(T1_MS_DTYPE)                   \
+                          .AddInputAttr(T1_MS_DTYPE)                   \
+                          .AddOutputAttr(T0_MS_DTYPE),                 \
+                        SliceFwdGpuKernelMod, T0_DTYPE)
+
+#define REG_DYNAMIC_SLICE_GPU(MS_DTYPE, DTYPE)                  \
+  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt32) \
+  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt64)
+
+REG_SLICE_GPU_DTYPES(REG_DYNAMIC_SLICE_GPU)
 }  // namespace kernel
 }  // namespace mindspore

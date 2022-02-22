@@ -75,7 +75,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < -dims || axis_ >= dims) {
@@ -95,7 +95,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
     int current_dim = 0;
     for (int i = 0; i < input_num_; i++) {
       size_t input_size = 1;
-      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
       }
@@ -126,6 +126,18 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.push_back(output_size_ * sizeof(T));
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    axis_ = 0;
+    input_num_ = 1;
+    output_size_ = 0;
+    all_size_before_axis_ = 1;
+    all_size_axis_ = 1;
+    kernel_name_ = "ConcatV2";
+    inputs_host_ = nullptr;
+    len_axis_ = nullptr;
   }
 
  protected:
