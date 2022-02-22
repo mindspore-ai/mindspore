@@ -14,18 +14,22 @@
 # ============================================================================
 
 """Custom operator"""
-import os
-import inspect
 import json
+import os
 import re
+import ast
 import hashlib
-from mindspore import ops
-from mindspore import log as logger
-from mindspore.ops import DataType
+import inspect
+import numpy as np
+from mindspore._c_expression import Oplib, typing
+from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
-from mindspore._c_expression import Oplib
-from ._pyfunc_registry import add_pyfunc
+from mindspore.ops import DataType
+from mindspore import log as logger
+from mindspore import ops
+from ._ms_hybrid import determine_variable_usage
 from ._custom_grad import autodiff_bprop
+from ._pyfunc_registry import add_pyfunc
 
 
 class Custom(ops.PrimitiveWithInfer):
@@ -47,6 +51,7 @@ class Custom(ops.PrimitiveWithInfer):
               1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
               2. A TBE operator implementation function.
               3. A pure python function
+              4. An ms_hybrid decorated function written by the Hybrid DSL.
 
             - str: If func is of str type, then str should be a path of file along with a function name.
               This could be used when func_type is "aot" or "julia".
@@ -125,12 +130,15 @@ class Custom(ops.PrimitiveWithInfer):
                       (ex. Custom(func="./add.jl:Add:add", out_shape=[1], out_dtype=mstype.float32, "julia")
 
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of
-            `func`.
+            `func`. Default: None.
 
             If func has single output, then the value of output shape is a list or tuple of int.
 
             If func has multiple outputs, then the value of output shape is a tuple, each item represents the shape
             of each output.
+
+            The input can be None only when the func_type input is "hybrid". In this case, the automatic infer
+            shape mechanic will be enabled.
 
         out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]]): The output data type
             infer function or the value of output data type of `func`.
@@ -140,14 +148,23 @@ class Custom(ops.PrimitiveWithInfer):
             If func has multiple outputs, then the value of output shape is a tuple of `mindspore.dtype`, each item
             represents the data type of each output.
 
-        func_type (str): The implementation type of `func`, should be one of ["akg", "tbe", "aot", "pyfunc"]. Each
-            `func_type` only supports specific platforms(targets). The supported platforms of `func_type`:
+            The input can be None only when the func_type input is "hybrid". In this case, the automatic infer
+            value mechanic will be enabled.
 
+        func_type (str): The implementation type of `func`, should be one of
+
+            ["hybrid", "akg", "tbe", "aot", "pyfunc", "julia", "aicpu"].
+
+        Each `func_type` only supports specific platforms(targets). Default: "hybrid".
+        The supported platforms of `func_type`:
+
+            - "hybrid": supports ["Ascend", "GPU"].
             - "akg": supports ["Ascend", "GPU"].
             - "tbe": supports ["Ascend"].
             - "aot": supports ["GPU", "CPU"].
             - "pyfunc": supports ["CPU"].
             - "julia": supports ["CPU"].
+            - "aicpu": supports ["Ascend"].
 
         bprop (function): The back propagation function of `func`. Default: None.
         reg_info (Union[str, dict, list, tuple]): Represents the registration information(reg info) of `func` with
@@ -184,12 +201,20 @@ class Custom(ops.PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore.ops as ops
-        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType
+        >>> import numpy as np
+        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, ms_hybrid
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.nn import Cell
+        >>> input_x = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> input_y = Tensor(np.ones([16, 16]).astype(np.float32))
         >>>
-        >>> # Example, func_type = "akg"
-        >>> def outer_product(a, b):
+        >>> # Example, func_type = "hybrid"
+        >>> # This is the default func_type in Custom,
+        >>> # and both out_shape and out_dtype can be None(default value).
+        >>> # In this case, the input func must be a function written in the Hybrid DSL
+        >>> # and decorated by @ms_hybrid.
+        >>> @ms_hybrid
+        >>> def outer_product_script(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
         ...         for i1 in range(b.shape[1]):
@@ -198,15 +223,18 @@ class Custom(ops.PrimitiveWithInfer):
         ...                 c[i0, i1] = c[i0, i1] + (a[i0, i2] * b[i2, i1])
         ...     return c
         >>>
-        >>> class AkgNet(Cell):
-        ...     def __init__(self):
-        ...         super(AkgNet, self).__init__()
-        ...         def infer_func(x, y):
-        ...             return x
-        ...         self.program = ops.Custom(outer_product, out_shape=infer_func, out_dtype=infer_func, \
-        ...                                   func_type="akg")
-        ...     def construct(self, x, y):
-        ...         return self.program(x, y)
+        >>> test_op_hybrid = ops.Custom(outer_product)
+        >>> output = test_op_hybrid(input_x, input_y)
+        >>>
+        >>> # Example, func_type = "akg"
+        >>> def outer_product(a_1, b_1):
+        ...     d = output_tensor(a_1.shape, a_1.dtype)
+        ...     for i0 in range(a_1.shape[0]):
+        ...         for i1 in range(b_1.shape[1]):
+        ...             d[i0, i1] = 0.0
+        ...             for i2 in range(a.shape[1]):
+        ...                 d[i0, i1] = d[i0, i1] + (a_1[i0, i2] * b_1[i2, i1])
+        ...     return d
         >>>
         >>> # Example, func_type = "tbe"
         >>> square_with_bias_op_info = CustomRegOp() \
@@ -242,14 +270,11 @@ class Custom(ops.PrimitiveWithInfer):
         ...
         ...     te.lang.cce.cce_build_code(sch, config)
         >>>
-        >>> class TbeNet(Cell):
-        ...     def __init__(self):
-        ...         super(TbeNet, self).__init__()
-        ...         self.square_with_bias = ops.Custom(square_with_bias, out_shape=lambda x, _: x, \
-        ...                                            out_dtype=lambda x, _: x, func_type="tbe")
-        ...     def construct(self, x):
-        ...         res = self.square_with_bias(x, 1.0)
-        ...         return res
+        >>> def test_tbe():
+        ...     square_with_bias = ops.Custom(square_with_bias, out_shape=lambda x, _: x, \
+        ...                                   out_dtype=lambda x, _: x, func_type="tbe")
+        ...     res = self.square_with_bias(input_x, 1.0)
+        ...     return res
         >>>
         >>> # Example, func_type = "aicpu"
         >>> resize_bilinear_op_info = CustomRegOp("ResizeBilinear") \
@@ -267,33 +292,24 @@ class Custom(ops.PrimitiveWithInfer):
         ... def resize_bilinear_aicpu():
         ...     return
         >>>
-        >>> class AicpuNet(Cell):
-        ...     def __init__(self):
-        ...         super(AicpuNet, self).__init__()
-        ...         self.resize_bilinear_op = ops.Custom(resize_bilinear_aicpu, out_shape=[1, 1, 9, 9], \
-        ...                                              out_dtype=mstype.float32, func_type="aicpu")
-        ...     def construct(self, x):
-        ...         res = self.resize_bilinear_op(x, True, "aicpu_kernels")
-        ...         return res
+        >>> def test_aicpu(x):
+        ...     resize_bilinear_op = ops.Custom(resize_bilinear_aicpu, out_shape=[1, 1, 9, 9], \
+        ...                                     out_dtype=mstype.float32, func_type="aicpu")
+        ...     res = resize_bilinear_op(x, True, "aicpu_kernels")
+        ...     return res
         >>>
         >>> # Example, func_type = "aot"
-        >>> class AOTSingleOutputNet(Cell):
-        ...     def __init__(self, out_shapes, out_types):
-        ...         super(AOTSingleOutputNet, self).__init__()
-        ...         self.program = ops.Custom("./reorganize.so:CustomReorganize", out_shapes, out_types, "aot")
-        ...     def construct(self, x, y):
-        ...         return self.program(x, y)
+        >>> def test_aot(x, y, out_shapes, out_types):
+        ...     program = ops.Custom("./reorganize.so:CustomReorganize", out_shapes, out_types, "aot")
+        ...     out = program(x, y)
+        ...     return out
         >>>
         >>> # Example, func_type = "pyfunc"
         >>> def func_multi_output(x1, x2):
         ...     return (x1 + x2), (x1 - x2)
         >>>
-        >>> class PyFuncNet(Cell):
-        ...     def __init__(self):
-        ...         super(PyFuncNet, self).__init__()
-        ...         self.func = ops.Custom(func_multi_output, lambda x, _: (x, x), lambda x, _: (x, x), "pyfunc")
-        ...     def construct(self, x1, x2):
-        ...         return self.func(x1, x2)
+        >>> test_pyfunc = ops.Custom(func_multi_output, lambda x, _: (x, x), lambda x, _: (x, x), "pyfunc")
+        >>> output = test_pyfunc(input_x, input_y)
         >>>
         >>> # Example, func_type = "julia"
         >>> # julia code:
@@ -304,32 +320,35 @@ class Custom(ops.PrimitiveWithInfer):
         >>> #   return z
         >>> # end
         >>> # end
-        >>> class JULIASingleOutputNet(Cell):
-        ...     def __init__(self, out_shapes, out_types):
-        ...         super(JULIASingleOutputNet, self).__init__()
-        ...         self.program = ops.Custom("./add.jl:Add:add", out_shapes, out_types, "julia")
-        ...     def construct(self, x, y):
-        ...         return self.program(x, y)
+        >>> def test_julia(x, y, out_shapes, out_types):
+        ...     program = ops.Custom("./add.jl:Add:add", out_shapes, out_types, "julia")
+        ...     out = program(x, y)
+        ...     return out
     """
 
     registered_func = {}
     attr_dict = {}  # Save input_names and attr_names for func.
 
-    def __init__(self, func, out_shape, out_dtype, func_type, bprop=None, reg_info=None):
+    def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
-        self.supported_func_type = ["akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]
+        self.supported_func_type = ["hybrid", "akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]
         self.func = func
         self.func_type = func_type
         self.func_name = ""
         self.uniq_name = ""
         self.imply_path = ""
         self.func_source_str = ""
+        self._func_compile_attrs = {}
+        self._is_ms_hybrid = False
+
         self._check_func()
         self._update_func_info()
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
+        self.add_prim_attr("func_compile_attrs", self._func_compile_attrs)
+
         self.add_prim_attr("imply_path", self.imply_path)
         if self.func_type == "pyfunc":
             func_id = id(self.func)
@@ -360,28 +379,12 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 self.func_type = "hybrid"
                 self._hybrid_func_analyser()
-                if not self.bprop:
-                    self._hybrid_autodiff()
+
+        if not self.bprop and self.func_type == "hybrid":
+            self._hybrid_autodiff(func_type)
+
         self.add_prim_attr("func_type", self.func_type)
         self._update_attr()
-
-    def infer_shape(self, *args):
-        if callable(self.out_shape):
-            return self.out_shape(*args)
-        if self.out_shape:
-            return self.out_shape
-        logger.warning("The function output are empty tuple. Add a placeholder instead. "
-                       "Do not use it as it could be any uninitialized data.")
-        return (1,)
-
-    def infer_dtype(self, *args):
-        if callable(self.out_dtype):
-            return self.out_dtype(*args)
-        if self.out_dtype:
-            return self.out_dtype
-        logger.warning("The function output are empty tuple. Add a placeholder instead. "
-                       "Do not use it as it could be any uninitialized data.")
-        return mstype.int32
 
     def get_bprop(self):
         return self.bprop
@@ -389,7 +392,8 @@ class Custom(ops.PrimitiveWithInfer):
     def _check_julia_func(self):
         """Check the validity of julia func"""
         if not isinstance(self.func, str):
-            raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
+            raise TypeError("{} func should be of type str, but got {}".format(
+                self.func_type, type(self.func)))
         if self.func.count(':') != 2:
             raise Exception("func format in julia custom op should be file:module:func.")
         file, module, func = self.func.split(':')
@@ -407,9 +411,27 @@ class Custom(ops.PrimitiveWithInfer):
                              .format(self.supported_func_type, self.func_type))
         if self.func_type == "aot":
             if not isinstance(self.func, str):
-                raise TypeError("{} func should be of type str, but got {}".format(self.func_type, type(self.func)))
+                raise TypeError("{} func should be of type str, but got {}".format(
+                    self.func_type, type(self.func)))
         elif self.func_type == "julia":
             self._check_julia_func()
+        elif self.func_type == "hybrid":
+            if not hasattr(self.func, "ms_hybrid_flag"):
+                raise TypeError(
+                    "To use the mode ms_hybrid, the input func should a function decorated by ms_hybrid")
+            self._is_ms_hybrid = True
+            self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
+        elif self.func_type == "akg":
+            if hasattr(self.func, "ms_hybrid_flag"):
+                logger.warning("To have a better user experience, the mode ms_hybrid is suggested "
+                               "for the input function with decorator @ms_hybrid"
+                               "To enable this mode, set the func_type to be \"ms_hybrid\"")
+        elif self.func_type == "pyfunc":
+            if hasattr(self.func, "ms_hybrid_flag"):
+                logger.warning("Now you are using the function with decorator @ms_hybrid in the mode pyfunc"
+                               "The kernel will be executed as a native python function, which might lead to "
+                               "low efficiency. To accelerate the kernel, set the func_type to be \"ms_hybrid\""
+                               )
         else:
             if not callable(self.func):
                 raise TypeError("{} func should be of type function, but got {}"
@@ -418,8 +440,8 @@ class Custom(ops.PrimitiveWithInfer):
     def _update_func_info(self):
         """Update information of func"""
         if callable(self.func):
-            # Get the original function if func is decorated
-            if "__wrapped__" in self.func.__dict__:
+            # For the func_type other then hybrid, get the original function if func is decorated
+            if "__wrapped__" in self.func.__dict__ and not self._is_ms_hybrid:
                 self.func = self.func.__dict__["__wrapped__"]
             # func name
             self.func_name = self.func.__name__
@@ -430,6 +452,16 @@ class Custom(ops.PrimitiveWithInfer):
             index = self.func_source_str.find("def ")
             if index != -1:
                 self.func_source_str = self.func_source_str[index:]
+
+            if self._is_ms_hybrid:
+                # static check for the Hybrid DSL in hybrid
+                root = ast.parse(self.func_source_str)
+                inplace_assign_output = determine_variable_usage(root, self.func_name)
+                if inplace_assign_output:
+                    self.add_prim_attr("inplace_assign_output",
+                                       " ".join([str(j) for i in inplace_assign_output for j in i]))
+                self.add_prim_attr('func_source_str', self.func_source_str)
+
             # unique func name
             sha256 = hashlib.sha256()
             sha256.update(self.imply_path.encode("utf-8"))
@@ -578,8 +610,8 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target, "pyfunc": target,
-                                   "julia": target}
+        func_type_to_imply_type = {"hybrid": "AKG", "akg": "AKG", "tbe": "TBE", "aicpu": "AiCPU", "aot": target,
+                                   "pyfunc": target, "julia": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def _save_attr(self, reg_info):
@@ -658,6 +690,8 @@ class Custom(ops.PrimitiveWithInfer):
         # add input_names, attr_names
         func_attr = {}
         if callable(self.func):
+            inputs_num = len(inspect.signature(self.func).parameters)
+            self.add_prim_attr("inputs_num", inputs_num)
             func_attr = getattr(self.func, "func_attr", None)
         elif isinstance(self.func, str):
             func_attr = Custom.attr_dict.get(self.func)
@@ -675,7 +709,7 @@ class Custom(ops.PrimitiveWithInfer):
         else:
             self.add_prim_attr("autodiff", False)
 
-    def _hybrid_autodiff(self):
+    def _hybrid_autodiff(self, input_func_type):
         """generate backward op for a custom hybrid op"""
         inputs_num = len(inspect.signature(self.func).parameters)
         if inputs_num == 0:
@@ -690,7 +724,7 @@ class Custom(ops.PrimitiveWithInfer):
 
             setattr(infer_func, "type", "autodiff")
             op = Custom(func=self.func, out_shape=infer_func, out_dtype=infer_func,
-                        func_type="akg", bprop=True)
+                        func_type=input_func_type, bprop=True)
             self.bprop = grad_func(op)
 
     def _hybrid_func_analyser(self):
@@ -707,3 +741,85 @@ class Custom(ops.PrimitiveWithInfer):
             if any(i[1] != -1 for i in inplace_assign_output):
                 self.add_prim_attr("inplace_assign_output", " ".join(
                     [str(j) for i in inplace_assign_output for j in i]))
+
+    def _auto_infer(self, *args):
+        """
+        the automatic infer function for functions with @ms_hybrid decorator
+        """
+        fake_input = []
+        enable_infer_value = True
+        for arg in args:
+            if arg["value"] is not None:
+                fake_input.append(arg["value"].asnumpy())
+            else:
+                arg_dtype = arg["dtype"]
+                # if any value is missing from input, disable infer value
+                enable_infer_value = False
+                if isinstance(arg_dtype, mstype.tensor_type):
+                    arg_dtype = arg_dtype.element_type()
+                fake_arg = np.zeros(arg["shape"]).astype(
+                    mstype.dtype_to_nptype(arg_dtype))
+                fake_input.append(fake_arg)
+
+        fake_output = self.func(*fake_input)
+
+        return fake_output, enable_infer_value
+
+    def __infer__(self, *args):
+        if callable(self.out_shape):
+            infer_shape = self.out_shape(*(x["shape"] for x in args))
+        else:
+            infer_shape = self.out_shape
+
+        if callable(self.out_shape):
+            infer_dtype = self.out_dtype(*(x["dtype"] for x in args))
+        else:
+            infer_dtype = self.out_dtype
+
+        infer_value = None
+
+        # deal with the case of ms script
+        # enable auto infer function if any infer information is missing
+        if self._is_ms_hybrid:
+            fake_output, enable_infer_value = self._auto_infer(*args)
+
+            # use automatically inferred shape/dtype if the input infer values are null
+            infer_shape = fake_output.shape if infer_shape is None else infer_shape
+            if infer_dtype is None:
+                if hasattr(fake_output, 'shape'):
+                    infer_dtype = mstype.tensor_type(
+                        mstype.pytype_to_dtype(fake_output.dtype))
+                else:
+                    infer_dtype = mstype.pytype_to_dtype(fake_output.dtype)
+
+            infer_value = Tensor(fake_output) if enable_infer_value else None
+
+        # deal with case that the custom op is of type pyfunc with empty output
+        if self.func_type == "pyfunc":
+            if infer_shape == ():
+                logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                               "Do not use it as it could be any uninitialized data.")
+                infer_shape = (1,)
+            if infer_dtype == ():
+
+                logger.warning("The function output are empty tuple. Add a placeholder instead. "
+                               "Do not use it as it could be any uninitialized data.")
+                infer_dtype = mstype.int32
+
+        # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
+        if not isinstance(infer_shape, (tuple, list)):
+            raise TypeError(
+                "The input 'out_shape' should be one of a tuple, list, and function, "
+                "but get a {} for the Custom Op {}".format(type(infer_shape), self.func_name))
+
+        if not isinstance(infer_dtype, (typing.Type, tuple, list)):
+            raise TypeError(
+                "The input 'out_dtype' should be one of a mindspore.dtype, tuple, list, and function, "
+                "but get a {} for the Custom Op {}".format(type(infer_dtype), self.func_name))
+
+        out = {
+            "shape": infer_shape,
+            "dtype": infer_dtype,
+            "value": infer_value,
+        }
+        return out
