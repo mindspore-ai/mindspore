@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "utils/utils.h"
 #include "src/common/log_util.h"
 #include "ir/func_graph.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,24 +36,23 @@ constexpr size_t kInvalidSize = SIZE_MAX;
 }  // namespace
 
 static size_t GetTupleGetItemOutIndex(const mindspore::CNodePtr &tuple_get_item) {
-  MS_ASSERT(tuple_get_item != nullptr);
-  if (tuple_get_item->size() != mindspore::kTupleGetItemInputSize) {
-    MS_LOG(ERROR) << "The node tuple_get_item must have 2 inputs!";
-    return kInvalidSize;
-  }
+  MS_CHECK_TRUE_MSG(tuple_get_item != nullptr, kInvalidSize, "tuple_get_item is nullptr.");
+  MS_CHECK_TRUE_MSG(tuple_get_item->size() == mindspore::kTupleGetItemInputSize, kInvalidSize,
+                    "The node tuple_get_item must have 3 inputs!");
   auto output_index_value_node = tuple_get_item->input(mindspore::kInputNodeOutputIndexInTupleGetItem);
-  MS_ASSERT(output_index_value_node != nullptr);
+  MS_CHECK_TRUE_MSG(output_index_value_node != nullptr, kInvalidSize, "output_index_value_node is nullptr.");
   auto value_node = output_index_value_node->cast<mindspore::ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
-  return IntToSize(opt::CastToInt(value_node->value()).front());
+  MS_CHECK_TRUE_MSG(value_node != nullptr, kInvalidSize, "value_node is nullptr.");
+  auto values = opt::CastToInt(value_node->value());
+  MS_CHECK_TRUE_MSG(values.size() > 0, kInvalidSize, "value_node has no value.");
+  return IntToSize(values.front());
 }
 
 static bool CheckPrimitiveType(const mindspore::AnfNodePtr &node, const mindspore::PrimitivePtr &primitive_type) {
-  if (node == nullptr) {
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
   if (node->isa<mindspore::CNode>()) {
     auto cnode = node->cast<mindspore::CNodePtr>();
+    MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cnode is nullptr.");
     return IsPrimitive(cnode->input(0), primitive_type);
   } else if (node->isa<mindspore::ValueNode>()) {
     return IsPrimitive(node, primitive_type);
@@ -64,9 +64,9 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
   mindspore::AbstractBasePtr cnode_abstract;
   if (CheckPrimitiveType(cnode, mindspore::prim::kPrimTupleGetItem)) {
     auto tuple_inputs = cnode->inputs();
-    MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
+    MS_CHECK_TRUE_MSG(tuple_inputs.size() == kTupleGetItemInputSize, lite::RET_ERROR, "The node must have 3 inputs!");
     auto get_item_input_cnode = tuple_inputs.at(kSecondIndex);
-    MS_ASSERT(get_item_input_cnode != nullptr);
+    MS_CHECK_TRUE_MSG(get_item_input_cnode != nullptr, lite::RET_ERROR, "input node is nullptr.");
     auto idx = GetTupleGetItemOutIndex(cnode);
     if (!mindspore::utils::isa<mindspore::abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
       MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
@@ -106,8 +106,10 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
 
 TypeId GetTypeFromNode(const AnfNodePtr &node) {
   TypeId type = kNumberTypeFloat32;
+  MS_CHECK_TRUE_MSG(node != nullptr, type, "node is nullptr.");
   if (utils::isa<CNodePtr>(node)) {
     auto cnode = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(cnode != nullptr, type, "cnode is nullptr.");
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
       auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
       if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
@@ -115,6 +117,7 @@ TypeId GetTypeFromNode(const AnfNodePtr &node) {
         return type;
       }
       auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+      MS_CHECK_TRUE_MSG(type_ptr != nullptr, type, "type_ptr is nullptr.");
       type = type_ptr->type_id();
     }
     MS_LOG(INFO) << "node type id is " << type;
@@ -124,31 +127,27 @@ TypeId GetTypeFromNode(const AnfNodePtr &node) {
 
 std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
   std::vector<int> result;
-  if (param_ptr == nullptr) {
-    MS_LOG(DEBUG) << "Param is nullptr.";
-    return result;
-  }
+  MS_CHECK_TRUE_MSG(param_ptr != nullptr, result, "Param is nullptr.");
 
   if (!param_ptr->has_default()) {
     MS_LOG(DEBUG) << "Param has not default.";
     return result;
   }
   auto default_param = param_ptr->default_param();
+  MS_CHECK_TRUE_MSG(default_param != nullptr, result, "default_param is nullptr.");
   if (!utils::isa<tensor::TensorPtr>(default_param)) {
     MS_LOG(DEBUG) << "Tensor info is not tensor::TensorPtr.";
     return result;
   }
   auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
-  if (default_param_ptr == nullptr) {
-    MS_LOG(DEBUG) << "Default param ptr is nullptr.";
-    return result;
-  }
+  MS_CHECK_TRUE_MSG(default_param_ptr != nullptr, result, "default_param_ptr is nullptr.");
   if (default_param_ptr->data_type() != kNumberTypeInt32 && default_param_ptr->data_type() != kNumberTypeInt) {
     MS_LOG(DEBUG) << "Default param is not int.";
     return result;
   }
 
   auto ptr = reinterpret_cast<int *>(default_param_ptr->data_c());
+  MS_CHECK_TRUE_MSG(ptr != nullptr, result, "ptr is nullptr.");
   int shape_size =
     std::accumulate(default_param_ptr->shape().begin(), default_param_ptr->shape().end(), 1, std::multiplies<int>());
   for (int i = 0; i < shape_size; i++) {
@@ -158,6 +157,7 @@ std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
 }
 
 bool IsCaseNode(const CNodePtr node) {
+  MS_CHECK_TRUE_MSG(node != nullptr, false, "node is nullptr.");
   if (node->input(0) == nullptr) {
     MS_LOG(WARNING) << "The input of node is nullptr.";
     return false;

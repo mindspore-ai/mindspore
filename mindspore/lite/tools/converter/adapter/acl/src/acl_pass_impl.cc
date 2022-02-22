@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,6 +166,7 @@ STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
+  MS_CHECK_TRUE_MSG(prim != nullptr, "", "prim is nullptr.");
   std::string name = prim->name();
   if (kAdjustCnodeName.find(name) != kAdjustCnodeName.end()) {
     auto val_ptr = prim->GetAttr(ops::kOriginalOpName);
@@ -180,7 +181,7 @@ std::string AclPassImpl::AdjustCnodeName(const PrimitivePtr &prim) {
 
 STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Deparser graph start.";
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graph, &all_func_graphs);
   for (auto graph : all_func_graphs) {
@@ -190,6 +191,7 @@ STATUS AclPassImpl::RunPrimitiveMapper(const FuncGraphPtr &func_graph) {
         continue;
       }
       auto cnode = node->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(cnode != nullptr, lite::RET_ERROR, "cnode is nullptr.");
       auto prim = GetCNodePrimitive(cnode);
       CHECK_NULL_RETURN(prim);
       std::string name = AdjustCnodeName(prim);
@@ -287,13 +289,9 @@ void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo
 
 std::shared_ptr<mindspore::Context> AclPassImpl::CreateModelContext() {
   auto model_context = std::make_shared<mindspore::Context>();
-  if (model_context == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "model_context is nullptr.");
   auto ascend_info = std::make_shared<AscendDeviceInfo>();
-  if (ascend_info == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(ascend_info != nullptr, nullptr, "ascend_info is nullptr.");
   ascend_info->SetDeviceID(user_options_cfg_.device_id);
   SetAclModelInitOptions(ascend_info);
   SetAclModelBuildOptions(ascend_info);
@@ -304,6 +302,7 @@ std::shared_ptr<mindspore::Context> AclPassImpl::CreateModelContext() {
 
 STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Set acl model options start.";
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
   auto model_context = CreateModelContext();
   CHECK_NULL_RETURN(model_context);
   options_ = std::make_shared<AclModelOptions>(model_context);
@@ -328,21 +327,23 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
 }
 
 ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr.");
   ParameterPtr om_parameter = func_graph->add_parameter();
+  MS_CHECK_TRUE_MSG(om_parameter != nullptr, nullptr, "om_parameter is nullptr.");
   om_parameter->set_name("ACL_om_data");
 
   auto type_ptr = TypeIdToType(kNumberTypeUInt8);
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, nullptr, "type_ptr is nullptr.");
   ShapeVector shape_vector = {static_cast<int64_t>(om_data.DataSize())};
   auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, nullptr, "abstract_tensor is nullptr.");
   om_parameter->set_abstract(abstract_tensor);
 
   auto param_value =
     std::make_shared<tensor::Tensor>(kNumberTypeUInt8, ShapeVector({static_cast<int64_t>(om_data.DataSize())}));
+  MS_CHECK_TRUE_MSG(param_value != nullptr, nullptr, "param_value is nullptr.");
   auto tensor_data = param_value->data_c();
-  if (tensor_data == nullptr) {
-    MS_LOG(ERROR) << "New Tensor failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(tensor_data != nullptr, nullptr, "New Tensor failed.");
   if (param_value->Size() < om_data.DataSize()) {
     MS_LOG(ERROR) << "Dst buff size  " << param_value->Size() << " should be greater than src buff size "
                   << om_data.DataSize();
@@ -387,16 +388,14 @@ STATUS AclPassImpl::CreateGraphAippInput(const FuncGraphPtr &func_graph, const B
 
 // now build the whole graph, not split
 STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
   Buffer om_data;
   if (ConvertGraphToOm(func_graph, &om_data) != lite::RET_OK) {
     MS_LOG(ERROR) << "Convert graph  to om failed.";
     return lite::RET_ERROR;
   }
   om_parameter_ = CreateOmParameter(func_graph, om_data);
-  if (om_parameter_ == nullptr) {
-    MS_LOG(ERROR) << "Convert graph  to om failed.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(om_parameter_ != nullptr, lite::RET_ERROR, "Convert graph  to om failed.");
   if (!user_options_cfg_.insert_op_config_file_path.empty()) {
     if (CreateGraphAippInput(func_graph, om_data) != lite::RET_OK) {
       MS_LOG(ERROR) << "Create aipp input failed.";
@@ -416,6 +415,7 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     CHECK_NULL_RETURN(tmp);
     cur_node = tmp->input(kTupleGetItemFirstInputIdx);
   }
+  CHECK_NULL_RETURN(cur_node);
   auto cnode = cur_node->cast<CNodePtr>();
   CHECK_NULL_RETURN(cnode);
   std::string name = lite::acl::GetCNodeTargetFuncName(cnode);
@@ -453,6 +453,7 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
 }
 
 STATUS AclPassImpl::GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
   AnfNodePtr return_input = func_graph->output();
   CHECK_NULL_RETURN(return_input);
   if (TraceOutput(return_input) != lite::RET_OK) {
@@ -469,6 +470,7 @@ STATUS AclPassImpl::GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::SetMultiOutputs(const CNodePtr &new_cnode, std::vector<TypeId> data_type) {
+  MS_CHECK_TRUE_MSG(new_cnode != nullptr, lite::RET_ERROR, "new_cnode is nullptr.");
   AbstractBasePtrList abstract_list;
   for (size_t j = 0; j < graph_outputs_.size(); j++) {
     auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[j], data_type[j]);
@@ -527,18 +529,13 @@ void AclPassImpl::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
 }
 
 CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr.");
   auto prim = std::make_shared<mindspore::ops::Custom>();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "New custom op failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "New custom op failed.");
   prim->set_type(kCustomPrimTypeACL);
   auto graph_input = func_graph->get_inputs();
   CNodePtr custom_node = func_graph->NewCNode(prim, graph_input);
-  if (custom_node == nullptr) {
-    MS_LOG(ERROR) << "Custom cnode failed.";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(custom_node != nullptr, nullptr, "Custom cnode failed.");
   custom_node->set_fullname_with_scope(kCustomNodeName);
   custom_node->add_input(om_parameter_);
 
@@ -580,7 +577,9 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
         return lite::RET_ERROR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+      MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, lite::RET_ERROR, "item_prim is nullptr.");
       auto get_item_value = NewValueNode(MakeValue<int>(j));
+      MS_CHECK_TRUE_MSG(get_item_value != nullptr, lite::RET_ERROR, "item_value is nullptr.");
       AnfNodePtrList inputs{tuple_get_item_prim, custom_node, get_item_value};
       CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
       if (get_item_cnode == nullptr) {
@@ -606,15 +605,9 @@ STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, cons
 
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Func_graph is nullptr.";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   auto manager = Manage(func_graph, true);
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "Manager is nullptr.";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
 
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
@@ -632,10 +625,7 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   }
 
   custom_node_ = CreateCustomNode(func_graph);
-  if (custom_node_ == nullptr) {
-    MS_LOG(ERROR) << "Create custom node failed.";
-    return false;
-  }
+  MS_CHECK_TRUE_MSG(custom_node_ != nullptr, false, "Create custom node failed.");
   // prepare graph for export create
   if (ModifyGraphByCustomNode(func_graph, manager, custom_node_) != lite::RET_OK) {
     MS_LOG(ERROR) << "Modify func graph by custom failed.";
