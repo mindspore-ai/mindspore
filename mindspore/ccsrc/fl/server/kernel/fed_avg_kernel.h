@@ -48,8 +48,7 @@ class FedAvgKernel : public AggregationKernelMod {
         weight_addr_(nullptr),
         data_size_addr_(nullptr),
         new_weight_addr_(nullptr),
-        new_data_size_addr_(nullptr),
-        participated_(false) {}
+        new_data_size_addr_(nullptr) {}
   ~FedAvgKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override {
@@ -76,43 +75,40 @@ class FedAvgKernel : public AggregationKernelMod {
         .first;
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
-    first_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {
-      std::unique_lock<std::mutex> lock(weight_mutex_);
-      if (!participated_) {
-        ClearWeightAndDataSize();
-      }
-    };
-    last_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {
-      MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_);
-      MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_);
-      MS_ERROR_IF_NULL_WO_RET_VAL(weight_addr_->addr);
-      MS_ERROR_IF_NULL_WO_RET_VAL(data_size_addr_->addr);
-      std::unique_lock<std::mutex> lock(weight_mutex_);
-      T *weight_addr = reinterpret_cast<T *>(weight_addr_->addr);
-      size_t weight_size = weight_addr_->size;
-      S *data_size_addr = reinterpret_cast<S *>(data_size_addr_->addr);
-      if (!CollectiveOpsImpl::GetInstance().AllReduce<T>(weight_addr, weight_addr, weight_size / sizeof(T))) {
-        MS_LOG(ERROR) << "Federated average allreduce failed.";
-        return;
-      }
-      if (!CollectiveOpsImpl::GetInstance().AllReduce<S>(data_size_addr, data_size_addr, 1)) {
-        MS_LOG(ERROR) << "Federated average allreduce failed.";
-        return;
-      }
-      if (data_size_addr[0] == 0) {
-        MS_LOG(ERROR) << "After AllReduce, the data size is 0.";
-        return;
-      }
-      LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, data_size_addr[0]);
-      for (size_t i = 0; i < weight_size / sizeof(T); i++) {
-        weight_addr[i] /= data_size_addr[0];
-      }
-      done_ = true;
-      return;
-    };
-    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
+
+    MS_LOG(INFO) << "Aggregate Weight full name is " << weight_node->fullname_with_scope() << ", weight byte size is "
+                 << weight_size;
     GenerateReuseKernelNodeInfo();
     return;
+  }
+
+  bool AllReduce() override {
+    std::unique_lock<std::mutex> lock(weight_mutex_);
+    MS_ERROR_IF_NULL_W_RET_VAL(weight_addr_, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(data_size_addr_, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(weight_addr_->addr, false);
+    MS_ERROR_IF_NULL_W_RET_VAL(data_size_addr_->addr, false);
+    T *weight_addr = reinterpret_cast<T *>(weight_addr_->addr);
+    size_t weight_size = weight_addr_->size;
+    S *data_size_addr = reinterpret_cast<S *>(data_size_addr_->addr);
+    if (!CollectiveOpsImpl::GetInstance().AllReduce<T>(name_, weight_addr, weight_addr, weight_size / sizeof(T))) {
+      MS_LOG(ERROR) << "Federated average allreduce failed.";
+      return false;
+    }
+    if (!CollectiveOpsImpl::GetInstance().AllReduce<S>(name_ + "_data_size", data_size_addr, data_size_addr, 1)) {
+      MS_LOG(ERROR) << "Federated average allreduce failed.";
+      return false;
+    }
+    if (data_size_addr[0] == 0) {
+      MS_LOG(ERROR) << "After AllReduce, the data size is 0.";
+      return false;
+    }
+    LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, data_size_addr[0]);
+    for (size_t i = 0; i < weight_size / sizeof(T); i++) {
+      weight_addr[i] /= data_size_addr[0];
+    }
+    done_ = true;
+    return true;
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -126,15 +122,16 @@ class FedAvgKernel : public AggregationKernelMod {
     }
 
     std::unique_lock<std::mutex> lock(weight_mutex_);
+    if (done_) {
+      MS_LOG(INFO) << "AllReduce for " << name_ << " has finished";
+      return true;
+    }
     // The weight and new_weight values should be multiplied by clients already, so we don't need to do multiplication
     // again.
     T *weight_addr = reinterpret_cast<T *>(inputs[0]->addr);
     S *data_size_addr = reinterpret_cast<S *>(inputs[1]->addr);
     T *new_weight_addr = reinterpret_cast<T *>(inputs[2]->addr);
     S *new_data_size_addr = reinterpret_cast<S *>(inputs[3]->addr);
-    if (accum_count_ == 0) {
-      ClearWeightAndDataSize();
-    }
 
     MS_LOG(DEBUG) << "Iteration: " << LocalMetaStore::GetInstance().curr_iter_num() << " launching FedAvgKernel for "
                   << name_ << " new data size is " << new_data_size_addr[0] << ", current total data size is "
@@ -146,17 +143,13 @@ class FedAvgKernel : public AggregationKernelMod {
     lock.unlock();
 
     accum_count_++;
-    participated_ = true;
-    return DistributedCountService::GetInstance().Count(
-      name_, std::to_string(DistributedCountService::GetInstance().local_rank()) + "_" + std::to_string(accum_count_));
+    return true;
   }
 
   void Reset() override {
     accum_count_ = 0;
     done_ = false;
-    participated_ = false;
-    DistributedCountService::GetInstance().ResetCounter(name_);
-    return;
+    ClearWeightAndDataSize();
   }
 
   bool IsAggregationDone() override { return done_; }
@@ -169,18 +162,8 @@ class FedAvgKernel : public AggregationKernelMod {
     new_data_size_addr_ = inputs[3];
     return;
   }
-
-  bool ReInitForScaling() override {
-    DistributedCountService::GetInstance().RegisterCounter(name_, done_count_, {first_cnt_handler_, last_cnt_handler_});
-    return true;
-  }
-
   bool ReInitForUpdatingHyperParams(size_t aggr_threshold) override {
     done_count_ = aggr_threshold;
-    if (!DistributedCountService::GetInstance().ReInitCounter(name_, done_count_)) {
-      MS_LOG(ERROR) << "Reinitializing count for " << name_ << " failed.";
-      return false;
-    }
     return true;
   }
 
@@ -211,9 +194,6 @@ class FedAvgKernel : public AggregationKernelMod {
     return;
   }
 
-  MessageCallback first_cnt_handler_;
-  MessageCallback last_cnt_handler_;
-
   // The trainable parameter index of the kernel node which is parsed from the frontend func_graph.
   size_t cnode_weight_idx_;
 
@@ -222,10 +202,6 @@ class FedAvgKernel : public AggregationKernelMod {
   AddressPtr data_size_addr_;
   AddressPtr new_weight_addr_;
   AddressPtr new_data_size_addr_;
-
-  // Whether the kernel's Launch method is called.
-  bool participated_;
-
   // The kernel could be called concurrently so we need lock to ensure threadsafe.
   std::mutex weight_mutex_;
 };

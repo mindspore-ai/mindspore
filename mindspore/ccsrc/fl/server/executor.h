@@ -69,6 +69,8 @@ class Executor {
   // Judge whether aggregation processes for all weights/gradients are completed.
   bool IsAllWeightAggregationDone();
 
+  bool RunAllWeightAggregation();
+
   // Judge whether the aggregation processes for the given param_names are completed.
   bool IsWeightAggrDone(const std::vector<std::string> &param_names);
 
