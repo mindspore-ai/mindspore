@@ -21,17 +21,26 @@ from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops import DataType, CustomRegOp
 
 
-class JuliaSingleOutputNet(Cell):
+class JuliaTwoInputsNet(Cell):
     def __init__(self, func, out_shapes, out_types, reg=None):
-        super(JuliaSingleOutputNet, self).__init__()
+        super(JuliaTwoInputsNet, self).__init__()
 
         self.program = ops.Custom(func, out_shapes, out_types, "julia", reg_info=reg)
 
     def construct(self, x, y):
         return self.program(x, y)
+
+
+class JuliaOneInputNet(Cell):
+    def __init__(self, func, out_shapes, out_types, reg=None):
+        super(JuliaOneInputNet, self).__init__()
+
+        self.program = ops.Custom(func, out_shapes, out_types, "julia", reg_info=reg)
+
+    def construct(self, x):
+        return self.program(x)
 
 
 def add(x, y):
@@ -48,26 +57,76 @@ def sub(x, y):
     return x - y
 
 
-def julia_single_output(func_name, bench, reg):
+def matmul(x, y):
+    """
+    function matmul for benchmark
+    """
+    return np.matmul(x, y)
+
+
+def reducesum(x, axis=0, keepdims=True):
+    return np.sum(x, axis=axis, keepdims=keepdims)
+
+
+def multiout(a, b):
+    return a + b, a - b
+
+
+def julia_elemwise_test(func_name, bench):
     shape = (4, 5)
     input_x = np.random.normal(0, 1, shape).astype(np.float32)
     input_y = np.random.normal(0, 1, shape).astype(np.float32)
     func_path = os.path.dirname(os.path.abspath(__file__)) + "/julia_test_files/"
     try:
-        test = JuliaSingleOutputNet(func_path + func_name, (shape,), (mstype.float32,), reg)
+        test = JuliaTwoInputsNet(func_path + func_name, (shape,), (mstype.float32,))
         output = test(Tensor(input_x), Tensor(input_y))[0]
     except Exception as e:
         raise e
     assert np.allclose(bench(input_x, input_y), output.asnumpy(), 0.001, 0.001)
 
 
-cpu_info = CustomRegOp() \
-    .input(0, "x1") \
-    .input(1, "x2") \
-    .output(0, "y") \
-    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None) \
-    .target("CPU") \
-    .get_op_info()
+def julia_matmul_test(func_name, bench):
+    shape1 = (2, 3)
+    shape2 = (3, 4)
+    shape3 = (2, 4)
+    input_x = np.random.normal(0, 1, shape1).astype(np.float32)
+    input_y = np.random.normal(0, 1, shape2).astype(np.float32)
+    func_path = os.path.dirname(os.path.abspath(__file__)) + "/julia_test_files/"
+    try:
+        test = JuliaTwoInputsNet(func_path + func_name, (shape3,), (mstype.float32,))
+        output = test(Tensor(input_x), Tensor(input_y))[0]
+    except Exception as e:
+        raise e
+    assert np.allclose(bench(input_x, input_y), output.asnumpy(), 0.001, 0.001)
+
+
+def julia_reducesum_test(func_name, bench):
+    shape1 = (2, 3, 4)
+    input_x = np.random.normal(0, 1, shape1).astype(np.float32)
+    expect = bench(input_x, 1)
+    func_path = os.path.dirname(os.path.abspath(__file__)) + "/julia_test_files/"
+    try:
+        test = JuliaOneInputNet(func_path + func_name, (expect.shape,), (mstype.float32,))
+        output = test(Tensor(input_x))[0]
+    except Exception as e:
+        raise e
+    assert np.allclose(expect, output.asnumpy(), 0.001, 0.001)
+
+
+def julia_multiout_test(func_name, bench):
+    shape = (4, 5)
+    input_x = np.random.normal(0, 1, shape).astype(np.float32)
+    input_y = np.random.normal(0, 1, shape).astype(np.float32)
+    func_path = os.path.dirname(os.path.abspath(__file__)) + "/julia_test_files/"
+    try:
+        test = JuliaTwoInputsNet(func_path + func_name, (shape, shape,), (mstype.float32, mstype.float32,))
+        output1 = test(Tensor(input_x), Tensor(input_y))[0]
+        output2 = test(Tensor(input_x), Tensor(input_y))[1]
+    except Exception as e:
+        raise e
+    expect1, expect2 = bench(input_x, input_y)
+    assert np.allclose(expect1, output1.asnumpy(), 0.001, 0.001)
+    assert np.allclose(expect2, output2.asnumpy(), 0.001, 0.001)
 
 
 @pytest.mark.level2
@@ -84,7 +143,7 @@ def test_julia_single_output_cpu_add():
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-        julia_single_output("add.jl:Add:foo!", add, cpu_info)
+        julia_elemwise_test("add.jl:Add:foo!", add)
 
 
 @pytest.mark.level2
@@ -101,4 +160,55 @@ def test_julia_single_output_cpu_sub():
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-        julia_single_output("sub.jl:Sub:foo!", sub, cpu_info)
+        julia_elemwise_test("sub.jl:Sub:foo!", sub)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_julia_single_output_cpu_matmul():
+    """
+    Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
+    Description: pre-write xxx.jl, custom operator launches xxx.jl
+    Expectation: nn result matches numpy result
+    """
+    system = platform.system()
+    if system != 'Linux':
+        pass
+    else:
+        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        julia_matmul_test("matmul.jl:Matmul:foo!", matmul)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_julia_single_output_cpu_reducesum():
+    """
+    Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
+    Description: pre-write xxx.jl, custom operator launches xxx.jl
+    Expectation: nn result matches numpy result
+    """
+    system = platform.system()
+    if system != 'Linux':
+        pass
+    else:
+        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        julia_reducesum_test("reducesum.jl:ReduceSum:foo!", reducesum)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_julia_multi_output_cpu():
+    """
+    Feature: custom julia operator, multiple inputs, multi output, CPU, GRAPH_MODE
+    Description: pre-write xxx.jl, custom operator launches xxx.jl
+    Expectation: nn result matches numpy result
+    """
+    system = platform.system()
+    if system != 'Linux':
+        pass
+    else:
+        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        julia_multiout_test("multi_output.jl:MultiOutput:foo!", multiout)
