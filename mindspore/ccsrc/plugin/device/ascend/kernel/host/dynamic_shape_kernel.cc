@@ -58,7 +58,7 @@ void TensorShapeKernel::Execute() {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
     MS_EXCEPTION_IF_NULL(runtime_instance);
     // cppcheck-suppress unreadVariable
-    auto lock = AscendKernelMod::LockRuntime();
+    auto lock = device::KernelRuntime::LockRuntime();
     auto ret = runtime_instance->SyncStream();
     if (!ret) {
       MS_LOG(EXCEPTION) << "Sync stream error!";

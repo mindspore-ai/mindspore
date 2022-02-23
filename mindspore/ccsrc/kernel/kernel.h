@@ -217,7 +217,7 @@ class KernelMod {
   const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
   void SetStream(void *stream) { stream_ = stream; }
   void *GetStream() const { return stream_; }
-  void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) { atomic_clean_nodes_ = atomic_clean_node; }
+  void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
 
  protected:
   void InferShape();
@@ -229,7 +229,7 @@ class KernelMod {
   void *stream_{nullptr};
   AnfNodeWeakPtr anf_node_;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
-  std::vector<CNodePtr> atomic_clean_nodes_;
+  std::vector<CNodeWeakPtr> atomic_clean_nodes_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

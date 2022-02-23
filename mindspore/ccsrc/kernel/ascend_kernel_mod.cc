@@ -15,21 +15,17 @@
  */
 
 #include "kernel/ascend_kernel_mod.h"
+#include "runtime/device/kernel_runtime.h"
 #include "runtime/rt.h"
 namespace mindspore {
 namespace kernel {
 void AscendKernelMod::UpdateOp() {
   MS_EXCEPTION_IF_NULL(stream_);
   // cppcheck-suppress unreadVariable
-  auto lock = LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime();
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed.";
   }
-}
-
-std::lock_guard<std::mutex> AscendKernelMod::LockRuntime() {
-  static std::mutex mutex;
-  return std::lock_guard<std::mutex>(mutex);
 }
 }  // namespace kernel
 }  // namespace mindspore

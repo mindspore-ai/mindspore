@@ -38,13 +38,24 @@ class ReshapeKernelMod : public HostKernelMod {
   device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    auto node = anf_node_.lock();
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (kernel_ == nullptr) {
-      auto node = anf_node_.lock();
-      MS_EXCEPTION_IF_NULL(node);
-      kernel_ = std::dynamic_pointer_cast<ReshapeKernel>(GenDynamicKernel(node->cast<CNodePtr>(), stream_ptr));
+      kernel_ = std::dynamic_pointer_cast<ReshapeKernel>(GenDynamicKernel(cnode, stream_ptr));
       kernel_->Initialize();
     }
-    kernel_->Execute(inputs, outputs);
+    if (stream_ != nullptr) {
+      stream_ = stream_ptr;
+    }
+    try {
+      kernel_->Execute(inputs, outputs);
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. node: " << cnode->fullname_with_scope() << ", Error message is "
+                    << e.what();
+      return false;
+    }
     return true;
   }
   void UpdateOp() override { AscendKernelMod::UpdateOp(); }

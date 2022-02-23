@@ -175,6 +175,8 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
 
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime();
   auto ret = runtime_instance->SyncStream();
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
@@ -202,15 +204,6 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   input_shapes[1] = GetInputShape(cnode, 1);
   auto grad_reduce_idx = CalculateOutput(input_shapes);
 
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
-  auto ret = runtime_instance->SyncStream();
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Sync stream error!";
-  }
-
   auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0, input_shapes[0].size());
   auto r1_size = SetOutputValue(cnode, grad_reduce_idx, 1, input_shapes[1].size());
 
@@ -230,9 +223,6 @@ bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr>
                                                    const std::vector<AddressPtr> &, void *stream_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   stream_ = stream_ptr;

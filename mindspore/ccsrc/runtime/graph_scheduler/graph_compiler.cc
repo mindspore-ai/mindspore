@@ -504,6 +504,13 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
 
   graph->EnableRuntimeCache();
+
+  // TODO(dsj): for ms_function running in graph_mode. should be delete later
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    AnfAlgo::SetNodeAttr(kAttrMSFunction, MakeValue(true), kernel);
+  }
+
   return graph->graph_id();
 }
 

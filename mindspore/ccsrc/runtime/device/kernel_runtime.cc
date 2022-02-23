@@ -71,6 +71,11 @@ KernelRuntime::~KernelRuntime() {
   communication_stream_ = nullptr;
 }
 
+std::lock_guard<std::mutex> KernelRuntime::LockRuntime() {
+  static std::mutex mutex;
+  return std::lock_guard<std::mutex>(mutex);
+}
+
 bool KernelRuntime::Load(const session::KernelGraph &, bool) {
   MS_LOG(INFO) << "Call default load.";
   return true;

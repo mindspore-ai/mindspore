@@ -15,9 +15,9 @@
  */
 
 #include "utils/anf_utils.h"
-#include <map>
 #include <memory>
 #include <string>
+#include <list>
 #include "base/core_ops.h"
 #include "utils/trace_base.h"
 #include "utils/utils.h"
@@ -33,14 +33,25 @@ class AbstractMutexManager {
     return instance;
   }
 
-  AbstractScope GetAbstractLock(const AnfNode *node) {
+  std::recursive_mutex *GetAbstractLock(const AnfNode *node) {
     std::lock_guard<std::recursive_mutex> lock(mu_);
-    return AbstractScope(&mu_for_nodes_[node]);
+    if (is_valid_) {
+      return &mu_for_nodes_[node];
+    } else {
+      return nullptr;
+    }
   }
 
+  void Close() {
+    is_valid_ = false;
+    mu_for_nodes_.clear();
+  }
+  void Open() { is_valid_ = true; }
+
  private:
-  std::map<const AnfNode *, std::recursive_mutex> mu_for_nodes_;
+  mindspore::HashMap<const AnfNode *, std::recursive_mutex> mu_for_nodes_;
   std::recursive_mutex mu_;
+  bool is_valid_ = false;
 };
 
 struct CustomActorInfo {
@@ -72,9 +83,10 @@ AnfNodePtr NewCustomActorNode(const CustomActorInfoPtr &actor_info, const FuncGr
 }  // namespace
 
 AbstractScope::AbstractScope(std::recursive_mutex *mu) {
-  MS_EXCEPTION_IF_NULL(mu);
   mu_ = mu;
-  mu_->lock();
+  if (mu_ != nullptr) {
+    mu_->lock();
+  }
 }
 
 AbstractScope::AbstractScope(AbstractScope &&other) {
@@ -95,8 +107,12 @@ AbstractScope::~AbstractScope() {
 }
 
 AbstractScope AnfUtils::GetAbstractLock(const AnfNode *node) {
-  return AbstractMutexManager::GetInstance().GetAbstractLock(node);
+  return AbstractScope(AbstractMutexManager::GetInstance().GetAbstractLock(node));
 }
+
+void AnfUtils::OpenAbstractLock() { AbstractMutexManager::GetInstance().Open(); }
+
+void AnfUtils::CloseAbstractLock() { AbstractMutexManager::GetInstance().Close(); }
 
 bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -248,7 +264,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
   }
   {
     // cppcheck-suppress unreadVariable
-    auto lock = AnfUtils::GetAbstractLock(node.get());
+    auto lock = AnfUtils::GetAbstractLock(cnode.get());
     ssize_t input_tensor_num = cnode->input_tensor_num();
     if (input_tensor_num >= 0) {
       return static_cast<size_t>(input_tensor_num);
@@ -268,7 +284,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     // Search monad inputs, backward.
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
       // cppcheck-suppress unreadVariable
-      auto lock = AnfUtils::GetAbstractLock(node.get());
+      auto lock = AnfUtils::GetAbstractLock((*iter).get());
       if (!HasAbstractMonad(*iter)) {
         // Stop count if we encounter a non-monad input.
         break;
@@ -277,7 +293,7 @@ size_t AnfUtils::GetInputTensorNum(const AnfNodePtr &node) {
     }
   }
   // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(node.get());
+  auto lock = AnfUtils::GetAbstractLock(cnode.get());
   cnode->set_input_tensor_num(static_cast<ssize_t>(input_num));
   return input_num;
 }

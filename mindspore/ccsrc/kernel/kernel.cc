@@ -29,12 +29,16 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
+void KernelMod::SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) {
+  atomic_clean_nodes_.resize(atomic_clean_node.size());
+  for (size_t i = 0; i < atomic_clean_node.size(); ++i) {
+    atomic_clean_nodes_[i] = atomic_clean_node[i];
+  }
+}
+
 void KernelMod::InferShape() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
@@ -44,16 +48,15 @@ void KernelMod::InferShape() {
     return;
   }
   depend_tensor_map_.clear();
-  auto inputs = cnode->inputs();
+  auto &inputs = cnode->inputs();
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs";
+    MS_LOG(EXCEPTION) << "Invalid inputs.";
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
   auto input_size = AnfAlgo::GetInputTensorNum(cnode);
-  std::vector<AnfNodePtr> input_nodes;
   for (size_t i = 0; i < input_size; i++) {
     auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
     auto real_input = input_node_with_index.first;
@@ -75,12 +78,13 @@ void KernelMod::InferShape() {
       out_tensor->set_device_address(output_addr, false);
       auto ret2 = depend_tensor_map_.try_emplace(i, out_tensor);
       if (!ret2.second) {
-        MS_LOG(EXCEPTION) << "Insert map failed";
+        MS_LOG(EXCEPTION) << "Insert map failed.";
       }
       out_tensor->data_sync();
+
+      // cppcheck-suppress unreadVariable
       auto lock = AnfUtils::GetAbstractLock(real_input.get());
-      MS_EXCEPTION_IF_NULL(real_input->abstract());
-      auto real_abs = real_input->abstract()->Clone();
+      auto real_abs = real_input->abstract();
       if (real_abs->isa<abstract::AbstractTensor>()) {
         real_abs->set_value(out_tensor);
       } else if (real_abs->isa<abstract::AbstractTuple>()) {
@@ -90,22 +94,10 @@ void KernelMod::InferShape() {
         auto tuple_elements = abstract_tuple->elements()[tuple_get_item_index];
         tuple_elements->set_value(out_tensor);
       }
-      real_input->set_abstract(real_abs);
     }
-    bool is_cnode_input = AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
-    if (is_cnode_input) {
-      input_nodes.push_back(cnode_input);
-    } else {
-      input_nodes.push_back(real_input);
-    }
+    AnfAlgo::AddArgList(&args_spec_list, cnode_input, real_input, i);
   }
-  std::vector<AbstractScope> locks;
-  std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(locks),
-                 [](const AnfNodePtr &input) { return AnfUtils::GetAbstractLock(input.get()); });
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
-  locks.clear();
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(cnode.get());
   cnode->set_abstract(eval_result);
 }
 
@@ -125,11 +117,11 @@ bool KernelMod::InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
   std::vector<int64_t> output_shape = {static_cast<int64_t>(cur_shape.size())};
   mindspore::abstract::BaseShapePtr shape = std::make_shared<mindspore::abstract::Shape>(output_shape);
 
+  // cppcheck-suppress unreadVariable
   auto lock = AnfUtils::GetAbstractLock(cnode.get());
-  auto abstract = cnode->abstract()->Clone();
+  auto abstract = cnode->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
   abstract->set_shape(shape);
-  cnode->set_abstract(abstract);
   return true;
 }
 
@@ -172,13 +164,13 @@ void KernelMod::GetDepndLists(const CNodePtr &cnode) {
   }
   auto ret = abstract::GetDependsFormMap(cnode);
   if (ret.empty()) {
-    MS_LOG(DEBUG) << "No dynamic_shape_depends found";
+    MS_LOG(DEBUG) << "No dynamic_shape_depends found.";
     return;
   }
-  MS_LOG(INFO) << "Have depends";
+  MS_LOG(INFO) << "Have depends.";
   (void)std::transform(ret.begin(), ret.end(), std::inserter(depend_list_, depend_list_.begin()),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  MS_LOG(INFO) << "Init End";
+  MS_LOG(INFO) << "Init End.";
 }
 }  // namespace kernel
 }  // namespace mindspore

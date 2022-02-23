@@ -43,17 +43,6 @@ DynamicAicpuOpKernelMod::DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr)
   }
 }
 
-DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
-  // free dev ptr
-  if (ext_info_addr_dev_ == nullptr) {
-    return;
-  }
-  auto ret = rtFree(ext_info_addr_dev_);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtFree failed";
-  }
-}
-
 void DynamicAicpuOpKernelMod::InferOp() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -114,7 +103,7 @@ void DynamicAicpuOpKernelMod::AllocateExtInfoDeviceAddr(const CNodePtr &cnode) {
     return;
   }
   // Allocate ext info addr in device
-  if (ext_info_.size() != 0) {
+  if (!ext_info_.empty()) {
     auto ret = rtMalloc(&ext_info_addr_dev_, ext_info_.size(), RT_MEMORY_HBM);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rtMalloc ext_info_addr_dev_ failed. Op name: " << cnode->fullname_with_scope();
@@ -156,12 +145,15 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   AicpuOpKernelMod::CreateCpuKernelInfo(inputs, outputs);
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
+  auto flag = RT_KERNEL_DEFAULT;
+  if (cust_kernel_) {
+    flag = RT_KERNEL_CUSTOM_AICPU;
+  }
   // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
-  ret = rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
-                                  reinterpret_cast<const void *>(node_name_.c_str()), 1,
-                                  reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()),
-                                  nullptr, stream_, RT_KERNEL_DEFAULT);
+  auto lock = device::KernelRuntime::LockRuntime();
+  ret = rtCpuKernelLaunchWithFlag(
+    reinterpret_cast<const void *>(node_so_.c_str()), reinterpret_cast<const void *>(node_name_.c_str()), 1,
+    reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()), nullptr, stream_, flag);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
     return false;
@@ -171,7 +163,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
                            ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "aclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
+      MS_LOG(ERROR) << "AclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
       return false;
     }
   }
@@ -195,7 +187,7 @@ void DynamicAicpuOpKernelMod::UpdateOp() {
     return;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime();
   auto ret = rtStreamSynchronize(stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();
@@ -214,7 +206,6 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
   std::vector<std::vector<size_t>> shapes;
   auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
-    MS_LOG(INFO) << "Get output:" << output_num << " Shape";
     std::vector<int64_t> shape;
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));

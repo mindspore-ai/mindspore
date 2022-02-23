@@ -25,6 +25,7 @@
 #include "utils/utils.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
+#include "plugin/device/ascend/kernel/aicpu/dynamic_aicpu_kernel_mod.h"
 #include "proto/tensor.pb.h"
 #include "proto/tensor_shape.pb.h"
 #include "proto/attr.pb.h"
@@ -427,9 +428,13 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
-  auto kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>();
+  std::shared_ptr<AicpuOpKernelMod> kernel_mod_ptr;
+  if (AnfAlgo::IsDynamicShape(anf_node)) {
+    kernel_mod_ptr = std::make_shared<DynamicAicpuOpKernelMod>(anf_node);
+  } else {
+    kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>(anf_node);
+  }
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
-  kernel_mod_ptr->SetAnfNode(anf_node);
   kernel_mod_ptr->SetNodeName(op_name);
   if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";

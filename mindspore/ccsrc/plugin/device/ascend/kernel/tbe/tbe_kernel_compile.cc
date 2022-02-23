@@ -30,6 +30,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
+#include "plugin/device/ascend/kernel/tbe/dynamic_tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "backend/common/session/kernel_build_client.h"
@@ -551,7 +552,12 @@ void TbeKernelCompileManager::GenKernelMod(const std::vector<CNodePtr> &node_lis
       }
     }
     auto kernel_info_json = kernel_pack->kernel_json_info();
-    auto kernel_mod_ptr = std::make_shared<TbeKernelMod>(kernel_pack);
+    std::shared_ptr<TbeKernelMod> kernel_mod_ptr;
+    if (AnfAlgo::IsDynamicShape(node)) {
+      kernel_mod_ptr = std::make_shared<DynamicTbeKernelMod>(kernel_pack, node);
+    } else {
+      kernel_mod_ptr = std::make_shared<TbeKernelMod>(kernel_pack, node);
+    }
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
 
     auto iter = kernel_io_size_info_.find(json_name);

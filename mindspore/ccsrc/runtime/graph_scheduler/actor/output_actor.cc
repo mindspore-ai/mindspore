@@ -61,6 +61,19 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
       output_device_tensors_[device_tensor_store_key.first] = device_tensor.get();
     }
 
+    // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here
+    // Check outputs number.
+    if (output_nodes_.size() != outputs_.size()) {
+      MS_LOG(EXCEPTION) << "The outputs number is wrong.";
+    }
+    // Update output tensor's shape
+    for (size_t i = 0; i < outputs_.size(); ++i) {
+      auto shape = AnfAlgo::GetOutputInferShape(output_nodes_[i].first, output_nodes_[i].second);
+      std::vector<int64_t> temp_shape;
+      (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+      outputs_[i]->set_shape(temp_shape);
+    }
+
     current_outputs_num_ = 0;
     current_count_ = 0;
     SET_OPCONTEXT_SUCCESS_RET((*context));

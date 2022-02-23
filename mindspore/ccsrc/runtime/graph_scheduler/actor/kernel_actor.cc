@@ -53,15 +53,17 @@ void KernelActor::Init() {
     (void)memory_free_list_.emplace_back(output_address.get());
     (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
   }
+  for (auto &external_reference_tensor : external_reference_tensors_) {
+    (void)memory_free_list_.emplace_back(external_reference_tensor);
+  }
+  // put workspace_address in the end of memory_alloc_list_ and memory_free_list_, for operation of dynamic_shape
+  // condition in FetchWorkspaceDeviceTensor
   for (auto &workspace_address : kernel_info_->workspace_address_list()) {
     MS_EXCEPTION_IF_NULL(workspace_address);
     (void)workspace_device_tensors_.emplace_back(workspace_address.get());
     (void)memory_alloc_list_.emplace_back(workspace_address.get());
     (void)memory_free_list_.emplace_back(workspace_address.get());
     (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
-  }
-  for (auto &external_reference_tensor : external_reference_tensors_) {
-    (void)memory_free_list_.emplace_back(external_reference_tensor);
   }
 
   // Init the output data.
@@ -82,9 +84,9 @@ void KernelActor::Init() {
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-
-  // Infer kernel shape and update abstract info for dynamic shape kernel.
-  if (is_dynamic_shape_) {
+  // Infer kernel shape and update abstract info for dynamic_shape, but not pipeline & ascend.
+  if (is_dynamic_shape_ && !(strategy_ == GraphExecutionStrategy::kPipeline &&
+                             device_contexts_[0]->GetDeviceAddressType() == device::DeviceAddressType::kAscend)) {
     try {
       device_contexts_[0]->UpdateDynamicShape(kernel_);
     } catch (const std::exception &e) {
@@ -98,10 +100,48 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
 
   FetchInputDeviceTensor(context);
   FetchOutputDeviceTensor(context);
+  if (is_dynamic_shape_ && strategy_ == GraphExecutionStrategy::kPipeline &&
+      device_contexts_[0]->GetDeviceAddressType() == device::DeviceAddressType::kAscend) {
+    FetchWorkspaceDeviceTensor();
+  }
+
   if (memory_alloc_list_.size() > 0) {
     SendMemoryAllocReq(context);
   } else {
     OnMemoryAllocFinish(context);
+  }
+}
+
+void KernelActor::FetchWorkspaceDeviceTensor() {
+  if (AnfAlgo::IsDynamicShape(kernel_) && AnfAlgo::GetKernelType(kernel_) == KernelType::TBE_KERNEL) {
+    MS_LOG(DEBUG) << "Start FetchWorkspaceDeviceTensor.";
+    MS_EXCEPTION_IF_NULL(kernel_);
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+    if (launch_info_.workspaces_.size() != workspace_sizes.size()) {
+      launch_info_.workspaces_.clear();
+      for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+        (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
+      }
+    }
+    workspace_device_tensors_.clear();
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+    // erase workapce address of last step
+    size_t free_start_index =
+      real_input_num_ + kernel_info_->output_address_list().size() + external_reference_tensors_.size();
+    size_t malloc_start_index = kernel_info_->output_address_list().size();
+    memory_alloc_list_.erase(memory_alloc_list_.begin() + malloc_start_index, memory_alloc_list_.end());
+    memory_free_list_.erase(memory_free_list_.begin() + free_start_index, memory_free_list_.end());
+    for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+      auto device_address = device_contexts_[0]->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
+      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel_) << " addr:" << device_address;
+      AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
+      MS_EXCEPTION_IF_NULL(device_address);
+      (void)memory_alloc_list_.emplace_back(device_address.get());
+      (void)memory_free_list_.emplace_back(device_address.get());
+      (void)workspace_device_tensors_.emplace_back(device_address.get());
+    }
   }
 }
 

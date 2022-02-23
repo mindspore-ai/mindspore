@@ -142,6 +142,7 @@ class AscendDeviceContext : public DeviceContext {
   bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
   void GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const;
   void InsertEventBeforeRunTask(const KernelGraphPtr &graph) const;
+  void SetAtomicCleanToNodes(const KernelGraphPtr &graph) const;
 
   void ReportErrorMessage() const;
   void ReportWarningMessage() const;

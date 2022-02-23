@@ -92,6 +92,7 @@ class KernelActor : public DebugAwareActor {
   // Fetch the device tensor for launch.
   void FetchInputDeviceTensor(OpContext<DeviceTensor> *const context);
   void FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context);
+  void FetchWorkspaceDeviceTensor();
   // Need copy when the data type or format between real parameters and formal parameters are inconsistent.
   void CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
   // In step mode, push the input tensors which contain valid device address into input_device_tensors_ directly.

@@ -58,6 +58,8 @@ class AicpuOpKernelMod : public AscendKernelMod {
   std::string node_so_;
   bool cust_kernel_{false};
   std::string node_def_str_;
+  // Because the ~DynamicAicpuKernelMod() is after ResetDevice, and ResetDevice has the function to free mem,
+  // so it is no rtFree of ext_info_addr_dev_ in ~DynamicAicpuKernelMod()
   void *ext_info_addr_dev_ = nullptr;
 
  private:

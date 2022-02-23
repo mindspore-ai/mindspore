@@ -318,17 +318,17 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
+    MS_LOG(EXCEPTION) << "The anfnode is not a cnode.";
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
   if (inputs.empty() && outputs.empty()) {
-    MS_LOG(ERROR) << "Hccl kernel input or output is empty";
+    MS_LOG(ERROR) << "Hccl kernel input or output is empty.";
     return false;
   }
   if (hccl_data_type_list_.empty()) {
-    MS_LOG(ERROR) << "Hccl data type list is empty";
+    MS_LOG(ERROR) << "Hccl data type list is empty.";
     return false;
   }
 
@@ -353,7 +353,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
     }
     std::lock_guard<std::mutex> lock(this->hccl_mutex_);
     this->cond_.notify_all();
-    MS_LOG(INFO) << "hccl callback success.";
+    MS_LOG(INFO) << "Hccl callback success.";
   };
 
   auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
@@ -364,16 +364,13 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
 
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
   cond_.wait(ulock);
-  MS_LOG(INFO) << "Execute " << cnode->DebugString() << " success";
+  MS_LOG(INFO) << "Execute " << cnode->DebugString() << " success.";
   return true;
 }
 
 void HcclKernel::InitOp() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
