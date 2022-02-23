@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_SCATTER_ND_BASE_H_
-#define MINDSPORE_NNACL_FP32_SCATTER_ND_BASE_H_
+#ifndef MINDSPORE_NNACL_BASE_SCATTER_ND_BASE_H_
+#define MINDSPORE_NNACL_BASE_SCATTER_ND_BASE_H_
 
 #include "nnacl/op_base.h"
 
@@ -35,4 +35,4 @@ int DoScatterND(void *output, const void *update, int *output_unit_offsets, cons
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_SCATTER_ND_BASE_H_
+#endif  // MINDSPORE_NNACL_BASE_SCATTER_ND_BASE_H_
