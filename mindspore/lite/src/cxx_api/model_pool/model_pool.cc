@@ -20,6 +20,8 @@
 #include "include/lite_types.h"
 #include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
+#include "src/common//file_utils.h"
+#include "src/pack_weight_manager.h"
 namespace mindspore {
 namespace {
 constexpr int32_t kNumThreads = 4;
@@ -169,10 +171,17 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
     return kLiteError;
   }
+  size_t size = 0;
+  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
+  if (graph_buf_ == nullptr) {
+    MS_LOG(ERROR) << "read file failed.";
+    return kLiteError;
+  }
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
   std::shared_ptr<ModelThread> model_thread = nullptr;
   for (size_t i = 0; i < num_models_; i++) {
     model_thread = std::make_shared<ModelThread>();
-    auto status = model_thread->Init(model_path, model_pool_context[i], dec_key, dec_mode);
+    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
@@ -408,6 +417,10 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 }
 
 ModelPool::~ModelPool() {
+  if (graph_buf_ != nullptr) {
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
   for (auto &th : model_thread_vec_) {
     if (th.joinable()) {
       th.join();

@@ -58,6 +58,7 @@ class ModelPool {
   std::vector<std::thread> model_thread_vec_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
+  char *graph_buf_ = nullptr;
   size_t num_models_ = 10;
   std::mutex mtx_split_task_;
   bool is_user_data_ = false;
