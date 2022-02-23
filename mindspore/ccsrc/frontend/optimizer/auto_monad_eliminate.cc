@@ -57,16 +57,11 @@ std::optional<std::string> GetRefKey(const AnfNodePtr &node) {
   return ref_key->name();
 }
 
-bool HasMemoryEffect(const CNodePtr &cnode) {
+bool HasSideEffect(const CNodePtr &cnode) {
   const auto &inputs = cnode->inputs();
-  if (HasAbstractUMonad(inputs.back())) {
-    // The last input is UMonad.
-    return true;
-  }
   constexpr size_t kRequiredArgs = 2;
   if (inputs.size() > kRequiredArgs) {
-    // The last two inputs are UMonad and IOMonad.
-    return HasAbstractIOMonad(inputs.back()) && HasAbstractUMonad(inputs.rbegin()[1]);
+    return HasAbstractMonad(inputs.back());
   }
   return false;
 }
@@ -111,8 +106,8 @@ LoadGraphMap GenerateLoadGroups(const FuncGraphPtr &fg, const std::vector<AnfNod
       continue;
     }
     // Record param user in toposort nodes.
-    // We only check memory side effect cnodes or Depend nodes.
-    if (HasMemoryEffect(cnode) || cnode->IsApply(prim::kPrimDepend)) {
+    // We only check side effect cnodes or Depend nodes.
+    if (HasSideEffect(cnode) || cnode->IsApply(prim::kPrimDepend)) {
       for (size_t n = 1; n < cnode->size(); ++n) {
         const auto &input = cnode->input(n);
         auto ref_key = GetRefKey(input);
