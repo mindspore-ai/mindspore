@@ -16,5 +16,6 @@
 Parallel Config for the Parallel Training
 This is an experimental interface that is subject to change and/or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer.op_parallel_config import OpParallelConfig, default_dpmp_config
+
+__all__ = ["OpParallelConfig", "default_dpmp_config"]

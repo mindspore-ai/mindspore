@@ -16,5 +16,6 @@
 The basic layer of the Transformer Networks. This is an experimental interface that is subject to
 change or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer.layers import FixedSparseAttention, _LayerNorm
+
+__all__ = ["FixedSparseAttention", "_LayerNorm"]

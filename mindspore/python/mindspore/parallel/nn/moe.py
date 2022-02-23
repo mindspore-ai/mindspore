@@ -15,5 +15,6 @@
 """
 Note: Mixture of Expert (MoE) structure. This is an experimental interface that is subject to change or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer.moe import MoEConfig, default_moe_config
+
+__all__ = ["MoEConfig", "default_moe_config"]

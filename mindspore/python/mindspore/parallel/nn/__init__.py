@@ -27,11 +27,15 @@ NOTE:
     from mindspore.nn.transformer import Transformer
 """
 from mindspore import log
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer import AttentionMask, VocabEmbedding, MultiHeadAttention, FeedForward, \
     TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer, Transformer, \
     TransformerOpParallelConfig, \
     EmbeddingOpParallelConfig, TransformerRecomputeConfig, MoEConfig, FixedSparseAttention, CrossEntropyLoss, \
     OpParallelConfig
+
+__all__ = ["AttentionMask", "VocabEmbedding", "MultiHeadAttention", "FeedForward", "TransformerEncoder",
+           "TransformerDecoder", "TransformerEncoderLayer", "TransformerDecoderLayer", "Transformer",
+           "TransformerOpParallelConfig", "EmbeddingOpParallelConfig", "TransformerRecomputeConfig", "MoEConfig",
+           "FixedSparseAttention", "CrossEntropyLoss", "OpParallelConfig"]
 
 log.warning("'mindspore.parallel.nn' will be deprecated in the future. Please use 'mindspore.nn.transformer' instead.")

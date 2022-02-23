@@ -166,7 +166,7 @@ Status BatchNormInfo::InferAllReduceGroupBySize() {
 
   RankList group_rank_list;
   for (size_t i = 0; i < LongToSize(group_size_); ++i) {
-    group_rank_list.push_back(tmp + i);
+    group_rank_list.push_back(tmp + SizeToLong(i));
   }
   MS_LOG(INFO) << name_ << ": The group rank list is " << group_rank_list;
 
