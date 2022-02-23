@@ -58,11 +58,11 @@ void ModelThread::Run() {
   }
 }
 
-Status ModelThread::Init(const std::string &model_path, const std::shared_ptr<Context> &model_context,
+Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
                          const Key &dec_key, const std::string &dec_mode) {
   model_ = std::make_shared<Model>();
   mindspore::ModelType model_type = kMindIR;
-  auto status = model_->Build(model_path, model_type, model_context, dec_key, dec_mode);
+  auto status = model_->Build(model_buf, size, model_type, model_context, dec_key, dec_mode);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;

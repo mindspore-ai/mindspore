@@ -146,6 +146,11 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
   if (IsPackedOp(op_type)) {
     return RET_OK;
   }
+#ifdef SERVER_INFERENCE
+  if (IsShareConstOp(op_type)) {
+    return RET_OK;
+  }
+#endif
   for (auto *tensor : tensors) {
     // only copy non-copied const tensor
     if (!tensor->IsConst() || tensor->own_data()) {
