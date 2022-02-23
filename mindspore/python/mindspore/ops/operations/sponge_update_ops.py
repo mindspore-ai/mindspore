@@ -947,6 +947,7 @@ class NeighborListRefresh(PrimitiveWithInfer):
         self.add_prim_attr('cutoff_with_skin_square', self.cutoff_with_skin_square)
         self.add_prim_attr('forced_update', self.forced_update)
         self.add_prim_attr('forced_check', self.forced_check)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, atom_numbers_in_grid_bucket_shape, bucket_shape, crd_shape, box_length_shape, grid_n_shape,
                     grid_length_inverse_shape, atom_in_grid_serial_shape, old_crd_shape, crd_to_uint_crd_cof_shape,
