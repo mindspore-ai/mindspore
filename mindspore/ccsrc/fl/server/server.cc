@@ -162,6 +162,13 @@ void Server::InitCluster() {
   return;
 }
 
+bool Server::SubmitTask(std::function<void()> &&task) {
+  if (task_executor_ == nullptr) {
+    return false;
+  }
+  return task_executor_->Submit(task);
+}
+
 bool Server::InitCommunicatorWithServer() {
   MS_EXCEPTION_IF_NULL(task_executor_);
   MS_EXCEPTION_IF_NULL(server_node_);
@@ -400,6 +407,8 @@ void Server::InitExecutor() {
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph_.lock(), executor_threshold_);
   ModelStore::GetInstance().Initialize(server_node_->rank_id());
+  // init weight memory to 0 after get model
+  Executor::GetInstance().ResetAggregationStatus();
   return;
 }
 

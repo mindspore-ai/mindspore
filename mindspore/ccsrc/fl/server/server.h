@@ -76,6 +76,8 @@ class Server {
   // Whether the training job of the server is enabled.
   InstanceState instance_state() const;
 
+  bool SubmitTask(std::function<void()> &&task);
+
  private:
   Server()
       : server_node_(nullptr),

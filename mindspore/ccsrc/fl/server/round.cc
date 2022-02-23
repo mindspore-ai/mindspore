@@ -46,9 +46,12 @@ void Round::RegisterMsgCallBack(const std::shared_ptr<ps::core::CommunicatorBase
 void Round::Initialize(const TimeOutCb &timeout_cb, const FinishIterCb &finish_iteration_cb) {
   MS_LOG(INFO) << "Round " << name_ << " start initialize.";
   // Callback when the iteration is finished.
-  finish_iteration_cb_ = [this, finish_iteration_cb](bool, const std::string &) -> void {
-    std::string reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
-    finish_iteration_cb(true, reason);
+  finish_iteration_cb_ = [this, finish_iteration_cb](bool valid, const std::string &in_reason) -> void {
+    std::string reason = in_reason;
+    if (valid) {
+      reason = "Round " + name_ + " finished! This iteration is valid. Proceed to next iteration.";
+    }
+    finish_iteration_cb(valid, reason);
   };
 
   if (check_timeout_) {

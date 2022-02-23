@@ -90,6 +90,7 @@ class ParameterAggregator {
 
   // Returns the aggregation/optimizing/pulling status to the caller.
   bool IsAggregationDone() const;
+  bool RunAggregation();
   bool IsOptimizingDone() const;
   bool IsPullingDone() const;
 
