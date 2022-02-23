@@ -27,6 +27,8 @@ namespace mindspore {
 namespace device {
 class MemHandler {
  public:
+  MemHandler() = default;
+  virtual ~MemHandler() = default;
   virtual size_t GetAvailableMemSize() = 0;
   virtual void *MallocDevice(size_t mem_size) = 0;
   virtual void FreeDevice(void *ptr) = 0;

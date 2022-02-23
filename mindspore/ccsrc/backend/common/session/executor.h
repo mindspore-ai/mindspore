@@ -113,7 +113,10 @@ class RunOpsInGraphTask : public Task {
 class RunOpTask : public Task {
  public:
   RunOpTask() { type_ = kRunOp; }
-  ~RunOpTask() override = default;
+  ~RunOpTask() override {
+    op_run_info_ = nullptr;
+    input_tensors_ = nullptr;
+  }
   void Run() override;
   OpRunInfo *op_run_info_{nullptr};
   GraphInfo graph_info_;

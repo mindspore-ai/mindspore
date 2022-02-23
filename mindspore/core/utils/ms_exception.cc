@@ -18,12 +18,12 @@
 
 namespace mindspore {
 MsException &MsException::Instance() {
-  static MsException instance;
+  static MsException instance{};
   return instance;
 }
 
 StaticAnalysisException &StaticAnalysisException::Instance() {
-  static StaticAnalysisException instance;
+  static StaticAnalysisException instance{};
   return instance;
 }
 }  // namespace mindspore

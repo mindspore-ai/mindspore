@@ -99,7 +99,7 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[2]->addr);
   params->output_ = reinterpret_cast<DataType *>(outputs[0]->addr);
   params->inverse_idx_ = reinterpret_cast<IndexType *>(outputs[1]->addr);
-  params->input_size_ = static_cast<IndexType>(input_size_);
+  params->input_size_ = input_size_;
   params->output_size_ = 0;
 
   params->thread_num_ = common::ThreadPool::GetInstance().GetSyncRunThreadNum();

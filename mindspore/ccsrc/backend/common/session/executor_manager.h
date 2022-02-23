@@ -26,7 +26,7 @@ class Executor;
 class ExecutorManager {
  public:
   static ExecutorManager &Instance() {
-    static ExecutorManager instance;
+    static ExecutorManager instance{};
     return instance;
   }
   std::shared_ptr<Executor> GetExecutor(const std::string &device_name, uint32_t device_id);

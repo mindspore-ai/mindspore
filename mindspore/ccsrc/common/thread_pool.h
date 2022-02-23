@@ -33,7 +33,7 @@
 namespace mindspore {
 namespace common {
 enum Status { FAIL = -1, SUCCESS = 0 };
-using Task = std::function<int()>;
+using Task = std::function<Status()>;
 
 struct ThreadContext {
   std::mutex mutex;
@@ -48,7 +48,7 @@ class ThreadPool {
   ThreadPool &operator=(const ThreadPool &) = delete;
   static ThreadPool &GetInstance();
   bool SyncRun(const std::vector<Task> &tasks);
-  size_t GetSyncRunThreadNum() { return max_thread_num_; }
+  size_t GetSyncRunThreadNum() const { return max_thread_num_; }
   void ClearThreadPool();
 
  private:

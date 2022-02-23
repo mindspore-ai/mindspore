@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
-#include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils.h"

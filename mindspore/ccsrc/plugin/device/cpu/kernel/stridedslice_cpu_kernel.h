@@ -42,8 +42,8 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   bool MatchParallelPattern();
   void InitParallelParam();
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
-  int RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
-  int RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+  common::Status RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+  common::Status RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
   void ParseMasks(const CNodePtr &kernel_node);
 
   TypeId dtype_;
