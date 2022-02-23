@@ -45,7 +45,7 @@ class PackWeightManager {
   virtual ~PackWeightManager();
 
   void InitWeightManagerByPath(const std::string &model_path, const char *model_buf);
-  void InitWeightManagerByBuf(const char *model_buf);
+  STATUS InitWeightManagerByBuf(const char *model_buf);
   void DeleteSavedModelPtr(LiteModel *delete_model);
   STATUS StoreLiteModel(const char *model_buf, const Model *model);
   void *GetTensorData(const LiteModel *model, const SchemaTensorWrapper *origin_tensor, size_t tensor_index);

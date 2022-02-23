@@ -20,7 +20,7 @@
 #include "include/lite_types.h"
 #include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
-#include "src/common//file_utils.h"
+#include "src/common/file_utils.h"
 #include "src/pack_weight_manager.h"
 namespace mindspore {
 namespace {
@@ -89,8 +89,10 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     }
     if (device->GetDeviceType() == kGPU) {
       num_models_ = 1;
-    } else {
+    } else if (runner_config->workers_num == 0) {
       num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
+    } else {
+      num_models_ = runner_config->workers_num;
     }
   } else {
     MS_LOG(DEBUG) << "use default config.";
@@ -172,12 +174,20 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     return kLiteError;
   }
   size_t size = 0;
+  if (graph_buf_ != nullptr) {
+    delete[] graph_buf_;
+    graph_buf_ = nullptr;
+  }
   graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf_ == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
     return kLiteError;
   }
-  lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
+  auto ret = lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
+    return kLiteError;
+  }
   std::shared_ptr<ModelThread> model_thread = nullptr;
   for (size_t i = 0; i < num_models_; i++) {
     model_thread = std::make_shared<ModelThread>();
