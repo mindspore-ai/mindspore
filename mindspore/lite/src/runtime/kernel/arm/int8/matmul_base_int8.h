@@ -60,8 +60,7 @@ class MatmulBaseInt8CPUKernel : public InnerKernel {
  private:
   int InitTmpBuffer();
   void FreeTmpBuffer();
-  void TransferA();
-  void TransferB();
+  int TransferB();
 
  private:
   int MallocQuantParam();
