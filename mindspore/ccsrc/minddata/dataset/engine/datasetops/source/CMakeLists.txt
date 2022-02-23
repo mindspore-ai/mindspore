@@ -30,6 +30,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     kmnist_op.cc
     libri_tts_op.cc
     lj_speech_op.cc
+    lsun_op.cc
     mappable_leaf_op.cc
     mnist_op.cc
     multi30k_op.cc

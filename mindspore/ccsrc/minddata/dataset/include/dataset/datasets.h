@@ -388,7 +388,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     last operation. The default output_columns will have the same
   ///     name as the input columns, i.e., the columns will be replaced.
   /// \param[in] project_columns A list of column names to project.
-  /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+  /// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
   /// \par Example
@@ -3403,6 +3403,113 @@ inline std::shared_ptr<LJSpeechDataset> MS_API LJSpeech(const std::string &datas
                                                         const std::reference_wrapper<Sampler> &sampler,
                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<LJSpeechDataset>(StringToChar(dataset_dir), sampler, cache);
+}
+
+/// \class LSUNDataset
+/// \brief A source dataset for reading LSUN datast.
+class MS_API LSUNDataset : public Dataset {
+ public:
+  /// \brief Constructor of LSUNDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all`.
+  /// \param[in] classes Classes list to load.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+              const std::vector<std::vector<char>> &classes, bool decode, const std::shared_ptr<Sampler> &sampler,
+              const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LSUNDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all`.
+  /// \param[in] classes Classes list to load.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+              const std::vector<std::vector<char>> &classes, bool decode, const Sampler *sampler,
+              const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LSUNDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all`.
+  /// \param[in] classes Classes list to load.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LSUNDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+              const std::vector<std::vector<char>> &classes, bool decode, const std::reference_wrapper<Sampler> sampler,
+              const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of LSUNDataset.
+  ~LSUNDataset() = default;
+};
+
+/// \brief Function to create a LSUNDataset.
+/// \note The generated dataset has two columns "image" and "label".
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all` (Default=`all`).
+/// \param[in] classes Classes list to load, such as 'bedroom', 'classroom' (Default={}, means load all classes).
+/// \param[in] decode Decode the images after reading (Default=false).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (Default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (Default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current LSUNDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/lsun_dataset_directory";
+///      std::shared_ptr<Dataset> ds = LSUN(folder_path, "all");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In LSUNDataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<LSUNDataset> MS_API
+LSUN(const std::string &dataset_dir, const std::string &usage = "all", const std::vector<std::string> &classes = {},
+     bool decode = false, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+     const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LSUNDataset>(StringToChar(dataset_dir), StringToChar(usage), VectorStringToChar(classes),
+                                       decode, sampler, cache);
+}
+
+/// \brief Function to create a LSUNDataset.
+/// \note The generated dataset has two columns "image" and "label".
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all`.
+/// \param[in] classes Classes list to load.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (Default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current LSUNDataset.
+inline std::shared_ptr<LSUNDataset> MS_API LSUN(const std::string &dataset_dir, const std::string &usage,
+                                                const std::vector<std::string> &classes, bool decode,
+                                                const Sampler *sampler,
+                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LSUNDataset>(StringToChar(dataset_dir), StringToChar(usage), VectorStringToChar(classes),
+                                       decode, sampler, cache);
+}
+
+/// \brief Function to create a LSUNDataset.
+/// \note The generated dataset has two columns "image" and "label".
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of LSUN, can be `train`, `valid`, `test` or `all`.
+/// \param[in] classes Classes list to load.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (Default=nullptr, which means no cache is used).
+/// \return Shared pointer to the current LSUNDataset.
+inline std::shared_ptr<LSUNDataset> MS_API LSUN(const std::string &dataset_dir, const std::string &usage,
+                                                const std::vector<std::string> &classes, bool decode,
+                                                const std::reference_wrapper<Sampler> sampler,
+                                                const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LSUNDataset>(StringToChar(dataset_dir), StringToChar(usage), VectorStringToChar(classes),
+                                       decode, sampler, cache);
 }
 
 /// \class ManifestDataset

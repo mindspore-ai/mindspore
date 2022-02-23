@@ -38,7 +38,7 @@ from .validators import check_imagefolderdataset, \
     check_usps_dataset, check_div2k_dataset, check_random_dataset, \
     check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
     check_photo_tour_dataset, check_svhn_dataset, check_stl10_dataset, check_semeion_dataset, \
-    check_caltech101_dataset, check_caltech256_dataset, check_wider_face_dataset
+    check_caltech101_dataset, check_caltech256_dataset, check_wider_face_dataset, check_lsun_dataset
 
 from ..core.validator_helpers import replace_none
 
@@ -2417,6 +2417,136 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
 
     def parse(self, children=None):
         return cde.KMnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class LSUNDataset(MappableDataset, VisionBaseDataset):
+    """
+    A source dataset that reads and parses the LSUN dataset.
+
+    The generated dataset has two columns: :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`, `valid` or `all`
+            (default=None, will be set to `all`).
+        classes(Union[str, list[str]], optional): Choose the specific classes to load (default=None, means loading
+            all classes in root directory).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        decode (bool, optional): Decode the images after reading (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided
+            into (default=None). When this argument is specified, 'num_samples' reflects
+            the max sample number of per shard.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument can only be specified when num_shards is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If 'sampler' and 'shuffle' are specified at the same time.
+        RuntimeError: If 'sampler' and sharding are specified at the same time.
+        RuntimeError: If 'num_shards' is specified but 'shard_id' is None.
+        RuntimeError: If 'shard_id' is specified but 'num_shards' is None.
+        ValueError: If 'shard_id' is invalid (< 0 or >= num_shards).
+        ValueError: If 'usage' or 'classes' is invalid (not in specific types).
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> lsun_dataset_dir = "/path/to/lsun_dataset_directory"
+        >>>
+        >>> # 1) Read all samples (image files) in lsun_dataset_dir with 8 threads
+        >>> dataset = ds.LSUNDataset(dataset_dir=lsun_dataset_dir,
+        ...                          num_parallel_workers=8)
+        >>>
+        >>> # 2) Read all train samples (image files) from folder "bedroom" and "classroom"
+        >>> dataset = ds.LSUNDataset(dataset_dir=lsun_dataset_dir, usage="train",
+        ...                          classes=["bedroom", "classroom"])
+
+    About LSUN dataset:
+
+    The LSUN dataset accesses the effectiveness of this cascading procedure and enables further progress
+    in visual recognition research.
+
+    The LSUN dataset contains around one million labeled images for each of 10 scene categories
+    and 20 object categories. The author experimented with training popular convolutional networks and found
+    that they achieved substantial performance gains when trained on this dataset.
+
+    You can unzip the original LSUN dataset files into this directory structure using official data.py and
+    read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── lsun_dataset_directory
+            ├── test
+            │    ├── ...
+            ├── bedroom_train
+            │    ├── 1_1.jpg
+            │    ├── 1_2.jpg
+            ├── bedroom_val
+            │    ├── ...
+            ├── classroom_train
+            │    ├── ...
+            ├── classroom_val
+            │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        article{yu15lsun,
+            title={LSUN: Construction of a Large-scale Image Dataset using Deep Learning with Humans in the Loop},
+            author={Yu, Fisher and Zhang, Yinda and Song, Shuran and Seff, Ari and Xiao, Jianxiong},
+            journal={arXiv preprint arXiv:1506.03365},
+            year={2015}
+        }
+    """
+
+    @check_lsun_dataset
+    def __init__(self, dataset_dir, usage=None, classes=None, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+        self.classes = replace_none(classes, [])
+        self.decode = replace_none(decode, False)
+
+    def parse(self, children=None):
+        return cde.LSUNNode(self.dataset_dir, self.usage, self.classes, self.decode, self.sampler)
 
 
 class ManifestDataset(MappableDataset, VisionBaseDataset):

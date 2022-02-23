@@ -105,6 +105,7 @@ constexpr char kIWSLT2017Node[] = "IWSLT2017Dataset";
 constexpr char kKMnistNode[] = "KMnistDataset";
 constexpr char kLibriTTSNode[] = "LibriTTSDataset";
 constexpr char kLJSpeechNode[] = "LJSpeechDataset";
+constexpr char kLSUNNode[] = "LSUNDataset";
 constexpr char kManifestNode[] = "ManifestDataset";
 constexpr char kMindDataNode[] = "MindDataDataset";
 constexpr char kMnistNode[] = "MnistDataset";
