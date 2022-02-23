@@ -44,19 +44,88 @@ void CPUProfiler::StepProfilingEnable(const bool enable_flag) {
   enable_flag_ = enable_flag;
 }
 
-void CPUProfiler::SetRunTimeData(const std::string &op_name, const uint32_t pid) {
+void CPUProfiler::SetRunTimeData(const std::string &op_name, const uint32_t pid, bool is_parallel) {
+  if (!is_parallel) {
+    op_name_ = op_name;
+    pid_ = pid;
+  }
+  {
+    std::shared_lock<std::shared_mutex> lock(op_map_mutex_);
+    auto iter = op_info_map_.find(op_name);
+    if (iter != op_info_map_.end()) {
+      iter->second.op_count += 1;
+      return;
+    }
+  }
+  std::unique_lock<std::shared_mutex> lock(op_map_mutex_);
+  OpInfo op_info;
+  op_info.op_name = op_name;
+  op_info.pid = pid;
+  op_info.op_count = 1;
+  op_info_map_[op_name] = op_info;
+}
+
+void CPUProfiler::SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp) {
+  std::shared_lock<std::shared_mutex> lock(op_map_mutex_);
   auto iter = op_info_map_.find(op_name);
   if (iter != op_info_map_.end()) {
-    iter->second.op_count += 1;
-  } else {
-    OpInfo op_info;
-    op_info.op_name = op_name;
-    op_info.pid = pid;
-    op_info.op_count = 1;
-    op_info_map_[op_name] = op_info;
+    iter->second.tmp_start_duration.start_timestamp = start_timestamp;
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    MS_EXCEPTION_IF_NULL(actor_manager);
+    auto thread_pool = actor_manager->GetActorThreadPool();
+    auto worker_ids_map = thread_pool->GetWorkerIdMap();
+    auto id_iter = worker_ids_map.find(std::this_thread::get_id());
+    if (id_iter != worker_ids_map.end()) {
+      iter->second.tmp_start_duration.tid = id_iter->second;
+    }
   }
-  op_name_ = op_name;
-  pid_ = pid;
+}
+
+float CPUProfiler::SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp) {
+  float op_time_elapsed = 0;
+  std::shared_lock<std::shared_mutex> lock(op_map_mutex_);
+  auto iter = op_info_map_.find(op_name);
+  if (iter != op_info_map_.end()) {
+    iter->second.tmp_start_duration.duration =
+      (stop_timestamp - iter->second.tmp_start_duration.start_timestamp) / kNanosecondToMillisecond;
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    MS_EXCEPTION_IF_NULL(actor_manager);
+    auto thread_pool = actor_manager->GetActorThreadPool();
+    auto worker_ids_map = thread_pool->GetWorkerIdMap();
+    auto id_iter = worker_ids_map.find(std::this_thread::get_id());
+    if (id_iter != worker_ids_map.end()) {
+      if (iter->second.tmp_start_duration.tid != id_iter->second) {
+        MS_LOG(EXCEPTION) << "Op " << op_name << " start time thread id must be equal to end thread id.";
+      }
+    }
+    iter->second.start_duration.emplace_back(iter->second.tmp_start_duration);
+    op_time_elapsed = iter->second.tmp_start_duration.duration;
+  }
+  return op_time_elapsed;
+}
+
+void CPUProfiler::OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid) {
+  auto start_timestamp = GetHostMonoTimeStamp();
+  SetRunTimeData(op_name, pid, true);
+  SetRuntimeStart(op_name, start_timestamp);
+
+#if ENABLE_GPU
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    // For heterogeneous scene, record op name to gpu_profiler_inst.
+    auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+    // For cpu network, no gpu profiler, do not to raise exception.
+    if (gpu_profiler_inst && gpu_profiler_inst->GetEnableFlag()) {
+      gpu_profiler_inst->RecordOneStepStartEndInfo(op_name);
+    }
+  }
+#endif
+}
+
+void CPUProfiler::OpDataProducerEndParallel(const std::string op_name) {
+  auto stop_timestamp = GetHostMonoTimeStamp();
+  float op_time_elapsed = SetRuntimeEnd(op_name, stop_timestamp);
+  MS_LOG(DEBUG) << "Host Time Elapsed(ms)," << op_name << "," << op_time_elapsed;
+  Profiler::SetRunTimeData(op_name, op_time_elapsed);
 }
 
 void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t pid) {

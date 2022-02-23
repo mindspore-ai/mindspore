@@ -167,11 +167,14 @@ void DataSaver::WriteOpTimestamp(const std::string &saver_base_dir) const {
     for (const auto &op_timestamp_info : op_timestamps_map_) {
       if (op_side_ == "cpu") {
         ofs << op_timestamp_info.first << ";HostCpuOps;";
+        for (auto start_end : op_timestamp_info.second) {
+          ofs << start_end.start_timestamp << "," << start_end.duration << "," << start_end.tid << " ";
+        }
       } else {
         ofs << op_timestamp_info.first << ";GpuOps;";
-      }
-      for (auto start_end : op_timestamp_info.second) {
-        ofs << start_end.start_timestamp << "," << start_end.duration << " ";
+        for (auto start_end : op_timestamp_info.second) {
+          ofs << start_end.start_timestamp << "," << start_end.duration << " ";
+        }
       }
       ofs << std::endl;
     }

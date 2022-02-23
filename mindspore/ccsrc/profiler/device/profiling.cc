@@ -52,6 +52,7 @@ uint64_t Profiler::GetHostMonoTimeStamp() const {
 }
 
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
+  std::shared_lock<std::shared_mutex> lock(op_map_mutex_);
   auto iter = op_info_map_.find(op_name);
   if (iter != op_info_map_.end()) {
     iter->second.op_host_cost_time += time_elapsed;
@@ -59,6 +60,7 @@ void Profiler::SetRunTimeData(const std::string &op_name, const float time_elaps
 }
 
 void Profiler::SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration) {
+  std::shared_lock<std::shared_mutex> lock(op_map_mutex_);
   auto iter = op_info_map_.find(op_name);
   if (iter != op_info_map_.end()) {
     iter->second.start_duration.emplace_back(StartDuration({start, duration}));

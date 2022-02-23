@@ -317,7 +317,6 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  std::lock_guard<std::mutex> locker(launch_mutex_);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
@@ -326,9 +325,10 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   uint32_t pid = IntToUint(getpid());
-  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
+  // cpu support multi-thread with mindrt for profiling.
+  profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
   bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
-  profiler_inst->OpDataProducerEnd();
+  profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
 
   return ret;
 }
