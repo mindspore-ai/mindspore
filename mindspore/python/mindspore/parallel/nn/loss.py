@@ -16,5 +16,6 @@
 Parallel Loss for the Parallel Training
 This is an experimental interface that is subject to change or deletion.
 """
-# pylint: disable=W0614,W0401,W0611
 from mindspore.nn.transformer.loss import CrossEntropyLoss
+
+__all__ = ["CrossEntropyLoss"]

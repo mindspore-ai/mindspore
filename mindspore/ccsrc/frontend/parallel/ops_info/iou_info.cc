@@ -52,7 +52,7 @@ Status IOUInfo::InferTensorMap() {
 
   inputs_tensor_map_.emplace_back(TensorMap({1, -1}));
   inputs_tensor_map_.emplace_back(TensorMap({0, -1}));
-  outputs_tensor_map_.emplace_back(TensorMap({1, 0}));
+  outputs_tensor_map_.emplace_back(TensorMap({0, 1}));
   return SUCCESS;
 }
 
