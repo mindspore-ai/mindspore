@@ -167,6 +167,8 @@ int DeConvolutionCPUKernel::Prepare() {
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
+  // There could be weight dataType casting before Prepare, thus weight update is required.
+  UpdateOriginWeightAndBias();
 
 #if defined(ENABLE_ARM32) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   row_tile_ = C4NUM;
