@@ -23,8 +23,9 @@ namespace mindspore::lite {
 class PoolTensorRT : public TensorRTOp {
  public:
   PoolTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name) {}
+               const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+               const schema::QuantType &quant_type)
+      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
 
   ~PoolTensorRT() override = default;
 

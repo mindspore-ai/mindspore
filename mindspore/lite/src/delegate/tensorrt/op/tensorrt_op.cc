@@ -37,6 +37,8 @@ std::vector<mindspore::MSTensor> &TensorRTOp::outputs() { return this->out_tenso
 
 schema::PrimitiveType TensorRTOp::type() const { return this->type_; }
 
+schema::QuantType TensorRTOp::GetQuantType() const { return this->quant_type_; }
+
 void TensorRTOp::set_in_ops(const std::vector<TensorRTOp *> &in_ops) { this->in_ops_ = in_ops; }
 
 void TensorRTOp::set_out_ops(const std::vector<TensorRTOp *> &out_ops) { this->out_ops_ = out_ops; }
@@ -74,9 +76,15 @@ int TensorRTOp::SetInt8DynamicRange() {
     MS_LOG(ERROR) << "input or output tensor empty.";
     return RET_ERROR;
   }
-  if (in_tensors_[0].QuantParams().empty() || out_tensors_[0].QuantParams().empty()) {
-    MS_LOG(INFO) << op_name_ << " quant param is empty.";
+  if (quant_type_ != schema::QuantType_QUANT_ALL) {
+    MS_LOG(INFO) << "op " << op_name_ << " not quantized.";
     return RET_OK;
+  }
+
+  if (in_tensors_[0].QuantParams().empty() || out_tensors_[0].QuantParams().empty()) {
+    MS_LOG(WARNING) << op_name_ << " quant param is empty.";
+    MS_LOG(WARNING) << "in_tensor quant param size: " << in_tensors_[0].QuantParams().size()
+                    << " ,out_tensor quant param size: " << out_tensors_[0].QuantParams().size();
   }
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto tensor = in_tensors_.at(i);
