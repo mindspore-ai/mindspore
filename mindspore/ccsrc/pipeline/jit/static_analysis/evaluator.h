@@ -372,6 +372,38 @@ class JEvaluator : public Evaluator {
   AbstractFunctionPtr orig_func_;
 };
 
+class TaylorEvaluator : public Evaluator {
+ public:
+  TaylorEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func)
+      : Evaluator("TaylorEvaluator"), evaluator_(evaluator), orig_func_(orig_func) {}
+  ~TaylorEvaluator() override = default;
+  MS_DECLARE_PARENT(TaylorEvaluator, Evaluator);
+  AnfNodePtr bound_node() const override {
+    if (evaluator_ != nullptr) {
+      return evaluator_->bound_node();
+    }
+    return bound_node_.lock();
+  }
+
+  void set_bound_node(const AnfNodePtr &node) override {
+    if (evaluator_ != nullptr) {
+      evaluator_->set_bound_node(node);
+    }
+    bound_node_ = AnfNodeWeakPtr(node);
+  }
+
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
+    MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
+  }
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
+  std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
+
+ private:
+  EvaluatorPtr evaluator_;
+  AbstractFunctionPtr orig_func_;
+};
+
 class ShardEvaluator : public Evaluator {
  public:
   ShardEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func)

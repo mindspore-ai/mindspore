@@ -22,6 +22,7 @@
 #include "base/core_ops.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
+#include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/meta_fg_prim_eliminate.h"
 
 namespace mindspore {
@@ -35,8 +36,8 @@ class ExpandMetaFg {
     // to the implementation of `kPrimVmap`.
     (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandJPrim>());
     (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandVmapPrim>());
+    (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandTaylorPrim>());
   }
-
   virtual ~ExpandMetaFg() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 

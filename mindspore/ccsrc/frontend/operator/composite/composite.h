@@ -166,6 +166,17 @@ class GradOperation : public MetaFuncGraph {
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 
+class TaylorOperation : public MetaFuncGraph {
+ public:
+  explicit TaylorOperation(const std::string &name);
+  ~TaylorOperation() override = default;
+  MS_DECLARE_PARENT(TaylorOperation, MetaFuncGraph);
+  FuncGraphPtr GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params);
+
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+};
+using TaylorOperationPtr = std::shared_ptr<TaylorOperation>;
+
 class ListMap {
  public:
   explicit ListMap(const std::string &name) : name_(name) { cache_.clear(); }

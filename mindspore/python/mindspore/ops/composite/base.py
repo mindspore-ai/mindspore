@@ -22,7 +22,7 @@ from types import FunctionType
 from mindspore import context
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
-    ListSlice_, VmapOperation_
+    ListSlice_, VmapOperation_, TaylorOperation_
 from ...common import dtype as mstype
 from ...common.api import ms_function, _pynative_executor, _wrap_func
 from ..primitive import Primitive
@@ -397,6 +397,29 @@ class GradOperation(GradOperation_):
                     return grad_(fn)(*args, **kwargs)
 
         self.grad_fn = after_grad
+        self.fn = fn
+        return self.grad_fn
+
+
+class _TaylorOperation(TaylorOperation_):
+    """
+    Generate the higher order derivatives function for the input function.
+    """
+    def __init__(self):
+        """Initialize TaylorOperation."""
+        TaylorOperation_.__init__(self, 'taylorgrad')
+        self.grad_fn = None
+        self.fn = None
+
+    def __call__(self, fn):
+        if self.grad_fn is not None and self.fn == fn:
+            return self.grad_fn
+        taylor_grad_ = _TaylorOperation()
+        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        @ms_function
+        def after_taylor_grad(*args):
+            return taylor_grad_(fn)(*args)
+        self.grad_fn = after_taylor_grad
         self.fn = fn
         return self.grad_fn
 

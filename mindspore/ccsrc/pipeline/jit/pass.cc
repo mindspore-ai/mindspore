@@ -52,6 +52,7 @@
 #include "frontend/optimizer/irpass/ge_specialized_prepare.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/shard_eliminate.h"
+#include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))

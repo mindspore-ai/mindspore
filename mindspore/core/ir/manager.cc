@@ -313,7 +313,7 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraphManager::recursive_graphs(cons
   }
 }
 
-// Check if the function graph embed with `MetaFGPrim`, which currently covers kPrimJ and kPrimVmap.
+// Check if the function graph embed with `MetaFGPrim`, which currently covers kPrimJ and kPrimVmap and kPrimTaylor.
 bool FuncGraphManager::func_graph_meta_fg_prim_total(const FuncGraphPtr &fg) const {
   MS_EXCEPTION_IF_NULL(meta_fg_prim_total_);
   MS_EXCEPTION_IF_NULL(fg);
@@ -704,7 +704,8 @@ void FuncGraphManager::OnEdgeAdded(const AnfNodePtr &node, int index, const AnfN
         signals_->InvalidateComputer();
       }
     }
-    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap)) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap) ||
+        IsPrimitiveCNode(node, prim::kPrimTaylor)) {
       fg->AddMetaFgPrimValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
@@ -725,7 +726,8 @@ void FuncGraphManager::OnEdgeRemoved(const AnfNodePtr &node, int index, const An
         signals_->InvalidateComputer();
       }
     }
-    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap)) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap) ||
+        IsPrimitiveCNode(node, prim::kPrimTaylor)) {
       fg->DropMetaFgPrimValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
@@ -1096,7 +1098,7 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
     return false;
   }
 
-  // Check MetaFgPrim (J/Vmap) FuncGraph input.
+  // Check MetaFgPrim (J/Vmap/Taylor) FuncGraph input.
   const auto &meta_fg_prim_values = fg->meta_fg_prim_value_nodes();
   if (!meta_fg_prim_values.empty()) {
     auto contains_meta_fg_prim =
@@ -1107,9 +1109,10 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
           return func_graph->seen_ != seen_num;
         }
         if (IsValueNode<Primitive>(iter.first)) {
-          // Exclude the primitive of MetaFgPrim (J/Vmap) itself.
+          // Exclude the primitive of MetaFgPrim (J/Vmap/Taylor) itself.
           auto prim = GetValueNode<PrimitivePtr>(iter.first);
-          return (prim->name() != prim::kPrimJ->name() && prim->name() != prim::kPrimVmap->name());
+          return (prim->name() != prim::kPrimJ->name() && prim->name() != prim::kPrimVmap->name() &&
+                  prim->name() != prim::kPrimTaylor->name());
         }
         return false;
       });
@@ -1119,35 +1122,38 @@ bool FuncGraphMetaFgPrimTotalComputer::SeekMetaFgPrim(const FuncGraphPtr &fg, Se
     }
   }
 
-  // Check MetaFgPrim (J/Vmap) CNode as FV.
+  // Check MetaFgPrim (J/Vmap/Taylor) CNode as FV.
   const auto &fv_nodes = fg->free_variables();
   if (!fv_nodes.empty()) {
     auto contains_meta_fg_prim_cnode = std::find_if(fv_nodes.begin(), fv_nodes.end(), [seen_num](const auto &iter) {
-      // Check if the FV is a MetaFgPrim (J/Vmap) call CNode.
-      if (IsPrimitiveCNode(iter.first, prim::kPrimJ) || IsPrimitiveCNode(iter.first, prim::kPrimVmap)) {
+      // Check if the FV is a MetaFgPrim (J/Vmap/Taylor) call CNode.
+      if (IsPrimitiveCNode(iter.first, prim::kPrimJ) || IsPrimitiveCNode(iter.first, prim::kPrimVmap) ||
+          IsPrimitiveCNode(iter.first, prim::kPrimTaylor)) {
         return true;
       }
       return false;
     });
     if (contains_meta_fg_prim_cnode != fv_nodes.end()) {
-      MS_LOG(DEBUG) << fg->ToString() << " contains FV MetaFgPrim (J/Vmap) ("
+      MS_LOG(DEBUG) << fg->ToString() << " contains FV MetaFgPrim (J/Vmap/Taylor) ("
                     << contains_meta_fg_prim_cnode->first->DebugString() << ")";
       return true;
     }
   }
 
-  // Check if func graphs used contains J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)
+  // Check if func graphs used contains J(func_graph), J(Primitive), Vmap(func_graph), Vmap(Primitive),
+  // Taylor(func_graph) or Taylor(Primitive).
   fg->seen_ = seen_num;
   for (auto &item : fg->func_graphs_used()) {
     auto used_g = item.first;
     if (SeekMetaFgPrim(used_g, seen_num)) {
       MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString()
-                    << " which contains J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)";
+                    << " which contains J(func_graph), J(Primitive), Vmap(func_graph), Vmap(Primitive), "
+                    << "Taylor(func_graph) or Taylor(Primitive)";
       return true;
     }
   }
-  MS_LOG(DEBUG) << fg->ToString()
-                << " doesn't contain J(func_graph), J(Primitive), Vmap(func_graph) or Vmap(Primitive)";
+  MS_LOG(DEBUG) << fg->ToString() << " doesn't contain J(func_graph), J(Primitive), Vmap(func_graph), Vmap(Primitive), "
+                << "Taylor(func_graph) or Taylor(Primitive)";
   return false;
 }
 

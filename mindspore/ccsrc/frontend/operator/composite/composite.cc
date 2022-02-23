@@ -944,6 +944,80 @@ REGISTER_PYBIND_DEFINE(VmapOperation_, ([](const py::module *m) {
                            .def(py::init<std::string &>(), py::arg("fn"));
                        }));
 
+TaylorOperation::TaylorOperation(const std::string &name) : MetaFuncGraph(name) {
+  // def Taylor(func:read):
+  signatures_ = std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault}});
+}
+
+FuncGraphPtr TaylorOperation::GetTaylorGrad(const AnfNodePtr &k, const std::vector<AnfNodePtr> &forward_graph_params) {
+  FuncGraphPtr k_child = std::make_shared<FuncGraph>();
+  k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(k);
+  MS_LOG(INFO) << "TaylorOperation forward input size " << forward_graph_params.size();
+  for (size_t i = 0; i < forward_graph_params.size(); ++i) {
+    inputs.push_back(k_child->add_parameter());
+  }
+  // Taylor(fn)(input params)
+  auto k_app = k_child->NewCNodeInOrder(inputs);
+
+  k_child->set_output(k_app);
+  return k_child;
+}
+
+// Generate the graph to calculate higher order derivatives.
+FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION)
+      << "'TaylorOperation' requires a forward network or function as an input, while the input is empty.";
+  }
+
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "'TaylorOperation' arg0 must be a 'Function' or 'Cell', but got "
+                      << args_spec_list[0]->ToString();
+  }
+
+  auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
+  MS_EXCEPTION_IF_NULL(real_fn);
+
+  FuncGraphPtr forward_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(forward_graph);
+  forward_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  FuncGraphPtr grad_fg = nullptr;
+  MS_LOG(INFO) << "'TaylorOperation' forward_graph" << forward_graph->debug_info();
+  grad_fg = std::make_shared<FuncGraph>();
+  auto nparam = forward_graph->parameters().size();
+
+  std::ostringstream ss;
+  ss << "taylorgrad{" << nparam << "}";
+  grad_fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  grad_fg->debug_info()->set_name(ss.str());
+  ParameterPtr param_graph = grad_fg->add_parameter();
+
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(prim::kPrimTaylor));
+  inputs.push_back(param_graph);
+  // Taylor(fn)
+  auto mark_taylor = grad_fg->NewCNodeInOrder(inputs);
+  FuncGraphPtr k_child = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));
+    k_child = GetTaylorGrad(mark_taylor, forward_graph->parameters());
+  }
+  grad_fg->set_output(NewValueNode(k_child));
+  // return Taylor(fn)(inputs)
+  return grad_fg;
+}
+
+REGISTER_PYBIND_DEFINE(TaylorOperation_, ([](const py::module *m) {
+                         (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(
+                           *m, "TaylorOperation_")
+                           .def(py::init<std::string &>(), py::arg("fn"));
+                       }));
+
 // Generate the ListMap func graph.
 FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   size_t args_num = args_spec_list.size();

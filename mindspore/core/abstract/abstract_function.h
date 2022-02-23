@@ -339,6 +339,36 @@ class MS_CORE_API JTransformedAbstractClosure final : public AbstractFuncAtom {
   AbstractFuncAtomPtr fn_;
 };
 
+/// \brief TaylorTransformedAbstractClosure defines interface for abstract of Function
+/// transformed through the application of Taylor.
+class MS_CORE_API TaylorTransformedAbstractClosure final : public AbstractFuncAtom {
+ public:
+  /// \brief Constructor of TaylorTransformedAbstractClosure
+  ///
+  /// \param[in] fn The AbstractFuncAtom transformed through the application of Taylor.
+  explicit TaylorTransformedAbstractClosure(const AbstractFuncAtomPtr &fn) : fn_(fn) {}
+
+  /// \brief Destructor of TaylorTransformedAbstractClosure
+  ~TaylorTransformedAbstractClosure() override = default;
+  MS_DECLARE_PARENT(TaylorTransformedAbstractClosure, AbstractFuncAtom)
+
+  /// \brief Get the AbstractFuncAtom TaylorTransformedAbstractClosure corresponding to.
+  ///
+  /// \return The AbstractFuncAtom TaylorTransformedAbstractClosure corresponding to.
+  AbstractFuncAtomPtr fn() { return fn_; }
+
+  AbstractFunctionPtr Copy() const override { return std::make_shared<TaylorTransformedAbstractClosure>(fn_); }
+
+  bool operator==(const AbstractFunction &other) const override;
+
+  std::size_t hash() const override;
+
+  std::string ToString() const override { return "Taylor(" + fn_->ToString() + ")"; }
+
+ private:
+  AbstractFuncAtomPtr fn_;
+};
+
 /// \brief ShardTransformedAbstractClosure defines interface for abstract of Function
 /// transformed through the application of Shard.
 class MS_CORE_API ShardTransformedAbstractClosure final : public AbstractFuncAtom {
