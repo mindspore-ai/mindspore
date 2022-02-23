@@ -564,7 +564,8 @@ static bool IsOriginWeight(const ParameterPtr &param) {
   return true;
 }
 
-static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
+static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
+                                                            const std::string &name = ALL_REDUCE) {
   if (IsValueNode<RefKey>(node)) {
     std::vector<AnfNodePtr> param_v = FindParameterByRefKeyNode(node, func_graph);
     if (param_v.size() != 1) {
@@ -572,7 +573,8 @@ static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &no
                         << param_v.size();
     }
     auto param_ptr = param_v[0]->user_data<parallel::TensorLayout>();
-    if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
+    if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty() &&
+        name == ALL_REDUCE) {
       return std::make_pair(nullptr, true);
     }
     return std::make_pair(node, true);
@@ -580,9 +582,11 @@ static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &no
   return std::make_pair(nullptr, false);
 }
 
-static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node) {
+static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node,
+                                                            const std::string &name = ALL_REDUCE) {
   auto param_ptr = node->user_data<parallel::TensorLayout>();
-  if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
+  if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty() &&
+      name == ALL_REDUCE) {
     return std::make_pair(nullptr, false);
   }
   return std::make_pair(node, false);
@@ -629,6 +633,34 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
       continue;
     }
     auto res = FindParameter(cnode->input(index), func_graph);
+    if (!res.first) {
+      continue;
+    }
+    return res;
+  }
+  return std::make_pair(nullptr, false);
+}
+
+// Used for allgather and reducescatter
+std::pair<AnfNodePtr, bool> FindParameterWithAllgather(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
+                                                       const std::string &name) {
+  if (!node->isa<Parameter>() && !node->isa<CNode>() && !node->isa<ValueNode>()) {
+    return std::make_pair(nullptr, false);
+  }
+
+  if (node->isa<Parameter>()) {
+    return FindParameterByParameter(node, name);
+  }
+
+  if (node->isa<ValueNode>()) {
+    return FindParameterByValueNode(node, func_graph, name);
+  }
+
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (size_t index = 0; index < cnode->inputs().size(); ++index) {
+    if (index != 1) continue;
+    auto res = FindParameterWithAllgather(cnode->input(index), func_graph, name);
     if (!res.first) {
       continue;
     }

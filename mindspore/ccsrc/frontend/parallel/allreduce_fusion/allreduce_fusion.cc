@@ -39,41 +39,80 @@ void SetMirrorFusion(const CNodePtr &mirror_cnode, int64_t fusion, const std::st
   (void)node_prim->AddAttr(PARAMETER, MakeValue(std::make_shared<StringImm>(parameter_name)));
 }
 
-Status AllreduceFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold) {
-  auto filter = [](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, prim::kPrimMirror); };
+Status AllCommFusion::SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) {
+  auto filter = [primp](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, primp); };
   auto todo = DeepScopedGraphSearchWithFilter(ret, AlwaysInclude, filter);
   auto temp = threshold;
   int64_t fusion = 1;
   bool init = true;
+  std::string parameter_name;
+  std::string name;
   for (auto &node : todo) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(1)->Shape() == nullptr) continue;
     auto input_shapes = GetNodeShape(cnode->input(1));
     int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
     FuncGraphPtr func_graph = cnode->func_graph();
-    std::pair<AnfNodePtr, bool> param_node_pair = FindParameter(cnode->input(1), func_graph);
-    if (!param_node_pair.first) {
-      continue;
+    if (IsPrimitiveEquals(primp, prim::kPrimMirror)) {
+      name = ALL_REDUCE;
+      std::pair<AnfNodePtr, bool> param_node_pair = FindParameter(cnode->input(1), func_graph);
+      if (!param_node_pair.first) continue;
+      parameter_name = ParameterName(param_node_pair.first);
     }
-    auto parameter_name = ParameterName(param_node_pair.first);
-    if (input_size < temp) {
+
+    if (IsPrimitiveEquals(primp, prim::kPrimMicroStepAllGather) || IsPrimitiveEquals(primp, prim::kPrimAllGather)) {
+      name = ALL_GATHER;
+      if (!cnode->input(0) || !cnode->input(1)) continue;
+      PrimitivePtr primp = GetValueNode<PrimitivePtr>(cnode->input(0));
+      if (!primp->HasAttr(RECOMPUTE) || GetValue<bool>(primp->GetAttr(RECOMPUTE))) continue;
+      std::pair<AnfNodePtr, bool> param_node_pair = FindParameterWithAllgather(cnode->input(1), func_graph, name);
+      if (!param_node_pair.first) continue;
+      parameter_name = ParameterName(param_node_pair.first);
+    }
+
+    if (init || input_size < temp) {
       temp -= input_size;
+      init = false;
     } else {
       temp = threshold;
       fusion++;
     }
-    if (init) {
-      SetMirrorFusion(cnode, 1, parameter_name);
-    } else {
-      SetMirrorFusion(cnode, fusion, parameter_name);
-    }
-    init = false;
+    SetMirrorFusion(cnode, fusion, parameter_name);
   }
-  MS_LOG(INFO) << "Allreduce fusion by size succeed.";
+  MS_LOG(INFO) << name << " fusion by size succeed.";
   return SUCCESS;
 }
 
-Status AllreduceFusion::ProcessAllreduceFusion(const CNodePtr &ret) {
+Status AllCommFusion::SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp) {
+  auto filter = [primp](const AnfNodePtr &node) { return !IsPrimitiveCNode(node, primp); };
+  auto todo = DeepScopedGraphSearchWithFilter(ret, AlwaysInclude, filter);
+  auto temp = threshold;
+  int64_t fusion = 1;
+  bool init = true;
+  for (auto &node : todo) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode->input(1) == nullptr) continue;
+    FuncGraphPtr func_graph = cnode->func_graph();
+    std::pair<AnfNodePtr, bool> param_node_pair =
+      FindParameterWithAllgather(cnode->input(1), func_graph, REDUCE_SCATTER);
+    if (!param_node_pair.first) continue;
+    auto parameter_name = ParameterName(param_node_pair.first);
+    auto input_shapes = GetNodeShape(param_node_pair.first);
+    int64_t input_size = std::accumulate(input_shapes[0].begin(), input_shapes[0].end(), 1, std::multiplies<int64_t>());
+    if (init || input_size < temp) {
+      temp -= input_size;
+      init = false;
+    } else {
+      temp = threshold;
+      fusion++;
+    }
+    SetMirrorFusion(cnode, fusion, parameter_name);
+  }
+  MS_LOG(INFO) << "Reduce_Scatter fusion by size succeed.";
+  return SUCCESS;
+}
+
+Status AllCommFusion::ProcessCommOpsFusion(const CNodePtr &ret, const std::string &comm_name) {
   if (ret == nullptr) {
     MS_LOG(ERROR) << "ret is nullptr.";
     return FAILED;
@@ -83,7 +122,7 @@ Status AllreduceFusion::ProcessAllreduceFusion(const CNodePtr &ret) {
   MS_EXCEPTION_IF_NULL(root_graph_);
   auto graph_set = ForwardGraph(root_graph_);
   if (graph_set.size() > 1) {
-    MS_LOG(WARNING) << "AllReduce fusion don't support multiple subgraphs now.";
+    MS_LOG(WARNING) << comm_name << "fusion don't support multiple subgraphs now.";
     return SUCCESS;
   }
   auto forward_graph = *(graph_set.begin());
@@ -91,16 +130,35 @@ Status AllreduceFusion::ProcessAllreduceFusion(const CNodePtr &ret) {
   forward_ret_ = forward_graph->get_return();
   MS_EXCEPTION_IF_NULL(forward_ret_);
   if (allreduce_graph_.set_head_cnode(forward_ret_) != SUCCESS) {
-    MS_LOG(ERROR) << "AllreduceGraph set_head_cnode failed.";
+    MS_LOG(ERROR) << comm_name << "Graph set_head_cnode failed.";
     return FAILED;
   }
-  int64_t threshold = ParallelContext::GetInstance()->fusion_threshold_mb() * 1024 * 1024 / 4;
+  int64_t threshold = 0;
+  if (comm_name == ALL_REDUCE) {
+    threshold = ParallelContext::GetInstance()->fusion_threshold_mb();
+  } else if (comm_name == ALL_GATHER) {
+    threshold = ParallelContext::GetInstance()->allgather_fusion_threshold_mb();
+  } else if (comm_name == REDUCE_SCATTER) {
+    threshold = ParallelContext::GetInstance()->reducescatter_fusion_threshold_mb();
+  } else {
+    MS_LOG(ERROR) << " Comm Ops must be ALL_REDUCE, ALL_GATHER or REDUCE_SCATTER, but got " << comm_name;
+  }
+  threshold *= DEFAULT_THRESHOLD_MB_TO_BYTE;
   if (threshold <= 0) {
-    MS_LOG(ERROR) << "The threshold of SetFusionBySize must be larger than 0, but got " << threshold << ".";
+    MS_LOG(ERROR) << "The threshold of" << comm_name << "fusion must be larger than 0, but got " << threshold << ".";
     return FAILED;
+  }
+  if (comm_name == REDUCE_SCATTER) {
+    (void)SetFusionBySizeReduceScatter(ret, threshold, prim::kPrimVirtualAssignAdd);
+  }
+  if (comm_name == ALL_REDUCE) {
+    (void)SetFusionBySize(ret, threshold, prim::kPrimMirror);
+  }
+  if (comm_name == ALL_GATHER) {
+    (void)SetFusionBySize(ret, threshold, prim::kPrimMicroStepAllGather);
+    (void)SetFusionBySize(ret, threshold, prim::kPrimAllGather);
   }
 
-  (void)SetFusionBySize(ret, threshold);
   return SUCCESS;
 }
 }  // namespace parallel

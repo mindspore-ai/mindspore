@@ -146,7 +146,15 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_num", &ParallelContext::set_device_num, "Set device num.")
     .def("get_device_num_is_set", &ParallelContext::device_num_is_set, "Get device num is set.")
     .def("set_fusion_threshold_mb", &ParallelContext::set_fusion_threshold_mb, "Set fusion threshold.")
-    .def("fusion_threshold_mb", &ParallelContext::fusion_threshold_mb, "Get fusion threshold.")
+    .def("set_allgather_fusion_threshold_mb", &ParallelContext::set_allgather_fusion_threshold_mb,
+         "Set allgather fusion threshold.")
+    .def("set_reducescatter_fusion_threshold_mb", &ParallelContext::set_reducescatter_fusion_threshold_mb,
+         "Set reducescatter fusion threshold.")
+    .def("fusion_threshold_mb", &ParallelContext::fusion_threshold_mb, "Get allreduce fusion threshold.")
+    .def("allgather_fusion_threshold_mb", &ParallelContext::allgather_fusion_threshold_mb,
+         "Get allgather fusion threshold.")
+    .def("reducescatter_fusion_threshold_mb", &ParallelContext::reducescatter_fusion_threshold_mb,
+         "Get reduce_scatter fusion threshold.")
     .def("set_fusion_mode", &ParallelContext::set_fusion_mode, "Get fusion mode.")
     .def("get_fusion_mode", &ParallelContext::get_fusion_mode, "Get fusion mode.")
     .def("get_global_rank", &ParallelContext::global_rank, "Get global rank.")
@@ -178,6 +186,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set enable/disable all reduce fusion.")
     .def("get_enable_all_reduce_fusion", &ParallelContext::enable_all_reduce_fusion,
          "Get enable/disable all reduce fusion.")
+    .def("set_enable_all_gather_fusion", &ParallelContext::set_enable_all_gather_fusion,
+         "Set enable/disable all gather fusion.")
+    .def("get_enable_all_gather_fusion", &ParallelContext::enable_all_gather_fusion,
+         "Get enable/disable all gather fusion.")
+    .def("set_enable_reduce_scatter_fusion", &ParallelContext::set_enable_reduce_scatter_fusion,
+         "Set enable/disable reduce scatter fusion.")
+    .def("get_enable_reduce_scatter_fusion", &ParallelContext::enable_reduce_scatter_fusion,
+         "Get enable/disable reduce scatter fusion.")
     .def("get_parameter_broadcast", &ParallelContext::parameter_broadcast, "Get parameter broadcast.")
     .def("get_parameter_broadcast_is_set", &ParallelContext::parameter_broadcast_is_set,
          "Get parameter broadcast is set.")

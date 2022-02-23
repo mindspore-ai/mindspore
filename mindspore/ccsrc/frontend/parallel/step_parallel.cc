@@ -25,6 +25,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <queue>
 
 #include "utils/hash_map.h"
 #include "base/core_ops.h"

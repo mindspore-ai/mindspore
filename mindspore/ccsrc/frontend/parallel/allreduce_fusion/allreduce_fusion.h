@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_FUSION_H_
 
 #include <vector>
+#include <string>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "frontend/parallel/allreduce_fusion/allreduce_graph.h"
@@ -34,22 +35,24 @@ constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_TIME = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_INHERENT_TIME = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_BANDWIDTH = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER = 0.1;
+constexpr int64_t DEFAULT_THRESHOLD_MB_TO_BYTE = 262144;
 
 const uint64_t MAX_RECURSIVE_CALL_TIMES = 100;
-class AllreduceFusion {
+class AllCommFusion {
  public:
-  AllreduceFusion()
+  AllCommFusion()
       : allreduce_graph_(),
         ret_(nullptr),
         forward_ret_(nullptr),
         root_graph_(nullptr),
         tail_time_(0),
         computation_time_parameter_(0) {}
-  virtual ~AllreduceFusion() = default;
-  Status ProcessAllreduceFusion(const CNodePtr &ret);
+  virtual ~AllCommFusion() = default;
+  Status ProcessCommOpsFusion(const CNodePtr &ret, const std::string &comm_name);
 
  private:
-  Status SetFusionBySize(const CNodePtr &ret, int64_t threshold);
+  Status SetFusionBySize(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp);
+  Status SetFusionBySizeReduceScatter(const CNodePtr &ret, int64_t threshold, const PrimitivePtr &primp);
   AllreduceGraph allreduce_graph_;
   CNodePtr ret_;
   CNodePtr forward_ret_;

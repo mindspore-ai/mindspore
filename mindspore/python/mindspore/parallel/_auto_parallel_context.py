@@ -32,6 +32,8 @@ class _ParallelFusionConfig:
     The key of the Parallel fusion method configuration.
     """
     ALLREDUCE = "allreduce"
+    ALLGATHER = "allgather"
+    REDUCESCATTER = "reducescatter"
     MODE = "mode"
     FUSION_CONFIG = "config"
     AUTO = "auto"
@@ -116,8 +118,12 @@ class _AutoParallelContext:
         for key in list(config.keys()):
             if key == _ParallelFusionConfig.ALLREDUCE:
                 self._set_allreduce_comm_fusion(config[key])
+            elif key == _ParallelFusionConfig.ALLGATHER:
+                self._set_allgather_comm_fusion(config[key], key)
+            elif key == _ParallelFusionConfig.REDUCESCATTER:
+                self._set_allgather_comm_fusion(config[key], key)
             else:
-                raise KeyError("comm fusion type must be allreduce, but got {}".format(key))
+                raise KeyError("comm fusion type must be allreduce, allgather or reducescatter, but got {}".format(key))
 
     def _set_allreduce_comm_fusion(self, comm_fusion):
         """
@@ -154,6 +160,42 @@ class _AutoParallelContext:
         if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.INDEX:
             self.set_all_reduce_fusion_split_indices(comm_fusion[_ParallelFusionConfig.FUSION_CONFIG])
 
+    def _set_allgather_comm_fusion(self, comm_fusion, comm_type="allgather"):
+        """
+        Set allgather and reducescatter fusion method for auto parallel.
+
+        Args:
+            comm_fusion (dict): A dict contains the methods and values for setting the fusion method. Currently it
+                                  supports four fusion methods: `auto` and `size`.
+            comm_type (str): The name of the communication operator, `allgather` or `reducescatter`.
+
+        Raises:
+            KeyError: When key of comm_fusion is not 'mode' or 'config'.
+            KeyError: When `mode` is not 'auto', 'size'.
+        """
+        self.check_context_handle()
+        if comm_type == "allgather" and not self.get_enable_all_gather_fusion():
+            return
+        if comm_type == "reducescatter" and not self.get_enable_reduce_scatter_fusion():
+            return
+        if not isinstance(comm_fusion, dict):
+            raise TypeError("For 'comm_fusion', {} config must be dict, but got the type : {}.".format(
+                comm_type, type(comm_fusion)))
+        if _ParallelFusionConfig.MODE not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'mode' should be contained.")
+        if _ParallelFusionConfig.FUSION_CONFIG not in comm_fusion:
+            raise KeyError("For 'comm_fusion', the key 'config' should be contained.")
+        check_mode = [_ParallelFusionConfig.AUTO, _ParallelFusionConfig.SIZE]
+        if comm_fusion[_ParallelFusionConfig.MODE] in check_mode:
+            self._context_handle.set_fusion_mode(comm_fusion[_ParallelFusionConfig.MODE])
+        else:
+            raise KeyError("fusion method mode must be auto or size, but got {}".format(
+                comm_fusion[_ParallelFusionConfig.MODE]))
+
+        fusion_threshold = 64 if comm_fusion[_ParallelFusionConfig.MODE] == _ParallelFusionConfig.AUTO else \
+                                 comm_fusion[_ParallelFusionConfig.FUSION_CONFIG]
+        self.set_fusion_threshold_mb(fusion_threshold, comm_type)
+
     def get_comm_fusion(self):
         """Get comm fusion config."""
         self.check_context_handle()
@@ -166,12 +208,13 @@ class _AutoParallelContext:
                                                   _ParallelFusionConfig.FUSION_CONFIG: config}}
 
 
-    def set_fusion_threshold_mb(self, fusion_threshold=64):
+    def set_fusion_threshold_mb(self, fusion_threshold=64, comm_type="allreduce"):
         """
         Set fusion threshold (MB) for auto parallel.
 
         Args:
             fusion_threshold (int): The fusion threshold (unit: MB). Default: 64.
+            comm_type (str): The name of the communication operator, `allreduce`, `allgather` or `reducescatter`.
 
         Raises:
             ValueError: If the fusion threshold is not in [0, +inf].
@@ -179,12 +222,29 @@ class _AutoParallelContext:
         self.check_context_handle()
         if fusion_threshold < 0:
             raise ValueError("fusion threshold must be larger than 0, but got {}".format(fusion_threshold))
-        self._context_handle.set_fusion_threshold_mb(fusion_threshold)
+
+        if comm_type == _ParallelFusionConfig.ALLREDUCE:
+            self._context_handle.set_fusion_threshold_mb(fusion_threshold)
+        if comm_type == _ParallelFusionConfig.ALLGATHER:
+            self._context_handle.set_allgather_fusion_threshold_mb(fusion_threshold)
+        if comm_type == _ParallelFusionConfig.REDUCESCATTER:
+            self._context_handle.set_reducescatter_fusion_threshold_mb(fusion_threshold)
+
 
     def fusion_threshold_mb(self):
-        """Get device num."""
+        """Get all reduce threshold."""
         self.check_context_handle()
         return self._context_handle.fusion_threshold_mb()
+
+    def allgather_fusion_threshold_mb(self):
+        """Get allgather threshold."""
+        self.check_context_handle()
+        return self._context_handle.allgather_fusion_threshold_mb()
+
+    def reducescatter_fusion_threshold_mb(self):
+        """Get reducescatter threshold."""
+        self.check_context_handle()
+        return self._context_handle.reducescatter_fusion_threshold_mb()
 
     def set_global_rank(self, global_rank):
         """
@@ -624,14 +684,52 @@ class _AutoParallelContext:
         self.check_context_handle()
         if not isinstance(enable_all_reduce_fusion, bool):
             raise TypeError("For 'set_auto_parallel_context().set_enable_all_reduce_fusion', "
-                            "the argument 'enable_all_reduce_fusion' must be bool, but got the type : {}."
+                            "the argument 'enable_fusion' must be bool, but got the type : {}."
                             .format(type(enable_all_reduce_fusion)))
         self._context_handle.set_enable_all_reduce_fusion(enable_all_reduce_fusion)
+
+    def set_enable_all_gather_fusion(self, enable_all_gather_fusion):
+        """
+        Set enable/disable all gather fusion.
+
+        Args:
+            enable_all_gather_fusion (bool): Enable/disable all gather fusion.
+        """
+        self.check_context_handle()
+        if not isinstance(enable_all_gather_fusion, bool):
+            raise TypeError("For 'set_auto_parallel_context().set_enable_all_gather_fusion', "
+                            "the argument 'enable_fusion' must be bool, but got the type : {}."
+                            .format(type(enable_all_gather_fusion)))
+        self._context_handle.set_enable_all_gather_fusion(enable_all_gather_fusion)
+
+    def set_enable_reduce_scatter_fusion(self, enable_reduce_scatter_fusion):
+        """
+        Set enable/disable reduce scatter fusion.
+
+        Args:
+            enable_reduce_scatter_fusion (bool): Enable/disable reduce scatter fusion.
+        """
+        self.check_context_handle()
+        if not isinstance(enable_reduce_scatter_fusion, bool):
+            raise TypeError("For 'set_auto_parallel_context().set_enable_reduce_scatter_fusion', "
+                            "the argument 'enable_fusion' must be bool, but got the type : {}."
+                            .format(type(enable_reduce_scatter_fusion)))
+        self._context_handle.set_enable_reduce_scatter_fusion(enable_reduce_scatter_fusion)
 
     def get_enable_all_reduce_fusion(self):
         """Get all reduce fusion flag."""
         self.check_context_handle()
         return self._context_handle.get_enable_all_reduce_fusion()
+
+    def get_enable_all_gather_fusion(self):
+        """Get all gather fusion flag."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_all_gather_fusion()
+
+    def get_enable_reduce_scatter_fusion(self):
+        """Get reduce scatter flag."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_reduce_scatter_fusion()
 
     def get_device_num_is_set(self):
         """Get device number is set or not."""

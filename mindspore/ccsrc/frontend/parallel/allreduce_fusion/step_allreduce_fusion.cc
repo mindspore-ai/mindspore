@@ -33,12 +33,15 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   bool enable_all_reduce_fusion = ParallelContext::GetInstance()->enable_all_reduce_fusion();
+  bool enable_all_gather_fusion = ParallelContext::GetInstance()->enable_all_gather_fusion();
+  bool enable_reduce_scatter_fusion = ParallelContext::GetInstance()->enable_reduce_scatter_fusion();
   auto graph_set = ForwardGraph(root);
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
   if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
-      (!enable_all_reduce_fusion) || (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY)) || graph_set.size() < 1) {
+      ((!enable_all_reduce_fusion) && (!enable_all_gather_fusion) && (!enable_reduce_scatter_fusion)) ||
+      (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY)) || graph_set.size() < 1) {
     return changes;
   }
 
@@ -50,7 +53,8 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   }, end_time{0};
   (void)gettimeofday(&start_time, nullptr);
 #endif
-  MS_LOG(INFO) << "Now entering allreduce fusion by size, and allreduce fusion before will be overlapped!";
+  MS_LOG(INFO) << "Now entering comm ops (allreduce, allgather, reducescatter) fusion by size, and fusion before will "
+                  "be overlapped!";
   DumpGraph(root, std::string(ALLREDUCE_FUSION_BEGIN));
 
   pipeline::ResourceBasePtr res = optimizer->resource();
@@ -61,9 +65,15 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   CNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
 
-  AllreduceFusion allreduce_fusion;
-  if (allreduce_fusion.ProcessAllreduceFusion(ret) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "ProcessAllreduceFusion failed";
+  AllCommFusion allcomm_fusion;
+  vector<std::string> comm_ops = {ALL_REDUCE, ALL_GATHER, REDUCE_SCATTER};
+  vector<bool> fusionlist = {enable_all_reduce_fusion, enable_all_gather_fusion, enable_reduce_scatter_fusion};
+  for (size_t i = 0; i < comm_ops.size(); i++) {
+    if (fusionlist[i]) {
+      if (allcomm_fusion.ProcessCommOpsFusion(ret, comm_ops[i]) != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Process" << comm_ops[i] << "Fusion failed";
+      }
+    }
   }
 
   DumpGraph(root, std::string(ALLREDUCE_FUSION_END));
