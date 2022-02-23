@@ -54,6 +54,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
 
   int kernel_w = param->kernel_w_ != -1 ? param->kernel_w_ : GetWidth(weight);
   int kernel_h = param->kernel_h_ != -1 ? param->kernel_h_ : GetHeight(weight);
+  MS_CHECK_FALSE(kernel_w <= 0, NNACL_ERR);
+  MS_CHECK_FALSE(kernel_h <= 0, NNACL_ERR);
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(kernel_h, kernel_w), NNACL_ERR);
 
   int stride_w = param->stride_w_;

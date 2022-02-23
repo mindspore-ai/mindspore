@@ -227,6 +227,7 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(const MetaGraphT *graph, const s
         ConvertTensorList(graph, tensor_index, &convert_succ, &lite_tensors);
         break;
       case kObjectTypeString:
+        MS_CHECK_TRUE_MSG(tensorT->dims.size() <= 1, {}, "String type tensor dims should be less than or equal to 1.");
         ConvertString(graph, tensor_index, &convert_succ, &lite_tensors);
         break;
       default:
