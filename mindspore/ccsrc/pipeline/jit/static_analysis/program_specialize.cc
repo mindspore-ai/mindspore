@@ -424,8 +424,8 @@ void FuncGraphSpecializer::FirstPass() {
       parent->FirstPass();
       AnfNodePtr new_node = parent->GetReplicatedNode(node);
       if (new_node->isa<CNode>()) {
-        MS_LOG(INFO) << "ProcessCNode in FirstPass for " << func_graph_->ToString() << ", node: " << node->DebugString()
-                     << ", new_node: " << new_node->DebugString();
+        MS_LOG(DEBUG) << "ProcessCNode in FirstPass for " << func_graph_->ToString()
+                      << ", node: " << node->DebugString() << ", new_node: " << new_node->DebugString();
         parent->ProcessCNode(new_node->cast<CNodePtr>());
       }
       continue;
