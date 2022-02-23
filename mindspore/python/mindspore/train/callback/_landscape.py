@@ -299,7 +299,8 @@ class SummaryLandscape:
             self._check_collect_landscape_data(collect_landscape)
             json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
             if not os.path.exists(json_path):
-                raise FileNotFoundError(f'json file path not exists.')
+                raise FileNotFoundError(f'For "{self.__class__.__name__}", '
+                                        f'train_metadata.json file path of {json_path} not exists.')
             with open(json_path, 'r') as file:
                 data = json.load(file)
             for key, value in collect_landscape.items():
@@ -711,7 +712,7 @@ class SummaryLandscape:
             loss = self._loss_compute(model, ds_eval, metrics)
             if path is False:
                 print("Current local landscape progress is %s/%s, landscape loss is %s."
-                      % (i+1, len(alph), loss['Loss']))
+                      % (i+1, len(alph), loss.get('Loss')))
             vals = np.append(vals, loss['Loss'])
 
         return vals

@@ -168,10 +168,12 @@ class SummaryRecord:
         log_path = _make_directory(log_dir, "log_dir")
 
         if not isinstance(max_file_size, (int, type(None))):
-            raise TypeError("The 'max_file_size' should be int type.")
+            raise TypeError(f"For '{self.__class__.__name__}', the 'max_file_size' should be int type, "
+                            f"but got type {type(max_file_size)}")
 
         if not isinstance(file_prefix, str) or not isinstance(file_suffix, str):
-            raise TypeError("`file_prefix` and `file_suffix`  should be str.")
+            raise TypeError(f"For '{self.__class__.__name__}', `file_prefix` and `file_suffix`  should be str, "
+                            f"but got type {type(file_prefix)}")
 
         if max_file_size is not None and max_file_size < 0:
             logger.warning("The 'max_file_size' should be greater than 0.")
@@ -204,7 +206,8 @@ class SummaryRecord:
     def __enter__(self):
         """Enter the context manager."""
         if self._status.get('closed'):
-            raise ValueError('SummaryRecord has been closed.')
+            raise ValueError(f'For "{self.__class__.__name__}", SummaryRecord has been closed, '
+                             f'please check if calling close() method')
         return self
 
     def __exit__(self, *err):
@@ -234,7 +237,8 @@ class SummaryRecord:
         """
         mode_spec = 'train', 'eval'
         if mode not in mode_spec:
-            raise ValueError(f'{repr(mode)} is not a recognized mode.')
+            raise ValueError(f'For "{self.__class__.__name__}", {repr(mode)} is not a recognized mode, '
+                             f'expect mode is train or eval')
         self._mode = mode
 
     def add_value(self, plugin, name, value):
@@ -290,7 +294,8 @@ class SummaryRecord:
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
             if not name or not isinstance(name, str):
-                raise ValueError(f'{repr(name)} is not a valid tag name.')
+                raise ValueError(f'For "{self.__class__.__name__}", {repr(name)} is not a valid tag name, '
+                                 f'expect type is str.')
             if not isinstance(value, Tensor):
                 raise TypeError(f'Expect the value to be Tensor, but got {type(value).__name__}')
             np_value = _check_to_numpy(plugin, value)
@@ -312,7 +317,9 @@ class SummaryRecord:
         elif plugin == PluginEnum.LANDSCAPE.value:
             self._data_pool[plugin].append(dict(tag=name, value=value.SerializeToString()))
         else:
-            raise ValueError(f'No such plugin of {repr(plugin)}')
+            raise ValueError(f'For "{self.__class__.__name__}", No such plugin of {repr(plugin)}, '
+                             f'expect value is one of [tensor, scalar, image, histogram, train_lineage, '
+                             f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
     def record(self, step, train_network=None, plugin_filter=None):
         """
@@ -346,7 +353,8 @@ class SummaryRecord:
         Validator.check_value_type(arg_name='train_network', arg_value=train_network, valid_types=[Cell, type(None)])
 
         if self._status.get('closed'):
-            logger.error("The record writer is closed.")
+            logger.error(f"For '{self.__class__.__name__}', The record writer is closed, "
+                         f"please check if calling close() method")
             return False
         # Set the current summary of train step
         if self.network is not None and not self._status.get('has_graph'):
@@ -423,7 +431,8 @@ class SummaryRecord:
             ...         summary_record.flush()
         """
         if self._status.get('closed'):
-            logger.error("The record writer is closed and can not flush.")
+            logger.error(f"For '{self.__class__.__name__}', the record writer is closed and can not flush, "
+                         f"please check if calling close() method")
         elif self._event_writer:
             self._event_writer.flush()
 
