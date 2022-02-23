@@ -58,8 +58,9 @@ constexpr auto kJOpTuneList = "op_tune_list";
 constexpr auto kJPassList = "pass_list";
 constexpr auto kCOMPILER_OP_LEVEL = "MS_COMPILER_OP_LEVEL";
 
-uintptr_t KernelManager::kernel_stub_gen_ = 0;
+std::atomic<uintptr_t> KernelManager::kernel_stub_gen_ = 0;
 std::unordered_map<string, KernelMetaPtr> KernelManager::info_table_ = {};
+std::mutex KernelManager::info_table_mutex_;
 
 void TbeUtils::GenLicInfo(nlohmann::json *lic_info_json) {
   MS_EXCEPTION_IF_NULL(lic_info_json);
@@ -282,6 +283,7 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
 
   if (!force_reload) {
     // use the cached object.
+    std::lock_guard<std::mutex> lock(info_table_mutex_);
     auto iter = info_table_.find(func_name);
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
@@ -312,6 +314,7 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     return 0;
   }
   // cache the registered kernelmeta.
+  std::lock_guard<std::mutex> lock(info_table_mutex_);
   info_table_[func_name] = std::make_shared<KernelMetaInfo>(KernelMetaInfo{func_stub, *block_dim});
   return func_stub;
 }

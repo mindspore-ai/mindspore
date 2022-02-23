@@ -28,8 +28,6 @@ class DynamicAicpuOpKernelMod : public AicpuOpKernelMod {
   DynamicAicpuOpKernelMod() : unknow_type_(device::ascend::UnknowShapeOpType::DEPEND_IN_SHAPE) {}
   explicit DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr);
 
-  ~DynamicAicpuOpKernelMod() override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 

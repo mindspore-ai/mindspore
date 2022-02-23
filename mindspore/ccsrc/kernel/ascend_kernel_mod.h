@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 class AscendKernelMod : public KernelMod {
  public:
-  AscendKernelMod() {}
+  AscendKernelMod() = default;
   explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(anf_node_ptr) {}
   virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
@@ -56,8 +56,6 @@ class AscendKernelMod : public KernelMod {
     }
   }
   device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
-
-  static std::lock_guard<std::mutex> LockRuntime();
 
  protected:
   uint32_t block_dim_{1};

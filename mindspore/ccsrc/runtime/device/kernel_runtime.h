@@ -138,6 +138,9 @@ class KernelRuntime {
   void AssignStaticMemoryOutput(const session::KernelGraph &graph);
   void AssignDynamicMemory(const session::KernelGraph &graph);
 
+  // lock runtime
+  static std::lock_guard<std::mutex> LockRuntime();
+
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) const = 0;

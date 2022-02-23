@@ -1467,12 +1467,11 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
     LinkControlArrowForDataPrepareActor(actor_set->data_prepare_actor_.get(), actor_set,
                                         graph_compiler_info.control_node_parser_);
   }
+  // Link control arrows for custom actor
+  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
-
-  // Link control arrows for custom actor
-  LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 }
 
 void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
@@ -1623,7 +1622,7 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   }
 
   // Collect the actors which have no output.
-  std::vector<MemoryAwareActor *> no_output_actors;
+  std::vector<AbstractActor *> no_output_actors;
   for (auto &super_actor : actor_set->super_kernel_actors_) {
     if ((super_actor->output_data_arrows_.size() == 0) && (super_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(super_actor.get());
@@ -1643,6 +1642,11 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   for (auto &copy_actor : copy_actors_) {
     if ((copy_actor->output_data_arrows_.size() == 0) && (copy_actor->output_control_arrows_.size() == 0)) {
       (void)no_output_actors.emplace_back(copy_actor.get());
+    }
+  }
+  for (auto &custom_actor : actor_set->custom_actors_) {
+    if ((custom_actor->output_data_arrows_.size() == 0) && (custom_actor->output_control_arrows_.size() == 0)) {
+      (void)no_output_actors.emplace_back(custom_actor.get());
     }
   }
 

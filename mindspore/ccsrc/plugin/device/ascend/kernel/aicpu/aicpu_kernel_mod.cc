@@ -165,7 +165,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
   // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime();
   if (rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
                                 reinterpret_cast<const void *>(node_name_.c_str()), 1,
                                 reinterpret_cast<const void *>(args_.data()), static_cast<uint32_t>(args_.length()),

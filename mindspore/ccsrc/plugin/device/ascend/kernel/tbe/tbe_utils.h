@@ -107,7 +107,8 @@ class KernelManager {
   static int BinaryRegister(const FlexArray &kernel_buffer, void **module, const string &magic,
                             const bool dynamic_flag);
   static std::unordered_map<string, KernelMetaPtr> info_table_;
-  static uintptr_t kernel_stub_gen_;
+  static std::atomic<uintptr_t> kernel_stub_gen_;
+  static std::mutex info_table_mutex_;
 };
 
 class KernelMeta {

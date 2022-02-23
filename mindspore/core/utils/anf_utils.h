@@ -74,6 +74,8 @@ class MS_CORE_API AnfUtils {
   // Get dump flag from CNode's primitive.
   static bool GetDumpFlag(const AnfNodePtr &node);
   static AbstractScope GetAbstractLock(const AnfNode *node);
+  static void OpenAbstractLock();
+  static void CloseAbstractLock();
 
   // Custom actor node is for dynamic shape.
   // Generate a Init custom actor node.

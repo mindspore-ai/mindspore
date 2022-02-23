@@ -51,12 +51,6 @@ DynamicTbeKernelMod::DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNod
   }
 }
 
-DynamicTbeKernelMod::~DynamicTbeKernelMod() {
-  if (tiling_data_ptr_ != nullptr) {
-    (void)rtFree(tiling_data_ptr_);
-  }
-}
-
 void DynamicTbeKernelMod::InferOp() {
   if (AnfAlgo::IsDynamicShape(anf_node_.lock())) {
     auto node = anf_node_.lock();
@@ -73,6 +67,12 @@ void DynamicTbeKernelMod::InferOp() {
   }
 }
 
+void DynamicTbeKernelMod::UpdateOp() {
+  if (need_skip_execute_) {
+    AscendKernelMod::UpdateOp();
+  }
+}
+
 void DynamicTbeKernelMod::InitOp() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -85,7 +85,7 @@ void DynamicTbeKernelMod::InitOp() {
 
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      AnfAlgo::GetKernelMod(atomic_clean_node)->InitOp();
+      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->InitOp();
     }
   }
 
@@ -144,7 +144,7 @@ void DynamicTbeKernelMod::InitTilingDataPtr() {
   if (op_para_size > 0) {
     auto ret = rtMalloc(&tiling_data_ptr_, op_para_size, RT_MEMORY_HBM);
     if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtMalloc tiling data failed";
+      MS_LOG(EXCEPTION) << "RtMalloc tiling data failed.";
     }
   }
 }
@@ -161,11 +161,11 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
   }
 
   if (tiling_data_.empty() || tiling_data_ptr_ == nullptr) {
-    MS_LOG(INFO) << "Tiling size is 0, skip aclrtMemcpyAsync";
+    MS_LOG(INFO) << "Tiling size is 0, skip aclrtMemcpyAsync.";
     return true;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime();
   auto ret = aclrtMemcpyAsync(tiling_data_ptr_, op_para_size, tiling_data_.c_str(), tiling_data_.size(),
                               ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
   if (ret != RT_ERROR_NONE) {
@@ -203,12 +203,12 @@ bool DynamicTbeKernelMod::NeedSkipExecute(const CNodePtr &cnode) {
 bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
-    MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
+    MS_LOG(ERROR) << "The stream_ptr should not be nullptr.";
     return false;
   }
 
   if (kernel_pack_ == nullptr) {
-    MS_LOG(ERROR) << "kernel pack should not be nullptr.";
+    MS_LOG(ERROR) << "The kernel_pack should not be nullptr.";
     return false;
   }
   if (stream_ == nullptr) {
@@ -217,9 +217,6 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "anfnode is not a cnode";
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -231,9 +228,9 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   if (!atomic_clean_nodes_.empty()) {
     for (auto atomic_clean_node : atomic_clean_nodes_) {
       KernelLaunchInfo kernel_launch_info;
-      auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node);
+      auto kernel_mod = AnfAlgo::GetKernelMod(atomic_clean_node.lock());
       MS_EXCEPTION_IF_NULL(kernel_mod);
-      device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node, &kernel_launch_info);
+      device::KernelRuntime::GenLaunchArgs(*kernel_mod, atomic_clean_node.lock(), &kernel_launch_info);
       auto atomic_inputs = kernel_launch_info.inputs_;
       std::vector<AddressPtr> atomic_outputs;
       std::vector<AddressPtr> atomic_workspace;
@@ -246,11 +243,11 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     // Skip reduce if axis is a empty Tensor (shape = 0)
     MS_LOG(INFO) << "The node " << cnode->fullname_with_scope() << "Need Skip.";
     // cppcheck-suppress unreadVariable
-    auto lock = AscendKernelMod::LockRuntime();
+    auto lock = device::KernelRuntime::LockRuntime();
     rtError_t status = aclrtMemcpyAsync(outputs[0]->addr, inputs[0]->size, inputs[0]->addr, inputs[0]->size,
                                         ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
     if (status != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtMemcpyAsync failed for " << cnode->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << cnode->fullname_with_scope();
     }
 
     MS_LOG(INFO) << "Execute node:" << cnode->fullname_with_scope() << " success.";
@@ -284,7 +281,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     origin_key_.find("kernel0") != origin_key_.npos ? origin_key_ : origin_key_ + "_" + std::to_string(tiling_key_);
   const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
   // cppcheck-suppress unreadVariable
-  auto lock = AscendKernelMod::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime();
   auto ret = rtKernelLaunchWithHandle(handle_, dev_func.c_str(), block_dim_, runtimeargs.data(), args_size, l2ctrl,
                                       stream_ptr, kernel_info.c_str());
   if (ret != RT_ERROR_NONE) {

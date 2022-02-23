@@ -33,13 +33,13 @@ class DynamicTbeKernelMod : public TbeKernelMod {
  public:
   explicit DynamicTbeKernelMod(KernelPackPtr kernel_pack) : TbeKernelMod(kernel_pack) {}  // maybe delete later
   DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNodePtr &anf_node_ptr);
-  ~DynamicTbeKernelMod() override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
   void InferOp() override;
   void InitOp() override;
+  void UpdateOp() override;
 
  private:
   void InferShapeRecursive();
@@ -51,8 +51,10 @@ class DynamicTbeKernelMod : public TbeKernelMod {
 
   uint32_t block_dim_ = 1;
   std::string tiling_data_;
+  // Because the ~DynamicTbeKernelMod() is after ResetDevice, and ResetDevice has the function to free mem,
+  // so it is no rtFree of tiling_data_ptr_ in ~DynamicTbeKernelMod()
   void *tiling_data_ptr_ = nullptr;
-  uint32_t tiling_key_{0};
+  uint64_t tiling_key_{0};
   void *handle_ = nullptr;
   std::string origin_key_{""};
   std::string op_compile_info_{};

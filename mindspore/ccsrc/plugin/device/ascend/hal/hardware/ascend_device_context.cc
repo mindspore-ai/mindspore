@@ -364,6 +364,19 @@ void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_gr
   MS_LOG(INFO) << "Finish!";
 }
 
+void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph) const {
+  // don't clear node_atomics_ in the end, since atomic_clean_nodes_ in kernel.h is weakptr
+  MS_EXCEPTION_IF_NULL(graph);
+  auto nodes = graph->execution_order();
+  for (const auto &node : nodes) {
+    if (node_atomics_.find(node) != node_atomics_.end()) {
+      auto atomics = node_atomics_[node];
+      auto kernel_mod = AnfAlgo::GetKernelMod(node);
+      kernel_mod->SetAtomicCleanNodes(atomics);
+    }
+  }
+}
+
 void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start preprocess before run graph. graph id: " << graph->graph_id();
@@ -383,6 +396,12 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
       CreateKernel(graph->execution_order());
       AllocateGraphMemory(NOT_NULL(graph));
       LoadModel(NOT_NULL(graph));
+      AssignOutputNopNodeDeviceAddress(graph);
+    } else if (graph->is_dynamic_shape() && IsGraphMode()) {
+      device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
+      SetAtomicCleanToNodes(graph);  // graph mode may can do it too, instead of update execorder
+      opt::AscendDynamicShapeConvert(graph);
+      AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
       AssignOutputNopNodeDeviceAddress(graph);
     } else {
       PreprocessBeforeRunSingleOpGraph(graph);
@@ -633,7 +652,7 @@ bool AscendDeviceContext::SyncStream(size_t stream_id) const {
 bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode();
+  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode() && !graph->is_dynamic_shape();
 }
 
 bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const {
@@ -790,13 +809,16 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  // start launch
-  std::lock_guard<std::mutex> locker(launch_mutex_);
-
-  // launch atomic clean
-  if (!LaunchAtomicClean(kernel, workspace, outputs)) {
-    MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
-    return false;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // TODO(dsj): for ms_function running in graph_mode. should be delete later
+  if (!is_dynamic_shape || !(AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
+    std::lock_guard<std::mutex> locker(launch_mutex_);
+    // launch atomic clean
+    if (!LaunchAtomicClean(kernel, workspace, outputs)) {
+      MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
+      return false;
+    }
   }
 
   // launch kernel
@@ -804,7 +826,8 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
-    if (is_dynamic_shape) {
+    // TODO(dsj): for ms_function running in graph_mode. should be delete later
+    if (is_dynamic_shape && !(AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
       kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(ascend_kernel);
       ascend_kernel->InitDynamicKernel(kernel, GetKernelStream(kernel));

@@ -37,6 +37,8 @@ const char kMsVm[] = "vm";
 const char kGeVm[] = "ge";
 namespace compile {
 namespace {
+const int kMaxDynamicSplitNum = 3;
+
 std::string GetOtherTarget(const std::vector<AnfNodePtr> &nodes) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -614,7 +616,14 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
     AddSegment(segment_nodes, segments, node_to_segment);
     return;
   }
-  SplitDynamicNodeSegment(segment_nodes, segments, node_to_segment, dynamic_nodes_set);
+  std::vector<GraphSegmentPtr> dynamic_segments;
+  SplitDynamicNodeSegment(segment_nodes, &dynamic_segments, node_to_segment, dynamic_nodes_set);
+  // when the SplitDynamicNodeSegment > kMaxDynamicSplitNum, return the ori segments
+  if (dynamic_segments.size() <= kMaxDynamicSplitNum) {
+    segments->insert(segments->end(), dynamic_segments.begin(), dynamic_segments.end());
+  } else {
+    AddSegment(segment_nodes, segments, node_to_segment);
+  }
 }
 }  // namespace
 

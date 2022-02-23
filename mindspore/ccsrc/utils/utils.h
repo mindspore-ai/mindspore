@@ -536,6 +536,9 @@ constexpr auto kAttrRecvDstNodeName = "recv_dst_node_name";
 constexpr auto kAttrRecvSrcRanks = "recv_src_ranks";
 constexpr auto kAttrRecvSrcRoles = "recv_src_roles";
 
+// TODO(dsj): for ms_function running in graph_mode. should be delete later
+constexpr auto kAttrMSFunction = "ms_function_graph";
+
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";
 constexpr auto kCustomTypeJULIA = "julia";

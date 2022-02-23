@@ -890,6 +890,9 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     return;
   }
 
+  // Open abstract_lock for dynamic_shape
+  AnfUtils::OpenAbstractLock();
+
   MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   // Fetch the graph compiler info.
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
@@ -960,6 +963,8 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
+  // Close abstract_lock for dynamic_shape
+  AnfUtils::CloseAbstractLock();
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
