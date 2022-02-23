@@ -108,8 +108,10 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
             ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 
-    file(GLOB HPC_SRC ${NNACL_DIR}/experiment/HPC-generator/gemm_avx512/*.c)
-    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        file(GLOB HPC_SRC ${NNACL_DIR}/experiment/HPC-generator/gemm_avx512/*.c)
+        set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
+    endif()
 endif()
 
 if(APPLE)
