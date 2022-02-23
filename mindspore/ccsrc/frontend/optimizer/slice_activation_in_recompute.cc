@@ -42,7 +42,7 @@ CNodePtr CreateStridedSliceCNode(const parallel::Shape &begin, const parallel::S
   return new_node;
 }
 
-CNodePtr CreateAllGatherCNode(const AnfNodePtr &node, std::string group) {
+CNodePtr CreateAllGatherCNode(const AnfNodePtr &node, const std::string &group) {
   auto op = parallel::CreateAllGatherOp(group);
   auto allgather_input = parallel::CreateInput(op, node, "recompute_slice_allgather");
   auto func_graph = node->func_graph();
@@ -59,7 +59,7 @@ std::vector<parallel::Group> InferRepeatedRankList(const CNodePtr &cnode) {
   auto tensor_layout = output_info[0].tensor_layout();
   auto tensor_map = tensor_layout.origin_tensor_map();
   std::vector<parallel::Group> groups;
-  operator_info->CreateGroupByTensorMap(tensor_map.array(), &groups);
+  (void)operator_info->CreateGroupByTensorMap(tensor_map.array(), &groups);
   return groups;
 }
 
@@ -106,7 +106,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
   }
   int64_t global_rank_id = parallel::g_device_manager->global_rank();
   int64_t stage_num = parallel::g_device_manager->stage_num();
-  int64_t device_num = parallel::g_device_manager->DeviceNum();
+  int64_t device_num = SizeToLong(parallel::g_device_manager->DeviceNum());
   int64_t stage_device_num = device_num / stage_num;
   int64_t local_rank_id = global_rank_id % stage_device_num;
   auto groups = InferRepeatedRankList(node);
@@ -120,7 +120,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
                     << "The slice would not activate to this node: " << node->DebugString();
     return;
   }
-  int64_t group_deivce_num = group.GetDevNum();
+  int64_t group_deivce_num = SizeToLong(group.GetDevNum());
   std::vector<int64_t> slice_begin(out_shape_element.size(), 0);
   slice_begin[0] = (local_rank_id % group_deivce_num) * (out_shape_element[0] / group_deivce_num);
   std::vector<int64_t> slice_end = out_shape_element;
@@ -142,7 +142,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
   if (node->HasPrimalAttr(parallel::MICRO)) {
     allgather_cnode->AddPrimalAttr(parallel::MICRO, node->GetPrimalAttr(parallel::MICRO));
   }
-  manager->Replace(slice_cnode, allgather_cnode);
+  (void)manager->Replace(slice_cnode, allgather_cnode);
   slice_allgathers->push_back(allgather_cnode);
 
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), forward_node_user.first, slice_cnode};
@@ -150,7 +150,7 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
   depend_node->set_abstract(forward_node_user.first->abstract()->Clone());
   depend_node->AddAttr("slice_forward_depend", MakeValue(true));
   MS_EXCEPTION_IF_NULL(depend_node);
-  manager->Replace(forward_node_user.first, depend_node);
+  (void)manager->Replace(forward_node_user.first, depend_node);
 }
 
 void InsertAllGatherDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &slice_allgathers) {
@@ -183,7 +183,7 @@ void InsertAllGatherDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr
   allgather_depend_node->set_input(1, last_allgather->input(1));
   allgather_depend_node->set_abstract(last_allgather->input(1)->abstract()->Clone());
   allgather_depend_node->AddAttr("last_slice_allgather_depend", MakeValue(true));
-  manager->Replace(allgather_depend_node, last_allgather);
+  (void)manager->Replace(allgather_depend_node, last_allgather);
   manager->SetEdge(last_allgather, 1, allgather_depend_node);
 }
 
@@ -234,7 +234,6 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
         !node->has_user_data<parallel::OperatorInfo>()) {
       continue;
     }
-    auto node_users = manager->node_users()[node];
     std::vector<std::pair<std::shared_ptr<AnfNode>, int>> duplicate_users;
     std::vector<std::pair<std::shared_ptr<AnfNode>, int>> forward_users;
     GroupingNextNodes(node, &duplicate_users, &forward_users);

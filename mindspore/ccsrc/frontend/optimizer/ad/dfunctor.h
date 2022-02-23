@@ -278,7 +278,7 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
 // din: CNodePtr with gradient of input.
 // fg: Funcgraph witch input and din belong to.
 // return: New din with inserted real op if necessarily.
-AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, FuncGraphPtr fg);
+AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, const FuncGraphPtr &fg);
 }  // namespace ad
 }  // namespace mindspore
 
