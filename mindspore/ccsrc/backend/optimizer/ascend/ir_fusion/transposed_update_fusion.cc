@@ -34,7 +34,6 @@ tensor::TensorPtr CreatePermTensor(const CNodePtr &transposed) {
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
   auto perm_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, perm_shape);
   perm_tensor->set_device_info(device_info);
-  MS_EXCEPTION_IF_NULL(perm_tensor);
   auto data_ptr = perm_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
   auto elem_num = perm.size() * kInt32Len;
