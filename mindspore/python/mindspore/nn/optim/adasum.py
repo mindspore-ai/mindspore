@@ -29,6 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations._inner_ops import Send, Receive
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.communication.management import create_group
 
 __all__ = ["AdaSumByDeltaWeightWrapCell", "AdaSumByGradWrapCell"]
 
@@ -184,7 +185,8 @@ class _AdaSum(Cell):
         self.parameter_divisibility_list = []
         self.allreduce_node_num_list = []
         last_delta_weights = []
-
+        fusion_attr = "fusion" if context.get_auto_parallel_context("parallel_mode") \
+                                  in ["data_parallel", "hybrid_parallel"] else "origin_fusion"
         for step in range(self.calc_times):
             current_group = self.device_number * (2 ** step)
             sr_target = self.rank
@@ -208,13 +210,13 @@ class _AdaSum(Cell):
             for shape, dtype, name in left_delta_weights:
                 send_tag = self._hash(step, sr_target, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
-                send.add_prim_attr("origin_fusion", fusion_id)
+                send.add_prim_attr(fusion_attr, fusion_id)
                 send.add_prim_attr("opposite_rank", dest_target)
                 send.add_prim_attr("target_param", name)
                 recv_tag = self._hash(step, dest_target, weights_index)
                 recv = Receive(sr_tag=recv_tag, src_rank=dest_target, shape=shape, dtype=dtype,
                                group="hccl_world_group")
-                recv.add_prim_attr("origin_fusion", fusion_id)
+                recv.add_prim_attr(fusion_attr, fusion_id)
                 recv.add_prim_attr("opposite_rank", dest_target)
                 recv.add_prim_attr("target_param", name)
                 send_left.append(send)
@@ -223,19 +225,18 @@ class _AdaSum(Cell):
             for shape, dtype, name in right_delta_weights:
                 send_tag = self._hash(step, sr_target, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
-                send.add_prim_attr("origin_fusion", fusion_id + 1)
+                send.add_prim_attr(fusion_attr, fusion_id + 1)
                 send.add_prim_attr("opposite_rank", dest_target)
                 send.add_prim_attr("target_param", name)
                 recv_tag = self._hash(step, dest_target, weights_index)
                 recv = Receive(sr_tag=recv_tag, src_rank=dest_target, shape=shape, dtype=dtype,
                                group="hccl_world_group")
-                recv.add_prim_attr("origin_fusion", fusion_id + 1)
+                recv.add_prim_attr(fusion_attr, fusion_id + 1)
                 recv.add_prim_attr("opposite_rank", dest_target)
                 recv.add_prim_attr("target_param", name)
                 send_right.append(send)
                 recv_right.append(recv)
                 weights_index += 1
-
             if self.send_node and self.send_node[-1]:
                 self.send_list_forward.append(send_left)
                 self.send_list_rollback.append(send_right)
@@ -250,17 +251,21 @@ class _AdaSum(Cell):
                 last_delta_weights = left_delta_weights
             param_allreduce_list = []
             neighbor_ids = []
+            rank_ids = []
             for index in range(2 ** (step + 1)):
                 node_rank = self.rank // self.device_number
                 double_d = 2 ** (step + 1)
                 neighbor_id = (node_rank // double_d * double_d + index) * self.device_number + \
                               self.rank % self.device_number
                 neighbor_ids.append(str(neighbor_id))
+                rank_ids.append(neighbor_id)
             group_name = "-".join(neighbor_ids)
+            if context.get_auto_parallel_context("parallel_mode") in ["data_parallel", "hybrid_parallel"]:
+                create_group(group_name, rank_ids)
             for parameter in self.parameter_tuple:
                 allreduce = P.AllReduce("sum", group_name)
                 allreduce.add_prim_attr("target_param", "adasum_delta_weight." + parameter.name)
-                allreduce.add_prim_attr("origin_fusion", fusion_id + 2)
+                allreduce.add_prim_attr(fusion_attr, fusion_id + 2)
                 allreduce.add_prim_attr("step", step)
                 param_allreduce_list.append(allreduce)
             self.allreduce_list.append(param_allreduce_list)
@@ -358,15 +363,18 @@ def _clone_weight_process(scale, weight):
     return scale_mul(weight, scale)
 
 def _parallel_check():
-    if context.get_auto_parallel_context("parallel_mode") not in ["semi_auto_parallel",
-                                                                  "auto_parallel", "data_parallel"]:
-        raise RuntimeError("Stand alone and hybrid parallel mode is not supported to apply adasum.")
-    if context.get_auto_parallel_context("parallel_mode") == "data_parallel":
-        logger.warning("For data parallel mode, it is recommended to using mindspore.boost to enable adasum.")
+    """Parallel infos checking"""
+    if context.get_auto_parallel_context("parallel_mode") == "stand_alone":
+        raise RuntimeError("Stand alone mode is not supported to apply adasum.")
+    if context.get_auto_parallel_context("parallel_mode") in ["data_parallel", "hybrid_parallel"]:
+        logger.warning("For data parallel mode or hybrid parallel mode, "
+                       "it is recommended to using mindspore.boost to enable adasum.")
     if context.get_auto_parallel_context("enable_parallel_optimizer"):
         raise RuntimeError("Currently, the optimizer shard is not supported with applying adasum.")
     if context.get_auto_parallel_context("pipeline_stages") > 1:
         raise RuntimeError("Currently, the pipeline parallel is not supported with applying adasum.")
+    if _get_stage_device_num() < 16:
+        raise RuntimeError("The device_num should be at least 16 when applying adasum.")
 
 class AdaSumByGradWrapCell(Cell):
     r"""

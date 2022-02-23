@@ -356,7 +356,18 @@ class TrainOneStepCell(Cell):
         if self.reducer_flag:
             self.mean = _get_gradients_mean()
             self.degree = _get_device_num()
-            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
+            if isinstance(self.optimizer, (nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell)):
+                from mindspore.communication.management import get_group_size, create_group, get_rank
+                group_number = get_group_size() // 8
+                self.degree = int(self.degree / group_number)
+                group_list = [list(range(x * self.degree, (x + 1) * self.degree)) for x in range(group_number)]
+                current_index = get_rank() // 8
+                server_group_name = "allreduce_" + str(current_index)
+                create_group(server_group_name, group_list[current_index])
+                self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree,
+                                                           group=server_group_name)
+            else:
+                self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree)
 
     def construct(self, *inputs):
         loss = self.network(*inputs)

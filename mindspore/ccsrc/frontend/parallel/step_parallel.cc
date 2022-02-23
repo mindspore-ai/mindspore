@@ -1012,6 +1012,9 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
       continue;
     }
     use_apply = SkipTrivialNodesMoveDown(manager, use_apply);
+    if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
+      continue;
+    }
     ValueNodePtr prim_anf_node = use_apply->input(0)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(prim_anf_node);
     PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();

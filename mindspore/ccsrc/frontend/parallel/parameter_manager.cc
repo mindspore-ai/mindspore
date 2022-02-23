@@ -712,7 +712,7 @@ RankList GetRankListByLayout(const std::shared_ptr<TensorLayout> &target_param_l
 std::vector<bool> IsBorderAdaSumSendReceive(const AnfNodePtr &node, const RankList &group_devices) {
   bool is_send = IsPrimitiveCNode(node, prim::kPrimSend);
   PrimitivePtr send_rec_prim = GetCNodePrimitive(node);
-  int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr("opposite_rank"));
+  int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr(OPPOSITE_RANK));
   int64_t rank = g_device_manager->global_rank();
   int64_t adasum_rank_distance = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
   if (adasum_rank_distance < ADASUM_MIN_DIS) {
@@ -882,7 +882,7 @@ void HandleAdaSumPureModelParallel(const AnfNodePtr &node) {
     return;
   }
   PrimitivePtr send_rec_prim = GetCNodePrimitive(node);
-  int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr("opposite_rank"));
+  int64_t origin_dest_rank = GetValue<int64_t>(send_rec_prim->GetAttr(OPPOSITE_RANK));
   int64_t rank = g_device_manager->global_rank();
   CNodePtr cnode = node->cast<CNodePtr>();
   auto pre_cnode = RealInputNode(cnode, 1);
@@ -897,7 +897,8 @@ void HandleAdaSumPureModelParallel(const AnfNodePtr &node) {
     AnfNodeIndexSet squeeze_input_node_user_set = manager->node_users()[squeeze_input];
     for (auto &squeeze_input_user : squeeze_input_node_user_set) {
       if (IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimSqueeze) ||
-          IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimUpdateState)) {
+          IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimUpdateState) ||
+          IsPrimitiveCNode(squeeze_input_user.first, prim::kPrimMakeTuple)) {
         continue;
       }
       manager->Replace(squeeze_input_user.first, squeeze_input);
@@ -923,10 +924,10 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
     std::string target_param;
     CNodePtr cnode = node->cast<CNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0)->cast<ValueNodePtr>());
-    if (!prim->HasAttr("target_param")) {
+    if (!prim->HasAttr(TARGET_PARAM)) {
       continue;
     }
-    target_param = GetValue<std::string>(prim->GetAttr("target_param"));
+    target_param = GetValue<std::string>(prim->GetAttr(TARGET_PARAM));
     auto target_param_layout = (*adasum_param_tensor_layout_map)[target_param];
     RankList group_devices = GetRankListByLayout(target_param_layout);
     // only model parallel
