@@ -105,9 +105,13 @@ endif()
 if("${X86_64_SIMD}" STREQUAL "avx512")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
             ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S
-            ${TOP_DIR}/mindspore/lite/experiment/HPC-generator/gemm_avx512/*.c)
+            ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        file(GLOB HPC_SRC ${TOP_DIR}/mindspore/lite/experiment/HPC-generator/gemm_avx512/*.c)
+        set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
+    endif()
 endif()
 
 if(APPLE)
@@ -117,7 +121,7 @@ endif()
 ########################### build nnacl library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${HPC_SRC})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_definitions(nnacl_mid PRIVATE ENABLE_DEBUG)
