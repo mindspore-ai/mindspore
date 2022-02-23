@@ -98,8 +98,8 @@ class AutoBoost:
               - mode (str): How to set the boost. Supports ["auto", "manual", "enable_all", "disable_all"].
                 Default: "auto".
 
-                - auto: Depend on the argument "boost_level" in class model.
-                - manual: Depen on "boost_config_dict".
+                - auto: Depend on the argument "boost_level" in class Model.
+                - manual: Depend on "boost_config_dict".
                 - enable_all: Set all boost functions true.
                 - disable_all: Set all boost functions false.
 
@@ -110,7 +110,7 @@ class AutoBoost:
               - dim_reduce (bool): Whether to apply dim_reduce function. Default: False.
 
               If set dim_reduce true, other functions will be false.
-              If set grad_freeze true and dim_reduce fasle, other functions will be false.
+              If set grad_freeze true and dim_reduce false, other functions will be false.
 
             - common:
 
@@ -131,9 +131,11 @@ class AutoBoost:
 
             - grad_accumulation:
 
-              - grad_ccumulation_step (int): Steps to accumulate gradients. Default: 1.
+              - grad_accumulation_step (int): Steps to accumulate gradients. Default: 1.
 
             - dim_reduce:
+
+              The leading principles of dim_reduce:
 
               .. math::
 
@@ -171,10 +173,10 @@ class AutoBoost:
               - n_components (int): PCA component. Default: 32.
               - pca_mat_path (str): The path to load pca mat. Default: None.
               - weight_load_dir (str): The directory to load weight files saved as ckpt. Default: None.
-              - timeout (int): Waiting time to load local pca mat. Default: 1800 second.
+              - timeout (int): Waiting time to load local pca mat. Default: 1800 (second).
 
             User can load the config through the JSON file or use the dictionary directly.
-            The unconfigured parameters will adopt the default values. Default: "".
+            The unconfigured parameters will adopt the default values.
 
     Raises:
         ValueError: The boost mode not in ["auto", "manual", "enable_all", "disable_all"].

@@ -74,6 +74,90 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
           }
 
+      - boost:
+
+        - mode (str): boost配置模式，支持 ["auto", "manual", "enable_all", "disable_all"]。默认值: "auto"。
+
+          - auto: 自动配置，取决于Model类中的"boost_level"参数配置。
+          - manual: 在"boost_config_dict"中人工配置。
+          - enable_all: 开启所有boost算法。
+          - disable_all: 关闭所有boost算法。
+
+        - less_bn (bool): 是否开启LessBN算法，默认: 不开启。
+        - grad_freeze: (bool): 是否开启梯度冻结算法，默认: 不开启。
+        - adasum (bool): 是否开启自适应求和算法，默认: 不开启。
+        - grad_accumulation (bool): 是否开启梯度累加算法，默认: 不开启。
+        - dim_reduce (bool): 是否开启降维训练算法，默认: 不开启。
+
+          如果开启dim_reduce算法，其他算法会失效。
+          如果开启grad_freeze算法，同时关闭dim_reduce，其他算法会失效。
+
+      - common:
+
+        - gradient_split_groups (list): 网络的梯度分割点，默认: [50, 100]。
+        - device_number (int): 设备数，默认: 8。
+
+      - less_bn:
+
+        - fn_flag (bool): 是否采用fn替换fc，默认: 替换。
+        - gc_flag (bool): 是否启用gc，默认: 启用gc。
+
+      - grad_freeze:
+
+        - param_groups (int): 参数分组数量，默认值: 10。
+        - freeze_type (int): 梯度冻结策略，参数选择[0, 1]，默认值: 1。
+        - freeze_p (float): 梯度冻结概率，默认值: 0.7。
+        - total_steps (int): 总训练步数，默认值: 65536。
+
+      - grad_accumulation:
+
+        - grad_accumulation_step (int): 累加梯度的步数，默认值: 1。
+
+      - dim_reduce:
+
+        dim_reduce主要原理：
+
+        .. math::
+
+            \begin{align}
+            grad\_k &= pca\_mat \cdot grad\\
+            dk &= - bk \cdot grad\_k\\
+            sk &= rho ^ m \cdot dk\\
+            delta\_loss &= sigma \cdot grad\_k.T \cdot sk
+            \end{align}
+
+        其中:
+
+          - pca_mat (array): 维度(k*n)，k是n_components的大小，n是权重的大小。
+          - bk (array): 维度(k*k)，bk是拟牛顿法中的对称正定矩阵。
+
+        我们需要找到满足以下条件的m:
+
+        .. math::
+            new\_loss < old\_loss + delta\_loss
+
+        然后使用delta_grad去更新模型的权重:
+
+        .. math::
+
+            \begin{align}
+            grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
+            new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
+            delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
+            \end{align}
+
+        - rho (float): 超参，一般无需调整，默认值: 0.55。
+        - gamma (float): 超参，一般无需调整，默认值: 0.9。
+        - alpha (float): 超参，一般无需调整，默认值: 0.001。
+        - sigma (float): 超参，一般无需调整，默认值: 0.4。
+        - n_components (int): PCA后的维度，默认值: 32。
+        - pca_mat_path (str): PCA矩阵的加载路径，默认值: None。
+        - weight_load_dir (str): 以checkpoint形式保存的权重加载路径，用于计算PCA矩阵，默认值: None。
+        - timeout (int): 加载PCA矩阵的最长等待时间，默认值: 1800(s)。
+
+      用户可以通过加载JSON文件或者直接使用字典来配置boost_config_dict。
+      未配置的参数会使用默认值。
+
     **异常：**
 
     - **Valuerror** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
@@ -193,6 +277,67 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。
     - **ValueError** - `scale_sense` 的shape既不是(1,)也不是()。
+
+.. py:class:: mindspore.boost.DimReduce(network, optimizer, weight, pca_mat_local, n_components, rho, gamma, alpha, sigma, rank, rank_size)
+
+    降维训练(dimension reduce training)是一种优化深度学习模型训练的算法，它可以加速模型的收敛。
+
+    算法主要原理：
+
+    .. math::
+
+        \begin{align}
+        grad\_k &= pca\_mat \cdot grad\\
+        dk &= - bk \cdot grad\_k\\
+        sk &= rho ^ m \cdot dk\\
+        delta\_loss &= sigma \cdot grad\_k.T \cdot sk
+        \end{align}
+
+    其中:
+
+    - pca_mat (array): 维度(k*n)，k是n_components的大小，n是权重的大小。
+    - bk (array): 维度(k*k)，bk是拟牛顿法中的对称正定矩阵。
+
+    我们需要找到满足以下条件的m:
+
+    .. math::
+        new\_loss < old\_loss + delta\_loss
+
+    然后使用delta_grad去更新模型的权重:
+
+    .. math::
+
+        \begin{align}
+        grad\_k\_proj &= pca\_mat.T \cdot grad\_k\\
+        new\_grad\_momentum &= gamma \cdot old\_grad\_momentum + grad - grad\_k\_proj\\
+        delta\_grad &= alpha \cdot new\_grad\_momentum - pca\_mat.T \cdot sk
+        \end{align}
+
+    **参数：**
+
+    - **network** (Cell) - 训练网络，只支持单输出。
+    - **optimizer** (Union[Cell]) - 更新权重的优化器。
+    - **weight** (Tuple(Parameter)) - 网络权重组成的元组。
+    - **pca_mat_local** (numpy.ndarray) - 用于PCA操作的，经过切分的PCA转换矩阵，维度为k*n，k是切分的n_components的大小，n是权重的大小。
+    - **n_components** (int) - PCA的主成分维度(components)。
+    - **rho** (float) - 超参。
+    - **gamma** (float) - 超参。
+    - **alpha** (float) - 超参。
+    - **sigma** (float) - 超参。
+    - **rank** (int) - Rank编号。
+    - **rank_size** (int) - Rank总数。
+
+    **输入：**
+
+    - **loss** (Tensor) - 标量Tensor。
+    - **old_grad** (Tuple(Tensor)) - 网络权重提取组成的元组。
+    - **weight** (Tuple(Tensor)) - 网络权重组成的元组。
+    - **weight_clone** (Tuple(Tensor)) - 网络权重的副本。
+    - **(\*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
+
+    **输出：**
+
+    - **loss** (Tensor) - 标量Tensor。
 
 .. py:class:: mindspore.boost.GradientFreeze(param_groups, freeze_type, freeze_p, total_steps)
 
