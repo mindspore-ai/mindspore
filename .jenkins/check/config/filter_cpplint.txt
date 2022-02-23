@@ -66,3 +66,4 @@
 "mindspore/mindspore/lite/examples/runtime_gpu_extend/src/cl"                                      "readability/fn_size"
 "mindspore/mindspore/lite/examples/quick_start_c/main.c"                                           "readability/casting"
 "mindspore/mindspore/lite/examples/quick_start_c/main.c"                                           "runtime/threadsafe_fn"
+"mindspore/mindspore/lite/examples/quick_start_micro"                                              "readability/casting"
