@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ std::unordered_map<std::string, ValuePtr> Primitive::attrs() const {
   attr_map.reserve(impl_attrs.size());
   for (auto &attr : impl_attrs) {
     auto value = ToWrapper<Value>(attr.second);
-    attr_map.emplace(attr.first, value);
+    (void)attr_map.emplace(attr.first, value);
   }
   return attr_map;
 }
