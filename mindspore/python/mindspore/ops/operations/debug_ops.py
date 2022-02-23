@@ -324,28 +324,25 @@ class InsertGradientOf(PrimitiveWithInfer):
 class HookBackward(PrimitiveWithInfer):
     """
     This operation is used as a tag to hook gradient in intermediate variables. Note that this function
-    is only supported in Pynative Mode.
+    is only supported in pynative mode.
 
     Note:
-        The hook function must be defined like `hook_fn(grad) -> Tensor or None`,
-        where grad is the gradient passed to the primitive and gradient may be
-        modified and passed to next primitive. The difference between a hook function and
-        callback of InsertGradientOf is that a hook function is executed in the python
-        environment while callback will be parsed and added to the graph.
+        The hook function must be defined like `hook_fn(grad) -> new gradient or None`, where the 'grad' is the
+        gradient passed to the primitive. The 'grad' may be modified by returning a new gradient and passed to next
+        primitive. The difference between a hook function and callback of InsertGradientOf is that the hook function is
+        executed in the python environment while callback will be parsed and added to the graph.
 
     Args:
         hook_fn (Function): Python function. hook function.
-        cell_id (str): Used to identify whether the function registered by the hook is actually registered on
-                       the specified Cell. Where the Cell is an object. For example, 'nn.Add' is a Cell object.
-                       The default value of cell_id is empty string(""), in this case, the system will automatically
-                       register when registering. Add a value of cell_id,
-                       the value of cell_id currently does not support custom values.
 
     Inputs:
-        - **inputs** (Tensor) - The variable to hook.
+        - **input** (Tensor) - The variable to hook.
+
+    Outputs:
+        - **output** (Tensor) - Returns `input` directly. `HookBackward` does not affect the forward result.
 
     Raises:
-        TypeError: If `inputs` are not a Tensor.
+        TypeError: If `input` is not a tensor.
         TypeError: If `hook_fn` is not a function of python.
 
     Supported Platforms:
@@ -353,15 +350,14 @@ class HookBackward(PrimitiveWithInfer):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import context
-        >>> from mindspore import Tensor
         >>> from mindspore import ops
+        >>> from mindspore import Tensor
+        >>> from mindspore import context
         >>> from mindspore.ops import GradOperation
-        >>> context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-        >>> def hook_fn(grad_out):
-        ...     print(grad_out)
+        >>> context.set_context(mode=context.PYNATIVE_MODE)
+        >>> def hook_fn(grad):
+        ...     print(grad)
         ...
-        >>> grad_all = GradOperation(get_all=True)
         >>> hook = ops.HookBackward(hook_fn)
         >>> def hook_test(x, y):
         ...     z = x * y
@@ -369,6 +365,7 @@ class HookBackward(PrimitiveWithInfer):
         ...     z = z * y
         ...     return z
         ...
+        >>> grad_all = GradOperation(get_all=True)
         >>> def backward(x, y):
         ...     return grad_all(hook_test)(x, y)
         ...
@@ -378,16 +375,16 @@ class HookBackward(PrimitiveWithInfer):
         (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))
     """
 
-    def __init__(self, hook_fn, cell_id=""):
+    def __init__(self, hook_fn):
         """Initialize HookBackward."""
         super(HookBackward, self).__init__(self.__class__.__name__)
-        self.add_prim_attr("cell_id", cell_id)
-        self.init_attrs["cell_id"] = cell_id
         if not isinstance(hook_fn, (FunctionType, MethodType)):
             raise TypeError(f"For '{self.name}', the type of 'hook_fn' should be python function, "
                             f"but got {type(hook_fn)}.")
-        self.register_hook(hook_fn)
-        self.cell_id = cell_id
+        self.add_prim_attr("cell_id", "")
+        self.init_attrs["cell_id"] = ""
+        self.cell_id = ""
+        self.add_backward_hook_fn(hook_fn)
 
     def infer_shape(self, *inputs_shape):
         if len(inputs_shape) == 1:

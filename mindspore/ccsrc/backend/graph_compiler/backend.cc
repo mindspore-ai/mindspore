@@ -580,6 +580,30 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
 }
 
 namespace {
+ValuePtr GetControlOpInputFromMakeTuple(const std::shared_ptr<GraphCompiler> &graph_compiler,
+                                        const AnfNodePtr &front_cnode, const CNodePtr &backend_cnode,
+                                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
+                                        const std::map<AnfNodePtr, size_t> &parameter_index,
+                                        const std::vector<tensor::TensorPtr> &graph_inputs,
+                                        InputTensorInfo *input_tensor_info, size_t *input_index) {
+  MS_EXCEPTION_IF_NULL(graph_compiler);
+  MS_EXCEPTION_IF_NULL(front_cnode);
+  MS_EXCEPTION_IF_NULL(input_index);
+  MS_LOG(DEBUG) << "The input node of hook op: " << front_cnode->DebugString() << " is a make tuple node.";
+  auto make_tuple = front_cnode->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  const auto output_size = make_tuple->size() - 1;
+  std::vector<ValuePtr> output_values;
+  for (size_t idx = 0; idx < output_size; ++idx) {
+    TensorPtr tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
+                                                                     graph_inputs, input_tensor_info, *input_index);
+    MS_EXCEPTION_IF_NULL(tensor);
+    output_values.emplace_back(tensor);
+    ++(*input_index);
+  }
+  return std::make_shared<ValueTuple>(output_values);
+}
+
 void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &front_cnode,
                        const CNodePtr &backend_cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -594,34 +618,36 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   for (size_t i = 1; i < inputs.size(); i++) {
     const auto &input_node = inputs[i];
     MS_EXCEPTION_IF_NULL(input_node);
-    auto kernel_with_index = AnfAlgo::VisitKernel(input_node, 0);
-    auto real_input = kernel_with_index.first;
-    MS_EXCEPTION_IF_NULL(real_input);
-
-    if (!real_input->isa<ValueNode>()) {
-      TensorPtr tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
-                                                                       graph_inputs, input_tensor_info, input_index);
-      MS_EXCEPTION_IF_NULL(tensor);
-      args->emplace_back(tensor);
-      input_index++;
+    if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
+      // Hook multi-input or multi-output.
+      args->emplace_back(GetControlOpInputFromMakeTuple(graph_compiler, input_node, backend_cnode, op_output_map,
+                                                        parameter_index, graph_inputs, input_tensor_info,
+                                                        &input_index));
       continue;
     }
-
-    // Get value from value node.
-    const auto &value_node = real_input->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    const auto &value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-
-    if (value->isa<ValueSequence>()) {
-      const auto &value_sequeue = value->cast<ValueSequencePtr>();
-      MS_EXCEPTION_IF_NULL(value_sequeue);
-      input_index += value_sequeue->size();
+    // Hook single-input or single-output.
+    auto real_input = AnfAlgo::VisitKernel(input_node, 0).first;
+    MS_EXCEPTION_IF_NULL(real_input);
+    if (!real_input->isa<ValueNode>()) {
+      auto tensor = graph_compiler->GetSingleOpInputTensorByIndex(backend_cnode, op_output_map, parameter_index,
+                                                                  graph_inputs, input_tensor_info, input_index);
+      MS_EXCEPTION_IF_NULL(tensor);
+      args->emplace_back(tensor);
+      ++input_index;
     } else {
-      input_index++;
+      const auto &value_node = real_input->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      const auto &value = value_node->value();
+      MS_EXCEPTION_IF_NULL(value);
+      args->emplace_back(value);
+      if (value->isa<ValueSequence>()) {
+        const auto &value_sequeue = value->cast<ValueSequencePtr>();
+        MS_EXCEPTION_IF_NULL(value_sequeue);
+        input_index += value_sequeue->size();
+      } else {
+        ++input_index;
+      }
     }
-
-    args->emplace_back(value);
   }
 }
 

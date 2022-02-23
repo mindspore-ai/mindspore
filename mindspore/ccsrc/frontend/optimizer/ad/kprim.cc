@@ -335,6 +335,28 @@ void KPrim::ExportBpropMindir(const py::object &obj) {
 }
 #endif
 
+FuncGraphPtr KPrim::GetPrimBprop(const PrimitivePtr &prim, const ValueNodePtr &value_node,
+                                 const pipeline::ResourceBasePtr &resources) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(value_node);
+  FuncGraphPtr bprop_fg = nullptr;
+  auto iter = bprop_registry_.find(prim);
+  if (iter != bprop_registry_.end()) {
+    bprop_fg = iter->second;
+  }
+
+  if (bprop_fg == nullptr) {
+    bprop_fg = GetBprop(prim, resources);
+    if (bprop_fg != nullptr) {
+      // Set bprop_g graph cache
+      bprop_registry_[prim] = bprop_fg;
+    } else {
+      bprop_fg = FakeBprop(value_node, resources);
+    }
+  }
+  return bprop_fg;
+}
+
 FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &resources) {
   // Set a child scope named "grad'PrimitiveName'" for the bprop function,
   // and add "Gradients" to the front.
@@ -518,28 +540,16 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   }
 
   FuncGraphPtr bprop_fg = nullptr;
-  if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) {
+  if ((prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) ||
+      (prim->Hash() == prim::kPrimCellBackwardHook->Hash() && prim->name() == prim::kPrimCellBackwardHook->name())) {
     if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
       MS_LOG(EXCEPTION)
-        << "The Primitive 'HookBackward' is not supported in graph mode, which is only supported in pynative mode.\n"
+        << "The Hook operation is not supported in graph mode, which is only supported in pynative mode.\n"
         << trace::GetDebugInfo(cnode->debug_info());
     }
     bprop_fg = BpropCut(value_node, resources);
   } else {
-    auto iter = bprop_registry_.find(prim);
-    if (iter != bprop_registry_.end()) {
-      bprop_fg = iter->second;
-    }
-
-    if (bprop_fg == nullptr) {
-      bprop_fg = GetBprop(prim, resources);
-      if (bprop_fg != nullptr) {
-        // Set bprop_g graph cache
-        bprop_registry_[prim] = bprop_fg;
-      } else {
-        bprop_fg = FakeBprop(value_node, resources);
-      }
-    }
+    bprop_fg = GetPrimBprop(prim, value_node, resources);
   }
 
   AdjustForAutoMonad(prim, bprop_fg);
@@ -766,8 +776,10 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
 
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
   auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut");
-  bprop_cut->CopyHookFunction(prim);
+  bprop_cut->CopyHookFunction(prim_py);
 
   auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
   if (cell_id != "") {

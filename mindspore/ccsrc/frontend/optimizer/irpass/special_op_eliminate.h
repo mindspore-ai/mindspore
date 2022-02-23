@@ -45,6 +45,7 @@ class SpecialOpEliminater : public OptimizerCaller {
       : insert_gradient_of_(std::make_shared<PrimEliminater>(prim::kPrimInsertGradientOf)),
         stop_gradient_(std::make_shared<PrimEliminater>(prim::kPrimStopGradient)),
         hook_backward_(std::make_shared<PrimEliminater>(prim::kPrimHookBackward)),
+        cell_backward_hook_(std::make_shared<PrimEliminater>(prim::kPrimCellBackwardHook)),
         print_shape_type_(std::make_shared<PrimEliminater>(prim::kPrimPrintShapeType)),
         get_ref_value_(std::make_shared<PrimEliminater>(prim::kPrimGetRefValue)),
         mirror_(std::make_shared<PrimEliminater>(prim::kPrimMirror)),
@@ -52,6 +53,7 @@ class SpecialOpEliminater : public OptimizerCaller {
     eliminaters_.emplace_back(insert_gradient_of_);
     eliminaters_.emplace_back(stop_gradient_);
     eliminaters_.emplace_back(hook_backward_);
+    eliminaters_.emplace_back(cell_backward_hook_);
     eliminaters_.emplace_back(print_shape_type_);
     eliminaters_.emplace_back(get_ref_value_);
     eliminaters_.emplace_back(mirror_);
@@ -64,7 +66,7 @@ class SpecialOpEliminater : public OptimizerCaller {
     for (auto &eliminater : eliminaters_) {
       new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
-        if (IsPrimitiveCNode(node, prim::kPrimHookBackward)) {
+        if (IsPrimitiveCNode(node, prim::kPrimHookBackward) || IsPrimitiveCNode(node, prim::kPrimCellBackwardHook)) {
           MS_LOG(WARNING)
             << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
         }
@@ -75,8 +77,8 @@ class SpecialOpEliminater : public OptimizerCaller {
   }
 
  private:
-  OptimizerCallerPtr insert_gradient_of_, stop_gradient_, hook_backward_, print_shape_type_, get_ref_value_, mirror_,
-    virtual_div_;
+  OptimizerCallerPtr insert_gradient_of_, stop_gradient_, hook_backward_, cell_backward_hook_, print_shape_type_,
+    get_ref_value_, mirror_, virtual_div_;
   std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 
