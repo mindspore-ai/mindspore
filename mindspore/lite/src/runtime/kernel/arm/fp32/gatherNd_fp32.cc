@@ -89,7 +89,7 @@ int GatherNdCPUKernel::InitOffset() {
     return RET_ERROR;
   }
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data());
-  MS_ASSERT(indices_ptr != nullptr);
+  MS_CHECK_TRUE_MSG(indices_ptr != nullptr, RET_ERROR, "indices_ptr is nullptr.");
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
     area_ *= in_shape[i];
