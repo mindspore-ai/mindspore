@@ -24,7 +24,7 @@ mindspore.dataset.vision.py_transforms.RandomResizedCrop
     - **TypeError** - 当 `size` 的类型不为整型或整型序列。
     - **TypeError** - 当 `scale` 的类型不为元组。
     - **TypeError** - 当 `ratio` 的类型不为元组。
-    - **TypeError** - 当 `interpolation` 的类型不为 :class:`Inter` 。
+    - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **TypeError** - 当 `max_attempts` 的类型不为整型。
     - **ValueError** - 当 `size` 不为正数。
     - **ValueError** - 当 `scale` 为负数。

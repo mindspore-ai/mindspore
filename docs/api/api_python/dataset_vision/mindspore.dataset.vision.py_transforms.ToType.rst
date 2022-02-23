@@ -7,7 +7,7 @@ mindspore.dataset.vision.py_transforms.ToType
 
     **参数：**
 
-    - **output_type** (numpy.dtype) - 输出图像的数据类型，例如numpy.float32。
+    - **output_type** (numpy.dtype) - 输出图像的数据类型，例如 :class:`numpy.float32` 。
 
     **异常：**
 

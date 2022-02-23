@@ -1,7 +1,7 @@
 mindspore.dataset.vision.Border
 ===============================
 
-.. py:class:: mindspore.dataset.vision.Border()
+.. py:class:: mindspore.dataset.vision.Border
 
     边界填充方式枚举类。
 

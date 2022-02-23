@@ -7,9 +7,9 @@ mindspore.dataset.vision.py_transforms.ToTensor
 
     **参数：**
 
-    - **output_type** (numpy.dtype，可选) - 输出图像的数据类型，默认值：numpy.float32。
+    - **output_type** (numpy.dtype，可选) - 输出图像的数据类型，默认值：:class:`numpy.float32`。
 
     **异常：**
 
-    - **TypeError** - 当输入图像的类型不为 :class:`numpy.ndarray` 或 :class:`PIL.Image` 。
+    - **TypeError** - 当输入图像的类型不为 :class:`PIL.Image` 或 :class:`numpy.ndarray` 。
     - **TypeError** - 输入图像的维度不为2或3。
