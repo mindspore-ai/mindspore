@@ -26,7 +26,7 @@ static constexpr size_t kSizeFloat16 = sizeof(float16);
 static constexpr size_t kScalarIndex = 0;
 static constexpr size_t kStandardInputNum = 12;
 static constexpr size_t kWorkSpaceNum = 3;
-static constexpr size_t kBatchSize = 10000;
+static constexpr size_t kBatchSize = 1000;
 static auto constexpr kEnableScaleParameter = "enable_scale_parameter";
 static auto constexpr kEnableFirstMoment = "enable_first_moment";
 static auto constexpr kEnableWeightDecay = "enable_weight_decay";
@@ -73,15 +73,31 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) {
-  if (elem_num == 0) {
+  if (elem_num == 0 || input == nullptr) {
     return 0.0f;
   }
-
-  float rms = 0;
-  for (size_t i = 0; i < elem_num; ++i) {
-    auto tmp = static_cast<float>(input[i]);
-    rms += tmp * tmp;
+  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  size_t thread_num =
+    elem_num < kBatchSize * max_thread_num ? (elem_num + kBatchSize - 1) / kBatchSize : max_thread_num;
+  std::vector<common::Task> tasks;
+  size_t batch_size = (elem_num + thread_num - 1) / thread_num;
+  std::vector<float> block_sum(thread_num, 0.0f);
+  for (size_t thread_id = 0; thread_id < thread_num; ++thread_id) {
+    size_t start = batch_size * thread_id;
+    size_t end = (start + batch_size) > elem_num ? elem_num : (start + batch_size);
+    auto block = [&, start, end, thread_id]() {
+      float square_sum = 0;
+      for (size_t i = start; i < end; ++i) {
+        auto tmp = static_cast<float>(input[i]);
+        square_sum += tmp * tmp;
+      }
+      block_sum[thread_id] = square_sum;
+      return common::SUCCESS;
+    };
+    (void)tasks.emplace_back(block);
   }
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  auto rms = std::accumulate(block_sum.begin(), block_sum.end(), 0.0f);
   rms /= elem_num;
   return std::sqrt(rms);
 }
@@ -103,7 +119,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   size_t last_row_col_size = last_row_dim_size_ * last_col_dim_size_;
   size_t row_dim_size = last_row_dim_size_;
   size_t col_dim_size = last_col_dim_size_;
-  // exp_avg_sq_row = exp_avg_sq_row * beta2t + reduce_mean(update, -1) * one_minus_beta2t;
+  // step 1: exp_avg_sq_row = exp_avg_sq_row * beta2t + reduce_mean(update, -1) * one_minus_beta2t;
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       float row_reduce = 0;
@@ -118,7 +134,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   };
   CPUKernelUtils::ParallelFor(task, exp_avg_sq_row_elem_num, kBatchSize);
 
-  // r_factor = sqrt(exp_avg_sq_row / reduce_mean(exp_avg_sq_row, -1))
+  // step 2: r_factor = sqrt(exp_avg_sq_row / reduce_mean(exp_avg_sq_row, -1))
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       float col_reduce = 0;
@@ -135,8 +151,8 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   };
   CPUKernelUtils::ParallelFor(task, exp_avg_sq_row_elem_num / col_dim_size, kBatchSize);
 
-  // exp_avg_sq_col = exp_avg_sq_col * beta2t + reduce_mean(update, -2) * one_minus_beta2t;
-  // c_factor = sqrt(exp_avg_sq_col);
+  // step 3: exp_avg_sq_col = exp_avg_sq_col * beta2t + reduce_mean(update, -2) * one_minus_beta2t;
+  // step 4: c_factor = sqrt(exp_avg_sq_col);
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       float row_reduce = 0;
@@ -153,7 +169,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   };
   CPUKernelUtils::ParallelFor(task, exp_avg_sq_col_elem_num, kBatchSize);
 
-  // update = grad / (r_factor * c_factor);
+  // step 5: update = grad / (r_factor * c_factor);
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       size_t row_i = i % row_dim_size;
