@@ -31,15 +31,15 @@ class DSCallback:
 
     Examples:
         >>> from mindspore.dataset import DSCallback
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>> from mindspore.dataset.transforms import c_transforms
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_epoch_end(self, ds_run_context):
         ...         print(ds_run_context.cur_epoch_num)
         ...         print(ds_run_context.cur_step_num)
         >>>
-        >>> # dataset is an instance of Dataset object and op is a certain data processing operator
-        >>> op = c_transforms.Fill(3)
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
+        >>> op = c_transforms.OneHot(10)
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
