@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ const void *Tensor::data() const { return ToRef<TensorImpl>(impl_).data_c(); }
 
 void *Tensor::data() { return ToRef<TensorImpl>(impl_).data_c(); }
 
-int Tensor::DataSize() const { return ToRef<TensorImpl>(impl_).DataSize(); }
+size_t Tensor::DataSize() const { return ToRef<TensorImpl>(impl_).DataSize(); }
 
 size_t Tensor::Size() const { return ToRef<TensorImpl>(impl_).Size(); }
 }  // namespace mindspore::api
