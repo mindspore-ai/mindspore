@@ -132,7 +132,7 @@ server_mode: "FEDERATED_LEARNING"
 ms_role: "MS_WORKER"
 worker_num: 1
 server_num: 1
-scheduler_ip: "10.113.216.40"
+scheduler_ip: "127.0.0.1"
 scheduler_port: 8113
 fl_server_port: 6666
 start_fl_job_threshold: 1

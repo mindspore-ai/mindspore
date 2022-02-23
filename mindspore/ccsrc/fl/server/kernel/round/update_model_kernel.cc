@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 #include "fl/server/kernel/round/update_model_kernel.h"
 
 namespace mindspore {
