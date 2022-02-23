@@ -34,7 +34,7 @@ const int ONE_SHAPE = 1;
 // Cache the summary callback data from ME session
 // Remove the GE module on new architecture
 // Output Format: [{"name": tag_name, "data": tensor}, {"name": tag_name, "data": tensor},...]
-uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::string, TensorPtr> &params_list) {
+uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, TensorPtr> &params_list) {
   // Acquire GIL before calling Python code
   py::gil_scoped_acquire acquire;
   py::list summary_list = py::list();

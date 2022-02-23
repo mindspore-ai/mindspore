@@ -65,8 +65,8 @@ class MS_CORE_API RefType final : public TensorType {
 };
 using RefTypePtr = std::shared_ptr<RefType>;
 
-MS_CORE_API inline const TypePtr kRefKeyType = std::make_shared<RefKeyType>();
-MS_CORE_API inline const TypePtr kRefType = std::make_shared<RefType>();
+GVAR_DEF(TypePtr, kRefKeyType, std::make_shared<RefKeyType>());
+GVAR_DEF(TypePtr, kRefType, std::make_shared<RefType>());
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_REF_H_

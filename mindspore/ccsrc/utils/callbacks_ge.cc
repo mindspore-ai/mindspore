@@ -156,7 +156,7 @@ static TensorPtr GetMeTensorForSummary(const std::string &name, const std::share
 
 // Cache the summary callback data
 // Output Format: [{"name": tag_name, "data": tensor}, {"name": tag_name, "data": tensor},...]
-uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {
+uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {
   // Acquire GIL before calling Python code
   py::gil_scoped_acquire acquire;
 

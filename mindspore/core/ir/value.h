@@ -488,7 +488,7 @@ class MS_CORE_API AnyValue : public Value {
   abstract::AbstractBasePtr ToAbstract() override;
 };
 
-MS_CORE_API inline const ValuePtr kAnyValue = std::make_shared<AnyValue>();
+GVAR_DEF(ValuePtr, kAnyValue, std::make_shared<AnyValue>());
 
 /// \brief Monad defines a Value class which is used in side effect.
 class MS_CORE_API Monad : public Value {

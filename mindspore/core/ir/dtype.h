@@ -424,20 +424,20 @@ struct MS_CORE_API TypeListEqual {
   bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const;
 };
 
-MS_CORE_API inline const TypePtr kTypeExternal = std::make_shared<External>();
-MS_CORE_API inline const TypePtr kTypeEnv = std::make_shared<EnvType>();
-MS_CORE_API inline const TypePtr kTypeType = std::make_shared<TypeType>();
-MS_CORE_API inline const TypePtr kString = std::make_shared<String>();
-MS_CORE_API inline const TypePtr kList = std::make_shared<List>();
-MS_CORE_API inline const TypePtr kTuple = std::make_shared<Tuple>();
-MS_CORE_API inline const TypePtr kDict = std::make_shared<Dictionary>();
-MS_CORE_API inline const TypePtr kSlice = std::make_shared<Slice>();
-MS_CORE_API inline const TypePtr kKeyword = std::make_shared<Keyword>();
-MS_CORE_API inline const TypePtr kTensorType = std::make_shared<TensorType>();
-MS_CORE_API inline const TypePtr kTensorTypeFP16 = std::make_shared<TensorType>(std::make_shared<Float>(16));
-MS_CORE_API inline const TypePtr kTensorTypeFP32 = std::make_shared<TensorType>(std::make_shared<Float>(32));
-MS_CORE_API inline const TypePtr kTensorTypeFP64 = std::make_shared<TensorType>(std::make_shared<Float>(64));
-MS_CORE_API inline const TypePtr kCSRTensorType = std::make_shared<CSRTensorType>();
+GVAR_DEF(TypePtr, kTypeExternal, std::make_shared<External>());
+GVAR_DEF(TypePtr, kTypeEnv, std::make_shared<EnvType>());
+GVAR_DEF(TypePtr, kTypeType, std::make_shared<TypeType>());
+GVAR_DEF(TypePtr, kString, std::make_shared<String>());
+GVAR_DEF(TypePtr, kList, std::make_shared<List>());
+GVAR_DEF(TypePtr, kTuple, std::make_shared<Tuple>());
+GVAR_DEF(TypePtr, kDict, std::make_shared<Dictionary>());
+GVAR_DEF(TypePtr, kSlice, std::make_shared<Slice>());
+GVAR_DEF(TypePtr, kKeyword, std::make_shared<Keyword>());
+GVAR_DEF(TypePtr, kTensorType, std::make_shared<TensorType>());
+GVAR_DEF(TypePtr, kTensorTypeFP16, std::make_shared<TensorType>(std::make_shared<Float>(16)));
+GVAR_DEF(TypePtr, kTensorTypeFP32, std::make_shared<TensorType>(std::make_shared<Float>(32)));
+GVAR_DEF(TypePtr, kTensorTypeFP64, std::make_shared<TensorType>(std::make_shared<Float>(64)));
+GVAR_DEF(TypePtr, kCSRTensorType, std::make_shared<CSRTensorType>());
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_H_
