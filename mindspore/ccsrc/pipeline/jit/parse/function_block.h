@@ -63,8 +63,10 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   CNodePtr ForceToWhileCond(const AnfNodePtr &cond);
   void Jump(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &args);
   AnfNodePtr SearchReplaceNode(const std::string &var, const ParameterPtr &phi);
-  void ConditionalJump(AnfNodePtr cond_node, const AnfNodePtr &true_block_call, const AnfNodePtr &false_block_call);
-  void ConditionalJump(AnfNodePtr cond_node, const FunctionBlockPtr &true_block, const FunctionBlockPtr &false_block);
+  void ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
+                       const AnfNodePtr &false_block_call);
+  void ConditionalJump(const AnfNodePtr &cond_node, const FunctionBlockPtr &true_block,
+                       const FunctionBlockPtr &false_block);
   // Create cnode for the assign statement like self.target = source.
   void SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &source);
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }

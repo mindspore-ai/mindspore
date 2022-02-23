@@ -226,7 +226,7 @@ std::string GetUserDefinedCachePath() {
 
 std::string GetCompileCacheDir() {
   static const std::string user_defined_path = GetUserDefinedCachePath();
-  static uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
   static const std::string compile_cache_dir =
     user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
   return compile_cache_dir;
@@ -502,7 +502,7 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
     }
     AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden);
     args_spec.push_back(ptr);
-    cur_convert_input_.emplace(args[i].ptr(), ptr);
+    (void)cur_convert_input_.emplace(args[i].ptr(), ptr);
   }
 
   // If cache matched no need CheckArgsValid
@@ -759,9 +759,9 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   auto res = iter->second->resource;
   if (res->HasResult(kStepParallelGraph)) {
     std::string layout_graph = phase + kStepParallelGraph;
-    info_.erase(layout_graph);
+    (void)info_.erase(layout_graph);
   }
-  info_.erase(phase);
+  (void)info_.erase(phase);
   MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
 }
 
@@ -1168,7 +1168,7 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
   return ret_value;
 }
 
-void CacheValidateFuncGraph(const std::string &phase, const ResourcePtr &resource) {
+void CacheValidateFuncGraph(const std::string &, const ResourcePtr &resource) {
   if (resource->enable_compile_cache()) {
 #ifdef ENABLE_PROFILE
     double t1 = GetTime();
@@ -1321,7 +1321,7 @@ void Pipeline::Run(const std::string &phase) {
 
 bool Pipeline::NeedCreateBackend() {
   return std::any_of(actions_.begin(), actions_.end(),
-                     [](ActionItem action) { return action.first == "task_emit" || action.first == "execute"; });
+                     [](const ActionItem &action) { return action.first == "task_emit" || action.first == "execute"; });
 }
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
