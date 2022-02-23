@@ -559,7 +559,10 @@ bool ConvertSwitchReplacement::CheckSwitchWrapNode(const AnfNodePtr &node) {
 
 void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
-  auto switch_cnode = cnode->input(0)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  constexpr size_t input_index = 0;
+  auto switch_cnode = cnode->input(input_index)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(switch_cnode);
   auto cond = switch_cnode->input(kCondIndex);
   auto true_br = switch_cnode->input(kTrueBranchIndex);
   auto false_br = switch_cnode->input(kFalseBranchIndex);
@@ -572,7 +575,7 @@ void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &no
   auto trans_g2 = internal::TransformGraphCondFalseBranchNodes(g2, cond);
 
   std::vector<AnfNodePtr> params;
-  if (cnode && cnode->size() > 1) {
+  if (cnode->size() > 1) {
     // There are arguments for the call of switch result,
     // usually these are monad states added by auto-monad.
     for (size_t i = 1; i < cnode->size(); ++i) {
