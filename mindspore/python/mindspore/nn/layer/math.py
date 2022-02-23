@@ -244,6 +244,7 @@ class LGamma(Cell):
         self.select = P.Select()
         self.sin = P.Sin()
         self.isfinite = P.IsFinite()
+        self.neg = P.Neg()
 
     def construct(self, x):
         input_dtype = self.dtype(x)
@@ -276,8 +277,8 @@ class LGamma(Cell):
         reflection_denom = self.log(self.sin(self.pi * reduced_frac_input))
 
         reflection = self.select(self.isfinite(reflection_denom),
-                                 -reflection_denom - log_y + self.log_pi, # pylint: disable=invalid-unary-operand-type
-                                 -reflection_denom) # pylint: disable=invalid-unary-operand-type
+                                 self.neg(reflection_denom) - log_y + self.log_pi,
+                                 self.neg(reflection_denom))
 
         result = self.select(need_to_reflect, reflection, log_y)
 
