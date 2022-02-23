@@ -27,11 +27,6 @@ STATUS MicroParamParser::ParseTarget(const std::string &target, micro::MicroPara
   micro_param->target = target;
   return RET_OK;
 }
-STATUS MicroParamParser::ParseOutputPath(const std::string &output_path, micro::MicroParam *micro_param) {
-  MS_LOG(DEBUG) << "Micro codegen output_path: " << output_path;
-  micro_param->output_path = output_path;
-  return RET_OK;
-}
 STATUS MicroParamParser::ParseCodeGenMode(const std::string &codegen_mode, micro::MicroParam *micro_param) {
   MS_LOG(DEBUG) << "Micro codegen mode: " << codegen_mode;
   micro_param->codegen_mode = codegen_mode;
@@ -71,12 +66,6 @@ STATUS MicroParamParser::ParseMicroParam(const MicroParamString &micro_param_str
   if (!micro_param_string.target.empty()) {
     if (ParseTarget(micro_param_string.target, micro_param) != RET_OK) {
       MS_LOG(ERROR) << "Parse HW target val: " << micro_param_string.target;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-  if (!micro_param_string.output_path.empty()) {
-    if (ParseOutputPath(micro_param_string.output_path, micro_param) != RET_OK) {
-      MS_LOG(ERROR) << "Parse output_path val； " << micro_param_string.output_path;
       return RET_INPUT_PARAM_INVALID;
     }
   }

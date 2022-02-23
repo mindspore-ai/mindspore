@@ -24,7 +24,6 @@ enum Target { kX86 = 0, kARM32M = 1, kARM32A = 2, kARM64 = 3, kAllTargets = 4, k
 enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
 
 struct MicroParam {
-  std::string output_path;
   std::string codegen_mode;
   std::string target;
   bool enable_micro{false};
@@ -54,7 +53,6 @@ class Configurator {
   void set_support_parallel(bool parallel) { support_parallel_ = parallel; }
   bool support_parallel() const { return support_parallel_; }
 
-  int ParseProjDir(std::string model_path);
   void set_proj_dir(std::string dir) { proj_dir_ = dir; }
   std::string proj_dir() const { return proj_dir_; }
 

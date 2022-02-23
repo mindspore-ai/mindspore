@@ -51,14 +51,8 @@ class MetaGraphSerializer {
   std::string model_name_;
   std::string save_model_path_;
   std::string save_data_path_;
-  std::string code_mode_;
-  std::string target_;
-  bool support_parallel_{false};
-  bool debug_mode_{false};
   std::fstream *model_fs_ = nullptr;
   std::fstream *data_fs_ = nullptr;
-
-  friend class Coder;
 };
 }  // namespace mindspore::lite
 

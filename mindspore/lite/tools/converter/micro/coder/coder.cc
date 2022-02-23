@@ -29,27 +29,6 @@
 #include "tools/converter/micro/coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
-class CoderFlags : public virtual FlagParser {
- public:
-  CoderFlags() {
-    AddFlag(&CoderFlags::model_path_, "modelPath", "Input model path", "");
-    AddFlag(&CoderFlags::code_path_, "codePath", "Input code path", ".");
-    AddFlag(&CoderFlags::target_, "target", "generated code target, x86| ARM32M| ARM32A| ARM64", "x86");
-    AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Inference | Train", "Inference");
-    AddFlag(&CoderFlags::support_parallel_, "supportParallel", "whether support parallel launch, true | false", false);
-    AddFlag(&CoderFlags::debug_mode_, "debugMode", "dump the tensors data for debugging, true | false", false);
-  }
-
-  ~CoderFlags() override = default;
-
-  std::string model_path_;
-  bool support_parallel_{false};
-  std::string code_path_;
-  std::string code_mode_;
-  bool debug_mode_{false};
-  std::string target_;
-};
-
 int Coder::Run(const void *model_buff, size_t size) {
   session_ = CreateCoderSession();
   if (session_ == nullptr) {
@@ -77,27 +56,6 @@ int Coder::Run(const void *model_buff, size_t size) {
     MS_LOG(ERROR) << "Generate Code Files error!" << status;
   }
   return status;
-}
-
-int Configurator::ParseProjDir(std::string model_path) {
-  // split model_path to get model file name
-  proj_dir_ = model_path;
-  size_t found = proj_dir_.find_last_of("/\\");
-  if (found != std::string::npos) {
-    proj_dir_ = proj_dir_.substr(found + 1);
-  }
-  found = proj_dir_.find(".ms");
-  if (found != std::string::npos) {
-    proj_dir_ = proj_dir_.substr(0, found);
-  } else {
-    MS_LOG(ERROR) << "model file's name must be end with \".ms\".";
-    return RET_ERROR;
-  }
-  if (proj_dir_.size() == 0) {
-    proj_dir_ = "net";
-    MS_LOG(WARNING) << "parse model's name failed, use \"net\" instead.";
-  }
-  return RET_OK;
 }
 
 bool Coder::InitPath(const std::string &output_path) {

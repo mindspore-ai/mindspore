@@ -79,7 +79,6 @@ struct AclOptionCfgString {
 };
 
 struct MicroParamString {
-  std::string output_path;
   std::string codegen_mode;
   std::string target;
   std::string support_parallel;
