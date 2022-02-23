@@ -419,8 +419,11 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
   py::list shape_list(len);
   py::list dtype_list(len);
   py::list value_list(len);
+  py::list min_value_list(len);
+  py::list max_value_list(len);
   py::list min_shape_list(len);
   py::list max_shape_list(len);
+  bool dyn_value = false;
   bool dyn_shape = false;
 
   for (size_t i = 0; i < len; i++) {
@@ -428,6 +431,13 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
     shape_list[i] = out[ATTR_SHAPE];
     dtype_list[i] = out[ATTR_DTYPE];
     value_list[i] = out[ATTR_VALUE];
+
+    // Elements in list is tensor, which value is dynamic.
+    if (out.contains(py::str(ATTR_MIN_VALUE)) && out.contains(py::str(ATTR_MAX_VALUE))) {
+      min_value_list[i] = out[ATTR_MIN_VALUE];
+      max_value_list[i] = out[ATTR_MAX_VALUE];
+      dyn_value = true;
+    }
 
     // Elements in list is tensor, which shape is dynamic.
     if (out.contains(py::str(ATTR_MIN_SHAPE)) && out.contains(py::str(ATTR_MAX_SHAPE))) {
@@ -446,6 +456,10 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base, bool only_convert
     dic[ATTR_VALUE] = value_list;
   }
 
+  if (dyn_value) {
+    dic[ATTR_MIN_VALUE] = min_value_list;
+    dic[ATTR_MAX_VALUE] = max_value_list;
+  }
   if (dyn_shape) {
     dic[ATTR_MIN_SHAPE] = min_shape_list;
     dic[ATTR_MAX_SHAPE] = max_shape_list;
