@@ -760,9 +760,9 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
 
 bool EnvironConversionPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
-  static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
+  static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
   if (enable_closure) {
-    opt::EnvironConversion(res);
+    (void)opt::EnvironConversion(res);
   }
   return true;
 }

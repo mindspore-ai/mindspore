@@ -631,7 +631,7 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 bool VmOptimizeAction(const ResourcePtr &res) {
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
-    kVmPasses.push_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
+    (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
   }
 #endif
   auto ret = OptimizeAction(res, kVmPasses);
@@ -791,7 +791,6 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(backend_ptr);
-  std::string backend = context_ptr->backend_policy();
   auto set_ctx = [&context_ptr, &backend_ptr](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
     context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
@@ -821,7 +820,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
   auto graphs = func_graph->func_graphs_used_total();
-  graphs.insert(func_graph);
+  (void)graphs.insert(func_graph);
   bool exist_func = ExistControlFlow(func_graph) ? HasIncorporateCall(all_nodes) : false;
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
