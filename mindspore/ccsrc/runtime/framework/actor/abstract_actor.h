@@ -100,7 +100,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // messages are sent asynchronously between actors, there will be multiple messages that remain unprocessed in
   // the channel. In order to prevent old data from being overwritten, it is necessary to allocate a new op data,
   // and these op data will be uniformly cleared by the scheduler after the step ends.
-  std::vector<OpDataPtr<DeviceTensor>> to_stack_data_;
+  std::vector<OpDataUniquePtr<DeviceTensor>> to_stack_data_;
 
   // The dependent device tensor stores, the dependent expression is pair<index, AnfNode>.
   // Index is the input position, AnfNode is the key of the device tensor store.

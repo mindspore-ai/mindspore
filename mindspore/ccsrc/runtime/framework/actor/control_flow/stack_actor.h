@@ -60,7 +60,7 @@ class StackActor : public ControlActor {
   // stored in the device tensor in the stack.
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_stack_data_;
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartialPtr>>> input_stack_partials_;
-  mindspore::HashMap<int, mindspore::HashMap<AID, size_t>> input_stack_controls_;
+  mindspore::HashMap<int, mindspore::HashMap<AID *, size_t>> input_stack_controls_;
 
   std::set<AID> stack_control_aids_;
   // Input parameter num represents the number of actor's input come from funcgraph itself, these inputs will

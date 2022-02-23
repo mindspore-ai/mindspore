@@ -98,10 +98,10 @@ void StackActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> 
   auto &sequential_num = context->sequential_num_;
   if (stack_control_aids_.find(*input_control) != stack_control_aids_.end()) {
     if ((input_stack_controls_.find(sequential_num) == input_stack_controls_.end()) ||
-        (input_stack_controls_[sequential_num].find(*input_control) == input_stack_controls_[sequential_num].end())) {
-      input_stack_controls_[sequential_num][*input_control] = 1;
+        (input_stack_controls_[sequential_num].find(input_control) == input_stack_controls_[sequential_num].end())) {
+      input_stack_controls_[sequential_num][input_control] = 1;
     } else {
-      input_stack_controls_[sequential_num][*input_control]++;
+      input_stack_controls_[sequential_num][input_control]++;
     }
   } else {
     (void)input_op_controls_[sequential_num].emplace_back(input_control);
