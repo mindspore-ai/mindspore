@@ -139,6 +139,9 @@ class Node {
   std::unordered_map<uint64_t, std::unordered_map<uint32_t, VectorPtr>> workder_receive_messages_;
   std::map<std::pair<uint32_t, uint64_t>, bool> receive_messages_done_;
   std::mutex receive_messages_mutex_;
+
+  // Message from the scheduler. The key is: request_id, the value is:RecvMessage.
+  std::unordered_map<uint64_t, VectorPtr> received_scheduler_messages_;
 };
 }  // namespace core
 }  // namespace ps

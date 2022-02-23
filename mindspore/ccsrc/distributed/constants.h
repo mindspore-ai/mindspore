@@ -19,6 +19,7 @@
 
 #include <set>
 #include <map>
+#include <chrono>
 #include <string>
 
 namespace mindspore {
@@ -46,6 +47,10 @@ constexpr int MAX_HOSTNAME_LEN = 1024;
 const uint16_t kDefaultSchedPort = 6667;
 const uint16_t kMaxPort = 65535;
 constexpr uint32_t kDefaultFinishTimeout = 30;
+
+// This macro the current timestamp in milliseconds.
+#define CURRENT_TIMESTAMP_MILLI \
+  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
 }  // namespace distributed
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DISTRIBUTED_CONSTANTS_H_

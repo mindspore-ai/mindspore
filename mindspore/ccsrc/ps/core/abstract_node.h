@@ -98,6 +98,10 @@ class AbstractNode : public Node {
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &msgs,
             int command, std::vector<VectorPtr> *output = nullptr, const uint32_t &timeout = kCommTimeoutInSeconds);
 
+  // The interface that sends sync message to the scheduler.
+  bool SendToScheduler(const void *message, size_t len, NodeCommand command, VectorPtr *output = nullptr,
+                       const uint32_t &timeout = kCommTimeoutInSeconds);
+
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
@@ -150,6 +154,9 @@ class AbstractNode : public Node {
   void ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
   void ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
+  // Process the response messages about actor route table service.
+  void ProcessActorRouteServiceResp(const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
+
   void ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                            const Protos &protos, const void *data, size_t size);
   void ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -201,6 +208,7 @@ class AbstractNode : public Node {
   uint64_t NextExpectedRankRequestId(const uint32_t &rank_id);
   uint64_t NextActualRankRequestId(const uint32_t &rank_id);
   void InitCommandHandler();
+  void RegisterActorRouteTableRspHandler();
   void InitServerHandler();
 
   // when initializing the node, should initializing the node info.

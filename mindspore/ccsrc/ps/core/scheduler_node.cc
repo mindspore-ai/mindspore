@@ -488,6 +488,9 @@ void SchedulerNode::ProcessSendEvent(const std::shared_ptr<TcpServer> &server,
 void SchedulerNode::ProcessRegisterActorRoute(const std::shared_ptr<TcpServer> &server,
                                               const std::shared_ptr<TcpConnection> &conn,
                                               const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
   MS_ERROR_IF_NULL_WO_RET_VAL(data);
   MS_ERROR_IF_NULL_WO_RET_VAL(actor_route_table_service_);
   ActorAddress actor_address;
@@ -501,11 +504,35 @@ void SchedulerNode::ProcessRegisterActorRoute(const std::shared_ptr<TcpServer> &
 
 void SchedulerNode::ProcessDeleteActorRoute(const std::shared_ptr<TcpServer> &server,
                                             const std::shared_ptr<TcpConnection> &conn,
-                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {}
+                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+  MS_ERROR_IF_NULL_WO_RET_VAL(actor_route_table_service_);
+  std::string actor_id(static_cast<const char *>(data), size);
+
+  std::string error = "";
+  bool ret = actor_route_table_service_->DeleteRoute(actor_id, &error);
+  GeneralResponse(server, conn, meta, ret, error);
+}
 
 void SchedulerNode::ProcessLookupActorRoute(const std::shared_ptr<TcpServer> &server,
                                             const std::shared_ptr<TcpConnection> &conn,
-                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {}
+                                            const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+  MS_ERROR_IF_NULL_WO_RET_VAL(actor_route_table_service_);
+  std::string actor_id(static_cast<const char *>(data), size);
+
+  std::string error = "";
+  ActorAddress address = actor_route_table_service_->LookupRoute(actor_id, &error);
+  if (!server->SendMessage(conn, meta, Protos::PROTOBUF, address.SerializeAsString().data(), address.ByteSizeLong())) {
+    MS_LOG(ERROR) << "Scheduler failed to respond message for lookup route.";
+  }
+}
 
 bool SchedulerNode::SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) {
   uint64_t request_id = AddMessageTrack(node_infos.size());

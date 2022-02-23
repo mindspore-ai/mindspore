@@ -287,6 +287,39 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
   return Wait(request_id, timeout);
 }
 
+bool AbstractNode::SendToScheduler(const void *message, size_t len, NodeCommand node_cmd, VectorPtr *output,
+                                   const uint32_t &timeout) {
+  MS_EXCEPTION_IF_NULL(message);
+
+  uint32_t expected_reponse_num = 1;
+  uint64_t request_id = AddMessageTrack(expected_reponse_num);
+  auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
+  message_meta->set_cmd(node_cmd);
+  message_meta->set_request_id(request_id);
+
+  MS_EXCEPTION_IF_NULL(client_to_scheduler_);
+  if (!client_to_scheduler_->SendMessage(message_meta, Protos::RAW, message, len)) {
+    MS_LOG(WARNING) << "Failed to send message" << node_cmd << "to scheduler.";
+  }
+
+  bool ret = Wait(request_id, timeout);
+  if (!ret) {
+    MS_LOG(ERROR) << "Sending message " << node_cmd << " to scheduler timeout.";
+    return ret;
+  }
+
+  // Assign the response value from scheduler.
+  if (output != nullptr) {
+    if (received_scheduler_messages_.count(request_id) == 0) {
+      MS_LOG(ERROR) << "The response message of " << node_cmd << " is not received yet.";
+      return false;
+    }
+    *output = received_scheduler_messages_[request_id];
+  }
+  return ret;
+}
+
 uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data,
                                            size_t size) {
   MS_EXCEPTION_IF_NULL(data);
@@ -613,6 +646,25 @@ void AbstractNode::ProcessFetchServersResp(const std::shared_ptr<MessageMeta> &m
     nodes_address_[std::make_pair(it.role(), it.rank_id())] = std::make_pair(it.ip(), it.port());
     MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port();
   }
+}
+
+void AbstractNode::ProcessActorRouteServiceResp(const std::shared_ptr<MessageMeta> &meta, const void *data,
+                                                size_t size) {
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  std::lock_guard<std::mutex> lock(receive_messages_mutex_);
+
+  const uint64_t request_id = meta->request_id();
+  VectorPtr received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
+  if (size > 0) {
+    size_t dest_size = size;
+    size_t src_size = size;
+    auto ret = memcpy_s(received_data.get()->data(), dest_size, data, src_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+    }
+  }
+  received_scheduler_messages_[request_id] = received_data;
 }
 
 void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &conn,
@@ -1088,6 +1140,13 @@ void AbstractNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = nullptr;
   handlers_[NodeCommand::SCALE_IN_DONE] = nullptr;
   handlers_[NodeCommand::SEND_EVENT] = nullptr;
+  RegisterActorRouteTableRspHandler();
+}
+
+void AbstractNode::RegisterActorRouteTableRspHandler() {
+  handlers_[NodeCommand::REGISTER_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
+  handlers_[NodeCommand::DELETE_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
+  handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &AbstractNode::ProcessActorRouteServiceResp;
 }
 
 void AbstractNode::InitServerHandler() {
