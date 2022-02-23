@@ -253,10 +253,11 @@ class SummaryRecord:
                 - eval_lineage: the value is a lineage data for the evaluation phase.
                 - dataset_graph: the value is a dataset graph.
                 - custom_lineage_data: the value is a customized lineage data.
+                - LANDSCAPE: the value is a landscape.
 
             name (str): The value of the name.
-            value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo]): \
-                The value to store.
+            value (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo,
+                LossLandscape]): The value to store.
 
                 - The data type of value should be 'GraphProto' (see `mindspore/ccsrc/anf_ir.proto
                   <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_) object
@@ -275,10 +276,13 @@ class SummaryRecord:
                 - The data type of value should be a 'UserDefinedInfo' object when the plugin is 'custom_lineage_data',
                   see `mindspore/ccsrc/lineage.proto
                   <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_.
+                - The data type of value should be a 'LossLandscape' object when the plugin is 'LANDSCAPE',
+                  see `mindspore/ccsrc/summary.proto
+                  <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/summary.proto>`_.
 
         Raises:
-            ValueError: `plugin` is not in the optional value。
-            TypeError: `name` is not non-empty string，or the data type of value is not 'Tensor' object when the plugin
+            ValueError: `plugin` is not in the optional value.
+            TypeError: `name` is not non-empty string, or the data type of value is not 'Tensor' object when the plugin
                 is 'scalar', 'image', 'tensor' or 'histogram'.
 
         Examples:

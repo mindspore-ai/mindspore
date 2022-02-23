@@ -304,7 +304,7 @@ class TestSummary:
                             break
         return tags
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -331,18 +331,18 @@ class TestSummary:
         device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
         summary_landscape = SummaryLandscape(summary_dir)
         summary_landscape.gen_landscapes_with_multi_process(callback_fn, device_ids=[device_id])
-        expected_pca_value = np.array([2.2795506, 2.2795567, 2.2795629, 2.2795689, 2.2795507, 2.2795567, 2.2795629,
-                                       2.2795688, 2.2795505, 2.2795566, 2.2795628, 2.2795689, 2.2795505, 2.2795566,
-                                       2.2795627, 2.2795687])
-        expe_pca_value_asc = np.array([2.2795513, 2.2797892, 2.2800267, 2.2802642, 2.2795035, 2.2797413, 2.2799790,
-                                       2.2802165, 2.2794557, 2.2796936, 2.2799315, 2.2801689, 2.2794084, 2.2796460,
-                                       2.2798840, 2.2801217])
-        expected_random_value = np.array([2.2732414, 2.2778292, 2.2829423, 2.2885174, 2.2725525, 2.2772029, 2.2822288,
-                                          2.2875323, 2.2726187, 2.2771581, 2.2819989, 2.2875887, 2.2732263, 2.2774866,
-                                          2.2823269, 2.2883627])
-        expe_random_value_asc = np.array([2.2728422, 2.2777682, 2.2830053, 2.2886044, 2.2725447, 2.2772817, 2.2823694,
-                                          2.2878207, 2.2726294, 2.2771712, 2.2820640, 2.2873242, 2.2731032, 2.2774446,
-                                          2.2821348, 2.2871782])
+        expected_pca_value = np.array([2.2795451, 2.2795504, 2.2795559, 2.2795612, 2.2795450, 2.2795503, 2.2795557,
+                                       2.2795612, 2.2795449, 2.2795503, 2.2795557, 2.2795610, 2.2795449, 2.2795502,
+                                       2.2795555, 2.2795610])
+        expe_pca_value_asc = np.array([2.2795452, 2.2795503, 2.2795557, 2.2795612, 2.2795450, 2.2795503, 2.2795557,
+                                       2.2795612, 2.2795449, 2.2795502, 2.2795555, 2.2795609, 2.2795449, 2.2795502,
+                                       2.2795554, 2.2795610])
+        expected_random_value = np.array([2.2729474, 2.2777648, 2.2829195, 2.2884243, 2.2724223, 2.2771732, 2.2822458,
+                                          2.2875971, 2.2725493, 2.2771329, 2.2819973, 2.2875895, 2.2730918, 2.2774068,
+                                          2.2822349, 2.2881028])
+        expe_random_value_asc = np.array([2.2729466, 2.2777647, 2.2829201, 2.2884242, 2.2724224, 2.2771732, 2.2822458,
+                                          2.2875975, 2.2725484, 2.2771326, 2.2819972, 2.2875896, 2.2730910, 2.2774070,
+                                          2.2822352, 2.2881035])
         tag_list_landscape = self._list_landscape_tags(summary_dir)
         assert np.all(abs(expected_pca_value - tag_list_landscape[0]) < 1.e-6) or \
                np.all(abs(expe_pca_value_asc - tag_list_landscape[0]) < 1.e-6)
