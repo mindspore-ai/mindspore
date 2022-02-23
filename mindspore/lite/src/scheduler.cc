@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1239,14 +1239,8 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
       return kernel::kCpuFP16SubGraph;
     } else if (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeInt8 ||
                desc.data_type == kNumberTypeInt64 || desc.data_type == kNumberTypeUInt8 ||
-               desc.data_type == kNumberTypeBool) {
+               desc.data_type == kNumberTypeBool || desc.data_type == kNumberTypeInt32) {
       return kernel::kCpuFP32SubGraph;
-    } else if (desc.data_type == kNumberTypeInt32) {
-      if (context.IsCpuFloat16Enabled() && !is_controlflow) {
-        return kernel::kCpuFP16SubGraph;
-      } else {
-        return kernel::kCpuFP32SubGraph;
-      }
     }
   } else if (desc.arch == kernel::KERNEL_ARCH::kCustom) {
     return kernel::kCustomSubGraph;
