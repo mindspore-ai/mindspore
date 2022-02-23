@@ -44,6 +44,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
   {BATCH_MATMUL, OperatorType::kRecBatchMatMul},
   {CONV2D, OperatorType::kRecConvolution},
+  {CONV2D_TRANSPOSE, OperatorType::kRecConvolution},
   {MAXPOOL, OperatorType::kRecPooling},
   {MAXPOOLV2, OperatorType::kRecPooling},
   {POOLING, OperatorType::kRecPooling},
