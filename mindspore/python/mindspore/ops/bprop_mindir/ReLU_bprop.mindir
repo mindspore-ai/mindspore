@@ -1,14 +1,14 @@
 
-0.1.0	MindSpore*1.6.0.20220112:Î
-Ö
+0.1.0	MindSpore*1.6.0:«
+³
 bprop.1:dout
-bprop.1:outbprop.1:dx:1bprop.1:dx:1"S-Prim-ReluGrad*0
-output_namesZoutputzscalar:List[value1,],€*=
-input_namesZ
-y_backpropZxzscalar:List[value1,value2,],€:Default/S-Prim-ReluGrad-op0
+bprop.1:outbprop.1:dx:1bprop.1:dx:1"S-Prim-ReluGrad*
+output_names€ŠZoutput€*+
+input_names€ŠZ
+y_backprop€ŠZx€:Default/S-Prim-ReluGrad-op0
 f
 bprop.1:dx:1bprop.1:[CNode]2:2bprop.1:[CNode]2:2"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op1bprop.1*
 	bprop.1:x*
 bprop.1:out*
 bprop.1:dout2
-bprop.1:[CNode]2:2:@bd5c2beacc0ba2eed5f983eeea340dcc433de735d4f8c434e57739a943fcd904P
+bprop.1:[CNode]2:2:@d71fea6ef2b30e4d7d59c8d209789f3c5fcd84d7a4d132dae244b965b4562000P

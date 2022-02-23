@@ -208,15 +208,40 @@ def get_bprop_max_pool_with_argmax(self):
 @bprop_getters.register(G.MaxPoolGrad)
 def get_bprop_max_pool_grad_grad(self):
     """Grad definition for `MaxPoolGrad` operation."""
-    maxpool_grad_grad = G.MaxPoolGradGrad(
-        kernel_size=self.kernel_size,
-        strides=self.strides,
-        pad_mode=self.pad_mode)
+    device_target = context.get_context("device_target")
+    is_ascend = (device_target == "Ascend")
+    if device_target == "Ascend":
+        maxpool_grad_grad = G.MaxPoolGradGrad(
+            kernel_size=self.kernel_size,
+            strides=self.strides,
+            pad_mode=self.pad_mode)
+    elif device_target == "GPU":
+        if self.data_format != "NCHW":
+            raise RuntimeError("MaxPoolGradGrad does not support NHWC!")
+        kernel_size = self.kernel_size
+        if isinstance(kernel_size, tuple) and len(kernel_size) == 4:
+            kernel_size = kernel_size[2:]
+        strides = self.strides
+        if isinstance(strides, tuple) and len(strides) == 4:
+            strides = strides[2:]
+        maxpool_with_argmax = P.MaxPoolWithArgmax(kernel_size=kernel_size, strides=strides, pad_mode=self.pad_mode)
+        gather = P.GatherNd()
+        reshape = P.Reshape()
+    else:
+        raise RuntimeError("MaxPoolGradGrad does not support on CPU!")
 
     def bprop(x1, x2, grad, out, dout):
         dx1 = zeros_like(x1)
         dx2 = zeros_like(x2)
-        dgrad = maxpool_grad_grad(x1, x2, dout)
+        if is_ascend:
+            dgrad = maxpool_grad_grad(x1, x2, dout)
+        else:
+            b, c, h, w = P.Shape()(x2)
+            _, ind = maxpool_with_argmax(x1)
+            batch = F.cast(F.tuple_to_array(range(b)), mstype.int32)
+            batch = P.Tile()(reshape(batch, (-1, 1)), (1, c * h * w))
+            gather_ind = P.Stack(-1)((batch, reshape(ind, (b, -1))))
+            dgrad = reshape(gather(reshape(dout, (b, -1)), gather_ind), (b, c, h, w))
         return (dx1, dx2, dgrad)
 
     return bprop
