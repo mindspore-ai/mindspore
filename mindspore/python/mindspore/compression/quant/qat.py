@@ -22,8 +22,8 @@ aware training, MindSpore provides conversion functions to convert the trained m
 """
 
 import re
-import mindspore.context as context
 import numpy as np
+import mindspore.context as context
 from ... import nn, ops
 from ..._checkparam import Validator, Rel
 from ...nn.layer import quant
