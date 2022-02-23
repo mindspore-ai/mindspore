@@ -66,6 +66,7 @@ class DeviceManager {
   static DeviceManager &GetInstance();
   RankList GetDeviceListByStageId(int64_t stage_id) const;
   RankList GetDeviceListInThisStage() const;
+  RankList GetDeviceListBetweenStage() const;
 
   Device CreateNewDeviceByRank(int64_t rank) const;
   std::vector<Device> CreateDeviceListByRankList(RankList ranks);

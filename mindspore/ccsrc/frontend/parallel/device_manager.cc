@@ -228,6 +228,22 @@ Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, 
 
 RankList DeviceManager::GetDeviceListInThisStage() const { return GetDeviceListByStageId(stage_id_); }
 
+RankList DeviceManager::GetDeviceListBetweenStage() const {
+  std::vector<int64_t> rank_list;
+  auto rank_id = g_device_manager->global_rank();
+  auto stage_id = g_device_manager->stage_id();
+  auto stage_num = g_device_manager->stage_num();
+  if (stage_num < 1) {
+    MS_LOG(EXCEPTION) << "Stage num got " << stage_num << ", expected a positive integer.";
+  }
+  auto device_num = parallel::ParallelContext::GetInstance()->device_num();
+  auto per_stage_rank_num = device_num / stage_num;
+  for (int64_t i = 0; i < stage_num; ++i) {
+    rank_list.push_back(rank_id + per_stage_rank_num * (i - stage_id));
+  }
+  return rank_list;
+}
+
 RankList DeviceManager::GetDeviceListByStageId(int64_t stage_id) const {
   if (LongToSize(stage_id) >= stage_devices_.size())
     MS_LOG(ERROR) << "the 'stage_id': " << stage_id

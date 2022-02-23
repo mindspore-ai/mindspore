@@ -128,11 +128,16 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
     return x_max
 
 
+# The attribute grad_scale is needed for enabling the parallel mode
+# If this is removed, c.clip_by_global_norm will have precision error in semi/auto parallel mode.
+expand_dims = P.ExpandDims().add_prim_attr("grad_scale", True)
+
+
 get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 @get_square_sum.register("Tensor")
 def _get_square_sum(x):
     norm = P.ReduceSum(False)(F.square(x), ())
-    norm = F.expand_dims(F.cast(norm, mstype.float32), 0)
+    norm = expand_dims(F.cast(norm, mstype.float32), 0)
     return norm
 
 
