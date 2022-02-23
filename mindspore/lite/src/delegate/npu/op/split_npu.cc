@@ -32,8 +32,11 @@ int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<minds
     return RET_ERROR;
   }
 
-  axis_ = static_cast<int>(split_prim->axis());
-  auto split_dim = in_tensors.at(0).Shape().at(axis_);
+  auto in_tensor = in_tensors.at(0);
+  auto axis = static_cast<int>(split_prim->axis());
+  axis_ = axis >= 0 ? axis : axis + static_cast<int>(in_tensor.Shape().size());
+  MS_CHECK_TRUE_MSG(axis_ >= 0, RET_ERROR, "The split axis is illegal!");
+  auto split_dim = in_tensor.Shape().at(axis_);
   auto sizes_split = split_prim->size_splits();
   int size = split_prim->output_num();
   std::vector<int> sizes_split_vec;

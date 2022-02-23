@@ -96,8 +96,8 @@ void AssistDataNHWC2NCHW(int *data, size_t unit_size);
 int MaskDataNHWC2NCHW(int mask);
 
 template <typename T>
-ge::Operator *GetNPUConst(const uint8_t *const_data, const std::vector<int64_t> &shape, const ge::DataType data_type,
-                          std::string name = "const", bool is_expand_4d = false) {
+hiai::op::Const *GetNPUConst(const uint8_t *const_data, const std::vector<int64_t> &shape, const ge::DataType data_type,
+                             std::string name = "const", bool is_expand_4d = false) {
   MS_CHECK_TRUE_MSG(const_data != nullptr, nullptr, "Const data can not be nullptr.");
   int element_num = 1;
   if (!shape.empty()) {
