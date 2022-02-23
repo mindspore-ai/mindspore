@@ -296,6 +296,11 @@ void GraphScheduler::Initialize() {
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
 
+  // Create and initialize RpcNodeScheduler.
+  rpc_node_scheduler_ = std::make_unique<RpcNodeScheduler>();
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  rpc_node_scheduler_->Initialize();
+
   BuildAndScheduleGlobalActor();
 }
 
@@ -536,6 +541,9 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   actor_set->data_prepare_actor_ =
     BuildDataPrepareActor(graph_compiler_info, actor_set->data_source_actors_, host_queue);
   actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info, memory_manager_aid_);
+
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  actor_set->rpc_actors_ = rpc_node_scheduler_->Build(graph_compiler_info);
   return actor_set;
 }
 
@@ -783,9 +791,14 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
         auto ref_input_indexes = FetchModifiableRefInputIndex(kernel);
         auto ref_output_indexes = FetchModifiableRefOutputIndex(kernel, graph);
-        auto kernel_actor =
-          std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                        debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+        KernelActorPtr kernel_actor = nullptr;
+        if (IsRpcActor(kernel)) {
+          kernel_actor = GenerateRpcActor(kernel, device_context, strategy, ref_input_indexes, ref_output_indexes);
+        } else {
+          kernel_actor =
+            std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                          debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+        }
         MS_EXCEPTION_IF_NULL(kernel_actor);
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
@@ -937,6 +950,33 @@ std::vector<AbstractActorPtr> GraphScheduler::BuildNoInputKernelActor(const Acto
     }
   }
   return no_input_kernel_actors;
+}
+
+KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
+                                                GraphExecutionStrategy strategy,
+                                                const std::set<size_t> &ref_input_indexes,
+                                                const std::set<size_t> &ref_output_indexes) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  if (AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
+    auto send_actor =
+      std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                  debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+    MS_EXCEPTION_IF_NULL(send_actor);
+    rpc_node_scheduler_->InsertSendActor(send_actor);
+    return send_actor;
+  } else if (AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
+    auto recv_actor =
+      std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                  debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    rpc_node_scheduler_->InsertRecvActor(recv_actor);
+    return recv_actor;
+  } else {
+    MS_LOG(EXCEPTION) << "Kernel " << kernel->fullname_with_scope() << " is not an rpc kernel.";
+  }
+  return nullptr;
 }
 
 void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,

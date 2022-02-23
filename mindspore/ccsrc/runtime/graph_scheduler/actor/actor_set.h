@@ -98,6 +98,7 @@ struct ActorSet {
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
   ControlActorSetPtr control_actors_{nullptr};
+  RpcActorSetPtr rpc_actors_{nullptr};
   ActorInfo name_;
   // The related statistics information of multi thread and single thread to decide whether use the multi thread.
   bool is_multi_thread_execution_{true};

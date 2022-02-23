@@ -28,6 +28,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
+#include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
@@ -106,6 +107,11 @@ class GraphScheduler {
                                             const std::vector<DataSourceActorPtr> &data_source_actors,
                                             const HostTensorQueuePtr &host_queue);
   std::vector<AbstractActorPtr> BuildNoInputKernelActor(const ActorSet *actor_set, GraphExecutionStrategy strategy);
+
+  // Generate rpc actor object inherited from kernel actor.
+  KernelActorPtr GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
+                                  GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
+                                  const std::set<size_t> &modifiable_ref_output_indexes);
 
   // Cache the information of graph output node to actor between “build” and “link”, for linking between the tail of
   // previous graph and the head of next graph.
@@ -200,6 +206,9 @@ class GraphScheduler {
 
   // In the control flow, used to build and link control actor.
   ControlNodeScheduler control_node_scheduler_;
+
+  // Used to build and link for rpc actors.
+  std::unique_ptr<RpcNodeScheduler> rpc_node_scheduler_{nullptr};
 
   // The id of global actor.
   AID memory_manager_aid_;

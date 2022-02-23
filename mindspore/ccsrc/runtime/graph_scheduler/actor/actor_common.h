@@ -191,6 +191,8 @@ bool IsSwitchActor(const AnfNodePtr &node);
 // The skip kernel doesn't run, it exists in the inplace optimizer.
 bool IsSkippedKernelActor(const AnfNodePtr &node);
 
+bool IsRpcActor(const AnfNodePtr &node);
+
 // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
 // related to the input of this kernel graph.
 bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
