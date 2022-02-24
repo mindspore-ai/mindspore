@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,41 @@
  * limitations under the License.
  */
 
+#if defined(__linux__) && !defined(Debug)
+#include <csignal>
+#endif
 #include "tools/converter/converter.h"
+
+#if defined(__linux__) && !defined(Debug)
+void SignalHandler(int sig) {
+  printf("encounter an unknown error, please verify the input model file or build the debug version\n");
+  exit(0);
+}
+#endif
+
 namespace mindspore {
 extern "C" {
 extern void common_log_init();
 }
 }  // namespace mindspore
 int main(int argc, const char **argv) {
-  mindspore::common_log_init();
-  return mindspore::lite::RunConverter(argc, argv);
+#if defined(__linux__) && !defined(Debug)
+  signal(SIGSEGV, SignalHandler);
+  signal(SIGABRT, SignalHandler);
+  signal(SIGFPE, SignalHandler);
+  signal(SIGBUS, SignalHandler);
+#endif
+  int ret = 0;
+#ifndef Debug
+  try {
+#endif
+    mindspore::common_log_init();
+    ret = mindspore::lite::RunConverter(argc, argv);
+#ifndef Debug
+  } catch (const std::exception &e) {
+    std::cout << e.what() << std::endl;
+    std::cout << "encounter an unknown error, please verify the input model file or build the debug version\n";
+  }
+#endif
+  return ret;
 }
