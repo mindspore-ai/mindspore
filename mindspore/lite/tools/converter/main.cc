@@ -14,13 +14,37 @@
  * limitations under the License.
  */
 
+#if defined(__linux__) && !defined(DEBUG)
+#include <csignal>
+#endif
 #include "tools/converter/converter.h"
+
+#if defined(__linux__) && !defined(DEBUG)
+void SignalHandler(int sig) {
+  printf("encounter an unknown error, please verify the input model file or build the debug version\n");
+  exit(0);
+}
+#endif
+
 namespace mindspore {
 extern "C" {
 extern void common_log_init();
 }
 }  // namespace mindspore
+
 int main(int argc, const char **argv) {
-  mindspore::common_log_init();
-  return mindspore::lite::RunConverter(argc, argv);
+#if defined(__linux__) && !defined(DEBUG)
+  signal(SIGSEGV, SignalHandler);
+  signal(SIGABRT, SignalHandler);
+  signal(SIGFPE, SignalHandler);
+  signal(SIGBUS, SignalHandler);
+#endif
+  int ret = 0;
+  try {
+    mindspore::common_log_init();
+    ret = mindspore::lite::RunConverter(argc, argv);
+  } catch (const std::exception &e) {
+    std::cout << e.what();
+  }
+  return ret;
 }
