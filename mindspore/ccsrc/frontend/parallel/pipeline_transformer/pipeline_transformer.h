@@ -58,7 +58,7 @@ class PipelineTransformer {
   void ParameterColoring();
   void CoverSensShape();
   void ElimGraphStage();
-  void ElimParameter();
+  void ModifyParameterList();
 
  private:
   void CreateForwardGroup();
@@ -87,6 +87,9 @@ class PipelineTransformer {
   CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
   bool IsPipelineCareNode(const CNodePtr &cnode);
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
+  void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
+  bool IsRedundancyParameter(const AnfNodePtr &parameter);
+  void ElimParameter();
   FuncGraphManagerPtr manager_;
   int64_t stage_;
   FuncGraphPtr root_;
