@@ -132,12 +132,12 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
       std::vector<int64_t> axes_value;
       ValuePtr valuePtr = nullptr;
       if (value_tuple->value().empty()) {
-        // case 1: tensor is empty;
+        // eg 1: tensor is empty;
         for (size_t i = 0; i < x_shape->shape().size(); i++) {
           axes_value.emplace_back(SizeToLong(i));
         }
       } else {
-        // case 2: contain value less 0;
+        // eg 2: contain value less 0;
         for (auto &iter : value_tuple->value()) {
           auto item = GetValue<int64_t>(iter->cast<ScalarPtr>());
           if (item < 0) {
