@@ -1849,9 +1849,9 @@ class Cell(Cell_):
     @args_type_check(mp_comm_recompute=bool, parallel_optimizer_comm_recompute=bool)
     def recompute(self, **kwargs):
         """
-        Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive
-        set recomputed feeds into some backward nodes for computing gradient, rather than storing the
-        intermediate activation computed in forward pass, we will recompute it in backward pass.
+        Set the cell recomputed. All the primitive in the cell except the outputs will be set recomputed.
+        If a primitive set recomputed feeds into some backward nodes for computing gradient, rather than
+        storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
 
         Note:
 
@@ -1861,6 +1861,9 @@ class Cell(Cell_):
               primitive is subject to the recompute api of the primitive.
             - The interface can be configured only once.
               Therefore, when the parent cell is configured, the child cell should not be configured.
+            - The outputs of cell are excluded from recomputation by default, which is based on our configuration
+              experience to reduce memory footprint. If a cell has only one primitive and the primitive is wanted
+              to be set recomputed, use the recompute api of the primtive.
             - When the memory remains after applying the recomputation, configuring 'mp_comm_recompute=False'
               to improve performance if necessary.
             - When the memory still not enough after applying the recompute, configuring
