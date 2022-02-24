@@ -69,7 +69,7 @@ if(MSLITE_ENABLE_SERVER_INFERENCE)
     set(CXX_API_SRCS
             ${CXX_API_SRCS}
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/predict_task_queue.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_thread.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_worker.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_pool.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_parallel_runner.cc
             )

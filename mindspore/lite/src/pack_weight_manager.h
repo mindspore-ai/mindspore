@@ -45,6 +45,7 @@ class PackWeightManager {
   virtual ~PackWeightManager();
 
   void InitWeightManagerByPath(const std::string &model_path, const char *model_buf);
+  void InitWeightManagerByBuf(const char *model_buf);
   void DeleteSavedModelPtr(LiteModel *delete_model);
   STATUS StoreLiteModel(const char *model_buf, const Model *model);
   void *GetTensorData(const LiteModel *model, const SchemaTensorWrapper *origin_tensor, size_t tensor_index);
@@ -56,6 +57,7 @@ class PackWeightManager {
   void FreePackedWeight(ModelConstWeight *weight);
 
   std::map<const std::string, ModelConstWeight *> path_model_weight_;
+  std::map<const std::string, ModelConstWeight *> buf_model_weight_;
   std::map<const std::string, std::vector<const void *>> path_model_buf_;
   std::mutex mtx_weight_;
 };

@@ -43,7 +43,7 @@
 #include "tools/common/opengl_util.h"
 #endif
 #ifdef SERVER_INFERENCE
-#include "src/cxx_api/model_pool/model_parallel_runner.h"
+#include "include/api/model_parallel_runner.h"
 #endif
 
 namespace mindspore::lite {

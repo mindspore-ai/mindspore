@@ -35,8 +35,8 @@ class ModelThread {
   ~ModelThread() = default;
 
   // the model pool is initialized once and can always accept model run requests
-  Status Init(const std::string &model_path, const std::shared_ptr<Context> &model_context, const Key &dec_key = {},
-              const std::string &dec_mode = kDecModeAesGcm);
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
+              const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
 
   std::vector<MSTensor> GetInputs();
 
@@ -58,6 +58,7 @@ class ModelThread {
 
   // num thread is configured according to the hardware
   int num_models_;
+  bool is_copy_output_ = true;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_THREAD_H_
