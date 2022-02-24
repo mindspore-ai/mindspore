@@ -536,13 +536,21 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   ValuePtrList elements;
   for (size_t i = 0; i < (*flags).size(); ++i) {
+    ValuePtr old_sequence_value = sequence_value->value()[i];
+    auto old_sequence_str_value = old_sequence_value->cast<StringImmPtr>();
     if (!(*flags)[i]) {
       auto zero = MakeValue(0);
       (void)elements.emplace_back(zero);
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
                     << index << "] of " << cnode->DebugString();
+    } else if (old_sequence_str_value != nullptr && old_sequence_str_value->value() == kDeadNodeName) {
+      auto zero = MakeValue(0);
+      elements.emplace_back(zero);
+      (*flags)[i] = false;  // Change the use flag as 0.
+      MS_LOG(DEBUG) << "Erase elements[" << i << "] DeadNode as zero for " << old_input->DebugString()
+                    << ", which is inputs[" << index << "] of " << cnode->DebugString();
     } else {
-      (void)elements.emplace_back(sequence_value->value()[i]);
+      (void)elements.emplace_back(old_sequence_value);
     }
   }
   auto new_sequence_value = std::make_shared<T>(elements);
@@ -601,12 +609,20 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) {
       (void)inputs.emplace_back(cnode->input(0));
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
+        auto old_input_value = GetValueNode<StringImmPtr>(old_input);
         if (!(*flags)[i]) {
           auto zero_value = NewValueNode(MakeValue(0));
           zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
           (void)inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);
+        } else if (old_input_value != nullptr && old_input_value->value() == kDeadNodeName) {
+          auto zero_value = NewValueNode(MakeValue(0));
+          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+          inputs.emplace_back(zero_value);
+          (*flags)[i] = false;  // Change the use flag as 0.
+          constexpr int recursive_level = 2;
+          MS_LOG(DEBUG) << "Erase elements[" << i << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
         } else {
           (void)inputs.emplace_back(old_input);
         }

@@ -45,6 +45,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "backend/graph_compiler/transform.h"
@@ -525,6 +526,19 @@ bool InferenceOptPrepareAction(const ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "InferenceOptPrepare error, graph is null.";
   }
   return InferenceOptPreparePass(res);
+}
+
+bool EliminateUnusedParameterAction(const ResourcePtr &res) {
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_PARALLEL_CALL") == "1");
+  if (!transform_tail_call_to_parallel_call) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  bool changed = opt::irpass::ParameterEliminator()(func_graph, nullptr);
+  MS_LOG(DEBUG) << "Eliminate parameter, changed: " << changed;
+  return true;
 }
 
 bool AbstractSpecializeAction(const ResourcePtr &res) {
@@ -1328,15 +1342,17 @@ static std::vector<ActionItem> CommonPipeline() {
   }
 
   (void)actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
-  // Evaluate type and shape, and specialize
+  // Eliminate unused parameters before renormalize.
+  (void)actions.emplace_back(std::make_pair("elininate_unused_parameter", EliminateUnusedParameterAction));
+  // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
-  // Do data structure simplifications and inline
+  // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
-  // Add pre-ad, post-inline python pass stub
+  // Add pre-ad, post-inline python pass stub.
   (void)actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
-  // Do PipelineSplit
+  // Do PipelineSplit action.
   (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 
   return actions;

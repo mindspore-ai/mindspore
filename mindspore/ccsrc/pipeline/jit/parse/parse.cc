@@ -173,15 +173,19 @@ void Parser::TransformParallelCall() {
     auto former_call_graph = call_graphs_pair.first->func_graph();
     MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
     auto middle_call_graph = call_graphs_pair.second->func_graph();
+    // Transform the call of {middle_graph -> latter_graph}.
+    auto middle_graph_return = middle_call_graph->get_return();
+    if (middle_graph_return == nullptr) {
+      MS_LOG(INFO) << "middle_graph_return is null, middle_call_graph: " << middle_call_graph->ToString();
+      continue;
+    }
     constexpr auto recur_3 = 3;
     MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
                   << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
-
-    // Transform the call of {middle_graph -> latter_graph}.
-    auto middle_graph_return = middle_call_graph->get_return();
-    MS_EXCEPTION_IF_NULL(middle_graph_return);
     auto middle_graph_output = middle_call_graph->output();
-    MS_EXCEPTION_IF_NULL(middle_graph_output);
+    if (middle_graph_output == nullptr) {
+      MS_LOG(EXCEPTION) << "middle_graph_output is null, middle_call_graph: " << middle_call_graph->ToString();
+    }
     auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
     MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
     if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
@@ -210,7 +214,7 @@ void Parser::TransformParallelCall() {
     auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
     if (latter_call_graph == nullptr) {
       constexpr auto recur_2 = 2;
-      MS_LOG(DEBUG) << "The latter graph node is not FuncGraph, " << latter_graph_node->DebugString(recur_2);
+      MS_LOG(ERROR) << "The latter graph node is not FuncGraph, " << latter_graph_node->DebugString(recur_2);
       continue;
     }
     if (latter_call_graphs_set.find(latter_call_graph) != latter_call_graphs_set.end()) {
