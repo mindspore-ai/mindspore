@@ -14,12 +14,12 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 import mindspore.context as context
 from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-import pytest
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 # enable graph kernel optimization.
@@ -42,13 +42,11 @@ class EmbeddingPostprocessor(Cell):
         return output
 
 
-def get_rtol_atol(dtype):
-    if dtype == np.float16:
-        return 1.e-3, 1.e-3
-    return 1.e-4, 1.e-4
-
-
 def compare_result(expect, output, dtype):
+    def get_rtol_atol(dtype):
+        if dtype == np.float16:
+            return 1.e-3, 1.e-3
+        return 1.e-4, 1.e-4
     rtol, atol = get_rtol_atol(dtype)
     if isinstance(expect, (list, tuple)):
         assert isinstance(output, (list, tuple)) and len(expect) == len(output)

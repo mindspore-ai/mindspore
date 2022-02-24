@@ -14,17 +14,23 @@
 # ============================================================================
 
 import numpy as np
+import pytest
 import mindspore.context as context
 from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 import mindspore.ops.functional as F
-import pytest
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 # enable graph kernel optimization.
 context.set_context(enable_graph_kernel=True)
+
+
+def get_rtol_atol(dtype):
+    if dtype == np.float16:
+        return 1.e-3, 1.e-3
+    return 1.e-4, 1.e-4
 
 
 class BertAttentionPiece(Cell):
@@ -49,22 +55,16 @@ class BertAttentionPiece(Cell):
         return attention_probs
 
 
-def get_rtol_atol(dtype):
-    if dtype == np.float16:
-        return 1.e-3, 1.e-3
-    return 1.e-4, 1.e-4
-
-
 def compare_result(expect, output, dtype):
     rtol, atol = get_rtol_atol(dtype)
-    if isinstance(expect, (list, tuple)):
+    if not isinstance(expect, (list, tuple)):
+        assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
+    else:
         assert isinstance(output, (list, tuple)) and len(expect) == len(output)
         expect_list = list(expect)
         output_list = list(output)
         for e, o in zip(expect_list, output_list):
             assert np.allclose(e.asnumpy(), o.asnumpy(), rtol, atol, equal_nan=True)
-    else:
-        assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
 def get_softmax_output(x, y, enable_stitch_fusion):

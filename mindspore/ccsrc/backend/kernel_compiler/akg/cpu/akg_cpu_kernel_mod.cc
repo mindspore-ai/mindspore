@@ -41,10 +41,11 @@ class AkgParallelLaunch {
   }
 };
 
-struct AkgCallBack {
-  void *parallel_launch_func;
-  void *(*malloc_func)(size_t);
-  void (*free_func)(void *);
+class AkgCallBack {
+ public:
+  void *parallel_launch_func = nullptr;
+  void *(*malloc_func)(size_t) = nullptr;
+  void (*free_func)(void *) = nullptr;
 
   AkgCallBack() {
     parallel_launch_func = reinterpret_cast<void *>(&AkgParallelLaunch::AkgLaunchFunc);
@@ -131,7 +132,7 @@ bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
                        [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &output) { return output->addr; });
-  static AkgCallBack akg_callback = AkgCallBack();
+  static AkgCallBack akg_callback;
   (void)runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
   using AkgCpuKernelFunction = void (*)(void *);
   reinterpret_cast<AkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));

@@ -33,7 +33,7 @@ namespace mindspore::graphkernel {
 void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(
   const AnfNodePtr &composite_node, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos) {
   // Change kernel build info.
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
+  auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
   auto origin_outputs_format = origin_kernel_build_info->GetAllOutputFormats();
