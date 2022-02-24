@@ -207,6 +207,7 @@ class PsCacheManager {
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
   std::atomic_bool running_{false};
+  std::atomic_bool finalized_{false};
   bool finish_embedding_table_sync_{false};
   bool device_need_wait_graph_{false};
   bool host_need_wait_graph_{false};
