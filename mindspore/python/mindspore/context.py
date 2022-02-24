@@ -509,10 +509,18 @@ def set_auto_parallel_context(**kwargs):
                         It supports following communication fusion types and configurations:
 
                         - allreduce: If communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
-                          and `index`. In `auto` mode, allreduce fusion is configured by gradients size, and the default
-                          fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
+                          and `index`. In `auto` mode, AllReduce fusion is configured by gradients size and the default
+                          fusion threshold is `64` MB. In 'size' mode, AllReduce fusion is configured by gradients size
                           manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
                           `all_reduce_fusion_config`.
+
+                        - allgather: If communication fusion type is `allgather`. The `mode` contains: `auto`, `size`.
+                          In `auto` mode, AllGather fusion is configured by gradients size, and the default fusion
+                          threshold is `64` MB. In 'size' mode, AllGather fusion is configured by gradients size
+                          manually, and the fusion threshold must be larger than `0` MB.
+
+                        - reducescatter: If communication fusion type is `reducescatter`. The `mode` contains: `auto`
+                          and `size`. Config is same as `allgather`.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -535,8 +543,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(pipeline_stages=2)
         >>> parallel_config = {"gradient_accumulation_shard": True}
         >>> context.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
-        >>> comm_fusion_config = {"allreduce": {"mode": "size", "config": 32}}
-        >>> context.set_auto_parallel_context(comm_fusion=comm_fusion_config)
+        >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
+        >>> context.set_auto_parallel_context(comm_fusion=config)
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -767,8 +775,8 @@ def set_context(**kwargs):
             Indicates whether to enable image-computing convergence to optimize network execution performance.
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
-            `Enabling Graph Kernel Fusion <https://www.mindspore.cn/docs/programming_guide
-            /en/master/enable_graph_kernel_fusion.html>`_.
+            `Enabling Graph Kernel Fusion
+            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -802,8 +810,8 @@ def set_context(**kwargs):
               (Automatic selection).
 
             For more information about the enable operator tuning tool settings, please check
-            `Enable the operator optimization tool <https://www.mindspore.cn/docs/programming_guide/en
-            /master/enable_auto_tune.html>`_.
+            `Enable the operator optimization tool
+            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
