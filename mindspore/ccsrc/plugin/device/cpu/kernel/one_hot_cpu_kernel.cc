@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/one_hot_cpu_kernel.h"
+#include <string>
+#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -22,24 +24,55 @@ namespace kernel {
 namespace {
 constexpr size_t kOneHotInputsNum = 3;
 constexpr size_t kOneHotOutputsNum = 1;
+#define INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)             \
+  case (DTYPE): {                                                            \
+    switch (ODTYPE) {                                                        \
+      INPUT_COMPUTE_CASE_INT(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)           \
+      INPUT_COMPUTE_CASE_FLOAT(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)         \
+      default:                                                               \
+        MS_LOG(EXCEPTION) << " For OneHot the dtype of output not support."; \
+    }                                                                        \
+    break;                                                                   \
+  }
+
+#define INPUT_COMPUTE_CASE_INT(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)      \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeInt8, int8_t, INPUTS, OUTPUTS)     \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeInt16, int16_t, INPUTS, OUTPUTS)   \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeInt32, int32_t, INPUTS, OUTPUTS)   \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeInt64, int64_t, INPUTS, OUTPUTS)   \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeUInt8, uint8_t, INPUTS, OUTPUTS)   \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeUInt16, uint16_t, INPUTS, OUTPUTS) \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeUInt32, uint32_t, INPUTS, OUTPUTS) \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeUInt64, uint64_t, INPUTS, OUTPUTS)
+
+#define INPUT_COMPUTE_CASE_FLOAT(DTYPE, TYPE, ODTYPE, INPUTS, OUTPUTS)                    \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeComplex64, std::complex<float>, INPUTS, OUTPUTS)   \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeComplex128, std::complex<double>, INPUTS, OUTPUTS) \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeFloat64, double, INPUTS, OUTPUTS)                  \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeFloat32, float_t, INPUTS, OUTPUTS)                 \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeFloat16, float16, INPUTS, OUTPUTS)                 \
+  OUTPUT_COMPUTE_CASE(TYPE, kNumberTypeBool, bool, INPUTS, OUTPUTS)                       \
+  OUTPUT_COMPUTE_CASE(TYPE, kObjectTypeString, std::string, INPUTS, OUTPUTS)
+
+#define OUTPUT_COMPUTE_CASE(TYPE, ODTYPE, OTYPE, INPUTS, OUTPUTS) \
+  case (ODTYPE): {                                                \
+    LaunchKernel<TYPE, OTYPE>(INPUTS, OUTPUTS);                   \
+    break;                                                        \
+  }
 }  // namespace
 
 void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (output_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be greater than or equal to 2, but got "
-                      << output_shape.size() << ".";
-  }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'axis' should be -1, or an int which is less than the dimension of output, but got "
                       << axis << ", got the dimension of output " << output_shape.size();
   }
-
   if (axis == -1) {
     axis_ = output_shape.size() - 1;
   } else {
@@ -56,12 +89,24 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
                                 const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
-  const auto *indices = reinterpret_cast<int *>(inputs[0]->addr);
-  auto on_value = reinterpret_cast<float *>(inputs[1]->addr)[0];
-  auto off_value = reinterpret_cast<float *>(inputs[2]->addr)[0];
-  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
-  size_t elem_num = inputs[0]->size / sizeof(int);
+  switch (input_dtype_) {
+    INPUT_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, output_dtype_, inputs, outputs);
+    INPUT_COMPUTE_CASE(kNumberTypeInt32, int32_t, output_dtype_, inputs, outputs);
+    INPUT_COMPUTE_CASE(kNumberTypeInt64, int64_t, output_dtype_, inputs, outputs);
+    default:
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input 'x' "
+                        << TypeIdToType(input_dtype_)->ToString() << " not support.";
+  }
+  return true;
+}
 
+template <typename ID, typename OD>
+void OneHotCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  const auto *indices = reinterpret_cast<ID *>(inputs[0]->addr);
+  auto on_value = reinterpret_cast<OD *>(inputs[1]->addr)[0];
+  auto off_value = reinterpret_cast<OD *>(inputs[2]->addr)[0];
+  auto *output = reinterpret_cast<OD *>(outputs[0]->addr);
+  size_t elem_num = inputs[0]->size / sizeof(ID);
   auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       size_t stride_num = i / stride_;
@@ -78,8 +123,6 @@ bool OneHotCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     }
   };
   ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
-
-  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
