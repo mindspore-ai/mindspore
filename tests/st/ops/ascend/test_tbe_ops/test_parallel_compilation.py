@@ -47,8 +47,7 @@ class TestCompile:
         print("Process Logs:")
         for item in compile_result_json["process_info"]:
             print("### LogLevel:" + str(item["level"]) + " " + item["message"])
-        res_json = json.loads(res)
-        if res_json["status"] == "FAILED":
+        if compile_result_json["status"] == "FAILED":
             print("Compile Failed")
             return False
 
