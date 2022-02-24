@@ -372,6 +372,10 @@ bool IsSwitchLayer(const AnfNodePtr &node) {
   return opt::CheckPrimitiveType(node, prim::kPrimSwitchLayer);
 }
 
+bool IsControlFlowOp(const AnfNodePtr &node) {
+  return IsPartialFusion(node) || IsCall(node) || IsSwitch(node) || IsSwitchLayer(node);
+}
+
 bool IsMakeTuple(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
