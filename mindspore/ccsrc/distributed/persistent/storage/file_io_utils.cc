@@ -155,9 +155,13 @@ void FileIOUtils::CreateDir(const std::string &dir_path, mode_t mode) {
 }
 
 void FileIOUtils::CreateDirRecursive(const std::string &dir_path, mode_t mode) {
+  if (dir_path.empty()) {
+    MS_LOG(EXCEPTION) << "The directory path need to be create is empty";
+  }
   size_t dir_path_len = dir_path.length();
   if (dir_path_len > PATH_MAX) {
-    MS_LOG(EXCEPTION) << "Directory path is too long: " << dir_path;
+    MS_LOG(EXCEPTION) << "Directory path is too long to exceed max length limit: " << PATH_MAX
+                      << ", the path: " << dir_path;
   }
 
   char tmp_dir_path[PATH_MAX] = {0};

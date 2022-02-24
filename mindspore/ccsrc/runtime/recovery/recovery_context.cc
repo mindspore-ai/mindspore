@@ -29,6 +29,7 @@
 #include "distributed/init.h"
 #include "runtime/hardware/device_context.h"
 #include "utils/convert_utils_base.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -81,6 +82,10 @@ void RecoveryContext::Initialize() {
   if (!enable_recovery_) {
     return;
   }
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  context_ptr->set_param<bool>(MS_CTX_ENABLE_RECOVERY, true);
 
   recovery_path_ = common::GetEnv(kEnvRecoveryPath);
   if (recovery_path_.empty()) {
@@ -140,20 +145,20 @@ void RecoveryContext::Initialize() {
 bool RecoveryContext::ReInitializeCollective() {
   auto ret = distributed::Initialize();
   if (ret) {
-    recovery_status_ = RecoveryStatus::kUnKnownError;
+    recovery_status_ = RecoveryErrCode::kUnKnownError;
     set_need_reset(true);
     set_need_sync_weight_to_device(true);
     return true;
   }
 
-  if (recovery_status_ == RecoveryStatus::kBroadcastUniqueIDFailed ||
-      recovery_status_ == RecoveryStatus::kAllGatherHostNameFailed) {
+  if (recovery_status_ == RecoveryErrCode::kBroadcastUniqueIDFailed ||
+      recovery_status_ == RecoveryErrCode::kAllGatherHostNameFailed) {
     MS_LOG(WARNING) << "Prepare to initialize NCCL failed, retrying.";
     // Retry duration: 30s.
     const int kRetryDuration = 30;
     std::this_thread::sleep_for(std::chrono::seconds(kRetryDuration));
     return ReInitializeCollective();
-  } else if (recovery_status_ == RecoveryStatus::kInitNcclFailed) {
+  } else if (recovery_status_ == RecoveryErrCode::kInitNcclFailed) {
     MS_LOG(EXCEPTION) << "Initialize NCCL failed.";
   }
 

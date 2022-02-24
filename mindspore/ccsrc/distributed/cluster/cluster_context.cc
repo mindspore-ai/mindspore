@@ -30,6 +30,7 @@ namespace cluster {
 ClusterContext::ClusterContext()
     : inited_(false),
       finalized_(true),
+      cluster_ready_(false),
       node_num_each_role_({}),
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
@@ -151,11 +152,11 @@ void ClusterContext::InitClusterConfig() {
 bool ClusterContext::BuildCluster() {
   // Create node according to different role.
   if (node_role_ == kEnvRoleOfWorker) {
-    node_ = std::make_shared<ps::core::WorkerNode>();
+    node_ = std::make_shared<ps::core::PSWorkerNode>();
   } else if (node_role_ == kEnvRoleOfServer) {
-    node_ = std::make_shared<ps::core::ServerNode>();
+    node_ = std::make_shared<ps::core::PSServerNode>();
   } else if (node_role_ == kEnvRoleOfScheduler) {
-    node_ = std::make_shared<ps::core::SchedulerNode>();
+    node_ = std::make_shared<ps::core::PSSchedulerNode>();
   } else {
     MS_LOG(EXCEPTION) << "The role " << node_role_ << " is invalid.";
     return false;
@@ -258,7 +259,19 @@ void ClusterContext::RegisterEventCallback() {
         MsException::Instance().SetException();
       }
     });
+
+    abstract_node->RegisterEventCallback(ps::core::ClusterEvent::ON_SEND_META_DATA,
+                                         [this]() { cluster_ready_ = true; });
   }
+}
+
+void ClusterContext::WaitForClusterReady() {
+  while (!cluster_ready_) {
+    const int kWaitDuration = 200;
+    std::this_thread::sleep_for(std::chrono::milliseconds(kWaitDuration));
+  }
+
+  cluster_ready_ = false;
 }
 }  // namespace cluster
 }  // namespace distributed

@@ -48,7 +48,6 @@ bool NvidiaCommunicationGroup::Finalize() {
   // because 'ncclCommAbort' will abort any uncompleted operations before destroying the communicator, e.g.,
   // ncclAllReduce.
   CHECK_RET(ncclCommAbort(comm_), ncclSuccess, "Failed to abort NCCL communicator.");
-  CHECK_RET(ncclCommDestroy(comm_), ncclSuccess, "Failed to destroy NCCL communicator.");
   initialized_ = false;
   return true;
 }

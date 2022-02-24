@@ -80,6 +80,13 @@ class CollectiveManager {
   // Assign the local rank id for this process.
   bool AssignLocalRank();
 
+  // Initialize communication group on the device side.
+  bool InitDeviceCommGroup(const CommunicationGroupPtr &group, void *root_info);
+
+  // Initialize communication group on the device side in thread with timeout limit.
+  std::unique_ptr<std::thread> init_group_thread_;
+  std::mutex init_group_mutex_;
+
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
 

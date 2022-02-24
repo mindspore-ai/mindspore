@@ -17,9 +17,12 @@
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/log_adapter.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
+using recovery::RecoveryContext;
+
 bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const AnfNodePtr &output_node) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_EXCEPTION_IF_NULL(output_device_tensor);
@@ -70,10 +73,44 @@ void OutputActor::Init() {
   running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
 }
 
+void OutputActor::FreeOutputNodeMem() {
+  for (size_t i = 0; i < output_nodes_.size(); ++i) {
+    auto &output_node = output_nodes_[i].first;
+    auto &output_device_tensor = output_device_tensors_[i];
+    if ((output_node == nullptr) || (output_device_tensor == nullptr)) {
+      return;
+    }
+    if (!IsOutputAddressPersisted(output_device_tensor, output_node)) {
+      FreeMemory(output_device_tensor, device_contexts_[i]);
+    }
+  }
+}
+
+void OutputActor::ClearOutputCache() {
+  output_node_to_tensor_device_address_.clear();
+  outputs_.clear();
+  outputs_.resize(outputs_num_);
+  output_nodes_.clear();
+  output_nodes_.resize(outputs_num_);
+  output_device_tensors_.clear();
+  output_device_tensors_.resize(outputs_num_);
+
+  current_outputs_num_ = 0;
+  current_count_ = 0;
+}
+
 void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
   ++current_count_;
+
+  // Trigger disaster recovery and return empty output.
+  if (RecoveryContext::GetInstance()->enable_recovery() && RecoveryContext::GetInstance()->need_reinit_collective()) {
+    FreeOutputNodeMem();
+    ClearOutputCache();
+    SET_OPCONTEXT_SUCCESS_RET((*context));
+  }
+
   // The last loop.
   if (loop_count_ == current_count_) {
     if (current_outputs_num_ + device_tensor_store_keys_.size() != outputs_num_) {
@@ -106,19 +143,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
-  // The output device memory will be taken over by tensor in the last loop, otherwise needs to free the memory.
-  // 1.Avoid the memory leak when memory used by dynamic ref count in the control flow scene.
-  // 2.Alloc the new memory in the next step using the new shape size in the dynamic shape scene.
-  for (size_t i = 0; i < output_nodes_.size(); ++i) {
-    auto &output_node = output_nodes_[i].first;
-    auto &output_device_tensor = output_device_tensors_[i];
-    if ((output_node == nullptr) || (output_device_tensor == nullptr)) {
-      return;
-    }
-    if (!IsOutputAddressPersisted(output_device_tensor, output_node)) {
-      FreeMemory(output_device_tensor, device_contexts_[i]);
-    }
-  }
+  FreeOutputNodeMem();
 
   // Send control arrow to trigger next step running.
   auto from_aid = const_cast<AID *>(&GetAID());

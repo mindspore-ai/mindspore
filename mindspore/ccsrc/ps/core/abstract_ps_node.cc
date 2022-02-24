@@ -29,6 +29,11 @@ void AbstractPSNode::StartHeartbeatTimer() {
       if (!DoHeartbeat()) {
         MS_LOG(WARNING)
           << "Heartbeat timeout, the tcp connection to scheduler is lost, please check the status of scheduler.";
+
+        if (CheckSchedulerTimeout()) {
+          MS_LOG(WARNING) << "Scheduler is Timeout, please recovery.";
+        }
+
         HandleHeartbeatTimeout();
       } else {
         UpdateSchedulerTime();
@@ -115,8 +120,11 @@ bool AbstractPSNode::InitClientToScheduler() {
   });
   client_to_scheduler_thread_->detach();
 
-  // Timeout for waiting for the tcp connection to the scheduler.
-  uint32_t timeout = 10;
+  // Timeout for waiting for the tcp connection to the scheduler, 10 seconds in recovery mode, or 900 seconds for first
+  // build connection to scheduler.
+  const uint32_t timeout_for_reinit_in_recovery = 10;
+  uint32_t timeout = heartbeat_stopped_ ? timeout_for_reinit_in_recovery
+                                        : PSContext::instance()->cluster_config().cluster_available_timeout;
   bool wait_res = client_to_scheduler_->WaitConnected(timeout);
   if (!wait_res) {
     is_ready_ = true;

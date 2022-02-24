@@ -724,9 +724,8 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
   }
 
   bool is_worker = heartbeat_resp_message.is_worker();
-  bool is_fl_mode = PSContext::instance()->server_mode() == ps::kServerModeFL ||
-                    PSContext::instance()->server_mode() == ps::kServerModeHybrid;
-  bool not_enable_recover_node_timeout = (is_worker && !is_fl_mode);
+  bool is_ps_mode = PSContext::instance()->server_mode() == ps::kServerModePS;
+  bool not_enable_recover_node_timeout = (is_worker && is_ps_mode);
 
   if (current_cluster_state_ == ClusterState::NODE_TIMEOUT) {
     if (node_recovery_ == nullptr || not_enable_recover_node_timeout) {
@@ -853,6 +852,8 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
 
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
+
+  OnEventCallback(ClusterEvent::ON_SEND_META_DATA);
 }
 
 void AbstractNode::ProcessFinish(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,

@@ -33,6 +33,9 @@
 #include "ps/core/worker_node.h"
 #include "ps/core/server_node.h"
 #include "ps/core/scheduler_node.h"
+#include "ps/core/ps_worker_node.h"
+#include "ps/core/ps_server_node.h"
+#include "ps/core/ps_scheduler_node.h"
 #include "distributed/cluster/actor_route_table_proxy.h"
 
 namespace mindspore {
@@ -77,6 +80,10 @@ class ClusterContext {
   // Return actor route proxy for AbstractNode.
   const ActorRouteTableProxyPtr &actor_route_table_proxy() const;
 
+  // Wait cluster networking or re-networking successly, using in disaster recovery to prevent collective communication
+  // ops flapping.
+  void WaitForClusterReady();
+
  private:
   ClusterContext();
 
@@ -100,6 +107,9 @@ class ClusterContext {
 
   // The flag that whether this cluster context instance is already finalized.
   std::atomic_bool finalized_;
+
+  // The cluster networking or re-networking successly.
+  std::atomic_bool cluster_ready_;
 
   // The mutex about exiting status of this node.
   std::mutex finish_mutex_;

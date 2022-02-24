@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/actor/loop_count_actor.h"
+#include <set>
 #include "runtime/graph_scheduler/actor/data_prepare_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
@@ -23,9 +24,13 @@
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "runtime/device/stream_synchronizer.h"
+#include "runtime/recovery/recovery_context.h"
 
 namespace mindspore {
 namespace runtime {
+using recovery::RecoveryContext;
+
 void LoopCountActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
@@ -50,6 +55,26 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   if (debug_aid_ != nullptr) {
     SendDebugReq(context);
     return;
+  }
+
+  // Sync device stream.
+  if (strategy_ == GraphExecutionStrategy::kPipeline) {
+    std::set<const DeviceContext *> sync_stream_device_contexts;
+    for (auto &device_context : device_contexts_) {
+      MS_EXCEPTION_IF_NULL(device_context);
+      if ((sync_stream_device_contexts.count(device_context) == 0) &&
+          (!device::StreamSynchronizer::GetInstance()->SyncStream(device_context->device_context_key().device_name_))) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context),
+                                          ("Sync stream failed:" + device_context->device_context_key().ToString()));
+      }
+      (void)sync_stream_device_contexts.insert(device_context);
+
+      // Trigger disaster recovery and exit loop early.
+      if (RecoveryContext::GetInstance()->enable_recovery() &&
+          RecoveryContext::GetInstance()->need_reinit_collective()) {
+        current_count_ = loop_count_;
+      }
+    }
   }
 
   PostRun(context);

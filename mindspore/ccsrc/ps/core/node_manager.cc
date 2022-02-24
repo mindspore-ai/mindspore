@@ -15,6 +15,7 @@
  */
 
 #include "ps/core/node_manager.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ps {
@@ -45,23 +46,29 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
     return rank_id;
   }
   // This is for scheduler recovery
-  ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port());
+  (void)ReAddNodeIfNotExists(node_id, register_message.ip(), register_message.port(), &rank_id);
   return rank_id;
 }
 
-void NodeManager::ReAddNodeIfNotExists(const std::string &node_id, const std::string &ip, uint32_t port) {
+bool NodeManager::ReAddNodeIfNotExists(const std::string &node_id, const std::string &ip, uint32_t port,
+                                       uint32_t *rank_id) {
   core::ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
   std::unordered_map<std::string, NodeInfo> recovery_node_infos = clusterConfig.initial_registered_nodes_infos;
 
   if (registered_nodes_info_.find(node_id) == registered_nodes_info_.end() &&
       recovery_node_infos.find(node_id) != recovery_node_infos.end()) {
+    if (rank_id != nullptr) {
+      *rank_id = recovery_node_infos[node_id].rank_id_;
+    }
     recovery_node_infos[node_id].is_alive = true;
     recovery_node_infos[node_id].ip_ = ip;
     recovery_node_infos[node_id].port_ = static_cast<uint16_t>(port);
     registered_nodes_info_[node_id] = recovery_node_infos[node_id];
     MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
                  << ", ip: " << ip << ", port: " << port;
+    return true;
   }
+  return false;
 }
 
 uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const std::shared_ptr<MessageMeta> &meta) {
@@ -219,9 +226,14 @@ void NodeManager::UpdateCluster() {
 
   if (!timeout_nodes_info_.empty()) {
     UpdateClusterState(ClusterState::NODE_TIMEOUT);
-    for (auto iter = timeout_nodes_info_.begin(); iter != timeout_nodes_info_.end(); ++iter) {
-      (void)heartbeats_.erase(iter->first);
-      finish_nodes_id_.insert(iter->first);
+
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY)) {
+      for (auto iter = timeout_nodes_info_.begin(); iter != timeout_nodes_info_.end(); ++iter) {
+        (void)heartbeats_.erase(iter->first);
+        finish_nodes_id_.insert(iter->first);
+      }
     }
     if (onPersist_) {
       onPersist_();
