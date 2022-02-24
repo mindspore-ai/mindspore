@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include "debug/utils.h"
 
 namespace mindspore {
 DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
@@ -77,7 +78,7 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
 }
 
 int32_t DbgServices::AddWatchpoint(
-  unsigned int id, int watch_condition,
+  int id, int watch_condition,
   std::map<std::string, std::map<std::string, std::variant<bool, std::vector<std::string>>>> check_nodes,
   std::vector<parameter_t> parameter_list) {
   MS_EXCEPTION_IF_NULL(debug_services_);
@@ -94,9 +95,14 @@ int32_t DbgServices::AddWatchpoint(
 
     std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
     std::vector<std::uint32_t> rank_id;
-    (void)std::transform(
-      rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
-      [](const std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
+    (void)std::transform(rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
+                         [](const std::string &id_str) -> std::uint32_t {
+                           size_t id_inter = 0;
+                           if (!CheckStoul(&id_inter, id_str)) {
+                             MS_LOG(EXCEPTION) << "Failed to extract rand_id!";
+                           }
+                           return static_cast<uint32_t>(id_inter);
+                         });
     MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint rank_id: ";
     for (auto const &i : rank_id) {
       MS_LOG(DEBUG) << i << " ";
@@ -104,9 +110,14 @@ int32_t DbgServices::AddWatchpoint(
 
     std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
     std::vector<std::uint32_t> root_graph_id;
-    (void)std::transform(
-      root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
-      [](const std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
+    (void)std::transform(root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
+                         [](const std::string &graph_str) -> std::uint32_t {
+                           size_t graph_inter = 0;
+                           if (!CheckStoul(&graph_inter, graph_str)) {
+                             MS_LOG(EXCEPTION) << "Failed to extract graph_id!";
+                           }
+                           return static_cast<uint32_t>(graph_inter);
+                         });
     MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint root_graph_id: ";
     for (auto const &j : root_graph_id) {
       MS_LOG(DEBUG) << j << " ";
@@ -139,7 +150,11 @@ int32_t DbgServices::AddWatchpoint(
                          std::vector<std::uint32_t> rank_id;
                          (void)std::transform(rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
                                               [](std::string &id_str) -> std::uint32_t {
-                                                return static_cast<uint32_t>(std::stoul(id_str));
+                                                size_t id_inter = 0;
+                                                if (!CheckStoul(&id_inter, id_str)) {
+                                                  MS_LOG(EXCEPTION) << "Failed to extract rand_id!";
+                                                }
+                                                return static_cast<uint32_t>(id_inter);
                                               });
                          return std::make_tuple(node.first, rank_id);
                        });
@@ -150,9 +165,14 @@ int32_t DbgServices::AddWatchpoint(
       auto attr_map = node.second;
       std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
       std::vector<std::uint32_t> root_graph_id;
-      (void)std::transform(
-        root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
-        [](std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
+      (void)std::transform(root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
+                           [](std::string &graph_str) -> std::uint32_t {
+                             size_t graph_inter = 0;
+                             if (!CheckStoul(&graph_inter, graph_str)) {
+                               MS_LOG(EXCEPTION) << "Failed to extract graph_id!";
+                             }
+                             return static_cast<uint32_t>(graph_inter);
+                           });
       return std::make_tuple(node.first, root_graph_id);
     });
 
@@ -204,8 +224,12 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
       parameter_t api_parameter(p.name, p.disabled, p.value, p.hit, p.actual_value);
       api_parameter_vector.push_back(api_parameter);
     }
-    watchpoint_hit_t hit(name[i], std::stoi(slot[i]), condition[i], watchpoint_id[i], api_parameter_vector,
-                         error_codes[i], rank_id[i], root_graph_id[i]);
+    size_t slot_inter = 0;
+    if (!CheckStoul(&slot_inter, slot[i])) {
+      MS_LOG(EXCEPTION) << "Failed to extract slot_id!";
+    }
+    watchpoint_hit_t hit(name[i], static_cast<uint32_t>(slot_inter), condition[i], watchpoint_id[i],
+                         api_parameter_vector, error_codes[i], rank_id[i], root_graph_id[i]);
 
     MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t name " << hit.name;
     MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t slot " << hit.slot;

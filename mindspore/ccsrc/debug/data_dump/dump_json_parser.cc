@@ -17,6 +17,7 @@
 #include <fstream>
 #include "utils/log_adapter.h"
 #include "debug/common.h"
+#include "debug/utils.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -434,7 +435,13 @@ bool IsIterInRange(uint32_t iteration, const std::string &range) {
   std::size_t range_idx = range.find(dash);
   // no dash in range, compare the value directly
   if (range_idx == std::string::npos) {
-    return iteration == std::stoul(range);
+    size_t range_d = 0;
+    if (!CheckStoul(&range_d, range)) {
+      MS_LOG(INFO) << "Failed to convert the single step range: " << range
+                   << " into an integer, so the iteration: " << iteration << " is regarded as not in dump range.";
+      return false;
+    }
+    return iteration == range_d;
   }
   // make sure there is only one dash in range
   if (range.find(dash, range_idx + 1) != std::string::npos) {
@@ -445,8 +452,18 @@ bool IsIterInRange(uint32_t iteration, const std::string &range) {
   if (low_range_str.empty() || high_range_str.empty()) {
     return false;
   }
-  uint32_t low_range = static_cast<uint32_t>(std::stoul(low_range_str));
-  uint32_t high_range = static_cast<uint32_t>(std::stoul(high_range_str));
+  size_t low_range = 0;
+  if (!CheckStoul(&low_range, low_range_str)) {
+    MS_LOG(INFO) << "Failed to convert the low_range_str: " << low_range_str
+                 << " into an integer, so the iteration: " << iteration << " is regarded as not in dump range.";
+    return false;
+  }
+  size_t high_range = 0;
+  if (!CheckStoul(&high_range, high_range_str)) {
+    MS_LOG(INFO) << "Failed to convert the high_range_str: " << high_range_str
+                 << " into an integer, so the iteration: " << iteration << " is regarded as not in dump range.";
+    return false;
+  }
   return (low_range <= iteration) && (iteration <= high_range);
 }
 

@@ -28,8 +28,8 @@
 #include "debug/tensor_data.h"
 #ifdef ONLINE_DBG_MODE
 #include "debug/data_dump/dump_json_parser.h"
-namespace mindspore {
 #endif
+namespace mindspore {
 class TensorLoader {
  public:
 #ifndef __APPLE__
@@ -245,7 +245,5 @@ class TensorLoader {
   std::deque<std::string> cache_evict_queue_;
   std::condition_variable evict_cond;
 };
-#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
-#endif
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_LOAD_H_

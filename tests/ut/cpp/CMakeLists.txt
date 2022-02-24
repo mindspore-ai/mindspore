@@ -114,6 +114,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
         "../../../mindspore/ccsrc/runtime/hccl_adapter/all_to_all_v_calc_param.cc"
+        "../../../mindspore/ccsrc/debug/utils.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_scheduler.cc"

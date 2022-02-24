@@ -40,9 +40,7 @@
 #include "debug/tensor_load.h"
 #include "debug/tensor_data.h"
 
-#ifdef ONLINE_DBG_MODE
 namespace mindspore {
-#endif
 class DebugServices {
  public:
   DebugServices();
@@ -242,8 +240,8 @@ class DebugServices {
   static TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
 
   void AddWatchpoint(
-    unsigned int id, int watch_condition, float parameter,
-    const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
+    int id, int watch_condition, float parameter, const std::vector<std::tuple<std::string, bool>> &check_node_list,
+    const std::vector<parameter_t> &parameter_list,
     const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_device_list = nullptr,
     const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list = nullptr);
 
@@ -496,8 +494,6 @@ class DebugServices {
 
   std::shared_ptr<TensorLoader> tensor_loader_;
 };
-#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
-#endif
 
 #endif  // MINDSPORE_CCSRC_DEBUG_DEBUG_SERVICES_H_
