@@ -86,15 +86,15 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
                            border_type_, fill_r_, fill_g_, fill_b_));
 
       // update pad total above/below
-      t_pad_top += (crop_height_ - *padded_image_h);
-      t_pad_bottom += (crop_height_ - *padded_image_h);
+      t_pad_top += ((ptrdiff_t)crop_height_ - *padded_image_h);
+      t_pad_bottom += ((ptrdiff_t)crop_height_ - *padded_image_h);
     }
     if (*padded_image_w < crop_width_) {
       RETURN_IF_NOT_OK(Pad(*pad_image, pad_image, 0, 0, crop_width_ - *padded_image_w, crop_width_ - *padded_image_w,
                            border_type_, fill_r_, fill_g_, fill_b_));
       // update pad total left/right
-      t_pad_left += (crop_width_ - *padded_image_w);
-      t_pad_right += (crop_width_ - *padded_image_w);
+      t_pad_left += ((ptrdiff_t)crop_width_ - *padded_image_w);
+      t_pad_right += ((ptrdiff_t)crop_width_ - *padded_image_w);
     }
     *padded_image_h = (*pad_image)->shape()[0];
     *padded_image_w = (*pad_image)->shape()[1];
@@ -136,10 +136,10 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   }
   int x = 0;
   int y = 0;
-  const int output_count = input.size();
+  const auto output_count = input.size();
   output->resize(output_count);
   for (size_t i = 0; i < input.size(); i++) {
-    RETURN_IF_NOT_OK(ValidateImageRank("RandomCrop", input[i]->shape().Size()));
+    RETURN_IF_NOT_OK(ValidateImageRank("RandomCrop", static_cast<int32_t>(input[i]->shape().Size())));
     std::shared_ptr<Tensor> pad_image = nullptr;
     int32_t t_pad_top = 0;
     int32_t t_pad_bottom = 0;

@@ -38,7 +38,7 @@ class SolarizeOp : public TensorOp {
 
   std::string Name() const override { return kSolarizeOp; }
 
- private:
+ protected:
   std::vector<uint8_t> threshold_;
 };
 }  // namespace dataset

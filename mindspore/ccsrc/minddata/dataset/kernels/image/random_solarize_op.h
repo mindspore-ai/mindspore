@@ -32,7 +32,7 @@ namespace dataset {
 class RandomSolarizeOp : public SolarizeOp {
  public:
   // Pick a random threshold value to solarize the image with
-  explicit RandomSolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(threshold) {
+  explicit RandomSolarizeOp(const std::vector<uint8_t> &threshold = {0, 255}) : SolarizeOp(threshold) {
     rnd_.seed(GetSeed());
     is_deterministic_ = false;
   }
@@ -44,7 +44,6 @@ class RandomSolarizeOp : public SolarizeOp {
   std::string Name() const override { return kRandomSolarizeOp; }
 
  private:
-  std::vector<uint8_t> threshold_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset
