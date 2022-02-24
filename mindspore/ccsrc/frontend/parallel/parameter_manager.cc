@@ -1013,7 +1013,7 @@ bool HandleAdaSum(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_n
 
 void ResetMirrorAttr(const PrimitivePtr &prim, const RankList &new_group) {
   if (new_group.size() == 1) {
-    prim->set_attr(DEV_NUM, MakeValue(new_group.size()));
+    prim->set_attr(DEV_NUM, MakeValue<int64_t>(new_group.size()));
     prim->set_attr(GROUP, MakeValue("one_rank_group"));
     prim->set_attr(GROUP_RANKS, MakeValue(std::to_string(new_group[0])));
     return;
@@ -1021,7 +1021,7 @@ void ResetMirrorAttr(const PrimitivePtr &prim, const RankList &new_group) {
   Group adasum_mirror_group = g_device_manager->CreateGroup(new_group);
   auto new_group_name = MakeValue(adasum_mirror_group.name());
   prim->set_attr(GROUP, new_group_name);
-  prim->set_attr(DEV_NUM, MakeValue(new_group.size()));
+  prim->set_attr(DEV_NUM, MakeValue<int64_t>(new_group.size()));
   std::string rank_list_name = g_device_manager->FindRankListNameByHashName(adasum_mirror_group.name());
   prim->set_attr(GROUP_RANKS, MakeValue(rank_list_name));
 }
