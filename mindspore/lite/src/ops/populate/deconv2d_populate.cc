@@ -28,8 +28,12 @@ int SetPadAndAct(schema::PadMode pad_mode, schema::ActivationType act_type, Conv
     case schema::PadMode_VALID:
       param->pad_mode_ = Pad_valid;
       break;
-    default:
+    case schema::PadMode_PAD:
       param->pad_mode_ = Pad_pad;
+      break;
+    default:
+      MS_LOG(ERROR) << "pad mode does not support, " << pad_mode;
+      return RET_NOT_SUPPORT;
   }
 
   switch (act_type) {
