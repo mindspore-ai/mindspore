@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -496,7 +496,7 @@ def set_auto_parallel_context(**kwargs):
                         context.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
-                        - gradient_accumulation_shard: If true, the accumulation gradient parameters will be
+                        - gradient_accumulation_shard(bool): If true, the accumulation gradient parameters will be
                           sharded across the data parallel devices. This will
                           introduce additional communication(ReduceScatter) at
                           each step when accumulate the gradients, but saves a
@@ -504,6 +504,11 @@ def set_auto_parallel_context(**kwargs):
                           with larger batch size. This configure is effective only
                           when the model runs on pipeline training or gradient
                           accumulation with data parallel. Default True.
+
+                        - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel
+                          optimizer is enabled, parameters with size smaller than this threshold will not be sharded
+                          across the devices. Unit: KB. Default: 64.
+
         comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
@@ -767,8 +772,8 @@ def set_context(**kwargs):
             Indicates whether to enable image-computing convergence to optimize network execution performance.
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
-            `Enabling Graph Kernel Fusion <https://www.mindspore.cn/docs/programming_guide
-            /en/master/enable_graph_kernel_fusion.html>`_.
+            `Enabling Graph Kernel Fusion
+            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -802,8 +807,8 @@ def set_context(**kwargs):
               (Automatic selection).
 
             For more information about the enable operator tuning tool settings, please check
-            `Enable the operator optimization tool <https://www.mindspore.cn/docs/programming_guide/en
-            /master/enable_auto_tune.html>`_.
+            `Enable the operator optimization tool
+            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.

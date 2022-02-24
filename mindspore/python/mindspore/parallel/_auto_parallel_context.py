@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ class _ParallelOptimizerConfig:
     The key of the Parallel Optimizer. There are three
     """
     GRADIENT_ACCUMULATION_SHARD = "gradient_accumulation_shard"
+    PARALLEL_OPTIMIZER_THRESHOLD = "parallel_optimizer_threshold"
 
 
 class _AutoParallelContext:
@@ -771,36 +772,42 @@ class _AutoParallelContext:
             parallel_optimizer_config(dict): A dict contains the keys and values for setting the parallel optimizer
             configure. It supports the following keys:
 
-            - gradient_accumulation_shard: If true, the accumulation gradient parameters will be sharded
-                                           across the data parallel devices. This will introduce additional
-                                           communication(ReduceScatter) at each step when accumulate the
-                                           gradients, but saves a lot of device memories,
-                                           thus can make model be trained with larger batch size.
-                                           This configure is effective only when the model runs on pipeline
-                                           training or gradient accumulation with data parallel.
+            - gradient_accumulation_shard(bool): If true, the accumulation gradient parameters will be sharded
+                                                 across the data parallel devices. This will introduce additional
+                                                 communication cost(ReduceScatter) at each step when accumulate the
+                                                 gradients, but saves a lot of device memories,
+                                                 thus can make model be trained with larger batch size.
+                                                 This configuration is effective only when the model runs on pipeline
+                                                 training or gradient accumulation with data parallel.
+
+            - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel optimizer
+                                                 is enabled, parameters with size smaller than this threshold will
+                                                 not be sharded across the devices. Unit: KB. Default: 64.
         """
         self.check_context_handle()
         grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
-        if len(parallel_optimizer_config) > 1 and grad_shard_name in parallel_optimizer_config:
-            other_keys = list(parallel_optimizer_config.keys())
-            other_keys.remove(grad_shard_name)
-            raise ValueError(f"Except {grad_shard_name}, there are useless keys in parallel_optimizer_config "
-                             f"{other_keys}, please check your "
-                             f"parallel_optimizer_config to remove the useless keys.")
-        if grad_shard_name not in parallel_optimizer_config:
-            raise ValueError(f"The parallel_optimizer_config does not support the keys "
-                             f"{list(parallel_optimizer_config.keys())}, "
-                             f"you should input the key {grad_shard_name} only, please check your "
-                             f"parallel_optimizer_config.")
-        Validator.check_bool(
-            parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
-        self._context_handle.set_grad_accumulation_shard(
-            parallel_optimizer_config[grad_shard_name])
+        threshold_name = _ParallelOptimizerConfig.PARALLEL_OPTIMIZER_THRESHOLD
+        if grad_shard_name in parallel_optimizer_config:
+            Validator.check_bool(
+                parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
+            self._context_handle.set_grad_accumulation_shard(
+                parallel_optimizer_config[grad_shard_name])
+
+        if threshold_name in parallel_optimizer_config:
+            Validator.check_positive_int(
+                parallel_optimizer_config[threshold_name])
+            self._context_handle.set_parallel_optimizer_threshold(
+                parallel_optimizer_config[threshold_name])
 
     def get_grad_accumulation_shard(self):
         """Get grad accumulation shard."""
         self.check_context_handle()
         return self._context_handle.get_grad_accumulation_shard()
+
+    def get_parallel_optimizer_threshold(self):
+        """Get parallel optimizer threshold."""
+        self.check_context_handle()
+        return self._context_handle.get_parallel_optimizer_threshold()
 
     def set_enable_alltoall(self, enable_a2a):
         """

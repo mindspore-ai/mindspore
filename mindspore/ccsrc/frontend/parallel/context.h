@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,10 @@ class ParallelContext {
     grad_accumulation_shard_ = grad_accumulation_shard;
   }
   bool grad_accumulation_shard() const { return grad_accumulation_shard_; }
+  void set_parallel_optimizer_threshold(const int64_t parallel_optimizer_threshold) {
+    parallel_optimizer_threshold_ = parallel_optimizer_threshold;
+  }
+  int64_t get_parallel_optimizer_threshold() const { return parallel_optimizer_threshold_; }
 
   bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
   std::string communi_parallel_mode() const { return communi_parallel_mode_; }
@@ -211,6 +215,7 @@ class ParallelContext {
   int64_t optimizer_weight_shard_size_;
   bool optimizer_weight_shard_aggregated_save_;
   bool grad_accumulation_shard_;
+  int64_t parallel_optimizer_threshold_;
   // Enable AllToAll or not. If false, use AllGather and Split.
   bool enable_all2all_;
   std::vector<std::vector<int64_t>> dataset_strategy_;

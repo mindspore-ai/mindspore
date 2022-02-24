@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ void ParallelContext::Reset() {
   optimizer_weight_shard_aggregated_save_ = false;
   enable_all2all_ = false;
   grad_accumulation_shard_ = true;
+  parallel_optimizer_threshold_ = -1;
   sharding_propagation_ = false;
   dataset_strategy_.clear();
   fusion_threshold_mb_ = FUSUION_THRESHOLD;

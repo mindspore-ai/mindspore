@@ -115,8 +115,9 @@ def test_mirror_group_parallel_optimizer():
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_parallel_optimizer.pb"
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel",
-                                      device_num=32, enable_parallel_optimizer=True)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32,
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1},
+                                      enable_parallel_optimizer=True)
     auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
     group_info_list = restore_group_info_list("./test_mirror_group_parallel_optimizer.pb")
     assert group_info_list == [0]
@@ -130,8 +131,9 @@ def test_mirror_group_parallel_optimizer_not_full_shard():
     Expectation: group info list match expectation value.
     """
     os.environ['GROUP_INFO_FILE'] = "./test_mirror_group_parallel_optimizer_not_full_shard.pb"
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel",
-                                      device_num=32, enable_parallel_optimizer=True, optimizer_weight_shard_size=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32,
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 2},
+                                      enable_parallel_optimizer=True, optimizer_weight_shard_size=2)
     auto_parallel_compile_net(((8, 1), (1, 4)), ((32, 1), (1, 1)), ((8, 4), (4, 1)))
     group_info_list = restore_group_info_list("./test_mirror_group_parallel_optimizer_not_full_shard.pb")
     assert group_info_list == [0, 8, 16, 24]

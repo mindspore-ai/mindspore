@@ -93,6 +93,7 @@ def auto_parallel_compile_net(mode, dev_num, net, strategy1=None, strategy2=None
                               loss_scale_manager=None):
     context.set_context(mode=context.GRAPH_MODE)
     context.set_auto_parallel_context(parallel_mode=mode, device_num=dev_num, enable_parallel_optimizer=True,
+                                      parallel_optimizer_config={"parallel_optimizer_threshold": 1},
                                       pipeline_stages=stages)
 
     net = MicroBatchInterleaved(net(param_type, strategy1, strategy2), interleaved_batch)
