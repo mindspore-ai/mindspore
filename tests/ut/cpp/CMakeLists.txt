@@ -112,6 +112,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         # dont remove the 4 lines above
         "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
+        "../../../mindspore/ccsrc/debug/utils.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_manager.cc"

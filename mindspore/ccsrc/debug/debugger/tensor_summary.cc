@@ -28,9 +28,7 @@
 #include "base/float16.h"
 #endif
 
-#ifdef ONLINE_DBG_MODE
 namespace mindspore {
-#endif
 using CONDITION_TYPE = DebugServices::CONDITION_TYPE;
 
 RangeCountCalculator::RangeCountCalculator()
@@ -437,6 +435,4 @@ template class TensorSummary<float16>;
 template class TensorSummary<float>;
 template class TensorSummary<double>;
 template class TensorSummary<bool>;
-#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
-#endif
