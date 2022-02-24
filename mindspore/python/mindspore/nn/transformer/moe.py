@@ -19,13 +19,14 @@ import math
 import numpy as np
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
+import mindspore.communication.management as D
 from mindspore._checkparam import Validator
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
-from .op_parallel_config import default_dpmp_config
+from .op_parallel_config import default_moeparallel_config
 
 __all__ = [
     "MoEConfig"]
@@ -75,14 +76,29 @@ default_moe_config = MoEConfig()
 
 
 def _check_moe_config(moe_config=None, parallel_config=None):
+    """
+        check if MoE with right configuration.
+    """
     if not isinstance(moe_config, MoEConfig):
         raise TypeError(f"'moe_config' should be an instance of MoEConfig, but got {type(moe_config).__name__}.")
     use_moe = (moe_config.expert_num > 1)
-    if use_moe and moe_config.expert_num % parallel_config.data_parallel != 0:
+    if use_moe is False:
+        return
+    if moe_config.expert_num % parallel_config.expert_parallel != 0:
         raise ValueError(f"When using MoE, the 'expert_num' in {type(moe_config).__name__} must be a multiple "
-                         f"of 'data_parallel' value in {type(parallel_config).__name__}, but got "
-                         f"{moe_config.expert_num} for 'expert_num' and {parallel_config.data_parallel} for "
-                         f"'data_parallel'.")
+                         f"of 'expert_parallel' value in {type(parallel_config).__name__}, but got "
+                         f"{moe_config.expert_num} for 'expert_num' and {parallel_config.expert_parallel} for "
+                         f"'expert_parallel'.")
+
+    device_num = D.get_group_size()
+    if device_num % parallel_config.expert_parallel != 0:
+        raise ValueError(f"device_num: {device_num} should be a multiple of expert_parallel: "
+                         f"{parallel_config.expert_parallel}.")
+    if parallel_config.data_parallel * parallel_config.model_parallel * parallel_config.expert_parallel > device_num:
+        raise ValueError(f"The product of the data parallel: {parallel_config.data_parallel}, "
+                         f"model parallel: {parallel_config.model_parallel}, and "
+                         f"expert parallel: {parallel_config.expert_parallel} "
+                         f"should be less than device_num: {device_num}.")
 
 
 @constexpr
@@ -106,9 +122,8 @@ class MoE(Cell):
         param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert). Default is an instance of MoEConfig with
             default values. Please see `MoEConfig`.
-        parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
-                                           Default `default_dpmp_config`, an instance of `OpParallelConfig` with default
-                                           args.
+        parallel_config(MoEParallelConfig): The parallel config for MoE, see `MoEParallelConfig`.
+            Default `default_moeparallel_config`, an instance of `MoEParallelConfig` with default args.
 
     Inputs:
         - **x** (Tensor) - should be `[batch, seq_length, hidden_size]`. Float tensor.
@@ -122,7 +137,7 @@ class MoE(Cell):
                  hidden_act='gelu',
                  param_init_type=mstype.float32,
                  moe_config=default_moe_config,
-                 parallel_config=default_dpmp_config):
+                 parallel_config=default_moeparallel_config):
         super(MoE, self).__init__()
         self.hidden_size = hidden_size
         self.expert_dim = moe_config.expert_num
