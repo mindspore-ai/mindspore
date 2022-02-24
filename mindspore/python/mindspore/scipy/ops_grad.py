@@ -15,10 +15,12 @@
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
 from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
+from .utils_const import _raise_type_error
 from .ops_wrapper import matrix_set_diag
 from ..ops import operations as P
 from ..ops import functional as F
 from ..ops._grad.grad_base import bprop_getters
+from ..common import dtype as mstype
 
 _matmul = P.MatMul(False, False)
 _real = P.Real()
@@ -88,13 +90,9 @@ def get_bprpo_eig(self):
     def bprop(a, out, dout):
         w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
         if not is_compute_v:
-            # w, _ = Eig(compute_eigenvectors=False)(a) -> a * _ = w * _
-            # where a is a general matrix
             gw_vh = F.expand_dims(grad_w, -1) * _adjoint(v)
             grad_a = _matrix_solve(_adjoint(v), gw_vh)  # not support
         else:
-            # w, v = Eig(compute_eigenvectors=True)(a)  -> a * v = w * v
-            # where a is a general matrix
             vh = _adjoint(v)
             vh_gv = _matmul(vh, grad_v)
             vh_gv_diag = vh_gv.diagonal(0, -2, -1)
@@ -119,14 +117,15 @@ def get_bprpo_eigh(self):
     eigh = Eigh(compute_eigenvectors=True)
 
     def bprop(a, out, dout):
+        if a.dtype in [mstype.complex64, mstype.complex128]:
+            _raise_type_error(
+                "For 'Eigh' operation, the data type of input 'a' don't support the complex64 or complex128.")
         if not is_compute_v:
             w, grad_w = out, dout
-            # w, _ = Eigh(compute_eigenvectors=False)(a) -> a * _ = w * _
             _, v = eigh(a)
             grad_a = _matmul(v * F.expand_dims(grad_w, -2), _adjoint(v))
         else:
             w, v, grad_w, grad_v = out[0], out[1], dout[0], dout[1]
-            # w, v = Eigh(compute_eigenvectors=True)(a)  -> a * v = w * v
             vh_gv = _matmul(_adjoint(v), grad_v)
             f = _compute_f(w)
             mid_part = _diag(grad_w) + f * vh_gv

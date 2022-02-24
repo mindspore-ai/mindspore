@@ -230,7 +230,7 @@ def test_solve_triangular_error_tensor_type():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
-@pytest.mark.parametrize('shape', [(4, 4), (50, 50), (2, 5, 5)])
+@pytest.mark.parametrize('shape', [(4, 4), (50, 50)])
 def test_inv(data_type, shape):
     """
     Feature: ALL TO ALL
@@ -442,11 +442,11 @@ def test_eigh_error_dims(n: int, dtype):
     Expectation: eigh raises expectated Exception
     """
     a = create_random_rank_matrix((10,) * n, dtype)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         msp.linalg.eigh(Tensor(a))
 
     a = create_random_rank_matrix((n, n + 1), dtype)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         msp.linalg.eigh(Tensor(a))
 
 
@@ -493,41 +493,6 @@ def test_lu(shape: (int, int), data_type):
     assert onp.allclose(m_p.asnumpy(), s_p, rtol=rtol, atol=atol)
     assert onp.allclose(m_l.asnumpy(), s_l, rtol=rtol, atol=atol)
     assert onp.allclose(m_u.asnumpy(), s_u, rtol=rtol, atol=atol)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(3, 4, 4), (3, 4, 5), (2, 3, 4, 5)])
-@pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
-def test_batch_lu(shape, data_type):
-    """
-    Feature: ALL To ALL
-    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
-    Expectation: the result match to scipy
-    """
-    b_a = create_random_rank_matrix(shape, data_type)
-    b_s_p = list()
-    b_s_l = list()
-    b_s_u = list()
-    tmp = onp.zeros(b_a.shape[:-2])
-    for index, _ in onp.ndenumerate(tmp):
-        a = b_a[index]
-        s_p, s_l, s_u = osp.linalg.lu(a)
-        b_s_p.append(s_p)
-        b_s_l.append(s_l)
-        b_s_u.append(s_u)
-    tensor_b_a = Tensor(onp.array(b_a))
-    b_m_p, b_m_l, b_m_u = msp.linalg.lu(tensor_b_a)
-    b_s_p = onp.asarray(b_s_p).reshape(b_m_p.shape)
-    b_s_l = onp.asarray(b_s_l).reshape(b_m_l.shape)
-    b_s_u = onp.asarray(b_s_u).reshape(b_m_u.shape)
-    rtol = 1.e-5
-    atol = 1.e-5
-    assert onp.allclose(b_m_p.asnumpy(), b_s_p, rtol=rtol, atol=atol)
-    assert onp.allclose(b_m_l.asnumpy(), b_s_l, rtol=rtol, atol=atol)
-    assert onp.allclose(b_m_u.asnumpy(), b_s_u, rtol=rtol, atol=atol)
 
 
 @pytest.mark.level0
@@ -600,29 +565,6 @@ def test_det(shape, dtype):
     sp_det = osp.linalg.det(a)
     tensor_a = Tensor(a)
     ms_det = msp.linalg.det(tensor_a)
-    rtol = 1.e-5
-    atol = 1.e-5
-    assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('shape', [(2, 3, 3), (2, 3, 5, 5)])
-@pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
-def test_batch_det(shape, dtype):
-    """
-    Feature: ALL To ALL
-    Description: test batch cases for det
-    Expectation: the result match to scipy
-    """
-    a = onp.random.random(shape).astype(dtype)
-    tensor_a = Tensor(a)
-    ms_det = msp.linalg.det(tensor_a)
-    sp_det = onp.empty(shape=ms_det.shape, dtype=dtype)
-    for index, _ in onp.ndenumerate(sp_det):
-        sp_det[index] = osp.linalg.det(a[index])
     rtol = 1.e-5
     atol = 1.e-5
     assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
