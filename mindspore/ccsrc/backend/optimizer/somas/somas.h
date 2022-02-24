@@ -37,6 +37,9 @@ namespace mindspore {
 namespace somas {
 class Somas {
  public:
+  using SomasStreamPtr = std::shared_ptr<SomasStream>;
+  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
+  using SomasNodePtr = std::shared_ptr<SomasNode>;
   // Constructors/Destructors
   Somas() = default;
   Somas(const Somas &) = delete;
@@ -56,7 +59,7 @@ class Somas {
 
   static bool NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2);
 #ifndef ENABLE_SECURITY
-  void ConvertToProfilingNode(uint32_t graph_id);
+  void ConvertToProfilingNode(uint32_t graph_id) const;
 #endif
 
  private:

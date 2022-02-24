@@ -205,7 +205,7 @@ class KernelGraph : public FuncGraph {
   // set stream label of graph
   void set_stream_distinction_label(uint32_t stream_label) { stream_distinction_label_ = stream_label; }
   // get stream label of graph
-  uint32_t stream_distinction_label() { return stream_distinction_label_; }
+  uint32_t stream_distinction_label() const { return stream_distinction_label_; }
   // refresh execute kernel stream label
   void UpdateExecuteKernelStreamLabel();
   // calculate the leaf graph order of root graph
@@ -405,7 +405,7 @@ class KernelGraph : public FuncGraph {
 
   // The interface to set/get the graph GIL flag.
   void set_is_need_gil(bool flag) { is_need_gil_ = flag; }
-  bool is_need_gil() { return is_need_gil_; }
+  bool is_need_gil() const { return is_need_gil_; }
 
   bool IsDatasetGraph() const;
 

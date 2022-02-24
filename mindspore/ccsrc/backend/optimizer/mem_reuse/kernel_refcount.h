@@ -32,7 +32,7 @@ class KernelRefCount {
  public:
   uint32_t stream_id_;
   int ref_count_;
-  // used by dynamic memory pool, it will be reseted by ref_count_ when one minibatch end
+  // used by dynamic memory pool, it will be reset by ref_count_ when one minibatch end
   int ref_count_dynamic_use_;
   size_t offset_;
   size_t size_;
@@ -85,7 +85,7 @@ class KernelDef {
   void set_scope_full_name(const std::string &scop_name) { scop_full_name_ = scop_name; }
   std::string scope_full_name() const { return scop_full_name_; }
   void InsertInputKernel(const std::shared_ptr<KernelDef> &input_kernel) { input_kernels_.insert(input_kernel); }
-  const std::set<std::shared_ptr<KernelDef>> &input_kernels() { return input_kernels_; }
+  const std::set<std::shared_ptr<KernelDef>> &input_kernels() const { return input_kernels_; }
 
  private:
   std::string scop_full_name_;

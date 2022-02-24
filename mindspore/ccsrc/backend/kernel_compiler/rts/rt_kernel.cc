@@ -40,7 +40,7 @@ RtKernel::RtKernel() {}
 
 RtKernel::~RtKernel() {}
 
-bool RtKernel::Init(const mindspore::AnfNodePtr & /*anf_node*/) { return true; }
+bool RtKernel::Init(const mindspore::AnfNodePtr & /* anf_node */) { return true; }
 
 const std::vector<size_t> &RtKernel::GetInputSizeList() const { return input_size_list_; }
 

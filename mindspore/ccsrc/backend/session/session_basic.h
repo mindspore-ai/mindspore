@@ -240,9 +240,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                 const std::vector<tensor::TensorPtr> &inputs, VectorRef *const outputs) {}
   virtual void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {}
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  virtual KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                                     const std::vector<tensor::TensorPtr> &input_tensors,
-                                     const std::vector<int64_t> &tensors_mask) {
+  virtual KernelGraphPtr BuildOpImpl(const OpRunInfo & /* op_run_info */, const GraphInfo & /* graph_info */,
+                                     const std::vector<tensor::TensorPtr> & /* input_tensors */,
+                                     const std::vector<int64_t> & /* tensors_mask */) {
     return nullptr;
   }
   virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,

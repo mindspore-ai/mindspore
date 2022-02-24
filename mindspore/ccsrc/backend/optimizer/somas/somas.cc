@@ -1838,7 +1838,7 @@ uint8_t *Somas::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const 
   return ptr;
 }
 #ifndef ENABLE_SECURITY
-void Somas::ConvertToProfilingNode(uint32_t graph_id) {
+void Somas::ConvertToProfilingNode(uint32_t graph_id) const {
 #ifdef ENABLE_D
   auto graph_node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
   if (graph_node == nullptr) {

@@ -18,7 +18,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <utility>
 
 #include "backend/optimizer/common/pass_manager.h"
