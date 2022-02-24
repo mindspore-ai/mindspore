@@ -365,7 +365,7 @@ Dynamic LR函数
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
     
-.. mscnautosummary::
+.. mscnplatformautosummary::
     :toctree: nn
 
     mindspore.nn.cosine_decay_lr
