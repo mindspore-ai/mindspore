@@ -412,6 +412,12 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     MS_LOG(EXCEPTION) << "Preprocess failed before run graph " << graph->graph_id() << ", \nerror msg: " << e.what();
   }
 
+  // TODO(dsj): for ms_function running in graph_mode. should be delete later
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    AnfAlgo::SetNodeAttr(kAttrMSFunction, MakeValue(true), kernel);
+  }
+
   PROF_END(preprocess_before_run_graph);
   MS_LOG(INFO) << "Status record: end preprocess before run graph. graph id: " << graph->graph_id();
 }
