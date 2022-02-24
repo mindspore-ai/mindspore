@@ -55,7 +55,7 @@ inline __device__ void L2CompareAndSwap(T *a, S *b, int i_1, int i_2) {
   a[i_1] = a[i_2];
   a[i_2] = a_tmp;
 
-  T b_tmp = b[i_1];
+  S b_tmp = b[i_1];
   b[i_1] = b[i_2];
   b[i_2] = b_tmp;
 }
