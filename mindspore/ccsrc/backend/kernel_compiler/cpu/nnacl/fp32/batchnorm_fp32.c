@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,18 @@
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdBatchNormFp32CoreCalc(block_size, block_num, unit_input, mean, variance, param, unit_output, c)        \
+  for (int block_max_size = param->channel_ - block_num + 1; c < block_max_size; c += block_num) {                 \
+    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, unit_input + c);                                        \
+    MS_FLOAT_32xN(block_num) mean_ = MS_LD_F32(block_size, mean + c);                                              \
+    MS_FLOAT_32xN(block_num) variance_ = MS_LD_F32(block_size, variance + c);                                      \
+    MS_FLOAT_32xN(block_num) variance_sqrt =                                                                       \
+      MS_SQRT_F32(block_size, MS_ADD_F32(block_size, variance_, MS_MOVN_F32(block_size, param->epsilon_)));        \
+    MS_FLOAT_32xN(block_num) output = MS_DIV_F32(block_size, MS_SUB_F32(block_size, input, mean_), variance_sqrt); \
+    MS_ST_F32(block_size, unit_output + c, output);                                                                \
+  }
+
 void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormParameter *param,
                    int task_id, float *output) {
   if (param->op_parameter_.thread_num_ == 0) {
@@ -33,16 +45,9 @@ void BatchNormFp32(const float *input, const float *mean, const float *variance,
     const float *unit_input = input + cur_offset;
     float *unit_output = output + cur_offset;
     int c = 0;
-#ifdef ENABLE_ARM
-    for (; c <= param->channel_ - C4NUM; c += C4NUM) {
-      MS_FLOAT32X4 input_4 = MS_LDQ_F32(unit_input + c);
-      MS_FLOAT32X4 mean_4 = MS_LDQ_F32(mean + c);
-      MS_FLOAT32X4 variance_4 = MS_LDQ_F32(variance + c);
-      MS_FLOAT32X4 variance_sqrt = MS_SQRTFX4_F32(MS_ADDQ_F32(variance_4, MS_MOVQ_F32(param->epsilon_)));
-      MS_FLOAT32X4 output_4 = MS_DIVQ_F32(MS_SUBQ_F32(input_4, mean_4), variance_sqrt);
-      MS_STQ_F32(unit_output + c, output_4);
-    }
-#endif
+
+    MS_SIMD_RUN_NO_SCALAR(SimdBatchNormFp32CoreCalc, unit_input, mean, variance, param, unit_output, c);
+
     for (; c < param->channel_; c++) {
       float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
       unit_output[c] = (unit_input[c] - mean[c]) / variance_sqrt;
@@ -50,6 +55,22 @@ void BatchNormFp32(const float *input, const float *mean, const float *variance,
     cur_offset += param->channel_;
   }
 }
+
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdFusedBatchNormFp32CoreCalc(block_size, block_num, unit_input, scale, mean, offset, variance, param,      \
+                                       unit_output, c)                                                               \
+  for (int block_max_size = param->channel_ - block_num + 1; c < block_max_size; c += block_num) {                   \
+    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, unit_input + c);                                          \
+    MS_FLOAT_32xN(block_num) scale_ = MS_LD_F32(block_size, scale + c);                                              \
+    MS_FLOAT_32xN(block_num) offset_ = MS_LD_F32(block_size, offset + c);                                            \
+    MS_FLOAT_32xN(block_num) mean_ = MS_LD_F32(block_size, mean + c);                                                \
+    MS_FLOAT_32xN(block_num) variance_ = MS_LD_F32(block_size, variance + c);                                        \
+    MS_FLOAT_32xN(block_num) variance_sqrt =                                                                         \
+      MS_SQRT_F32(block_size, MS_ADD_F32(block_size, variance_, MS_MOVN_F32(block_size, param->epsilon_)));          \
+    MS_FLOAT_32xN(block_num) norm_val = MS_DIV_F32(block_size, MS_SUB_F32(block_size, input, mean_), variance_sqrt); \
+    MS_FLOAT_32xN(block_num) output = MS_ADD_F32(block_size, MS_MUL_F32(block_size, norm_val, scale_), offset_);     \
+    MS_ST_F32(block_size, unit_output + c, output);                                                                  \
+  }
 
 void FusedBatchNormFp32(const float *input, const float *scale, const float *offset, const float *mean,
                         const float *variance, const BatchNormParameter *param, int task_id, float *output) {
@@ -65,19 +86,10 @@ void FusedBatchNormFp32(const float *input, const float *scale, const float *off
     const float *unit_input = input + cur_offset;
     float *unit_output = output + cur_offset;
     int c = 0;
-#ifdef ENABLE_ARM
-    for (; c <= param->channel_ - C4NUM; c += C4NUM) {
-      MS_FLOAT32X4 input_4 = MS_LDQ_F32(unit_input + c);
-      MS_FLOAT32X4 scale_4 = MS_LDQ_F32(scale + c);
-      MS_FLOAT32X4 offset_4 = MS_LDQ_F32(offset + c);
-      MS_FLOAT32X4 mean_4 = MS_LDQ_F32(mean + c);
-      MS_FLOAT32X4 variance_4 = MS_LDQ_F32(variance + c);
-      MS_FLOAT32X4 variance_sqrt = MS_SQRTFX4_F32(MS_ADDQ_F32(variance_4, MS_MOVQ_F32(param->epsilon_)));
-      MS_FLOAT32X4 norm_val = MS_DIVQ_F32(MS_SUBQ_F32(input_4, mean_4), variance_sqrt);
-      MS_FLOAT32X4 output_4 = MS_ADDQ_F32(MS_MULQ_F32(norm_val, scale_4), offset_4);
-      MS_STQ_F32(unit_output + c, output_4);
-    }
-#endif
+
+    MS_SIMD_RUN_NO_SCALAR(SimdFusedBatchNormFp32CoreCalc, unit_input, scale, mean, offset, variance, param, unit_output,
+                          c);
+
     for (; c < param->channel_; c++) {
       float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
       float norm_val = (unit_input[c] - mean[c]) / variance_sqrt;
