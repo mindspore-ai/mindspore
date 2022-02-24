@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t mask_convert_len = 128;
+const int64_t kDropoutGenMaskMaskConvertLen = 128;
 ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   int64_t count = 1;
   size_t x_rank = value_list.size();
@@ -53,8 +53,8 @@ ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / mask_convert_len;
-  if ((count % mask_convert_len) != 0) {
+  int64_t n128s = count / kDropoutGenMaskMaskConvertLen;
+  if ((count % kDropoutGenMaskMaskConvertLen) != 0) {
     n128s++;
   }
   int64_t bytes_count = n128s * 16;
@@ -87,8 +87,8 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
     count = count * value;
   }
   // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / mask_convert_len;
-  if ((count % mask_convert_len) != 0) {
+  int64_t n128s = count / kDropoutGenMaskMaskConvertLen;
+  if ((count % kDropoutGenMaskMaskConvertLen) != 0) {
     n128s++;
   }
   int64_t bytes_count = n128s * 16;
@@ -97,7 +97,8 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
   return shape;
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, input_num,
@@ -152,7 +153,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   out_shape = CalOutputShape(x_shape_data);
   return std::make_shared<abstract::Shape>(out_shape);
 }
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), valid_types, op_name);
@@ -163,7 +164,8 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(DropoutGenMaskInferShape(primitive, input_args),
+                                DropoutGenMaskInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGenMask, prim::kPrimDropoutGenMask, DropoutGenMaskInfer, nullptr, true);
 }  // namespace ops

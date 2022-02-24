@@ -22,12 +22,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kRecvShapes = "recv_shapes";
-constexpr auto kRecvRankIds = "recv_rank_ids";
-constexpr auto kRecvType = "recv_type";
-constexpr auto kSendShapes = "send_shapes";
-constexpr auto kSendRankIds = "send_rank_ids";
-constexpr auto kGroup = "group";
+constexpr auto kNeighborExchangeRecvShapes = "recv_shapes";
+constexpr auto kNeighborExchangeRecvType = "recv_type";
 
 inline std::string GetShapeStr(const std::vector<int64_t> &shape) {
   std::string shape_str = "[";
@@ -78,16 +74,20 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
   }
 }
 
-void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAttr(primitive, kRecvShapes, kRecvRankIds);
+  constexpr auto kSendShapes = "send_shapes";
+  constexpr auto kRecvRankIds = "recv_rank_ids";
+  constexpr auto kSendRankIds = "send_rank_ids";
+  constexpr auto kGroup = "group";
+  CheckAttr(primitive, kNeighborExchangeRecvShapes, kRecvRankIds);
   CheckAttr(primitive, kSendShapes, kSendRankIds);
   // check recv type
-  auto recv_type_attr = primitive->GetAttr(kRecvType);
+  auto recv_type_attr = primitive->GetAttr(kNeighborExchangeRecvType);
   MS_EXCEPTION_IF_NULL(recv_type_attr);
   if (!recv_type_attr->isa<Type>()) {
-    MS_EXCEPTION(TypeError) << "Attr " << kRecvType << " should be a mindspore data type.";
+    MS_EXCEPTION(TypeError) << "Attr " << kNeighborExchangeRecvType << " should be a mindspore data type.";
   }
   // check group
   auto group_attr = primitive->GetAttr(kGroup);
@@ -141,9 +141,9 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   }
 }
 
-abstract::BaseShapePtr InferShape(const PrimitivePtr &primitive) {
+abstract::BaseShapePtr NeighborExchangeInferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto recv_shapes = primitive->GetAttr(kRecvShapes);
+  auto recv_shapes = primitive->GetAttr(kNeighborExchangeRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
   auto shapes_seq = recv_shapes->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(shapes_seq);
@@ -163,15 +163,15 @@ abstract::BaseShapePtr InferShape(const PrimitivePtr &primitive) {
   return std::make_shared<abstract::TupleShape>(base_shape_list);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive) {
+TypePtr NeighborExchangeInferType(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto recv_shapes = primitive->GetAttr(kRecvShapes);
+  auto recv_shapes = primitive->GetAttr(kNeighborExchangeRecvShapes);
   MS_EXCEPTION_IF_NULL(recv_shapes);
   auto shapes_seq = recv_shapes->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(shapes_seq);
   auto shapes_value = shapes_seq->value();
   auto out_num = shapes_value.size();
-  auto recv_type = primitive->GetAttr(kRecvType)->cast<TypePtr>();
+  auto recv_type = primitive->GetAttr(kNeighborExchangeRecvType)->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(recv_type);
   std::vector<TypePtr> type_vec(out_num, recv_type);
   if (type_vec.empty()) {
@@ -182,9 +182,9 @@ TypePtr InferType(const PrimitivePtr &primitive) {
 }  // namespace
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
-  Check(primitive, input_args);
-  auto type = InferType(primitive);
-  auto shape = InferShape(primitive);
+  NeighborExchangeCheck(primitive, input_args);
+  auto type = NeighborExchangeInferType(primitive);
+  auto shape = NeighborExchangeInferShape(primitive);
   return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NeighborExchange, prim::kPrimNeighborExchange, NeighborExchangeInfer, nullptr, true);

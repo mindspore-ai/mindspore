@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t k5DInputDims = 5;
-constexpr size_t kKernelDims = 3;
-constexpr size_t kStridesDims = 3;
-constexpr size_t kPadDims = 6;
+constexpr size_t kAvgPool3DPadDims = 6;
 
 void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, std::vector<int64_t> *strides,
               int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode, bool *count_include_pad) {
+  constexpr size_t kKernelDims = 3;
+  constexpr size_t kStridesDims = 3;
   MS_EXCEPTION_IF_NULL(primitive);
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
@@ -66,11 +65,14 @@ std::vector<int64_t> GetOutputShape(const std::vector<int64_t> &in_shape, int64_
   int64_t out_d = 0;
   int64_t out_h = 0;
   int64_t out_w = 0;
+  if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
+    MS_LOG(EXCEPTION) << "stride_d or stride_h or stride_w must be non-zero";
+  }
   if (ceil_mode) {
     out_d =
       static_cast<int64_t>(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d + stride_d - 1) / stride_d + 1));
-    out_h =
-      static_cast<int64_t>(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h + stride_h - 1) / stride_h + 1));
+    out_h = static_cast<int64_t>(
+      std::floor((in_h + pad_list[kInputIndex2] + pad_list[kInputIndex3] - kernel_h + stride_h - 1) / stride_h + 1));
     out_w =
       static_cast<int64_t>(std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w + stride_w - 1) / stride_w + 1));
     if ((out_d - 1) * stride_d >= in_d + pad_list[0]) {
@@ -85,7 +87,8 @@ std::vector<int64_t> GetOutputShape(const std::vector<int64_t> &in_shape, int64_
   } else {
     out_d = static_cast<int64_t>(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1));
     out_h = static_cast<int64_t>(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1));
-    out_w = static_cast<int64_t>(std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w) / stride_w + 1));
+    out_w = static_cast<int64_t>(
+      std::floor((in_w + pad_list[kInputIndex4] + pad_list[kInputIndex5] - kernel_w) / stride_w + 1));
   }
   std::vector<int64_t> output_shape = {in_shape[0], in_shape[1], out_d, out_h, out_w};
   return output_shape;
@@ -95,7 +98,7 @@ void GetPadsByPadding(int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d
                       int64_t stride_d, int64_t stride_h, int64_t stride_w, const int64_t &pad_mode,
                       const std::vector<int64_t> &padding, std::vector<int64_t> *pad_list) {
   if (pad_mode == PadMode::VALID) {
-    (void)pad_list->insert(pad_list->begin(), kPadDims, 0);
+    (void)pad_list->insert(pad_list->begin(), kAvgPool3DPadDims, 0);
   } else if (pad_mode == PadMode::SAME) {
     if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
       MS_LOG(EXCEPTION) << "stride_d or stride_h or stride_w must be non-zero";
@@ -106,18 +109,20 @@ void GetPadsByPadding(int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d
     int64_t pad_d = std::max((tail_d > 0 ? kernel_d - tail_d : kernel_d - stride_d), (int64_t)0);
     int64_t pad_h = std::max((tail_h > 0 ? kernel_h - tail_h : kernel_h - stride_h), (int64_t)0);
     int64_t pad_w = std::max((tail_w > 0 ? kernel_w - tail_w : kernel_w - stride_w), (int64_t)0);
-    pad_list->push_back(static_cast<int64_t>(std::floor(pad_d / 2)));
+    constexpr int twice = 2;
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_d / twice)));
     pad_list->push_back(pad_d - pad_list->at(0));
-    pad_list->push_back(static_cast<int64_t>(std::floor(pad_h / 2)));
-    pad_list->push_back(pad_h - pad_list->at(2));
-    pad_list->push_back(static_cast<int64_t>(std::floor(pad_w / 2)));
-    pad_list->push_back(pad_w - pad_list->at(4));
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_h / twice)));
+    pad_list->push_back(pad_h - pad_list->at(kInputIndex2));
+    pad_list->push_back(static_cast<int64_t>(std::floor(pad_w / twice)));
+    pad_list->push_back(pad_w - pad_list->at(kInputIndex4));
   } else if (pad_mode == PadMode::PAD) {
     pad_list->assign(padding.begin(), padding.end());
   }
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr int64_t k5DInputDims = 5;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input size", int64_t(input_args.size()), kEqual, 1, op_name);
@@ -146,7 +151,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   std::vector<int64_t> new_pad_list;
   GetPadsByPadding(in_d, in_h, in_w, kernel_d, kernel_h, kernel_w, stride_d, stride_h, stride_w, pad_mode, pad_list,
                    &new_pad_list);
-  if (new_pad_list.size() != kPadDims) {
+  if (new_pad_list.size() != kAvgPool3DPadDims) {
     MS_LOG(EXCEPTION) << "pad_list size must be 6.";
   }
   primitive->set_attr(kPadList, MakeValue(new_pad_list));
@@ -159,7 +164,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AvgPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input size", int64_t(input_args.size()), kEqual, 1, op_name);
@@ -174,7 +179,7 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
 
 AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(AvgPool3DInferShape(primitive, input_args), AvgPool3DInferType(primitive, input_args));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool3D, prim::kPrimAvgPool3D, AvgPool3DInfer, nullptr, true);

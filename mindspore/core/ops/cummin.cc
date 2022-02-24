@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr CumminInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
@@ -37,7 +38,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_shape, y_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr CumminInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
@@ -54,8 +55,8 @@ AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto type = InferType(primitive, input_args);
-  auto shape = InferShape(primitive, input_args);
+  auto type = CumminInferType(primitive, input_args);
+  auto shape = CumminInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Cummin, prim::kPrimCummin, CumminInfer, nullptr, true);

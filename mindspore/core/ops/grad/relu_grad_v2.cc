@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ReLUGradV2InferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ReLUGradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type_map = input_args[0]->BuildType();
@@ -55,7 +55,7 @@ AbstractBasePtr ReLUGradV2Infer(const abstract::AnalysisEnginePtr &, const Primi
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return abstract::MakeAbstract(InferShape(input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(ReLUGradV2InferShape(input_args), ReLUGradV2InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUGradV2, prim::kPrimReluGradV2, ReLUGradV2Infer, nullptr, true);
 }  // namespace ops

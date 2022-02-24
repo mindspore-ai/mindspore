@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MfccInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input0_size = 3;
@@ -38,7 +38,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MfccInferType(const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -90,7 +90,8 @@ int64_t Mfcc::get_dct_coeff_num() const { return GetValue<int64_t>(GetAttr(kDctC
 
 AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(MfccInferType(input_args),
+                                                    MfccInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameMfcc, Mfcc);
 }  // namespace ops

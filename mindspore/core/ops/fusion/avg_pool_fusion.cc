@@ -51,7 +51,8 @@ ActivationType AvgPoolFusion::get_activation_type() const {
 }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AvgPoolFusionInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -96,7 +97,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AvgPoolFusionInferType(const std::vector<AbstractBasePtr> &input_args) {
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -106,7 +107,8 @@ TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) {
 
 AbstractBasePtr AvgPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args));
+  return std::make_shared<abstract::AbstractTensor>(AvgPoolFusionInferType(input_args),
+                                                    AvgPoolFusionInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops

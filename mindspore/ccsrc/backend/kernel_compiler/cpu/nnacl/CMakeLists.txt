@@ -3,6 +3,10 @@ project(nnacl)
 set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${NNACL_DIR}/..)
 
+if(ENABLE_CPU)
+    set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")
+endif()
+
 if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fstrict-aliasing \

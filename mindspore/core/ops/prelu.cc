@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr PReLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x = input_args[0]->BuildShape();
   auto w = input_args[1]->BuildShape();
@@ -40,7 +40,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return shape_element;
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr PReLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<string, TypePtr> check_map = {{"input_x", input_args[0]->BuildType()},
                                          {"weight", input_args[1]->BuildType()}};
@@ -52,8 +52,8 @@ AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+  return std::make_shared<abstract::AbstractTensor>(PReLUInferType(primitive, input_args),
+                                                    PReLUInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNamePReLU, PReLU);
 }  // namespace ops

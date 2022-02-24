@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "LayerNormXBackprop.h"
+#include "ops/LayerNormXBackprop.h"
 #include <memory>
 #include <set>
 #include "ops/op_utils.h"

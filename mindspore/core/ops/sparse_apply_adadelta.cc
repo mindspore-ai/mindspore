@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseApplyAdadeltaInferShape(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -70,7 +71,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr, accum_updata_shape_ptr});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SparseApplyAdadeltaInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -112,8 +113,8 @@ AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, co
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 7;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = SparseApplyAdadeltaInferType(primitive, input_args);
+  auto infer_shape = SparseApplyAdadeltaInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyAdadelta, prim::kPrimSparseApplyAdadelta, SparseApplyAdadeltaInfer, nullptr,

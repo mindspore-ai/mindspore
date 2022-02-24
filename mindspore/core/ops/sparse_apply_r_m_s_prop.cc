@@ -26,7 +26,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseApplyRMSPropInferShape(const PrimitivePtr &primitive,
+                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(primitive);
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 6, primitive->name());
@@ -66,7 +67,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, ms_shape_ptr, mom_shape_ptr});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SparseApplyRMSPropInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 6, prim_name);
@@ -103,7 +104,8 @@ TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> 
 AbstractBasePtr SparseApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(SparseApplyRMSPropInferShape(primitive, input_args),
+                                SparseApplyRMSPropInferType(primitive, input_args));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyRMSProp, prim::kPrimSparseApplyRMSProp, SparseApplyRMSPropInfer, nullptr, true);

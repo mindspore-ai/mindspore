@@ -19,7 +19,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t type_size = 4;
 AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);

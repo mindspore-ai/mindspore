@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape, const std::shared_ptr<Type> &x_dtype) {
+std::vector<int64_t> ReLUV2GetOutputMaskShape(const std::vector<int64_t> &input_shape,
+                                              const std::shared_ptr<Type> &x_dtype) {
   std::vector<int64_t> mask_shape;
   if (input_shape.size() != 4) {
     MS_EXCEPTION(ValueError) << "The `input_x` should be a 4-D tensor,but got a " + std::to_string(input_shape.size()) +
@@ -53,7 +54,8 @@ std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape,
   }
   return mask_shape;
 }
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kEqual, 1, prim_name);
@@ -69,7 +71,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   auto input_type = x_type_tmp->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input_type);
   auto x_dtype = input_type->element();
-  auto mask_shape = GetOutputMaskShape(input_shape, x_dtype);
+  auto mask_shape = ReLUV2GetOutputMaskShape(input_shape, x_dtype);
   abstract::ShapePtr inputs_shape;
   abstract::ShapePtr masks_shape;
   if (min_shape.empty() || max_shape.empty()) {
@@ -77,14 +79,14 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     masks_shape = std::make_shared<abstract::Shape>(mask_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
   }
-  auto min_mask_shape = GetOutputMaskShape(min_shape, x_dtype);
-  auto max_mask_shape = GetOutputMaskShape(max_shape, x_dtype);
+  auto min_mask_shape = ReLUV2GetOutputMaskShape(min_shape, x_dtype);
+  auto max_mask_shape = ReLUV2GetOutputMaskShape(max_shape, x_dtype);
   inputs_shape = std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   masks_shape = std::make_shared<abstract::Shape>(mask_shape, min_mask_shape, max_mask_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{inputs_shape, masks_shape});
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ReLUV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("ReLUV2 infer", int64_t(input_args.size()), kEqual, 1, prim_name);
@@ -102,8 +104,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto types = InferType(primitive, input_args);
-  auto shapes = InferShape(primitive, input_args);
+  auto types = ReLUV2InferType(primitive, input_args);
+  auto shapes = ReLUV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ReLUV2, prim::kPrimReluV2, ReLUV2Infer, nullptr, true);
