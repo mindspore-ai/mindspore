@@ -683,6 +683,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
         }
         host_tensor_address = device_tensor;
+        tensor->set_device_address(device_tensor);
       } else {
         AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
         host_tensor_address->SetNodeIndex(backend_node, 0);
