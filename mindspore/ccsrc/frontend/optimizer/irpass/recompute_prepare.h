@@ -45,6 +45,12 @@ class SetCellOutputNoRecompute : public AnfVisitor {
     if (output->isa<CNode>()) {
       mindspore::HashSet<CNodePtr> real_outputs;
       GetRealOutputNodes(output, &real_outputs);
+      if (OutputAllNodes(real_outputs)) {
+        MS_LOG(WARNING)
+          << "All nodes in the graph " << fg->ToString()
+          << " are the output nodes, which are set to not be recomputed. If you want to set these nodes to "
+             "be recomputed, use the api recompute() of Primitive.";
+      }
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
         real_output->AddAttr(kAttrRecompute, MakeValue(false));
@@ -119,6 +125,22 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       }
     }
     return nullptr;
+  }
+
+  bool OutputAllNodes(const mindspore::HashSet<CNodePtr> &real_outputs) {
+    for (const auto &cnode : real_outputs) {
+      const auto &inputs = cnode->inputs();
+      for (const auto &input : inputs) {
+        auto input_cnode = input->cast<CNodePtr>();
+        if (input_cnode == nullptr || IsPrimitiveCNode(input_cnode, prim::kPrimLoad)) {
+          continue;
+        }
+        if (real_outputs.find(input_cnode) == real_outputs.end()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 };
 }  // namespace irpass
