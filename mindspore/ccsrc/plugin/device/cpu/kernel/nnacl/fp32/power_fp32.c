@@ -17,7 +17,7 @@
 #include "nnacl/fp32/power_fp32.h"
 #include "nnacl/errorcode.h"
 
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
 MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
   int exp = abs((int)(*exponent));
   MS_FLOAT32X4 result = MS_MOVQ_F32(1.0f);
@@ -50,23 +50,23 @@ float OptimizedPowerScalar(float x, const float *exponent) {
 
 void PowerBroadCast(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   PowerSimdFun PowerSimdFun_ = NULL;
 #endif
 
   if (CheckInteger(*exponent)) {
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
     PowerSimdFun_ = OptimizedPowerSimd;
 #endif
     PowerScalarFun_ = OptimizedPowerScalar;
   } else {
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
     PowerSimdFun_ = StdPowerSimd;
 #endif
     PowerScalarFun_ = StdPowerScalar;
   }
   int i = 0;
-#if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
@@ -83,7 +83,7 @@ void PowerBroadCast(const float *input, const float *exponent, float *output, in
 void PowerSingle(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   int i = 0;
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
   int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
