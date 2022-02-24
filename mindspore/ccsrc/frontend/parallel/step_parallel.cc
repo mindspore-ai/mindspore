@@ -3273,6 +3273,10 @@ static void HandlGlobalNormScale(const FuncGraphPtr &root, const std::vector<Anf
                        "will cause the global norm calculation with wrong precision.";
       continue;
     }
+    if (!device_num_ptr->isa<Int64Imm>()) {
+      MS_LOG(ERROR) << "The type of device number attribute of mirror operator is not int64.";
+      continue;
+    }
     auto dev_num = device_num_ptr->cast<Int64ImmPtr>()->value();
     if (dev_num == 0) continue;
     InsertDivAndAllReduceForNorm(node_user_map, parameter, dev_num);
