@@ -79,26 +79,6 @@ void LogicalNot(ArithmeticSelfCpuKernelMod *content, const bool *in, bool *out, 
 }
 
 template <typename T>
-void OnesLike(ArithmeticSelfCpuKernelMod *content, const T *, T *out, size_t size) {
-  auto task = [&out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(1);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-}
-
-template <typename T>
-void ZerosLike(ArithmeticSelfCpuKernelMod *content, const T *, T *out, size_t size) {
-  auto task = [&out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(0);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
-}
-
-template <typename T>
 void Floor(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -365,8 +345,6 @@ void ArithmeticSelfCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                           {prim::kPrimSinh->name(), Sinh<T>},
                           {prim::kPrimCosh->name(), Cosh<T>},
                           {prim::kPrimAsinh->name(), Asinh<T>},
-                          {prim::kPrimZerosLike->name(), ZerosLike<T>},
-                          {prim::kPrimOnesLike->name(), OnesLike<T>},
                           {prim::kPrimReciprocal->name(), Reciprocal<T>},
                           {prim::kPrimRint->name(), Rint<T>},
                           {prim::kPrimRound->name(), Round<T>},

@@ -86,18 +86,6 @@ MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutput
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Neg, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
                   ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(ZerosLike, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(OnesLike, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(OnesLike, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  ArithmeticSelfCpuKernelMod);
-MS_REG_CPU_KERNEL(OnesLike, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-                  ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Sign, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ArithmeticSelfCpuKernelMod);
 MS_REG_CPU_KERNEL(Sign, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
