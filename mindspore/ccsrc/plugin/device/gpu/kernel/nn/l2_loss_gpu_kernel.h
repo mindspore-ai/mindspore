@@ -20,7 +20,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/l2_loss.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/l2_loss.cuh"
 namespace mindspore {
 namespace kernel {
 template <typename T>

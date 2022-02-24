@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include "plugin/device/gpu/kernel/cuda_impl/logical_not_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/logical_not_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "utils/convert_utils.h"

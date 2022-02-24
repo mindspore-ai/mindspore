@@ -23,9 +23,9 @@
 #include <cuda_runtime.h>
 #include <vector>
 #include <algorithm>
-#include "utils/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/matrix_band_part_impl.cuh"
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_band_part_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"

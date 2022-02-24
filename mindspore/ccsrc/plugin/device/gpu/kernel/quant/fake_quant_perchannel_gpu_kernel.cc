@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/quant/fake_quant_perchannel_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/fake_quant_perchannel_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fake_quant_perchannel_impl.cuh"
 #include <thrust/extrema.h>
 #include <thrust/pair.h>
 #include <thrust/device_vector.h>

@@ -23,8 +23,8 @@
 #include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/float_status_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/slice_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/float_status_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
 
 namespace mindspore {
 namespace kernel {

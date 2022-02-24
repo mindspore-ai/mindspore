@@ -212,6 +212,11 @@ if(ENABLE_GPU)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
+    install(
+            TARGETS cuda_ops
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
 endif()
 
 if(ENABLE_D)

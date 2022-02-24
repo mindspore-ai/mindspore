@@ -113,6 +113,8 @@ if(ENABLE_GPU)
             "plugin/device/gpu/kernel/*.cu"
             )
 
+    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/kernel/cuda_impl/cuda_ops/*.cu")
+
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
     list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/blocking_queue.cc"
             "plugin/device/gpu/hal/device/gpu_buffer_mgr.cc")
@@ -144,6 +146,8 @@ if(ENABLE_GPU)
     cuda_add_library(gpu_cuda_lib STATIC ${GPU_SRC_LIST})
     set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_GPU)
+
+    add_subdirectory(plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 endif()
 
 
@@ -429,7 +433,7 @@ endif()
 
 if(ENABLE_GPU)
     message("add gpu lib to c_expression")
-    target_link_libraries(_c_expression PRIVATE gpu_cuda_lib gpu_queue cublas
+    target_link_libraries(_c_expression PRIVATE gpu_cuda_lib gpu_queue cublas cuda_ops
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so

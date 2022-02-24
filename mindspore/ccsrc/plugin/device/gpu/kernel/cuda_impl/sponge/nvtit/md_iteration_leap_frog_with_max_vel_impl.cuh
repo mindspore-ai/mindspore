@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_MD_ITERATION_LEAP_FROG_WITH_MAX_VEL_IMPL_H_
 
 #include <curand_kernel.h>
-#include "plugin/device/gpu/hal/device/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 void MDIterationLeapFrogWithMaxVelocity(const int atom_numbers, float *vel, float *crd, float *frc, float *acc,
                                         const float *inverse_mass, const float dt, const float max_velocity,
                                         cudaStream_t stream);
