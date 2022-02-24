@@ -7,8 +7,9 @@ mindspore.dataset.transforms.c_transforms.Mask
 
     **参数：**
 
-    - **operator** (Relational) - 关系操作符，可以取值为 Relational.EQ、Relational.NE、Relational.LT、
-        Relational.GT、Relational.LE、Relational.GE。以Relational.EQ为例，将找出Tensor中与 `constant` 相等的元素。
+    - **operator** (:class:`mindspore.dataset.transforms.c_transforms.Relational`) - 关系操作符，可以取值为
+        Relational.EQ、Relational.NE、Relational.LT、 Relational.GT、Relational.LE、Relational.GE。
+        以Relational.EQ为例，将找出Tensor中与 `constant` 相等的元素。
     - **constant** (Union[str, int, float, bool]) - 要进行比较的基准值。
     - **dtype** (mindspore.dtype, 可选) - 生成的掩码Tensor的数据类型，默认值：mstype.bool。
 

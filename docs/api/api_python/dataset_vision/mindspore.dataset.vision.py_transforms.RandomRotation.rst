@@ -1,9 +1,11 @@
 mindspore.dataset.vision.py_transforms.RandomRotation
 =====================================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.RandomRotation(degrees, resample=<Inter.NEAREST: 0>, expand=False, center=None, fill_value=0)
+.. py:class:: mindspore.dataset.vision.py_transforms.RandomRotation(degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0)
 
     将输入PIL图像旋转随机角度。
+
+    .. note:: 参阅Pillow的 `rotate <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate>`_ 功能以了解更多用法。
 
     **参数：**
 

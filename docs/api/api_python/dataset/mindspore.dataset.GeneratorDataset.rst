@@ -33,7 +33,7 @@
     - **RuntimeError** - `column_names` 参数指定的列名数量与 `source` 参数输出的数据数量不匹配。
     - **ValueError** - `num_parallel_workers` 参数超过最大线程数。
     - **ValueError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-    - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
     - **ValueError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **ValueError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。

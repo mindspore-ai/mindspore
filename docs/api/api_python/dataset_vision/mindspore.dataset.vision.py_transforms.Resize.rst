@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.Resize
 =============================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.Resize(size, interpolation=<Inter.BILINEAR: 2>)
+.. py:class:: mindspore.dataset.vision.py_transforms.Resize(size, interpolation=Inter.BILINEAR)
 
     将输入PIL图像放缩为指定大小。
 

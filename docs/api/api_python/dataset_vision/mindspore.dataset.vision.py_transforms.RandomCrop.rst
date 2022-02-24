@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.RandomCrop
 =================================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.RandomCrop(size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=<Border.CONSTANT: 'constant'>)
+.. py:class:: mindspore.dataset.vision.py_transforms.RandomCrop(size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT)
 
     在输入PIL图像上的随机位置，裁剪指定大小的子图。
 

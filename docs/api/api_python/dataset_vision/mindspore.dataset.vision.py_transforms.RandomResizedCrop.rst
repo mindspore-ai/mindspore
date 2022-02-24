@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.RandomResizedCrop
 ========================================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.RandomResizedCrop(size, scale=(0.08, 1.0), ratio=(0.75, 1.3333333333333333), interpolation=<Inter.BILINEAR: 2>, max_attempts=10)
+.. py:class:: mindspore.dataset.vision.py_transforms.RandomResizedCrop(size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), interpolation=Inter.BILINEAR, max_attempts=10)
 
     在输入PIL图像上的随机位置裁剪子图，并放缩到指定大小。    
 

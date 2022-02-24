@@ -366,7 +366,7 @@ class SentencePieceTokenizer(TextTensorOperation):
 
     Raises:
         TypeError: If `mode` is not of type string or SentencePieceVocab.
-        TypError: If `out_type` is not of type SPieceTokenizerOutType.
+        TypeError: If `out_type` is not of type SPieceTokenizerOutType.
 
     Supported Platforms:
         ``CPU``
@@ -401,7 +401,7 @@ class SlidingWindow(TextTensorOperation):
     Raises:
         TypeError: If `width` is not of type int.
         ValueError: If value of `width` is not positive.
-        TypError: If `axis` is not of type int.
+        TypeError: If `axis` is not of type int.
 
     Supported Platforms:
         ``CPU``

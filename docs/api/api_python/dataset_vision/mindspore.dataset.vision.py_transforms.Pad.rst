@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.Pad
 ==========================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.Pad(padding, fill_value=0, padding_mode=<Border.CONSTANT: 'constant'>)
+.. py:class:: mindspore.dataset.vision.py_transforms.Pad(padding, fill_value=0, padding_mode=Border.CONSTANT)
 
     对输入PIL图像的各边进行填充。
 

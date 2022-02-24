@@ -8,7 +8,7 @@ mindspore.dataset.transforms.py_transforms.OneHotOp
     **参数：**
 
     - **num_classes** (int) - 数据集的类别数，它应该大于数据集中最大的label编号。
-    - **num_classes** (float，可选) - 标签平滑的系数，默认值：0.0。
+    - **smoothing_rate** (float，可选) - 标签平滑的系数，默认值：0.0。
 
     **异常：**
       

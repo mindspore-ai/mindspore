@@ -37,7 +37,7 @@ mindspore.dataset.VOCDataset
     - **RuntimeError** - 读取的xml文件缺失 `object` 属性。
     - **RuntimeError** - 读取的xml文件缺失 `bndbox` 属性。
     - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数。
+    - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
     - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
     - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
     - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。

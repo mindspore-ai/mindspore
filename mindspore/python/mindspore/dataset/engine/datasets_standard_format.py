@@ -68,18 +68,18 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If dataset_files are not valid or do not exist.
         ValueError: If field_delim is invalid.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
@@ -129,8 +129,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
             When this argument is specified, 'num_samples' reflects the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
             with shuffle and block_reader). Support list: SubsetRandomSampler,
@@ -146,10 +146,10 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
@@ -270,21 +270,21 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
             the maximum sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
             When the number of samples of per TFRecord file are not equal, it is suggested to set to true.
-            This argument should only be specified when num_shards is also specified.
+            This argument should only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
     Raises:
         ValueError: If dataset_files are not valid or do not exist.
-        ValueError: If num_parallel_workers exceeds the max thread numbers.
-        RuntimeError: If num_shards is specified but shard_id is None.
-        RuntimeError: If shard_id is specified but num_shards is None.
-        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        RuntimeError: If `num_shards` is specified but `shard_id` is None.
+        RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Examples:
         >>> from mindspore import dtype as mstype
