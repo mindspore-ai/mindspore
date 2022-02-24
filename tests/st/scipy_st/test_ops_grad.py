@@ -184,7 +184,7 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shapes', [((8, 8), (8, 8)), ((8, 8), (8, 2)), ((8, 8), (8,))])
-@pytest.mark.parametrize('trans', ["N", "T"])
+@pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('lower', [False, True])
 @pytest.mark.parametrize('unit_diagonal', [True, False])
 @pytest.mark.parametrize('data_type', [(onp.float32, 1e-3, 1e-3), (onp.float64, 1e-4, 1e-7)])

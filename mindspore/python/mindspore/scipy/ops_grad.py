@@ -150,7 +150,7 @@ def get_bprpo_trsm(self):
     is_lower = self.lower
     is_unit_diagonal = self.unit_diagonal
     lower = int(is_lower)
-    bp_trans = ("N" if self.trans == "T" else "T")
+    bp_trans = ("N" if self.trans in ["T", "C"] else "T")
     solve_triangular = SolveTriangular(is_lower, is_unit_diagonal, bp_trans)
 
     def bprop(a, b, out, dout):
@@ -159,7 +159,7 @@ def get_bprpo_trsm(self):
         grad_b = solve_triangular(a, grad_x)
         grad_b_align = F.reshape(grad_b, (row_size, -1))
         x_align = F.reshape(x, (row_size, -1))
-        if bp_trans == "T":
+        if bp_trans in ["T", "C"]:
             grad_a = _matmul(grad_b_align, _adjoint(x_align))
         else:
             grad_a = _matmul(x_align, _adjoint(grad_b_align))
