@@ -1079,6 +1079,7 @@ int LiteSession::Init(InnerContext *context) {
     is_running_.store(false);
     return ret;
   }
+
   is_running_.store(false);
   return RET_OK;
 }

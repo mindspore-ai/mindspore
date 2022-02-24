@@ -34,6 +34,9 @@
 #include "src/lite_session.h"
 #include "src/common/file_utils.h"
 #include "src/common/config_file.h"
+#ifdef SERVER_INFERENCE
+#include "src/common/common.h"
+#endif
 
 namespace mindspore {
 namespace {
@@ -684,6 +687,15 @@ lite::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) {
     delete context;
     return nullptr;
   }
+#ifdef SERVER_INFERENCE
+  auto iter = config_info_.find(lite::kConfigServerInference);
+  if (iter != config_info_.end()) {
+    auto numa_iter = iter->second.find(lite::kConfigNUMANodeId);
+    if (numa_iter != iter->second.end()) {
+      context->SetNodeId(std::atoi(numa_iter->second.c_str()));
+    }
+  }
+#endif
 
   session->InitExecutionConfig(&execution_plan_);
   session->SetConfigInfo(&config_info_);
