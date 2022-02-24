@@ -74,6 +74,40 @@ class _ScatterOp(PrimitiveWithInfer):
         return x_dtype
 
 
+class UnravelIndex(Primitive):
+    """
+    Converts an array of flat indices into a tuple of coordinate arrays.
+
+    Inputs:
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_dims** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+
+    Raises:
+        TypeError: The data type of input0 need be same with input1.
+        TypeError: Both input data types are supported only support int32, int64.
+        ValueError: Dims shape must be equal to 1 or indices shape must be equal to 1 or 0.
+        ValueError: Index out of boundary or index must be greater than 0.
+        ValueError: All dimensions must be greater than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Example:
+        >>> indices = Tensor(np.array([2, 5]), mindspore.int32)
+        >>> dims = Tensor(np.array([3, 3]), mindspore.int32)
+        >>> output = ops.UnravelIndex()(indices, dims)
+        >>> print(output)
+        [[0 2]
+         [1 2]]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Shape"""
+
+
 class _ScatterOpDynamic(PrimitiveWithCheck):
     """
     Defines Scatter operators with dynamic shape

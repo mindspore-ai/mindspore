@@ -34,6 +34,7 @@ from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, BesselK1, BesselK0e, \
                                               BesselK1e, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
@@ -2729,6 +2730,10 @@ test_case_nn_ops = [
 ]
 
 test_case_array_ops = [
+    ('UnravelIndex', {
+        'block': UnravelIndex(),
+        'desc_inputs': [Tensor(np.array([5, 5]).astype(np.int64)), Tensor(np.array([3, 3]).astype(np.int64))],
+        'skip': ['backward']}),
     ('SpaceToDepth', {
         'block': P.SpaceToDepth(2),
         'desc_inputs': [[1, 3, 2, 2]],

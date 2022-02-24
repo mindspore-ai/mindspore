@@ -116,6 +116,7 @@ constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kSliceGetItem = "SliceGetItem";
 constexpr auto kGeLU = "GeLU";
+constexpr auto kUnravelIndex = "UnravelIndex";
 constexpr auto kGLU = "GLU";
 constexpr auto kReLU = "ReLU";
 constexpr auto kReLU6 = "ReLU6";
@@ -307,6 +308,7 @@ GVAR_DEF(PrimitivePtr, kPrimStackPop, std::make_shared<Primitive>("StackPop"));
 
 // Arrays
 GVAR_DEF(PrimitivePtr, kPrimIdentitys, std::make_shared<Primitive>(kIdentity));
+GVAR_DEF(PrimitivePtr, kPrimUnravelIndex, std::make_shared<Primitive>(kUnravelIndex));
 GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastTo, std::make_shared<Primitive>(kDynamicBroadcastTo));
 GVAR_DEF(PrimitivePtr, kPrimCummin, std::make_shared<Primitive>("Cummin"));
 GVAR_DEF(PrimitivePtr, kPrimBroadcastTo, std::make_shared<Primitive>("BroadcastTo"));
