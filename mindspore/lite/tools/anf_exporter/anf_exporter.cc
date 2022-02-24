@@ -867,7 +867,10 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
   MS_ASSERT(fb_node != nullptr);
   std::string cnode_name = fb_node->name;
 
-  if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
+  // new anf export and import will add abstract tuple for control flow op, which contains abstract closure,
+  // abstract tuple and abstract tensor. For inference, we don't need this information. So skip export abstract tuple
+  // for control flow op. Just use a abstract tensor link the control flow ops.
+  if (utils::isa<abstract::AbstractTuple>(cnode->abstract()) && !IsControlFlowOp(cnode)) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     MS_CHECK_TRUE_MSG(tuple != nullptr, RET_ERROR, "tuple is nullptr");
     auto elements = tuple->elements();
