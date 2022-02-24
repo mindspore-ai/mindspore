@@ -80,6 +80,8 @@ class GpuDynamicKernel : public device::DynamicKernel {
   void UpdateArgs() override;
   void PostExecute() final { MS_LOG(EXCEPTION) << "`PostExecute()` should not invoked with gpu backend"; };
   void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with gpu backend"; }
+
+  std::map<uint32_t, tensor::TensorPtr> GetDependTensorMap() { return depend_tensor_map_; }
 };
 
 class NativeGpuKernelMod : public GpuKernelMod {
@@ -99,6 +101,12 @@ class NativeGpuKernelMod : public GpuKernelMod {
   virtual void InitResource() {}
   virtual void InitSizeLists() = 0;
   std::weak_ptr<CNode> kernel_node_;
+
+  inline void ResetSizeLists() {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
 
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
@@ -321,7 +329,66 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return type->second;
   }
 
-  device::DynamicKernelPtr dynamic_kernel_;
+  inline std::map<uint32_t, tensor::TensorPtr> GetDependTensorMap() {
+    auto gpu_dynamic_kernel = dynamic_cast<GpuDynamicKernel *>(DynamicKernel().get());
+    if (gpu_dynamic_kernel != nullptr) {
+      return gpu_dynamic_kernel->GetDependTensorMap();
+    }
+    return {};
+  }
+
+  inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index) {
+    std::vector<int64_t> tensor_value;
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    size_t data_size = input_tensor->DataSize();
+    auto tensor_type = input_tensor->Dtype();
+    if (tensor_type->type_id() == kNumberTypeInt32) {
+      auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      tensor_value.assign(tensor_data, tensor_data + data_size);
+    } else if (tensor_type->type_id() == kNumberTypeInt64) {
+      auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data);
+      tensor_value.assign(tensor_data, tensor_data + data_size);
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the " << input_index
+                              << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
+                              << input_tensor->ToString();
+    }
+    return tensor_value;
+  }
+
+  inline bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2) {
+    std::vector<size_t> s2_trans;
+    std::transform(s2.begin(), s2.end(), std::back_inserter(s2_trans), [](const int64_t &e) { return LongToSize(e); });
+    return std::equal(s1.begin(), s1.end(), s2_trans.begin(), s2_trans.end());
+  }
+
+  inline std::vector<int64_t> GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index) {
+    const auto &depend_tensor_map = GetDependTensorMap();
+    if (depend_tensor_map.empty()) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the depend_tensor_map is empty!";
+    }
+    auto depend_iter = depend_tensor_map.find(input_index);
+    if (depend_iter == depend_tensor_map.end()) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to find the " << input_index
+                        << "th input in the depend_tensor_map";
+    }
+    auto input_tensor = depend_iter->second;
+    const auto &input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
+    if (!ShapeEqual(input_shape, input_tensor->shape())) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the " << input_index
+                        << "th input is different between the InferShape and the TensorShape";
+    }
+    const auto &data_format = AnfAlgo::GetInputFormat(kernel_node, input_index);
+    if (data_format != kOpFormat_DEFAULT && data_format != kOpFormat_NCHW) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "',  the format of the " << input_index
+                        << "th input currently should be the default format and does not support " << data_format;
+    }
+    return GetTensorIntValue(input_tensor, input_index);
+  }
+
+  device::DynamicKernelPtr dynamic_kernel_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
