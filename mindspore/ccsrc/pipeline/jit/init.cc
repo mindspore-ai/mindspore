@@ -484,7 +484,9 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("http_url_prefix", &PSContext::http_url_prefix, "http url prefix for http communication.")
     .def("set_global_iteration_time_window", &PSContext::set_global_iteration_time_window,
          "Set global iteration time window.")
-    .def("global_iteration_time_window", &PSContext::global_iteration_time_window, "Get global iteration time window.");
+    .def("global_iteration_time_window", &PSContext::global_iteration_time_window, "Get global iteration time window.")
+    .def("set_checkpoint_dir", &PSContext::set_checkpoint_dir, "Set server checkpoint directory.")
+    .def("checkpoint_dir", &PSContext::checkpoint_dir, "Server checkpoint directory.");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");

@@ -399,7 +399,7 @@ void Server::InitExecutor() {
   // so the required_cnt of these kernels must be the same as executor_threshold_.
   MS_LOG(INFO) << "Required count for push-type and pull-type kernels is " << executor_threshold_;
   Executor::GetInstance().Initialize(func_graph_.lock(), executor_threshold_);
-  ModelStore::GetInstance().Initialize();
+  ModelStore::GetInstance().Initialize(server_node_->rank_id());
   return;
 }
 

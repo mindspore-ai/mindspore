@@ -20,6 +20,7 @@
 #include <any>
 #include <mutex>
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include "fl/server/common.h"
 
@@ -29,6 +30,14 @@ namespace server {
 // LocalMetaStore class is used for metadata storage of this server process.
 // For example, the current iteration number, time windows for round kernels, etc.
 // LocalMetaStore is threadsafe.
+
+struct Feature {
+  std::vector<size_t> weight_shape;
+  std::string weight_type;
+  size_t weight_size;
+  std::vector<float> weight_data;
+};
+
 class LocalMetaStore {
  public:
   static LocalMetaStore &GetInstance() {
@@ -70,11 +79,11 @@ class LocalMetaStore {
   void set_curr_iter_num(size_t num);
   const size_t curr_iter_num();
 
-  const void put_feature_map(const std::string &name, const size_t &size);
+  const void put_aggregation_feature_map(const std::string &name, const Feature &feature);
 
-  std::unordered_map<std::string, size_t> &feature_map();
+  std::unordered_map<std::string, Feature> &aggregation_feature_map();
 
-  bool verifyFeatureMap(const std::unordered_map<std::string, size_t> &model);
+  bool verifyAggregationFeatureMap(const std::unordered_map<std::string, size_t> &model);
 
  private:
   LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}
@@ -88,8 +97,8 @@ class LocalMetaStore {
   std::mutex mtx_;
   size_t curr_iter_num_{0};
 
-  // feature_map_ stores model meta data with weight name and size.
-  std::unordered_map<std::string, size_t> feature_map_;
+  // aggregation_feature_map_ stores model meta data with weight name and size which will be Aggregated.
+  std::unordered_map<std::string, Feature> aggregation_feature_map_;
 };
 }  // namespace server
 }  // namespace fl

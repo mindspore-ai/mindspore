@@ -1091,7 +1091,9 @@ def set_fl_context(**kwargs):
         http_url_prefix (string): The http url prefix for http server.
             Default: "".
         global_iteration_time_window (unsigned long): The global iteration time window for one iteration
-            with rounds(ms). Default: 21600000.
+            with rounds(ms). Default: 3600000.
+        checkpoint_dir (string): The Server model checkpoint directory. If no checkpoint dir is set,
+            the startup script directory is used by default. Default: "".
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
 

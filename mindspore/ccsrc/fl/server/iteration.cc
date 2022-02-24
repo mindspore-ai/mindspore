@@ -557,7 +557,7 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       feature_map[weight_fullname] = weight_size;
     }
 
-    if (LocalMetaStore::GetInstance().verifyFeatureMap(feature_map)) {
+    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
       iteration_result_ = IterationResult::kSuccess;
       MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
@@ -859,6 +859,7 @@ void Iteration::InitGlobalIterTimer(const TimeOutCb &timeout_cb) {
   global_iteration_time_window_ = ps::PSContext::instance()->global_iteration_time_window();
   global_iter_timer_ = std::make_shared<IterationTimer>();
 
+  MS_LOG(INFO) << "Global iteration time window is: " << global_iteration_time_window_;
   // Set the timeout callback for the timer.
   global_iter_timer_->SetTimeOutCallBack([this, timeout_cb](bool, const std::string &) -> void {
     std::string reason = "Global Iteration " + std::to_string(iteration_num_) +
