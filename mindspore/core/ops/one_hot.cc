@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,13 +74,17 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(), {kInt32, kInt64},
-                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(),
+                                                   {kUInt8, kInt32, kInt64}, op_name);
   (void)CheckAndConvertUtils::CheckTypeValid("depth", input_args[kInputIndex1]->BuildType(),
                                              {kInt8, kInt16, kInt32, kInt64}, op_name);
   std::map<std::string, TypePtr> args = {{"on_value", input_args[kInputIndex2]->BuildType()},
                                          {"off_dtype", input_args[kInputIndex3]->BuildType()}};
-  return CheckAndConvertUtils::CheckTensorTypeSame(args, {kFloat16, kFloat32}, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeSame(
+    args,
+    {kBool, kInt, kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32,
+     kFloat64, kComplex64, kComplex128},
+    op_name);
 }
 }  // namespace
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

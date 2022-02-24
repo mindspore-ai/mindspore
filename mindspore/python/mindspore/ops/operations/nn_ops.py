@@ -3283,10 +3283,11 @@ class OneHot(Primitive):
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
-          Data type must be int32 or int64.
+          Data type must be uint8, int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one-hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
-          With data type of float16 or float32.
+          Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
+          bool, complex64, complex128.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
           Has the same data type as `on_value`.
 
@@ -3295,7 +3296,7 @@ class OneHot(Primitive):
 
     Raises:
         TypeError: If `axis` or `depth` is not an int.
-        TypeError: If dtype of `indices` is neither int32 nor int64.
+        TypeError: If dtype of `indices` is not uint8, int32 or int64.
         TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, len(indices_shape)].
         ValueError: If `depth` is less than 0.
