@@ -14,32 +14,32 @@
 # limitations under the License.
 # ============================================================================
 
-# Prepare and Install mindspore gpu by pip on Ubuntu 18.04.
+# Prepare environment for mindspore gpu compilation on Ubuntu 18.04.
 #
 # This file will:
 #   - change deb source to huaweicloud mirror
-#   - install mindspore dependencies via apt like gcc, libgmp
+#   - install compile dependencies via apt like cmake, gcc
 #   - install python3 & pip3 via apt and set it to default
 #   - install CUDA by run file and cudnn via apt.
-#   - install mindspore-cpu within new installed python by pip
 #   - compile and install Open MPI if OPENMPI is set to on.
+#   - install LLVM if LLVM is set to on.
 #
 # Augments:
 #   - PYTHON_VERSION: python version to install. [3.7(default), 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, default 1.6.0
 #   - CUDA_VERSION: CUDA version to install. [10.1(default), 11.1]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
+#   - LLVM: whether to install optional dependency LLVM for graph kernel fusion. [on, off(default)]
 #
 # Usage:
-#   Need root permission to run, like `sudo bash -i ./ubuntu-gpu-pip.sh`.
-#   To set augments, run it as `sudo PYTHON_VERSION=3.9 CUDA_VERSION=11.1 OPENMPI=on bash -i ./ubuntu-gpu-pip.sh`.
+#   Need root permission to run, like `sudo bash -i ./ubuntu-gpu-source.sh`.
+#   To set augments, run it as `sudo PYTHON_VERSION=3.9 CUDA_VERSION=11.1 OPENMPI=on bash -i ./ubuntu-gpu-source.sh`.
 
 set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
-MINDSPORE_VERSION=${MINDSPORE_VERSION:-1.6.0}
 CUDA_VERSION=${CUDA_VERSION:-10.1}
 OPENMPI=${OPENMPI:-off}
+LLVM=${LLVM:-off}
 
 available_py_version=(3.7 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
@@ -60,11 +60,6 @@ if [[ $driver_version < ${minimum_driver_version_map[$CUDA_VERSION]} ]]; then
         but current nvidia driver version is $driver_version, please upgrade your driver manually."
     exit 1
 fi
-cuda_name="cuda-$CUDA_VERSION"
-
-declare -A version_map=()
-version_map["3.7"]="${MINDSPORE_VERSION}-cp37-cp37m"
-version_map["3.9"]="${MINDSPORE_VERSION}-cp39-cp39"
 
 # add value to environment variable if value is not in it
 add_env() {
@@ -77,13 +72,43 @@ add_env() {
 # use huaweicloud mirror in China
 sed -i "s@http://.*archive.ubuntu.com@http://repo.huaweicloud.com@g" /etc/apt/sources.list
 sed -i "s@http://.*security.ubuntu.com@http://repo.huaweicloud.com@g" /etc/apt/sources.list
-apt-get update
 
-apt-get install curl make gcc-7 libgmp-dev linux-headers-"$(uname -r)" -y
+# base packages
+apt-get update
+apt-get install software-properties-common lsb-release -y
+apt-get install curl tcl automake autoconf libtool gcc-7 git libgmp-dev patch libnuma-dev flex -y
+
+# cmake
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+apt-get install cmake -y
+
+# optional dependency LLVM for graph-computation fusion
+if [[ X"$LLVM" == "Xon" ]]; then
+    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+    add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-12 main"
+    apt-get update
+    apt-get install llvm-12-dev -y
+fi
+
+# optional openmpi for distributed training
+if [[ X"$OPENMPI" == "Xon" ]]; then
+    origin_wd=$PWD
+    cd /tmp
+    sudo -u $SUDO_USER curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
+    sudo -u $SUDO_USER tar xzf openmpi-4.0.3.tar.gz
+    cd openmpi-4.0.3
+    sudo -u $SUDO_USER ./configure --prefix=/usr/local/openmpi-4.0.3
+    sudo -u $SUDO_USER make
+    make install
+    add_env PATH /usr/local/openmpi-4.0.3/bin
+    add_env LD_LIBRARY_PATH /usr/local/openmpi-4.0.3/lib
+    cd $origin_wd
+fi
 
 # python
 add-apt-repository -y ppa:deadsnakes/ppa
-apt-get install python$PYTHON_VERSION python$PYTHON_VERSION-distutils python3-pip -y
+apt-get install python$PYTHON_VERSION python$PYTHON_VERSION-dev python$PYTHON_VERSION-distutils python3-pip -y
 update-alternatives --install /usr/bin/python python /usr/bin/python$PYTHON_VERSION 100
 # pip
 sudo -u $SUDO_USER python -m pip install pip -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -118,37 +143,9 @@ add_env LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu
 set +e && source ~/.bashrc
 set -e
 
-# optional openmpi for distributed training
-if [[ X"$OPENMPI" == "Xon" ]]; then
-    cd /tmp
-    sudo -u $SUDO_USER curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
-    sudo -u $SUDO_USER tar xzf openmpi-4.0.3.tar.gz
-    cd openmpi-4.0.3
-    sudo -u $SUDO_USER ./configure --prefix=/usr/local/openmpi-4.0.3
-    sudo -u $SUDO_USER make
-    make install
-    add_env PATH /usr/local/openmpi-4.0.3/bin
-    add_env LD_LIBRARY_PATH /usr/local/openmpi-4.0.3/lib
-fi
+# wheel
+sudo -u $SUDO_USER pip install wheel
+# python 3.9 needs setuptools>44.0
+sudo -u $SUDO_USER pip install -U setuptools
 
-arch=`uname -m`
-sudo -u $SUDO_USER pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/gpu/${arch}/${cuda_name}/mindspore_gpu-${version_map["$PYTHON_VERSION"]}-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# check mindspore installation
-python -c "import mindspore;mindspore.run_check()"
-
-# check if it can be run with GPU
-cd /tmp
-cat > example.py <<END
-import numpy as np
-from mindspore import Tensor
-import mindspore.ops as ops
-import mindspore.context as context
-
-context.set_context(device_target="GPU")
-x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-print(ops.add(x, y))
-END
-python example.py
-cd -
+echo "The environment is ready to clone and compile mindspore."
