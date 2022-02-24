@@ -203,32 +203,3 @@ class TestAutotuneWithProfiler:
                 pass
 
         ds.config.set_enable_autotune(False)
-
-    def test_autotune_config(self):
-        """
-        Feature: Autotuning
-        Description: test basic config of autotune
-        Expectation: config can be set successfully
-        """
-        autotune_state = ds.config.get_enable_autotune()
-        assert autotune_state is False
-
-        ds.config.set_enable_autotune(False)
-        autotune_state = ds.config.get_enable_autotune()
-        assert autotune_state is False
-
-        with pytest.raises(TypeError):
-            ds.config.set_enable_autotune(1)
-
-        autotune_interval = ds.config.get_autotune_interval()
-        assert autotune_interval == 0
-
-        ds.config.set_autotune_interval(200)
-        autotune_interval = ds.config.get_autotune_interval()
-        assert autotune_interval == 200
-
-        with pytest.raises(TypeError):
-            ds.config.set_autotune_interval(20.012)
-
-        with pytest.raises(ValueError):
-            ds.config.set_autotune_interval(-999)

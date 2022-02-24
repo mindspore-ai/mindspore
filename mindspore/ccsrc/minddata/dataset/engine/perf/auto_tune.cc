@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <utility>
 #include <vector>
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
@@ -39,6 +40,8 @@ AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
   tree_modifier_ = std::make_unique<TreeModifier>(tree_adapter_);
   max_workers_ = GlobalContext::config_manager()->num_cpu_threads();
   step_gap_ = GlobalContext::config_manager()->autotune_interval();
+  save_autoconfig_ = GlobalContext::config_manager()->save_autoconfig();
+  autotune_json_filepath_ = GlobalContext::config_manager()->get_autotune_json_filepath();
 }
 
 Status AutoTune::Main() {

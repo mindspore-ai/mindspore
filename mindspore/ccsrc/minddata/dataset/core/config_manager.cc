@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/core/config_manager.h"
 
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -27,6 +28,7 @@
 #else
 #include "mindspore/lite/src/common/log_adapter.h"
 #endif
+#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/system_pool.h"
 #include "utils/ms_utils.h"
 
@@ -53,7 +55,9 @@ ConfigManager::ConfigManager()
       enable_shared_mem_(true),
       auto_offload_(false),
       enable_autotune_(false),
+      save_autoconfig_(false),
       autotune_interval_(kCfgAutoTuneInterval) {
+  autotune_json_filepath_ = kEmptyString;
   num_cpu_threads_ = num_cpu_threads_ > 0 ? num_cpu_threads_ : std::numeric_limits<uint16_t>::max();
   num_parallel_workers_ = num_parallel_workers_ < num_cpu_threads_ ? num_parallel_workers_ : num_cpu_threads_;
   std::string env_cache_host = common::GetEnv("MS_CACHE_HOST");
@@ -126,7 +130,7 @@ Status ConfigManager::set_num_parallel_workers(int32_t num_parallel_workers) {
   if (num_parallel_workers > num_cpu_threads_ || num_parallel_workers < 1) {
     std::string err_msg = "Invalid Parameter, num_parallel_workers exceeds the boundary between 1 and " +
                           std::to_string(num_cpu_threads_) + ", as got " + std::to_string(num_parallel_workers) + ".";
-    RETURN_STATUS_UNEXPECTED(err_msg);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   num_parallel_workers_ = num_parallel_workers;
   return Status::OK();
@@ -161,6 +165,57 @@ void ConfigManager::set_cache_port(int32_t cache_port) { cache_port_ = cache_por
 void ConfigManager::set_num_connections(int32_t num_connections) { num_connections_ = num_connections; }
 
 void ConfigManager::set_cache_prefetch_size(int32_t cache_prefetch_size) { cache_prefetch_size_ = cache_prefetch_size; }
+
+Status ConfigManager::set_enable_autotune(bool enable, bool save_autoconfig, const std::string &json_filepath) {
+  enable_autotune_ = enable;
+  save_autoconfig_ = save_autoconfig;
+
+  // Check if not requested to save AutoTune config
+  if (!save_autoconfig_) {
+    // No need for further processing, like process json_filepath input
+    return Status::OK();
+  }
+
+  Path jsonpath(json_filepath);
+
+  if (jsonpath.IsDirectory()) {
+    std::string err_msg = "Invalid json_filepath parameter. <" + json_filepath + "> is a directory, not filename.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  std::string parent_path = jsonpath.ParentPath();
+  if (parent_path != "") {
+    if (!Path(parent_path).Exists()) {
+      std::string err_msg = "Invalid json_filepath parameter.  Directory <" + parent_path + "> does not exist.";
+      LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  } else {
+    // Set parent_path to current working directory
+    parent_path = ".";
+  }
+
+  std::string real_path;
+  if (Path::RealPath(parent_path, real_path).IsError()) {
+    std::string err_msg = "Invalid json_filepath parameter. Cannot get real json_filepath <" + real_path + ">.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (access(real_path.c_str(), W_OK) == -1) {
+    std::string err_msg = "Invalid json_filepath parameter. No access to write to <" + real_path + ">.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (jsonpath.Exists()) {
+    // Note: Allow file to be overwritten (like serialize)
+    std::string err_msg = "Invalid json_filepath parameter. File: <" + json_filepath + "> already exists." +
+                          " File will be overwritten with the AutoTuned data pipeline configuration.";
+    MS_LOG(WARNING) << err_msg;
+  }
+
+  // Save the final AutoTune configuration JSON filepath name
+  autotune_json_filepath_ = std::move(json_filepath);
+  return Status::OK();
+}
 
 }  // namespace dataset
 }  // namespace mindspore

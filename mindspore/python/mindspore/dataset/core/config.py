@@ -28,6 +28,7 @@ import random
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
+from .validator_helpers import replace_none
 
 __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
            'get_num_parallel_workers', 'set_numa_enable', 'get_numa_enable', 'set_monitor_sampling_interval',
@@ -421,24 +422,55 @@ def load(file):
     _config.load(file)
 
 
-def set_enable_autotune(enable):
+def set_enable_autotune(enable, json_filepath=None):
     """
-    Set the default state of AutoTune flag. If it is True, will facilitate users to improve
-    performance for a given workload by automatically finding the better settings for data pipeline.
+    Set the default state of AutoTune flag. If it is True, will facilitate users to improve the
+    performance for a given workload by automatically finding better settings for data pipeline.
+    Optionally save the AutoTuned data pipeline configuration to a JSON file, which
+    can be loaded with deserialize().
 
     Args:
         enable (bool): Whether to use AutoTune feature when running data pipeline.
+        json_filepath (str, optional): The filepath where the AutoTuned data pipeline
+            configuration will be generated as a JSON file. If the file already exists,
+            it will be overwritten. If no AutoTuned data pipeline configuration is desired,
+            then set json_filepath to None (Default=None).
 
     Raises:
         TypeError: If enable is not a boolean data type.
+        TypeError: If json_filepath is not a str value.
+        RuntimeError: If the value of json_filepath is the empty string.
+        RuntimeError: If json_filepath a directory.
+        RuntimeError: If parent path for json_filepath does not exist.
+        RuntimeError: If parent path for json_filepath does not have write permission.
+
+    Note:
+        When using enable is False, the value of json_filepath is ignored.
 
     Examples:
+        >>> # Enable AutoTune and save AutoTuned data pipeline configuration
+        >>> ds.config.set_enable_autotune(True, "/path/to/autotune_out.json")
+        >>>
         >>> # Enable AutoTune
         >>> ds.config.set_enable_autotune(True)
     """
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
-    _config.set_enable_autotune(enable)
+
+    save_autoconfig = bool(enable and json_filepath is not None)
+
+    if json_filepath and not isinstance(json_filepath, str):
+        raise TypeError("json_filepath must be a str value but was: {}.".format(json_filepath))
+
+    if enable and json_filepath == "":
+        raise RuntimeError("The value of json_filepath cannot be the empty string.")
+
+    if not enable and json_filepath is not None:
+        logger.warning("The value of json_filepath is ignored when enable is False.")
+
+    json_filepath = replace_none(json_filepath, "")
+
+    _config.set_enable_autotune(enable, save_autoconfig, json_filepath)
 
 
 def get_enable_autotune():
