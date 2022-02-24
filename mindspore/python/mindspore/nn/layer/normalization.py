@@ -496,6 +496,10 @@ def _check_3d_shape(input_shape, prim_name=None):
         raise ValueError(f"{msg_prefix} input_shape must be 5-dimensional, but got the length of input_shape: "
                          f"{len(input_shape)}.")
 
+@constexpr
+def _check_dtype(dtype, valid_dtypes, args_name, prim_name=None):
+    validator.check_type_name(args_name, dtype, valid_dtypes, prim_name)
+
 
 class BatchNorm3d(Cell):
     r"""
@@ -702,8 +706,9 @@ class SyncBatchNorm(_BatchNorm):
 
     Examples:
         >>> # This example should be run with multiple processes.
-        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
-        >>> # Focus on the contents of these three parts: 配置分布式环境变量, 调用集合通信库, 运行脚本.
+        >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
+        >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
+        >>> # Variables, Calling the Collective Communication Library, Running the Script.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import context
@@ -1070,6 +1075,7 @@ class GroupNorm(Cell):
 
     def construct(self, x):
         _shape_check(self.shape(x), self.cls_name)
+        _check_dtype(x.dtype, [mstype.float16, mstype.float32], "input", self.cls_name)
         output = self._cal_output(x)
         return output
 
