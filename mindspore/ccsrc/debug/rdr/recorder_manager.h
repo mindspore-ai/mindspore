@@ -24,6 +24,7 @@
 #include <utility>
 #include "utils/hash_map.h"
 #include "debug/env_config_parser.h"
+#include "debug/rdr/base_recorder.h"
 
 namespace mindspore {
 // The number is the reciprocal of the golden ratio.
@@ -51,8 +52,6 @@ struct pair_hash {
   }
 };
 
-class BaseRecorder;
-using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
 class RecorderManager {
  public:
   static RecorderManager &Instance() {
