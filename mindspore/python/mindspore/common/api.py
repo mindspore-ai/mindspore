@@ -661,7 +661,7 @@ class _CellGraphExecutor:
         if enable_ge:
             self._build_data_graph(obj, phase)
             if "export" not in phase:
-                init_phase = "init_subgraph." + str(obj.create_time) + "." + str(id(obj))
+                init_phase = "init_subgraph." + str(obj.create_time) + "." + str(id(obj)) + '.' + obj.arguments_key
                 _exec_init_graph(obj, init_phase)
         elif "export" in phase:
             self._build_data_graph(obj, phase)
@@ -742,7 +742,8 @@ class _CellGraphExecutor:
             Tensor/Tuple, return execute result.
         """
         if phase == 'save':
-            return self._graph_executor((), phase + '.' + str(obj.create_time) + '.' + str(id(obj)))
+            exe_phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
+            return self._graph_executor((), exe_phase)
 
         phase_real = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
         if self.has_compiled(phase_real):
