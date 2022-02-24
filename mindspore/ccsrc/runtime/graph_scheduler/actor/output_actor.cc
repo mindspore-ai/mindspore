@@ -64,13 +64,16 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
     // For dynamic_shape, UpdateOp maybe run after RunOpData, so it's needed to update shape of output tensor here
     // Check outputs number.
     if (output_nodes_.size() != outputs_.size()) {
-      MS_LOG(EXCEPTION) << "The outputs number is wrong.";
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs number is wrong.");
     }
     // Update output tensor's shape
     for (size_t i = 0; i < outputs_.size(); ++i) {
       auto shape = AnfAlgo::GetOutputInferShape(output_nodes_[i].first, output_nodes_[i].second);
       std::vector<int64_t> temp_shape;
       (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
+      if (outputs_[i] == nullptr) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs_[i] is nullptr.");
+      }
       outputs_[i]->set_shape(temp_shape);
     }
 
