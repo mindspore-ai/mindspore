@@ -36,6 +36,7 @@ namespace abstract {
 constexpr auto kCSRDenseShape = "dense_shape";
 constexpr auto kCSRAxis = "axis";
 constexpr auto kCSRAvgRows = "csr_avg_rows";
+constexpr auto kIsCSR = "is_csr";
 AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // An object of a subclass of AbstractBase
@@ -439,6 +440,9 @@ AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &p
                              << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
                              << "and dense tensor has " << dense_shape.size() << " dimensions, ";
   }
+  if (dense_shape[0] != sparse_shape[0]) {
+    MS_EXCEPTION(ValueError) << "Currently, only support dense tensor broadcast with last dim!";
+  }
   auto ret = sparse->values()->Broaden();
 
   MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
@@ -446,7 +450,7 @@ AbstractBasePtr InferImplCSRMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
-
+  primitive->set_attr(kIsCSR, MakeValue(true));
   return ret;
 }
 
@@ -482,7 +486,7 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
   int csr_avg_rows = SizeToInt(nnz_vec[0] / dense_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
-
+  primitive->set_attr(kIsCSR, MakeValue(true));
   return ret;
 }
 
@@ -532,7 +536,98 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
   int csr_avg_rows = SizeToInt(nnz_vec[0] / sparse_shape[0]);
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
   primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
+  primitive->set_attr(kIsCSR, MakeValue(true));
+  return ret;
+}
 
+AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: the indptr and indices of a sparse csr tensor, a dense tensor, and the shape of the sparse tensor.
+  constexpr auto kCSRShapeSize = 2;
+  constexpr auto kCSRArgsSize = 4;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRArgsSize);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto sparse_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(dense);
+  MS_EXCEPTION_IF_NULL(sparse_shape);
+
+  if (sparse_shape->size() != kCSRShapeSize) {
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRShapeSize << "-D inputs!"
+                             << "But sparse tensor has " << sparse_shape->size() << " dimensions.";
+  }
+
+  auto shape_value = sparse_shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  auto nnz_vec = indices->shape()->shape();
+  int64_t csr_avg_rows = nnz_vec[0] / GetValue<int64_t>(shape_value->value()[0]);
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kIsCSR, MakeValue(true));
+
+  MS_EXCEPTION_IF_NULL(indices->shape());
+  ShapeVector out_shape = indices->shape()->shape();
+  MS_EXCEPTION_IF_NULL(dense->element());
+  auto ret = std::make_shared<AbstractTensor>(dense->element()->BuildType(), out_shape);
+  return ret;
+}
+
+AbstractBasePtr InferImplCSR2COO(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  // Inputs: the indptr of a sparse csr tensor, and the number of non-zero elements.
+  constexpr auto kCSRArgsSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRArgsSize);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto nnz = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(nnz);
+
+  MS_EXCEPTION_IF_NULL(nnz->BuildValue());
+  ShapeVector out_shape;
+  if (nnz->BuildValue()->isa<Int32Imm>() || nnz->BuildValue()->isa<Int64Imm>()) {
+    int64_t nnz_value = GetValue<int64_t>(nnz->BuildValue());
+    out_shape.push_back(nnz_value);
+  } else {
+    MS_EXCEPTION(ValueError) << "Currently, only support Integer nnz.";
+  }
+
+  MS_EXCEPTION_IF_NULL(indptr->shape());
+  auto num_rows = indptr->shape()->shape()[0] - 1;
+  int csr_avg_rows = GetValue<int64_t>(nnz->BuildValue()) / num_rows;
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kIsCSR, MakeValue(true));
+
+  MS_EXCEPTION_IF_NULL(indptr->element());
+  auto ret = std::make_shared<AbstractTensor>(indptr->element()->BuildType(), out_shape);
+  return ret;
+}
+
+AbstractBasePtr InferImplCOO2CSR(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  // Inputs: the row indices of a sparse coo tensor, and the size of its first dimension.
+  constexpr auto kCSRArgsSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRArgsSize);
+  auto row_indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto height = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(row_indices);
+  MS_EXCEPTION_IF_NULL(height);
+
+  MS_EXCEPTION_IF_NULL(height->BuildValue());
+  ShapeVector out_shape;
+  if (height->BuildValue()->isa<Int32Imm>() || height->BuildValue()->isa<Int64Imm>()) {
+    int64_t height_value = GetValue<int64_t>(height->BuildValue());
+    out_shape.push_back(height_value + 1);
+  } else {
+    MS_EXCEPTION(ValueError) << "Currently, only support Integer height.";
+  }
+
+  MS_EXCEPTION_IF_NULL(row_indices->element());
+  auto ret = std::make_shared<AbstractTensor>(row_indices->element()->BuildType(), out_shape);
   return ret;
 }
 

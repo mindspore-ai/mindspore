@@ -2468,6 +2468,24 @@ class COOTensor(COOTensor_):
     def shape(self):
         return self._shape
 
+    def to_csr(self):
+        "Converts COOTensor to CSRTensor."
+        row_indices = self.indices[:, 0]
+        col_indices = self.indices[:, 1]
+        idx_dtype = self.indices.dtype
+        row_indices, sort_idx = tensor_operator_registry.get("sort")(
+            row_indices.astype(mstype.float32))
+        row_indices = row_indices.astype(idx_dtype)
+        col_indices = col_indices[sort_idx]
+        values = self.values[sort_idx]
+        indptr = tensor_operator_registry.get("coo2csr")(row_indices, self.shape[0])
+        return CSRTensor(indptr, col_indices, values, self.shape)
+
+    def to_dense(self):
+        zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
+        return tensor_operator_registry.get("tensor_scatter_update")(
+            zeros_tensor, self.indices, self.values)
+
 
 class CSRTensor(CSRTensor_):
     """
@@ -2565,6 +2583,15 @@ class CSRTensor(CSRTensor_):
 
     def to_tuple(self):
         return self.indptr, self.indices, self.values, self.shape
+
+    def to_coo(self):
+        row_indices = tensor_operator_registry.get("csr2coo")(self.indptr, self.values.shape[0])
+        coo_indices = tensor_operator_registry.get("stack")(1)((row_indices, self.indices))
+        return COOTensor(coo_indices, self.values, self.shape)
+
+    def to_dense(self):
+        coo_tensor = self.to_coo()
+        return coo_tensor.to_dense()
 
 
 def _vm_compare(*args):

@@ -346,4 +346,19 @@ def _add_nonetensor_tensor(x, y):
    """
     return x + y
 
+
+@_add_backward.register("CSRTensor", "CSRTensor")
+def _add_csrtensor_csrtensor(x, y):
+    """
+   Adds CSRTensor and CSRTensor.
+
+   Args:
+       x (CSRTensor): x
+       y (CSRTensor): y
+
+   Returns:
+       CSRTensor.
+   """
+    return F.make_csr_tensor(x.indptr, x.indices, x.values + y.values, x.shape)
+
 hyper_add = base.HyperMap(_add_backward)

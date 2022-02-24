@@ -58,6 +58,12 @@ def _ones_like_coo_tensor(x):
     return F.make_coo_tensor(F.coo_tensor_get_indices(x), values, F.coo_tensor_get_dense_shape(x))
 
 
+@ones_like_leaf.register("CSRTensor")
+def _ones_like_csr_tensor(x):
+    """Returns a tensor with the same shape and dtype as x and all elements are 1."""
+    return F.make_csr_tensor(x.indptr, x.indices, ones_like(x.values), x.shape)
+
+
 @ones_like_leaf.register("Function")
 def _ones_like_func(x):
     """

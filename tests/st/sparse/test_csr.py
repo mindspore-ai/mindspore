@@ -18,7 +18,7 @@ import os
 import pytest
 import numpy as np
 
-from mindspore import Tensor, CSRTensor, ms_function, nn, context
+from mindspore import Tensor, CSRTensor, ms_function, nn, context, ops
 from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
@@ -232,8 +232,8 @@ def test_csr_ops():
     csr_reducesum = _csr_ops.CSRReduceSum()
     csrmv = _csr_ops.CSRMV()
 
-    indptr = Tensor([0, 1, 2])
-    indices = Tensor([0, 1])
+    indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+    indices = Tensor([0, 1], dtype=mstype.int32)
     values = Tensor([2, 1], dtype=mstype.float32)
     dense_shape = (2, 4)
 
@@ -331,8 +331,8 @@ def test_csrops_export_and_import_mindir():
             sparse2 = dence_tensor * csr_tensor
             return dense1, dense2, dense3, sparse1, sparse2
 
-    indptr = Tensor([0, 1, 2])
-    indices = Tensor([0, 1])
+    indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+    indices = Tensor([0, 1], dtype=mstype.int32)
     values = Tensor([2, 1], dtype=mstype.float32)
     shape = (2, 4)
     dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
@@ -428,3 +428,111 @@ def test_dtype_csr_tensor():
     out2 = graph_test()
     assert out1 in [mstype.float32]
     assert out2 in [mstype.float32]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_bprop():
+    """
+    Feature: Test back-propagation with CSR-related Ops.
+    Description: Test CSRReduceSum, CSRMul, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
+    Expectation: Success.
+    """
+    class CSRMulNet(nn.Cell):
+        def __init__(self):
+            super(CSRMulNet, self).__init__()
+            self.op = _csr_ops.CSRMul()
+
+        def construct(self, csr_tensor, dense):
+            return self.op(csr_tensor, dense)
+
+    class CSRReduceSumNet(nn.Cell):
+        def __init__(self):
+            super(CSRReduceSumNet, self).__init__()
+            self.op = _csr_ops.CSRReduceSum()
+
+        def construct(self, csr_tensor, axis):
+            return self.op(csr_tensor, axis)
+
+    class CSRMVNet(nn.Cell):
+        def __init__(self):
+            super(CSRMVNet, self).__init__()
+            self.op = _csr_ops.CSRMV()
+
+        def construct(self, csr_tensor, dense):
+            return self.op(csr_tensor, dense)
+
+    class BpropNet(nn.Cell):
+        def __init__(self, net):
+            super(BpropNet, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_all=True)
+
+        def construct(self, *inputs):
+            return self.grad_op(self.net)(*inputs)
+
+    indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
+    indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
+    values = Tensor(np.arange(6), dtype=mstype.float32)
+    dense_shape = (3, 4)
+    csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+
+    csr_mv_arg = Tensor([[1], [2], [3], [4]], dtype=mstype.float32)
+    csr_mv_output_1, csr_mv_output_2 = BpropNet(CSRMVNet())(csr_tensor, csr_mv_arg)
+    csr_mv_expect_1 = np.array([4, 1, 2, 3, 2, 4], dtype=np.float32)
+    csr_mv_expect_2 = np.array([[1], [6], [3], [5]], dtype=np.float32)
+    assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
+    assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
+
+    csr_reduce_sum_output = BpropNet(CSRReduceSumNet())(csr_tensor, 1)
+    csr_reduce_sum_expect = np.ones(6, dtype=np.float32)
+    assert np.allclose(csr_reduce_sum_output[0].values.asnumpy(), csr_reduce_sum_expect)
+
+    csr_mul_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
+    csr_mul_output_1_1, csr_mul_output_1_2 = BpropNet(CSRMulNet())(csr_tensor, csr_mul_arg_1)
+    csr_mul_expect_1_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
+    csr_mul_expect_1_2 = np.array([[0], [6], [9]], dtype=np.float32)
+    assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
+    assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
+
+    csr_mul_arg_2 = Tensor(np.arange(12).reshape(3, 4), dtype=mstype.float32)
+    csr_mul_output_2_1, csr_mul_output_2_2 = BpropNet(CSRMulNet())(csr_tensor, csr_mul_arg_2)
+    csr_mul_expect_2_1 = np.array([3, 4, 5, 6, 9, 11], dtype=np.float32)
+    csr_mul_expect_2_2 = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
+    assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
+    assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_csr_method():
+    """
+    Feature: Test csr tensor methods.
+    Description: Test csr_tensor.to_coo(), csr_tensor.to_dense().
+    Expectation: Success.
+    """
+    class CSRToCOONet(nn.Cell):
+        def construct(self, csr_tensor):
+            return csr_tensor.to_coo()
+
+    class CSRToDenseNet(nn.Cell):
+        def construct(self, csr_tensor):
+            return csr_tensor.to_dense()
+
+    indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
+    indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
+    values = Tensor(np.arange(6), dtype=mstype.float32)
+    dense_shape = (3, 4)
+    csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+
+    to_coo_output = CSRToCOONet()(csr_tensor)
+    to_coo_expect_1 = np.array([[0, 3], [1, 0], [1, 1], [1, 2], [2, 1], [2, 3]], dtype=np.int32)
+    to_coo_expect_2 = np.arange(6).astype(np.float32)
+    assert np.allclose(to_coo_output.indices.asnumpy(), to_coo_expect_1)
+    assert np.allclose(to_coo_output.values.asnumpy(), to_coo_expect_2)
+
+    to_dense_output = CSRToDenseNet()(csr_tensor)
+    to_dense_expect = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
+    assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)

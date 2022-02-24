@@ -98,6 +98,7 @@ namespace pipeline {
 using Tensor = mindspore::tensor::Tensor;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using CSRTensor = mindspore::tensor::CSRTensor;
+using COOTensor = mindspore::tensor::COOTensor;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
@@ -178,7 +179,8 @@ bool CheckArgValid(const py::handle &arg) {
 
   return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<py::none>(arg) ||
          py::isinstance<Number>(arg) ||
-         ((py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg)) && !py::hasattr(arg, "__parameter__"));
+         ((py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg) || py::isinstance<COOTensor>(arg)) &&
+          !py::hasattr(arg, "__parameter__"));
 }
 
 std::string GetCompileExceptionInfo() {

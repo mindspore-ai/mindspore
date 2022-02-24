@@ -32,7 +32,7 @@ from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
 from ..common.parameter import Parameter, ParameterTuple
-from ..common.tensor import Tensor, CSRTensor
+from ..common.tensor import Tensor, CSRTensor, COOTensor
 from ..ops.operations import Cast
 from ..ops.primitive import Primitive
 from ..ops.operations import _inner_ops as inner
@@ -815,6 +815,8 @@ class Cell(Cell_):
                 if i.has_init:
                     i.init_data()
                 new_inputs.append(i)
+            elif isinstance(i, COOTensor):
+                new_inputs.append(i)
             elif isinstance(i, CSRTensor):
                 new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
@@ -1267,16 +1269,16 @@ class Cell(Cell_):
 
     def _add_mixed_precision_flag(self, **flags):
         """Add mixed precision flag to current cell"""
-        if "fp16" in flags and flags["fp16"]:
+        if "fp16" in flags and flags.get("fp16", False):
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP16)
-        if "fp32" in flags and flags["fp32"]:
+        if "fp32" in flags and flags.get("fp32", False):
             Cell_.set_mixed_precision_type(self, MixedPrecisionType.FP32)
 
     def _add_mixed_precision_flag_recursive(self, **flags):
         """Add mixed precision flag to each cell"""
-        if "fp16" in flags and flags["fp16"]:
+        if "fp16" in flags and flags.get("fp16", False):
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
-        if "fp32" in flags and flags["fp32"]:
+        if "fp32" in flags and flags.get("fp32", False):
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP32)
 
     def add_flags(self, **flags):
@@ -1876,15 +1878,16 @@ class Cell(Cell_):
         """
         self._recompute()
         if 'mp_comm_recompute' in kwargs.keys():
-            self._mp_comm_recompute(kwargs['mp_comm_recompute'])
+            self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))
         if 'parallel_optimizer_comm_recompute' in kwargs.keys():
-            if kwargs['parallel_optimizer_comm_recompute'] and context.get_auto_parallel_context("pipeline_stages") > 1:
+            if (kwargs.get('parallel_optimizer_comm_recompute', False) and
+                    context.get_auto_parallel_context("pipeline_stages") > 1):
                 logger.warning("Currently, the communication operator allgathers introduced by optimizer shard "
                                "are not support recomputation in pipeline parallel.")
             elif context.get_auto_parallel_context("pipeline_stages") == 1:
-                self._parallel_optimizer_comm_recompute(kwargs['parallel_optimizer_comm_recompute'])
+                self._parallel_optimizer_comm_recompute(kwargs.get('parallel_optimizer_comm_recompute', False))
         if 'recompute_slice_activation' in kwargs.keys():
-            self._recompute_slice_activation(kwargs['recompute_slice_activation'])
+            self._recompute_slice_activation(kwargs.get('recompute_slice_activation', False))
 
         for key, _ in kwargs.items():
             if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute', 'recompute_slice_activation'):

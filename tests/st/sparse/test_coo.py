@@ -91,3 +91,39 @@ def test_coo_tensor_in_while():
     assert np.allclose(out.indices.asnumpy(), indices.asnumpy(), .0, .0)
     assert np.allclose(out.values.asnumpy(), values.asnumpy(), .0, .0)
     assert out.shape == shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_coo_method():
+    """
+    Feature: Test coo tensor methods.
+    Description: Test coo_tensor.to_csr(), coo_tensor.to_dense().
+    Expectation: Success.
+    """
+    class COOToCSRNet(nn.Cell):
+        def construct(self, coo_tensor):
+            return coo_tensor.to_csr()
+
+    class COOToDenseNet(nn.Cell):
+        def construct(self, coo_tensor):
+            return coo_tensor.to_dense()
+
+    indices = Tensor([[1, 2], [0, 1]], dtype=mstype.int32)
+    values = Tensor([2, 1], dtype=mstype.float32)
+    shape = (3, 4)
+    coo_tensor = COOTensor(indices, values, shape)
+
+    to_csr_output = COOToCSRNet()(coo_tensor)
+    to_csr_expect_1 = np.array([0, 1, 2, 2], dtype=np.int32)
+    to_csr_expect_2 = np.array([1, 2], dtype=np.int32)
+    to_csr_expect_3 = np.array([1, 2], dtype=np.float32)
+    assert np.allclose(to_csr_output.indptr.asnumpy(), to_csr_expect_1)
+    assert np.allclose(to_csr_output.indices.asnumpy(), to_csr_expect_2)
+    assert np.allclose(to_csr_output.values.asnumpy(), to_csr_expect_3)
+
+    to_dense_output = COOToDenseNet()(coo_tensor)
+    to_dense_expect = np.array(
+        [[0., 1., 0., 0.], [0., 0., 2., 0.], [0., 0., 0., 0.]], dtype=np.float32)
+    assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)

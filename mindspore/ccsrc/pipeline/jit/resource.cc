@@ -216,7 +216,17 @@ BuiltInTypeMap &GetMethodMap() {
                                        }},
                                       {kObjectTypeJTagged, {}},
                                       {kObjectTypeSymbolicKeyType, {}},
-                                      {kObjectTypeEnvType, {}}};
+                                      {kObjectTypeEnvType, {}},
+                                      {kObjectTypeCOOTensorType,
+                                       {
+                                         {"to_csr", std::string("coo_to_csr")},
+                                         {"to_dense", std::string("coo_to_dense")},
+                                       }},
+                                      {kObjectTypeCSRTensorType,
+                                       {
+                                         {"to_coo", std::string("csr_to_coo")},
+                                         {"to_dense", std::string("csr_to_dense")},
+                                       }}};
   return method_map;
 }
 

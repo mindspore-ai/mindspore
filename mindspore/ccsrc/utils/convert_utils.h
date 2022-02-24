@@ -94,8 +94,13 @@ const mindspore::HashSet<std::string> make_sparse_set = {{prim::kMakeCSRTensor},
 // sparse_op_set records all sparse_compute operators, which takes sparsetensor
 // and (possibly) dense tensors, used in backend common optimization pass:
 // sparse_process.cc
-const mindspore::HashSet<std::string> sparse_op_set = {
-  {prim::kSparseTensorDenseMatmul}, {prim::kCSRDenseMul}, {prim::kCSRReduceSum}, {prim::kCSRMV}, {prim::kCSRMul}};
+const mindspore::HashSet<std::string> sparse_op_set = {{prim::kSparseTensorDenseMatmul},
+                                                       {prim::kCSRDenseMul},
+                                                       {prim::kCSRReduceSum},
+                                                       {prim::kCSRMV},
+                                                       {prim::kCSRMul},
+                                                       {prim::kCSRGather},
+                                                       {prim::kCSR2COO}};
 
 bool IsCustomCSROP(const AnfNodePtr &cnode);
 }  // namespace mindspore
