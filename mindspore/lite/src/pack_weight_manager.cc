@@ -26,16 +26,17 @@ PackWeightManager *PackWeightManager::GetInstance() {
   return &instance;
 }
 
-void PackWeightManager::InitWeightManagerByBuf(const char *model_buf) {
-  MS_CHECK_TRUE_RET_VOID(model_buf != nullptr);
+STATUS PackWeightManager::InitWeightManagerByBuf(const char *model_buf) {
+  MS_CHECK_TRUE_RET(model_buf != nullptr, RET_ERROR);
   if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
     auto *model_const_weight = new (std::nothrow) ModelConstWeight();
     if (model_const_weight == nullptr) {
       MS_LOG(ERROR) << "model_const_weight is nullptr.";
-      return;
+      return RET_ERROR;
     }
     buf_model_weight_[model_buf] = model_const_weight;
   }
+  return RET_OK;
 }
 
 void PackWeightManager::InitWeightManagerByPath(const std::string &model_path, const char *model_buf) {

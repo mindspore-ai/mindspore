@@ -139,11 +139,11 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::cosine_distance_threshold_, "cosineDistanceThreshold", "cosine distance threshold", -1.1);
     AddFlag(&BenchmarkFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
-#ifdef SERVER_INFERENCE
     AddFlag(&BenchmarkFlags::enable_parallel_predict_, "enableParallelPredict", "Enable model parallel : true | false",
             false);
-    AddFlag(&BenchmarkFlags::num_require_, "numRequire", "require num", 1);
-#endif
+    AddFlag(&BenchmarkFlags::parallel_request_num_, "parallelRequestNum", "parallel request num of parallel predict",
+            1);
+    AddFlag(&BenchmarkFlags::workers_num_, "workersNum", "works num of parallel predict", 2);
 #ifdef ENABLE_OPENGL_TEXTURE
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
 #endif
@@ -157,10 +157,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
 
  public:
   // common
-#ifdef SERVER_INFERENCE
   bool enable_parallel_predict_ = false;
-  int num_require_ = 1;
-#endif
+  int parallel_request_num_ = 1;
+  int workers_num_ = 2;
   std::string model_file_;
   std::string in_data_file_;
   std::string config_file_;
