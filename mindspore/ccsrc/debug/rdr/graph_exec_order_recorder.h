@@ -22,8 +22,6 @@
 #include "debug/rdr/base_recorder.h"
 
 namespace mindspore {
-class CNode;
-using CNodePtr = std::shared_ptr<CNode>;
 class GraphExecOrderRecorder : public BaseRecorder {
  public:
   GraphExecOrderRecorder() : BaseRecorder() {}

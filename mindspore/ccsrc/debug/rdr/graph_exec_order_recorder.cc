@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "debug/rdr/graph_exec_order_recorder.h"
-#include <sstream>
 #include <fstream>
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
