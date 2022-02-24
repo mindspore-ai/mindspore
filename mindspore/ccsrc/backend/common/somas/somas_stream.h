@@ -29,12 +29,11 @@ namespace somas {
 class SomasNode;
 class SomasTensor;
 
-using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-
 class SomasStream {
  public:
-  using SomasStreamPtr = std::shared_ptr<SomasStream>;
   using SomasNodePtr = std::shared_ptr<SomasNode>;
+  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
+  using SomasStreamPtr = std::shared_ptr<SomasStream>;
 
   // Attributes mutated in code
   std::vector<SomasTensorPtr> tensors_;  // vector needed for same-stream loop in ConflictComputing()

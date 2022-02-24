@@ -48,8 +48,7 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    TypeId dtype = kTypeUnknown;
-    dtype = AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
+    TypeId dtype = AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
     output_types->emplace_back(dtype);
   }
 }

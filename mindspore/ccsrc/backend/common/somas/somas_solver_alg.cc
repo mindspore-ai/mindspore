@@ -137,7 +137,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
 
   // transform constrained tensors in non eligible intervals
   if (block.Alone()) {
-    if (m_algorithm_ == kManyObjects && m_starts_.size() > 0 && m_starts_[0]->Alone() &&
+    if (m_algorithm_ == static_cast<uint32_t>(kManyObjects) && m_starts_.size() > 0 && m_starts_[0]->Alone() &&
         (*constraints)[block.m_start_tensor_->index_].IsBitTrue(m_starts_[0]->m_start_tensor_->index_) == false) {
       return false;
     }

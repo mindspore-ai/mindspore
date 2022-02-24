@@ -107,7 +107,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   std::vector<int64_t> assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
   std::vector<size_t> infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
   float val = 1.0;
-  if (divisor_override) {
+  if (divisor_override != 0) {
     val = 1.0 / divisor_override;
   } else if (IsZeroPads(pad_list) && !ceil_mode) {
     val = 1.0 / (kd * kh * kw);

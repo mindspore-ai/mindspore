@@ -46,8 +46,10 @@ class MemoryManager : public MemHandler {
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
                            const DeviceAddressPtr &address, bool comm_mem);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
-  virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address,
-                             uint32_t graph_id = kInvalidGraphId);
+  virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address, uint32_t graph_id);
+  virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
+    return MallocMem(type, size, address, kInvalidGraphId);
+  }
 
   // param address is the address type of each device
   // param from_persistent_mem shows whether the tensor is a parameter in Pynative mode
@@ -109,7 +111,10 @@ class MemoryManager : public MemHandler {
   }
 
  protected:
-  virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) = 0;
+  virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) = 0;
+  virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem) {
+    return MallocStaticMem(size, communication_mem, kInvalidGraphId);
+  }
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
   SomasPtr somas_reuse_util_ptr_{nullptr};
   std::map<size_t, std::queue<void *>> cached_host_mem_;

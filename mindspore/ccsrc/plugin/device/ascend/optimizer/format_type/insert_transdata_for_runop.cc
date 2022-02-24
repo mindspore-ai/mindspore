@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
-#include <memory>
 #include "utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

@@ -35,11 +35,10 @@ class SomasTensor;
 
 enum NodeType { kCommonNode, kCommunicationNode };
 
-using SomasStreamPtr = std::shared_ptr<SomasStream>;
-using SomasTensorPtr = std::shared_ptr<SomasTensor>;
-
 class SomasNode {
  public:
+  using SomasStreamPtr = std::shared_ptr<SomasStream>;
+  using SomasTensorPtr = std::shared_ptr<SomasTensor>;
   using SomasNodePtr = std::shared_ptr<SomasNode>;
   // Public attributes (mutated in code)
   std::string scope_full_name_;
@@ -56,7 +55,7 @@ class SomasNode {
   mindspore::HashMap<int64_t, size_t> anc_stream_max_order_;
 
   // Constructors/Destructors
-  SomasNode(size_t id, NodeType type, SomasStreamPtr stream) : id_(id), stream_(stream), type_(type) {}
+  SomasNode(size_t id, NodeType type, const SomasStreamPtr &stream) : id_(id), stream_(stream), type_(type) {}
   SomasNode(const SomasNode &) = delete;
   SomasNode &operator=(const SomasNode &) = delete;
   ~SomasNode() = default;

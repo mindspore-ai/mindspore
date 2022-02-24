@@ -85,7 +85,7 @@ class KernelDef {
   void set_scope_full_name(const std::string &scop_name) { scop_full_name_ = scop_name; }
   std::string scope_full_name() const { return scop_full_name_; }
   void InsertInputKernel(const std::shared_ptr<KernelDef> &input_kernel) { input_kernels_.insert(input_kernel); }
-  const std::set<std::shared_ptr<KernelDef>> &input_kernels() { return input_kernels_; }
+  const std::set<std::shared_ptr<KernelDef>> &input_kernels() const { return input_kernels_; }
 
  private:
   std::string scop_full_name_;

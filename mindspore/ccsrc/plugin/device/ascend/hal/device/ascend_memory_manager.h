@@ -50,7 +50,7 @@ class AscendMemoryManager : public MemoryManager {
   uint64_t GetMsUsedHbmSize();
 
  protected:
-  uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;
+  uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) override;
   uint8_t *MallocDynamicMem(size_t size, bool communication_mem) override;
 };
 }  // namespace ascend

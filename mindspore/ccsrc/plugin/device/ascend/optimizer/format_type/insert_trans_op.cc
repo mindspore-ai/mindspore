@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include <memory>
-#include <vector>
 #include "utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"

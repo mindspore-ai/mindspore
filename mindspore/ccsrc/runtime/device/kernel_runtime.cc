@@ -1035,7 +1035,7 @@ DeviceAddressPtr KernelRuntime::CreateDeviceAddressForStringValue(const ValuePtr
     }
   }
   ShapeVector shape = {1, SizeToLong(tensor_size)};
-  if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value_string.data())) {
+  if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value_string.data(), "DefaultFormat")) {
     MS_LOG(EXCEPTION) << "kValueNode SyncHostToDevice fail!";
   }
   return address;

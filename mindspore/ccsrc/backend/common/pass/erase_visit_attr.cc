@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/pass/erase_visit_attr.h"
-#include <vector>
 #include <memory>
 #include "kernel/common_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
