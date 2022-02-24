@@ -33,6 +33,7 @@ class DynamicTbeKernelMod : public TbeKernelMod {
  public:
   explicit DynamicTbeKernelMod(KernelPackPtr kernel_pack) : TbeKernelMod(kernel_pack) {}  // maybe delete later
   DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNodePtr &anf_node_ptr);
+  ~DynamicTbeKernelMod() override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;

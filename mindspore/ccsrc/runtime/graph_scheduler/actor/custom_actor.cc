@@ -36,6 +36,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     std::string error_info = "Launch custom kernel exception: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
   }
+  EraseInput(ctx);
   SendOutput(ctx);
 }
 }  // namespace runtime

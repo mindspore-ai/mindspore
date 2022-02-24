@@ -20,12 +20,12 @@ from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
-def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1, dataset_helper=None):
-    if dataset_sink_mode and not is_train:
-        dataset.__loop_size__ = 1
+
+def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, sink_size=1, epoch_num=1, dataset_helper=None):
 
     if dataset_helper is None:
-        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
+        dataset_helper = DatasetHelper(
+            dataset, dataset_sink_mode, sink_size, epoch_num)
 
     if dataset_sink_mode:
         network = connect_network_with_dataset(network, dataset_helper)
@@ -43,12 +43,15 @@ def _eval_dataset_sink_process(network, valid_dataset):
         for elem1, (_, elem2) in zip(outputs, inputs2.items()):
             assert elem1.shape == elem2.shape
 
+
 def dataset_generator():
     for i in range(1, 10):
         yield (
-            np.ones((32, i), dtype=np.float32), np.zeros((32, i, i, 3), dtype=np.int32),
+            np.ones((32, i), dtype=np.float32), np.zeros(
+                (32, i, i, 3), dtype=np.int32),
             np.ones((32,), dtype=np.float32),
             np.ones((32, i, 8), dtype=np.float32), np.ones((32, 8, 8), dtype=np.float32))
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -69,13 +72,41 @@ class Net(nn.Cell):
         x5 = self.relu(x5)
         return x1, x2, x3, x4, x5
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_getnext_dynamic_pipeline():
     network = Net()
-    dataset = ds.GeneratorDataset(dataset_generator, ["data1", "data2", "data3", "data4", "data5"])
+    dataset = ds.GeneratorDataset(
+        dataset_generator, ["data1", "data2", "data3", "data4", "data5"])
     dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None, None, 3],
                                          "data3": [32], "data4": [32, None, 8], "data5": [32, 8, 8]})
     _eval_dataset_sink_process(network, dataset)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_getnext_sink_size_dynamic_pipeline():
+    """
+    Feature: arbitrary sink size of dynamic data sink.
+    Description: datasets with dynamic shape as input.
+    Expectation: success without assert exception.
+    """
+    network = Net()
+    dataset = ds.GeneratorDataset(
+        dataset_generator, ["data1", "data2", "data3", "data4", "data5"])
+    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None, None, 3],
+                                         "data3": [32], "data4": [32, None, 8], "data5": [32, 8, 8]})
+
+    dataset_helper, eval_network = _exec_preprocess(
+        network, is_train=False, dataset=dataset, dataset_sink_mode=True, sink_size=-1)
+    for inputs in dataset_helper:
+        outputs = eval_network(*inputs)
+        for data_item in dataset.create_dict_iterator():
+            last_inputs = data_item.items()
+        for output, (_, last_input) in zip(outputs, last_inputs):
+            assert output.shape == last_input.shape

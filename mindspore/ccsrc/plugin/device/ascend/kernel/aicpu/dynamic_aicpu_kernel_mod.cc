@@ -24,6 +24,7 @@
 #include "acl/acl_rt.h"
 #include "utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/kernel.h"
@@ -40,6 +41,13 @@ DynamicAicpuOpKernelMod::DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr)
     if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
       unknow_type_ = device::ascend::UnknowShapeOpType::DEPEND_COMPUTE;
     }
+  }
+}
+DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
+  // free dev ptr
+  if (ext_info_addr_dev_ != nullptr) {
+    auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
+    mem_manager->FreeMemFromMemPool(ext_info_addr_dev_);
   }
 }
 
@@ -104,9 +112,11 @@ void DynamicAicpuOpKernelMod::AllocateExtInfoDeviceAddr(const CNodePtr &cnode) {
   }
   // Allocate ext info addr in device
   if (!ext_info_.empty()) {
-    auto ret = rtMalloc(&ext_info_addr_dev_, ext_info_.size(), RT_MEMORY_HBM);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "Call rtMalloc ext_info_addr_dev_ failed. Op name: " << cnode->fullname_with_scope();
+    auto mem_manager = std::make_shared<device::ascend::AscendMemoryManager>();
+    ext_info_addr_dev_ = mem_manager->MallocMemFromMemPool(ext_info_.size(), false);
+    if (ext_info_addr_dev_ == nullptr) {
+      MS_LOG(EXCEPTION) << "Call MemoryPool to allocate ext_info_addr_dev_ failed. Op name: "
+                        << cnode->fullname_with_scope();
     }
   }
   ext_info_size_ = ext_info_.size();

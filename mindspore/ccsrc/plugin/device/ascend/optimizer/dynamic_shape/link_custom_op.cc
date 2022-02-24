@@ -27,36 +27,50 @@ namespace opt::dynamic_shape {
 namespace {
 constexpr size_t kTupleFirstItemIndex = 0;
 constexpr size_t kFirstDataInputIndex = 1;
-
-AnfNodePtr InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePtr &next) {
+using DependPair = std::pair<AnfNodePtr, AnfNodePtr>;
+struct DependPairCmp {
+  bool operator()(const DependPair &lhs, const DependPair &rhs) const {
+    if (lhs.first != rhs.first) {
+      return lhs.first > rhs.first;
+    }
+    return lhs.second > rhs.second;
+  }
+};
+void InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePtr &next, AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(next);
+  MS_EXCEPTION_IF_NULL(depend_nodes);
+  static std::set<DependPair, DependPairCmp> added_set;
+
+  DependPair cur_pair = std::make_pair(prev, next);
+  if (added_set.count(cur_pair) > 0) {
+    return;
+  }
+
   // add depend from prev to next
   auto depend_node = g->NewCNode(
     std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), next, prev});
   MS_EXCEPTION_IF_NULL(depend_node);
-  return depend_node;
+  depend_nodes->push_back(depend_node);
+  added_set.insert(cur_pair);
 }
 
 bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(depend_nodes);
+
   bool changed = false;
   auto custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(node);
-  if (custom_nodes.infer_node != nullptr) {
-    if (custom_nodes.init_node == nullptr) {
-      MS_LOG(WARNING) << "Node " << node->DebugString() << " has infer node but init node is null.";
-    } else {
-      depend_nodes->push_back(InsertDepend(g, custom_nodes.infer_node, custom_nodes.init_node));  // link infer => init
-      depend_nodes->push_back(InsertDepend(g, custom_nodes.init_node, node));                     // link init => launch
-      changed = true;
-    }
+  if (custom_nodes.infer_node != nullptr && custom_nodes.init_node != nullptr) {
+    InsertDepend(g, custom_nodes.infer_node, custom_nodes.init_node, depend_nodes);  // link infer => init
+    InsertDepend(g, custom_nodes.init_node, node, depend_nodes);                     // link init => launch
+    changed = true;
   }
 
   if (IsDynUpdate(custom_nodes.update_node)) {
-    depend_nodes->push_back(InsertDepend(g, node, custom_nodes.update_node));  // link launch => update
+    InsertDepend(g, node, custom_nodes.update_node, depend_nodes);  // link launch => update
     changed = true;
   }
 
@@ -81,19 +95,13 @@ bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *d
     }
     auto prev_custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(prev_node);
     if (prev_custom_nodes.infer_node != nullptr) {
-      depend_nodes->push_back(
-        InsertDepend(g, prev_custom_nodes.infer_node, custom_nodes.infer_node));  // link prev.infer => curr.infer
-      MS_LOG(DEBUG) << "Link from " << prev_node->fullname_with_scope() << " infer "
-                    << prev_custom_nodes.infer_node->fullname_with_scope() << " to " << cnode->fullname_with_scope()
-                    << " infer " << custom_nodes.infer_node->fullname_with_scope();
+      InsertDepend(g, prev_custom_nodes.infer_node, custom_nodes.infer_node,
+                   depend_nodes);  // link prev.infer => curr.infer
       changed = true;
     }
     if (IsDynUpdate(prev_custom_nodes.update_node)) {
-      depend_nodes->push_back(
-        InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node));  // link prev.update => curr.infer
-      MS_LOG(DEBUG) << "Link from " << prev_node->fullname_with_scope() << " update "
-                    << prev_custom_nodes.update_node->fullname_with_scope() << " to " << cnode->fullname_with_scope()
-                    << " infer " << custom_nodes.infer_node->fullname_with_scope();
+      InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node,
+                   depend_nodes);  // link prev.update => curr.infer
       changed = true;
     }
   }
@@ -127,11 +135,11 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
     if (IsDynUpdate(prev_custom_nodes.update_node)) {
       continue;
     }
-
     // 1. Link prev_node => prev_node.update if its update is just sync.
-    depend_nodes->push_back(InsertDepend(g, prev_node, prev_custom_nodes.update_node));
+    InsertDepend(g, prev_node, prev_custom_nodes.update_node, depend_nodes);
+    // 1. Link prev_node => prev_node.update if its update is just sync.
     // 2. Link prev_node.update => cur_node.infer.
-    depend_nodes->push_back(InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node));
+    InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
     changed = true;
   }
   return changed;
