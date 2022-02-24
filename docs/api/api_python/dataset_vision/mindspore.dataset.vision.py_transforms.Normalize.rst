@@ -9,7 +9,7 @@ mindspore.dataset.vision.py_transforms.Normalize
 
         output_{c} = \frac{input_{c} - mean_{c}}{std_{c}}
 
-    .. note:: 输入图像的像素值需要在[0.0, 1.0]范围内。否则，请先调用 :class:`ToTensor` 进行转换。
+    .. note:: 输入图像的像素值需要在[0.0, 1.0]范围内。否则，请先调用 :class:`mindspore.dataset.vision.py_transforms.ToTensor` 进行转换。
 
     **参数：**
 

@@ -2,7 +2,7 @@ mindspore.dataset.vision.SliceMode
 ==================================
 
 .. py:class:: mindspore.dataset.vision.SliceMode
-	
+
     Tensor切片方式枚举类。
 
     可选枚举值为：SliceMode.PAD、SliceMode.DROP。

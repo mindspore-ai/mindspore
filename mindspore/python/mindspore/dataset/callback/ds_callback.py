@@ -35,14 +35,15 @@ class DSCallback:
 
     Examples:
         >>> from mindspore.dataset import DSCallback
+        >>> from mindspore.dataset.transforms import c_transforms
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_epoch_end(self, ds_run_context):
         ...         print(ds_run_context.cur_epoch_num)
         ...         print(ds_run_context.cur_step_num)
         >>>
-        >>> # dataset is a MindSpore dataset object and op is a certain data processing operator
-        >>> op = c_transforms.Fill(3)
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
+        >>> op = c_transforms.OneHot(10)
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
@@ -126,10 +127,10 @@ class DSCallback:
 
 
 class WaitedDSCallback(Callback, DSCallback):
-    """
+    r"""
     Abstract base class used to build dataset callback classes that are synchronized with the training callback class
-    `mindspore.train.callback <https://mindspore.cn/docs/api/en/master/api_python/
-    mindspore.train.html#mindspore.train.callback.Callback>`_.
+    `mindspore.train.callback \
+    <https://mindspore.cn/docs/api/en/master/api_python/mindspore.train.html#mindspore.train.callback.Callback>`_.
 
     It can be used to execute a custom callback method before a step or an epoch, such as
     updating the parameters of operators according to the loss of the previous training epoch in auto augmentation.
@@ -140,8 +141,8 @@ class WaitedDSCallback(Callback, DSCallback):
     `network`, `train_network`, `epoch_num`, `batch_num`, `loss_fn`, `optimizer`, `parallel_mode`,
     `device_number`, `list_callback`, `cur_epoch_num`, `cur_step_num`, `dataset_sink_mode`,
     `net_outputs`, etc., see
-    `mindspore.train.callback <https://mindspore.cn/docs/api/en/master/api_python/
-    mindspore.train.html#mindspore.train.callback.Callback>`_.
+    `mindspore.train.callback \
+    <https://mindspore.cn/docs/api/en/master/api_python/mindspore.train.html#mindspore.train.callback.Callback>`_.
 
     Users can obtain the dataset pipeline context through `ds_run_context`, including
     `cur_epoch_num`, `cur_step_num_in_epoch` and `cur_step_num`.

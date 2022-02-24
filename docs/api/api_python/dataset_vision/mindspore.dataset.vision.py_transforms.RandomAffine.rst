@@ -25,7 +25,7 @@ mindspore.dataset.vision.py_transforms.RandomAffine
     - **TypeError** - 当 `translate` 的类型不为序列。
     - **TypeError** - 当 `scale` 的类型不为序列。
     - **TypeError** - 当 `shear` 的类型不为整型、浮点型或序列。
-    - **TypeError** - 当 `resample` 的类型不为 :class:`Inter` 。
+    - **TypeError** - 当 `resample` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **TypeError** - 当 `fill_value` 的类型不为整型或整型元组。
     - **ValueError** - 当 `degrees` 为负数。
     - **ValueError** - 当 `translate` 取值不在[-1.0, 1.0]范围内。

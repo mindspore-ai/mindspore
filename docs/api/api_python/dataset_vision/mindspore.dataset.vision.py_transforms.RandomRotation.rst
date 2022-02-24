@@ -24,7 +24,7 @@ mindspore.dataset.vision.py_transforms.RandomRotation
     **异常：**
 
     - **TypeError** - 当 `degrees` 的类型不为整型、浮点型或序列。
-    - **TypeError** - 当 `resample` 的类型不为 :class:`Inter` 。
+    - **TypeError** - 当 `resample` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **TypeError** - 当 `expand` 的类型不为布尔型。
     - **TypeError** - 当 `center` 的类型不为元组。
     - **TypeError** - 当 `fill_value` 的类型不为整型或整型序列。

@@ -1,7 +1,7 @@
 mindspore.dataset.vision.ImageBatchFormat
 =========================================
 
-.. py:class:: mindspore.dataset.vision.ImageBatchFormat()
+.. py:class:: mindspore.dataset.vision.ImageBatchFormat
 
     图像批处理输出格式枚举类。
 

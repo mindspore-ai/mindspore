@@ -1,7 +1,7 @@
 mindspore.dataset.vision.Inter
 ==============================
 
-.. py:class:: mindspore.dataset.vision.Inter()
+.. py:class:: mindspore.dataset.vision.Inter
 
     图像插值方式枚举类。
 

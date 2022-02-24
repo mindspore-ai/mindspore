@@ -24,7 +24,7 @@ mindspore.dataset.vision.py_transforms.RandomCrop
     - **TypeError** - 当 `padding` 的类型不为整型或整型序列。
     - **TypeError** - 当 `pad_if_needed` 的类型不为布尔型。
     - **TypeError** - 当 `fill_value` 的类型不为整型或整型序列。
-    - **TypeError** - 当 `padding_mode` 的类型不为 :class:`Border` 。
+    - **TypeError** - 当 `padding_mode` 的类型不为 :class:`mindspore.dataset.vision.Border` 。
     - **ValueError** - 当 `size` 不为正数。
     - **ValueError** - 当 `padding` 为负数。
     - **ValueError** - 当 `fill_value` 取值不在[0, 255]范围内。

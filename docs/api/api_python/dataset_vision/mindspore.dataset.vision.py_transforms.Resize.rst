@@ -18,5 +18,5 @@ mindspore.dataset.vision.py_transforms.Resize
     **异常：**
 
     - **TypeError** - 当 `size` 的类型不为整型或整型序列。
-    - **TypeError** - 当 `interpolation` 的类型不为 :class:`Inter` 。
+    - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **ValueError** - 当 `size` 不为正数。
