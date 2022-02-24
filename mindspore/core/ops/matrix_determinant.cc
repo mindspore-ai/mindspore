@@ -24,7 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MatrixDeterminantInferShape(const PrimitivePtr &primitive,
+                                               const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
@@ -38,7 +39,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MatrixDeterminantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat32};
   auto infer_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
@@ -51,8 +52,8 @@ AbstractBasePtr MatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, cons
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = InferType(primitive, input_args);
-  auto infershape = InferShape(primitive, input_args);
+  auto infertype = MatrixDeterminantInferType(primitive, input_args);
+  auto infershape = MatrixDeterminantInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDeterminant, prim::kPrimMatrixDeterminant, MatrixDeterminantInfer, nullptr, true);

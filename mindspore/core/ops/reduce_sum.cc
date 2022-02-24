@@ -80,7 +80,7 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
   return;
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ReduceSum", input_args, 0);
   auto input_shape = shape_ptr->shape();
@@ -173,7 +173,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ReduceSumInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto x_type = input_args[0]->BuildType();
   std::set<TypePtr> valid_types = common_valid_types;
@@ -188,7 +188,7 @@ AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const Primit
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                      primitive->name());
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(ReduceSumInferShape(primitive, input_args), ReduceSumInferType(primitive, input_args));
 }
 }  // namespace ops
 }  // namespace mindspore

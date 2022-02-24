@@ -26,11 +26,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kIndex1 = 1;
-constexpr auto kIndex3 = 3;
-constexpr auto kInputNum = 7;
+constexpr auto kBNTrainingUpdateInputNum = 7;
 
-int64_t GetAndCheckFormat(const ValuePtr &value) {
+int64_t BNTrainingUpdateGetAndCheckFormat(const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
@@ -43,7 +41,7 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto square_sum_shape =
@@ -54,10 +52,10 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = GetAndCheckFormat(data_format_ptr);
-  size_t c_axis = kIndex1;
+  int64_t data_format = BNTrainingUpdateGetAndCheckFormat(data_format_ptr);
+  size_t c_axis = kInputIndex1;
   if (data_format == Format::NHWC) {
-    c_axis = kIndex3;
+    c_axis = kInputIndex3;
   }
   // input_x rank should be equal with 4
   (void)CheckAndConvertUtils::CheckInteger("input_x rank", input_x_shape.size(), kEqual, 4, prim_name);
@@ -95,7 +93,7 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
 TuplePtr BNTrainingUpdateInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
   auto input_x_type = input_args[kInputIndex0]->BuildType();
   auto sum_type = input_args[kInputIndex1]->BuildType();
   auto square_sum_type = input_args[kInputIndex2]->BuildType();

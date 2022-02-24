@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr GeLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
@@ -35,7 +35,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(shape_ptr);
   return shape_ptr;
 }
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+
+TypePtr GeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   MS_EXCEPTION_IF_NULL(input_args[0]);
@@ -48,8 +49,8 @@ AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = GeLUInferType(primitive, input_args);
+  auto infer_shape = GeLUInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GeLU, prim::kPrimGeLU, GeLUInfer, nullptr, true);

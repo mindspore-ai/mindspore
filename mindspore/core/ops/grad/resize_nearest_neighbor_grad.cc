@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
@@ -55,7 +56,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ResizeNearestNeighborGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   return input_args[0]->BuildType();
 }
 }  // namespace
@@ -65,7 +66,8 @@ AbstractBasePtr ResizeNearestNeighborGradInfer(const abstract::AnalysisEnginePtr
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
                                            kEqual, input_num, prim_name);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(ResizeNearestNeighborGradInferShape(primitive, input_args),
+                                ResizeNearestNeighborGradInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ResizeNearestNeighborGrad, prim::kPrimResizeNearestNeighborGrad,
                              ResizeNearestNeighborGradInfer, nullptr, true);

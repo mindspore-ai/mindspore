@@ -23,7 +23,7 @@ void Squeeze::set_axis(const std::vector<int64_t> &axis) { (void)AddAttr(kAxis, 
 std::vector<int64_t> Squeeze::get_axis() const { return GetValue<std::vector<int64_t>>(GetAttr(kAxis)); }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
@@ -70,7 +70,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
@@ -88,7 +88,7 @@ AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                             << x_type->ToString();
   }
 
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(SqueezeInferShape(primitive, input_args), SqueezeInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Squeeze, prim::kPrimSqueeze, SqueezeInfer, nullptr, true);
 }  // namespace ops

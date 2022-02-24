@@ -26,13 +26,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kInputNum = 4;
+constexpr auto kBNTrainingUpdateGradInputNum = 4;
 
 abstract::TupleShapePtr BNTrainingUpdateGradInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateGradInputNum, prim_name);
   auto batch_mean_shape_ptr = input_args[kInputIndex2]->BuildShape();
   auto batch_variance_shape_ptr = input_args[kInputIndex3]->BuildShape();
   return std::make_shared<abstract::TupleShape>(
@@ -42,7 +42,7 @@ abstract::TupleShapePtr BNTrainingUpdateGradInferShape(const PrimitivePtr &primi
 TuplePtr BNTrainingUpdateGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateGradInputNum, prim_name);
   auto batch_mean_type_ptr = input_args[kInputIndex2]->BuildType();
   auto batch_variance_type_ptr = input_args[kInputIndex3]->BuildType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{batch_mean_type_ptr, batch_variance_type_ptr});

@@ -24,7 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SplitVInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1L, prim_name);
@@ -76,7 +77,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::TupleShape>(shape_tuple);
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SplitVInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -97,8 +98,8 @@ TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> 
 AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto infertype = InferType(primitive, input_args);
-  auto infershape = InferShape(primitive, input_args);
+  auto infertype = SplitVInferType(primitive, input_args);
+  auto infershape = SplitVInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(SplitV, prim::kPrimSplitV, SplitVInfer, nullptr, true);

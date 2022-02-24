@@ -27,15 +27,15 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int ELL_VAL = 52;
-constexpr int LABEL_NUM = 52;
-constexpr int ELL_LEN = 3;
-constexpr int BIG_C_BEGIN = 26;
+constexpr int kEinsumEllVal = 52;
+constexpr int kEinsumLableNum = 52;
+constexpr int kEinsumEllLen = 3;
 static int64_t char_to_index(char cur_char) {
   if (cur_char <= 'z' && cur_char >= 'a') {
     return static_cast<int64_t>(cur_char - 'a');
   }
-  return static_cast<int64_t>(cur_char - 'A' + BIG_C_BEGIN);
+  constexpr int kBigCBegin = 26;
+  return static_cast<int64_t>(cur_char - 'A' + kBigCBegin);
 }
 
 static void seg_left_equation(const std::string &left_equation, const std::string &prim_name,
@@ -54,14 +54,14 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
           << "For " << prim_name
           << ", each operand can contain contain only one ellipsis, but it has been found again.";
       }
-      if (idx + ELL_LEN - 1 >= left_equation.length() || left_equation[idx + 1] != label ||
-          left_equation[idx + ELL_LEN - 1] != label) {
+      if (idx + kEinsumEllLen - 1 >= left_equation.length() || left_equation[idx + 1] != label ||
+          left_equation[idx + kEinsumEllLen - 1] != label) {
         MS_EXCEPTION(ValueError) << "For " << prim_name
                                  << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
       }
-      idx += (ELL_LEN - 1);
+      idx += (kEinsumEllLen - 1);
       found_ell = true;
-      (*left_elements)[cur_element].emplace_back(ELL_VAL);
+      (*left_elements)[cur_element].emplace_back(kEinsumEllVal);
     } else if (label == ',') {
       if ((found_ell && (*left_elements)[cur_element].size() > input_shapes[cur_element].size() + 1) ||
           (!found_ell && (*left_elements)[cur_element].size() != input_shapes[cur_element].size())) {
@@ -87,7 +87,7 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
   }
   for (size_t i = 0; i < (*left_elements).size(); ++i) {
-    auto it = std::find((*left_elements)[i].begin(), (*left_elements)[i].end(), ELL_VAL);
+    auto it = std::find((*left_elements)[i].begin(), (*left_elements)[i].end(), kEinsumEllVal);
     if ((*left_elements)[i].size() != input_shapes[i].size() && it == (*left_elements)[i].end()) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", The number of subscript in " << i
                                << " operand in the eqaution should match inputs[" << i << "].dim(), but it does not.";
@@ -104,7 +104,7 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
     out_shape->emplace_back(1);
     return;
   }
-  std::vector<bool> exit_flag(LABEL_NUM, false);
+  std::vector<bool> exit_flag(kEinsumLableNum, false);
   for (size_t idx = 0; idx < right_equation.length(); ++idx) {
     if (left_equation.find(right_equation[idx]) == std::string::npos) {
       MS_EXCEPTION(ValueError)
@@ -119,14 +119,15 @@ static void seg_right_equation_with_arrow(const std::string &left_equation, cons
           << "For " << prim_name
           << ", each operand can contain contain only one ellipsis, but it has been found again.";
       }
-      if ((idx + ELL_LEN - 1 >= right_equation.length()) ||
-          (right_equation[idx + 1] != '.' || right_equation[idx + ELL_LEN - 1] != '.')) {
+      if ((idx + kEinsumEllLen - 1 >= right_equation.length()) ||
+          (right_equation[idx + 1] != '.' || right_equation[idx + kEinsumEllLen - 1] != '.')) {
         MS_EXCEPTION(ValueError) << "For " << prim_name
                                  << ", An ellipsis in the equation should consist three \'.\', but got less than 3.";
       }
-      idx += (ELL_LEN - 1);
+      idx += (kEinsumEllLen - 1);
       found_ell = true;
-      out_shape->insert(out_shape->end(), (*element_shape_map)[ELL_VAL].begin(), (*element_shape_map)[ELL_VAL].end());
+      out_shape->insert(out_shape->end(), (*element_shape_map)[kEinsumEllVal].begin(),
+                        (*element_shape_map)[kEinsumEllVal].end());
     } else if (isalpha(right_equation[idx])) {
       auto val = char_to_index(right_equation[idx]);
       if (exit_flag[val]) {
@@ -149,7 +150,8 @@ static void seg_right_equation_without_arrow(const std::string &left_equation,
                                              const std::vector<int64_t> &element_count,
                                              std::vector<int64_t> *out_shape) {
   if (left_equation.find('.') != std::string::npos) {
-    out_shape->insert(out_shape->begin(), (*element_shape_map)[ELL_VAL].begin(), (*element_shape_map)[ELL_VAL].end());
+    out_shape->insert(out_shape->begin(), (*element_shape_map)[kEinsumEllVal].begin(),
+                      (*element_shape_map)[kEinsumEllVal].end());
   }
   for (size_t idx = 0; idx < element_count.size(); ++idx) {
     if (element_count[idx] == 1) {
@@ -167,7 +169,7 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
   for (size_t idx_input = 0; idx_input < input_shapes.size(); ++idx_input) {
     auto cur_shape = input_shapes[idx_input];
     size_t idx_left = 0;
-    while (idx_left < left_elements[idx_input].size() && left_elements[idx_input][idx_left] != ELL_VAL) {
+    while (idx_left < left_elements[idx_input].size() && left_elements[idx_input][idx_left] != kEinsumEllVal) {
       auto cur_element = left_elements[idx_input][idx_left];
       if (element_shape_map->find(cur_element) != element_shape_map->end()) {
         if ((*element_shape_map)[cur_element][0] != input_shapes[idx_input][idx_left]) {
@@ -185,7 +187,7 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
     if (idx_left != left_elements[idx_input].size()) {
       auto idx_element_right = left_elements[idx_input].size() - 1;
       auto idx_shape_right = input_shapes[idx_input].size() - 1;
-      while (idx_element_right > idx_left && left_elements[idx_input][idx_element_right] != ELL_VAL) {
+      while (idx_element_right > idx_left && left_elements[idx_input][idx_element_right] != kEinsumEllVal) {
         auto cur_element = left_elements[idx_input][idx_element_right];
         if (element_shape_map->find(cur_element) != element_shape_map->end()) {
           if ((*element_shape_map)[cur_element][0] != input_shapes[idx_input][idx_shape_right]) {
@@ -202,14 +204,14 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
       }
       std::vector<int64_t> temp_vec(input_shapes[idx_input].begin() + idx_left,
                                     input_shapes[idx_input].begin() + idx_shape_right + 1);
-      if (element_shape_map->find(ELL_VAL) != element_shape_map->end()) {
-        if ((*element_shape_map)[ELL_VAL] != temp_vec) {
+      if (element_shape_map->find(kEinsumEllVal) != element_shape_map->end()) {
+        if ((*element_shape_map)[kEinsumEllVal] != temp_vec) {
           MS_EXCEPTION(ValueError)
             << "For " << prim_name
             << ", the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
         }
       } else {
-        (*element_shape_map)[ELL_VAL] = temp_vec;
+        (*element_shape_map)[kEinsumEllVal] = temp_vec;
       }
     }
   }
@@ -225,7 +227,7 @@ std::string Einsum::get_equation() const {
   return GetValue<std::string>(value_ptr);
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
   equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
@@ -270,7 +272,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 
   const auto left_equation = equation.substr(0, seg_pos);
   std::vector<std::vector<int64_t>> left_elements(input_shapes.size());
-  std::vector<int64_t> element_count(LABEL_NUM, 0);
+  std::vector<int64_t> element_count(kEinsumLableNum, 0);
   std::unordered_map<int64_t, std::vector<int64_t>> element_shape_map;
   std::vector<int64_t> out_shape;
   seg_left_equation(left_equation, prim_name, input_shapes, &left_elements, &element_count);
@@ -284,7 +286,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
@@ -298,8 +300,8 @@ AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto res =
-    std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args), InferShape(primitive, input_args));
+  auto res = std::make_shared<abstract::AbstractTensor>(EinsumInferType(primitive, input_args),
+                                                        EinsumInferShape(primitive, input_args));
   return res;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Einsum, prim::kPrimEinsum, EinsumInfer, nullptr, true);

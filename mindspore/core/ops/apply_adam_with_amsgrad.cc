@@ -27,7 +27,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   for (const auto &item : input_args) {
@@ -61,7 +62,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<abstract::BaseShapePtr>{var_shape, m_shape, v_shape, vhat_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   // get all input_args' shape
@@ -95,8 +96,8 @@ AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, c
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 8;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = ApplyAdamWithAmsgradInferType(primitive, input_args);
+  auto infer_shape = ApplyAdamWithAmsgradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ApplyAdamWithAmsgrad, prim::kPrimApplyAdamWithAmsgrad, ApplyAdamWithAmsgradInfer, nullptr,

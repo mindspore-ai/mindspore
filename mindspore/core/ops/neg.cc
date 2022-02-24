@@ -38,7 +38,7 @@ void ImpleNeg(void *origin, void *target, size_t size) {
     target_data[i] = -origin_data[i];
   }
 }
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr NegInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_ptr = x->cast<abstract::ShapePtr>();
@@ -46,7 +46,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return shape_ptr;
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr NegInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
                                          kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
@@ -69,7 +69,7 @@ ValuePtr NegInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = InferShape(prim, input_args)->shape();
+  auto shape = NegInferShape(prim, input_args)->shape();
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();
@@ -139,8 +139,8 @@ AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = NegInferType(primitive, input_args);
+  auto infer_shape = NegInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Neg, prim::kPrimNeg, NegInfer, NegInferValue, true);

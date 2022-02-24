@@ -66,7 +66,7 @@ std::vector<int64_t> infer_shape_reduce(std::vector<int64_t> input_x_shape, cons
   return out_shape;
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto axis_value = input_args[1]->BuildValue();
 
   MS_EXCEPTION_IF_NULL(primitive);
@@ -78,7 +78,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ReduceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -95,8 +95,8 @@ void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
 AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(ReduceInferType(primitive, input_args),
+                                                    ReduceInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameReduce, Reduce);
 }  // namespace ops

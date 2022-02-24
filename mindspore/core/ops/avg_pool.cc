@@ -79,7 +79,7 @@ void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
 }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
@@ -124,7 +124,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
+TypePtr AvgPoolInferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
 }  // namespace
 
 AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -132,7 +132,8 @@ AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(AvgPoolInferType(input_args),
+                                                    AvgPoolInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameAvgPool, AvgPool);
 }  // namespace ops

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "LayerNormBetaGammaBackprop.h"
+#include "ops/LayerNormBetaGammaBackprop.h"
 #include <memory>
 #include <set>
 #include "ops/op_utils.h"

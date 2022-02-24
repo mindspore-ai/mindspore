@@ -28,13 +28,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t kInputNum = 7;
+const int64_t kApplyPowerSignDInputNum = 7;
 abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
+                                           kApplyPowerSignDInputNum, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -82,8 +82,8 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
 TuplePtr ApplyPowerSignDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual,
+                                           kApplyPowerSignDInputNum, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

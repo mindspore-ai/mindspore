@@ -27,9 +27,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kX1Index = 0;  // x1
-constexpr auto kX2Index = 1;  // x2
-
 template <typename T>
 void DivNoNanImpl(void *x1, void *x2, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
@@ -50,7 +47,7 @@ void DivNoNanImpl(void *x1, void *x2, void *result, size_t size) {
   }
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr DivNoNanInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t valid_size = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -63,7 +60,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return BroadCastInferShape(prim_name, input_args);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DivNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -74,9 +71,11 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   return input_args[0]->BuildType();
 }
 
-ValuePtr InferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto result_type = InferType(prim, input_args);
-  auto result_shape = InferShape(prim, input_args)->cast<abstract::ShapePtr>();
+ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr auto kX1Index = 0;
+  constexpr auto kX2Index = 1;
+  auto result_type = DivNoNanInferType(prim, input_args);
+  auto result_shape = DivNoNanInferShape(prim, input_args)->cast<abstract::ShapePtr>();
   auto x1 = input_args[kX1Index]->BuildValue();
   auto x2 = input_args[kX2Index]->BuildValue();
   if (x1 == nullptr || x2 == nullptr) {
@@ -160,10 +159,10 @@ ValuePtr InferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr>
 
 AbstractBasePtr DivNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_shape = InferShape(primitive, input_args);
-  auto infer_type = InferType(primitive, input_args);
+  auto infer_shape = DivNoNanInferShape(primitive, input_args);
+  auto infer_type = DivNoNanInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DivNoNan, prim::kPrimDivNoNan, DivNoNanInfer, InferValue, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(DivNoNan, prim::kPrimDivNoNan, DivNoNanInfer, DivNoNanInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

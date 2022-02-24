@@ -66,7 +66,8 @@ void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const st
   }
 }
 
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckCTCLossInputs(input_args, op_name);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -90,7 +91,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{loss_shape, gradient_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr CTCLossInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("labels_indices", input_args[kInputIndex1]->BuildType(), {kInt64},
                                                    op_name);
@@ -108,8 +109,8 @@ TuplePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBase
 AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto types = InferType(primitive, input_args);
-  auto shapes = InferShape(primitive, input_args);
+  auto types = CTCLossInferType(primitive, input_args);
+  auto shapes = CTCLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(CTCLoss, prim::kPrimCTCLoss, CTCLossInfer, nullptr, true);

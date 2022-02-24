@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int k2Directions = 2;
 AbstractBasePtr LstmGradDataInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
@@ -91,6 +90,7 @@ void LSTMGradData::Init(const int64_t input_size, const int64_t hidden_size, con
   this->set_dropout(dropout);
   this->set_bidirectional(bidirectional);
   if (bidirectional) {
+    constexpr int k2Directions = 2;
     this->set_num_directions(k2Directions);
   } else {
     this->set_num_directions(1);

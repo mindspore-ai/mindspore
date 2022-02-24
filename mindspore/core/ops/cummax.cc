@@ -25,7 +25,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = input_args[0]->BuildShape();
   auto x_shape_value = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
   auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
@@ -40,7 +41,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, x_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr CummaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kUInt8, kUInt32, kFloat16, kFloat32};
   auto y_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, op_name);
@@ -53,8 +54,8 @@ AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto types = InferType(primitive, input_args);
-  auto shapes = InferShape(primitive, input_args);
+  auto types = CummaxInferType(primitive, input_args);
+  auto shapes = CummaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

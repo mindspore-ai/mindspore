@@ -28,12 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr auto kIndex1 = 1;
-constexpr auto kIndex3 = 3;
-constexpr auto kInputDim = 4;
-constexpr auto kInputNum = 1;
-
-int64_t GetAndCheckFormat(const ValuePtr &value) {
+int64_t BNTrainingReduceGetAndCheckFormat(const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
@@ -48,13 +43,14 @@ abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive
   auto min_shape = input_shape[kMinShape];
   auto max_shape = input_shape[kMaxShape];
 
+  constexpr auto kInputDim = 4;
   (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(shape.size()), kEqual, kInputDim, primitive->name());
   auto data_format_ptr = primitive->GetAttr("format");
   MS_EXCEPTION_IF_NULL(data_format_ptr);
-  int64_t data_format = GetAndCheckFormat(data_format_ptr);
-  size_t c_axis = kIndex1;
+  int64_t data_format = BNTrainingReduceGetAndCheckFormat(data_format_ptr);
+  size_t c_axis = kInputIndex1;
   if (data_format == Format::NHWC) {
-    c_axis = kIndex3;
+    c_axis = kInputIndex3;
   }
   ShapeVector batch = {shape[c_axis]};
   abstract::ShapePtr sum_shape;
@@ -83,6 +79,7 @@ TypePtr BNTrainingReduceInferType(const PrimitivePtr &primitive, const std::vect
 AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int64_t kInputNum = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
   auto infer_type = BNTrainingReduceInferType(primitive, input_args);
   auto infer_shape = BNTrainingReduceInferShape(primitive, input_args);

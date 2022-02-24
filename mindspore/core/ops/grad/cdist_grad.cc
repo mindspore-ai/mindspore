@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   for (const auto &item : input_args) {
@@ -44,7 +44,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr CdistGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -63,8 +63,8 @@ AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = CdistGradInferType(primitive, input_args);
+  auto infer_shape = CdistGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(CdistGrad, prim::kPrimCdistGrad, CdistGradInfer, nullptr, true);

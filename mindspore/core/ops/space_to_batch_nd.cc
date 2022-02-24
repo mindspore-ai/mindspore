@@ -26,7 +26,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
@@ -51,7 +52,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr SpaceToBatchNDInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -100,8 +101,8 @@ void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vec
 
 AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(SpaceToBatchNDInferType(primitive, input_args),
+                                                    SpaceToBatchNDInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameSpaceToBatchND, SpaceToBatchND);
 }  // namespace ops

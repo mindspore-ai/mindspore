@@ -35,13 +35,13 @@ float PowFusion::get_scale() const { return GetValue<float>(GetAttr(kScale)); }
 float PowFusion::get_shift() const { return GetValue<float>(GetAttr(kShift)); }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr PowFusionInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   return BroadCastInferShape(op_name, input_args);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr PowFusionInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -59,8 +59,8 @@ AbstractBasePtr PowFusionInfer(const abstract::AnalysisEnginePtr &, const Primit
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("PowFusion infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+  return std::make_shared<abstract::AbstractTensor>(PowFusionInferType(primitive, input_args),
+                                                    PowFusionInferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNamePowFusion, PowFusion);
 }  // namespace ops

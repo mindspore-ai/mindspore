@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AddcmulInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   for (const auto &item : input_args) {
@@ -50,7 +50,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AddcmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -78,8 +78,8 @@ AbstractBasePtr AddcmulInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  auto infer_shape = InferShape(primitive, input_args);
-  auto infer_type = InferType(primitive, input_args);
+  auto infer_shape = AddcmulInferShape(primitive, input_args);
+  auto infer_type = AddcmulInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Addcmul, prim::kPrimAddcmul, AddcmulInfer, nullptr, true);

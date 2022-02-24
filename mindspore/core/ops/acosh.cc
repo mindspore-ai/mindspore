@@ -19,15 +19,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t input_num = 1;
-const int64_t max_dim = 8;
-
 abstract::ShapePtr AcoshInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  const int64_t max_dim = 8;
   (void)CheckAndConvertUtils::CheckInteger("The dimension of Acosh input", SizeToLong(in_shape.size()), kLessThan,
                                            max_dim, prim_name);
   auto shape_element = x->cast<abstract::ShapePtr>();
@@ -48,6 +46,7 @@ AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const size_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = AcoshInferType(primitive, input_args);
   auto shapes = AcoshInferShape(primitive, input_args);

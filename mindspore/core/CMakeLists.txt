@@ -13,20 +13,22 @@ if(NOT(BUILD_LITE))
     add_subdirectory(mindrt)
 endif()
 
+include(${TOP_DIR}/mindspore/lite/cmake/merge.cmake)
+if(ENABLE_SECURITY)
+    merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc "_summary.cc$")
+else()
+    merge_files(${CMAKE_CURRENT_SOURCE_DIR}/ops/ ${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc "")
+endif()
+
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "abstract/*.cc"
   "base/*.cc"
-  "ops/*.cc"
+  "${CMAKE_BINARY_DIR}/merge/mindspore/core/ops_merge.cc"
   "ir/*.cc"
   "utils/*.cc"
   "load_mindir/*.cc"
   "mindapi/src/*.cc"
   )
-
-if(ENABLE_SECURITY)
-    file(GLOB_RECURSE _INFER_SUMMARY_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ops/*_summary.cc")
-    list(REMOVE_ITEM CORE_SRC_LIST ${_INFER_SUMMARY_FILES})
-endif()
 
 file(GLOB_RECURSE PROTO_FILE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "proto/*.proto")
 if(NOT(BUILD_LITE))
