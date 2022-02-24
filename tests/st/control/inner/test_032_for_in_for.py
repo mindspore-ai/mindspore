@@ -110,7 +110,7 @@ def test_for_in_for_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
+    x = Tensor(2, mstype.int32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
