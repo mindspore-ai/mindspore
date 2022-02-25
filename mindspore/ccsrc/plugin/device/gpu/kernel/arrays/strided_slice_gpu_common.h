@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <algorithm>
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
@@ -31,10 +33,12 @@ class StridedSliceGpuCommon {
   StridedSliceGpuCommon() : null_output_(false) {}
   ~StridedSliceGpuCommon() = default;
 
-  void CollectInfo(const CNodePtr &kernel_node) {
-    begin_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-    end_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-    strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+  void CollectInfo(const CNodePtr &kernel_node, bool is_dynamic_attr_ = false) {
+    if (!is_dynamic_attr_) {
+      begin_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
+      end_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
+      strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+    }
     FillEmptyDims(kernel_node, &begin_, &end_, &strides_, &input_shape_);
     ParseStrideSliceMasks(kernel_node, &begin_, &end_, &strides_, input_shape_);
     FillOutputDim();

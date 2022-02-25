@@ -44,9 +44,7 @@ class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
         cudnn_compute_format_(CUDNN_TENSOR_NCHW),
         dy_desc_(nullptr),
         db_desc_(nullptr),
-        op_desc_(nullptr) {
-    ResetResource();
-  }
+        op_desc_(nullptr) {}
   ~BiasAddGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

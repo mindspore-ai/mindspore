@@ -47,9 +47,7 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
         batch_size_(0),
         channel_size_(0),
         height_(0),
-        width_(0) {
-    ResetResource();
-  }
+        width_(0) {}
   ~SoftmaxGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

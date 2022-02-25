@@ -24,7 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
+constexpr int DynamicInputNum = 4;
+template <typename T, typename S, typename G = int>
 class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   OneHotFwdGpuKernelMod()
@@ -37,9 +38,15 @@ class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
     VARIABLE_NOT_USED(workspace);
+    size_t on_value_idx = 1;
+    size_t off_value_idx = 2;
+    if (is_dynamic_shape_) {
+      on_value_idx++;
+      off_value_idx++;
+    }
     const S *indices = GetDeviceAddress<S>(inputs, 0);
-    const T *on_value = GetDeviceAddress<T>(inputs, 1);
-    const T *off_value = GetDeviceAddress<T>(inputs, 2);
+    const T *on_value = GetDeviceAddress<T>(inputs, on_value_idx);
+    const T *off_value = GetDeviceAddress<T>(inputs, off_value_idx);
     T *output = GetDeviceAddress<T>(outputs, 0);
     OneHot(indices, depth_, on_value, off_value, left_dim_size_, right_dim_size_, output,
            reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -51,6 +58,10 @@ class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == DynamicInputNum) {
+      is_dynamic_shape_ = true;
+    }
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
@@ -91,11 +102,27 @@ class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
     InitSizeLists();
     return true;
   }
+  void ResetResource() noexcept override {
+    is_dynamic_shape_ = false;
+    input_size_ = 1;
+    output_size_ = 1;
+    depth_ = 0;
+    left_dim_size_ = 1;
+    right_dim_size_ = 1;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    is_dynamic_shape_ = false;
+  }
 
  protected:
   void InitSizeLists() override {
     // inputs: indices, depth
     input_size_list_.push_back((input_size_ + 1) * sizeof(S));
+    if (is_dynamic_shape_) {
+      input_size_list_.push_back(sizeof(int64_t));
+    }
     output_size_list_.push_back(output_size_ * sizeof(T));
   }
 
@@ -103,6 +130,7 @@ class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
   size_t input_size_;
   size_t output_size_;
 
+  bool is_dynamic_shape_ = false;
   size_t depth_;
   size_t left_dim_size_;
   size_t right_dim_size_;

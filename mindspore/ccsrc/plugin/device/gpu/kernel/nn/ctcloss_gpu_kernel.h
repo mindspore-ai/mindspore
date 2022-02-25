@@ -83,9 +83,7 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
         batch_label(0),
         label_value_with_blank(nullptr),
         log_alpha_b(nullptr),
-        log_beta_b(nullptr) {
-    ResetResource();
-  }
+        log_beta_b(nullptr) {}
   ~CtcLossGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
