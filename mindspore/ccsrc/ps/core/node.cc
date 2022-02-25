@@ -103,8 +103,12 @@ bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
   tracker_lock.unlock();
 
   std::unique_lock<std::mutex> msgs_lock(receive_messages_mutex_);
+  // The messages should be already copied before message_tracker_cond_ is notified.
   if (receive_messages_.count(request_id) != 0) {
     (void)receive_messages_.erase(request_id);
+  }
+  if (received_scheduler_messages_.count(request_id) != 0) {
+    (void)received_scheduler_messages_.erase(request_id);
   }
   msgs_lock.unlock();
   return res;

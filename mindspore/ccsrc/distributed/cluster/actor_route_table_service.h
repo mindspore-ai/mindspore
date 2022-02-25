@@ -18,10 +18,12 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_ACTOR_ROUTE_TABLE_SERVICE_H_
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <memory>
 #include <shared_mutex>
 #include "proto/comm.pb.h"
+#include "utils/log_adapter.h"
 #include "distributed/constants.h"
 
 namespace mindspore {

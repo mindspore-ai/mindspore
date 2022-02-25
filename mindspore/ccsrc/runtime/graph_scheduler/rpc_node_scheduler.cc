@@ -48,7 +48,6 @@ void RpcNodeScheduler::Link(const ActorSetPtr &) {
                         << " is invalid. send_dst_ranks: " << send_dst_ranks << ", send_dst_roles: " << send_dst_roles
                         << ", send_src_node_name: " << send_src_node_name
                         << ", send_dst_node_name: " << send_dst_node_name;
-      return;
     }
     send_actor->SetRouteInfo(send_dst_ranks[0], send_dst_roles[0], send_src_node_name, send_dst_node_name);
   }
@@ -66,7 +65,6 @@ void RpcNodeScheduler::Link(const ActorSetPtr &) {
                         << " is invalid. recv_src_ranks: " << recv_src_ranks << ", recv_src_roles: " << recv_src_roles
                         << ", recv_src_node_name: " << recv_src_node_name
                         << ", recv_dst_node_name: " << recv_dst_node_name;
-      return;
     }
     recv_actor->SetRouteInfo(recv_src_ranks[0], recv_src_roles[0], recv_src_node_name, recv_dst_node_name);
   }

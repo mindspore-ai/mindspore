@@ -149,10 +149,11 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
       MS_LOG(EXCEPTION) << "This segment is empty.";
       return;
     }
-    if (node_labels_[nodes[0]] != segment.label) {
-      MS_LOG(EXCEPTION) << "Node label " << node_labels_[nodes[0]].to_string() << " is not the same as segment label "
-                        << segment.label.to_string();
-      return;
+
+    auto segment_first_node = nodes[0];
+    if (node_labels_[segment_first_node] != segment.label) {
+      MS_LOG(EXCEPTION) << "Node label " << node_labels_[segment_first_node].to_string()
+                        << " is not the same as segment label " << segment.label.to_string();
     }
 
     // Add Depend between in-degree and out-degree of this segment because the execution order should be kept
@@ -199,7 +200,6 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
     if (send_label == recv_label) {
       MS_LOG(EXCEPTION) << "The Send and Recv must have different label. But got Send: " << send_label.to_string()
                         << ", Recv: " << recv_label.to_string();
-      return;
     }
 
     if (recv_label == this_process_label_) {
@@ -227,7 +227,6 @@ OperatorLabel GraphSplitter::GetSplitLabel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Only CNode has distributed split label.";
-    return default_label_;
   }
   CNodePtr cnode = node->cast<CNodePtr>();
   auto prim_node = cnode->input(0);
@@ -301,11 +300,17 @@ CNodePtr GraphSplitter::GenerateRecvNode(const AnfNodePtr &input, const AnfNodeP
 
   std::vector<AnfNodePtr> recv_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcRecvOpName))};
   if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
+    ValuePtr monad_value = nullptr;
     if (HasAbstractUMonad(input)) {
-      auto monad_input = NewValueNode(kUMonad);
-      monad_input->set_abstract(kUMonad->ToAbstract());
-      recv_inputs.push_back(monad_input);
+      monad_value = kUMonad;
+    } else if (HasAbstractIOMonad(input)) {
+      monad_value = kIOMonad;
+    } else {
+      MS_LOG(EXCEPTION) << "The input is PrimUpdateState must have monad abstract.";
     }
+    auto monad_input = NewValueNode(monad_value);
+    monad_input->set_abstract(monad_value->ToAbstract());
+    recv_inputs.push_back(monad_input);
   } else {
     auto mock_value = GenerateMockValueNode(true, input);
     MS_EXCEPTION_IF_NULL(mock_value);
@@ -332,7 +337,6 @@ void GraphSplitter::SetSendNodeAttr(const AnfNodePtr &send_node, const AnfNodePt
   std::string to_node_name = send_to_node->fullname_with_scope();
   if (node_labels_.count(send_to_node) == 0) {
     MS_LOG(EXCEPTION) << "Send to node " << to_node_name << " has no operator label.";
-    return;
   }
 
   // These attributes are the inter-process edge information.
@@ -358,7 +362,6 @@ void GraphSplitter::SetRecvNodeAttr(const AnfNodePtr &recv_node, const AnfNodePt
   std::string to_node_name = recv_to_node->fullname_with_scope();
   if (node_labels_.count(recv_from_node) == 0) {
     MS_LOG(EXCEPTION) << "Recv from node " << from_node_name << " has no operator label.";
-    return;
   }
 
   // These attributes are the inter-process edge information.
@@ -431,7 +434,6 @@ bool GraphSplitter::IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodeP
   if (node_labels_.count(node1) == 0 || node_labels_.count(node2) == 0) {
     MS_LOG(EXCEPTION) << "Either 'node1': " << node1->fullname_with_scope()
                       << " or 'node2': " << node2->fullname_with_scope() << " is not marked with split label.";
-    return false;
   }
   return node_labels_[node1] == node_labels_[node2];
 }
