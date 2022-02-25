@@ -37,7 +37,7 @@ class LUCpuKernelMod : public NativeCpuKernelMod {
   void InitPivotVecInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
   T GetPermutatedValue(const T *lu_value, const std::vector<int> &per_value, size_t i, size_t j);
-  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *const per_value, int *pivots, size_t k, size_t rows);
+  bool UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k, size_t rows);
   void SetPermutatedValue(T *lu_value, const std::vector<int> &per_value, size_t i, size_t j, const T &value);
   size_t batch_size_{1};
   size_t a_row_{1};
