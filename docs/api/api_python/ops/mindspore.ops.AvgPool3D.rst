@@ -1,8 +1,7 @@
 ﻿mindspore.ops.AvgPool3D
 ========================
 
-.. py:class:: mindspore.ops.AvgPool3D(kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False,
-                 count_include_pad=True, divisor_override=0, data_format="NCDHW")
+.. py:class:: mindspore.ops.AvgPool3D(kernel_size=1, strides=1, pad_mode="valid", pad=0, ceil_mode=False, count_include_pad=True, divisor_override=0, data_format="NCDHW")
 
     对输入的多维数据进行三维的平均池化运算。
 

@@ -5,9 +5,10 @@ mindspore.dataset.transforms.py_transforms.Compose
 
     将多个数据增强算子组合使用。
 
-    .. note:: Compose可以将 `mindspore.dataset.transforms.py_transforms` 模块中的数据增强算子以及用户自定义的Python可调用对象
-    合并成单个数据增强。对于用户定义的Python可调用对象，要求其返回值是numpy.ndarray类型。有关如何使用，请参阅Compose的示例，或阅读
-    :class:`mindspore.dataset.vision.py_transforms.FiveCrop` 的示例，学习如何与用户自定义Python可调用对象配合使用。
+    .. note::
+        Compose可以将 `mindspore.dataset.transforms.py_transforms` 模块中的数据增强算子以及用户自定义的Python可调用对象
+        合并成单个数据增强。对于用户定义的Python可调用对象，要求其返回值是numpy.ndarray类型。有关如何使用，请参阅Compose的示例，或阅读
+        :class:`mindspore.dataset.vision.py_transforms.FiveCrop` 的示例，学习如何与用户自定义Python可调用对象配合使用。
 
     **参数：**
 
