@@ -69,8 +69,8 @@ int QuantParamParser::ParseBitNum(const CommonQuantString &common_quant_string, 
       return RET_INPUT_PARAM_INVALID;
     }
   } else if (common_quant->quant_type == schema::QuantType_QUANT_ALL) {
-    if (common_quant->bit_num <= 0 || common_quant->bit_num > kQuantBitNumInt8) {
-      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [1,8].";
+    if (common_quant->bit_num != kQuantBitNumInt8) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be 8.";
       return RET_INPUT_PARAM_INVALID;
     }
   }
