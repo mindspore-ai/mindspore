@@ -125,9 +125,8 @@ class TbeJobManager:
             return res
         # pylint: disable=broad-except
         except Exception as e:
-            # pylint: disable=no-value-for-parameter
             sys_info = self._get_job_sys_info()
-            job = TbeJob(-1, -1, "", None, job_str, sys_info) if job is None else job
+            job = TbeJob(-1, -1, 0, "", None, job_str, sys_info) if job is None else job
             job.status = JobStatus.JOB_FAILED
             job.result = "Exception during job process"
             job.error("Process Job Failed")
@@ -190,33 +189,40 @@ class TbeJobManager:
     def compile_handler(self, job: TbeJob):
         """ Compile job handler """
         compute_op_list = get_compute_op_list(job.content)
-        if len(compute_op_list) == 1:  # pylint: disable=no-else-return
-            res = do_fuzz_build_tbe_op(job)
-            if not res:
-                job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
-                return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-            if job.result == "NOT_CHANGED":
-                job.result = ""
-                before_build_process(job)
-                res = build_single_pre_op(job)
-                if not res:
-                    job.error("Process build single pre op failed, job json string:{}".format(job.json_string))
-                    return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-                return self.add_to_running_jobs(job)
-            if job.result == "SUCCESS":
-                return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
+        if len(compute_op_list) == 1:
+            return self.single_op_build(job)
+        return self.fusion_op_build(job)
+
+    def single_op_build(self, job):
+        """ single op build """
+        res = do_fuzz_build_tbe_op(job)
+        if not res:
             job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
-        else:
+        if job.result == "NOT_CHANGED":
+            job.result = ""
             before_build_process(job)
-            if self.fusion_need_sync:
-                sync_fusion_env(self.fusion_need_sync, self.imported_module)
-                self.fusion_need_sync = 0
-            res = parallel_compile_fusion_op(job)
+            res = build_single_pre_op(job)
             if not res:
-                job.error("Parallel_compile_fusion_op Job failed, job json string:{}".format(job.json_string))
+                job.error("Process build single pre op failed, job json string:{}".format(job.json_string))
                 return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
             return self.add_to_running_jobs(job)
+        if job.result == "SUCCESS":
+            return self.add_to_finished_jobs(job, JobStatus.JOB_SUCCESS)
+        job.error("Process do fuzz build tbe op failed, job json string:{}".format(job.json_string))
+        return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+
+    def fusion_op_build(self, job):
+        """ single op build """
+        before_build_process(job)
+        if self.fusion_need_sync:
+            sync_fusion_env(self.fusion_need_sync, self.imported_module)
+            self.fusion_need_sync = 0
+        res = parallel_compile_fusion_op(job)
+        if not res:
+            job.error("Parallel_compile_fusion_op Job failed, job json string:{}".format(job.json_string))
+            return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        return self.add_to_running_jobs(job)
 
     def tune_handler(self, job: TbeJob):
         """ Tune job handler """
