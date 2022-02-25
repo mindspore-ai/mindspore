@@ -211,6 +211,14 @@ bool IsValidPartialCNode(const AnfNodePtr &node) {
   }
   return true;
 }
+
+bool CheckExitActorInvalid(const ExitActorPtr &exit_actor) {
+  MS_EXCEPTION_IF_NULL(exit_actor);
+
+  return exit_actor->output_data_arrows().empty() && exit_actor->output_partial_arrows().empty() &&
+         exit_actor->output_control_arrows().empty() && exit_actor->output_branch_control_arrows().empty() &&
+         exit_actor->output_branch_data_arrows().empty() && exit_actor->output_branch_partial_arrows().empty();
+}
 }  // namespace
 
 std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCompilerInfo &graph_compiler_info) {
@@ -1562,6 +1570,13 @@ bool ControlNodeScheduler::CheckActorValid(const ActorSet *actor_set) const {
                             << " does not support the ref formal parameters that are different type.";
         }
       }
+    }
+  }
+
+  for (const auto &exit_actor : actor_set->control_actors_->exit_actors_) {
+    MS_EXCEPTION_IF_NULL(exit_actor);
+    if (CheckExitActorInvalid(exit_actor)) {
+      MS_LOG(EXCEPTION) << "Invalid exit actor:" << exit_actor->GetAID();
     }
   }
   return true;

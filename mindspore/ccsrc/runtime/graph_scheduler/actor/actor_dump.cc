@@ -377,6 +377,9 @@ void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
 void DumpStackActor(const StackActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
+  ofs << "\t\tinput stack data num:" << actor->input_stack_data_num() << '\n';
+  ofs << "\t\tinput stack partial num:" << actor->input_stack_partials_num() << '\n';
+  ofs << "\t\tinput stack control num:" << actor->input_stack_controls_num() << '\n';
   DumpControlActor(actor, ofs);
 }
 
