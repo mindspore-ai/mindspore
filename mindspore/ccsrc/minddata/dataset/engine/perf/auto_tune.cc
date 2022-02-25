@@ -118,12 +118,6 @@ Status AutoTune::CollectOpsInfo() {
   // sort parallel ops in reverse order of IDs (i.e., bottommost op is first)
   std::sort(parallel_ops_ids_.begin(), parallel_ops_ids_.end(), std::greater<>());
   leaf_op_id_ = ops_.size() - 1;
-
-  if (parallel_ops_ids_.size() != 0) {
-    CHECK_FAIL_RETURN_UNEXPECTED(parallel_ops_ids_[parallel_ops_ids_.size() - 1] != 0,
-                                 "Non-sink pipeline, root node is a ParallelOp. Dataset AutoTune is not supported.");
-  }
-
   return Status::OK();
 }
 
@@ -220,20 +214,7 @@ double AutoTune::Mean(const std::vector<T> &items) {
   return std::accumulate(items.begin(), items.end(), 0.0) / static_cast<double>(items.size());
 }
 
-Status IsSinkCheck(bool sink_type) {
-  // Close AutoTune in Non-sink mode, since it's not ready for test.
-  if (sink_type == true) {
-    return Status::OK();
-  } else {
-    MS_LOG(ERROR) << "Dataset AutoTune doesn't support non-sink pipeline.";
-    return Status(StatusCode::kMDUnexpectedError,
-                  "Dataset AutoTune hasn't been supported in non-sink mode(dataset_sink_mode=False), check training "
-                  "config or set dataset_sink_mode to True.");
-  }
-}
-
 Status AutoTune::RunIterationEpoch() {
-  RETURN_IF_NOT_OK(IsSinkCheck(IsSink()));
   // Run every epoch
   if ((profiling_manager_->GetNumOfProfiledEpochs()) >= cur_epoch_) {
     MS_LOG(INFO) << "Run Dataset AutoTune at epoch #" << cur_epoch_;
@@ -244,7 +225,6 @@ Status AutoTune::RunIterationEpoch() {
 }
 
 Status AutoTune::RunIterationStep() {
-  RETURN_IF_NOT_OK(IsSinkCheck(IsSink()));
   // Run at autotune step interval
   int32_t step_temp = 0;
   profiling_manager_->GetNumberOfProfiledSteps(&step_temp);
