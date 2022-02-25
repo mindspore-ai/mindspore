@@ -15,16 +15,22 @@
 """
 Testing Autotune support in DE
 """
+import sys
 import numpy as np
 import pytest
 import mindspore._c_dataengine as cde
 import mindspore.dataset as ds
 
+def err_out_log(out, err, log=False):
+    if log:
+        sys.stdout.write(out)
+        sys.stderr.write(err)
 
 # pylint: disable=unused-variable
 @pytest.mark.forked
 class TestAutotuneWithProfiler:
-    def test_autotune_after_profiler_with_1_pipeline(self, capfd):
+    @staticmethod
+    def test_autotune_after_profiler_with_1_pipeline(capfd):
         """
         Feature: Autotuning with Profiler
         Description: Test Autotune enabled together with MD Profiler with a single pipeline
@@ -40,17 +46,18 @@ class TestAutotuneWithProfiler:
         data1 = data1.batch(32)
         itr1 = data1.create_dict_iterator(num_epochs=5)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert "Cannot enable AutoTune for the current data pipeline as Dataset Profiling is already enabled for the " \
                "current data pipeline." in err
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
+
 
         md_profiler.stop()
         ds.config.set_enable_autotune(False)
 
-    def test_autotune_after_profiler_with_2_pipeline(self, capfd):
+    @staticmethod
+    def test_autotune_after_profiler_with_2_pipeline(capfd):
         """
         Feature: Autotuning with Profiler
         Description: Test Autotune enabled together with MD Profiler with two pipelines
@@ -68,28 +75,26 @@ class TestAutotuneWithProfiler:
         data1 = data1.batch(32)
         itr1 = data1.create_dict_iterator(num_epochs=5)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert "Cannot enable AutoTune for the current data pipeline as Dataset Profiling is already enabled for the " \
                "current data pipeline." in err
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
 
         itr2 = data1.create_dict_iterator(num_epochs=5)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert "Dataset Profiling is already enabled for a different data pipeline." in err
         assert "Cannot enable AutoTune for the current data pipeline as Dataset Profiling is enabled for another data" \
                " pipeline." in err
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
 
         md_profiler.stop()
         ds.config.set_enable_autotune(False)
 
-    @pytest.mark.skip(reason="close non-sink")
-    def test_autotune_with_2_pipeline(self, capfd):
+    @staticmethod
+    def test_autotune_with_2_pipeline(capfd):
         """
         Feature: Autotuning
         Description: Test Autotune two pipelines
@@ -104,17 +109,16 @@ class TestAutotuneWithProfiler:
         itr1 = data1.create_dict_iterator(num_epochs=5)
         itr2 = data1.create_dict_iterator(num_epochs=5)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert "Cannot enable AutoTune for the current data pipeline as it is already enabled for another data " \
                "pipeline." in err
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
 
         ds.config.set_enable_autotune(False)
 
-    @pytest.mark.skip(reason="close non-sink")
-    def test_delayed_autotune_with_2_pipeline(self, capfd):
+    @staticmethod
+    def test_delayed_autotune_with_2_pipeline(capfd):
         """
         Feature: Autotuning
         Description: Test delayed Autotune with two pipelines
@@ -130,14 +134,13 @@ class TestAutotuneWithProfiler:
         itr2 = data1.create_dict_iterator(num_epochs=5)
         ds.config.set_enable_autotune(False)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert err == ''
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
 
-    @pytest.mark.skip(reason="close non-sink")
-    def test_delayed_start_autotune_with_3_pipeline(self, capfd):
+    @staticmethod
+    def test_delayed_start_autotune_with_3_pipeline(capfd):
         """
         Feature: Autotuning
         Description: Test delayed Autotune and early stop with three pipelines
@@ -155,14 +158,13 @@ class TestAutotuneWithProfiler:
 
         itr3 = data1.create_dict_iterator(num_epochs=5)
 
-        _, err = capfd.readouterr()
+        out, err = capfd.readouterr()
         assert err == ''
-        # Uncomment the following two lines to see complete stdout and stderr output in pytest summary output
-        # sys.stdout.write(_)
-        # sys.stderr.write(err)
+        # Change False to True in the following call to see complete stdout and stderr output in pytest summary output
+        err_out_log(out, err, False)
 
-    @pytest.mark.skip(reason="close non-sink")
-    def test_autotune_before_profiler(self):
+    @staticmethod
+    def test_autotune_before_profiler():
         """
         Feature: Autotuning with Profiler
         Description: Test Autotune with Profiler when Profiler is Initialized after autotune
@@ -184,7 +186,8 @@ class TestAutotuneWithProfiler:
 
         assert "Unexpected error. Stop MD Autotune before initializing the MD Profiler." in str(excinfo.value)
 
-    def test_autotune_simple_pipeline(self):
+    @staticmethod
+    def test_autotune_simple_pipeline():
         """
         Feature: Autotuning
         Description: test simple pipeline of autotune - Generator -> Shuffle -> Batch
