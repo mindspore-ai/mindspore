@@ -16,12 +16,11 @@ if(ENABLE_GPU)
     target_compile_options(cuda_common_obj PRIVATE "-std=c++17")
     cuda_add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
     message("add gpu lib to cuda_ops")
-    target_link_libraries(cuda_ops mindspore_core
+    target_link_libraries(cuda_ops mindspore_core cublas
             ${CUDA_PATH}/lib64/libcurand.so
             ${CUDNN_LIBRARY_PATH}
             ${CUDA_PATH}/lib64/libcudart.so
             ${CUDA_PATH}/lib64/stubs/libcuda.so
             ${CUDA_PATH}/lib64/libcusolver.so
-            ${CUDA_PATH}/lib64/libcufft.so
-            ${CUDA_PATH}/lib64/libcublas.so)
+            ${CUDA_PATH}/lib64/libcufft.so)
 endif()
