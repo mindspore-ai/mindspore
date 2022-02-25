@@ -143,14 +143,25 @@ int LiteExitOpActor::PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
   return RET_OK;
 }
 
+bool LiteExitOpActor::IsSubSet(const std::vector<lite::Tensor *> &all_set, const std::vector<lite::Tensor *> &sub_set) {
+  if (sub_set.size() > all_set.size()) {
+    return false;
+  }
+  for (auto &sub_item : sub_set) {
+    if (std::find(all_set.begin(), all_set.end(), sub_item) == all_set.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int LiteExitOpActor::RecordCallNodeOutputActor(std::vector<std::shared_ptr<LiteOpActor>> *actors) {
   actors_ = actors;
   for (auto actor : *actors_) {
     auto actor_in_tensors = actor->GetKernel()->in_tensors();
     for (auto &info : all_mapping_info_) {
       auto &call = info.call_node;
-      if (std::includes(actor_in_tensors.begin(), actor_in_tensors.end(), call->out_tensors().begin(),
-                        call->out_tensors().end())) {
+      if (IsSubSet(actor_in_tensors, call->out_tensors())) {
         info.call_output_aid = actor->GetAID();
       }
     }
