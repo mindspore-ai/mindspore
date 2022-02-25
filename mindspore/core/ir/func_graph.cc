@@ -252,7 +252,7 @@ void FuncGraph::DropNode(const AnfNodePtr &node) {
     (void)parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());
   }
   // Remove the node from order list.
-  if (graph) {
+  if (graph != nullptr) {
     graph->EraseUnusedNodeInOrder(node);
   }
 }
