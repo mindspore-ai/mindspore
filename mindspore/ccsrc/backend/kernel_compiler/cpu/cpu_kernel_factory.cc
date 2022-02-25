@@ -168,10 +168,7 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
   std::vector<KernelAttr> result;
   auto iter = name_to_attr_creator_.find(kernel_name);
   if (iter == name_to_attr_creator_.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name
-                      << ", only support these types: Concat, Pack, Stack, Split, Transpose, Unpack, AddN, "
-                         "ConcatOffset or DynamicStitch currently, but got "
-                      << kernel_name;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << ", the CPU platform is not supported!";
   }
   auto creators = iter->second;
   result.reserve(creators.size());
