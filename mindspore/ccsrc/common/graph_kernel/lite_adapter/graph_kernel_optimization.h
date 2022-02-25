@@ -28,12 +28,12 @@ class GraphKernelOptimizer {
   void Run(const FuncGraphPtr &kernel_graph);
 
  private:
-  // before graph_kernel
-  PassManagerPtr PreProcess() const;
   // Cluster kernels
   PassManagerPtr Cluster() const;
   // Split kernels
   PassManagerPtr Split() const;
+  // Post-process
+  PassManagerPtr PostProcess() const;
 };
 
 void GraphKernelOptimize(const FuncGraphPtr &kernel_graph);

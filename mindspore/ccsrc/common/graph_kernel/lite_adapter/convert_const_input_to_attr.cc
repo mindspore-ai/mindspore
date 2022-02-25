@@ -23,17 +23,23 @@ bool ConvertConstInputToAttr::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
-    if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
-      continue;
+    auto graph_kernel_fg = GetCNodeFuncGraph(node);
+    if (graph_kernel_fg != nullptr && graph_kernel_fg->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
+      auto toposet = TopoSort(graph_kernel_fg->get_return());
+      for (auto sub_node : toposet) {
+        if (sub_node == nullptr || !AnfUtils::IsRealCNodeKernel(sub_node)) {
+          continue;
+        }
+        auto cnode = sub_node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        opt::ConstInputToAttrInfoRegister reg;
+        if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfUtils::GetCNodeName(cnode), &reg)) {
+          continue;
+        }
+        changed = true;
+        opt::ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
+      }
     }
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    opt::ConstInputToAttrInfoRegister reg;
-    if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(AnfUtils::GetCNodeName(cnode), &reg)) {
-      continue;
-    }
-    changed = true;
-    opt::ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
   }
   return changed;
 }
