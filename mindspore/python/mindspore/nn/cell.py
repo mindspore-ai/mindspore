@@ -1540,6 +1540,9 @@ class Cell(Cell_):
         if not isinstance(hook_fn, (FunctionType, MethodType)):
             raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' should be python "
                             f"function, but got {type(hook_fn)}.")
+        if hook_fn.__code__.co_name == "staging_specialize":
+            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
+
         self._enable_forward_pre_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_pre_hook_key'):
@@ -1636,6 +1639,9 @@ class Cell(Cell_):
         if not isinstance(hook_fn, (FunctionType, MethodType)):
             raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' should be python "
                             f"function, but got {type(hook_fn)}.")
+        if hook_fn.__code__.co_name == "staging_specialize":
+            raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
+
         self._enable_forward_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_hook_key'):
