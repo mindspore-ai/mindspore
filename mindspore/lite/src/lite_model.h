@@ -134,9 +134,17 @@ class LiteModel : public Model {
       node->node_type_ = GetPrimitiveType(c_node->primitive(), schema_version_);
 #ifdef ENABLE_MODEL_OBF
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
+      if (src_prim == nullptr) {
+        delete node;
+        return false;
+      }
       auto src_prim_type = src_prim->value_type();
       unsigned char *dst_prim = nullptr;
       if (src_prim_type == schema::PrimitiveType_GenOP) {
+        if (i >= this->all_nodes_stat_.size() || i >= this->all_prims_type_.size()) {
+          delete node;
+          return false;
+        }
         auto src_node_stat = this->all_nodes_stat_[i];
         auto dst_prim_type = this->all_prims_type_[i];
         auto ret = DeObfuscatePrimitive(src_prim, src_node_stat, &dst_prim, schema::PrimitiveType(dst_prim_type));
