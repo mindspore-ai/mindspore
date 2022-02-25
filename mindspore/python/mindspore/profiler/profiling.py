@@ -167,7 +167,8 @@ class Profiler:
         if self._device_target and self._device_target == "CPU":
             self.start_profile = kwargs.pop("start_profile", True)
             if not isinstance(self.start_profile, bool):
-                raise TypeError("The parameter start_profile must be bool.")
+                raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
+                                f"but got type {type(self.start_profile)}")
 
         if self._device_target and self._device_target == "GPU":
             gpu_profiler = c_expression.GPUProfiler
@@ -179,10 +180,9 @@ class Profiler:
 
             self.start_profile = kwargs.pop("start_profile", True)
             if not isinstance(self.start_profile, bool):
-                raise TypeError("The parameter start_profile must be bool.")
+                raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
+                                f"but got type {type(self.start_profile)}")
 
-            if kwargs:
-                logger.warning("Params not be supported yet on GPU.")
         elif self._device_target and self._device_target == "Ascend":
             self._init_time = int(time.time() * 10000000)
             logger.info("Profiling: profiling init time: %d", self._init_time)
@@ -192,7 +192,8 @@ class Profiler:
             profiling_options = json.dumps(self._construct_profiling_options())
             # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
             if len(profiling_options) > 2048:
-                msg = "The parameter length exceeds the limit (2048), please input valid parameters."
+                msg = f"For '{self.__class__.__name__}', the environment parameter length exceeds " \
+                      f"the limit (2048), please input valid parameters."
                 logger.critical(msg)
                 raise ValueError(msg)
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
@@ -245,7 +246,8 @@ class Profiler:
             deprecated('optypes_not_deal', '1.6')
         optypes_not_deal = kwargs.pop("optypes_not_deal", "Variable")
         if not isinstance(optypes_not_deal, str):
-            raise TypeError("The parameter optypes_not_deal must be str.")
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter optypes_not_deal "
+                            f"must be str, but got type {type(optypes_not_deal)}")
         self._filt_optype_names = optypes_not_deal.split(",") if optypes_not_deal else []
 
         self._ascend_job_id = kwargs.pop("ascend_job_id", "")
@@ -260,21 +262,24 @@ class Profiler:
 
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
-            raise TypeError("The parameter start_profile must be bool.")
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
+                            f"but got type {type(self.start_profile)}")
 
         self._profile_communication = kwargs.pop("profile_communication", False)
         if not isinstance(self._profile_communication, bool):
-            raise TypeError("The parameter profile_communication must be bool.")
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_communication must be bool, "
+                            f"but got type {type(self._profile_communication)}")
         if self._profile_communication:
             hccl_option = {"output": self._output_path, "task_trace": "on"}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
             if not self.start_profile:
-                raise RuntimeError("The parameter profile_communication can not be True while starting profiler in the "
-                                   "process of training.")
+                raise RuntimeError(f"For '{self.__class__.__name__}', the parameter profile_communication can "
+                                   f"not be True while starting profiler in the process of training.")
 
         self._profile_memory = kwargs.pop("profile_memory", False)
         if not isinstance(self._profile_memory, bool):
-            raise TypeError("The parameter profile_memory must be bool")
+            raise TypeError(f"For '{self.__class__.__name__}', the parameter profile_memory must be bool, "
+                            f"but got type '{type(self._profile_memory)}'")
         if kwargs:
             logger.warning("There are invalid params which don't work.")
 
@@ -441,7 +446,7 @@ class Profiler:
         try:
             output_path = validate_and_normalize_path(output_path)
         except RuntimeError:
-            raise ProfilerPathErrorException('Output path is invalid.')
+            raise ProfilerPathErrorException(f'profiling data output path {output_path} is invalid.')
         if not os.path.isdir(output_path):
             raise ProfilerDirNotFoundException(output_path)
         return output_path
@@ -906,7 +911,8 @@ class Profiler:
         rank_id = os.getenv("RANK_ID")
         if not rank_id or not rank_id.isdigit():
             rank_id = "0"
-            logger.info("Fail to get RANK_ID, use 0 instead.")
+            logger.warning(f"For '{self.__class__.__name__}', fail to get RANK_ID from environment, "
+                           f"use 0 instead.")
 
         self._dev_id = dev_id
         self._device_target = device_target
@@ -986,6 +992,6 @@ class Profiler:
             param_nums = len(network.parameters_dict())
             result = {"trainable_parameters": param_nums}
         else:
-            raise ValueError("Wrong options.")
+            raise ValueError("profile_option value must be ProfileOption.trainable_parameters")
 
         return result
