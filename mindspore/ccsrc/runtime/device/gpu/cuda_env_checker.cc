@@ -16,7 +16,6 @@
 
 #include "runtime/device/gpu/cuda_env_checker.h"
 #include <dirent.h>
-#include <cstdlib>
 #include <algorithm>
 #include "utils/log_adapter.h"
 

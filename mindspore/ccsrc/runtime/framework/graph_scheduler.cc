@@ -459,7 +459,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
 }
 
 void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
-                                               double execution_time) {
+                                               double execution_time) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->loop_count_actor_);
   ++actor_set->execution_count_;
@@ -487,7 +487,7 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
     actor_set->multi_thread_execution_time_ += execution_time;
     if (actor_set->execution_count_ == ActorDispatcher::kMultiThreadExecutionCountEnd) {
       actor_set->multi_thread_execution_time_ /=
-        (ActorDispatcher::kMultiThreadExecutionCountEnd - ActorDispatcher::kMultiThreadExecutionCountBegin + 1);
+        ((ActorDispatcher::kMultiThreadExecutionCountEnd - ActorDispatcher::kMultiThreadExecutionCountBegin) + 1);
       actor_set->is_multi_thread_execution_ = false;
     }
     return;

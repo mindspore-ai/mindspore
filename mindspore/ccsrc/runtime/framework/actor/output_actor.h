@@ -41,7 +41,7 @@ using mindspore::tensor::TensorPtr;
 // The output actor is used to receive the output result of actor which represents the graph output.
 class OutputActor : public AbstractActor {
  public:
-  OutputActor(std::string name, size_t loop_count, size_t outputs_num)
+  OutputActor(const std::string &name, size_t loop_count, size_t outputs_num)
       : AbstractActor(name, KernelTransformType::kOutputActor, nullptr),
         loop_count_(loop_count),
         current_count_(0),
