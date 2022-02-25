@@ -32,9 +32,11 @@ class LearningRateScheduler(Callback):
         learning_rate_function (Function): The function about how to change the learning rate during training.
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import Model
         >>> from mindspore.train.callback import LearningRateScheduler
         >>> import mindspore.nn as nn
+        >>> from mindspore import dataset as ds
         ...
         >>> def learning_rate_function(lr, cur_step_num):
         ...     if cur_step_num%1000 == 0:
@@ -43,12 +45,13 @@ class LearningRateScheduler(Callback):
         ...
         >>> lr = 0.1
         >>> momentum = 0.9
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> net = nn.Dense(10, 5)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=momentum)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         ...
-        >>> dataset = create_custom_dataset("custom_dataset_path")
+        >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+        >>> dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> model.train(1, dataset, callbacks=[LearningRateScheduler(learning_rate_function)],
         ...             dataset_sink_mode=False)
     """

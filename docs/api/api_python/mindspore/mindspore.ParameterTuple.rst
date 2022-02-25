@@ -1,7 +1,7 @@
 mindspore.ParameterTuple
 ========================
 
-.. py:class:: mindspore.ParameterTuple(iterable)
+.. py:class:: mindspore.ParameterTuple
 
     继承于tuple，用于管理多个Parameter。
 

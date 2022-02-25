@@ -22,7 +22,7 @@ mindspore.nn.Loss
 
         **异常：**
 
-        RuntimeError：样本总数为0。
+        - **RuntimeError** - 样本总数为0。
 
     .. py:method:: update(*inputs)
 

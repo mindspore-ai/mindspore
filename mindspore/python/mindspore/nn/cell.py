@@ -1144,7 +1144,8 @@ class Cell(Cell_):
             Iteration, all parameters at the cell.
 
         Examples:
-            >>> net = Net()
+            >>> from mindspore import nn
+            >>> net = nn.Dense(3, 4)
             >>> parameters = []
             >>> for item in net.get_parameters():
             ...     parameters.append(item)
@@ -1178,7 +1179,8 @@ class Cell(Cell_):
             Iteration, all the names and corresponding parameters in the cell.
 
         Examples:
-            >>> n = Net()
+            >>> from mindspore import nn
+            >>> n = nn.Dense(3, 4)
             >>> names = []
             >>> for m in n.parameters_and_names():
             ...     if m[0]:
@@ -1218,7 +1220,14 @@ class Cell(Cell_):
             Iteration, all the child cells and corresponding names in the cell.
 
         Examples:
-            >>> n = Net()
+            >>> from mindspore import nn
+            >>> class Net(nn.Cell):
+            ...     def __init__(self):
+            ...         super(Net, self).__init__()
+            ...         self.conv = nn.Conv2d(3, 64, 3)
+            ...     def construct(self, x):
+            ...         out = self.conv(x)
+            ...         return out
             >>> names = []
             >>> for m in n.cells_and_names():
             ...     if m[0]:
@@ -1988,7 +1997,6 @@ class GraphCell(Cell):
         TypeError: If the `params_init` is not a dict.
         TypeError: If the key of the `params_init` is not a str.
         TypeError: If the value of the `params_init` is neither a Tensor nor a Parameter.
-        ValueError: If the initial value's dtype and shape are not consistent with the parameter would be inited.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

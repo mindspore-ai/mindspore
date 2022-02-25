@@ -157,12 +157,15 @@ def connect_network_with_dataset(network, dataset_helper):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import DatasetHelper
+        >>> from mindspore import DatasetHelper, nn, connect_network_with_dataset
+        >>> from mindspore import dataset as ds
         >>>
-        >>> # call create_dataset function to create a regular dataset, refer to mindspore.dataset
-        >>> train_dataset = create_custom_dataset()
+        >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+        >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
-        >>> net = Net()
+        >>> net = nn.Dense(10, 5)
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     """
     dataset_iter = dataset_helper.iter
@@ -236,12 +239,15 @@ class DatasetHelper:
         epoch_num (int): The number of passes of the entire dataset to be sent. Default: 1.
 
     Examples:
-        >>> from mindspore import DatasetHelper
+        >>> import numpy as np
+        >>> from mindspore import DatasetHelper, nn
+        >>> from mindspore import dataset as ds
         >>>
-        >>> train_dataset = create_custom_dataset()
+        >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+        >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
         >>> set_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
         >>>
-        >>> net = Net()
+        >>> net = nn.Dense(10, 5)
         >>> # Object of DatasetHelper is iterable
         >>> for next_element in set_helper:
         ...     # `next_element` includes data and label, using data to run the net
