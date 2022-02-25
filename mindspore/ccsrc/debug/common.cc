@@ -282,7 +282,7 @@ std::string Common::GetUserDefineCachePath() {
     config_path = "./";
   } else {
     config_path = std::string(value);
-    FileUtils::CreateNotExistDirs(config_path);
+    (void)FileUtils::CreateNotExistDirs(config_path);
     if (config_path[config_path.length() - 1] != '/') {
       config_path += "/";
     }

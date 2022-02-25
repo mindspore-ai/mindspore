@@ -842,7 +842,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     });
   }
 
-  static bool inline ExistEnvironNodeInTupleItem(const FuncGraphPtr &fg) {
+  static bool ExistEnvironNodeInTupleItem(const FuncGraphPtr &fg) {
     MS_EXCEPTION_IF_NULL(fg);
     const auto &output = fg->output();
     if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {

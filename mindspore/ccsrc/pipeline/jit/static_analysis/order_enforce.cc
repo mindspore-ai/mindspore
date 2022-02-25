@@ -20,6 +20,8 @@
 #include <queue>
 #include <vector>
 #include <utility>
+#include <string>
+#include <memory>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/utils.h"

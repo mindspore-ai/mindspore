@@ -33,8 +33,7 @@ class NormalDistribution<T, float> {
     const uint32_t temp_value = input & 0x7fffffu;
     const uint32_t exp = static_cast<uint32_t>(127);
     const uint32_t val = (exp << 23) | temp_value;
-    errno_t mem_ret;
-    mem_ret = memcpy_s(output, sizeof(float), &val, sizeof(uint32_t));
+    errno_t mem_ret = memcpy_s(output, sizeof(float), &val, sizeof(uint32_t));
     if (mem_ret != EOK) {
       MS_LOG(ERROR) << "UInt32ToFloat32 memcpy is failed";
       return false;

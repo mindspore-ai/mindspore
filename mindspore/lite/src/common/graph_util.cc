@@ -17,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <utility>
+#include <deque>
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"

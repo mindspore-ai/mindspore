@@ -270,7 +270,7 @@ inline T GetValue(const ValuePtr &value) {
 /// \return The values as a vector, empty if the input is not a ValueSequence.
 template <typename T, typename S = typename std::decay_t<T>,
           typename U = typename std::enable_if_t<is_vector<S>::value, typename S::value_type>>
-inline std::vector<U> GetValue(const ValuePtr &value) {
+std::vector<U> GetValue(const ValuePtr &value) {
   if (value == nullptr) {
     return {};
   }

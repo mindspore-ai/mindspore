@@ -48,7 +48,7 @@ class MS_CORE_API Any {
   // right reference constructor
   template <class T, class = typename std::enable_if<!std::is_same<typename std::decay<T>::type, Any>::value, T>::type>
   Any(T &&t) : m_tpIndex(typeid(typename std::decay<T>::type)) {  // NOLINT
-    BasePtr new_val(new Derived<typename std::decay<T>::type>(std::forward<T>(t)));
+    BasePtr new_val = std::make_unique<Derived<typename std::decay<T>::type>>(std::forward<T>(t));
     std::swap(m_ptr, new_val);
   }
 
@@ -175,7 +175,7 @@ class MS_CORE_API Any {
 
     const std::type_info &type() const override { return typeid(T); }
 
-    BasePtr clone() const override { return BasePtr(new Derived<T>(m_value)); }
+    BasePtr clone() const override { return std::make_unique<Derived<T>>(m_value); }
 
     ~Derived() override {}
 

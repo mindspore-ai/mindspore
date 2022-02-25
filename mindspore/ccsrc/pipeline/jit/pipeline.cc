@@ -318,8 +318,6 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
   return true;
 }
 
-GraphExecutorPy::GraphExecutorPy() {}
-
 ResourcePtr GraphExecutorPy::GetResource(const std::string &phase) {
   MS_LOG(DEBUG) << "Phase size:" << info_.size();
   if (info_.count(phase) == 0) {
