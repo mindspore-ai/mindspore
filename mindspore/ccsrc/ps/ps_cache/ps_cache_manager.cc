@@ -360,6 +360,10 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
 }
 
 void PsCacheManager::Finalize() {
+  if (finalized_) {
+    return;
+  }
+
   SyncEmbeddingTable();
 
   running_ = false;
@@ -369,6 +373,8 @@ void PsCacheManager::Finalize() {
   if (process_data_thread_.joinable()) {
     process_data_thread_.join();
   }
+
+  finalized_ = true;
 }
 
 bool PsCacheManager::ProcessData() {
