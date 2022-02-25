@@ -69,9 +69,16 @@ void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr>
     return;
   }
 
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
+    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
       AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
     FetchRealDependNodeByAutoMonad(real_inputs[kDependAttachNodeIndex], depend_nodes);
+    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
+    // node in this scene.
+    if (IsOneOfPrimitiveCNode(real_inputs[kRealInputIndexInDepend], recursion_prims)) {
+      FetchRealDependNodeByAutoMonad(real_inputs[kRealInputIndexInDepend], depend_nodes);
+    }
   } else if (AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
     for (size_t i = kUpdateStateRealInput; i < real_inputs.size(); ++i) {
       FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
