@@ -50,6 +50,7 @@ class LiteExitOpActor : public LiteOpActor {
   int RecordCallNodeOutputActor(std::vector<std::shared_ptr<LiteOpActor>> *actors);
   void RecordPartialNodeInputActor();
   void SetEntranceInputAID(OpData<Tensor> *inputs);
+  bool IsSubSet(const std::vector<lite::Tensor *> &all_set, const std::vector<lite::Tensor *> &sub_set);
 
   std::vector<std::shared_ptr<LiteOpActor>> *actors_{};
   std::vector<MappingInfo> all_mapping_info_{};
