@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Gather(const void *input, int64_t outer_size, int64_t inner_size, int64_t limit, const int *indices,
-           int64_t indices_element_size, void *output, int64_t data_size);
+int Gather(const void *input, int64_t outer_size, int64_t byte_inner_size, int64_t limit, const int *indices,
+           int64_t index_num, void *output, int64_t byte_out_stride);
 #ifdef __cplusplus
 }
 #endif
