@@ -26,8 +26,6 @@ struct DumpGraphParams {
   bool dump_full_name;
   int dump_mode;
 };
-class FuncGraph;
-using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 class GraphRecorder : public BaseRecorder {
  public:
   GraphRecorder() : BaseRecorder(), func_graph_(nullptr), graph_type_("") {}
@@ -37,7 +35,7 @@ class GraphRecorder : public BaseRecorder {
   ~GraphRecorder() {}
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
-  void SetDumpFlag(DumpGraphParams info) { dump_graph_info_ = info; }
+  void SetDumpFlag(const DumpGraphParams &info) { dump_graph_info_ = info; }
 
   virtual void Export();
 

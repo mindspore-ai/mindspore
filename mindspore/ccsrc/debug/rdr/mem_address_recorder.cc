@@ -16,7 +16,6 @@
 #include "debug/rdr/mem_address_recorder.h"
 #include <fstream>
 #include <sstream>
-#include <utility>
 #include "kernel/kernel.h"
 
 namespace mindspore {

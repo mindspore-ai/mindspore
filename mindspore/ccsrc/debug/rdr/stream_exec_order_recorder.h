@@ -50,8 +50,6 @@ class ExecNode {
 };
 using ExecNodePtr = std::shared_ptr<ExecNode>;
 
-class CNode;
-using CNodePtr = std::shared_ptr<CNode>;
 class StreamExecOrderRecorder : public BaseRecorder {
  public:
   StreamExecOrderRecorder() : BaseRecorder() {}
