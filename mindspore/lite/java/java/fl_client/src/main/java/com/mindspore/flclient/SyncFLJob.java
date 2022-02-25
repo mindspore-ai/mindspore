@@ -121,7 +121,7 @@ public class SyncFLJob {
 
     private void flRunLoop(FLLiteClient flLiteClient) {
         do {
-            if (ifTryTimeExceedsLimit() || checkStopJobFlag()) {
+            if (tryTimeExceedsLimit() || checkStopJobFlag()) {
                 break;
             }
             LOGGER.info(Common.addTag("flName: " + flParameter.getFlName()));
@@ -138,9 +138,9 @@ public class SyncFLJob {
             curStatus = flLiteClient.startFLJob();
             if (curStatus == FLClientStatus.RESTART) {
                 tryTimePerIter += 1;
-                restart("[startFLJob]", flLiteClient.getNextRequestTime(), flLiteClient);
+                resetContext("[startFLJob]", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
-            } else if (curStatus == FLClientStatus.FAILED) {
+            } else if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[startFLJob]", flLiteClient);
                 break;
             }
@@ -150,16 +150,16 @@ public class SyncFLJob {
             // create mask
             curStatus = flLiteClient.getFeatureMask();
             if (curStatus == FLClientStatus.RESTART) {
-                restart("[Encrypt] creatMask", flLiteClient.getNextRequestTime(), flLiteClient);
+                resetContext("[Encrypt] creatMask", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
-            } else if (curStatus == FLClientStatus.FAILED) {
+            } else if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[Encrypt] createMask", flLiteClient);
                 break;
             }
 
             // train
             curStatus = flLiteClient.localTrain();
-            if (curStatus == FLClientStatus.FAILED) {
+            if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[train] train", flLiteClient);
                 break;
             }
@@ -168,9 +168,9 @@ public class SyncFLJob {
             // updateModel
             curStatus = flLiteClient.updateModel();
             if (curStatus == FLClientStatus.RESTART) {
-                restart("[updateModel]", flLiteClient.getNextRequestTime(), flLiteClient);
+                resetContext("[updateModel]", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
-            } else if (curStatus == FLClientStatus.FAILED) {
+            } else if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[updateModel] updateModel", flLiteClient);
                 break;
             }
@@ -178,9 +178,9 @@ public class SyncFLJob {
             // unmasking
             curStatus = flLiteClient.unMasking();
             if (curStatus == FLClientStatus.RESTART) {
-                restart("[Encrypt] unmasking", flLiteClient.getNextRequestTime(), flLiteClient);
+                resetContext("[Encrypt] unmasking", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
-            } else if (curStatus == FLClientStatus.FAILED) {
+            } else if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[Encrypt] unmasking", flLiteClient);
                 break;
             }
@@ -188,9 +188,9 @@ public class SyncFLJob {
             // getModel
             curStatus = getModel(flLiteClient);
             if (curStatus == FLClientStatus.RESTART) {
-                restart("[getModel]", flLiteClient.getNextRequestTime(), flLiteClient);
+                resetContext("[getModel]", flLiteClient.getNextRequestTime(), flLiteClient);
                 continue;
-            } else if (curStatus == FLClientStatus.FAILED) {
+            } else if (curStatus != FLClientStatus.SUCCESS) {
                 failed("[getModel] getModel", flLiteClient);
                 break;
             }
@@ -204,7 +204,7 @@ public class SyncFLJob {
                         "don't evaluate the model after getting model from server"));
             } else {
                 curStatus = flLiteClient.evaluateModel();
-                if (curStatus == FLClientStatus.FAILED) {
+                if (curStatus != FLClientStatus.SUCCESS) {
                     failed("[evaluate] evaluate", flLiteClient);
                     break;
                 }
@@ -216,6 +216,7 @@ public class SyncFLJob {
             flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                     flLiteClient.getRetCode());
             Common.freeSession();
+            tryTimePerIter = 0;
         } while (flLiteClient.getIteration() < flLiteClient.getIterations());
     }
 
@@ -226,9 +227,9 @@ public class SyncFLJob {
         waitTryTime = 0;
     }
 
-    private Boolean ifTryTimeExceedsLimit() {
+    private Boolean tryTimeExceedsLimit() {
         if (tryTimePerIter > RESTART_TIME_PER_ITER) {
-            LOGGER.severe(Common.addTag("[ifTryTimeExceedsLimit] the repeated request time exceeds the limit, current" +
+            LOGGER.severe(Common.addTag("[tryTimeExceedsLimit] the repeated request time exceeds the limit, current" +
                     " repeated" +
                     " request time is: " + tryTimePerIter + " the limited time is: " + RESTART_TIME_PER_ITER));
             curStatus = FLClientStatus.FAILED;
@@ -246,9 +247,9 @@ public class SyncFLJob {
         }
     }
 
-    private Boolean ifWaitTryTimeExceedsLimit() {
+    private Boolean waitTryTimeExceedsLimit() {
         if (waitTryTime > MAX_WAIT_TRY_TIME) {
-            LOGGER.severe(Common.addTag("[ifWaitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+            LOGGER.severe(Common.addTag("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
                     "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
             curStatus = FLClientStatus.FAILED;
             return true;
@@ -261,7 +262,7 @@ public class SyncFLJob {
         waitTryTime = 0;
         while (curStatus == FLClientStatus.WAIT) {
             waitTryTime += 1;
-            if (ifWaitTryTimeExceedsLimit()) {
+            if (waitTryTimeExceedsLimit()) {
                 curStatus = FLClientStatus.FAILED;
                 break;
             }
@@ -272,7 +273,6 @@ public class SyncFLJob {
             waitSomeTime();
             curStatus = flLiteClient.getModel();
         }
-        waitTryTime = 0;
         return curStatus;
     }
 
@@ -402,7 +402,7 @@ public class SyncFLJob {
         Common.sleep(waitTime);
     }
 
-    private void restart(String tag, String nextReqTime, FLLiteClient flLiteClient) {
+    private void resetContext(String tag, String nextReqTime, FLLiteClient flLiteClient) {
         LOGGER.info(Common.addTag(tag + " out of time: need wait and request startFLJob again"));
         waitNextReqTime(nextReqTime);
         Common.freeSession();
