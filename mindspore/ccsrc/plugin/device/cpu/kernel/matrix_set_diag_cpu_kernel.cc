@@ -38,37 +38,35 @@ void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // invalid alignment will throw an exception.
   auto alignment = AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
   alignment_ = GetAlignments(alignment);
-  constexpr int input_index = 0;
-  constexpr int diag_index = 1;
-  constexpr int diag_k_index = 2;
-  constexpr int output_index = 0;
+  constexpr size_t input_index = 0;
+  constexpr size_t diag_index = 1;
+  constexpr size_t diag_k_index = 2;
+  constexpr size_t output_index = 0;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
   auto diag_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_index);
   auto diag_k_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_k_index);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
 
-  constexpr int temporary_2d_dim = 2;
-  constexpr int temporary_1d_dim = 1;
-  if (SizeToInt(input_shape.size()) < temporary_2d_dim || SizeToInt(diag_shape.size()) < temporary_1d_dim ||
-      input_shape != output_shape) {
+  constexpr size_t temporary_2d_dim = 2;
+  constexpr size_t temporary_1d_dim = 1;
+  if (input_shape.size() < temporary_2d_dim || diag_shape.size() < temporary_1d_dim || input_shape != output_shape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input is invalid for input shape greater than 2D, diag shape "
                          "greater than 1D, input shape should equal to output shape.";
   }
-  if (SizeToInt(diag_k_shape.size()) != temporary_1d_dim) {
+  if (diag_k_shape.size() != temporary_1d_dim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of diag_region's dim should be limited to range (k[0],k[1]).";
   }
-  int input_rank = SizeToInt(input_shape.size());
-  for (int i = 0; i < input_rank - temporary_2d_dim; ++i) {
+  size_t input_rank = input_shape.size();
+  for (size_t i = 0; i < input_rank - temporary_2d_dim; ++i) {
     outer_batch_ *= SizeToInt(input_shape.at(i));
   }
   input_shape_ = input_shape;
   inner_rows_ = SizeToInt(input_shape.at(input_rank - temporary_2d_dim));
   inner_cols_ = SizeToInt(input_shape.at(input_rank - temporary_1d_dim));
 
-  expected_num_diags_ =
-    SizeToInt(diag_shape.size()) == input_rank ? SizeToInt(diag_shape.at(input_rank - temporary_2d_dim)) : 1;
+  expected_num_diags_ = diag_shape.size() == input_rank ? SizeToInt(diag_shape.at(input_rank - temporary_2d_dim)) : 1;
 
   data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -94,8 +92,7 @@ bool MatrixSetDiagCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
 }
 
 template <typename T>
-void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspaces,
+void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs) {
   auto input = inputs.at(kDim0);
   auto diag = inputs.at(kDim1);

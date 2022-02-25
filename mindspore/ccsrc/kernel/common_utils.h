@@ -98,8 +98,9 @@ class MatrixInfo {
     // initial current indexes.
     int last_rank = SizeToInt(current_indexes_.size()) - 1;
     for (int i = last_rank; start != 0 && i >= 0; --i) {
-      current_indexes_[i] = start % shapes_.at(i);
-      start = start / shapes_.at(i);
+      size_t position = IntToSize(i);
+      current_indexes_[position] = start % shapes_.at(position);
+      start = start / shapes_.at(position);
     }
     return true;
   }
