@@ -224,9 +224,10 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore.context import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_rank, get_local_rank
-        >>> set_context(device_target="Ascend", device_num=16) # 2 server, each server with 8 NPU.
+        >>> set_context(device_target="Ascend")
+        >>> set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
         >>> world_rank = get_rank() # rank_id is 9.
         >>> local_rank = get_local_rank()
@@ -260,9 +261,10 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL/NCCL is not available.
 
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore.context import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_group_size
-        >>> set_context(device_target="Ascend", device_num=8)
+        >>> set_context(device_target="Ascend")
+        >>> set_auto_parallel_context(device_num=8)
         >>> init()
         >>> group_size = get_group_size()
         >>> print("group_size is: ", group_size)
@@ -295,9 +297,10 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore.context import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_local_rank_size
-        >>> set_context(device_target="Ascend", device_num=16) # 2 server, each server with 8 NPU.
+        >>> set_context(device_target="Ascend")
+        >>> set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
         >>> local_rank_size = get_local_rank_size()
         >>> print("local_rank_size is: ", local_rank_size)

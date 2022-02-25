@@ -231,6 +231,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Adam
     mindspore.nn.AdamOffload
     mindspore.nn.AdamWeightDecay
+    mindspore.nn.AdaSumByDeltaWeightWrapCell
+    mindspore.nn.AdaSumByGradWrapCell
     mindspore.nn.ASGD
     mindspore.nn.FTRL
     mindspore.nn.Lamb
@@ -243,6 +245,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Rprop
     mindspore.nn.SGD
     mindspore.nn.thor
+
 
 Wrapper
 ---------
