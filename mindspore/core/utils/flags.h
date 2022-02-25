@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,8 @@ namespace mindspore {
 // flag names
 inline const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
 inline const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
-inline const char GRAPH_FLAG_HAS_EFFECT[] = "has_effect";
-inline const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
 inline const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
 inline const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
-inline const char GRAPH_FLAG_SIDE_EFFECT[] = "_side_effect";
 inline const char GRAPH_FLAG_SIDE_EFFECT_IO[] = "side_effect_io";
 inline const char GRAPH_FLAG_SIDE_EFFECT_MEM[] = "side_effect_mem";
 inline const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
