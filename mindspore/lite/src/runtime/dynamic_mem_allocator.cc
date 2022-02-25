@@ -15,40 +15,43 @@
  */
 #include "src/runtime/dynamic_mem_allocator.h"
 #include <memory>
-#include "src/runtime/dynamic_mem_manager.h"
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
-void *DynamicMemAllocator::Malloc(size_t size) { return DynamicMemManager::GetInstance()->Malloc(size); }
+void *DynamicMemAllocator::Malloc(size_t size) { return mem_oper_->Malloc(size); }
 
-void DynamicMemAllocator::Free(void *ptr) { DynamicMemManager::GetInstance()->Free(ptr); }
+void DynamicMemAllocator::Free(void *ptr) { mem_oper_->Free(ptr); }
 
 int DynamicMemAllocator::RefCount(void *ptr) {
   if (ptr == nullptr) {
     return -1;
   }
-  return DynamicMemManager::GetInstance()->RefCount(ptr);
+  return mem_oper_->RefCount(ptr);
 }
 
 int DynamicMemAllocator::SetRefCount(void *ptr, int ref_count) {
   if (ptr == nullptr) {
     return -1;
   }
-  return DynamicMemManager::GetInstance()->SetRefCount(ptr, ref_count);
+  return mem_oper_->SetRefCount(ptr, ref_count);
 }
 
 int DynamicMemAllocator::IncRefCount(void *ptr, int ref_count) {
   if (ptr == nullptr) {
     return -1;
   }
-  return DynamicMemManager::GetInstance()->IncRefCount(ptr, ref_count);
+  return mem_oper_->IncRefCount(ptr, ref_count);
 }
 
 int DynamicMemAllocator::DecRefCount(void *ptr, int ref_count) {
   if (ptr == nullptr) {
     return -1;
   }
-  return DynamicMemManager::GetInstance()->DecRefCount(ptr, ref_count);
+  return mem_oper_->DecRefCount(ptr, ref_count);
+}
+
+DynamicMemAllocator::DynamicMemAllocator(int node_id) {
+  mem_oper_ = DynamicMemManager::GetInstance()->GetMemOperator(node_id);
 }
 }  // namespace mindspore

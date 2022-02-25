@@ -40,6 +40,9 @@
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
 #include "src/runtime/runtime_allocator.h"
+#ifdef SERVER_INFERENCE
+#include "src/runtime/dynamic_mem_allocator.h"
+#endif
 #include "src/lite_kernel_util.h"
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "src/registry/register_kernel_impl.h"
@@ -1078,6 +1081,7 @@ int LiteSession::Init(InnerContext *context) {
     is_running_.store(false);
     return ret;
   }
+
   is_running_.store(false);
   return RET_OK;
 }

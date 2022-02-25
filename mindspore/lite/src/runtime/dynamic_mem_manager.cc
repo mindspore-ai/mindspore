@@ -17,6 +17,12 @@
 #include "src/runtime/dynamic_mem_manager.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
+#include "src/common/common.h"
+#include "src/runtime/numa_adapter.h"
+
+using mindspore::numa::NUMAAdapter;
+
+using mindspore::numa::MemoryInfo;
 
 namespace mindspore {
 namespace {
@@ -24,51 +30,69 @@ namespace {
 static constexpr size_t kMemAlginSize = 64;
 
 // The minimum unit size (512M) of memory block used for dynamic extend.
-static constexpr size_t kAllocUnitSize = 536870912;
+static constexpr auto kAllocUnitSize = 536870912;
 
-static constexpr size_t kBlockSize = 1024;
+static constexpr auto kBlockSize = 2048;
 // invalid block index
-static constexpr int64_t kInvalidIndex = -1;
+static constexpr int kInvalidIndex = -1;
+// invalid numa node id
+static constexpr int kInvalidNodeId = -1;
+static constexpr int kInvalidRefCount = -1;
+static constexpr float kDefaultMemoryLeastRatio = 0.1;
 
 size_t Rounded(size_t size) { return (size + kMemAlginSize - 1) & (~(kMemAlginSize - 1)); }
+}  // namespace
 
-void *Allocate(size_t allocate_size) {
-  if (allocate_size > lite::GetMaxMallocSize()) {
-    MS_LOG(ERROR) << "MallocData out of max_size, size: " << allocate_size;
+void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_size) {
+  int64_t allocate_tmp_size = static_cast<int64_t>(rounded_size < kAllocUnitSize ? kAllocUnitSize : rounded_size);
+  int64_t free_count = 0;
+  int64_t left = 0;
+  if (node_id >= 0) {
+    // allocate memory from numa node
+    MemoryInfo mem_info = NUMAAdapter::GetInstance()->GetNodeSize(node_id);
+    free_count = mem_info.free;
+  } else {
+    free_count = lite::GetFreeMemory();
+  }
+
+  if (UNLIKELY(static_cast<int64_t>(rounded_size) >= free_count)) {
+    MS_LOG(ERROR) << "No enough memory left!node_id: " << node_id << ", request: " << rounded_size
+                  << ", free: " << free_count << ", least free request: " << least_free_memory_;
     return nullptr;
   }
+  if (free_count < allocate_tmp_size) {
+    allocate_tmp_size = rounded_size;
+  }
+  left = free_count - allocate_tmp_size;
+  if (left <= least_free_memory_) {
+    MS_LOG(ERROR) << "No enough memory left!node_id: " << node_id << ", request: " << rounded_size
+                  << ", free: " << free_count << ", least free request: " << least_free_memory_;
+    return nullptr;
+  }
+  *allocate_size = allocate_tmp_size;
   void *data = nullptr;
 #ifdef _WIN32
-  data = _aligned_malloc(allocate_size, kMemAlginSize);
+  data = _aligned_malloc(allocate_tmp_size, kMemAlginSize);
 #else
-  auto ret = posix_memalign(&data, kMemAlginSize, allocate_size);
-  if (UNLIKELY(ret != 0)) {
-    MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret;
-    return nullptr;
+  if (node_id >= 0) {
+    data = NUMAAdapter::GetInstance()->Malloc(node_id, static_cast<size_t>(allocate_tmp_size));
+  } else {
+    auto ret = posix_memalign(&data, kMemAlginSize, static_cast<size_t>(allocate_tmp_size));
+    if (UNLIKELY(ret != 0)) {
+      MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret;
+      return nullptr;
+    }
   }
 #endif
   if (UNLIKELY(data == nullptr)) {
     MS_LOG(ERROR) << "malloc data failed!";
     return nullptr;
   }
+
   return data;
 }
-}  // namespace
 
-DynamicMemManager::DynamicMemManager() {
-  blocks_.resize(kBlockSize);
-  garbage_block_ = kInvalidIndex;
-  auto *block = GetBlock();
-  block->data_ = Allocate(kAllocUnitSize);
-  if (UNLIKELY(block->data_ == nullptr)) {
-    return;
-  }
-  all_datas_.emplace_back(block->data_);
-  block->size_ = kAllocUnitSize;
-  free_blocks_.emplace(kAllocUnitSize, block->index_);
-}
-
-Block *DynamicMemManager::GetBlock() {
+Block *MemOperator::GetBlock() {
   Block *block;
   if (garbage_block_ != kInvalidIndex) {
     block = &blocks_[garbage_block_];
@@ -87,24 +111,25 @@ Block *DynamicMemManager::GetBlock() {
   return block;
 }
 
-void DynamicMemManager::AddGarbageBlock(const int64_t index) {
+void MemOperator::AddGarbageBlock(const int64_t index) {
   blocks_[index].next_index_ = garbage_block_;
   garbage_block_ = index;
 }
 
 // malloc memory for data storage
-void *DynamicMemManager::Malloc(size_t size) {
+void *MemOperator::Malloc(size_t size) {
   auto rounded_size = Rounded(size);
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = free_blocks_.lower_bound(rounded_size);
   if (iter != free_blocks_.end()) {
     auto index = iter->second;
     free_blocks_.erase(iter);
-    auto *block = &blocks_[index];
-    block->used_ = true;
-    datas_.emplace(block->data_, index);
-    if (block->size_ > rounded_size) {
+    blocks_[index].used_ = true;
+    auto data = blocks_[index].data_;
+    datas_.emplace(data, index);
+    if (blocks_[index].size_ > rounded_size) {
       Block *block_next = GetBlock();
+      auto *block = &blocks_[index];
       block_next->size_ = block->size_ - rounded_size;
       block->size_ = rounded_size;
       block_next->data_ = static_cast<int8_t *>(block->data_) + rounded_size;
@@ -117,15 +142,15 @@ void *DynamicMemManager::Malloc(size_t size) {
       block->next_index_ = block_next->index_;
       free_blocks_.emplace(block_next->size_, block_next->index_);
     }
-    return block->data_;
+    return data;
   }
   // todo kAllocUnitSize can be replaced by config
-  auto allocate_size = rounded_size < kAllocUnitSize ? kAllocUnitSize : rounded_size;
-  void *data = Allocate(allocate_size);
+  size_t allocate_size;
+  void *data = Allocate(rounded_size, node_id_, &allocate_size);
   if (UNLIKELY(data == nullptr)) {
     return nullptr;
   }
-  all_datas_.emplace_back(data);
+  all_datas_.emplace(data, allocate_size);
   Block *block = GetBlock();
   block->size_ = rounded_size;
   block->data_ = data;
@@ -143,7 +168,7 @@ void *DynamicMemManager::Malloc(size_t size) {
 }
 
 // return memory to the memory pool
-void DynamicMemManager::Free(void *ptr) {
+void MemOperator::Free(void *ptr) {
   if (UNLIKELY(ptr == nullptr)) {
     return;
   }
@@ -194,7 +219,7 @@ void DynamicMemManager::Free(void *ptr) {
   }
 }
 
-void DynamicMemManager::EraseFreeBlock(const int64_t index) {
+void MemOperator::EraseFreeBlock(const int64_t index) {
   auto range = free_blocks_.equal_range(blocks_[index].size_);
   for (auto item = range.first; item != range.second; ++item) {
     if (item->second == index) {
@@ -204,23 +229,52 @@ void DynamicMemManager::EraseFreeBlock(const int64_t index) {
   }
 }
 
-DynamicMemManager::~DynamicMemManager() {
-  MS_LOG(DEBUG) << "~DynamicMemManager() begin.";
+MemOperator::MemOperator(int node_id) {
+  if (node_id >= 0 && NUMAAdapter::GetInstance()->Available()) {
+    node_id_ = node_id;
+    auto mem_info = NUMAAdapter::GetInstance()->GetNodeSize(node_id_);
+    if (mem_info.total <= 0) {
+      return;
+    }
+    least_free_memory_ = mem_info.total * kDefaultMemoryLeastRatio;
+  } else {
+    auto total = lite::GetMaxMallocSize();
+    least_free_memory_ = total * kDefaultMemoryLeastRatio;
+  }
+
+  blocks_.resize(kBlockSize);
+  garbage_block_ = kInvalidIndex;
+  auto *block = GetBlock();
+  size_t allocate_size;
+  block->data_ = Allocate(kAllocUnitSize, node_id, &allocate_size);
+  if (UNLIKELY(block->data_ == nullptr)) {
+    return;
+  }
+  all_datas_.emplace(block->data_, allocate_size);
+  block->size_ = allocate_size;
+  free_blocks_.emplace(allocate_size, block->index_);
+}
+
+MemOperator::~MemOperator() {
+  MS_LOG(DEBUG) << "~MemOperator() begin.";
   for (auto &&data : all_datas_) {
 #ifdef _WIN32
-    _aligned_free(data);
+    _aligned_free(data.first);
 #else
-    free(data);
+    if (node_id_ >= 0) {
+      NUMAAdapter::GetInstance()->Free(data.first, data.second);
+    } else {
+      free(data.first);
+    }
 #endif
-    data = nullptr;
   }
   free_blocks_.clear();
   all_datas_.clear();
   blocks_.clear();
-  MS_LOG(DEBUG) << "~DynamicMemManager() end.";
+  MS_LOG(DEBUG) << "~MemOperator() end.";
 }
 
-int DynamicMemManager::SetRefCount(void *ptr, int ref_count) {
+int MemOperator::SetRefCount(void *ptr, int ref_count) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = datas_.find(ptr);
   if (iter != datas_.end()) {
@@ -228,10 +282,10 @@ int DynamicMemManager::SetRefCount(void *ptr, int ref_count) {
     blocks_[index].ref_count_ = ref_count;
     return ref_count;
   }
-  return -1;
+  return kInvalidRefCount;
 }
 
-int DynamicMemManager::IncRefCount(void *ptr, int ref_count) {
+int MemOperator::IncRefCount(void *ptr, int ref_count) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = datas_.find(ptr);
   if (iter != datas_.end()) {
@@ -239,10 +293,10 @@ int DynamicMemManager::IncRefCount(void *ptr, int ref_count) {
     blocks_[index].ref_count_ += ref_count;
     return blocks_[index].ref_count_;
   }
-  return -1;
+  return kInvalidRefCount;
 }
 
-int DynamicMemManager::DecRefCount(void *ptr, int ref_count) {
+int MemOperator::DecRefCount(void *ptr, int ref_count) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = datas_.find(ptr);
   if (iter != datas_.end()) {
@@ -250,15 +304,39 @@ int DynamicMemManager::DecRefCount(void *ptr, int ref_count) {
     blocks_[index].ref_count_ -= ref_count;
     return blocks_[index].ref_count_;
   }
-  return -1;
+  return kInvalidRefCount;
 }
 
-int DynamicMemManager::RefCount(void *ptr) {
+int MemOperator::RefCount(void *ptr) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto iter = datas_.find(ptr);
   if (iter != datas_.end()) {
     return blocks_[iter->second].ref_count_;
   }
-  return -1;
+  return kInvalidRefCount;
+}
+
+std::shared_ptr<MemOperator> DynamicMemManager::GetMemOperator(const int node_id) {
+  std::map<int, std::shared_ptr<MemOperator>>::iterator iter;
+  int numa_node_id = node_id;
+  if (numa_node_id < 0) {
+    numa_node_id = kInvalidNodeId;
+  }
+
+  std::lock_guard<std::mutex> locker(mutex_);
+  std::shared_ptr<MemOperator> mem_oper = nullptr;
+  iter = nodes_mem_.find(numa_node_id);
+  if (iter == nodes_mem_.end()) {
+    mem_oper = std::make_shared<MemOperator>(numa_node_id);
+    if (UNLIKELY(mem_oper == nullptr)) {
+      MS_LOG(ERROR) << "make_shared MemOperator failed!";
+      return nullptr;
+    }
+    std::cout << "new mem_oper, node_id " << numa_node_id << "\n";
+    nodes_mem_.insert({numa_node_id, mem_oper});
+  } else {
+    mem_oper = iter->second;
+  }
+  return mem_oper;
 }
 }  // namespace mindspore

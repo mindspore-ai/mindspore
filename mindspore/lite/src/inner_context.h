@@ -20,7 +20,11 @@
 #include <string>
 #include <unordered_map>
 #include "include/context.h"
+#ifdef SERVER_INFERENCE
+#include "src/runtime/dynamic_mem_allocator.h"
+#else
 #include "src/runtime/inner_allocator.h"
+#endif
 #include "thread/threadpool.h"
 #include "nnacl/op_base.h"
 #ifdef ENABLE_ARM
@@ -82,6 +86,13 @@ struct InnerContext : public Context {
 
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
 
+#ifdef SERVER_INFERENCE
+  /// \brief Set NUMA node id.
+  ///
+  /// \param[in] node Define the NUMA node id.
+  inline void SetNodeId(int node_id) { node_id_ = node_id; }
+#endif
+
  private:
   bool IsAllDeviceTypeValid() const;
 
@@ -98,6 +109,10 @@ struct InnerContext : public Context {
   void InitDeviceFp16();
 
   bool device_and_pkg_support_fp16_ = false;
+
+#ifdef SERVER_INFERENCE
+  int node_id_ = -1;
+#endif
 
   ThreadPool *thread_pool_{nullptr};
 

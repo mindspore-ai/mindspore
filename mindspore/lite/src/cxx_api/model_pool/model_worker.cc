@@ -16,6 +16,7 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/common/log.h"
 #include "src/common/utils.h"
+#include "src/common/common.h"
 namespace mindspore {
 void ModelThread::Run() {
   while (!PredictTaskQueue::GetInstance()->IsPredictTaskDone()) {
@@ -59,9 +60,12 @@ void ModelThread::Run() {
 }
 
 Status ModelThread::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
-                         const Key &dec_key, const std::string &dec_mode) {
+                         const Key &dec_key, const std::string &dec_mode, int node_id) {
   model_ = std::make_shared<Model>();
   mindspore::ModelType model_type = kMindIR;
+  if (node_id > -1) {
+    model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
+  }
   auto status = model_->Build(model_buf, size, model_type, model_context, dec_key, dec_mode);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";

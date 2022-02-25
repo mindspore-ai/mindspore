@@ -24,8 +24,6 @@
 #include <unordered_map>
 #include <deque>
 
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
-
 namespace mindspore {
 struct Block {
   // used_ may be true when ref_count_ == 0
@@ -38,14 +36,10 @@ struct Block {
   int64_t next_index_ = -1;
 };
 
-class DynamicMemManager {
+class MemOperator {
  public:
-  static DynamicMemManager *GetInstance() {
-    static DynamicMemManager instance;
-    return &instance;
-  }
-
-  virtual ~DynamicMemManager();
+  explicit MemOperator(int node_id);
+  virtual ~MemOperator();
 
   void *Malloc(size_t size);
   void Free(void *ptr);
@@ -53,14 +47,18 @@ class DynamicMemManager {
   int IncRefCount(void *ptr, int ref_count);
   int DecRefCount(void *ptr, int ref_count);
   int RefCount(void *ptr);
+  inline void set_node_id(int node_id) { node_id_ = node_id; }
+  inline int node_id(void) const { return node_id_; }
 
  private:
-  DynamicMemManager();
   Block *GetBlock();
   void EraseFreeBlock(const int64_t index);
   void AddGarbageBlock(const int64_t index);
+  void *Allocate(size_t rounded_size, int node_id, size_t *allocate_size);
 
  private:
+  int node_id_ = -1;
+  int64_t least_free_memory_ = 0;
   // all data blocks
   size_t block_count_ = 0;
   int64_t garbage_block_;
@@ -70,7 +68,21 @@ class DynamicMemManager {
   std::multimap<size_t, int64_t> free_blocks_;
   // key: data addr, value: Block index
   std::unordered_map<void *, int64_t> datas_;
-  std::vector<void *> all_datas_;
+  std::unordered_map<void *, size_t> all_datas_;
+};
+
+class DynamicMemManager {
+ public:
+  static DynamicMemManager *GetInstance() {
+    static DynamicMemManager instance;
+    return &instance;
+  }
+
+  std::shared_ptr<MemOperator> GetMemOperator(const int node_id);
+
+ private:
+  std::map<int, std::shared_ptr<MemOperator>> nodes_mem_;
+  std::mutex mutex_;
 };
 }  // namespace mindspore
 

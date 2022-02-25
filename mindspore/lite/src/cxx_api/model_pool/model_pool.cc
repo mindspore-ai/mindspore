@@ -22,6 +22,9 @@
 #include "src/runtime/inner_allocator.h"
 #include "src/common//file_utils.h"
 #include "src/pack_weight_manager.h"
+#include "src/runtime/numa_adapter.h"
+#include "src/common/common.h"
+
 namespace mindspore {
 namespace {
 constexpr int32_t kNumThreads = 4;
@@ -35,6 +38,32 @@ int GetCoreNum() {
   core_num = sysconf(_SC_NPROCESSORS_CONF);
 #endif
   return core_num;
+}
+
+void SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, int thread_num, int node_id) {
+  if (UNLIKELY(thread_num == 0)) {
+    MS_LOG(ERROR) << "thread num is zero.";
+    return;
+  }
+  std::vector<int> cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(node_id);
+  auto cpu_num = cpu_list.size();
+  if (cpu_num == 0) {
+    return;
+  }
+  std::vector<int> bind_id;
+  bind_id.reserve(thread_num);
+  all_model_bind_list->reserve(cpu_num / thread_num + 1);
+  bind_id.emplace_back(cpu_list[0]);
+  for (size_t i = 1; i < cpu_num; ++i) {
+    if (i % thread_num == 0) {
+      all_model_bind_list->emplace_back(bind_id);
+      bind_id.clear();
+    }
+    bind_id.emplace_back(cpu_list[i]);
+  }
+  if (!bind_id.empty()) {
+    all_model_bind_list->emplace_back(bind_id);
+  }
 }
 }  // namespace
 
@@ -112,14 +141,26 @@ ModelPoolContex ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig
     MS_LOG(ERROR) << "context is nullptr.";
     return {};
   }
-  if (model_context->GetThreadNum() == 0) {
-    MS_LOG(ERROR) << "thread num is zero.";
+  if (model_context->GetThreadNum() < 1) {
+    MS_LOG(ERROR) << "Invalid thread num " << model_context->GetThreadNum();
     return {};
+  }
+  int node_id = -1;
+  if (numa::NUMAAdapter::GetInstance()->Available()) {
+    node_id = 0;
+    num_models_ =
+      numa::NUMAAdapter::GetInstance()->GetCPUList(node_id).size() / static_cast<int>(model_context->GetThreadNum());
+  } else {
+    num_models_ = GetCoreNum() / static_cast<int>(model_context->GetThreadNum());
   }
   ModelPoolContex model_pool_context;
   std::vector<std::vector<int>> all_model_bind_list;
   if (model_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
-    SetBindStrategy(&all_model_bind_list, static_cast<int>(model_context->GetThreadNum()));
+    if (numa::NUMAAdapter::GetInstance()->Available()) {
+      SetNumaBindStrategy(&all_model_bind_list, static_cast<int>(model_context->GetThreadNum()), node_id);
+    } else {
+      SetBindStrategy(&all_model_bind_list, static_cast<int>(model_context->GetThreadNum()));
+    }
   } else if (model_context->GetThreadAffinityMode() == lite::MID_CPU) {
     MS_LOG(ERROR) << "not support bind MID_CPU.";
     return {};
@@ -171,6 +212,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
     return kLiteError;
   }
+
   size_t size = 0;
   graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf_ == nullptr) {
@@ -178,10 +220,14 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     return kLiteError;
   }
   lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
+  int node_id = -1;
+  if (numa::NUMAAdapter::GetInstance()->Available()) {
+    node_id = 0;
+  }
   std::shared_ptr<ModelThread> model_thread = nullptr;
   for (size_t i = 0; i < num_models_; i++) {
     model_thread = std::make_shared<ModelThread>();
-    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode);
+    auto status = model_thread->Init(graph_buf_, size, model_pool_context[i], dec_key, dec_mode, node_id);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
