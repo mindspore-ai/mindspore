@@ -47,6 +47,7 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res);
 bool InferenceOptPreparePass(const ResourcePtr &res);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &res);
+bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res);
 bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);

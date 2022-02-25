@@ -61,10 +61,13 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                            prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul, prim::kPrimPow});
   arithmetic_simplify2_ =
     MakeSubstitution(std::make_shared<ArithmeticSimplify2>(), "arithmetic_simplify2", {prim::kPrimMul});
-  special_op_eliminate_ = MakeSubstitution(
-    std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
-    {prim::kPrimInsertGradientOf, prim::kPrimStopGradient, prim::kPrimHookBackward, prim::kPrimCellBackwardHook,
-     prim::kPrimPrintShapeType, prim::kPrimGetRefValue, prim::kPrimMirror, prim::kPrimVirtualDiv});
+  special_op_eliminate_ =
+    MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
+                     {prim::kPrimInsertGradientOf, prim::kPrimStopGradient, prim::kPrimHookBackward,
+                      prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType, prim::kPrimGetRefValue});
+  ad_related_special_op_eliminate_ =
+    MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "ad_related_special_op_eliminate",
+                     {prim::kPrimMirror, prim::kPrimVirtualDiv});
   pynative_eliminate_ = MakeSubstitution(std::make_shared<PynativeEliminater>(), "pynative_eliminate", IsCNodeDup);
   zero_like_fill_zero_ =
     MakeSubstitution(std::make_shared<ZeroLikeFillZero>(), "zero_like_fill_zero", prim::kPrimZerosLike);

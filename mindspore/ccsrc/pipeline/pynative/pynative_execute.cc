@@ -861,11 +861,6 @@ void CheckPyNativeContext() {
   MS_EXCEPTION_IF_NULL(parallel_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &parallel_mode = parallel_context->parallel_mode();
-  if (parallel_mode != parallel::STAND_ALONE && parallel_mode != parallel::DATA_PARALLEL &&
-      ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(EXCEPTION) << "PyNative Only support STAND_ALONE and DATA_PARALLEL, but got:" << parallel_mode;
-  }
 }
 
 py::object GetDstType(const TypeId &type_id) {
@@ -2672,6 +2667,34 @@ std::string GradExecutor::GetGradCellId(bool has_sens, const py::object &cell, c
   return cell_id;
 }
 
+void GradExecutor::MarkMsFunctionNodes(const pipeline::ResourcePtr &resource) {
+  auto func_graph = resource->func_graph();
+  std::vector<size_t> in_ms_function;
+  auto parameters = func_graph->parameters();
+  for (size_t i = 0; i < parameters.size(); i++) {
+    auto param = parameters[i]->cast<ParameterPtr>();
+    if (!param->has_default()) {
+      continue;
+    }
+    auto iter = std::find(ms_function_params_.begin(), ms_function_params_.end(), param->name());
+    if (iter != ms_function_params_.end()) {
+      in_ms_function.push_back(1);
+    } else {
+      in_ms_function.push_back(0);
+    }
+  }
+
+  auto ret = func_graph->get_return();
+  auto ret_cnode = ret->cast<CNodePtr>();
+  auto grads = ret_cnode->input(1)->cast<CNodePtr>();
+  for (size_t i = 1; i < grads->inputs().size(); i++) {
+    if (in_ms_function[i - 1]) {
+      auto cnode = grads->input(i)->cast<CNodePtr>();
+      cnode->set_parallel(true);
+    }
+  }
+}
+
 void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                                 const py::object &weights, const py::object &grad_position, const py::args &args) {
   MS_EXCEPTION_IF_NULL(ret);
@@ -2716,6 +2739,10 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   compile::SetMindRTEnable();
   resource->SetResult(pipeline::kBackend, compile::CreateBackend());
   MS_LOG(DEBUG) << "Start task emit action";
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL) {
+    MarkMsFunctionNodes(resource);
+  }
   TaskEmitAction(resource);
   MS_LOG(DEBUG) << "Start execute action";
   ExecuteAction(resource);
@@ -3264,6 +3291,15 @@ py::object GradExecutor::GradMsFunction(const py::object &out, const py::args &a
   FuncGraphPtr grad_graph = executor->GetGradGraph(phase);
   MS_EXCEPTION_IF_NULL(grad_graph);
   GradMsFunctionInner(phase, out, args, ms_func_graph, grad_graph);
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL) {
+    for (auto &parameter : ms_func_graph->parameters()) {
+      auto param = parameter->cast<ParameterPtr>();
+      if (param->has_default()) {
+        ms_function_params_.push_back(param->name());
+      }
+    }
+  }
   set_graph_phase("");
   return ret;
 }

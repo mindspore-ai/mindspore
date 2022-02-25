@@ -704,6 +704,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
             # pipeline parallel need to be supported here later
             if mp_weight:
                 allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group))
+                object.__setattr__(allgather_net, "keep_input_unchanged", True)
             elif opt_shard_group:
                 allgather_net = get_allgather_cell(opt_shard_group, False)
         elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
@@ -815,7 +816,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         enc_key = Validator.check_isinstance('enc_key', kwargs['enc_key'], bytes)
         enc_mode = 'AES-GCM'
         if 'enc_mode' in kwargs.keys():
-            enc_mode = Validator.check_isinstance('enc_mode', kwargs['enc_mode'], str)
+            enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
         dataset = kwargs['dataset'] if 'dataset' in kwargs.keys() else None
         _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode, dataset=dataset)
     else:
@@ -961,8 +962,8 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
             write_data = raw_data + bytes(append_size)
             offset += (data_length + append_size)
             if is_encrypt():
-                write_data = _encrypt(write_data, len(write_data), kwargs['enc_key'],
-                                      len(kwargs['enc_key']), kwargs['enc_mode'])
+                write_data = _encrypt(write_data, len(write_data), kwargs.get('enc_key'),
+                                      len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
             f.write(write_data)
 
         # save graph
@@ -973,9 +974,9 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
             os.chmod(graph_file_name, stat.S_IRUSR | stat.S_IWUSR)
             model_string = model.SerializeToString()
             if is_encrypt():
-                model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'],
-                                        len(kwargs['enc_key']),
-                                        kwargs['enc_mode'])
+                model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'),
+                                        len(kwargs.get('enc_key')),
+                                        kwargs.get('enc_mode'))
             model_file.write(model_string)
             os.chmod(graph_file_name, stat.S_IRUSR)
 
@@ -1000,7 +1001,7 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     net_dict = net.parameters_dict()
     model.ParseFromString(mindir_stream)
 
-    if 'dataset' in kwargs.keys() and kwargs['dataset'] is not None:
+    if 'dataset' in kwargs.keys() and kwargs.get('dataset') is not None:
         check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
         dataset = kwargs['dataset']
         _save_dataset_to_mindir(model, dataset)
@@ -1035,8 +1036,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
         model_string = model.SerializeToString()
         if is_encrypt():
-            model_string = _encrypt(model_string, len(model_string), kwargs['enc_key'], len(kwargs['enc_key']),
-                                    kwargs['enc_mode'])
+            model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'), len(kwargs.get('enc_key')),
+                                    kwargs.get('enc_mode'))
         f.write(model_string)
         os.chmod(file_name, stat.S_IRUSR)
 
@@ -1109,8 +1110,8 @@ def _quant_export(network, *inputs, file_format, **kwargs):
     quant_net = copy.deepcopy(network)
     quant_net._create_time = int(time.time() * 1e9)
 
-    mean = 127.5 if kwargs.get('mean', None) is None else kwargs['mean']
-    std_dev = 127.5 if kwargs.get('std_dev', None) is None else kwargs['std_dev']
+    mean = 127.5 if kwargs.get('mean', None) is None else kwargs.get('mean')
+    std_dev = 127.5 if kwargs.get('std_dev', None) is None else kwargs.get('std_dev')
     mean = Validator.check_value_type("mean", mean, (int, float))
     std_dev = Validator.check_value_type("std_dev", std_dev, (int, float))
 

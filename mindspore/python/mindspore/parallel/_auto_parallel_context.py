@@ -355,11 +355,6 @@ class _AutoParallelContext:
             ValueError: If parallel mode is not supported.
         """
         self.check_context_handle()
-        run_mode = context.get_context("mode")
-        if run_mode == context.PYNATIVE_MODE and parallel_mode not in (
-                context.ParallelMode.DATA_PARALLEL, context.ParallelMode.STAND_ALONE):
-            raise ValueError(f"Pynative Only support STAND_ALONE and DATA_PARALLEL for ParallelMode, "
-                             f"but got {parallel_mode.upper()}.")
         ret = self._context_handle.set_parallel_mode(parallel_mode)
         if ret is False:
             raise ValueError("The context configuration parameter 'parallel_mode' only support 'stand_alone', "

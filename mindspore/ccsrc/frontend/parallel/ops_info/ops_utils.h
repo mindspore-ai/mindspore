@@ -347,6 +347,7 @@ constexpr char MAX_POOL_WITH_ARGMAX[] = "MaxPoolWithArgmax";
 constexpr char SIMPLE_MEAN[] = "SimpleMean";
 constexpr char FLATTEN[] = "Flatten";
 constexpr char J[] = "J";
+constexpr char SHARD[] = "Shard";
 constexpr char TMPIDENTITY_INFO_NAME[] = "identity_info";
 constexpr char COS[] = "Cos";
 constexpr char ACOS[] = "ACos";

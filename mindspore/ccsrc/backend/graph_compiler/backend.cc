@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 
+#include "frontend/parallel/context.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/session/session_factory.h"
 #include "runtime/op_builder/op_lazy_builder.h"
@@ -451,10 +452,12 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   ms_execution_mode_ = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   real_execution_mode_ = ms_execution_mode_;
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  auto is_parallel = (parallel_mode == parallel::SEMI_AUTO_PARALLEL || parallel_mode == parallel::AUTO_PARALLEL);
 
   // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
   if (ms_execution_mode_ == kPynativeMode &&
-      (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1)) {
+      (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) && !is_parallel) {
     real_execution_mode_ = kGraphMode;
     context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
     pipeline::SetRunMode(func_graph, this);
@@ -891,7 +894,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
 
       // Save grad node to Bucket
-      if (graph->is_bprop() && (!AnfAlgo::IsControlOpExecInBackend(kernel))) {
+      if (graph->is_bprop() && (!AnfAlgo::IsControlOpExecInBackend(kernel)) && !kernel->is_parallel()) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }

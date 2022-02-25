@@ -703,6 +703,16 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \param node A node debug info of an anf node.
   void AddFusedDebugInfoList(const std::vector<NodeDebugInfoPtr> &debug_infos);
 
+  /// \brief Check whether this node is in ms_function or not in PyNative Mode.
+  ///
+  /// \return True if in ms_function, otherwise false.
+  bool is_parallel() const { return is_parallel_; }
+
+  /// \brief Set is_parallel_ for CNode.
+  ///
+  /// \param[in] is_parallel_ Boolean.
+  void set_parallel(bool parallel) { is_parallel_ = parallel; }
+
  private:
   std::vector<AnfNodePtr> inputs_;
   VarPtr func_graph_as_var_;
@@ -710,6 +720,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   bool in_forward_flag_ = false;
   bool effect_handled_ = false;
   bool is_load_ = false;
+  // is_parallel represents whether this cnode lies in ms_function or not in PyNative Mode
+  bool is_parallel_ = false;
   // inputs_value_ store cnode input value and id in pynative mode
   // output_value_ store cnode value and id in pynative mode
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;

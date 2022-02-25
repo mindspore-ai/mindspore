@@ -345,7 +345,7 @@ def vjp(fn, inputs, v):
     return wrap_container(inputs, v)
 
 shard_fn = Shard()
-def shard(fn, in_axes, out_axes, device, level=0):
+def shard(fn, in_axes, out_axes, device="Ascend", level=0):
     return shard_fn(fn, in_axes, out_axes, device, level)
 
 def narrow(inputs, axis, start, length):

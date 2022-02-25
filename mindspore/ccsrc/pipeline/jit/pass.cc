@@ -49,6 +49,8 @@
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/meta_fg_eliminate.h"
 #include "frontend/optimizer/irpass/ge_specialized_prepare.h"
+#include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/optimizer/irpass/shard_eliminate.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
@@ -188,6 +190,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     irpass.reshape_eliminate_,
     irpass.switch_simplify_,
     irpass.addn_zero_filter_,
+    irpass.ad_related_special_op_eliminate_,
   });
   opt::OptPassConfig fill_zeros_like = opt::OptPassConfig{irpass.zero_like_fill_zero_};
   OptPassGroupMap map({
@@ -366,6 +369,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
+                         {"shard", opt::OptPassConfig(opt::irpass::ExpandShardPrim())},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
@@ -720,6 +724,21 @@ bool PynativeOptPass(const ResourcePtr &res) {
   auto pynative_opt = GetOptPassesPynativeElim(irpass);
   auto pynative_opt_opt = opt::Optimizer::MakeOptimizer("pynative_opt", res, pynative_opt);
   (void)pynative_opt_opt->step(func_graph, false);
+  return true;
+}
+
+bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res) {
+  auto func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig ad_related_special_op_eliminate = opt::OptPassConfig({
+    irpass.ad_related_special_op_eliminate_,
+  });
+  OptPassGroupMap map({
+    {"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
+  });
+  auto ad_related_special_op_eliminate_opt = opt::Optimizer::MakeOptimizer("ad_related_special_op_eliminate", res, map);
+  (void)ad_related_special_op_eliminate_opt->step(func_graph, false);
   return true;
 }
 
