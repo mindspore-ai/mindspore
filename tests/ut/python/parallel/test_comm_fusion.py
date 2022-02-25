@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -23,6 +24,8 @@ from mindspore.common.initializer import initializer
 from mindspore.train.model import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from tests.ut.python.parallel.test_adafactor import compile_net
+from tests.ut.python.parallel.test_adafactor import Net as Net2
 
 
 class DatasetLenet():
@@ -146,3 +149,90 @@ def test_fusion_auto():
     model.train(2, dataset, dataset_sink_mode=False)
     assert auto_parallel_context().allgather_fusion_threshold_mb() == 64
     assert auto_parallel_context().reducescatter_fusion_threshold_mb() == 64
+
+def test_fusion_optimizer_parallel():
+    """
+    Feature: test_fusion_optimizer_parallel in size mode
+    Description: allgather and reduce scatter size fusion in optimizer parallel
+    Expectation: compile success
+    """
+    allgather_threshold = 16
+    reducescatter_threshold = 8
+    comm_fusion_dict = {"allgather": {"mode": "size", "config": allgather_threshold},
+                        "reducescatter": {"mode": "size", "config": reducescatter_threshold}}
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
+                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict)
+    _w0 = Tensor(np.ones([64, 16, 2]), dtype=ms.float32)
+    _w1 = Tensor(np.ones([32, 32]), dtype=ms.float32)
+    _w2 = Tensor(np.ones([32]), dtype=ms.float32)
+    strategy1 = ((4, 2), (2, 2))
+    strategy2 = ((4, 2), (2,))
+    net = Net2(_w0, _w1, _w2, strategy1, strategy2)
+    compile_net(net)
+
+    comm_fusion_dict = {"allgather": {"mode": "auto", "config": None},
+                        "reducescatter": {"mode": "auto", "config": None}}
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
+                                      enable_parallel_optimizer=True, comm_fusion=comm_fusion_dict)
+    compile_net(net)
+
+def test_allgather_fusion_invalid_value_failed():
+    """
+    Feature: test_allgather_fusion with invalid value
+    Description: test_allgather_fusion with invalid value
+    Expectation: throw TypeError
+    """
+    with pytest.raises(TypeError):
+        comm_fusion_dict = [1, 2]
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"allgather": [1, 2]}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"allgather": {"mode": "size", "config": "30.12"}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"all": {"mode": "size", "config": 30}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"allgather": {"modes": "size", "config": 30}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"allgather": {"mode": "sizes", "config": 30}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"allgather": {"mode": "size"}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+def test_reducescatter_fusion_invalid_value_failed():
+    """
+    Feature: test_reducescatter_fusion with invalid value
+    Description: test_reducescatter_fusion with invalid value
+    Expectation: throw TypeError
+    """
+
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"reducescatter": [1, 2]}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(TypeError):
+        comm_fusion_dict = {"reducescatter": {"mode": "size", "config": "30.12"}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"reducescatter": {"modes": "size", "config": 30}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"reducescatter": {"mode": "sizes", "config": 30}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)
+
+    with pytest.raises(KeyError):
+        comm_fusion_dict = {"reducescatter": {"mode": "size"}}
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", comm_fusion=comm_fusion_dict)

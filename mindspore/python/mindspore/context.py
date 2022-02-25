@@ -514,10 +514,18 @@ def set_auto_parallel_context(**kwargs):
                         It supports following communication fusion types and configurations:
 
                         - allreduce: If communication fusion type is `allreduce`. The `mode` contains: `auto`, `size`
-                          and `index`. In `auto` mode, allreduce fusion is configured by gradients size, and the default
-                          fusion threshold is `64` MB. In 'size' mode, allreduce fusion is configured by gradients size
+                          and `index`. In `auto` mode, AllReduce fusion is configured by gradients size and the default
+                          fusion threshold is `64` MB. In 'size' mode, AllReduce fusion is configured by gradients size
                           manually, and the fusion threshold must be larger than `0` MB. In `index` mode, it is same as
                           `all_reduce_fusion_config`.
+
+                        - allgather: If communication fusion type is `allgather`. The `mode` contains: `auto`, `size`.
+                          In `auto` mode, AllGather fusion is configured by gradients size, and the default fusion
+                          threshold is `64` MB. In 'size' mode, AllGather fusion is configured by gradients size
+                          manually, and the fusion threshold must be larger than `0` MB.
+
+                        - reducescatter: If communication fusion type is `reducescatter`. The `mode` contains: `auto`
+                          and `size`. Config is same as `allgather`.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -540,8 +548,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(pipeline_stages=2)
         >>> parallel_config = {"gradient_accumulation_shard": True}
         >>> context.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
-        >>> comm_fusion_config = {"allreduce": {"mode": "size", "config": 32}}
-        >>> context.set_auto_parallel_context(comm_fusion=comm_fusion_config)
+        >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
+        >>> context.set_auto_parallel_context(comm_fusion=config)
     """
     _set_auto_parallel_context(**kwargs)
 
