@@ -36,16 +36,15 @@ void MatrixBandPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 }
 
 template <typename T>
-bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
+bool MatrixBandPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs) {
   T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
   const int64_t *lower = reinterpret_cast<int64_t *>(inputs[1]->addr);
   const int64_t *upper = reinterpret_cast<int64_t *>(inputs[2]->addr);
   T *out_value = reinterpret_cast<T *>(outputs[0]->addr);
 
-  const size_t l = (*lower < 0 || *lower > static_cast<int64_t>(m_)) ? m_ : *lower;
-  const size_t u = (*upper < 0 || *upper > static_cast<int64_t>(n_)) ? n_ : *upper;
+  const size_t l = (*lower < 0 || *lower > static_cast<int64_t>(m_)) ? m_ : static_cast<size_t>(*lower);
+  const size_t u = (*upper < 0 || *upper > static_cast<int64_t>(n_)) ? n_ : static_cast<size_t>(*upper);
   auto ret_s1 = memset_s(out_value, matrix_size_ * sizeof(T), 0, matrix_size_ * sizeof(T));
   if (ret_s1 != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output to 0 failed. Error no: " << ret_s1;
