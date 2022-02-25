@@ -19,6 +19,7 @@ mindspore.nn.transformer
 .. include:: transformer/mindspore.nn.OpParallelConfig.rst
 .. include:: transformer/mindspore.nn.FixedSparseAttention.rst
 .. include:: transformer/mindspore.nn.MoEConfig.rst
+.. include:: transformer/mindspore.nn.TransformerRecomputeConfig.rst
 
 .. automodule::  mindspore.nn.transformer
     :members:
