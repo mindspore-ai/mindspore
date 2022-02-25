@@ -76,7 +76,6 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
     if (inner_pool_ != nullptr) {
       inner_pool_->SetMaxSpinCount(kDefaultSpinCount);
       inner_pool_->SetSpinCountMaxValue();
-      inner_pool_->SetKernelThreadMaxSpinCount(kDefaultKernelSpinCount);
     }
   }
   return MINDRT_OK;

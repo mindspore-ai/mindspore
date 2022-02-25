@@ -151,12 +151,11 @@ class ActorDispatcher {
   }
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
-  // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
-  // if there are cpu kernels.
-  static constexpr size_t kMultiThreadExecutionCountBegin{31};
-  static constexpr size_t kMultiThreadExecutionCountEnd{40};
-  static constexpr size_t kSingleThreadExecutionCountBegin{41};
-  static constexpr size_t kSingleThreadExecutionCountEnd{50};
+  // and the next next five executions are statistics of single thread execution time.
+  static constexpr size_t kMultiThreadExecutionCountBegin{21};
+  static constexpr size_t kMultiThreadExecutionCountEnd{30};
+  static constexpr size_t kSingleThreadExecutionCountBegin{31};
+  static constexpr size_t kSingleThreadExecutionCountEnd{40};
   // The single thread execution constraint.
   static constexpr size_t kSingleThreadExecutionActorMaxNum{100};
 

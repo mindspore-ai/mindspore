@@ -415,6 +415,9 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
   auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();
   MS_EXCEPTION_IF_NULL(thread_pool);
+  if (actor_set->is_multi_thread_execution_) {
+    thread_pool->SetSpinCountMaxValue();
+  }
   ActorDispatcher::is_multi_thread_execution(actor_set->is_multi_thread_execution_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
@@ -424,6 +427,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   auto result_future = result[0].GetFuture();
   result_future.Wait();
   MsException::Instance().CheckException();
+  thread_pool->SetSpinCountMinValue();
   if (!result_future.IsOK()) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
