@@ -19,6 +19,7 @@ import numpy as np
 
 from mindspore import Tensor, COOTensor, ms_function, nn, context
 from mindspore.common import dtype as mstype
+from mindspore.ops import functional as F
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -71,7 +72,7 @@ def test_coo_tensor_in_while():
     """
     class COOTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super().__init__()
+            super(COOTensorWithControlWhile, self).__init__()
             self.shape = shape
 
         @ms_function
@@ -127,3 +128,82 @@ def test_coo_method():
     to_dense_expect = np.array(
         [[0., 1., 0., 0.], [0., 0., 2., 0.], [0., 0., 0., 0.]], dtype=np.float32)
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dtype_coo_tensor():
+    """
+    Feature: Test F.dtype with COOTensor.
+    Description: Test: F.dtype(x), x.dtype.
+    Expectation: Success.
+    """
+    indices = Tensor([[0, 1], [1, 2]])
+    values = Tensor([1, 2], dtype=mstype.float32)
+    shape = (3, 4)
+
+    def pynative_test():
+        x = COOTensor(indices, values, shape)
+        return F.dtype(x), x.dtype
+    graph_test = ms_function(pynative_test)
+
+    out1, out2 = pynative_test()
+    out3, out4 = graph_test()
+    assert out1 in [mstype.float32]
+    assert out2 in [mstype.float32]
+    assert out3 in [mstype.float32]
+    assert out4 in [mstype.float32]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_coo_attr():
+    """
+    Feature: Test COOTensor GetAttr in Graph and PyNative.
+    Description: Test COOTensor.indices, COOTensor.values, COOTensor.shape.
+    Expectation: Success.
+    """
+    indices = Tensor([[0, 1], [1, 2]])
+    values = Tensor([1, 2], dtype=mstype.float32)
+    shape = (3, 4)
+    coo = COOTensor(indices, values, shape)
+
+    def test_pynative_1():
+        return coo.indices, coo.values, coo.shape
+
+    def test_pynative_2():
+        return coo.astype(mstype.int32)
+
+    def test_pynative_3():
+        return coo.to_tuple()
+
+    test_graph_1 = ms_function(test_pynative_1)
+    test_graph_2 = ms_function(test_pynative_2)
+    test_graph_3 = ms_function(test_pynative_3)
+
+    py_indices, py_values, py_shape = test_pynative_1()
+    py_coo = test_pynative_2()
+    py_tuple = test_pynative_3()
+
+    g_indices, g_values, g_shape = test_graph_1()
+    g_coo = test_graph_2()
+    g_tuple = test_graph_3()
+
+    coo1 = COOTensor(py_indices, py_values, py_shape)
+    coo2 = COOTensor(g_indices, g_values, g_shape)
+    # check coo attr
+    compare_coo(coo1, coo2)
+    # check astype
+    compare_coo(py_coo, g_coo)
+    # check to_tuple
+    assert len(py_tuple) == len(g_tuple)
+    for i, _ in enumerate(py_tuple):
+        if isinstance(py_tuple[i], Tensor):
+            assert (py_tuple[i].asnumpy() == g_tuple[i].asnumpy()).all()
+        else:
+            assert py_tuple[i] == g_tuple[i]

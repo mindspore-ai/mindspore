@@ -79,17 +79,48 @@ def test_csr_attr():
     indices = Tensor([0, 1])
     values = Tensor([1, 2], dtype=mstype.float32)
     shape = (2, 6)
-    def test_pynative():
-        csr = CSRTensor(indptr, indices, values, shape)
-        return csr.indptr, csr.indices, csr.values, csr.shape
-    test_graph = ms_function(test_pynative)
+    csr = CSRTensor(indptr, indices, values, shape)
 
-    csr1_tuple = test_pynative()
-    csr2_tuple = test_graph()
+    def test_pynative_1():
+        return csr.indptr, csr.indices
 
-    csr1 = CSRTensor(*csr1_tuple)
-    csr2 = CSRTensor(*csr2_tuple)
+    def test_pynative_2():
+        return csr.values, csr.shape
+
+    def test_pynative_3():
+        return csr.astype(mstype.int32)
+
+    def test_pynative_4():
+        return csr.to_tuple()
+
+    test_graph_1 = ms_function(test_pynative_1)
+    test_graph_2 = ms_function(test_pynative_2)
+    test_graph_3 = ms_function(test_pynative_3)
+    test_graph_4 = ms_function(test_pynative_4)
+
+    py_indptr, py_indices = test_pynative_1()
+    py_values, py_shape = test_pynative_2()
+    py_csr = test_pynative_3()
+    py_tuple = test_pynative_4()
+
+    g_indptr, g_indices = test_graph_1()
+    g_values, g_shape = test_graph_2()
+    g_csr = test_graph_3()
+    g_tuple = test_graph_4()
+
+    csr1 = CSRTensor(py_indptr, py_indices, py_values, py_shape)
+    csr2 = CSRTensor(g_indptr, g_indices, g_values, g_shape)
+    # check csr attr
     compare_csr(csr1, csr2)
+    # check astype
+    compare_csr(py_csr, g_csr)
+    # check to_tuple
+    assert len(py_tuple) == len(g_tuple)
+    for i, _ in enumerate(py_tuple):
+        if isinstance(py_tuple[i], Tensor):
+            assert (py_tuple[i].asnumpy() == g_tuple[i].asnumpy()).all()
+        else:
+            assert py_tuple[i] == g_tuple[i]
 
 
 @pytest.mark.level0
@@ -123,7 +154,7 @@ def test_csr_tensor_in_while():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super().__init__()
+            super(CSRTensorWithControlWhile, self).__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -193,7 +224,7 @@ def test_csr_tensor_in_while_cpu():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super().__init__()
+            super(CSRTensorWithControlWhile, self).__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -241,28 +272,38 @@ def test_csr_ops():
     dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
     csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
 
-    def test_ops_pynative():
+    def test_ops_pynative_dense():
         dense1 = csr_reducesum(csr_tensor, 1)
         dense2 = csrmv(csr_tensor, dense_vector)
+        return dense1, dense2
+
+    def test_ops_pynative_sparse():
         sparse1 = csr_tensor * dense_tensor
         sparse2 = dense_tensor * csr_tensor
-        return dense1, dense2, sparse1, sparse2
+        sparse3 = csr_tensor / dense_tensor
+        return sparse1, sparse2, sparse3
 
-    test_ops_graph = ms_function(test_ops_pynative)
+    test_ops_graph_dense = ms_function(test_ops_pynative_dense)
+    test_ops_graph_sparse = ms_function(test_ops_pynative_sparse)
 
-    pynative_res = test_ops_pynative()
-    graph_res = test_ops_graph()
+    pynative_res_dense = test_ops_pynative_dense()
+    graph_res_dense = test_ops_graph_dense()
     expect1 = np.array([[2.], [1.]], dtype=np.float32)
     expect2 = np.array([[2.], [1.]], dtype=np.float32)
+    assert np.allclose(pynative_res_dense[0].asnumpy(), expect1)
+    assert np.allclose(pynative_res_dense[1].asnumpy(), expect2)
+    assert np.allclose(graph_res_dense[0].asnumpy(), expect1)
+    assert np.allclose(graph_res_dense[1].asnumpy(), expect2)
+
+    pynative_res_sparse = test_ops_pynative_sparse()
+    graph_res_sparse = test_ops_graph_sparse()
     expect3 = np.array([2., 1.], dtype=np.float32)
-    assert np.allclose(pynative_res[0].asnumpy(), expect1)
-    assert np.allclose(pynative_res[1].asnumpy(), expect2)
-    assert np.allclose(pynative_res[2].values.asnumpy(), expect3)
-    assert np.allclose(pynative_res[3].values.asnumpy(), expect3)
-    assert np.allclose(graph_res[0].asnumpy(), expect1)
-    assert np.allclose(graph_res[1].asnumpy(), expect2)
-    assert np.allclose(graph_res[2].values.asnumpy(), expect3)
-    assert np.allclose(graph_res[3].values.asnumpy(), expect3)
+    assert np.allclose(pynative_res_sparse[0].values.asnumpy(), expect3)
+    assert np.allclose(pynative_res_sparse[1].values.asnumpy(), expect3)
+    assert np.allclose(pynative_res_sparse[2].values.asnumpy(), expect3)
+    assert np.allclose(graph_res_sparse[0].values.asnumpy(), expect3)
+    assert np.allclose(graph_res_sparse[1].values.asnumpy(), expect3)
+    assert np.allclose(graph_res_sparse[2].values.asnumpy(), expect3)
 
 
 @pytest.mark.level0
@@ -279,7 +320,7 @@ def test_csrtensor_export_and_import_mindir():
     """
     class TestCSRTensor(nn.Cell):
         def __init__(self, shape):
-            super().__init__()
+            super(TestCSRTensor, self).__init__()
             self.shape = shape
 
         def construct(self, indptr, indices, values):
@@ -317,7 +358,7 @@ def test_csrops_export_and_import_mindir():
     """
     class TestCSRNet(nn.Cell):
         def __init__(self, shape):
-            super().__init__()
+            super(TestCSRNet, self).__init__()
             self.shape = shape
             self.csr_reducesum = _csr_ops.CSRReduceSum()
             self.csr_mv = _csr_ops.CSRMV()
@@ -421,13 +462,15 @@ def test_dtype_csr_tensor():
 
     def pynative_test():
         x = CSRTensor(indptr, indices, values, shape)
-        return F.dtype(x)
+        return F.dtype(x), x.dtype
     graph_test = ms_function(pynative_test)
 
-    out1 = pynative_test()
-    out2 = graph_test()
+    out1, out2 = pynative_test()
+    out3, out4 = graph_test()
     assert out1 in [mstype.float32]
     assert out2 in [mstype.float32]
+    assert out3 in [mstype.float32]
+    assert out4 in [mstype.float32]
 
 
 @pytest.mark.level0

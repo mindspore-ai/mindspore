@@ -235,6 +235,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCSRTensorGetIndices, R{InferImplCSRTensorGetIndices, nullptr, true}},
     {prim::kPrimCSRTensorGetDenseShape, R{InferImplCSRTensorGetDenseShape, nullptr, true}},
     {prim::kPrimCSRMul, R{InferImplCSRMul, nullptr, true}},
+    {prim::kPrimCSRDiv, R{InferImplCSRDiv, nullptr, true}},
     {prim::kPrimCSRMV, R{InferImplCSRMV, nullptr, true}},
     {prim::kPrimCSRReduceSum, R{InferImplCSRReduceSum, nullptr, true}},
     {prim::kPrimCSRGather, R{InferImplCSRGather, nullptr, true}},
