@@ -49,6 +49,8 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(
       kernel_node_, cudaMemcpyAsync(&x1_value[0], s1_addr, input_size_list_[1], cudaMemcpyDeviceToHost, cuda_stream),
       "DynamicBroadcastGradientArgs copy s1 value failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(cuda_stream),
+                               "DynamicBroadcastGradientArgs cudaStreamSynchronized failed");
     auto grad_reduce_idx = CalOut({x0_value, x1_value});
     r0_size_ = SetOuputValue(r0_addr, grad_reduce_idx[0], x0_value.size(), cuda_stream);
     r1_size_ = SetOuputValue(r1_addr, grad_reduce_idx[1], x1_value.size(), cuda_stream);

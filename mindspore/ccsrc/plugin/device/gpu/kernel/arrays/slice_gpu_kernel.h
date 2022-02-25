@@ -40,7 +40,7 @@ constexpr auto kIdx4 = 4;
 constexpr auto kIdx5 = 5;
 constexpr auto kIdx6 = 6;
 
-template <typename T>
+template <typename T, typename S = int64_t>
 class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   SliceFwdGpuKernelMod() { kernel_name_ = "Slice"; }
@@ -106,7 +106,10 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
-
+    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+      InitSizeLists();
+      return true;
+    }
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     auto out_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
@@ -118,27 +121,15 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
     (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                          [](const int64_t &e) { return static_cast<int32_t>(e); });
 
-    size_t input_size = sizeof(T);
+    input_size_ = sizeof(T);
     for (size_t x : input_shape) {
-      input_size *= x;
-    }
-    input_size_list_.push_back(input_size);
-    if (is_dynamic_attr_) {
-      std::vector<size_t> dynamic_attr_indexs = {kBeginIndex_, kSizeIndex_};
-      for (size_t index : dynamic_attr_indexs) {
-        input_size = sizeof(T);
-        for (size_t x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
-          input_size *= x;
-        }
-        input_size_list_.push_back(input_size);
-      }
+      input_size_ *= x;
     }
 
-    size_t output_size = sizeof(T);
+    output_size_ = sizeof(T);
     for (size_t x : out_shape) {
-      output_size *= x;
+      output_size_ *= x;
     }
-    output_size_list_.push_back(output_size);
 
     // transpose begin and size for NHWC data
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
@@ -166,6 +157,8 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
     begin_.clear();
     size_.clear();
     input_shape_.clear();
+    input_size_ = 0;
+    output_size_ = 0;
     is_null_input_ = false;
     kernel_name_ = "Slice";
     is_dynamic_attr_ = false;
@@ -173,7 +166,29 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {}
+  void InitSizeLists() override {
+    input_size_list_.push_back(input_size_);
+    output_size_list_.push_back(output_size_);
+    if (is_dynamic_attr_) {
+      InitDynamicAttrSizeLists(kernel_node_.lock());
+    }
+  }
+
+  inline void InitDynamicAttrSizeLists(const CNodePtr &kernel_node) {
+    if (get_dynamic_attr_value_) {
+      std::vector<size_t> dynamic_attr_indexs = {kBeginIndex_, kSizeIndex_};
+      for (size_t index : dynamic_attr_indexs) {
+        size_t input_size = sizeof(S);
+        for (size_t x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
+          input_size *= x;
+        }
+        input_size_list_.push_back(input_size);
+      }
+    } else {
+      input_size_list_.push_back(0);
+      input_size_list_.push_back(0);
+    }
+  }
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
@@ -205,13 +220,13 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
       size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
       begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     } else {
-      // The value of dynamic attr can only be obtained after the InferShape() of dynamic kernel is executed
-      if (depend_tensor_map_.empty()) {
+      if (GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin) &&
+          GetDynamicAttrIntValue(kernel_node, kSizeIndex_, &size)) {
+        get_dynamic_attr_value_ = true;
+      }
+      if (!get_dynamic_attr_value_) {
         return;
       }
-      begin = GetDynamicAttrIntValue(kernel_node, kBeginIndex_);
-      size = GetDynamicAttrIntValue(kernel_node, kSizeIndex_);
-      get_dynamic_attr_value_ = true;
     }
 
     if (size.size() != input_shape.size() || begin.size() != input_shape.size()) {
@@ -220,9 +235,8 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
                         << "of size: " << size.size() << ", the dimension of begin: " << begin.size()
                         << ", the dimension of input_x: " << input_shape.size();
     }
-    const int64_t NEG_ONE = -1;
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (size[i] == NEG_ONE) {
+      if (size[i] == -1) {
         size[i] = input_shape[i] - begin[i];
       }
       if (input_shape[i] <= 0 || size[i] <= 0) {
@@ -245,6 +259,8 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int32_t> size_;
   std::vector<int32_t> input_shape_;
 
+  size_t input_size_{0};
+  size_t output_size_{0};
   bool is_null_input_{false};
   bool is_dynamic_attr_{false};
   bool get_dynamic_attr_value_{false};

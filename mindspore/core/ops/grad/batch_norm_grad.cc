@@ -45,27 +45,34 @@ bool BatchNormGrad::get_is_training() const {
   return GetValue<bool>(value_ptr);
 }
 
+constexpr auto kInputNum = 6;
+
+abstract::TupleShapePtr BatchNormGradInferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto scale_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{x_shape_ptr, scale_shape_ptr, scale_shape_ptr});
+}
+
+TuplePtr BatchNormGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
+  auto x_type_ptr = input_args[kInputIndex1]->BuildType();
+  auto scale_type_ptr = input_args[kInputIndex2]->BuildType();
+  return std::make_shared<Tuple>(std::vector<TypePtr>{x_type_ptr, scale_type_ptr, scale_type_ptr});
+}
+
 AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const int64_t input_num = 5;
-  (void)CheckAndConvertUtils::CheckInteger("BatchNormGrad infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                           input_num, primitive->name());
-  auto y_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("BatchNorm y_backprop_shape", y_backprop_shape, kEqual, x_shape);
-
-  auto dx = input_args[kInputIndex1]->Broaden();
-  auto dscale = input_args[kInputIndex2]->Broaden();
-  auto reserve_1 = input_args[kInputIndex3]->Broaden();
-  auto reserve_2 = input_args[kInputIndex4]->Broaden();
-
-  AbstractBasePtrList rets = {dx, dscale, dscale, reserve_1, reserve_2};
-  return std::make_shared<abstract::AbstractTuple>(rets);
+  return abstract::MakeAbstract(BatchNormGradInferShape(primitive, input_args),
+                                BatchNormGradInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameBatchNormGrad, BatchNormGrad);
+REGISTER_PRIMITIVE_EVAL_IMPL(BatchNormGrad, prim::kPrimBatchNormGrad, BatchNormGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

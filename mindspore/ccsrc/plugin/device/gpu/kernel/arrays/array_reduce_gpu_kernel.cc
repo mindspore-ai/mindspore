@@ -56,5 +56,22 @@ MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat32).
                       ArrayReduceGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(ReduceProd, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                       ArrayReduceGpuKernelMod, double)
+
+// dynamic
+MS_REG_GPU_KERNEL_TWO(
+  ReduceSum,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  ArrayReduceGpuKernelMod, double, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceSum,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ArrayReduceGpuKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceSum,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ArrayReduceGpuKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  ReduceSum, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  ArrayReduceGpuKernelMod, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -33,30 +33,7 @@ constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM = 8;
 template <typename T>
 class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  BatchNormGradGpuKernelMod()
-      : batch_(0),
-        channel_(0),
-        height_(0),
-        width_(0),
-        x_size_(0),
-        para_size_(0),
-        workspace_size_(0),
-        reserve_size_(0),
-        mode_(CUDNN_BATCHNORM_SPATIAL),
-        bn_ops_(CUDNN_BATCHNORM_OPS_BN),
-        epsilon_(10e-5),
-        is_train_(false),
-        is_null_input_(false),
-        x_desc_(nullptr),
-        y_desc_(nullptr),
-        dy_desc_(nullptr),
-        dx_desc_(nullptr),
-        dz_desc_(nullptr),
-        scale_bias_diff_desc_(nullptr),
-        activation_desc_(nullptr),
-        handle_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        beta_data_diff_(0) {}
+  BatchNormGradGpuKernelMod() { ResetResource(); }
   ~BatchNormGradGpuKernelMod() override { DestroyResource(); }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -169,6 +146,33 @@ class BatchNormGradGpuKernelMod : public NativeGpuKernelMod {
     InitSizeLists();
     is_train_ = GetAttr<bool>(kernel_node, "is_training");
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    batch_ = 0;
+    channel_ = 0;
+    height_ = 0;
+    width_ = 0;
+    x_size_ = 0;
+    para_size_ = 0;
+    workspace_size_ = 0;
+    reserve_size_ = 0;
+    mode_ = CUDNN_BATCHNORM_SPATIAL;
+    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
+    epsilon_ = 10e-5;
+    is_train_ = false;
+    is_null_input_ = false;
+    x_desc_ = nullptr;
+    y_desc_ = nullptr;
+    dy_desc_ = nullptr;
+    dx_desc_ = nullptr;
+    dz_desc_ = nullptr;
+    scale_bias_diff_desc_ = nullptr;
+    activation_desc_ = nullptr;
+    handle_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    beta_data_diff_ = 0;
   }
 
  protected:

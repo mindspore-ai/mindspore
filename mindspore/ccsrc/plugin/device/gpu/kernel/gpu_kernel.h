@@ -346,9 +346,12 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return std::equal(s1.begin(), s1.end(), s2_trans.begin(), s2_trans.end());
   }
 
-  inline std::vector<int64_t> GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index) {
+  inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
+                                     std::vector<int64_t> *attr_value) {
+    // The value of dynamic attr can only be obtained after the InferShape() is executed
     if (depend_tensor_map_.empty()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the depend_tensor_map is empty!";
+      MS_LOG(DEBUG) << "For '" << kernel_name_ << "', the depend_tensor_map is currently empty";
+      return false;
     }
     auto depend_iter = depend_tensor_map_.find(input_index);
     if (depend_iter == depend_tensor_map_.end()) {
@@ -366,7 +369,8 @@ class NativeGpuKernelMod : public GpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "',  the format of the " << input_index
                         << "th input currently should be the default format and does not support " << data_format;
     }
-    return GetTensorIntValue(input_tensor, input_index);
+    *attr_value = GetTensorIntValue(input_tensor, input_index);
+    return true;
   }
 };
 }  // namespace kernel

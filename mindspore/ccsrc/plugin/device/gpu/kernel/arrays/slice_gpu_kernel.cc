@@ -33,18 +33,18 @@ namespace kernel {
 
 REG_SLICE_GPU_DTYPES(REG_SLICE_GPU)
 
-#define REG_DYNAMIC_SLICE_GPU_ATTR(T0_MS_DTYPE, T0_DTYPE, T1_MS_DTYPE) \
-  MS_REG_GPU_KERNEL_ONE(Slice,                                         \
-                        KernelAttr()                                   \
-                          .AddInputAttr(T0_MS_DTYPE)                   \
-                          .AddInputAttr(T1_MS_DTYPE)                   \
-                          .AddInputAttr(T1_MS_DTYPE)                   \
-                          .AddOutputAttr(T0_MS_DTYPE),                 \
-                        SliceFwdGpuKernelMod, T0_DTYPE)
+#define REG_DYNAMIC_SLICE_GPU_ATTR(T0_MS_DTYPE, T0_DTYPE, T1_MS_DTYPE, T1_DTYPE) \
+  MS_REG_GPU_KERNEL_TWO(Slice,                                                   \
+                        KernelAttr()                                             \
+                          .AddInputAttr(T0_MS_DTYPE)                             \
+                          .AddInputAttr(T1_MS_DTYPE)                             \
+                          .AddInputAttr(T1_MS_DTYPE)                             \
+                          .AddOutputAttr(T0_MS_DTYPE),                           \
+                        SliceFwdGpuKernelMod, T0_DTYPE, T1_DTYPE)
 
-#define REG_DYNAMIC_SLICE_GPU(MS_DTYPE, DTYPE)                  \
-  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt32) \
-  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt64)
+#define REG_DYNAMIC_SLICE_GPU(MS_DTYPE, DTYPE)                           \
+  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt32, int32_t) \
+  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt64, int64_t)
 
 REG_SLICE_GPU_DTYPES(REG_DYNAMIC_SLICE_GPU)
 }  // namespace kernel
