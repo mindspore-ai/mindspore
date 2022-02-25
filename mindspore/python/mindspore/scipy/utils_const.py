@@ -98,6 +98,15 @@ def _tuple(x):
 
 
 def pytype_to_mstype(type_):
+    """
+    Convert python type to MindSpore type.
+
+    Args:
+        type_: A python type object.
+
+    Returns:
+        Type of MindSpore type.
+    """
     return {
         Tensor: tensor_type,
         CSRTensor: csr_tensor_type,

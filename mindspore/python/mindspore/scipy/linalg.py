@@ -189,6 +189,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False,
                        'a', 'data type')
     trsm_type_in_check(b.dtype, [mstype.int32, mstype.int64, mstype.float32, mstype.float64],
                        'b', 'data type')
+    trsm_type_in_check(a.dtype, b.dtype, ('a', 'b'), 'data type', fmt='match')
 
     _solve_check(func_name, a.shape, b.shape)
     trsm_value_check(debug, None, 'debug', op='is', fmt='todo')
