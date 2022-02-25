@@ -24,7 +24,6 @@
 #include "backend/common/pass/convert_tuple_output_to_maketuple.h"
 #include "backend/common/pass/convert_const_input_to_tensor_input.h"
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
-#include "backend/common/pass/const_to_attr_strided_slice_grad.h"
 #include "backend/common/pass/convert_const_scalar_to_tensor.h"
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
 #include "backend/common/pass/add_training_attr.h"
@@ -61,7 +60,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
   common_pm->AddPass(std::make_shared<SparseProcess>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
-  common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());

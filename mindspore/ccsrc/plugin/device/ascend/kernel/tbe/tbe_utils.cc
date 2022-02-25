@@ -236,7 +236,7 @@ KernelPackPtr TbeUtils::InsertCache(const std::string &kernel_name, const std::s
 }
 
 int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buffer, void **module, const string &magic,
-                                  const bool dynamic_flag) {
+                                  bool has_kernel_list) {
   static std::map<string, uint32_t> magic_maps = {{"RT_DEV_BINARY_MAGIC_PLAIN", RT_DEV_BINARY_MAGIC_PLAIN},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN_AICPU", RT_DEV_BINARY_MAGIC_PLAIN_AICPU},
                                                   {"RT_DEV_BINARY_MAGIC_PLAIN_AIVEC", RT_DEV_BINARY_MAGIC_PLAIN_AIVEC},
@@ -255,7 +255,7 @@ int KernelManager::BinaryRegister(const mindspore::kernel::FlexArray &kernel_buf
   dev_bin.magic = iter->second;
   dev_bin.length = kernel_buffer.len;
   dev_bin.version = 0;
-  auto ret = dynamic_flag ? rtRegisterAllKernel(&dev_bin, module) : rtDevBinaryRegister(&dev_bin, module);
+  auto ret = has_kernel_list ? rtRegisterAllKernel(&dev_bin, module) : rtDevBinaryRegister(&dev_bin, module);
   if (RT_ERROR_NONE != ret) {
     MS_LOG(INFO) << "Call runtime rtDevBinaryRegister error.";
     return -1;
@@ -288,20 +288,20 @@ uintptr_t KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel
     if (iter != info_table_.end()) {
       auto kernelmeta = iter->second;
       *block_dim = kernelmeta->block_dim_;
-      if (!dynamic_flag) {
+      if (!kernel_json_info.has_kernel_list) {
         return kernelmeta->func_stub_;
       }
     }
   }
   void *module = nullptr;
-  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, dynamic_flag) != 0) {
+  if (BinaryRegister((*kernel_pack.GetKernel()), &module, magic, kernel_json_info.has_kernel_list) != 0) {
     MS_LOG(INFO) << "Call runtime BinaryRegister error.";
     if (module != nullptr) {
       (void)rtDevBinaryUnRegister(module);
     }
     return 0;
   }
-  if (dynamic_flag) {
+  if (kernel_json_info.has_kernel_list) {
     *handle = module;
     *origin_key = func_name;
     return 1;

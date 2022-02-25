@@ -73,6 +73,7 @@ std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {kConv2D
                                                                          kLayerNormBetaGammaBackpropOpName,
                                                                          kMinimumGradOpName,
                                                                          kMaximumGradOpName,
+                                                                         kStridedSliceGradOpName,
                                                                          kApplyCenteredRMSPropOpName};
 
 bool TbeAdapter::IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNodePtr> &compute_nodes) {

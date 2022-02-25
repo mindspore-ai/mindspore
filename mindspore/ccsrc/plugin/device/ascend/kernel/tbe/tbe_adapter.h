@@ -102,6 +102,11 @@ class TbeAdapter {
         inputs_json->push_back(inputs_list[kIndex7]);
         inputs_json->push_back(inputs_list[kIndex8]);
         inputs_json->push_back(inputs_list[kIndex4]);
+      } else if (op_name == kStridedSliceGradOpName) {
+        for (size_t i = 1; i < inputs_list.size(); ++i) {
+          inputs_json->push_back(inputs_list[i]);
+        }
+        inputs_json->push_back(inputs_list[kIndex0]);
       } else {
         if (inputs_list.size() < kIndex2) {
           MS_LOG(EXCEPTION) << "Op " << op_name << " should have at least " << kIndex2 << " inputs, but got "

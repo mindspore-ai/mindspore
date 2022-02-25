@@ -122,7 +122,7 @@ void RuntimeModel::InitLabel(const std::shared_ptr<DavinciModel> &davinci_model)
     }
 
     rtLabel_t rt_label = nullptr;
-    rtError_t rt_ret = rtLabelCreateEx(&rt_label, stream_list_[label_set_task_info->stream_id()]);
+    rtError_t rt_ret = rtLabelCreateExV2(&rt_label, rt_model_handle_, stream_list_[label_set_task_info->stream_id()]);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtLabelCreate failed, ret: " << rt_ret;
     }

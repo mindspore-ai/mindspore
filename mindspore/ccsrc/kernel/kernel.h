@@ -128,6 +128,7 @@ struct KernelJsonInfo {
   std::vector<size_t> parameters;
   std::string sha256;
   std::vector<size_t> workspaces;
+  bool has_kernel_list = false;
   uint32_t op_para_size;
   KernelJsonInfo() : block_dim(0), op_para_size(0) {}
 };

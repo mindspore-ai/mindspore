@@ -203,6 +203,7 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
     }
   }
   kernel_json_info_.sha256 = js["sha256"];
+  kernel_json_info_.has_kernel_list = js.find("kernelList") != js.end();
 }
 
 bool KernelPack::LoadKernelMeta(const std::string &json_f) {

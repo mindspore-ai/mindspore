@@ -870,7 +870,6 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
-
       if (!AnfAlgo::IsControlOpExecInBackend(kernel)) {
         OpRunInfo op_run_info;
         GraphInfo graph_info;

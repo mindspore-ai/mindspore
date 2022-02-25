@@ -597,7 +597,12 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     MS_LOG(INFO) << "Dataset param is " << param.ToString() << ".";
     // GetNext
     auto iter_getnext_op = make_shared<ge::op::GetNext>("get_next_tmp");
-    (void)iter_getnext_op->set_attr_output_types(param.ge_types());
+    std::vector<enum ge::DataType> getnext_types;
+    const auto &origin_ge_types = param.ge_types();
+    std::transform(
+      origin_ge_types.begin(), origin_ge_types.end(), std::back_inserter(getnext_types),
+      [](int64_t t_num) -> enum ge::DataType { return static_cast<enum ge::DataType>(t_num); });
+    (void)iter_getnext_op->set_attr_output_types(getnext_types);
     (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
     (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
 

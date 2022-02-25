@@ -149,7 +149,9 @@ static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t
   {prim::kPrimMaximumGrad->name(), {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
   {prim::kPrimApplyCenteredRMSProp->name(),
    {{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}},
-    {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}}};
+    {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}},
+  {prim::kPrimStridedSliceGrad->name(),
+   {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
 
 std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
   std::vector<KernelWithIndex> ret;

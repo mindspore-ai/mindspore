@@ -1454,7 +1454,9 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
       MS_EXCEPTION_IF_NULL(real_input);
       if (real_input->isa<ValueNode>()) {
         const auto &tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
-        MS_EXCEPTION_IF_NULL(tensor);
+        if (tensor == nullptr) {
+          continue;
+        }
         if (forward_op_output_id.find(tensor->id()) != forward_op_output_id.end()) {
           (*forward_op_output_tensor_id)[tensor->id()] += 1;
         }
@@ -1630,6 +1632,11 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      InputTensorInfo *input_tensor_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
+  auto has_const_input_to_attr = AnfAlgo::HasNodeAttr(kAttrNeedConvertToValueNode, cnode);
+  std::vector<size_t> const_input_attr_index = {};
+  if (has_const_input_to_attr) {
+    const_input_attr_index = AnfAlgo::GetNodeAttr<std::vector<size_t>>(cnode, kAttrNeedConvertToValueNode);
+  }
   const auto input_tensor_num = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
@@ -1641,8 +1648,13 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       tensor = GetValueNodeOutputTensor(real_input, kernel_with_index.second);
       const auto &value_ptr = GetValueNode(real_input);
       MS_EXCEPTION_IF_NULL(value_ptr);
-      input_tensor_info->input_tensors_mask.emplace_back(value_ptr->isa<StringImm>() ? kValueNodeTensorMask
-                                                                                     : kParameterDataTensorMask);
+      auto is_value_node = value_ptr->isa<StringImm>();
+      if (has_const_input_to_attr) {
+        is_value_node =
+          std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i) != const_input_attr_index.end();
+      }
+      input_tensor_info->input_tensors_mask.emplace_back(is_value_node ? kValueNodeTensorMask
+                                                                       : kParameterDataTensorMask);
     } else if (real_input->isa<Parameter>()) {
       tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_tensor_info->input_tensors_mask.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask

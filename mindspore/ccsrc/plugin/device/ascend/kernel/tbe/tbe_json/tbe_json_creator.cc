@@ -522,6 +522,11 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
     auto value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
     ParseConstValue(value, input_desc);
+  } else if (input_node->isa<Parameter>()) {
+    auto param = input_node->cast<ParameterPtr>();
+    auto value = param->default_param();
+    MS_EXCEPTION_IF_NULL(value);
+    ParseConstValue(value, input_desc);
   } else {
     MS_LOG(ERROR) << "The operator " << anf_node->fullname_with_scope() << "'s input" << real_input_index
                   << "'s value depend is " << value_depend << ", but its input node is a " << input_node->type_name()
