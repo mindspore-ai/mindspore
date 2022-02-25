@@ -613,6 +613,12 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
 #endif
 
 void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) == false) {
+    MS_LOG(INFO) << "TaskFailCallback does not support non-sink scenes.";
+    return;
+  }
   if (task_fail_info == nullptr || current_graph_ == nullptr) {
     MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info or current_graph_ is nullptr";
     return;
