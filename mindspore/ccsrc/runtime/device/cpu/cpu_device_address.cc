@@ -122,6 +122,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
 
     // If the value of host is a scalar type, then the host addr is a temporary address, which will be released after
     // the sync ends. Therefore, if the value is less than 16, it needs to be copied.
+#ifndef __APPLE__
     const size_t kCopySize = 16;
     if (size <= kCopySize) {
       auto ret = memcpy_s(ptr_, size, host_ptr, size);
@@ -132,6 +133,7 @@ bool CPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
         return true;
       }
     }
+#endif
 
     // Use the tensor host ptr to set the device ptr.
     if (from_mem_pool_) {
