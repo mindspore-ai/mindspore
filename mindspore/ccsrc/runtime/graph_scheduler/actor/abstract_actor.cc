@@ -55,7 +55,11 @@ bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
     if (data_iter == input_op_datas_.end()) {
       return false;
     }
-    if (data_iter->second.size() != input_datas_num_) {
+    if (data_iter->second.size() < input_datas_num_) {
+      return false;
+    } else if (data_iter->second.size() > input_datas_num_) {
+      MS_LOG(ERROR) << "Invalid input data num:" << data_iter->second.size() << " need:" << input_datas_num_
+                    << " for actor:" << GetAID();
       return false;
     }
   }
@@ -65,7 +69,11 @@ bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context
     if (control_iter == input_op_controls_.end()) {
       return false;
     }
-    if (control_iter->second.size() != input_controls_num_) {
+    if (control_iter->second.size() < input_controls_num_) {
+      return false;
+    } else if (control_iter->second.size() > input_controls_num_) {
+      MS_LOG(ERROR) << "Invalid input control num:" << control_iter->second.size() << " need:" << input_controls_num_
+                    << " for actor:" << GetAID();
       return false;
     }
   }

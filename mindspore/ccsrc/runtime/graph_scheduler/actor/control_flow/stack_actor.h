@@ -45,6 +45,9 @@ class StackActor : public ControlActor {
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   void RunOpPartial(const OpPartialPtr &partial, size_t position, OpContext<DeviceTensor> *const context) override;
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+  size_t input_stack_data_num() const { return input_stack_data_num_; }
+  size_t input_stack_partials_num() const { return input_stack_partials_num_; }
+  size_t input_stack_controls_num() const { return input_stack_controls_num_; }
 
  protected:
   void Init() override;
@@ -55,6 +58,11 @@ class StackActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
+
+  // Check running condition functions.
+  bool CheckStackDataRunningCondition(const OpContext<DeviceTensor> *context) const;
+  bool CheckStackPartialRunningCondition(const OpContext<DeviceTensor> *context) const;
+  bool CheckStackControlRunningCondition(const OpContext<DeviceTensor> *context) const;
 
   // The input data and partials records that the stack actor is copied from the input nodes and needs to be
   // stored in the device tensor in the stack.

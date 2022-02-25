@@ -138,6 +138,15 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
     return false;
   }
 
+  if (CheckStackDataRunningCondition(context) && CheckStackPartialRunningCondition(context) &&
+      CheckStackControlRunningCondition(context)) {
+    return true;
+  }
+  return false;
+}
+
+bool StackActor::CheckStackDataRunningCondition(const OpContext<DeviceTensor> *context) const {
+  MS_EXCEPTION_IF_NULL(context);
   auto iter = input_branch_ids_.find(context->sequential_num_);
   bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
 
@@ -146,7 +155,11 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
     if (data_iter == input_stack_data_.end()) {
       return false;
     }
-    if (data_iter->second.size() != input_stack_data_num_) {
+    if (data_iter->second.size() < input_stack_data_num_) {
+      return false;
+    } else if (data_iter->second.size() > input_stack_data_num_) {
+      MS_LOG(ERROR) << "Invalid input stack data num:" << data_iter->second.size() << " need:" << input_stack_data_num_
+                    << " for actor:" << GetAID();
       return false;
     }
 
@@ -155,18 +168,35 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
     size_t branch_id_size = iter->second.size();
-    if (std::any_of(data_iter->second.begin(), data_iter->second.end(),
-                    [branch_id_size](const auto &one_stack) { return one_stack.second.size() != branch_id_size; })) {
-      return false;
+    for (const auto &one_stack : data_iter->second) {
+      if (one_stack.second.size() < branch_id_size) {
+        return false;
+      } else if (one_stack.second.size() > branch_id_size) {
+        MS_LOG(ERROR) << "Invalid input stack data num:" << one_stack.second.size()
+                      << " for input index:" << one_stack.first << " need:" << branch_id_size
+                      << " for actor:" << GetAID();
+        return false;
+      }
     }
   }
+  return true;
+}
+
+bool StackActor::CheckStackPartialRunningCondition(const OpContext<DeviceTensor> *context) const {
+  MS_EXCEPTION_IF_NULL(context);
+  auto iter = input_branch_ids_.find(context->sequential_num_);
+  bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
 
   if (input_stack_partials_num_ != 0) {
     const auto &partial_iter = input_stack_partials_.find(context->sequential_num_);
     if (partial_iter == input_stack_partials_.end()) {
       return false;
     }
-    if (partial_iter->second.size() != input_stack_partials_num_) {
+    if (partial_iter->second.size() < input_stack_partials_num_) {
+      return false;
+    } else if (partial_iter->second.size() > input_stack_partials_num_) {
+      MS_LOG(ERROR) << "Invalid input stack partial num:" << partial_iter->second.size()
+                    << " need:" << input_stack_partials_num_ << " for actor:" << GetAID();
       return false;
     }
 
@@ -175,18 +205,35 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
     size_t branch_id_size = iter->second.size();
-    if (std::any_of(partial_iter->second.begin(), partial_iter->second.end(),
-                    [branch_id_size](const auto &one_stack) { return one_stack.second.size() != branch_id_size; })) {
-      return false;
+    for (const auto &one_stack : partial_iter->second) {
+      if (one_stack.second.size() < branch_id_size) {
+        return false;
+      } else if (one_stack.second.size() > branch_id_size) {
+        MS_LOG(ERROR) << "Invalid input stack partial num:" << one_stack.second.size()
+                      << " for input index:" << one_stack.first << " need:" << branch_id_size
+                      << " for actor:" << GetAID();
+        return false;
+      }
     }
   }
+  return true;
+}
+
+bool StackActor::CheckStackControlRunningCondition(const OpContext<DeviceTensor> *context) const {
+  MS_EXCEPTION_IF_NULL(context);
+  auto iter = input_branch_ids_.find(context->sequential_num_);
+  bool is_branch_id_available = (iter == input_branch_ids_.end() || iter->second.empty());
 
   if (input_stack_controls_num_ != 0) {
     const auto &control_iter = input_stack_controls_.find(context->sequential_num_);
     if (control_iter == input_stack_controls_.end()) {
       return false;
     }
-    if (control_iter->second.size() != input_stack_controls_num_) {
+    if (control_iter->second.size() < input_stack_controls_num_) {
+      return false;
+    } else if (control_iter->second.size() > input_stack_controls_num_) {
+      MS_LOG(ERROR) << "Invalid input stack control num:" << control_iter->second.size()
+                    << " need:" << input_stack_controls_num_ << " for actor:" << GetAID();
       return false;
     }
 
@@ -195,9 +242,15 @@ bool StackActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) c
       return false;
     }
     size_t branch_id_size = iter->second.size();
-    if (std::any_of(control_iter->second.begin(), control_iter->second.end(),
-                    [branch_id_size](const auto &one_stack) { return one_stack.second != branch_id_size; })) {
-      return false;
+    for (const auto &one_stack : control_iter->second) {
+      if (one_stack.second < branch_id_size) {
+        return false;
+      } else if (one_stack.second > branch_id_size) {
+        MS_LOG(ERROR) << "Invalid input stack control num:" << one_stack.second
+                      << " for input actor:" << one_stack.first->Name() << " need:" << branch_id_size
+                      << " for actor:" << GetAID();
+        return false;
+      }
     }
   }
   return true;

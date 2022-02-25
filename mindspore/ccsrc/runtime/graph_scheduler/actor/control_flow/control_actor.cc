@@ -161,7 +161,11 @@ bool ControlActor::CheckRunningCondition(const OpContext<DeviceTensor> *context)
     if (partial_iter == input_op_partials_.end()) {
       return false;
     }
-    if (partial_iter->second.size() != input_partials_num_) {
+    if (partial_iter->second.size() < input_partials_num_) {
+      return false;
+    } else if (partial_iter->second.size() > input_partials_num_) {
+      MS_LOG(ERROR) << "Invalid input partial num:" << partial_iter->second.size() << " need:" << input_partials_num_
+                    << " for actor:" << GetAID();
       return false;
     }
   }
