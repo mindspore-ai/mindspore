@@ -224,7 +224,7 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
   auto shape_info = dst_tensor->shape();
   if (shape_info.end() !=
       std::find_if(shape_info.begin(), shape_info.end(), [](const int shape) { return shape <= 0; })) {
-    MS_LOG(ERROR) << "Invalid shape size." << src_tensor->handler()->name()->c_str();
+    MS_LOG(ERROR) << "Invalid shape size, tensor name: " << src_tensor->handler()->name();
     return RET_ERROR;
   }
 

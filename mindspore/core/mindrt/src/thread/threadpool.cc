@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
 
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // if single thread, run master thread
-  if (thread_num() <= 1 || task_num <= 1) {
+  if (task_num <= 1) {
     for (int i = 0; i < task_num; ++i) {
       int ret = func(content, i, 0, 1);
       if (ret != 0) {
