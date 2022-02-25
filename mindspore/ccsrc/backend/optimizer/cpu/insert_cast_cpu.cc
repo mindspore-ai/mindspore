@@ -168,21 +168,32 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
       continue;
     }
     if (infer_type != device_type) {
-      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, i);
-      for (size_t j = 0; j < used_node_list->size(); j++) {
-        auto used_node = used_node_list->at(j).first;
-        if (used_node != func_output) {
+      auto input_num = AnfAlgo::GetInputTensorNum(func_output);
+      for (size_t j = 0; j < input_num; j++) {
+        auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(func_output), j);
+        if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
+          MS_LOG(WARNING) << "Cast type conversion doesn't support nested MakeTuple!";
           continue;
         }
-        auto used_node_index = static_cast<size_t>(used_node_list->at(j).second - 1);
-        auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(used_node), used_node_index);
+        auto kernel_with_index = AnfAlgo::VisitKernel(func_output, j);
+        auto real_node = kernel_with_index.first;
+        if (real_node != cnode) {
+          continue;
+        }
+        auto cur_input = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(func_output), j);
         const abstract::BaseShapePtr origin_shape =
-          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(used_node), used_node_index);
+          AnfAlgo::GetPrevNodeOutputDetailShape(utils::cast<CNodePtr>(func_output), j);
         auto cast =
           AddCastOpNodeToGraph(func_graph, cur_input, dev_fmt, device_type, infer_type, origin_shape, infer_type);
         MS_EXCEPTION_IF_NULL(cast);
-        cast->set_scope(used_node->scope());
-        utils::cast<CNodePtr>(used_node)->set_input(used_node_index + 1, cast);
+        cast->set_scope(func_output->scope());
+        utils::cast<CNodePtr>(func_output)->set_input(j + 1, cast);
+        auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(func_graph);
+        if (kernel_graph != nullptr) {
+          MS_LOG(INFO) << "Replace internal output from:" << cnode->DebugString() << " to:" << cast->DebugString()
+                       << " for graph:" << kernel_graph->ToString();
+          kernel_graph->ReplaceInternalOutput(cnode, cast);
+        }
       }
     }
   }
