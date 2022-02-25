@@ -77,7 +77,7 @@ class Worker {
   bool UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vector<int> &lookup_ids,
                             const std::vector<float> &vals);
 
-  bool running() { return running_; }
+  bool running() const { return running_; }
   void Finalize();
 
  private:
