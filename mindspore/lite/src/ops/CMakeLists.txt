@@ -12,6 +12,9 @@ file(GLOB OPS_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/populate/*.cc
     )
+if(NOT MSLITE_ENABLE_RUNTIME_PASS)
+  list(REMOVE_ITEM OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/populate/custom_populate.cc)
+endif()
 if(MSLITE_ENABLE_STRING_KERNEL)
     file(GLOB OPS_SRC_STRING
             ${CMAKE_CURRENT_SOURCE_DIR}/populate/string/*.cc
@@ -56,3 +59,4 @@ endif()
 
 add_library(cpu_ops_mid OBJECT ${OPS_SRC})
 add_dependencies(cpu_ops_mid fbs_src fbs_inner_src)
+

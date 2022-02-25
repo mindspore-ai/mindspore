@@ -35,7 +35,9 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/fp32_grad/*.c
     #${NNACL_DIR}/experiment/HPC-generator/*.c
 )
-
+if(NOT MSLITE_ENABLE_RUNTIME_PASS)
+  list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
+endif()
 if((NOT DEFINED MSLITE_ENABLE_INT8) OR MSLITE_ENABLE_INT8)
     file(GLOB KERNEL_SRC_INT8
             ${NNACL_DIR}/int8/*.c
