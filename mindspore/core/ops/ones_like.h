@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace ops {
 class MS_CORE_API OnesLike : public PrimitiveC {
  public:
   /// \brief Constructor.
-  OnesLike() : PrimitiveC(prim::kPrimOnesLike->name()) {}
+  OnesLike() : PrimitiveC(prim::kPrimOnesLike->name()) { InitIOName({"x"}, {"y"}); }
   /// \brief Destructor.
   ~OnesLike() = default;
   MS_DECLARE_PARENT(OnesLike, PrimitiveC);

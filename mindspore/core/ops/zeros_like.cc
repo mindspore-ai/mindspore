@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,27 +27,28 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ZerosLikeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("infer_shape", SizeToLong(input_args.size()), kGreaterEqual, 1, op_name);
   return CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ZerosLikeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto infer_type = input_args[0]->BuildType();
-  auto valid_type = common_valid_types;
-  (void)valid_type.insert(kBool);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("infer_type", infer_type, valid_type, op_name);
+  auto valid_type = common_valid_types_with_complex_and_bool;
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_type, op_name);
   return infer_type;
 }
 }  // namespace
 AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  const int64_t kInputNum = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
+  auto infer_type = ZerosLikeInferType(primitive, input_args);
+  auto infer_shape = ZerosLikeInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ZerosLike, prim::kPrimZerosLike, ZerosLikeInfer, nullptr, true);
 }  // namespace ops
