@@ -210,7 +210,7 @@ class Parameter(Tensor_):
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
         new_obj.name = self.name
-        new_obj._inited_param = self._inited_param  # pylint: disable=W0212
+        new_obj._inited_param = self._inited_param
         return new_obj
 
     @staticmethod
