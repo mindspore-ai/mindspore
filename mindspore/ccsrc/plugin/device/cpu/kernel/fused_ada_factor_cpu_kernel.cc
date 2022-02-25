@@ -38,8 +38,8 @@ static constexpr float kEps = 1e-30;
 void FusedAdaFactorCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
-  (void)workspace_size_list_.emplace_back(elem_num_ / last_row_dim_size_ * kSizeFloat32);
-  (void)workspace_size_list_.emplace_back(elem_num_ / last_col_dim_size_ * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back((elem_num_ / last_row_dim_size_) * kSizeFloat32);
+  (void)workspace_size_list_.emplace_back((elem_num_ / last_col_dim_size_) * kSizeFloat32);
 }
 
 void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -156,7 +156,7 @@ void FusedAdaFactorCpuKernelMod::FactorUpdate(float *update, const std::vector<A
   task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       float row_reduce = 0;
-      size_t reduce_start = i / row_dim_size * last_row_col_size + i % row_dim_size;
+      size_t reduce_start = (i / row_dim_size) * last_row_col_size + i % row_dim_size;
       for (size_t j = 0; j < col_dim_size; ++j) {
         row_reduce += update[reduce_start + j * row_dim_size];
       }

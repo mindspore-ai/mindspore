@@ -147,7 +147,8 @@ void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::
   slice_param_.num_axes_ = DIMENSION_8D;
 }
 
-int StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+common::Status StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr,
+                                                        int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr = input_addr + (start_pos * input_shape_[split_axis_] + begin_index) * inner_size;
@@ -162,7 +163,8 @@ int StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_addr, uint8_t 
   return common::SUCCESS;
 }
 
-int StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+common::Status StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr,
+                                                            int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[split_axis_] + begin_index) * inner_size;
@@ -179,7 +181,7 @@ int StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input_addr, uint
 void StridedSliceCpuKernelMod::ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num) {
   int thread_index = 0;
   std::vector<common::Task> tasks;
-  std::function<int(StridedSliceCpuKernelMod *, const uint8_t *, uint8_t *, int)> execute_func;
+  std::function<common::Status(StridedSliceCpuKernelMod *, const uint8_t *, uint8_t *, int)> execute_func;
   if (parallel_strategy_ == kOnOuter) {
     execute_func = &StridedSliceCpuKernelMod::RunTaskOnOuter;
   } else if (parallel_strategy_ == kOnSplitAxis) {

@@ -771,7 +771,7 @@ void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return compute_stream_;
   } else {
-    auto stream = kernel_mod->GetStream();
+    auto stream = kernel_mod->stream();
     if (stream == nullptr) {
       stream = compute_stream_;
       MS_LOG(INFO) << "Assign default compute stream for node " << node->fullname_with_scope();

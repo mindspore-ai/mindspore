@@ -765,9 +765,9 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
         MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
       }
       stream_id_map_[stream_id] = stream;
-      ascend_kernel_mod->SetStream(stream);
+      ascend_kernel_mod->set_stream(stream);
     } else {
-      ascend_kernel_mod->SetStream(iter->second);
+      ascend_kernel_mod->set_stream(iter->second);
     }
     if (stream_id > 0) {
       last_kernel[stream_id_map_[stream_id]] = i;

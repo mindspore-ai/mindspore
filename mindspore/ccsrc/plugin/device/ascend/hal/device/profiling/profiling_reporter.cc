@@ -112,7 +112,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->GetStream());
+    rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->stream());
 
     MS_LOG(INFO) << "Report step point, graph id: " << graph_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)

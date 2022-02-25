@@ -172,7 +172,7 @@ struct Address {
 };
 using AddressPtr = std::shared_ptr<Address>;
 using AddressPtrList = std::vector<AddressPtr>;
-
+using StreamType = void *;
 // The memory info of kernel launch.
 struct KernelLaunchInfo {
   AddressPtrList inputs_;
@@ -215,8 +215,8 @@ class KernelMod {
   const std::vector<AddressPtr> &GetInputsAddr() { return inputs_addr_; }
   const std::vector<AddressPtr> &GetWorkSpacesAddr() { return workspaces_addr_; }
   const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
-  void SetStream(void *stream) { stream_ = stream; }
-  void *GetStream() const { return stream_; }
+  void set_stream(StreamType stream) { stream_ = stream; }
+  StreamType stream() const { return stream_; }
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
 
  protected:
@@ -226,7 +226,7 @@ class KernelMod {
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};
-  void *stream_{nullptr};
+  StreamType stream_{nullptr};
   AnfNodeWeakPtr anf_node_;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
   std::vector<CNodeWeakPtr> atomic_clean_nodes_;

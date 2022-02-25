@@ -36,8 +36,8 @@ struct UniqueParam {
   IndexType *inverse_idx_{nullptr};
   DataType *workspace_{nullptr};
   IndexType *workspace_idx_{nullptr};
-  IndexType input_size_{0};
-  IndexType output_size_{0};
+  size_t input_size_{0};
+  size_t output_size_{0};
   size_t thread_num_{0};
   bool need_sort_{true};
 };
@@ -48,15 +48,14 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   ~UniqueCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   template <typename DataType, typename IndexType>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-
- protected:
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t output_size_{0};
@@ -64,16 +63,20 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   CNodeWeakPtr node_wpt_;
 
   template <typename DataType>
-  static size_t BucketId(DataType data, size_t bucket_num) {
-    if (bucket_num < 1) {
-      return static_cast<size_t>(data);
+  static size_t BucketId(DataType input, size_t bucket_num) {
+    if (input < 0) {
+      input = -input;
     }
-    return static_cast<size_t>(data) % bucket_num;
+    size_t data = static_cast<size_t>(input);
+    if (bucket_num < 1) {
+      return data;
+    }
+    return data % bucket_num;
   }
 
   template <typename DataType, typename IndexType>
   static void CalculateEachBucketSize(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,
-                                      std::vector<IndexType> *each_bucket_size) {
+                                      std::vector<size_t> *each_bucket_size) {
     MS_EXCEPTION_IF_NULL(params);
     MS_EXCEPTION_IF_NULL(params->input_);
     MS_EXCEPTION_IF_NULL(each_bucket_size);
@@ -81,17 +84,16 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     if (params->input_size_ < 1) {
       return;
     }
-    for (IndexType i = 0; i < params->input_size_; ++i) {
+    for (size_t i = 0; i < params->input_size_; ++i) {
       auto bucket_id = BucketId(params->input_[i], bucket_num);
       each_bucket_size->at(bucket_id)++;
     }
   }
 
   template <typename DataType, typename IndexType>
-  static void SplitAndCalculateBucketSize(
-    const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,
-    std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> *segments_ptr,
-    std::vector<std::shared_ptr<std::vector<IndexType>>> *segment_bucket_sizes_ptr) {
+  static void SplitAndCalculateBucketSize(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,
+                                          std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> *segments_ptr,
+                                          std::vector<std::shared_ptr<std::vector<size_t>>> *segment_bucket_sizes_ptr) {
     MS_EXCEPTION_IF_NULL(params);
     MS_EXCEPTION_IF_NULL(params->input_);
     MS_EXCEPTION_IF_NULL(segments_ptr);
@@ -99,21 +101,21 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     auto &segments = *segments_ptr;
     auto &segment_bucket_sizes = *segment_bucket_sizes_ptr;
 
-    IndexType input_size = params->input_size_;
+    size_t input_size = params->input_size_;
     size_t thread_num = params->thread_num_;
     if (thread_num < 1) {
       MS_LOG(EXCEPTION) << "For 'Unique', thread num should be greater than 0, but got " << thread_num;
     }
-    IndexType thread_data_size = input_size / thread_num;
+    size_t thread_data_size = input_size / thread_num;
     size_t left_data_size = input_size % thread_num;
     segments.reserve(thread_num);
     segment_bucket_sizes.reserve(thread_num);
-    IndexType current_offset = 0;
+    size_t current_offset = 0;
     std::vector<common::Task> tasks;
     tasks.reserve(thread_num);
     for (size_t i = 0; i < thread_num; ++i) {
-      (void)segment_bucket_sizes.emplace_back(std::make_shared<std::vector<IndexType>>(thread_num, 0));
-      IndexType data_size = thread_data_size;
+      (void)segment_bucket_sizes.emplace_back(std::make_shared<std::vector<size_t>>(thread_num, 0));
+      size_t data_size = thread_data_size;
       if (i < left_data_size) {
         data_size += 1;
       }
@@ -132,18 +134,17 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   }
 
   template <typename DataType, typename IndexType>
-  static void SegmentToBuckets(const std::shared_ptr<UniqueParam<DataType, IndexType>> &segment,
-                               IndexType segment_offset,
+  static void SegmentToBuckets(const std::shared_ptr<UniqueParam<DataType, IndexType>> &segment, size_t segment_offset,
                                const std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> &buckets) {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(segment);
     MS_EXCEPTION_IF_NULL(segment->input_);
-    std::vector<IndexType> bucket_data_num(segment->thread_num_, 0);
+    std::vector<size_t> bucket_data_num(segment->thread_num_, 0);
     auto bucket_size = buckets.size();
     if (segment->input_size_ < 1) {
       return;
     }
-    for (IndexType i = 0; i < segment->input_size_; ++i) {
+    for (size_t i = 0; i < segment->input_size_; ++i) {
       DataType data = segment->input_[i];
       auto bucket_id = BucketId(data, segment->thread_num_);
       auto bucket_index = bucket_data_num[bucket_id];
@@ -160,7 +161,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
         continue;
       }
       bucket->input_[bucket_index] = data;
-      bucket->workspace_idx_[bucket_index] = segment_offset + i;
+      bucket->workspace_idx_[bucket_index] = static_cast<IndexType>(segment_offset + i);
       bucket_data_num[bucket_id]++;
     }
     MS_LOG(DEBUG) << "End";
@@ -169,7 +170,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   template <typename DataType, typename IndexType>
   static void GatherSegmentsToBuckets(const std::shared_ptr<UniqueParam<DataType, IndexType>> &params,
                                       std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> *segments_ptr,
-                                      std::vector<std::shared_ptr<std::vector<IndexType>>> *segment_bucket_sizes_ptr,
+                                      std::vector<std::shared_ptr<std::vector<size_t>>> *segment_bucket_sizes_ptr,
                                       std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> *buckets_ptr) {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(params);
@@ -186,14 +187,14 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     auto &buckets = *buckets_ptr;
     auto thread_num = segments.size();
     buckets.reserve(thread_num);
-    std::vector<IndexType> bucket_data_size(thread_num, 0);
+    std::vector<size_t> bucket_data_size(thread_num, 0);
     for (size_t i = 0; i < thread_num; ++i) {
       for (size_t j = 0; j < thread_num; ++j) {
         bucket_data_size[j] += segment_bucket_sizes[i]->at(j);
       }
     }
 
-    IndexType current_offset = 0;
+    size_t current_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
       auto bucket = std::make_shared<UniqueParam<DataType, IndexType>>();
       bucket->input_ = params->output_ + current_offset;
@@ -205,7 +206,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
       current_offset += bucket_data_size[i];
       (void)buckets.emplace_back(bucket);
     }
-    std::vector<IndexType> tmp_bucket_data_size(thread_num, 0);
+    std::vector<size_t> tmp_bucket_data_size(thread_num, 0);
     std::vector<std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>>> thread_buckets;
     for (size_t i = 0; i < thread_num; ++i) {
       std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> local_buckets;
@@ -251,14 +252,14 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     if (params->input_size_ < 1) {
       return;
     }
-    if (params->need_sort_) {
-      for (IndexType i = 0; i < params->input_size_; ++i) {
-        input_idx[i] = i;
+    if (params->need_sort_ && !std::is_same<DataType, float>::value) {
+      for (size_t i = 0; i < params->input_size_; ++i) {
+        input_idx[i] = static_cast<IndexType>(i);
       }
       std::sort(input_idx, input_idx + params->input_size_,
-                [&](IndexType left, IndexType right) { return input[left] < input[right]; });
+                [&](size_t left, size_t right) { return input[left] < input[right]; });
       DataType last = input[0];
-      for (IndexType i = 0; i < params->input_size_; ++i) {
+      for (size_t i = 0; i < params->input_size_; ++i) {
         auto curr = input[input_idx[i]];
         if (i == 0 || curr != last) {
           if (i != 0) {
@@ -271,11 +272,11 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
           inverse_idx[input_idx[i]] = j;
         }
       }
-      params->output_size_ = j + 1;
+      params->output_size_ = static_cast<size_t>(j + 1);
     } else {
       std::unordered_map<DataType, IndexType> uniq;
       uniq.reserve(params->input_size_);
-      for (IndexType i = 0; i < params->input_size_; ++i) {
+      for (size_t i = 0; i < params->input_size_; ++i) {
         auto it = uniq.emplace(input[i], j);
         inverse_idx[i] = it.first->second;
         if (it.second) {
@@ -285,7 +286,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
       for (const auto &it : uniq) {
         output[it.second] = it.first;
       }
-      params->output_size_ = j;
+      params->output_size_ = static_cast<size_t>(j);
     }
     MS_LOG(DEBUG) << "End";
   }
@@ -310,7 +311,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   template <typename DataType, typename IndexType>
   static void TransformBucketReverseIndices(const std::shared_ptr<UniqueParam<DataType, IndexType>> &bucket,
                                             const std::shared_ptr<UniqueParam<DataType, IndexType>> &result,
-                                            IndexType offset) {
+                                            size_t offset) {
     MS_EXCEPTION_IF_NULL(bucket);
     MS_EXCEPTION_IF_NULL(bucket->inverse_idx_);
     MS_EXCEPTION_IF_NULL(bucket->workspace_idx_);
@@ -319,10 +320,14 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     if (bucket->input_size_ < 1) {
       return;
     }
-    for (IndexType i = 0; i < bucket->input_size_; ++i) {
+    for (size_t i = 0; i < bucket->input_size_; ++i) {
       auto origin_idx = bucket->workspace_idx_[i];
-      if (origin_idx >= 0 && origin_idx < result->input_size_) {
-        result->inverse_idx_[origin_idx] = bucket->inverse_idx_[i] + offset;
+      if (origin_idx < 0) {
+        continue;
+      }
+      size_t index = static_cast<size_t>(origin_idx);
+      if (index < result->input_size_) {
+        result->inverse_idx_[index] = bucket->inverse_idx_[i] + offset;
       }
     }
   }
@@ -334,8 +339,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->output_);
     size_t thread_num = buckets.size();
-    std::vector<IndexType> bucket_offsets(thread_num);
-    IndexType current_size = 0;
+    std::vector<size_t> bucket_offsets(thread_num);
+    size_t current_size = 0;
     for (size_t i = 0; i < thread_num; ++i) {
       auto bucket = buckets[i];
       MS_EXCEPTION_IF_NULL(bucket);
@@ -368,7 +373,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(params);
     std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> segments;
     std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> buckets;
-    std::vector<std::shared_ptr<std::vector<IndexType>>> segment_bucket_sizes;
+    std::vector<std::shared_ptr<std::vector<size_t>>> segment_bucket_sizes;
     SplitAndCalculateBucketSize(params, &segments, &segment_bucket_sizes);
     GatherSegmentsToBuckets(params, &segments, &segment_bucket_sizes, &buckets);
     UniqueEachBucket(buckets);

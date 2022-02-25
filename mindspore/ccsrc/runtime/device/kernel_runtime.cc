@@ -1483,7 +1483,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   KernelLaunchInfo kernel_launch_info;
-  auto stream = kernel_mod->GetStream();
+  auto stream = kernel_mod->stream();
   if (stream == nullptr) {
     if (AnfAlgo::IsCommunicationOp(kernel)) {
       stream = communication_stream_;

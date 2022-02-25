@@ -157,7 +157,7 @@ void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   size_t once_compute_size = (num_units_ + max_thread_num - 1) / max_thread_num;
   while (start < num_units_) {
     size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
-    auto task = [&params, start, end]() -> int {
+    auto task = [&params, start, end]() {
       Compute<T>(&params, start, end);
       return common::SUCCESS;
     };

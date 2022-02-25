@@ -349,8 +349,8 @@ class KernelGraph : public FuncGraph {
 
   bool HasPostGraph() const { return !post_graphs_.empty(); }
 
-  void IncPreGraphFinishedCount() { pre_graph_finished_count_++; }
-  void IncPostGraphFinishedCount() { post_graph_finished_count_++; }
+  void IncPreGraphFinishedCount() { ++pre_graph_finished_count_; }
+  void IncPostGraphFinishedCount() { ++post_graph_finished_count_; }
   void ResetGraphRunningStatus() {
     first_step_ = false;
     post_graph_finished_count_ = 0;
