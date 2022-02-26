@@ -17,6 +17,7 @@
 from copy import copy
 import numbers
 import numpy as np
+from mindspore import log as logger
 from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .. import context
@@ -512,6 +513,7 @@ class Parameter(Tensor_):
         return new_param
 
     def add_pipeline_stage(self, stage):
+        logger.warning(f"This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
             raise TypeError("`stage` must be a positive number of int type")
         self._pipeline_stage_list.append(stage)

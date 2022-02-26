@@ -1955,6 +1955,7 @@ class Cell(Cell_):
             RuntimeError: If there is a parameter does not belong to any stage.
         """
         from mindspore.parallel._utils import _get_global_rank, _get_device_num
+        logger.warning(f"This interface may be deleted in the future.")
         stage_num = context.get_auto_parallel_context("pipeline_stages")
         device_num = _get_device_num()
         rank_id = _get_global_rank()

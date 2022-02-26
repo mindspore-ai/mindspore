@@ -179,7 +179,16 @@ void PipelineTransformer::LabelMicroBatch() {
 }
 
 void PipelineTransformer::CreateForwardGroup() {
-  std::vector<int64_t> rank_list = g_device_manager->GetDeviceListBetweenStage();
+  std::vector<int64_t> rank_list;
+  auto rank_id = g_device_manager->global_rank();
+  auto stage_id = g_device_manager->stage_id();
+  auto stage_num = g_device_manager->stage_num();
+  if (stage_num < 1) {
+    MS_LOG(EXCEPTION) << "Stage num got " << stage_num << ", expected a positive integer.";
+  }
+  for (int64_t i = 0; i < stage_num; ++i) {
+    rank_list.push_back(rank_id + per_stage_rank_num_ * (i - stage_id));
+  }
   auto dev_list = g_device_manager->CreateDeviceListByRankList(rank_list);
   auto g = g_device_manager->CreateGroup(rank_list);
   auto g_back_name = g.name() + BACKWARD;
