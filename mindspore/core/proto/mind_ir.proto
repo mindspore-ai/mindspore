@@ -26,6 +26,9 @@ message AttributeProto {
     TUPLE = 20;        // tuple
     LIST = 21;         // list
     DICT = 22;         // dictionary
+    UMONAD = 23;
+    IOMONAD = 24;
+    NONE = 25;
   }
   optional string name = 1;
   optional float f = 2;
