@@ -324,7 +324,9 @@ class Cell(Cell_):
         if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(str(id(self)))
 
-        cells_compile_cache.pop(id(self))
+        # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
+        # here using pop(id(self), None) to avoid KeyError exception
+        cells_compile_cache.pop(id(self), None)
         if self.compile_cache:
             _cell_graph_executor.del_net_res(self.compile_cache)
 
