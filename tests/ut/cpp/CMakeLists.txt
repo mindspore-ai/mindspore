@@ -216,6 +216,7 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/gpu/
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_relu_grad_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/akg_build.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/build_kernel.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
   "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/callback_impl.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST

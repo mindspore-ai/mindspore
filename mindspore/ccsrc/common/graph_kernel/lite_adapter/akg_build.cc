@@ -28,6 +28,7 @@
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "utils/anf_utils.h"
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 
@@ -157,6 +158,7 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
     return false;
   }
   std::vector<std::string> json_list;
+  std::string kernels_name = "";
   for (const auto &node : node_list) {
     graphkernel::DumpOption option;
     option.get_compute_capability = true;
@@ -172,14 +174,23 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
     GetValidKernelNodes(fg, &node_list, &input_list, &output_list);
     akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list);
     auto json_kernel_name = akg_kernel_json_generator.kernel_name();
+    AnfUtils::SetNodeAttr("kernel_name", MakeValue(json_kernel_name + "_kernel"), node->cast<CNodePtr>());
     if (find(json_list.begin(), json_list.end(), json_kernel_name) != json_list.end()) {
       continue;
     }
     json_list.push_back(json_kernel_name);
+    kernels_name += dir_path.value() + "/" + json_kernel_name + ".o ";
     if (!SaveJsonInfo(dir_path.value() + "/" + json_kernel_name, akg_kernel_json_generator.kernel_json_str())) {
       return false;
     }
   }
-  return CompileJsonsInList(dir_path.value(), json_list);
+  auto res = CompileJsonsInList(dir_path.value(), json_list);
+  if (res) {
+    auto cmd = "g++ -fPIC -shared " + kernels_name + " -o " + dir_path.value() + "/akgkernels.so";
+    if (system(cmd.c_str()) == 0) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace mindspore::graphkernel
