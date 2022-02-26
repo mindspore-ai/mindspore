@@ -34,13 +34,13 @@
 #include "debug/anf_ir_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
+#include "debug/utils.h"
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
 #include "utils/file_utils.h"
 #include "climits"
-#ifdef ONLINE_DBG_MODE
+
 namespace mindspore {
-#endif
 
 static constexpr const char *constant_prefix = "Default--data-";
 static constexpr const char *kNpyExt = ".npy";
@@ -83,8 +83,8 @@ DebugServices &DebugServices::operator=(const DebugServices &other) {
 }
 
 void DebugServices::AddWatchpoint(
-  unsigned int id, int watch_condition, float parameter,
-  const std::vector<std::tuple<std::string, bool>> &check_node_list, const std::vector<parameter_t> &parameter_list,
+  int id, int watch_condition, float parameter, const std::vector<std::tuple<std::string, bool>> &check_node_list,
+  const std::vector<parameter_t> &parameter_list,
   const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_device_list,
   const std::vector<std::tuple<std::string, std::vector<uint32_t>>> *check_node_graph_list) {
   std::lock_guard<std::mutex> lg(lock_);
@@ -638,7 +638,13 @@ void DebugServices::SortWatchpointsInfo(
     std::vector<int32_t>().swap((*chunk_error_codes)[i]);
     std::vector<unsigned int>().swap((*chunk_device_id)[i]);
     std::vector<unsigned int>().swap((*chunk_root_graph_id)[i]);
-    (*tensor_list_byte_size) += (*chunk_tensor_byte_size)[i];
+    if ((*tensor_list_byte_size) > ULONG_LONG_MAX - (*chunk_tensor_byte_size)[i]) {
+      MS_LOG(WARNING) << (*tensor_list_byte_size) << " + " << (*chunk_tensor_byte_size)[i]
+                      << " would lead to integer overflow!";
+      (*tensor_list_byte_size) = ULONG_LONG_MAX;
+    } else {
+      (*tensor_list_byte_size) += (*chunk_tensor_byte_size)[i];
+    }
   }
 }
 
@@ -697,9 +703,20 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   std::stringstream check_shape(shape_str);
   MS_LOG(INFO) << "Shape of " << file_name << " is: [" << shape_str << "]";
   while (getline(check_shape, intermediate, ',')) {
-    shape->push_back(std::stoi(intermediate));
+    int64_t shape_d = 0;
+    if (!CheckStoi(&shape_d, intermediate)) {
+      MS_LOG(INFO) << "Failed to get the shape from file: " << file_name << ", error in convert the string "
+                   << intermediate << " into an integer.";
+      return;
+    }
+    shape->push_back(shape_d);
   }
-  std::size_t word_size = std::stoul(std::string(1, (*tensor_type)[1]));
+  std::size_t word_size = 0;
+  if (!CheckStoul(&word_size, std::string(1, (*tensor_type)[1]))) {
+    MS_LOG(INFO) << "Failed to get the word_size from file: " << file_name << ", error in convert the string "
+                 << (*tensor_type)[1] << " into an integer.";
+    return;
+  }
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
   if (!data_size) {
@@ -763,25 +780,26 @@ void DebugServices::ProcessConvertToHostFormat(const std::vector<std::string> &f
   std::string real_dump_iter_dir = RealPath(dump_key);
   DIR *d_handle = opendir(real_dump_iter_dir.c_str());
   if (d_handle == nullptr) {
-    MS_LOG(INFO) << "Directory does not exist in ConvertToHostFormat.";
+    MS_LOG(INFO) << "Directory " << real_dump_iter_dir << " does not exist in ConvertToHostFormat.";
     return;
   }
   struct dirent *dir = nullptr;
   while ((dir = readdir(d_handle)) != nullptr) {
     std::string name = real_dump_iter_dir + std::string("/") + std::string(dir->d_name);
-    if (IsRegFile(name)) {
-      std::string candidate = dir->d_name;
-      for (const std::string &file_to_find : files_after_convert_in_dir) {
-        std::string file_n = file_to_find;
-        auto last_slash_pos = file_to_find.find_last_of("\\/");
-        if (last_slash_pos != std::string::npos) {
-          file_n = file_to_find.substr(last_slash_pos + 1);
-        }
-        if (candidate.find(file_n + ".") != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
-          // we found a converted file for this op
-          std::string found_file = dump_key + "/" + candidate;
-          (void)result_list->insert(found_file);
-        }
+    if (!IsRegFile(name)) {
+      continue;
+    }
+    std::string candidate = dir->d_name;
+    for (const std::string &file_to_find : files_after_convert_in_dir) {
+      std::string file_n = file_to_find;
+      auto last_slash_pos = file_to_find.find_last_of("\\/");
+      if (last_slash_pos != std::string::npos) {
+        file_n = file_to_find.substr(last_slash_pos + 1);
+      }
+      if (candidate.find(file_n + ".") != std::string::npos && candidate.rfind(kNpyExt) != std::string::npos) {
+        // we found a converted file for this op
+        std::string found_file = dump_key + "/" + candidate;
+        (void)result_list->insert(found_file);
       }
     }
   }
@@ -929,8 +947,14 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<std::tuple<std::str
 
       if (file_name.find(specific_dump_dir) != std::string::npos && found != std::string::npos &&
           found_out != std::string::npos) {
-        slot_list.push_back(
-          std::stoul(file_name_to_check.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1)));
+        std::string slot_str = file_name_to_check.substr(found_dot_start + 1, found_dot_end - found_dot_start - 1);
+        size_t slot = 0;
+        if (!CheckStoul(&slot, slot_str)) {
+          MS_LOG(INFO) << "Failed to get the slot_id from file_name: " << file_name << ", error in convert the string "
+                       << slot_str << " into an integer.";
+          continue;
+        }
+        slot_list.push_back(slot);
       }
     }
     for (auto slot : slot_list) {
@@ -1411,35 +1435,40 @@ void DebugServices::ProcessTensorDataSync(const std::vector<std::tuple<std::stri
   DIR *d = opendir(specific_dump_dir.c_str());
   if (d == nullptr) {
     MS_LOG(INFO) << "Directory " << specific_dump_dir.c_str() << " does not exist in ProcessTensorDataSync.";
-  } else {
-    struct dirent *dir = nullptr;
-    while ((dir = readdir(d)) != nullptr) {
-      std::string file_name = dir->d_name;
-      std::string file_path = specific_dump_dir + std::string("/") + file_name;
-      if (IsRegFile(file_path)) {
-        for (auto &node : proto_to_dump) {
-          std::string dump_name = std::get<1>(node);
-          std::string stripped_file_name = GetStrippedFilename(file_name);
-          if (stripped_file_name.empty() || stripped_file_name.length() <= dump_name.length()) {
+    return;
+  }
+  struct dirent *dir = nullptr;
+  while ((dir = readdir(d)) != nullptr) {
+    std::string file_name = dir->d_name;
+    std::string file_path = specific_dump_dir + std::string("/") + file_name;
+    if (IsRegFile(file_path)) {
+      for (auto &node : proto_to_dump) {
+        std::string dump_name = std::get<1>(node);
+        std::string stripped_file_name = GetStrippedFilename(file_name);
+        if (stripped_file_name.empty() || stripped_file_name.length() <= dump_name.length()) {
+          continue;
+        }
+        std::size_t found = stripped_file_name.rfind(dump_name + ".", 0);
+        if (found == 0) {
+          size_t slot = 0;
+          if (!CheckStoul(&slot, stripped_file_name.substr(dump_name.length() + 1))) {
+            MS_LOG(INFO) << "Failed to get the slot from file_name: " << file_name << ", error in convert the string "
+                         << stripped_file_name.substr(dump_name.length() + 1) << " into an integer.";
             continue;
           }
-          std::size_t found = stripped_file_name.rfind(dump_name + ".", 0);
-          if (found == 0) {
-            size_t slot = std::stoul(stripped_file_name.substr(dump_name.length() + 1));
-            std::vector<int64_t> shape;
-            std::string orig_name = std::get<0>(node);
-            std::string output_str = dump_name.substr(dump_name.rfind(".") + 1);
-            bool output_flag = (output_str == "output");
+          std::vector<int64_t> shape;
+          std::string orig_name = std::get<0>(node);
+          std::string output_str = dump_name.substr(dump_name.rfind(".") + 1);
+          bool output_flag = (output_str == "output");
 
-            AddToTensorData(orig_name, "", slot, iteration, device_id, root_graph_id, output_flag, 0, "", shape,
-                            nullptr, tensor_list);
-            break;
-          }
+          AddToTensorData(orig_name, "", slot, iteration, device_id, root_graph_id, output_flag, 0, "", shape, nullptr,
+                          tensor_list);
+          break;
         }
       }
     }
-    (void)closedir(d);
   }
+  (void)closedir(d);
 }
 
 std::string DebugServices::IterationString(unsigned int iteration) {
@@ -1776,8 +1805,16 @@ bool DebugServices::GetTaskIdStreamId(std::string file_name, std::string overflo
 
   std::string task_id_str = file_name.substr(task_pos_start, task_pos_end - task_pos_start);
   std::string stream_id_str = file_name.substr(stream_pos_start, stream_pos_end - stream_pos_start);
-  *task_id = std::stoull(task_id_str);
-  *stream_id = std::stoull(stream_id_str);
+  if (!CheckStoull(task_id, task_id_str)) {
+    MS_LOG(INFO) << "Failed to get the task_id from file_name: " << file_name << ", error in convert the string "
+                 << task_id_str << " into an integer.";
+    return false;
+  }
+  if (!CheckStoull(stream_id, stream_id_str)) {
+    MS_LOG(INFO) << "Failed to get the stream_id from file_name: " << file_name << ", error in convert the string "
+                 << stream_id_str << " into an integer.";
+    return false;
+  }
 
   return true;
 }
@@ -1821,13 +1858,9 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   // get task id
   if (second_dot < third_dot) {
     std::string extracted_task_id = file_name.substr(second_dot + 1, third_dot - second_dot - 1);
-    try {
-      *task_id = std::stoull(extracted_task_id);
-    } catch (std::invalid_argument &e) {
-      MS_LOG(ERROR) << "stoull failed on extracted_task_id to get task_id, invalid argument.";
-      return false;
-    } catch (std::out_of_range &e) {
-      MS_LOG(ERROR) << "stoull failed on extracted_task_id to get task_id, out of range.";
+    if (!CheckStoull(task_id, extracted_task_id)) {
+      MS_LOG(INFO) << "Failed to get the task_id from file_name: " << file_name << ", error in convert the string "
+                   << extracted_task_id << " into an integer.";
       return false;
     }
   } else {
@@ -1837,13 +1870,9 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   // get stream id
   if (third_dot < fourth_dot) {
     std::string extracted_stream_id = file_name.substr(third_dot + 1, fourth_dot - third_dot - 1);
-    try {
-      *stream_id = std::stoull(extracted_stream_id);
-    } catch (std::invalid_argument &e) {
-      MS_LOG(ERROR) << "stoull failed on extracted_stream_id to get stream_id, invalid argument.";
-      return false;
-    } catch (std::out_of_range &e) {
-      MS_LOG(ERROR) << "stoull failed on extracted_stream_id to get stream_id, out of range.";
+    if (!CheckStoull(stream_id, extracted_stream_id)) {
+      MS_LOG(INFO) << "Failed to get the stream_id from file_name: " << file_name << ", error in convert the string "
+                   << extracted_stream_id << " into an integer.";
       return false;
     }
   } else {
@@ -1926,6 +1955,4 @@ bool DebugServices::GetSyncMode() { return is_sync_mode_; }
 
 void DebugServices::SetMemLimit(uint64_t max_mem_size) { tensor_loader_->SetMemTotal(max_mem_size); }
 
-#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
-#endif

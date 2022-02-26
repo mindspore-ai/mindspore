@@ -161,13 +161,13 @@ message Statistics {
  float max_value = 2;
  float min_value = 3;
  float avg_value = 4;
- int32 count = 5;
- int32 neg_zero_count = 6;
- int32 pos_zero_count = 7;
- int32 nan_count = 8;
- int32 neg_inf_count = 9;
- int32 pos_inf_count = 10;
- int32 zero_count = 11;
+ uint64 count = 5;
+ uint64 neg_zero_count = 6;
+ uint64 pos_zero_count = 7;
+ uint64 nan_count = 8;
+ uint64 neg_inf_count = 9;
+ uint64 pos_inf_count = 10;
+ uint64 zero_count = 11;
 }
 
 message TensorBase{

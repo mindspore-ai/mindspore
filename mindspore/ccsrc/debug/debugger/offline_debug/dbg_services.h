@@ -196,7 +196,7 @@ class DbgServices {
                      uint64_t max_mem_usage);
 
   int32_t AddWatchpoint(
-    unsigned int id, int watch_condition,
+    int id, int watch_condition,
     std::map<std::string, std::map<std::string, std::variant<bool, std::vector<std::string>>>> check_nodes,
     std::vector<parameter_t> parameter_list);
 
