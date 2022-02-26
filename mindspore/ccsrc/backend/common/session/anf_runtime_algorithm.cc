@@ -870,12 +870,31 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   return true;
 }
 
-std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
+static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, std::vector<size_t> *device_shape) {
+  if (!max_shape.empty()) {
+    std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+  } else {
+    const size_t kDefaultValueForDynamicDim = 16;
+    auto tmp_shape = *device_shape;
+    auto ConvertNegOneToDefalut = [](size_t size) {
+      return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
+    };
+    std::transform(tmp_shape.begin(), tmp_shape.end(), device_shape->begin(), ConvertNegOneToDefalut);
+  }
+}
+
+// This function get input device shape adaptively in case of dynamic shape and static shape.
+// when shape is dynamic, it firstly get shape value from max_shape. If max_shape is empty, it
+// just return default shape value to avoid calculating error in init of kernels.
+// why do we do this? Because in dynamic shape case, the input shape is unknown when the `init`
+// function executes at the very first time, but we still need to  some helpful shape to make
+// sure the `init` executes correctly.
+std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetInputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
   if (AnfUtils::IsShapeDynamic(device_shape)) {
     auto max_shape = common::AnfAlgo::GetInputMaxShape(anf_node, index);
-    std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
+    GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetInputFormat(anf_node, index);
     auto dtype = GetInputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype, false);
@@ -883,12 +902,13 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
   return device_shape;
 }
 
-std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
+// The same to GetInputDeviceShapeAdaptively
+std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
   if (AnfUtils::IsShapeDynamic(device_shape)) {
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, index);
-    std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
+    GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetOutputFormat(anf_node, index);
     auto dtype = GetOutputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype);

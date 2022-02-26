@@ -54,7 +54,7 @@ class SplitFwdGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -96,7 +96,7 @@ class SplitFwdGpuKernelMod : public NativeGpuKernelMod {
 
     for (int i = 0; i < output_num_; i++) {
       size_t output_size = 1;
-      auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
+      auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
       if (is_null_input_) {
         InitSizeLists();

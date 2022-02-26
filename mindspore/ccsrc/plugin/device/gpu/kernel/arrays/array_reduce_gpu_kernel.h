@@ -94,7 +94,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    int input_dim_length = SizeToInt(AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0).size());
+    int input_dim_length = SizeToInt(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size());
 
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
@@ -121,8 +121,8 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     }
     keep_dims_ = GetAttr<bool>(kernel_node, "keep_dims");
 
-    auto inputA_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    auto outputC_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto outputC_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(inputA_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(outputC_shape, kernel_name_, "output");
     if (is_null_input_) {

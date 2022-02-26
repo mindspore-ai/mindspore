@@ -58,9 +58,9 @@ class DynamicBroadcastToGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    auto shape_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    auto input_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto shape_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto output_shapes = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes) || CHECK_NULL_INPUT(shape_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "For 'BroadcastToGpuKernelMod', input or output is null";

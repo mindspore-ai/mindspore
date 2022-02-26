@@ -34,15 +34,15 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   n_ = input_num / kDivNum2;
 
-  auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+  auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, n_);
   // Index type is restricted to int32 by kernel prim.
   size_t index_type_size = sizeof(int);
   data_type_size_ = GetDtypeNbyte(TypeIdToString(data_type, true));
-  auto first_data_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, n_);
+  auto first_data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_);
   one_data_ele_num_ = first_data_shape[first_data_shape.size() - 1];
   for (size_t i = 0; i < n_; i++) {
-    auto data_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, n_ + i);
+    auto data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_ + i);
     size_t data_size = std::accumulate(data_shape.begin(), data_shape.end(), 1, std::multiplies<size_t>());
     //  Data size
     input_size_list_.push_back(data_size * data_type_size_);
@@ -60,7 +60,7 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
 }
 
 void DynamicStitchKernelMod::PostExecute() {
-  auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node_.lock(), 0);
+  auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
   output_shape[0] = max_index_ + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());

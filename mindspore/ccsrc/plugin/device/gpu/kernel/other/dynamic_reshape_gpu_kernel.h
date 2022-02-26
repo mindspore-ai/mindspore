@@ -53,9 +53,9 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    auto input_x_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    auto input_shape_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     data_type_size_ = mindspore::kernel::GetDtypeNbyte(TypeIdToString(data_type, true));
     shape_size_ = input_shape_shape.size();

@@ -64,7 +64,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     }
     for (size_t i = 0; i < input_num; i++) {
       size_t input_size = 1;
-      auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
+      auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
       }

@@ -84,7 +84,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
+      auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
         InitSizeLists();
@@ -99,7 +99,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       input_size_ += aligned_size;
     }
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
+      auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
       if (is_null_input_) {
         InitSizeLists();

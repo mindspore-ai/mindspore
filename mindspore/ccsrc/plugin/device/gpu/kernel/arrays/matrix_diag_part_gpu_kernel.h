@@ -70,7 +70,7 @@ class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void PostExecute() override {
-    auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node_.lock(), 0);
+    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
     output_shape[shapes_.size() - kDim1] = max_diag_len_;
     // If the out shape m' * n', the m' dimension is 1, then remove this dimension
     output_shape[shapes_.size() - kDim2] = num_diags_;

@@ -79,7 +79,7 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

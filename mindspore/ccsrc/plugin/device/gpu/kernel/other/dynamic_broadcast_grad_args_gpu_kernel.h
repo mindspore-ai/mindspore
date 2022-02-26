@@ -61,10 +61,10 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "DynamicBroadcastGradiendArgs needs " << kInputNum << " inputs, but get " << input_num;
     }
-    auto s0_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    auto s1_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
-    auto r0_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    auto r1_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 1);
+    auto s0_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto s1_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto r0_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto r1_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 1);
     if (s0_shape.size() != 1 || s1_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "Inputs must be [1-D], but get " << s0_shape.size() << "-D and " << s1_shape.size() << "-D.";
     }
