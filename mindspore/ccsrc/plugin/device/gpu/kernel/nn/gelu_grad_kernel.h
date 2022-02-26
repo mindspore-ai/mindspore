@@ -45,10 +45,10 @@ class GeLUGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
     input_size_ = sizeof(T);
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

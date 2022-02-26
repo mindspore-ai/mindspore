@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 #include "ops/glu.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
 

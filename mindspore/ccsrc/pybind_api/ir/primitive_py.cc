@@ -21,17 +21,16 @@
 #include <utility>
 #include "ir/signature.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pybind11/pytypes.h"
 #include "pybind_api/api_register.h"
 #include "pybind_api/export_flags.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "utils/convert_utils_base.h"
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
-#include "utils/primitive_utils.h"
+#include "include/common/utils/primitive_utils.h"
 #include "utils/check_convert_utils.h"
-#include "pipeline/jit/resource.h"
 #include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
@@ -64,8 +63,8 @@ void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_ar
   }
   for (size_t i = 0; i < input_args.size(); ++i) {
     if (py::isinstance<tensor::Tensor>(input_args[i])) {
-      (*convert_args)[i] = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE,
-                                                           parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i]);
+      (*convert_args)[i] =
+        python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_CONVERT_TO_MS_TENSOR, input_args[i]);
     } else if (py::isinstance<py::tuple>(input_args[i])) {
       auto tuple_inp_arg = py::cast<py::tuple>(input_args[i]);
       py::tuple convert_tuple_arg(tuple_inp_arg.size());
@@ -374,7 +373,7 @@ py::function PrimitivePy::GetComputeFunction() const {
   static const std::string vm_module = "mindspore.ops.vm_impl_registry";
   static const std::string get_vm_impl_fn = "get_vm_impl_fn";
   MS_LOG(DEBUG) << name() << ": get_vm_impl_fn";
-  py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
+  py::function get_fn = python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
   if (py::isinstance<py::none>(vm_fn)) {
     MS_LOG(DEBUG) << "Cannot find " << python_obj_.attr("__class__").attr("__name__").cast<std::string>();

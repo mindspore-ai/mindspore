@@ -23,7 +23,7 @@
 #include "include/api/types.h"
 #include "include/api/status.h"
 #include "mindspore/core/ir/func_graph.h"
-#include "transform/graph_ir/types.h"
+#include "include/transform/graph_ir/types.h"
 #include "external/ge/ge_ir_build.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 

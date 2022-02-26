@@ -63,11 +63,11 @@ constexpr size_t kOneHotOutputsNum = 1;
 
 void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'axis' should be -1, or an int which is less than the dimension of output, but got "

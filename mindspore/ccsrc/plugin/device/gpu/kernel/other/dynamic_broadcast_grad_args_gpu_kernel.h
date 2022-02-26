@@ -57,7 +57,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "DynamicBroadcastGradiendArgs needs " << kInputNum << " inputs, but get " << input_num;
     }
@@ -86,8 +86,8 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
   void PostExecute() override {
     std::vector<size_t> r0_shape{r0_size_};
     std::vector<size_t> r1_shape{r1_size_};
-    AnfAlgo::SetOutputInferTypeAndShape({TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64}, {r0_shape, r1_shape},
-                                        kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64},
+                                                {r0_shape, r1_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicBroadcastGradientArgs, real r0 shape is " << r0_shape
                   << ", r1 shape is " << r1_shape;
   }

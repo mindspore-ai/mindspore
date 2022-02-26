@@ -63,10 +63,10 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 template <typename T>
 void ArgMaxWithValueCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
-  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)

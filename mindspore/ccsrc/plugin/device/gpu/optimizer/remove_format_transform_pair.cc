@@ -17,8 +17,9 @@
 #include "plugin/device/gpu/optimizer/remove_format_transform_pair.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -36,12 +37,13 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Process node:" << node->fullname_with_scope();
-  auto input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(input_node);
-  if (AnfAlgo::GetCNodeName(node) != prim::kPrimTranspose->name() ||
-      AnfAlgo::GetCNodeName(input_node) != prim::kPrimTranspose->name()) {
+  if (common::AnfAlgo::GetCNodeName(node) != prim::kPrimTranspose->name() ||
+      common::AnfAlgo::GetCNodeName(input_node) != prim::kPrimTranspose->name()) {
     MS_LOG(EXCEPTION) << "The  pattern is not transpose pair, "
-                      << "node:" << AnfAlgo::GetCNodeName(node) << " node input:" << AnfAlgo::GetCNodeName(input_node);
+                      << "node:" << common::AnfAlgo::GetCNodeName(node)
+                      << " node input:" << common::AnfAlgo::GetCNodeName(input_node);
   }
   // If transpose operator used by more than one other operators, it cant not be deleted directly.
   if (IsUsedByOthers(graph, input_node)) {
@@ -52,7 +54,7 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
   auto transpose1_input_shape = AnfAlgo::GetInputDeviceShape(input_node, 0);
   auto transpose2_output_shape = AnfAlgo::GetOutputDeviceShape(node, 0);
   if (transpose2_output_shape == transpose1_input_shape) {
-    auto transpose1_input_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(input_node), 0);
+    auto transpose1_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(input_node), 0);
     MS_EXCEPTION_IF_NULL(transpose1_input_node);
     return transpose1_input_node;
   }

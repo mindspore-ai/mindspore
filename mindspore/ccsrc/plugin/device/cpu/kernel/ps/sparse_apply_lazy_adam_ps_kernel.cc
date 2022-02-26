@@ -70,8 +70,8 @@ void SparseApplyLazyAdamPSKernelMod::InitKernel(
   if (grad_shape[0] != indices_size_) {
     MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
   }
-  if (AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, USE_NESTEROV);
+  if (common::AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
+    use_nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(cnode, USE_NESTEROV);
   }
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);

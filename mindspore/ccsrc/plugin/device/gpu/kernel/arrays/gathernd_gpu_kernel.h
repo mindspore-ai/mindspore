@@ -22,6 +22,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -67,17 +68,17 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     memcpy_flag_ = false;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
-    input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input_x") ||
                      CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
                      CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
@@ -124,13 +125,13 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
-    size_t size = AnfAlgo::TensorSizeInByte<T>(input_shapes_);
+    size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
     input_size_list_.push_back(size);
 
-    size = AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
+    size = common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
     input_size_list_.push_back(size);
 
-    size = AnfAlgo::TensorSizeInByte<T>(output_shapes_);
+    size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
     output_size_list_.push_back(size);
   }
 

@@ -35,7 +35,7 @@
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
 #include "frontend/operator/ops.h"
 #include "debug/trace.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ad {

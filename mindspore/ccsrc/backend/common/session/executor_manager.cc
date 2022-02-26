@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/session/executor_manager.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 namespace mindspore {
 namespace session {
 std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, uint32_t device_id) {

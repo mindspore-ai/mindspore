@@ -79,13 +79,13 @@ void TileCpuKernelMod::TileMultipleCompute() {
 }
 
 void TileCpuKernelMod::TileTensorParamrInit(const CNodePtr &kernel_node) {
-  x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  y_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   multiples_.clear();
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num == kTileInputsNum) {
-    std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
+    std::vector<int64_t> multiples_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
     (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     TileMultipleCompute();
@@ -94,7 +94,7 @@ void TileCpuKernelMod::TileTensorParamrInit(const CNodePtr &kernel_node) {
 
 void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   TileTensorParamrInit(kernel_node);
   cnode_ptr_ = kernel_node;
 
@@ -135,10 +135,10 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num == kTileDynamicInputsNum) {
     auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
-    auto multiple_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    auto multiple_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     size_t multiple_nums = 1;
     for (size_t i = 0; i < multiple_shape.size(); ++i) {
       multiple_nums *= multiple_shape[i];

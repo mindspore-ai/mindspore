@@ -32,13 +32,13 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
   std::vector<CNodePtr> allreduce_kernels;
   auto execution_kernels = kernel_graph->execution_order();
   for (auto kernel_node : execution_kernels) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == kAllReduceOpName) {
       allreduce_kernels.emplace_back(kernel_node);
     } else {
       CudaDeviceStream compute_stream = GPUDeviceManager::GetInstance().default_stream();
       MS_EXCEPTION_IF_NULL(compute_stream);
-      AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(compute_stream)), kernel_node);
+      common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(compute_stream)), kernel_node);
     }
   }
   if (allreduce_kernels.size() > 1) {
@@ -47,11 +47,12 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
     if (FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs)) {
       CudaDeviceStream comm_stream = nullptr;
       GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
-      std::transform(
-        allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(), [&](CNodePtr allreduce_kernel) {
-          AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(comm_stream)), allreduce_kernel);
-          return allreduce_kernel;
-        });
+      std::transform(allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(),
+                     [&](CNodePtr allreduce_kernel) {
+                       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(reinterpret_cast<uintptr_t>(comm_stream)),
+                                                    allreduce_kernel);
+                       return allreduce_kernel;
+                     });
       InsertStreamSwitchNode(kernel_graph, send_recv_pairs);
     } else {
       return;
@@ -68,14 +69,14 @@ bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &k
   iter = iter_begin = execution_kernels.begin();
   std::vector<CNodePtr>::iterator iter_end = execution_kernels.end();
   for (; iter != execution_kernels.end(); ++iter) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(*iter);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(*iter);
     if (kernel_name == kAllReduceOpName) {
       // Find AllReduce node's last input node.
       std::vector<CNodePtr>::iterator mock_send_node_iter =
         FindSendNodePos(iter_begin, iter + 1, *iter, kAllReduceStreamSwitch);
       if (mock_send_node_iter == iter + 1) {
         MS_LOG(INFO) << "Can't find send node place before AllReduce node.";
-      } else if (AnfAlgo::GetCNodeName(*mock_send_node_iter) != kAllReduceOpName) {
+      } else if (common::AnfAlgo::GetCNodeName(*mock_send_node_iter) != kAllReduceOpName) {
         SendRecvPair pair1 = {kAllReduceStreamSwitch, *mock_send_node_iter, *iter,
                               IntToSize(mock_send_node_iter - iter_begin + 1), IntToSize(iter - iter_begin)};
         send_recv_pairs->push_back(pair1);
@@ -90,7 +91,7 @@ bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &k
         // otherwise consider FindAllReduceStreamSwitchPos as failed.
         MS_LOG(INFO) << "Can't find recv node place after AllReduce node.";
         return false;
-      } else if (AnfAlgo::GetCNodeName(*mock_recv_node_iter) != kAllReduceOpName) {
+      } else if (common::AnfAlgo::GetCNodeName(*mock_recv_node_iter) != kAllReduceOpName) {
         SendRecvPair pair2 = {kAllReduceStreamSwitch, *iter, *mock_recv_node_iter, IntToSize(iter - iter_begin + 1),
                               IntToSize(mock_recv_node_iter - iter_begin)};
         send_recv_pairs->push_back(pair2);
@@ -130,8 +131,8 @@ std::vector<CNodePtr>::iterator FindRecvNodePos(std::vector<CNodePtr>::iterator 
     if (stream_switch_type == kAllReduceStreamSwitch) {
       MS_EXCEPTION_IF_NULL(node);
       for (auto input : node->inputs()) {
-        if (mock_send_node == AnfAlgo::VisitKernel(input, 0).first) {
-          if (AnfAlgo::GetCNodeName(node) != kAllReduceOpName) {
+        if (mock_send_node == common::AnfAlgo::VisitKernel(input, 0).first) {
+          if (common::AnfAlgo::GetCNodeName(node) != kAllReduceOpName) {
             return iter;
           } else if (ret == end) {
             ret = iter;
@@ -187,13 +188,13 @@ bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &
   std::weak_ptr<CNode> send_node_ = *send_node;
   CHECK_CUDA_RET_WITH_EXCEPT(send_node_, cudaEventCreate(&event, cudaEventDisableTiming),
                              "Creating cuda event failed.");
-  AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *send_node);
-  AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *recv_node);
 
-  uintptr_t send_stream = AnfAlgo::GetNodeAttr<uintptr_t>(mock_send_node, kAttrStreamId);
-  AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(send_stream), *send_node);
-  uintptr_t recv_stream = AnfAlgo::GetNodeAttr<uintptr_t>(mock_recv_node, kAttrStreamId);
-  AnfAlgo::SetNodeAttr(kAttrWaitEventStream, MakeValue(recv_stream), *recv_node);
+  uintptr_t send_stream = common::AnfAlgo::GetNodeAttr<uintptr_t>(mock_send_node, kAttrStreamId);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(send_stream), *send_node);
+  uintptr_t recv_stream = common::AnfAlgo::GetNodeAttr<uintptr_t>(mock_recv_node, kAttrStreamId);
+  common::AnfAlgo::SetNodeAttr(kAttrWaitEventStream, MakeValue(recv_stream), *recv_node);
   return true;
 }
 
@@ -220,11 +221,11 @@ void CacheSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph>
                                      const CNodePtr &send_node, const CNodePtr &recv_node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::pair<CNodePtr, CNodePtr> send_recv_nodes(send_node, recv_node);
-  if (AnfAlgo::GetCNodeName(mock_send_node) == kAllReduceOpName) {
+  if (common::AnfAlgo::GetCNodeName(mock_send_node) == kAllReduceOpName) {
     kernel_graph->InsertToSendRecvPair(mock_send_node, send_recv_nodes);
   }
 
-  if (AnfAlgo::GetCNodeName(mock_recv_node) == kAllReduceOpName) {
+  if (common::AnfAlgo::GetCNodeName(mock_recv_node) == kAllReduceOpName) {
     kernel_graph->InsertFromSendRecvPair(mock_recv_node, send_recv_nodes);
   }
 }

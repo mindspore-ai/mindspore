@@ -24,23 +24,13 @@
 #include <sstream>
 
 #include "utils/hash_map.h"
-#include "transform/graph_ir/util.h"
+#include "include/transform/graph_ir/util.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
-#include "transform/graph_ir/types.h"
-#ifdef ENABLE_D
-#ifdef OPEN_SOURCE
-#include "graph/types.h"
-#endif
-#endif
-
+#include "include/transform/graph_ir/types.h"
 #include "graph/operator_reg.h"
-#ifdef OPEN_SOURCE
-#include "ge/client/ge_api.h"
-#else
 #include "external/ge/ge_api.h"
-#endif
 #include "graph/tensor.h"
 
 namespace ge {
@@ -64,21 +54,6 @@ namespace mindspore {
 namespace transform {
 using CusOperatorPtr = std::shared_ptr<ge::CustomOperator>;
 using CustomOperator = ge::CustomOperator;
-
-struct OutHandler {
-  OperatorPtr op;
-  std::string out;
-  AnfNodePtr node;
-  OutHandler() : op(nullptr), out(""), node(nullptr) {}
-  OutHandler(const OperatorPtr &op, const std::string out, const AnfNodePtr &node = nullptr)
-      : op(op), out(out), node(node) {}
-};
-
-struct ControlEdge {
-  OperatorPtr src_op;
-  OperatorPtr dest_op;
-};
-
 using AttrFunc = std::function<void(OperatorPtr, ValuePtr)>;
 using OutputFunc = std::function<OutHandler(OperatorPtr)>;
 using InputOpFunc = std::function<void(OperatorPtr, OperatorPtr)>;

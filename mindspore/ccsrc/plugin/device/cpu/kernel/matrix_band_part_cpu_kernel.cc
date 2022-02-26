@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void MatrixBandPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
     MS_LOG(EXCEPTION) << "Wrong array shape, A should be a matrix max than 2.";

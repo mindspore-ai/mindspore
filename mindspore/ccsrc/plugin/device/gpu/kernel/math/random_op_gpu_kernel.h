@@ -123,7 +123,7 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kRandomOpTypeMap.find(kernel_name);
     if (iter == kRandomOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: StandardNormal, CudnnUniformReal, "
@@ -131,19 +131,19 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
     } else {
       random_op_type_ = iter->second;
     }
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if ((random_op_type_ == RANDOM_OP_NORMAL || random_op_type_ == RANDOM_OP_UNIFORM_REAL) && input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
     if (random_op_type_ == RANDOM_OP_UNIFORM_INT && input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape_0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_0, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
@@ -168,7 +168,7 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
       workspace_size_ = 0;
     }
 
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
     seed2_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed2")));

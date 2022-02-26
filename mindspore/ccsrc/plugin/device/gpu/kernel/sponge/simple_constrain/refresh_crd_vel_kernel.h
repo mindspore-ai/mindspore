@@ -44,10 +44,10 @@ class RefreshCrdVelGpuKernelMod : public NativeGpuKernelMod {
     dt = static_cast<float>(GetAttr<float>(kernel_node, "dt"));
     exp_gamma = static_cast<float>(GetAttr<float>(kernel_node, "exp_gamma"));
     half_exp_gamma_plus_half = static_cast<float>(GetAttr<float>(kernel_node, "half_exp_gamma_plus_half"));
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_vel = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_test_frc = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_mass_inverse = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_vel = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_test_frc = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_mass_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
     for (size_t i = 0; i < shape_vel.size(); i++) ele_vel *= shape_vel[i];

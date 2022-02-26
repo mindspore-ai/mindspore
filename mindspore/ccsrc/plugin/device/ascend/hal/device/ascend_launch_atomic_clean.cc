@@ -18,6 +18,7 @@
 #include "abstract/utils.h"
 #include "backend/common/session/single_kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/anf_ir_dump.h"
 
 namespace mindspore::device::ascend {
@@ -109,7 +110,7 @@ void AscendLaunchAtomicClean::ConstructKernelGraphAndSetAttr() {
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clean_node.get());
     // set attr
     std::vector<size_t> clean_size = {total_size_};
-    AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clean_node);
+    common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clean_node);
   }
 }
 }  // namespace mindspore::device::ascend

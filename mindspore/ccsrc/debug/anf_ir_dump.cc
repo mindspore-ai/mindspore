@@ -26,6 +26,7 @@
 #include "runtime/device/kernel_info.h"
 #include "ir/graph_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
 #include "debug/trace.h"
@@ -184,7 +185,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
 
   gsub->buffer << "      : (";
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < input_num; ++i) {
     if (i != 0) {
       gsub->buffer << ", ";
@@ -195,7 +196,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     PrintKernelFormatAndType(gsub->buffer, format, type, shape);
   }
   gsub->buffer << ") -> (";
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
     if (i != 0) {
       gsub->buffer << ", ";
@@ -238,7 +239,7 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
       auto format = AnfAlgo::GetOutputFormat(p, 0);
       auto shape = AnfAlgo::GetOutputDeviceShape(p, 0);
       PrintKernelFormatAndType(buffer, format, type, shape);
-      buffer << "  :  IsWeight:" << std::boolalpha << AnfAlgo::IsParameterWeight(parameter_ptr);
+      buffer << "  :  IsWeight:" << std::boolalpha << common::AnfAlgo::IsParameterWeight(parameter_ptr);
     }
     buffer << std::endl;
 

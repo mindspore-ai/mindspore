@@ -29,11 +29,11 @@ constexpr size_t kSpaceToDepthMinBlockSize = 2;
 template <typename T>
 void SpaceToDepthCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
 
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  block_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
+  block_size_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
   if (input_shape_.size() != kSpaceToDepthInputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be 4-D, but got "
                       << input_shape_.size() << "-D";

@@ -45,10 +45,10 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     small_ = (kernel_name == "ArgMinWithValue") ? true : false;
-    std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
+    std::vector<size_t> shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {

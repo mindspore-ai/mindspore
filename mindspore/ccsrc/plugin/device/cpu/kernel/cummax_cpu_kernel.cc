@@ -24,7 +24,7 @@ void CummaxCPUKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output1_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   output2_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 1);
-  dim_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
+  dim_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
 }
 
 template <typename T>

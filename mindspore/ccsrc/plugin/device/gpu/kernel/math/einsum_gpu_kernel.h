@@ -123,9 +123,9 @@ class EinsumGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     node_name_ = node_name;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num < 1) {
       MS_LOG(ERROR) << "For " << node_name << ", input number can not be less than 1, but got " << input_num;
       return false;

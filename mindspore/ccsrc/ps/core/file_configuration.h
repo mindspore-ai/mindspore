@@ -28,7 +28,7 @@
 #include <unordered_map>
 
 #include "utils/hash_map.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"

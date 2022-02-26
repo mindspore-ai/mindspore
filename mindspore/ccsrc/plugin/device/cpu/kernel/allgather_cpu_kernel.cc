@@ -29,10 +29,10 @@ constexpr auto kRanksGroup = "group";
 
 void AllGatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kAllGatherInputsNum, kernel_name_);
-  ranks_group_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
+  ranks_group_ = common::AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
 }
 
 bool AllGatherCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -32,7 +32,6 @@
 namespace mindspore {
 namespace abstract {
 namespace py = pybind11;
-namespace python_adapter = mindspore::parse::python_adapter;
 class UTPrimUtils {
  public:
   using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;

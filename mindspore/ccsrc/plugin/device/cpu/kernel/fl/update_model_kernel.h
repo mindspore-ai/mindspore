@@ -98,7 +98,7 @@ class UpdateModelKernelMod : public NativeCpuKernelMod {
     target_server_rank_ = rank_id_ % server_num_;
     fl_name_ = fl::worker::FLWorker::GetInstance().fl_name();
     fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
-    encrypt_mode = AnfAlgo::GetNodeAttr<string>(kernel_node, "encrypt_mode");
+    encrypt_mode = common::AnfAlgo::GetNodeAttr<string>(kernel_node, "encrypt_mode");
     if (encrypt_mode.compare("") != 0 && encrypt_mode.compare("STABLE_PW_ENCRYPT") != 0) {
       MS_LOG(EXCEPTION) << "Value Error: the parameter 'encrypt_mode' of updateModel kernel can only be '' or "
                            "'STABLE_PW_ENCRYPT' until now, but got: "
@@ -115,9 +115,10 @@ class UpdateModelKernelMod : public NativeCpuKernelMod {
       }
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
-      auto input_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, i), 0).first;
+      auto input_node =
+        common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(kernel_node, i), 0).first;
       MS_EXCEPTION_IF_NULL(input_node);
       auto weight_node = input_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(weight_node);
@@ -125,7 +126,7 @@ class UpdateModelKernelMod : public NativeCpuKernelMod {
       MS_LOG(INFO) << "Parameter name is " << weight_name;
       weight_full_names_.push_back(weight_name);
 
-      auto weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
       size_t weight_size_ =
         std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(float), std::multiplies<float>());
       input_size_list_.push_back(weight_size_);

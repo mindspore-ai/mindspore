@@ -22,7 +22,7 @@
 #include <utility>
 #include <memory>
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 
 namespace mindspore {
 namespace device {

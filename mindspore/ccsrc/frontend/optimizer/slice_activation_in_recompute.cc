@@ -23,7 +23,7 @@
 #include <string>
 #include <algorithm>
 #include "mindspore/core/base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "frontend/parallel/step_parallel.h"
 
@@ -217,8 +217,8 @@ void SpreadRecomputeDepend(const FuncGraphManagerPtr &manager, const std::vector
 }  // namespace
 
 void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
-  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::SEMI_AUTO_PARALLEL &&
-      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::AUTO_PARALLEL) {
+  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
+      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);

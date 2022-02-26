@@ -26,9 +26,9 @@ constexpr char kKernelName[] = "Coalesce";
 }  // namespace
 
 void CoalesceCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kCoalesceInputsNum, kKernelName);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kCoalesceOutputsNum, kKernelName);
 }
 
@@ -46,7 +46,7 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
   }
-  size_t output_nm = AnfAlgo::GetOutputTensorNum(node_);
+  size_t output_nm = common::AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_nm);
   for (size_t i = 0; i < output_nm; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
@@ -56,7 +56,8 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   (void)dims.emplace_back(jump + 1);
   std::vector<size_t> dim;
   (void)dim.emplace_back(jump + 1);
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {dims, dim, AnfAlgo::GetOutputInferShape(node_, 2)}, node_.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {dims, dim, common::AnfAlgo::GetOutputInferShape(node_, 2)},
+                                              node_.get());
   return true;
 }
 
@@ -65,7 +66,7 @@ void CoalesceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   values_size_ = indices_shape[1];
   shape_size_ = indices_shape[0];
 }

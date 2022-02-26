@@ -20,8 +20,9 @@
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -63,8 +64,8 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(maxpool_with_argmax);
 
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
-  auto output_shape = AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
+  auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
   auto argmax_shape = output_shape;
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
@@ -72,9 +73,9 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   }
   argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
   argmax_shape[kDim3] = (output_shape[kDim2] * output_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
-  auto types = {AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
   auto shapes = {output_shape, argmax_shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
 
   return maxpool_with_argmax;
 }
@@ -99,15 +100,15 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
 
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
-  auto argmax_shape = AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
+  auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
+  auto argmax_shape = common::AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
                       << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);
   }
   argmax_shape[kDim3] = (argmax_shape[kDim2] * argmax_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
   argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
-  AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;
 }

@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/kernel/host/dynamic_shape_kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "runtime/mem.h"
@@ -26,13 +27,13 @@ void TensorShapeKernel::Execute() {
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
                       << trace::DumpSourceLines(cnode);
   }
 
-  auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto prev_output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
 
   auto output_type = TypeId::kNumberTypeInt64;
@@ -75,13 +76,13 @@ void TensorShapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
                       << trace::DumpSourceLines(cnode);
   }
 
-  auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto prev_output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
 
   auto output_type = TypeId::kNumberTypeInt64;

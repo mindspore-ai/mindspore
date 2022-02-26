@@ -31,7 +31,7 @@ constexpr size_t kConv2dGradFilterOutputsNum = 1;
 
 void Conv2dGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> weight_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -39,7 +39,7 @@ void Conv2dGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << ("Conv2d grad filter only support nchw input!");
   }
   std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
-  size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
+  size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv2d channels should be divided by group!";
@@ -52,8 +52,8 @@ void Conv2dGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   std::vector<int> stride_ori;
   std::vector<int> dilation_ori;
-  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
-  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
+  auto stride_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
+  auto dilation_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_ori),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
@@ -72,7 +72,7 @@ void Conv2dGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};
   dnnl::memory::dims strides{stride_ori[0], stride_ori[1]};
   dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);

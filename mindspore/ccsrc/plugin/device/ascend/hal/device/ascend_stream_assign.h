@@ -31,7 +31,7 @@
 #include "runtime/rt_model.h"
 #include "runtime/stream.h"
 #include "backend/common/session/kernel_graph.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 
 namespace mindspore {
 namespace device {

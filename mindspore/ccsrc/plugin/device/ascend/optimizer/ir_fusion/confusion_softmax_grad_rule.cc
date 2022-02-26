@@ -19,8 +19,9 @@
 #include <vector>
 #include <set>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -38,7 +39,7 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
   }
 
   // check axis should be last dim
-  auto prim = AnfAlgo::GetCNodePrimitive(reduce_sum);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(reduce_sum);
   MS_EXCEPTION_IF_NULL(prim);
   if (!prim->HasAttr(kAttrAxis)) {
     MS_LOG(INFO) << "ReduceSum should have attr axis if do fusion.";
@@ -58,7 +59,7 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
   } else {
     return false;
   }
-  auto sum_input_shape = AnfAlgo::GetPrevNodeOutputInferShape(reduce_sum, 0);
+  auto sum_input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(reduce_sum, 0);
   auto sum_input_size = SizeToLong(sum_input_shape.size());
   if (sum_input_size == 0) {
     MS_LOG(INFO) << "ReduceSum's input should not be a scalar if do fusion.";
@@ -71,7 +72,7 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
   }
 
   const size_t last_dim_limit = 30000;
-  auto input0_shape = AnfAlgo::GetOutputInferShape(input0, 0);
+  auto input0_shape = common::AnfAlgo::GetOutputInferShape(input0, 0);
   if (!input0_shape.empty() && input0_shape[input0_shape.size() - 1] > last_dim_limit) {
     MS_LOG(INFO) << "Input shape is too large to optimize, quit fusion, shape: " << input0_shape;
     return false;
@@ -104,8 +105,8 @@ const AnfNodePtr ConfusionSoftmaxGradRule::Process(const FuncGraphPtr &graph, co
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_abstract(node->abstract());
   fusion_node->set_scope(node->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, sum_anf, fusion_node);
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum_anf, fusion_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum_anf, fusion_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum_anf, fusion_node);
   return fusion_node;
 }
 }  // namespace opt

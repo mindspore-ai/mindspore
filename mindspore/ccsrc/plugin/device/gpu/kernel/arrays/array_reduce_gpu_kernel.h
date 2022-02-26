@@ -76,27 +76,27 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto type_name = TypeIdLabel(type_id);
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) && type_id != kNumberTypeBool) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data type should be bool, but got " << type_name;
     }
     data_type_ = GetCudnnDataType(type_name);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0).size());
 
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
       std::vector<int> attr_axis;
@@ -197,7 +197,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void InferArrayReduceType(const CNodePtr &kernel_node) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kReduceTypeMap.find(kernel_name);
     if (iter == kReduceTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "Only support these array reduce kernel types: "

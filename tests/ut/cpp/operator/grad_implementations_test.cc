@@ -23,6 +23,7 @@
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "debug/draw.h"
 #include "common/py_func_graph_fetcher.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace prim {

@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "backend/common/session/single_kernel_graph.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore::device::gpu {
 void GPULaunchMul::FreeDeviceMem(void *addr) { GPULaunchkernel::FreeDeviceMem(addr); }

@@ -21,7 +21,7 @@
 #include <queue>
 #include <unordered_map>
 #include <utility>
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "kernel/kernel.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "kernel/common_utils.h"
@@ -270,7 +270,7 @@ std::tuple<AnfNodePtrList, AnfNodePtrList, AnfNodePtrList, AnfNodePtrList> GetIn
 
 bool WhiteOpsFilter(const AnfNodePtr &node) {
   std::vector<PrimitivePtr> whiteable_ops = {};  // Not special for now.
-  return session::AnfRuntimeAlgorithm::IsGraphKernel(node) || IsOneOf(node, whiteable_ops);
+  return common::AnfAlgo::IsGraphKernel(node) || IsOneOf(node, whiteable_ops);
 }
 
 bool Unfavorable(const AnfNodePtr &node) {
@@ -279,7 +279,7 @@ bool Unfavorable(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input = cnode->input(kAnfPrimitiveIndex);
   if (!IsValueNode<FuncGraph>(input)) {
-    return AnfAlgo::HasNodeAttr(kAttrStitch, cnode);
+    return common::AnfAlgo::HasNodeAttr(kAttrStitch, cnode);
   }
 
   auto func_graph = GetValueNode<FuncGraphPtr>(input);
@@ -289,7 +289,7 @@ bool Unfavorable(const AnfNodePtr &node) {
   for (auto sub_node : sub_nodes) {
     auto sub_cnode = sub_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(sub_cnode);
-    if (AnfAlgo::HasNodeAttr(kAttrStitch, sub_cnode)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrStitch, sub_cnode)) {
       return true;
     }
   }
@@ -385,7 +385,7 @@ std::string DumpNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::stringstream buf;
-  buf << (AnfAlgo::IsGraphKernel(cnode) ? "[graph]" : "[primitive]") << cnode->fullname_with_scope() << "|"
+  buf << (common::AnfAlgo::IsGraphKernel(cnode) ? "[graph]" : "[primitive]") << cnode->fullname_with_scope() << "|"
       << cnode->ToString();
   return buf.str();
 }
@@ -431,8 +431,8 @@ inline bool ParameterLimit(const AnfNodePtrList &nodes) {
       // The number of inputs and outputs for a valid kernel should be less than cuda's limit.
       size_t para_count = 0;
       for (const auto &node : nodes) {
-        para_count += AnfAlgo::GetInputTensorNum(node);
-        para_count += AnfAlgo::GetOutputTensorNum(node);
+        para_count += common::AnfAlgo::GetInputTensorNum(node);
+        para_count += common::AnfAlgo::GetOutputTensorNum(node);
       }
       res = para_count <= CUDA_PARA_LIMIT;
     } break;
@@ -709,7 +709,7 @@ void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &pa
   for (size_t i = 0; i < parallel_info.GetSize(); ++i) {
     const auto &fuse_nodes = parallel_info.nodes();
     std::vector<size_t> info = {i, std::dynamic_pointer_cast<CommonDimInfo>(parallel_info.dims()[i])->dim_info()};
-    if (!AnfAlgo::IsGraphKernel(fuse_nodes[i])) {
+    if (!common::AnfAlgo::IsGraphKernel(fuse_nodes[i])) {
       attach_node = fuse_nodes[i];
       SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), fuse_nodes[i]);
     } else {
@@ -734,11 +734,11 @@ void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &pa
 
 void ParallelOpFusion::SetFusionInfoAttrToNode(const AnfNodePtr &node, const ParallelInfo &parallel_info) {
   auto fusion_type = parallel_info.fusion_info()->FusionType();
-  AnfAlgo::SetNodeAttr(kAttrParallelFusionType, MakeValue<std::string>(fusion_type), node);
+  common::AnfAlgo::SetNodeAttr(kAttrParallelFusionType, MakeValue<std::string>(fusion_type), node);
   if (parallel_info.fusion_info()->ExistTypeInfo()) {
     if (auto pipeline_fusion = std::dynamic_pointer_cast<BlockPipelineFusionInfo>(parallel_info.fusion_info())) {
-      AnfAlgo::SetNodeAttr(kAttrParallelTypeInfo,
-                           MakeValue<std::vector<std::vector<int>>>(pipeline_fusion->PipelineIds()), node);
+      common::AnfAlgo::SetNodeAttr(kAttrParallelTypeInfo,
+                                   MakeValue<std::vector<std::vector<int>>>(pipeline_fusion->PipelineIds()), node);
     }
   }
 }
@@ -755,7 +755,7 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
     changed = true;
     SetFusedParallelOpAttrToReturnNode(parallel_infos[i]);
     auto sg_node = ReplaceNodesWithGraphKernelNode(fuse_nodes, kernel_graph, "parallel");
-    AnfAlgo::SetNodeAttr(kAttrCompositeType, MakeValue("parallel_fusion"), sg_node);
+    common::AnfAlgo::SetNodeAttr(kAttrCompositeType, MakeValue("parallel_fusion"), sg_node);
     DumpParallelFusionDetail(fuse_nodes, sg_node);
   }
 

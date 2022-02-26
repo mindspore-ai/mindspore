@@ -21,6 +21,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,7 +29,7 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
   MS_LOG(INFO) << "AicpuMetadataInfo.";
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
@@ -53,20 +54,20 @@ void AicpuMetadataInfoForSpecialNodes(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::string> inputs_format{};
   std::vector<TypeId> inputs_type{};
-  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kDynamicInputOps.find(op_name) != kDynamicInputOps.end()) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_format.emplace_back(kOpFormat_DEFAULT);
-      (void)inputs_type.emplace_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+      (void)inputs_type.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
     }
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
-    (void)outputs_type.emplace_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    (void)outputs_type.emplace_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
   auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
   builder.SetInputsFormat(inputs_format);

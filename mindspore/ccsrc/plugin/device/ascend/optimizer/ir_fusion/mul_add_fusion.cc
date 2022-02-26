@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -35,7 +36,7 @@ bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_
     if (input->isa<CNode>()) {
       auto cnode = input->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimMul->name()) {
+      if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimMul->name()) {
         if (!opt::IsUsedByOthers(graph, cnode)) {
           auto full_name = cnode->fullname_with_scope();
           // exclude lamb and adam, and only work in bert
@@ -67,7 +68,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
     return nullptr;
   }
   auto add = node->cast<CNodePtr>();
-  if (add == nullptr || AnfAlgo::GetInputTensorNum(add) != kAddInputTensorNum) {
+  if (add == nullptr || common::AnfAlgo::GetInputTensorNum(add) != kAddInputTensorNum) {
     return nullptr;
   }
 
@@ -85,7 +86,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   }
   auto another_input_node = add->input(add->size() - mul_index);
   if (another_input_node->isa<CNode>() &&
-      AnfAlgo::GetCNodeName(another_input_node) == prim::kPrimTupleGetItem->name()) {
+      common::AnfAlgo::GetCNodeName(another_input_node) == prim::kPrimTupleGetItem->name()) {
     MS_LOG(INFO) << "Add's another input node has multiple outputs, do not fuse";
     return nullptr;
   }

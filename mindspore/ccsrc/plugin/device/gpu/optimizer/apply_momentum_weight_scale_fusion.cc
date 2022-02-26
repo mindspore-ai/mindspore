@@ -20,8 +20,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -124,9 +125,9 @@ const AnfNodePtr ApplyMomentumWeightDecayScaleFusion::Process(const FuncGraphPtr
                                     learning_rate,      gradient,     momentum, monad_state};
   auto replace_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(replace_node);
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, replace_node.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, replace_node.get());
   replace_node->set_scope(node->scope());
   return replace_node;
 }

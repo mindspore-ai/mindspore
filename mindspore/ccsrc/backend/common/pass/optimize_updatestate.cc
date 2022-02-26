@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

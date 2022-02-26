@@ -47,8 +47,8 @@ class SigmoidCrossEntropyWithLogitsGradGpuKernelMod : public NativeGpuKernelMod 
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
@@ -56,9 +56,9 @@ class SigmoidCrossEntropyWithLogitsGradGpuKernelMod : public NativeGpuKernelMod 
     labels_size_ = sizeof(S);
     outputs_size_ = sizeof(T);
 
-    auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits") ||
                      CHECK_SHAPE_NULL(labels_shape, kernel_name, "labels") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name, "output");

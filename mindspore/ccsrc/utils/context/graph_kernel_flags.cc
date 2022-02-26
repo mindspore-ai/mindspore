@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 
 #include <map>
 #include <string>
@@ -148,6 +148,16 @@ class FlagRegister {
   std::map<std::string, std::string> &flag_map_;
 };
 }  // namespace
+
+const GraphKernelFlags &GraphKernelFlags::GetInstance() {
+  static std::unique_ptr<GraphKernelFlags> flags(nullptr);
+  auto contexts = GetGraphKernelContext();
+  if (flags == nullptr || contexts.first != flags->flags_cache_ || contexts.second != flags->enable_graph_kernel_) {
+    flags.reset(new GraphKernelFlags(contexts.first, contexts.second));
+    flags->Refresh();
+  }
+  return *flags;
+}
 
 std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
   // This environment variable is deprecated.

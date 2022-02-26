@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/kernel_build_info.h"
 
 namespace mindspore {
@@ -33,7 +34,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
   if (node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
-  auto node_name = AnfAlgo::GetCNodeName(node);
+  auto node_name = common::AnfAlgo::GetCNodeName(node);
   if (node_name != prim::kPrimTransData->name() && node_name != prim::kPrimCast->name()) {
     return nullptr;
   }
@@ -45,7 +46,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     MS_EXCEPTION_IF_NULL(builder);
     builder->SetKernelType(AICPU_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-    AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), node);
+    common::AnfAlgo::SetNodeAttr(kAttrIsAiCpuKernel, MakeValue(true), node);
   } else {
     MS_LOG(EXCEPTION) << "Kernel " << kernel_builder_info->ToString() << "is not supported in AiCPU & AiCore : node ["
                       << node->DebugString() << "]" << trace::DumpSourceLines(node);

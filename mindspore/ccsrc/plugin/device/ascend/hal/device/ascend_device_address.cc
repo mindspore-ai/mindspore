@@ -32,8 +32,8 @@
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
 #include "abstract/utils.h"
-#include "utils/utils.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "include/common/utils/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif

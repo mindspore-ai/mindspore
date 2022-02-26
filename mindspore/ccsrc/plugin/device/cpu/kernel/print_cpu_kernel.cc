@@ -26,10 +26,10 @@ namespace kernel {
 template <typename T>
 void PrintCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_tensor_num; ++i) {
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
     (void)input_shapes_.emplace_back(input_shape);
     size_t size = input_shape.size() ? 1 : 0;
     for (size_t j = 0; j < input_shape.size(); ++j) {

@@ -135,7 +135,7 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
@@ -328,12 +328,12 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     const size_t kInputNum = 2;
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
@@ -355,7 +355,8 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
+    auto shp_tuple_x =
+      common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
                          [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
   }
@@ -386,8 +387,8 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
-    std::vector<int64_t> stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "strides");
-    std::vector<int64_t> dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilations");
+    std::vector<int64_t> stride_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "strides");
+    std::vector<int64_t> dilation_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilations");
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),

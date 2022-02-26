@@ -19,7 +19,7 @@
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ir/primitive.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -55,9 +55,9 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 
 void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1-"
                       << kEmbeddingLookupInputParamsMaxDim << "D, but got " << input_shape.size() << "D.";
@@ -68,13 +68,13 @@ void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     outer_dim_size_ *= input_shape[i];
   }
   indices_lens_ = 1;
-  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   for (const auto &shape : indices_shape) {
     indices_lens_ *= shape;
   }
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  if (AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
-    offset_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
+  if (common::AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
+    offset_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
   }
 }
 
@@ -86,7 +86,7 @@ void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     if (!node) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
     }
-    std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+    std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimension of input should be at least 1D, but got empty input.";
@@ -98,7 +98,7 @@ void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     }
 
     indices_lens_ = 1;
-    std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+    std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
     for (const auto &shape : indices_shape) {
       indices_lens_ *= shape;
     }

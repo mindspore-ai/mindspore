@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "utils/hash_map.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 #include "ir/anf.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/graph_partition.h"

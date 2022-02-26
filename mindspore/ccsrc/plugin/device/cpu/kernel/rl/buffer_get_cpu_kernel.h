@@ -31,9 +31,9 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
 
   ~BufferGetCpuKernelMod() override = default;
   void Init(const CNodePtr &kernel_node) {
-    auto shapes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
-    auto types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
-    capacity_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
+    auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "buffer_elements");
+    auto types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "buffer_dtype");
+    capacity_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "capacity");
     element_nums_ = shapes.size();
     for (size_t i = 0; i < element_nums_; i++) {
       exp_element_list.push_back(shapes[i] * UnitSizeInBytes(types[i]->type_id()));

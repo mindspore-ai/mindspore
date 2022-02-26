@@ -179,12 +179,12 @@ void Util::DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_nam
         single_nodes.push_back(node);
 
         auto weight_name_value_node =
-          AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightNameOffset)->cast<ValueNodePtr>();
+          common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightNameOffset)->cast<ValueNodePtr>();
         const std::string &weight_name = GetValue<std::string>(weight_name_value_node->value());
         weight_names.push_back(weight_name);
 
         auto weight_index_value_node =
-          AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightIndexOffset)->cast<ValueNodePtr>();
+          common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kNodeInputWeightIndexOffset)->cast<ValueNodePtr>();
         int64_t weight_index = GetValue<int64_t>(weight_index_value_node->value());
         indices.push_back(weight_index);
       }
@@ -196,14 +196,14 @@ void Util::DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_nam
   std::vector<AnfNodePtr> fused_node_inputs = {};
   fused_node_inputs.push_back(NewValueNode(prim));
   (void)std::for_each(single_nodes.begin(), single_nodes.end(), [&](const AnfNodePtr &node) {
-    fused_node_inputs.push_back(AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0));
+    fused_node_inputs.push_back(common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0));
   });
 
   auto fused_cnode = func_graph->NewCNode(fused_node_inputs);
   MS_EXCEPTION_IF_NULL(fused_cnode);
-  AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(weight_names), fused_cnode);
-  AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(indices), fused_cnode);
-  AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), fused_cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(weight_names), fused_cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(indices), fused_cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), fused_cnode);
 
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -241,16 +241,16 @@ kernel::KernelBuildInfoPtr Util::GenerateKernelBuildInfo(const std::vector<AnfNo
   for (size_t idx = 0; idx < node_list.size(); ++idx) {
     auto cnode = utils::cast<CNodePtr>(node_list[idx]);
     MS_EXCEPTION_IF_NULL(cnode);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
       (void)inputs_device_format.emplace_back(kOpFormat_DEFAULT);
-      inputs_device_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
+      inputs_device_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_device_format.emplace_back(kOpFormat_DEFAULT);
-      outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(cnode, output_index));
-      outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
+      outputs_device_type.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
+      outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(cnode, output_index));
     }
   }
   builder.SetInputsFormat(inputs_device_format);

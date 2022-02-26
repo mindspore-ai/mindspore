@@ -22,8 +22,8 @@ namespace mindspore {
 namespace kernel {
 void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   // The dimensions of input tensor must be 1 or 2, with data type of float32.
   if (input_shape_.size() == 1) {
@@ -32,8 +32,8 @@ void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     workspace_size_list_.push_back(input_shape_[1] * sizeof(float));
   }
 
-  seed_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
-  seed2_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
+  seed_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
+  seed2_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
   int64_t RNG_seed = 0;
   if (seed2_ > 0) {
     RNG_seed = seed2_;

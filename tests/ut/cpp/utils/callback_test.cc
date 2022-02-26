@@ -16,19 +16,17 @@
 #include <map>
 #include <string>
 #include "pybind11/pybind11.h"
-#include "utils/callbacks.h"
+#include "include/common/utils/callbacks.h"
 #include "common/common_test.h"
 #include "pipeline/jit/pipeline.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "transform/graph_ir/df_graph_manager.h"
+#include "include/common/utils/python_adapter.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
 #include "debug/draw.h"
 #ifdef ENABLE_D
-#include "utils/callbacks_ge.h"
+#include "include/common/utils/callbacks_ge.h"
 #endif
 
 namespace mindspore {
-namespace python_adapter = mindspore::parse::python_adapter;
-
 class TestCallback : public UT::Common {
  public:
   TestCallback() {}

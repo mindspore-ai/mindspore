@@ -34,9 +34,9 @@ void KernelActor::Init() {
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   MS_EXCEPTION_IF_NULL(kernel_);
-  real_input_num_ = AnfAlgo::GetInputTensorNum(kernel_);
+  real_input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_);
   kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
-  is_dynamic_shape_ = AnfAlgo::IsDynamicShape(kernel_);
+  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_);
 
   // Init the device tensors and kernel launch info.
   copy_input_device_tensors_.resize(real_input_num_);
@@ -128,7 +128,8 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
       auto device_address = device_contexts_[0]->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel_) << " addr:" << device_address;
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
+                    << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
       MS_EXCEPTION_IF_NULL(device_address);
       (void)workspace_device_tensors_.emplace_back(device_address.get());

@@ -21,13 +21,14 @@
 #include <memory>
 #include <utility>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -44,7 +45,7 @@ constexpr auto kAttrInputSize = "input_size";
 
 bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vector<size_t> out_shape) {
   MS_EXCEPTION_IF_NULL(conv2d);
-  auto group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(conv2d, kAttrGroup));
+  auto group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(conv2d, kAttrGroup));
   if (group == 1) {
     return false;
   }
@@ -115,73 +116,73 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
   transpose->set_scope(conv2d->scope());
 
   if (need_trans_output) {
-    auto types = {AnfAlgo::GetOutputInferDataType(input_node, 0)};
-    auto out_shape = AnfAlgo::GetOutputInferShape(input_node, 0);
+    auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
+    auto out_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
     if (out_shape.size() != kConv2DAxisNum) {
       MS_LOG(EXCEPTION) << "Conv2D's output axis number should be " << kConv2DAxisNum << ", but got "
                         << out_shape.size() << trace::DumpSourceLines(conv2d);
     }
     std::swap(out_shape[kDim0], out_shape[kDim1]);
     auto shapes = {out_shape};
-    AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
   } else {
     transpose->set_abstract(conv2d->abstract());
   }
 
   auto input_names = std::vector<std::string>{"x", "perm"};
   auto output_names = std::vector<std::string>{"output"};
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), transpose);
-  AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), transpose);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), transpose);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), transpose);
   if (IsPynative()) {
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
+    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
   }
   return transpose;
 }
 
 void SetCommonAttrs(const CNodePtr &conv2d, const CNodePtr &depth_conv) {
-  AnfAlgo::CopyNodeAttr(kAttrKernelSize, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrDilation, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrFormat, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrPadList, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrPadMode, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrKernelSize, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrDilation, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrFormat, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrPadList, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrPadMode, conv2d, depth_conv);
   constexpr auto kMode = 3;
-  AnfAlgo::SetNodeAttr(kAttrMode, MakeValue(kMode), depth_conv);
-  AnfAlgo::SetNodeAttr(kAttrChannelMultiplier, MakeValue(1), depth_conv);
+  common::AnfAlgo::SetNodeAttr(kAttrMode, MakeValue(kMode), depth_conv);
+  common::AnfAlgo::SetNodeAttr(kAttrChannelMultiplier, MakeValue(1), depth_conv);
 }
 
 void SetConv2DAttrs(const CNodePtr &conv2d, const CNodePtr &depth_conv) {
   SetCommonAttrs(conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrInputNames, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrStride, conv2d, depth_conv);
-  if (AnfAlgo::HasNodeAttr(kAttrOffsetA, conv2d)) {
-    AnfAlgo::CopyNodeAttr(kAttrOffsetA, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrInputNames, conv2d, depth_conv);
+  common::AnfAlgo::CopyNodeAttr(kAttrStride, conv2d, depth_conv);
+  if (common::AnfAlgo::HasNodeAttr(kAttrOffsetA, conv2d)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrOffsetA, conv2d, depth_conv);
   } else {
-    AnfAlgo::SetNodeAttr(kAttrOffsetA, MakeValue(0), depth_conv);
+    common::AnfAlgo::SetNodeAttr(kAttrOffsetA, MakeValue(0), depth_conv);
   }
 }
 
 void SetConv2DBackpropInputAttrs(const CNodePtr &conv2d_backin, const CNodePtr &depth_conv_backin) {
   SetCommonAttrs(conv2d_backin, depth_conv_backin);
   auto input_names = std::vector<std::string>{"input_size", "filter", "dout"};
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), depth_conv_backin);
-  auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backin, kAttrStride);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), depth_conv_backin);
+  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backin, kAttrStride);
   constexpr size_t kStrideSize = 2;
   if (stride.size() == kStrideSize) {
     (void)stride.insert(stride.begin(), kStrideSize, 1);
   }
-  AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backin);
+  common::AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backin);
 }
 
 void SetConv2DBackpropFilterAttrs(const CNodePtr &conv2d_backfil, const CNodePtr &depth_conv_backfil) {
   SetCommonAttrs(conv2d_backfil, depth_conv_backfil);
   auto input_names = std::vector<std::string>{"input", "filter_size", "dout"};
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), depth_conv_backfil);
-  auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backfil, kAttrStride);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), depth_conv_backfil);
+  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(conv2d_backfil, kAttrStride);
   constexpr size_t kStrideSize = 2;
   if (stride.size() == kStrideSize) {
     (void)stride.insert(stride.begin(), kStrideSize, 1);
   }
-  AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backfil);
+  common::AnfAlgo::SetNodeAttr(kAttrStride, MakeValue(stride), depth_conv_backfil);
 }
 }  // namespace
 
@@ -212,8 +213,8 @@ const AnfNodePtr Conv2DUnifyMindIR::Process(const FuncGraphPtr &graph, const Anf
 
   auto conv2d = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(conv2d, 0);
-  auto output_shape = AnfAlgo::GetOutputInferShape(conv2d, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(conv2d, 0);
   if (!NeedUpdate(conv2d, input_shape, output_shape)) {
     return nullptr;
   }
@@ -243,7 +244,7 @@ CNodePtr Conv2DBackpropInputUnifyMindIR::CreateDepthwiseConv2DBackpropInput(cons
       NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeBackpropInputOpName)), transpose,
       conv2d_backin->input(kIndex1)};
     depth_conv_backin = NewCNode(depth_conv_backin_inputs, graph);
-    AnfAlgo::CopyNodeAttr(kAttrInputSizes, kAttrInputSize, conv2d_backin, depth_conv_backin);
+    common::AnfAlgo::CopyNodeAttr(kAttrInputSizes, kAttrInputSize, conv2d_backin, depth_conv_backin);
   }
   MS_EXCEPTION_IF_NULL(depth_conv_backin);
   depth_conv_backin->set_abstract(conv2d_backin->abstract());
@@ -264,8 +265,8 @@ const AnfNodePtr Conv2DBackpropInputUnifyMindIR::Process(const FuncGraphPtr &gra
 
   auto conv2d_backin = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d_backin);
-  auto input_shape = AnfAlgo::GetOutputInferShape(conv2d_backin, 0);
-  auto output_shape = AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backin, 0);
+  auto input_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backin, 0);
+  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backin, 0);
   if (!NeedUpdate(conv2d_backin, input_shape, output_shape)) {
     return nullptr;
   }
@@ -309,15 +310,15 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   MS_EXCEPTION_IF_NULL(depth_conv_backfil);
   depth_conv_backfil->set_scope(conv2d_backfil->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(conv2d_backfil, 0)};
-  std::vector<size_t> out_shape = AnfAlgo::GetOutputInferShape(conv2d_backfil, 0);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(conv2d_backfil, 0)};
+  std::vector<size_t> out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, 0);
   if (out_shape.size() != kConv2DAxisNum) {
     MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's output axis number should be " << kConv2DAxisNum << ", but got "
                       << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
   }
   std::swap(out_shape[0], out_shape[1]);
   auto shapes = {out_shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, depth_conv_backfil.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, depth_conv_backfil.get());
   return depth_conv_backfil;
 }
 
@@ -336,8 +337,8 @@ const AnfNodePtr Conv2DBackpropFilterUnifyMindIR::Process(const FuncGraphPtr &gr
 
   auto conv2d_backfil = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(conv2d_backfil);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 1);
-  auto output_shape = AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 1);
+  auto output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(conv2d_backfil, 0);
   if (!NeedUpdate(conv2d_backfil, input_shape, output_shape)) {
     return nullptr;
   }

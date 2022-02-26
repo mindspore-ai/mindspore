@@ -25,6 +25,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "pipeline/jit/resource.h"
 #include "common/mem_reuse/mem_reuse.h"
@@ -197,11 +198,11 @@ static KernelGraphPtr CreateGraphWithExecOrder() {
   kernel_graph->SetExecOrderByDefault();
   auto execution_order = kernel_graph->execution_order();
   EXPECT_EQ(execution_order.size(), 2);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[1]), prim::kPrimMul->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(execution_order[1]), prim::kPrimMul->name());
   auto new_outputs = kernel_graph->outputs();
   EXPECT_EQ(new_outputs.size(), 1);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(new_outputs[0]), prim::kPrimMul->name());
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(new_outputs[0]), prim::kPrimMul->name());
   return kernel_graph;
 }
 

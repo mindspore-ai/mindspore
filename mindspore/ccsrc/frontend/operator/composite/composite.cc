@@ -33,7 +33,7 @@
 #include "ir/signature.h"
 #include "debug/trace.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

@@ -25,6 +25,7 @@
 #include <utility>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 

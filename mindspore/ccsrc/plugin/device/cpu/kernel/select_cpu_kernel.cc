@@ -27,8 +27,8 @@ constexpr size_t kSelectOutputsNum = 1;
 template <typename T>
 void SelectCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (size_t x : shape) {
     element_num_ *= x;
   }

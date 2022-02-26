@@ -18,15 +18,16 @@
 #include <set>
 #include <string>
 #include "base/base.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
 bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
-  size_t real_input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t real_input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < real_input_num; i++) {
-    session::KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
     auto format = AnfAlgo::GetInputFormat(node, i);
     if (!CheckValidOutputDeviceShape(kernel_with_index.first, kernel_with_index.second, format)) {
       MS_LOG(WARNING) << "TBE Host check input device shape failed, node:" << node->fullname_with_scope()
@@ -35,7 +36,7 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
     }
   }
 
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < real_output_num; i++) {
     auto format = AnfAlgo::GetOutputFormat(node, i);
     if (!CheckValidOutputDeviceShape(node, i, format)) {
@@ -49,7 +50,7 @@ bool HostCheck::CheckValidDeviceShape(const AnfNodePtr &node) {
 
 std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, const size_t output_idx,
                                                    const std::string &format) {
-  auto output_shape = AnfAlgo::GetOutputDetailShape(node, output_idx);
+  auto output_shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
   std::vector<int64_t> infer_shape;
   if (output_shape->isa<abstract::Shape>()) {
     auto shape_ptr = output_shape->cast<abstract::ShapePtr>();

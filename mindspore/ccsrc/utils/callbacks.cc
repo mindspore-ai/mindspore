@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include "utils/callbacks.h"
+#include "include/common/utils/callbacks.h"
 #include <map>
 #include <string>
 #include <memory>
 #include "pybind11/pybind11.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "utils/visible.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace callbacks {
@@ -53,7 +52,7 @@ uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, Tens
     summary_list.append(summary_value_dict);
   }
 
-  py::bool_ ret = parse::python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_SUMMARY, summary_list);
+  py::bool_ ret = python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_SUMMARY, summary_list);
   auto bool_ret = py::cast<bool>(ret);
   if (!bool_ret) {
     MS_LOG(ERROR) << "Python checkpoint return false during callback";

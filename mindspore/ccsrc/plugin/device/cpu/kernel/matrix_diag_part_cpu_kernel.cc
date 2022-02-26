@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void MatrixDiagPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
-  shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   out_shapes_ = shapes_;
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
@@ -34,7 +34,7 @@ void MatrixDiagPartCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     out_range_size_ *= shapes_[i];
   }
   // Invalid alignment will throw an exception.
-  auto alignment = AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
+  auto alignment = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
   alignment_ = GetAlignments(alignment);
   node_wpt_ = kernel_node;
 }
@@ -72,7 +72,7 @@ bool MatrixDiagPartCpuKernelMod<T>::Launch(const std::vector<AddressPtr> &inputs
       out_shapes_.erase(out_shapes_.begin() + shapes_.size() - kDim2);
     }
     auto dtype = AnfAlgo::GetOutputDeviceDataType(node_, 0);
-    AnfAlgo::SetOutputInferTypeAndShape({dtype}, {out_shapes_}, node_.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {out_shapes_}, node_.get());
   }
   auto func = [m = m_, n = n_, max_diag_len, u, l, in_value, out_value, dest_inner_matrix_len, padding_value,
                alignment = alignment_](size_t spos, size_t epos) {

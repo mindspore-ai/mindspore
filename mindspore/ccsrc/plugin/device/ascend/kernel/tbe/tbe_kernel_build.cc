@@ -19,6 +19,7 @@
 #include <map>
 #include "base/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
@@ -177,7 +178,7 @@ bool TbeKernelBuild::CalOutputSize(const nlohmann::json &fusion_op_list,
   MS_EXCEPTION_IF_NULL(output_size_list);
   // cal output size for malloc
   for (const auto &output_node : output_nodes) {
-    auto kernel_idx = AnfAlgo::VisitKernel(output_node, 0);
+    auto kernel_idx = common::AnfAlgo::VisitKernel(output_node, 0);
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;
     auto full_name = real_node->fullname_with_scope();

@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 #include "utils/ms_context.h"
 #include "toolchain/prof_callback.h"
 #include "toolchain/prof_acl_api.h"

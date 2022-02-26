@@ -59,21 +59,21 @@ void AtomicAdd(T *const address, const T val) {
 template <typename T>
 void ROIAlignGradCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
   //  Get the number of the input args
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num
                   << " input(s).";
   }
 
   //  Get the number of the output args
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num
                   << " output(s).";
   }
 
   //  Get the input shapes
-  auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dy_shape_size = dy_shape.size();
   if (dy_shape_size != DY_DIMS) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of output should be 4-D, but got " << dy_shape_size
@@ -84,20 +84,20 @@ void ROIAlignGradCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
 template <typename T>
 void ROIAlignGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
 
-  auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   roi_rows_ = SizeToInt(rois_shape[0]);
   roi_cols_ = SizeToInt(rois_shape[1]);
 
-  std::vector<int64_t> xdiff_shape_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "xdiff_shape");
+  std::vector<int64_t> xdiff_shape_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "xdiff_shape");
   (void)std::transform(xdiff_shape_me.begin(), xdiff_shape_me.end(), std::back_inserter(xdiff_shape_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  pooled_height_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_height"));
-  pooled_width_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_width"));
-  spatial_scale_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, "spatial_scale"));
-  sample_num_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
+  pooled_height_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_height"));
+  pooled_width_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_width"));
+  spatial_scale_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, "spatial_scale"));
+  sample_num_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "sample_num"));
   roi_end_mode_ = 1;
 
   batch_size_ = xdiff_shape_[BATCH];

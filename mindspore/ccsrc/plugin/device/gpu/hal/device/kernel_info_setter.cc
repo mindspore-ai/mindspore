@@ -25,11 +25,12 @@
 #include "kernel/oplib/opinfo.h"
 #include "kernel/oplib/oplib.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/kernel/custom/custom_aot_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace device {
@@ -86,19 +87,19 @@ std::string SupportedTypeList(const CNodePtr &kernel_node, KernelType kernel_typ
   // Custom op gets reg info from OpLib instead of NativeGpuKernelModFactory.
   if (!IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     supported_type_lists =
-      kernel::NativeGpuKernelModFactory::GetInstance().SupportedTypeList(AnfAlgo::GetCNodeName(kernel_node));
+      kernel::NativeGpuKernelModFactory::GetInstance().SupportedTypeList(common::AnfAlgo::GetCNodeName(kernel_node));
     if (!supported_type_lists.empty()) {
       return supported_type_lists;
     }
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel::OpImplyType imply_type = GetImplyType(kernel_type);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, imply_type);
   if (op_info_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Unsupported op [" << op_name
                       << "] on GPU, Please confirm whether the device target setting is correct, or refer to the "
-                         "official website https://mindspore.cn/ to query the operator support list.";
+                         "official website to query the operator support list.";
   }
   (void)ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list);
   for (size_t i = 0; i < kernel_info_list.size(); i++) {
@@ -122,13 +123,13 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
-  if (AnfAlgo::IsNodeInGraphKernel(kernel_node)) {
+  if (common::AnfAlgo::IsNodeInGraphKernel(kernel_node)) {
     // The op_info in OpLib is only used for basic ops,
     // we don't care it in GraphKernel.
     return true;
   }
 
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
 
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
   if (op_info_ptr == nullptr) {
@@ -158,9 +159,9 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   MS_EXCEPTION_IF_NULL(kernel_type);
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   // Custom op's kernel type can be one of [GPU_KERNEL, AKG_KERNEL] on GPU
-  auto func_type = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+  auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
   if (func_type == kCustomTypeAOT) {
     *kernel_type = KernelType::GPU_KERNEL;
     if (!kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(op_name, selected_kernel_info)) {
@@ -200,11 +201,11 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
 
 void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_kernel_node = kernel_node->input(input_index + 1);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
-    auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
+    auto input_with_index = common::AnfAlgo::VisitKernel(input_kernel_node, 0);
     MS_EXCEPTION_IF_NULL(input_with_index.first);
     auto real_input_node = input_with_index.first;
     if (!real_input_node->isa<Parameter>()) {
@@ -215,16 +216,16 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, co
 
     auto param = real_input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param);
-    if (!AnfAlgo::IsParameterWeight(param)) {
+    if (!common::AnfAlgo::IsParameterWeight(param)) {
       std::vector<std::string> output_format = {kOpFormat_DEFAULT};
       builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
+      std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
       builder->SetOutputsDeviceType(output_type);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
       continue;
     }
     if ((AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown) ||
-        (AnfAlgo::GetCNodeName(kernel_node) == "ApplyMomentum")) {
+        (common::AnfAlgo::GetCNodeName(kernel_node) == "ApplyMomentum")) {
       std::vector<std::string> output_format = {selected_kernel_info.GetInputFormat(input_index)};
       builder->SetOutputsFormat(output_format);
       auto reduce_flag = kernel::NativeGpuKernelModFactory::GetInstance().reduce_flag_;
@@ -268,7 +269,7 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   if (!AnfUtils::IsRealCNodeKernel(kernel_node)) {
     return false;
   }
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kKernelFormatPositionMap.find(kernel_name);
   if (iter == kKernelFormatPositionMap.end()) {
     return false;
@@ -278,10 +279,10 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   }
 
   auto inputs_format_position = iter->second.first;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   TransformFormatPosition(&inputs_format_position, input_num);
   for (const auto &input_format_position : inputs_format_position) {
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_format_position);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_format_position);
     // Only support the transformer between NCHW and NHWC, so need the shape is 4 dimension.
     if (input_shape.size() != kFormatTransformDimension) {
       return false;
@@ -289,10 +290,10 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   }
 
   auto outputs_format_position = iter->second.second;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   TransformFormatPosition(&outputs_format_position, output_num);
   for (const auto &output_format_position : outputs_format_position) {
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, output_format_position);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_format_position);
     // Only support the transformer between NCHW and NHWC, so need the shape is 4 dimension.
     if (output_shape.size() != kFormatTransformDimension) {
       return false;
@@ -307,7 +308,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(inputs_format);
   MS_EXCEPTION_IF_NULL(outputs_format);
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto iter = kKernelFormatPositionMap.find(kernel_name);
   if (iter == kKernelFormatPositionMap.end()) {
     return;
@@ -315,7 +316,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   auto cal_format = (inputs_type[0] == kNumberTypeFloat16) ? kOpFormat_NHWC : kOpFormat_NCHW;
   MS_LOG(DEBUG) << "Kernel node: " << kernel_node->fullname_with_scope() << ", format: " << cal_format;
   auto inputs_format_position = iter->second.first;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   TransformFormatPosition(&inputs_format_position, input_num);
   for (const auto &input_format_position : inputs_format_position) {
     if (input_format_position >= inputs_format->size()) {
@@ -326,7 +327,7 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   }
 
   auto outputs_format_position = iter->second.second;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   TransformFormatPosition(&outputs_format_position, output_num);
   for (const auto &output_format_position : outputs_format_position) {
     if (output_format_position >= outputs_format->size()) {
@@ -335,10 +336,10 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
     }
     (*outputs_format)[output_format_position] = cal_format;
   }
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   if (prim->HasAttr("format")) {
-    *origin_data_format = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
+    *origin_data_format = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
   }
 }
 
@@ -352,9 +353,9 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   for (size_t i = 0; i < input_list.size(); ++i) {
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     std::vector<std::string> outputs_format = {kOpFormat_DEFAULT};
-    std::vector<TypeId> outputs_device_type = {AnfAlgo::GetOutputInferDataType(input_list[i], 0)};
+    std::vector<TypeId> outputs_device_type = {common::AnfAlgo::GetOutputInferDataType(input_list[i], 0)};
     graph_input_format.push_back(kOpFormat_DEFAULT);
-    graph_input_type.push_back(AnfAlgo::GetOutputInferDataType(input_list[i], 0));
+    graph_input_type.push_back(common::AnfAlgo::GetOutputInferDataType(input_list[i], 0));
     builder.SetOutputsFormat(outputs_format);
     builder.SetOutputsDeviceType(outputs_device_type);
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), input_list[i].get());
@@ -400,7 +401,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
 
 void PrintUnsupportedTypeException(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type,
                                    const std::vector<TypeId> &outputs_type, KernelType kernel_type) {
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   std::string build_type = "input[";
   std::for_each(std::begin(inputs_type), std::end(inputs_type),
                 [&build_type](auto i) { build_type += TypeIdToString(i) + " "; });
@@ -427,12 +428,12 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
   size_t conv_cnt = 0;
   size_t bn_cnt = 0;
   for (const auto &kernel : kernels) {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel);
     if (kernel_name == prim::kPrimLayerNorm->name()) {
       format_transform_ = false;
       return;
     }
-    auto value = AnfAlgo::GetCNodePrimitive(kernel);
+    auto value = common::AnfAlgo::GetCNodePrimitive(kernel);
     if (value != nullptr && value->GetAttr("format") != nullptr &&
         GetValue<std::string>(value->GetAttr("format")) == kOpFormat_NHWC) {
       format_transform_ = false;
@@ -454,25 +455,25 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  if (AnfAlgo::IsGraphKernel(kernel_node)) {
-    auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(kernel_node);
+  if (common::AnfAlgo::IsGraphKernel(kernel_node)) {
+    auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(kernel_node);
     MS_EXCEPTION_IF_NULL(func_graph);
     SetGraphKernelInfo(kernel_node, func_graph);
     return;
   }
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_format.emplace_back(kOpFormat_DEFAULT);
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
   std::string origin_data_format = kOpFormat_DEFAULT;
   if (IsNeedProcessFormatInfo(kernel_node, inputs_type)) {
@@ -489,20 +490,20 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     // Custom op select kernel from OpLib
     result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
   } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
-    result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node),
-                                                                               builder->Build());
+    result = kernel::NativeGpuKernelModFactory::GetInstance().SearchRegistered(
+      common::AnfAlgo::GetCNodeName(kernel_node), builder->Build());
     if (!result) {
-      result =
-        kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
+      result = kernel::NativeGpuKernelModFactory::GetInstance().ReducePrecision(
+        common::AnfAlgo::GetCNodeName(kernel_node), builder);
     }
-    if (!result && (!AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+    if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
       result = SelectAkgKernel(kernel_node, builder->Build());
       kernel_type = AKG_KERNEL;
     }
   } else if (kernel_type == AKG_KERNEL) {
     result = SelectAkgKernel(kernel_node, builder->Build());
   }
-  if (!result && (!AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+  if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
     PrintUnsupportedTypeException(kernel_node, inputs_type, outputs_type, kernel_type);
     return;
   }

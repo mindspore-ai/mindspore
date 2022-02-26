@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/duplex_pipe.h"
+#include "include/common/duplex_pipe.h"
 
 namespace mindspore {
 int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool append_fds) {

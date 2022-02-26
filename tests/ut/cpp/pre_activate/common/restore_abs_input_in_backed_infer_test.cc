@@ -17,7 +17,7 @@
 #include <vector>
 #include <string>
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/primitive_infer_map.h"
 #include "backend/common/optimizer/const_input_to_attr.h"

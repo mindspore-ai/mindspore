@@ -44,7 +44,7 @@ void FusedAdaFactorCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node
 
 void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   param_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, PARAM);
   auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, PARAM);
   elem_num_ = std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<size_t>());
@@ -60,14 +60,14 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
   }
 
-  if (AnfAlgo::HasNodeAttr(kEnableScaleParameter, kernel_node)) {
-    enable_scale_parameter_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableScaleParameter);
+  if (common::AnfAlgo::HasNodeAttr(kEnableScaleParameter, kernel_node)) {
+    enable_scale_parameter_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableScaleParameter);
   }
-  if (AnfAlgo::HasNodeAttr(kEnableFirstMoment, kernel_node)) {
-    enable_first_moment_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableFirstMoment);
+  if (common::AnfAlgo::HasNodeAttr(kEnableFirstMoment, kernel_node)) {
+    enable_first_moment_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableFirstMoment);
   }
-  if (AnfAlgo::HasNodeAttr(kEnableWeightDecay, kernel_node)) {
-    enable_weight_decay_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableWeightDecay);
+  if (common::AnfAlgo::HasNodeAttr(kEnableWeightDecay, kernel_node)) {
+    enable_weight_decay_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kEnableWeightDecay);
   }
 }
 

@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/local_response_norm_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -93,7 +93,7 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     (void)CheckParam(kernel_node);
 
     depth_radius_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "depth_radius"));
@@ -208,11 +208,11 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }

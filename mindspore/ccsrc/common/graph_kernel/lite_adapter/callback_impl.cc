@@ -23,7 +23,7 @@
 #include "base/core_ops.h"
 #include "ir/dtype.h"
 #include "utils/anf_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {
 // register the callback object

@@ -18,7 +18,8 @@
 #include <algorithm>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -159,13 +160,13 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingUpdate(
   GetBNTrainingUpdateAbstractList(equiv, bn, &abstract_list);
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   bn_training_update->set_abstract(abstract_tuple);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn, bn_training_update);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn, bn_training_update);
   ValuePtr factor = GetFactor(equiv);
   if (factor == nullptr) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrFactor, factor, bn_training_update);
-  AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
+  common::AnfAlgo::SetNodeAttr(kAttrFactor, factor, bn_training_update);
+  common::AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
   bn_training_update->set_scope(node->scope());
   return bn_training_update;
 }
@@ -181,7 +182,7 @@ void FusedBatchNormFusion::EliminateMonadNodes(const FuncGraphPtr &func_graph, c
   for (const auto &node_index : users) {
     const AnfNodePtr &output = node_index.first;
     MS_EXCEPTION_IF_NULL(output);
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
+    if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
       (void)manager->Replace(output, GetAnfNodeByVar(equiv, monad0_var_));
       break;
     }

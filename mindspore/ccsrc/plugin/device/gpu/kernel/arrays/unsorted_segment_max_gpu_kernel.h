@@ -50,7 +50,7 @@ class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto segment_ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
@@ -63,7 +63,7 @@ class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
       return true;
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == 3) {
       MS_LOG(INFO) << "UnsortedSegmentMax Kernel Input count is 3 - dynamic mode";
     } else {

@@ -16,9 +16,8 @@
 
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "ir/anf.h"
-#include "utils/convert_utils.h"
 #include "backend/common/optimizer/optimizer.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -26,7 +25,7 @@ const AnfNodePtr AddDynamicShapeAttr::Process(const FuncGraphPtr &func_graph, co
                                               const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     MS_LOG(DEBUG) << "Set Dynamic Shape Attr to Node:" << node->fullname_with_scope();
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);

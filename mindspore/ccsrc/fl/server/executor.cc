@@ -213,13 +213,14 @@ bool Executor::unmasked() const {
 
 std::string Executor::GetTrainableParamName(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
+  std::string cnode_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kNameToIdxMap.count(cnode_name) == 0) {
     return "";
   }
   const OptimParamNameToIndex &index_info = kNameToIdxMap.at(cnode_name);
   size_t weight_idx = index_info.at("inputs").at(kWeight);
-  AnfNodePtr weight_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, weight_idx), 0).first;
+  AnfNodePtr weight_node =
+    common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(cnode, weight_idx), 0).first;
   MS_EXCEPTION_IF_NULL(weight_node);
   if (!weight_node->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << weight_idx << " input of " << cnode_name << " is not a Parameter.";

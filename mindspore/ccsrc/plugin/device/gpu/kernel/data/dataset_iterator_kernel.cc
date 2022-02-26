@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/data/dataset_utils.h"
 #include "kernel/common_utils.h"
 
@@ -44,7 +44,7 @@ DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { GpuBufferMgr::GetInstanc
 bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_node_ = kernel_node;
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
   std::vector<std::vector<int>> shapes;
   std::vector<TypePtr> type_ptrs;
@@ -164,7 +164,7 @@ void DatasetIteratorKernelMod::PostExecute() {
     std::transform(item.shapes_.begin(), item.shapes_.end(), std::back_inserter(shape), LongToSize);
     shapes.push_back(shape);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(types_, shapes, kernel_node_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types_, shapes, kernel_node_.lock().get());
 }
 }  // namespace kernel
 }  // namespace mindspore

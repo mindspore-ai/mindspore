@@ -22,8 +22,9 @@
 #include "utils/hash_set.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,11 +34,11 @@ void InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &node, size_t i, con
   MS_EXCEPTION_IF_NULL(node);
   auto prim = std::make_shared<Primitive>(prim::kPrimCast->name());
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i)};
   auto cast = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cast);
-  auto cast_shape = {AnfAlgo::GetPrevNodeOutputInferShape(node, i)};
-  AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
+  auto cast_shape = {common::AnfAlgo::GetPrevNodeOutputInferShape(node, i)};
+  common::AnfAlgo::SetOutputInferTypeAndShape({cast_type}, cast_shape, cast.get());
   FuncGraphManagerPtr manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->SetEdge(node, i + 1, cast);
@@ -52,7 +53,7 @@ void ProcessTupleGetItem(const FuncGraphPtr &graph, const AnfNodePtr &node, size
   for (size_t i = 0; i < used_node_list->size(); i++) {
     auto used_node = used_node_list->at(i).first;
     auto used_node_index = used_node_list->at(i).second - 1;
-    if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+    if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "TupleGetItem connect with TupleGetItem.";
     }
     InsertCast(graph, used_node, used_node_index, src_type, cast_type);
@@ -70,24 +71,24 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
     static const mindspore::HashSet<std::string> kConv3DKernel = {
       prim::kPrimConv3DBackpropInput->name(), prim::kPrimConv3DBackpropFilter->name(), prim::kPrimConv3D->name(),
       prim::kPrimConv3DTranspose->name()};
-    if (kConv3DKernel.find(AnfAlgo::GetCNodeName(node)) == kConv3DKernel.end()) {
+    if (kConv3DKernel.find(common::AnfAlgo::GetCNodeName(node)) == kConv3DKernel.end()) {
       continue;
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; i++) {
-      auto inferType = AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
+      auto inferType = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
       if (inferType == kNumberTypeFloat16) {
         InsertCast(graph, node, i, inferType, kNumberTypeFloat32);
         IsCasted = true;
-        MS_LOG(INFO) << "Improve precision for [" << AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node)) << "] input "
-                     << i;
+        MS_LOG(INFO) << "Improve precision for [" << common::AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node))
+                     << "] input " << i;
       }
     }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; i++) {
-      auto inferType = AnfAlgo::GetOutputInferDataType(node, i);
+      auto inferType = common::AnfAlgo::GetOutputInferDataType(node, i);
       if (inferType != kNumberTypeFloat16) {
         continue;
       }
@@ -96,7 +97,7 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
       for (size_t j = 0; j < used_node_list->size(); j++) {
         auto used_node = used_node_list->at(j).first;
         auto used_node_index = used_node_list->at(j).second - 1;
-        if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
+        if (common::AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
           ProcessTupleGetItem(graph, used_node, used_node_index, kNumberTypeFloat32, inferType);
         } else {
           InsertCast(graph, used_node, used_node_index, kNumberTypeFloat32, inferType);
@@ -108,10 +109,10 @@ bool InsertCastGPU::Run(const FuncGraphPtr &graph) {
       auto output_types = std::vector<TypeId>(output_num, kNumberTypeFloat32);
       std::vector<std::vector<size_t>> output_shapes;
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
-        std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(node, output_index);
+        std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
         (void)output_shapes.emplace_back(shape);
       }
-      AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, node.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, node.get());
     }
   }
   return true;

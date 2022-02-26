@@ -58,7 +58,7 @@ void MKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::string 
     }
   } else {
     std::vector<int> pad;
-    std::vector<int64_t> pad_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);
+    std::vector<int64_t> pad_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, PAD_LIST);
     (void)std::transform(pad_me.begin(), pad_me.end(), std::back_inserter(pad),
                          [](const int64_t &value) { return static_cast<int>(value); });
     for (size_t i = 0; i < dim; i += 2) {

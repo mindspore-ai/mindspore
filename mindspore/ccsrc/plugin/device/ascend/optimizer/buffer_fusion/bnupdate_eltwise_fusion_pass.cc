@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -33,7 +34,7 @@ void BnupdateEltwiseFusionPass::MatchBnupdateDoubleOutputEltwise(const CNodePtr 
   MS_EXCEPTION_IF_NULL(getitem);
   auto bnupdate = getitem->input(kIndex1);
   MS_EXCEPTION_IF_NULL(bnupdate);
-  if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
+  if (bnupdate->isa<CNode>() && common::AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName &&
       GetNodeOutputTotalUsedNum(kernel_graph, bnupdate) == kBNTrainingUpdateOutputUsedTotalNum) {
     mindspore::HashSet<AnfNodePtr> record{cnode, bnupdate};
     candidate_fusion->push_back(record);
@@ -47,16 +48,16 @@ void BnupdateEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGr
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
-        AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE) {
+        common::AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_DOUBLE_OUTPUT_SIZE) {
       auto eltwise_input = cnode->input(1);
-      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
+      if (eltwise_input->isa<CNode>() && common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
         MatchBnupdateDoubleOutputEltwise(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }
     }

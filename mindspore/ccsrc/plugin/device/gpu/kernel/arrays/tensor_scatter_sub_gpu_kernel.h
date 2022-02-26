@@ -86,22 +86,22 @@ class TensorScatterSubGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     memcpy_flag_ = false;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
-    update_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    update_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
     std::vector<size_t> shape_me = input_shapes_;
     (void)std::transform(shape_me.begin(), shape_me.end(), std::back_inserter(vec_work_shape_),

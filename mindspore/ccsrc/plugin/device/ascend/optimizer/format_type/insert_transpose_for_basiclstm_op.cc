@@ -17,9 +17,10 @@
 #include "plugin/device/ascend/optimizer/format_type/insert_transpose_for_basiclstm_op.h"
 #include <memory>
 #include <vector>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/ms_context.h"
@@ -43,15 +44,15 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
   transpose_inputs.push_back(NewValueNode(prim));
 
   if (op_name == kBasicLSTMCellInputGradOpName) {
-    auto origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
-    auto origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
+    auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     auto dst_shape = {origin_shape[1], origin_shape[0]};
-    transpose_inputs.push_back(AnfAlgo::GetInputNode(cnode, 1));
+    transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
-    AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
-    AnfAlgo::SetNodeInput(cnode, transpose, 1);
+    common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
+    common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
+    common::AnfAlgo::SetNodeInput(cnode, transpose, 1);
     if (kernel_graph == nullptr) {
       new_node = std::make_shared<CNode>(*cnode);
     } else {
@@ -59,18 +60,18 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     }
   } else if (op_name == kBasicLSTMCellWeightGradOpName) {
     std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-    size_t out_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t out_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t output_idx = 0; output_idx < out_num; output_idx++) {
       auto tuple_getitem = CreatTupleGetItemNode(func_graph, cnode, output_idx);
-      auto origin_shape = AnfAlgo::GetOutputInferShape(cnode, output_idx);
+      auto origin_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_idx);
       if (origin_shape.size() > 1 && output_idx == 0) {
-        auto dtype = AnfAlgo::GetOutputInferDataType(cnode, output_idx);
+        auto dtype = common::AnfAlgo::GetOutputInferDataType(cnode, output_idx);
         auto dst_shape = {origin_shape[0], origin_shape[1]};
         transpose_inputs.push_back(tuple_getitem);
         CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
         MS_EXCEPTION_IF_NULL(transpose);
-        AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
-        AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
+        common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
+        common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
         make_tuple_inputs.push_back(transpose);
       } else {
         make_tuple_inputs.push_back(tuple_getitem);
@@ -85,10 +86,10 @@ const AnfNodePtr InsertTranspose::Process(const FuncGraphPtr &func_graph, const 
                                           const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   CNodePtr new_node = nullptr;
   if (op_name == kBasicLSTMCellInputGradOpName || op_name == kBasicLSTMCellWeightGradOpName) {
     new_node = Insert(func_graph, cnode, op_name);

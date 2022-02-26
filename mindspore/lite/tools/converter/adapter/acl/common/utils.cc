@@ -21,7 +21,7 @@
 #include "base/core_ops.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "src/common/log_util.h"
 #include "ir/func_graph.h"
 #include "nnacl/op_base.h"

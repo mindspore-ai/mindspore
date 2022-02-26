@@ -24,7 +24,7 @@
 #include "frontend/parallel/parallel_stub/executor_manager_stub.h"
 #endif
 #include "frontend/parallel/device_manager.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -188,7 +188,7 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
     (void)group->Init(group_name, devices);
     groups_[group_name] = *group;
 
-    vector<uint32_t> ranks;
+    std::vector<uint32_t> ranks;
     (void)std::transform(std::begin(devices), std::end(devices), std::back_inserter(ranks),
                          [](const Device dev) { return (uint32_t)dev.rank(); });
     // Create group through the executor

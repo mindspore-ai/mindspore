@@ -27,24 +27,24 @@ MinMaxUpdatePerChannelGpuKernelMod::MinMaxUpdatePerChannelGpuKernelMod()
     : input_size_(0), quant_num_(1), ema_(false), is_null_input_(false), ema_decay_(0), num_channels_(0) {}
 
 bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   ema_ = GetValue<bool>(prim->GetAttr("ema"));
   ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
 
   // init size
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();

@@ -59,8 +59,8 @@ class AdaptiveAvgPool2DGradKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kAdaptiveAvgPool2dGradInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
                         << kAdaptiveAvgPool2dGradInputNum << ", but got " << input_num;
@@ -69,8 +69,8 @@ class AdaptiveAvgPool2DGradKernelMod : public NativeGpuKernelMod {
     input_size_ = sizeof(T);
     output_size_ = sizeof(T);
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);  // dy
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);         // dx
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);  // dy
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);         // dx
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {

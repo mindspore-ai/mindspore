@@ -27,7 +27,7 @@
 #include "runtime/mem.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "acl/acl_rt.h"
 
@@ -46,7 +46,7 @@ AiCoreDynamicKernel::~AiCoreDynamicKernel() {
 bool AiCoreDynamicKernel::NeedSkipExecute(const CNodePtr &cnode) {
   // Skip run ReduceSum when axis is a Empty Tensor
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name != "ReduceSum") {
     return false;
   }
@@ -84,8 +84,8 @@ void AiCoreDynamicKernel::Execute() {
     if (status != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "rtMemcpyAsync failed for " << node_info;
     }
-    std::vector<TypeId> dtypes{AnfAlgo::GetOutputInferDataType(cnode, 0)};
-    AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
+    std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
+    common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
 
     MS_LOG(INFO) << "Execute node:" << cnode->fullname_with_scope() << " success.";
     return;
@@ -111,7 +111,7 @@ void AiCoreDynamicKernel::Execute() {
 void AiCoreDynamicKernel::ParseCompileJson() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     return;
   }
   bool get_flag = true;

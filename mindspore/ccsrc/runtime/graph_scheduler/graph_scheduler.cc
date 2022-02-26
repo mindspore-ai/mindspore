@@ -23,15 +23,16 @@
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/anf_utils.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "utils/profile.h"
 #if !defined(_WIN32) && !defined(_WIN64)
-#include "utils/signal_util.h"
+#include "include/common/utils/signal_util.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -144,7 +145,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     }
     auto front_input_node = FetchFrontNodeByBackendNode(input_node, graph);
     DeviceTensorStore::GetInstance().Remove(front_input_node.get());
-    size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(input_node, index)) {
         AnfAlgo::SetOutputAddr(nullptr, index, input_node.get());
@@ -163,7 +164,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
 
   // Clear cnode device tensor.
   for (const auto &cnode : graph->execution_order()) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(cnode, index)) {
         AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
@@ -554,7 +555,7 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
+    auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
     for (const auto &output_with_index : outputs) {
       auto output_kernel = output_with_index.first;
       MS_EXCEPTION_IF_NULL(output_kernel);
@@ -903,15 +904,15 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
 
       auto &execution_order = graph->execution_order();
       for (auto &kernel : execution_order) {
-        if (!AnfAlgo::IsCommunicationOp(kernel)) {
+        if (!common::AnfAlgo::IsCommunicationOp(kernel)) {
           continue;
         }
         auto key = std::make_pair(kernel, graph_compiler_info.device_contexts_[index]);
         auto value = std::make_pair(false, false);
-        if (AnfAlgo::GetInputTensorNum(kernel) > 1) {
+        if (common::AnfAlgo::GetInputTensorNum(kernel) > 1) {
           value.first = true;
         }
-        if (AnfAlgo::GetOutputTensorNum(kernel) > 1) {
+        if (common::AnfAlgo::GetOutputTensorNum(kernel) > 1) {
           value.second = true;
         }
         if ((value.first == true) || (value.second == true)) {
@@ -959,14 +960,14 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
-  if (AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
+  if (common::AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
     auto send_actor =
       std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
                                   debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(send_actor);
     rpc_node_scheduler_->InsertSendActor(send_actor);
     return send_actor;
-  } else if (AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
+  } else if (common::AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
     auto recv_actor =
       std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
                                   debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
@@ -1014,8 +1015,8 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
   // Foreach the execution order to get the auto monad kernels.
   auto &execution_order = graph->execution_order();
   (void)std::for_each(execution_order.begin(), execution_order.end(), [&](const CNodePtr &kernel) {
-    for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
-      auto input_node = AnfAlgo::GetInputNode(kernel, i);
+    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
+      auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       if (HasAbstractMonad(input_node)) {
         (void)auto_monad_kernels.emplace_back(kernel);
         continue;
@@ -1024,8 +1025,8 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
   });
   // Foreach auto monad kernels to get the auto monad device tensor stores.
   (void)std::for_each(auto_monad_kernels.begin(), auto_monad_kernels.end(), [&](const CNodePtr &kernel) {
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-      KernelWithIndex from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(kernel, i, false);
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); ++i) {
+      KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(kernel, i, false);
       auto front_node = FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, graph);
       if (IsPersistentDeviceTensor(front_node)) {
         (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
@@ -1051,7 +1052,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   // Foreach the execution order to link the actors.
   for (const auto &kernel : execution_order) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsCommunicationOp(kernel)) {
+    if (common::AnfAlgo::IsCommunicationOp(kernel)) {
       (void)communication_nodes->emplace_back(kernel);
     }
     if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel, graph_compiler_info.strategy_))) {
@@ -1060,8 +1061,8 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
     const auto &kernel_actor = FetchActor(kernel->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(kernel_actor);
 
-    for (size_t i = 0; i < AnfAlgo::GetInputNum(kernel); ++i) {
-      auto input_node = AnfAlgo::GetInputNode(kernel, i);
+    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {
+      auto input_node = common::AnfAlgo::GetInputNode(kernel, i);
       // Link the control arrows of kernel actor by the auto monad, the inputs include monad node.
       if (IsOneOfPrimitiveCNode(input_node, auto_monad_prims) || HasAbstractMonad(input_node)) {
         LinkControlArrowByAutoMonad(kernel_actor, input_node, graph, graph_compiler_info.control_node_parser_);
@@ -1071,7 +1072,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
         continue;  // No data arrow for monad input.
       }
 
-      KernelWithIndex from_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+      KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       KernelWithIndex to_kernel_with_input_idx = std::make_pair(kernel, i);
       // The data arrow linking is taken over by the control flow.
       if (graph_compiler_info.control_node_parser_ != nullptr &&
@@ -1147,8 +1148,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   } else {
     // front node ---> actor.
     if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-      MS_LOG(EXCEPTION) << "Can't find actor by front node:" << AnfAlgo::GetNodeDebugString(front_output_node)
-                        << ", internal parameter:" << AnfAlgo::GetNodeDebugString(internal_parameter);
+      MS_LOG(EXCEPTION) << "Can't find actor by front node:" << common::AnfAlgo::GetNodeDebugString(front_output_node)
+                        << ", internal parameter:" << common::AnfAlgo::GetNodeDebugString(internal_parameter);
     }
     auto actor_pair = graph_output_to_actor_[front_output_with_index];
     MS_EXCEPTION_IF_NULL(actor_pair.first);
@@ -1224,7 +1225,7 @@ void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor
   // Update the from kernel info by the real node info.
   MS_EXCEPTION_IF_NULL(from_kernel);
   if (IsSkippedKernelActor(from_kernel)) {
-    real_from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(from_kernel, 0, false);
+    real_from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(from_kernel, 0, false);
     MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
     LinkControlArrowBySkippedNode(to_actor, from_kernel);
 
@@ -1308,7 +1309,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   // Find the real input node, include the monad node and make tuple node.
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
                                                   prim::kPrimMakeTuple};
-  const auto &input_kernel_with_output_idx = AnfAlgo::VisitKernelWithReturnType(from_node, 0, false, return_types);
+  const auto &input_kernel_with_output_idx =
+    common::AnfAlgo::VisitKernelWithReturnType(from_node, 0, false, return_types);
   MS_EXCEPTION_IF_NULL(input_kernel_with_output_idx.first);
   auto input_anfnode = input_kernel_with_output_idx.first;
   CNodePtr input_cnode = nullptr;
@@ -1316,7 +1318,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     input_cnode = input_anfnode->cast<CNodePtr>();
   }
   // Make tuple node needs to be expanded.
-  if (AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
+  if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = 1; i < input_cnode->inputs().size(); ++i) {
       LinkControlArrowByAutoMonad(to_actor, input_cnode->input(i), graph, parser);
@@ -1328,8 +1330,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
   // Get the real depend input by monad node which needs to link the control arrow.
   std::vector<AnfNodePtr> real_depend_inputs;
-  if (AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimDepend) ||
-      AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimLoad)) {
+  if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimLoad)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     real_depend_inputs.push_back(input_cnode->input(kDependAttachNodeIndex));
     // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
@@ -1337,7 +1339,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
     if (IsOneOfPrimitiveCNode(input_cnode->input(kRealInputIndexInDepend), recursion_prims)) {
       real_depend_inputs.push_back(input_cnode->input(kRealInputIndexInDepend));
     }
-  } else if (AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
+  } else if (common::AnfAlgo::CheckPrimitiveType(input_anfnode, prim::kPrimUpdateState)) {
     MS_EXCEPTION_IF_NULL(input_cnode);
     for (size_t i = kUpdateStateRealInput; i < input_cnode->inputs().size(); ++i) {
       real_depend_inputs.push_back(input_cnode->input(i));
@@ -1347,7 +1349,8 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
   }
 
   for (const auto &real_depend_input : real_depend_inputs) {
-    auto real_depend_input_with_idx = AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
+    auto real_depend_input_with_idx =
+      common::AnfAlgo::VisitKernelWithReturnType(real_depend_input, 0, false, return_types);
     MS_EXCEPTION_IF_NULL(real_depend_input_with_idx.first);
     auto real_depend_kernel = real_depend_input_with_idx.first;
     // Update the real depend kernel in the subgraphs connecting scene.
@@ -1355,7 +1358,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
       auto front_output_with_index = graph->GetFrontNodeByInternalParameter(real_depend_kernel);
       MS_EXCEPTION_IF_NULL(front_output_with_index.first);
       if (graph_output_to_actor_.count(front_output_with_index) == 0) {
-        if (AnfAlgo::IsCallNode(front_output_with_index.first)) {
+        if (common::AnfAlgo::IsCallNode(front_output_with_index.first)) {
           continue;
         }
         MS_LOG(EXCEPTION) << "Can't find graph output by front node:" << front_output_with_index.first->DebugString();
@@ -1406,9 +1409,9 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
   MS_EXCEPTION_IF_NULL(skipped_node);
 
   // Link the control arrow from all the inputs of skipped node to the user of skipped node.
-  auto input_num = AnfAlgo::GetInputTensorNum(skipped_node);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(skipped_node);
   for (size_t i = 0; i < input_num; ++i) {
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
+    auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(skipped_node, i, false);
     MS_EXCEPTION_IF_NULL(kernel_with_index.first);
     auto from_actor = FetchActor(kernel_with_index.first->fullname_with_scope());
     MS_EXCEPTION_IF_NULL(from_actor);
@@ -1477,7 +1480,7 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
 
     // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be
     // reused only when the recv node runs finished, which is expressed by the reference count increased.
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(from_allreduce_node); ++i) {
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(from_allreduce_node); ++i) {
       auto device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(from_allreduce_node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       UpdateRefCount(device_tensor.get());
@@ -1542,7 +1545,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
     if (device_data_source_actor != nullptr) {
       auto kernel = device_data_source_actor->data_kernel();
       MS_EXCEPTION_IF_NULL(kernel);
-      if (AnfAlgo::GetCNodeName(kernel) == kGetNextOpName) {
+      if (common::AnfAlgo::GetCNodeName(kernel) == kGetNextOpName) {
         kernel_to_actors.emplace(kernel, actor);
       }
     }
@@ -1718,7 +1721,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
+    auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
     std::set<std::vector<size_t>> unique_output_positions;
     std::set<KernelWithIndex> unique_outputs;
     for (const auto &output : outputs) {
@@ -1936,7 +1939,7 @@ void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
       if (actor->type_ == KernelTransformType::kKernelActor) {
         auto kernel_actor = dynamic_cast<KernelActor *>(actor.get());
         MS_EXCEPTION_IF_NULL(kernel_actor);
-        expect_toal_input_num = AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
+        expect_toal_input_num = common::AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
       }
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();

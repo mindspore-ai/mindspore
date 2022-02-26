@@ -52,9 +52,9 @@ class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {

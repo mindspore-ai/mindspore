@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/conv2dbackprop_eltwise_fusion_pass.h"
 #include "kernel/kernel_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -34,7 +35,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNod
       fusion_id_allocator->HasFusionIdAttr(eltwise_input)) {
     return;
   }
-  if (AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimConv2DBackpropInput)) {
+  if (common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimConv2DBackpropInput)) {
     (void)record.insert(eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
@@ -47,12 +48,12 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
       MatchConv2DBackpropInputEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

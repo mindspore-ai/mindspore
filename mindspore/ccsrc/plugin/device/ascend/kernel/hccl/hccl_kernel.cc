@@ -18,7 +18,8 @@
 
 #include <map>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
@@ -87,7 +88,7 @@ HcclKernel::~HcclKernel() {
 
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  op_name_ = AnfAlgo::GetCNodeName(anf_node);
+  op_name_ = common::AnfAlgo::GetCNodeName(anf_node);
   if (op_name_ == kHcomSend) {
     if (!HcomUtil::GetHcomDestRank(anf_node, &dest_rank_)) {
       MS_LOG(ERROR) << "GetHcomDestRank fail!";
@@ -175,25 +176,25 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   int64_t rank_size = 1;
-  if (AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
-    rank_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
+  if (common::AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
+    rank_size = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
   }
   int64_t fusion = 0;
-  if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode)) {
-    fusion = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
+  if (common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode)) {
+    fusion = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
   }
   if (hccl_data_type_list_.size() != hccl_kernel_input_shape_list_.size()) {
     MS_LOG(EXCEPTION) << "Invalid data type size " << hccl_data_type_list_.size() << " diff shape size "
                       << hccl_kernel_input_shape_list_.size();
   }
   ulong loop_size = hccl_data_type_list_.size();
-  if (AnfAlgo::GetInputTensorNum(anf_node) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
+  if (common::AnfAlgo::GetInputTensorNum(anf_node) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
     loop_size *= static_cast<ulong>(rank_size);
   }
   if (op_name == kReduceScatterOpName && fusion >= 1) {
-    loop_size = AnfAlgo::GetOutputTensorNum(anf_node);
+    loop_size = common::AnfAlgo::GetOutputTensorNum(anf_node);
   }
   for (ulong i = 0; i < loop_size; ++i) {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
@@ -225,7 +226,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   if (!anf_node) {
     MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
   }
-  std::string hccl_type = AnfAlgo::GetCNodeName(anf_node);
+  std::string hccl_type = common::AnfAlgo::GetCNodeName(anf_node);
   if (hccl_type == kReceive) {
     if (outputs.empty()) {
       MS_LOG(EXCEPTION) << "Outputs is empty";
@@ -288,7 +289,7 @@ device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr,
   KernelLaunchInfo kernel_launch_info;
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
 
-  std::string hccl_type = MsOpNameToHcomOpType(AnfAlgo::GetCNodeName(anf_node_.lock()));
+  std::string hccl_type = MsOpNameToHcomOpType(common::AnfAlgo::GetCNodeName(anf_node_.lock()));
 
   if (kernel_launch_info.inputs_.empty()) {
     MS_LOG(EXCEPTION) << "Hccl kernel input is empty";
@@ -308,7 +309,7 @@ device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr,
 }
 
 void HcclKernel::InferOp() {
-  if (AnfAlgo::IsDynamicShape(anf_node_.lock())) {
+  if (common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
     KernelMod::InferShape();
   }
 }
@@ -335,7 +336,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
   MS_LOG(INFO) << "Start Execute: " << cnode->DebugString();
-  std::string hccl_type = MsOpNameToHcomOpType(AnfAlgo::GetCNodeName(anf_node_.lock()));
+  std::string hccl_type = MsOpNameToHcomOpType(common::AnfAlgo::GetCNodeName(anf_node_.lock()));
   HcclDataType data_type = hccl_data_type_list_[0];
 
   ::HcomOperation op_info;
@@ -374,7 +375,7 @@ void HcclKernel::InitOp() {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(DEBUG) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
     return;
   }

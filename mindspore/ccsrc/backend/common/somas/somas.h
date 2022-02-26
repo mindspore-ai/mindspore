@@ -31,6 +31,7 @@
 #include "backend/common/somas/somas_stream.h"
 #include "backend/common/somas/somas_parameter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {

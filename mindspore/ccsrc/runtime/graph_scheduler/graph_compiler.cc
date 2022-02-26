@@ -22,9 +22,9 @@
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/op_builder/op_lazy_builder.h"
 #include "runtime/device/device_address.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/convert_utils.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "backend/common/optimizer/helper.h"
@@ -74,8 +74,8 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
       continue;
     }
 
-    if (AnfAlgo::CheckPrimitiveType(item, prim::kPrimMakeTuple)) {
-      std::vector<AnfNodePtr> outs = AnfAlgo::GetAllOutput(item);
+    if (common::AnfAlgo::CheckPrimitiveType(item, prim::kPrimMakeTuple)) {
+      std::vector<AnfNodePtr> outs = common::AnfAlgo::GetAllOutput(item);
       for (const auto &out : outs) {
         MS_EXCEPTION_IF_NULL(out);
         if (!out->isa<Parameter>() || NodeDeviceAddressExist(device_context, out, 0)) {
@@ -92,11 +92,11 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
 
   // Create device address for anf node in nodes_list
   for (const auto &item : nodes_list) {
-    auto output_size = AnfAlgo::GetOutputTensorNum(item);
+    auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
       if (output_type_id == kTypeUnknown) {
-        output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
+        output_type_id = common::AnfAlgo::GetOutputInferDataType(item, index);
       }
 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
@@ -104,7 +104,8 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
                                                                 AnfAlgo::GetOutputFormat(item, index), output_type_id);
       device_address->set_from_persistent_mem(item->isa<Parameter>());
       device_address->set_host_shape(trans::GetRuntimePaddingShape(item, index));
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(item) << " addr:" << device_address;
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
+                    << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -139,13 +140,13 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
     if (output_type_id == kTypeUnknown) {
-      output_type_id = AnfAlgo::GetOutputInferDataType(value_node, output_idx);
+      output_type_id = common::AnfAlgo::GetOutputInferDataType(value_node, output_idx);
     }
     std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
 
     device::DeviceAddressPtr address =
       device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
-    MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
+    MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
     MS_EXCEPTION_IF_NULL(address);
     address->set_from_persistent_mem(true);
     AnfAlgo::SetOutputAddr(address, output_idx++, value_node.get());
@@ -171,7 +172,8 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
       auto address = device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(true);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
+                    << " addr:" << address;
 
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
     }
@@ -185,7 +187,7 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsControlOpExecInBackend(kernel)) {
+    if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       continue;
     }
 
@@ -202,7 +204,8 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       if (is_gradient_out) {
         device_address->set_from_persistent_mem(true);
       }
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
+                    << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
   }
@@ -214,7 +217,7 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::IsControlOpExecInBackend(kernel)) {
+    if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
       continue;
     }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -225,7 +228,8 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
         break;
       }
       auto device_address = device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
+                    << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
     }
   }
@@ -237,10 +241,10 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
   std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
-    if (!AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
+    if (!common::AnfAlgo::IsInplaceNode(kernel, "inplace_algo")) {
       continue;
     }
-    auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
+    auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
     MS_EXCEPTION_IF_NULL(primitive);
     auto inplace_group_attr = primitive->GetAttr("inplace_group");
     MS_EXCEPTION_IF_NULL(inplace_group_attr);
@@ -255,7 +259,7 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
       continue;
     }
     // Get the device address of the first node in the inplace group.
-    auto node_primitive = AnfAlgo::GetCNodePrimitive(group_nodes[0]);
+    auto node_primitive = common::AnfAlgo::GetCNodePrimitive(group_nodes[0]);
     MS_EXCEPTION_IF_NULL(node_primitive);
     auto output_index = GetValue<uint32_t>(node_primitive->GetAttr("inplace_output_index"));
     auto device_address = AnfAlgo::GetMutableOutputAddr(group_nodes[0], output_index, false);
@@ -264,7 +268,7 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
     // Update the device address of other nodes using device address of the first node in the inplace group.
     for (size_t i = 1; i < group_nodes.size(); ++i) {
       auto &group_node = group_nodes[i];
-      auto prim = AnfAlgo::GetCNodePrimitive(group_node);
+      auto prim = common::AnfAlgo::GetCNodePrimitive(group_node);
       MS_EXCEPTION_IF_NULL(prim);
       auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
       AnfAlgo::SetOutputAddr(device_address, index, group_node.get());
@@ -280,7 +284,7 @@ void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
     if (output_num == 0) {
       MS_LOG(DEBUG) << "This kernel has no output size.";
       continue;
@@ -542,7 +546,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   auto &outputs_with_index = run_op_graph_output_nodes_[graph->graph_id()];
   for (auto &node : output_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    (void)outputs_with_index.emplace_back(AnfAlgo::VisitKernelWithReturnType(node, 0, false));
+    (void)outputs_with_index.emplace_back(common::AnfAlgo::VisitKernelWithReturnType(node, 0, false));
   }
 
   UpdateRefCountForGraphOutput(outputs_with_index);

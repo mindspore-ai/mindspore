@@ -25,6 +25,7 @@
 #include <thread>
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "ir/manager.h"
@@ -418,14 +419,14 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
-  size_t real_input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t real_input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   std::vector<std::shared_ptr<OpIOInfo>> inputs = op_info_ptr->inputs_ptr();
   std::vector<std::shared_ptr<OpIOInfo>> outputs = op_info_ptr->outputs_ptr();
   std::vector<int64_t> dyn_input_sizes;
-  auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (primitive->GetAttr("dyn_input_sizes") != nullptr) {
     dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr("dyn_input_sizes"));
   }
@@ -560,7 +561,7 @@ std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfN
     auto const &output = output_list[i];
     MS_EXCEPTION_IF_NULL(output);
     bool found = false;
-    auto pree_node = AnfAlgo::VisitKernel(output, 0);
+    auto pree_node = common::AnfAlgo::VisitKernel(output, 0);
     auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
     if (pos != std::end(node_list)) {
       output_index.push_back(pree_node);
@@ -624,18 +625,18 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
       for (size_t input_idx = 1; input_idx < cnode->inputs().size(); ++input_idx) {
         auto input_node = cnode->input(input_idx);
         MS_EXCEPTION_IF_NULL(input_node);
-        if (input_node->isa<CNode>() && AnfAlgo::GetInputTensorNum(input_node) == 0) {
+        if (input_node->isa<CNode>() && common::AnfAlgo::GetInputTensorNum(input_node) == 0) {
           continue;
         }
-        output_list->push_back(AnfAlgo::VisitKernel(input_node, 0).first);
+        output_list->push_back(common::AnfAlgo::VisitKernel(input_node, 0).first);
       }
     } else {
       // single output.
-      output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+      output_list->push_back(common::AnfAlgo::VisitKernel(func_output, 0).first);
     }
   } else {
     // single output.
-    output_list->push_back(AnfAlgo::VisitKernel(func_output, 0).first);
+    output_list->push_back(common::AnfAlgo::VisitKernel(func_output, 0).first);
   }
 }
 
@@ -643,20 +644,20 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
   if (node->isa<ValueNode>()) {
     return true;
   }
-  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+  if (node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
     return true;
   }
   return false;
 }
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
-  if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || common::AnfAlgo::GetOutputTensorNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output."
                       << trace::DumpSourceLines(cnode);
   }
   std::vector<int64_t> axis;
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis_attr = primitive->GetAttr(kAxis);
   if (axis_attr == nullptr) {
@@ -676,7 +677,7 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
       (void)axis.emplace_back(elem);
     }
   }
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
   return axis;
 }
 
@@ -687,7 +688,7 @@ void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std
   std::vector<int64_t> &_stride = *stride;
   std::vector<size_t> &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << AnfAlgo::GetCNodeName(kernel_node)
+    MS_LOG(EXCEPTION) << "For '" << common::AnfAlgo::GetCNodeName(kernel_node)
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
                          "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
                       << _begin.size() << ", the length of 'stride': " << _stride.size()
@@ -736,7 +737,7 @@ std::vector<bool> Dec2Bin(const int64_t &mask) {
 void ComputeBeginMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, const std::vector<int64_t> &stride,
                       const std::vector<size_t> &input_shape) {
   std::vector<int64_t> &_begin = *begin;
-  auto begin_mask_int = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBeginMask);
+  auto begin_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBeginMask);
   auto begin_mask = Dec2Bin(begin_mask_int);
   for (size_t i = 0; i < begin_mask.size(); i++) {
     if (i < kStridedSliceMaxDims && begin_mask[i]) {
@@ -748,7 +749,7 @@ void ComputeBeginMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, 
 void ComputeEndMask(const CNodePtr &kernel_node, std::vector<int64_t> *end, const std::vector<int64_t> &stride,
                     const std::vector<size_t> &input_shape) {
   std::vector<int64_t> &_end = *end;
-  auto end_mask_int = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEndMask);
+  auto end_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEndMask);
   auto end_mask = Dec2Bin(end_mask_int);
   for (size_t j = 0; j < end_mask.size(); j++) {
     if (j < kStridedSliceMaxDims && end_mask[j]) {
@@ -762,7 +763,7 @@ void ComputeEllipsisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begi
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto ellipsis_mask_int = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEllipsisMask);
+  auto ellipsis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEllipsisMask);
   auto ellipsis_mask = Dec2Bin(ellipsis_mask_int);
   for (size_t k = 0; k < ellipsis_mask.size(); k++) {
     if (k < kStridedSliceMaxDims && ellipsis_mask[k]) {
@@ -778,7 +779,7 @@ void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto new_axis_mask_int = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrNewAxisMask);
+  auto new_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrNewAxisMask);
   auto new_axis_mask = Dec2Bin(new_axis_mask_int);
   for (size_t l = 0; l < new_axis_mask.size(); l++) {
     if (l < kStridedSliceMaxDims && new_axis_mask[l]) {
@@ -793,7 +794,7 @@ void ComputShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_t
                           std::vector<int64_t> *stride) {
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  auto shrink_axis_mask_int = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrShrinkAxisMask);
+  auto shrink_axis_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrShrinkAxisMask);
   auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_int);
   for (size_t m = 0; m < shrink_axis_mask.size(); m++) {
     if (m < kStridedSliceMaxDims && shrink_axis_mask[m]) {

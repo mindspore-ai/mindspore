@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace device {

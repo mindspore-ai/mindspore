@@ -18,7 +18,7 @@
 #include <memory>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"

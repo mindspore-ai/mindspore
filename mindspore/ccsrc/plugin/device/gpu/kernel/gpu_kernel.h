@@ -34,6 +34,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/executor/dynamic_kernel.h"
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
@@ -116,7 +117,7 @@ class NativeGpuKernelMod : public GpuKernelMod {
 
     if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
       auto kernel_node = kernel_node_.lock();
-      const std::string &prim_name = (kernel_node == nullptr ? "" : AnfAlgo::GetCNodeName(kernel_node));
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
       MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index << ", op name is: " << prim_name;
     }
 
@@ -140,17 +141,17 @@ class NativeGpuKernelMod : public GpuKernelMod {
 
   template <typename T>
   inline T GetAttr(const CNodePtr &kernel_node, const std::string &key) const {
-    const PrimitivePtr &prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    const PrimitivePtr &prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     const ValuePtr &attr = prim->GetAttr(key);
     if (attr == nullptr) {
-      const std::string &prim_name = AnfAlgo::GetCNodeName(kernel_node);
+      const std::string &prim_name = common::AnfAlgo::GetCNodeName(kernel_node);
       MS_LOG(EXCEPTION) << "The attr(" << key << ") of kernel(" << prim_name << ") not exist";
     }
     return GetValue<T>(attr);
   }
   template <typename T>
   inline T GetAttrWithDefault(const CNodePtr &kernel_node, const std::string &key, const T &value) const {
-    const PrimitivePtr &prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    const PrimitivePtr &prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     const ValuePtr &attr = prim->GetAttr(key);
     if (attr == nullptr) {
       return value;
@@ -375,7 +376,7 @@ class NativeGpuKernelMod : public GpuKernelMod {
                         << "th input in the depend_tensor_map";
     }
     auto input_tensor = depend_iter->second;
-    const auto &input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
+    const auto &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
     if (!ShapeEqual(input_shape, input_tensor->shape())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the " << input_index
                         << "th input is different between the InferShape and the TensorShape";

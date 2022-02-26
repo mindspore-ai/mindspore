@@ -21,7 +21,7 @@
 #include <ctime>
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #if ENABLE_GPU
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif

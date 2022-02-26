@@ -28,6 +28,7 @@
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "utils/ms_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/session_basic.h"
 #include "frontend/operator/ops.h"
 #include "profiler/device/cpu/cpu_profiling.h"
@@ -105,7 +106,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       }
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item_node, 0);
       if (output_type_id == kTypeUnknown) {
-        output_type_id = AnfAlgo::GetOutputInferDataType(item_node, 0);
+        output_type_id = common::AnfAlgo::GetOutputInferDataType(item_node, 0);
       }
       size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
       ShapeVector data_shape = tensor->shape();
@@ -134,11 +135,11 @@ void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel
   for (auto &item : kernel_graph->input_nodes()) {
     MS_EXCEPTION_IF_NULL(item);
     if (item->isa<Parameter>()) {
-      auto output_num = AnfAlgo::GetOutputTensorNum(item);
+      auto output_num = common::AnfAlgo::GetOutputTensorNum(item);
       for (size_t index = 0; index < output_num; index++) {
         TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
         if (output_type_id == kTypeUnknown) {
-          output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
+          output_type_id = common::AnfAlgo::GetOutputInferDataType(item, index);
         }
         std::vector<size_t> fmt_shape = AnfAlgo::GetOutputDeviceShape(item, index);
         size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
@@ -190,16 +191,16 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(bound_addresses);
-  size_t output_size = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_size = common::AnfAlgo::GetOutputTensorNum(node);
   if (index >= output_size) {
     MS_LOG(EXCEPTION) << "For node " << node->DebugString() << ", index " << index << " exceed output size "
                       << output_size;
   }
   auto address = AnfAlgo::GetMutableOutputAddr(node, index);
   MS_EXCEPTION_IF_NULL(address);
-  TypeId infer_type_id = AnfAlgo::GetOutputInferDataType(node, index);
+  TypeId infer_type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
   TypeId device_type_id = AnfAlgo::GetOutputDeviceDataType(node, index);
-  auto shape = AnfAlgo::GetOutputInferShape(node, index);
+  auto shape = common::AnfAlgo::GetOutputInferShape(node, index);
   ShapeVector temp_shape;
   tensor::TensorPtr tensor;
   bool is_internal_output = kernel_graph->IsInternalOutput(node, index);
@@ -255,10 +256,10 @@ BaseRef CPUKernelRuntime::GetOrCreateTensorForOutput(
   if (input_node->isa<CNode>()) {
     auto node = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
+    if (common::AnfAlgo::GetCNodeName(input_node) == prim::kPrimMakeTuple->name()) {
       VectorRef ret;
       for (size_t i = 1; i < node->inputs().size(); i++) {
-        auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
+        auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
         auto out = GetOrCreateTensorForOutput(kernel_graph, item_with_index, tensor_to_node, input_param_tensor_map,
                                               bound_addresses);
         ret.push_back(out);
@@ -303,7 +304,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   std::set<DeviceAddressPtr> bound_addresses;
   auto output_nodes = kernel_graph->outputs();
   for (const auto &item : output_nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, false);
+    auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(item, 0, false);
     auto out = GetOrCreateTensorForOutput(kernel_graph, item_with_index, tensor_to_node, &input_param_tensor_map,
                                           &bound_addresses);
     outputs->push_back(std::move(out));
@@ -330,7 +331,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
       auto tensor_address = tensor->device_address();
-      if (AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()) && tensor_address != nullptr &&
+      if (common::AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()) && tensor_address != nullptr &&
           tensor_address != address) {
         tensor->data_sync();
       }
@@ -355,10 +356,11 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       auto tensor_shape = tensor->shape();
       std::vector<size_t> shape_tmp;
       (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
-      AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp}, item.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp},
+                                                  item.get());
     }
     address->ref_count_ = INIT_NODE_REF;
-    if (AnfAlgo::IsParameterWeight(input_param)) {
+    if (common::AnfAlgo::IsParameterWeight(input_param)) {
       tensor->set_device_address(address);
     }
   }
@@ -434,19 +436,19 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
 #endif
-    if (AnfAlgo::IsDynamicShape(kernel)) {
+    if (common::AnfAlgo::IsDynamicShape(kernel)) {
       AnfAlgo::InferShape(kernel);
     }
     std::vector<kernel::AddressPtr> kernel_inputs;
     std::vector<kernel::AddressPtr> kernel_workspaces;
     std::vector<kernel::AddressPtr> kernel_outputs;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 0; i < input_num; ++i) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i).get();
       MS_EXCEPTION_IF_NULL(device_address);
       AddRuntimeAddress(device_address, &kernel_inputs);
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i).get();
       MS_EXCEPTION_IF_NULL(device_address);

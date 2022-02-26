@@ -21,6 +21,8 @@
 #include "backend/common/pass/convert_const_input_to_attr.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/ir_fission/topk_split.h"
@@ -108,12 +110,12 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
 
   CNodePtr topk_cnode = GetTopkCNodeFromKernelGraph(kernel_graph);
   EXPECT_EQ(topk_cnode->inputs().size(), 3);
-  auto input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
+  auto input_names_vec = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
   EXPECT_EQ(input_names_vec.size(), 2);
   mindspore::HashSet<size_t> attr_index{1};
   ConstInputToAttr(topk_cnode, attr_index);
   EXPECT_EQ(topk_cnode->inputs().size(), 2);
-  input_names_vec = AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
+  input_names_vec = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
   EXPECT_EQ(input_names_vec.size(), 2);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

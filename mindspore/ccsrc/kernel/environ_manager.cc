@@ -65,7 +65,7 @@ void EnvironMgr::Clear() {
 bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
   // Check the value type attr.
-  auto value_type_attr = TypeId(AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
+  auto value_type_attr = TypeId(common::AnfAlgo::GetNodeAttr<int>(kernel_node, kEnvValueTypeAttr));
   if ((value_type_attr != kObjectTypeTensorType) && (value_type_attr != kObjectTypeEnvType)) {
     MS_LOG(ERROR) << "The value type is not supported: " << value_type_attr
                   << ", kernel: " << kernel_node->fullname_with_scope();

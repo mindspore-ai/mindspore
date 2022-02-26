@@ -18,11 +18,10 @@
 #include <memory>
 #include "backend/common/pass/sparse_process.h"
 #include "ir/anf.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/anf_utils.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/optimizer/optimizer.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -102,7 +101,7 @@ bool SplitParameter(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs,
 
 bool SplitCNode(const AnfNodePtr &node, std::vector<AnfNodePtr> *new_inputs) {
   auto cnode = node->cast<CNodePtr>();
-  auto sparse_prim = AnfAlgo::GetCNodePrimitive(cnode);
+  auto sparse_prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(sparse_prim);
   // Currently, only MakeCSR and MakeTuple nodes can be split.
   if (make_sparse_set.count(sparse_prim->name()) <= 0 && sparse_prim->name().compare(prim::kPrimMakeTuple->name()) != 0)
@@ -140,7 +139,7 @@ const AnfNodePtr SparseProcess::Process(const FuncGraphPtr &func_graph, const An
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto prim = AnfAlgo::GetCNodePrimitive(cnode);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(prim);
   std::string prim_name = prim->name();
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();

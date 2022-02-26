@@ -51,13 +51,13 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
 void UpdateShape(size_t miss_count, const CNodePtr &node) {
   std::vector<size_t> out_shape;
   (void)out_shape.emplace_back(miss_count);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node, 0), out_shape, out_shape, out_shape},
-                                      node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(
+    dtypes, {common::AnfAlgo::GetOutputInferShape(node, 0), out_shape, out_shape, out_shape}, node.get());
 }
 
 void CheckMissCount(size_t miss_count, int count_size, float total_count, float hit_count) {
@@ -72,9 +72,9 @@ void CheckMissCount(size_t miss_count, int count_size, float total_count, float 
 
 void MapCacheIdxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
-  auto hashmap_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto hashmap_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (hashmap_shape.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' should be 2-D, but got "
                       << hashmap_shape.size() << "-D.";
@@ -107,7 +107,7 @@ template <typename T>
 void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
-  auto emb_idx_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  auto emb_idx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   batch_size_ = 1;
   for (size_t i = 0; i < emb_idx_shape.size(); ++i) {
     batch_size_ *= emb_idx_shape[i];

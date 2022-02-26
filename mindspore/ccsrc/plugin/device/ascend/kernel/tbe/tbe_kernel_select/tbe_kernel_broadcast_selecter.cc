@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
 
 namespace mindspore {
@@ -34,34 +35,34 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
   output_num_ = 0;
   input_shapes_.clear();
   output_shapes_.clear();
-  if (AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode_ptr_)) {
-    auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kAttrDynInputSizes);
+  if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode_ptr_)) {
+    auto dynamic_size_vec = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kAttrDynInputSizes);
     constexpr int64_t DYNAMIC_INPUT_NUM = 2;
     if (dynamic_size_vec.empty()) {
-      MS_LOG(EXCEPTION) << "Node [" << AnfAlgo::GetCNodeName(cnode_ptr_) << "]'s attr [dyn_input_sizes] is empty"
-                        << trace::DumpSourceLines(cnode_ptr_);
+      MS_LOG(EXCEPTION) << "Node [" << common::AnfAlgo::GetCNodeName(cnode_ptr_)
+                        << "]'s attr [dyn_input_sizes] is empty" << trace::DumpSourceLines(cnode_ptr_);
     }
     if (dynamic_size_vec[0] < DYNAMIC_INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "Node [" << AnfAlgo::GetCNodeName(cnode_ptr_)
+      MS_LOG(EXCEPTION) << "Node [" << common::AnfAlgo::GetCNodeName(cnode_ptr_)
                         << "]'s attr [dyn_input_sizes] value less than " << DYNAMIC_INPUT_NUM
                         << trace::DumpSourceLines(cnode_ptr_);
     }
-    auto dynamic_input_shape0_ = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
+    auto dynamic_input_shape0_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
     PadScalarShape(&dynamic_input_shape0_);
     input_shapes_.emplace_back(dynamic_input_shape0_);
     input_num_ = 1;
   } else {
-    input_num_ = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+    input_num_ = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
     for (size_t i = 0; i < input_num_; ++i) {
-      auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
+      auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
       PadScalarShape(&input_shape);
       input_shapes_.emplace_back(input_shape);
     }
   }
 
-  output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  output_num_ = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   for (size_t i = 0; i < output_num_; ++i) {
-    auto output = AnfAlgo::GetOutputInferShape(cnode_ptr_, i);
+    auto output = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, i);
     PadScalarShape(&output);
     output_shapes_.emplace_back(output);
   }

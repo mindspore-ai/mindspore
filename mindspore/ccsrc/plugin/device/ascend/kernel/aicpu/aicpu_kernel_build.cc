@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <map>
 #include <climits>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/dynamic_aicpu_kernel_mod.h"
@@ -31,6 +31,7 @@
 #include "proto/attr.pb.h"
 #include "proto/node_def.pb.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "backend/common/session/kernel_graph.h"
@@ -81,8 +82,8 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   std::vector<size_t> input_size_list;
   std::vector<size_t> output_size_list;
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
   if (!SetIOIputSize(anf_node, input_num, &input_size_list)) {
     return false;
@@ -146,7 +147,7 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
 void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(proto);
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
@@ -157,7 +158,7 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAICPU);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   auto attrs_ptr = op_info_ptr->attrs_ptr();
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
   for (const auto &attr_ptr : attrs_ptr) {
@@ -181,15 +182,15 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
 void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(proto);
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_num == 0) {
-    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have input.";
+    MS_LOG(INFO) << "Node [" << common::AnfAlgo::GetCNodeName(anf_node) << "] does not have input.";
     return;
   }
 
   std::vector<size_t> input_size_list;
   if (!SetIOIputSize(anf_node, input_num, &input_size_list)) {
-    MS_LOG(ERROR) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] get input size list failed.";
+    MS_LOG(ERROR) << "Node [" << common::AnfAlgo::GetCNodeName(anf_node) << "] get input size list failed.";
     return;
   }
 
@@ -229,12 +230,12 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
 void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(proto);
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   if (output_num == 1 && HasAbstractMonad(anf_node)) {
     output_num = 0;
   }
   if (output_num == 0) {
-    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have output. ";
+    MS_LOG(INFO) << "Node [" << common::AnfAlgo::GetCNodeName(anf_node) << "] does not have output. ";
     return;
   }
 
@@ -254,7 +255,7 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
 
     int64_t data_size = 1;
     if (!GetShapeSize(output_shape, TypeIdToType(output_type), &data_size)) {
-      MS_LOG(ERROR) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] get output size failed for output "
+      MS_LOG(ERROR) << "Node [" << common::AnfAlgo::GetCNodeName(anf_node) << "] get output size failed for output "
                     << output_index;
       return;
     }
@@ -268,7 +269,7 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
 void SetNodedefProto(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(proto);
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
@@ -385,14 +386,14 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
     return;
   }
 
-  if (!AnfAlgo::IsDynamicShape(anf_node)) {
+  if (!common::AnfAlgo::IsDynamicShape(anf_node)) {
     return;
   }
 
   uint64_t ext_info_head_len = kExtInfoHeadSize;
   std::string ext_info;
-  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
   // 1.addr:unknown shape type
   uint64_t ext_info_len = ext_info.size();
@@ -409,7 +410,7 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   char *ext_info_buf = ext_info.data();
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
@@ -424,12 +425,12 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
 
 KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
   std::shared_ptr<AicpuOpKernelMod> kernel_mod_ptr;
-  if (AnfAlgo::IsDynamicShape(anf_node)) {
+  if (common::AnfAlgo::IsDynamicShape(anf_node)) {
     kernel_mod_ptr = std::make_shared<DynamicAicpuOpKernelMod>(anf_node);
   } else {
     kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>(anf_node);

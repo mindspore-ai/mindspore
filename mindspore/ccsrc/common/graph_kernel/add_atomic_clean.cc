@@ -26,12 +26,11 @@
 #include <vector>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "kernel/kernel.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "backend/common/session/kernel_graph.h"
 #include "debug/anf_ir_dump.h"
 #include "kernel/common_utils.h"
@@ -41,7 +40,7 @@ namespace {
 auto constexpr NUMBER_COND_FOR_FILTER_INPLACE = 2;
 std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = false) {
   if (!IsPrimitiveCNode(node, prim::kPrimReduceSum)) {
-    MS_LOG(EXCEPTION) << "Expect ReduceSum node, but got " << AnfAlgo::GetCNodeName(node);
+    MS_LOG(EXCEPTION) << "Expect ReduceSum node, but got " << common::AnfAlgo::GetCNodeName(node);
   }
 
   auto input = node->cast<CNodePtr>()->input(kFirstDataInputIndex);
@@ -110,7 +109,7 @@ bool AtomicAddChecker::FindCandidate(const AnfNodePtr &anf_node) {
   atomic_add_infos_.clear();
   auto node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+  auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
     mng_sub = Manage(sub_graph, false);
@@ -176,7 +175,7 @@ bool AtomicAddChecker::CanActivateAtomicAdd(const AnfNodePtr &anf_node) {
 }
 
 bool AtomicAddChecker::Check(const AnfNodePtr &node) {
-  return (AnfAlgo::IsGraphKernel(node) && CanActivateAtomicAdd(node));
+  return (common::AnfAlgo::IsGraphKernel(node) && CanActivateAtomicAdd(node));
 }
 
 bool AtomicAddCheckerGPU::SuitableForAtomicAdd(const AnfNodePtr &node) {
@@ -277,7 +276,7 @@ void AtomicCleanInsertter::CorrectKernelBuildInfo(
 
   for (const auto &clean_info : clean_infos) {
     auto &new_input = clean_info.second;
-    auto kernel_with_index = AnfAlgo::VisitKernel(new_input, 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(new_input, 0);
     new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
     new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
   }
@@ -390,7 +389,7 @@ void AtomicCleanInsertter::CorrectAbstract(
 void AtomicCleanInsertter::ProcessOriginCNode(
   const AnfNodePtr &composite_node,
   const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) {
-  auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
+  auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
     mng_sub = Manage(sub_graph, false);

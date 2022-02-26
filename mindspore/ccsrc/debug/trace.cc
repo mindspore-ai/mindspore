@@ -38,7 +38,7 @@
 #include "pipeline/jit/static_analysis/async_eval_result.h"
 #include "pipeline/jit/base.h"
 #include "utils/log_adapter.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "abstract/abstract_value.h"
 #include "utils/file_utils.h"
 

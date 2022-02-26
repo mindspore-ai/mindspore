@@ -21,6 +21,7 @@
 
 #include "abstract/abstract_value.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,10 +42,10 @@ CNodePtr ProcessOutput(const FuncGraphPtr &graph, const AnfNodePtr &node, const 
   auto abstract = cnode_ptr->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
 
-  if (AnfAlgo::HasNodeAttr("optim_output_passed", cnode_ptr) && abstract->isa<abstract::AbstractTuple>()) {
+  if (common::AnfAlgo::HasNodeAttr("optim_output_passed", cnode_ptr) && abstract->isa<abstract::AbstractTuple>()) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr("optim_output_passed", MakeValue(true), cnode_ptr);
+  common::AnfAlgo::SetNodeAttr("optim_output_passed", MakeValue(true), cnode_ptr);
 
   std::vector<AbstractBasePtr> abstract_list;
   for (size_t i = 0; i < output_size; i++) {

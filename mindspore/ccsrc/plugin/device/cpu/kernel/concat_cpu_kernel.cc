@@ -26,10 +26,10 @@ constexpr size_t kConcatOutputsNum = 1;
 template <typename T>
 void ConcatCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
-  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
-  auto input_1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  axis_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+  auto input_1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(input_1_shape.size());
   }
@@ -43,14 +43,14 @@ bool ConcatCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs
   if (!node_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
-  const size_t input_num = AnfAlgo::GetInputTensorNum(node_);
+  const size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOutputsNum, kernel_name_);
 
   std::vector<std::vector<size_t>> input_flat_shape_list;
   input_flat_shape_list.reserve(input_num);
   for (size_t i = 0; i < input_num; i++) {
-    auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
+    auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
     (void)input_flat_shape_list.emplace_back(flat_shape);
   }

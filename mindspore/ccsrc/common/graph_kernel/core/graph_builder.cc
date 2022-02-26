@@ -24,7 +24,7 @@
 
 #include "base/core_ops.h"
 #include "ir/func_graph.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "utils/ordered_set.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"

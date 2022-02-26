@@ -33,7 +33,7 @@ const std::map<std::string, size_t> kFormatIndexMap = {{"NCHW", 2}, {"HWCN", 0},
 
 void Conv2dGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -41,7 +41,7 @@ void Conv2dGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Conv2d grad filter only support nchw input!";
   }
   std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
-  size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
+  size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv2d channels should be divided by group!";
@@ -55,9 +55,9 @@ void Conv2dGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   std::vector<int> stride_ori;
   std::vector<int> dilation_ori;
-  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
-  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
-  auto format_me = AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
+  auto stride_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
+  auto dilation_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
+  auto format_me = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, FORMAT);
   auto iter = kFormatIndexMap.find(format_me);
   if (iter == kFormatIndexMap.end()) {
     MS_LOG(EXCEPTION) << "OriFormat is " << format_me << ", Please confirm that in {NCHW, HWCN, NHWC}.";
@@ -87,7 +87,7 @@ void Conv2dGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "Conv2d grad get padding failed";

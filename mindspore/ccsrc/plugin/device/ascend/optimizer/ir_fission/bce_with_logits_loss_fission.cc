@@ -18,10 +18,11 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -38,12 +39,12 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   CNodePtr new_cnode = NewCNode(new_simoid_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   auto predict_input = cnode->inputs()[kIndex1];
-  auto new_node_dtype = {AnfAlgo::GetOutputInferDataType(predict_input, 0)};
-  auto new_node_shape = {AnfAlgo::GetOutputInferShape(predict_input, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(new_node_dtype, new_node_shape, new_cnode.get());
+  auto new_node_dtype = {common::AnfAlgo::GetOutputInferDataType(predict_input, 0)};
+  auto new_node_shape = {common::AnfAlgo::GetOutputInferShape(predict_input, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(new_node_dtype, new_node_shape, new_cnode.get());
 
   // Add reduce node
-  string reduction = AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
+  string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
   MS_LOG(INFO) << "Create reduce node, reduction attr is: " << reduction;
   std::vector<AnfNodePtr> reduce_inputs;
   if (reduction == "sum") {
@@ -56,15 +57,15 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   }
   auto reduce_node = NewCNode(reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
-  auto type = AnfAlgo::GetOutputInferDataType(node, 0);
+  auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   if (type == kNumberTypeFloat16) {
     type = kNumberTypeFloat32;
   }
-  auto shape = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape({type}, shape, reduce_node.get());
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{}), reduce_node);
-  AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_node);
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reduce_node);
+  auto shape = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape({type}, shape, reduce_node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{}), reduce_node);
+  common::AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_node);
+  common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reduce_node);
   reduce_node->set_scope(cnode->scope());
   return reduce_node;
 }
@@ -84,11 +85,11 @@ const AnfNodePtr BCEWithLogitsLossFission::Process(const FuncGraphPtr &func_grap
   if (GetBoolAttr(cnode, kAttrVisited)) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   if (cnode->inputs().size() == 0) {
     return nullptr;
   }
-  if (!AnfAlgo::HasNodeAttr("reduction", cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr("reduction", cnode)) {
     MS_LOG(INFO) << "Has no reduction attr.";
     return nullptr;
   }

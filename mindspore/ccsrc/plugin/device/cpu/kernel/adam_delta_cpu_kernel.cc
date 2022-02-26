@@ -59,7 +59,7 @@ void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, floa
 
 void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -91,8 +91,8 @@ void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' should be at least 1-D, but got empty shape!";
   }
-  if (AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
+  if (common::AnfAlgo::HasNodeAttr(USE_NESTEROV, kernel_node)) {
+    use_nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "use_nesterov");
   }
 }
 

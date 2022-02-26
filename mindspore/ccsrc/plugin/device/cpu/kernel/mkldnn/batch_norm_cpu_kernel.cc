@@ -37,9 +37,9 @@ void BatchNormCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void BatchNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
-  momentum = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  is_train = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
+  momentum = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() == kBatchNormInputShapeSize2) {
     (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeSize - kBatchNormInputShapeSize2, 1);
@@ -52,7 +52,7 @@ void BatchNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   nhw_size = x_shape[0] * hw_size;
   dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
   dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({2, channel});
-  auto epsilon = AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
+  auto epsilon = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
   auto prop_kind = dnnl::prop_kind::forward_inference;
   auto normalization_flags = dnnl::normalization_flags::use_scale_shift | dnnl::normalization_flags::use_global_stats;
   if (is_train) {

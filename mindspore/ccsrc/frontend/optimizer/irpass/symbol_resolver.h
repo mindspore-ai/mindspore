@@ -27,7 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/pattern_matcher.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/parse/parse_base.h"
 
 namespace mindspore {

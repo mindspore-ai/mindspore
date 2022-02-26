@@ -29,12 +29,13 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "pipeline/jit/pipeline.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "debug/data_dump/e2e_dump.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "debug/env_config_parser.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
@@ -737,7 +738,7 @@ void Debugger::CheckDatasetGraph() {
   // check if there is GetNext or InitDataSetQueue node
   const auto &nodes = graph_ptr_->execution_order();
   for (const auto &node : nodes) {
-    auto node_name = AnfAlgo::GetCNodeName(node);
+    auto node_name = common::AnfAlgo::GetCNodeName(node);
     MS_LOG(INFO) << "node: " << GetKernelNodeName(node);
     if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
       MS_LOG(INFO) << "Not enabling debugger for graph " << graph_ptr_->graph_id() << ": found dataset graph node "
@@ -1515,7 +1516,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   // When MindRT is used, only ValueNodes and ParameterWeights can be loaded from device to host
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     if (!anf_node->isa<ValueNode>() &&
-        !(anf_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
+        !(anf_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(anf_node->cast<ParameterPtr>()))) {
       return;
     }
   }
@@ -1529,7 +1530,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   }
   auto addr = AnfAlgo::GetOutputAddr(anf_node, output_index);
   MS_EXCEPTION_IF_NULL(addr);
-  auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
+  auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   if (!IsTypeDebuggerSupported(type)) {
     return;
   }
@@ -1684,7 +1685,7 @@ void Debugger::LoadGraphOutputs() {
   for (const auto &node : apply_kernels) {
     MS_EXCEPTION_IF_NULL(node);
     std::string kernel_name = GetKernelNodeName(node);
-    auto output_size = AnfAlgo::GetOutputTensorNum(node);
+    auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
     if (partial_memory_) {
       if (!debug_services_->IsWatchPoint(kernel_name, node)) {
         continue;
@@ -1697,7 +1698,7 @@ void Debugger::LoadGraphOutputs() {
       }
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       MS_EXCEPTION_IF_NULL(addr);
-      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
       if (!IsTypeDebuggerSupported(type)) {
         continue;
       }

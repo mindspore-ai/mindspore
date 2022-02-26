@@ -19,7 +19,8 @@
 #include <utility>
 #include "utils/hash_map.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "base/core_ops.h"
 #include "kernel/common_utils.h"
@@ -94,7 +95,7 @@ const AnfNodePtr EliminateRedundantOp::ProcessMatchedNodes(const FuncGraphPtr &f
   auto pass_size = pass_vector->size();
   for (size_t idx = 1; idx <= pass_size - 1; ++idx) {
     auto nd = (*pass_vector)[idx].first;
-    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimDepend)) {
+    if (common::AnfAlgo::CheckPrimitiveType(nd, prim::kPrimDepend)) {
       has_depend_node = true;
     }
     if (users[nd].size() > 1) {
@@ -140,7 +141,7 @@ void EliminateRedundantOp::Init() {
 
 const AnfNodePtr EliminateRedundantOp::DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   // match the first name
-  auto name1 = AnfAlgo::GetCNodeName(cnode);
+  auto name1 = common::AnfAlgo::GetCNodeName(cnode);
   auto it = redundant_process_map_.find(name1);
   if (it == redundant_process_map_.end()) {
     return nullptr;
@@ -152,7 +153,7 @@ const AnfNodePtr EliminateRedundantOp::DoEliminate(const FuncGraphPtr &func_grap
     return nullptr;
   }
   // match the second name
-  auto name2 = AnfAlgo::GetCNodeName(prev_cnode);
+  auto name2 = common::AnfAlgo::GetCNodeName(prev_cnode);
   if (name2 != it->second.first) {
     return nullptr;
   }

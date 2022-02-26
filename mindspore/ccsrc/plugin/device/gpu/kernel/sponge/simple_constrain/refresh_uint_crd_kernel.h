@@ -41,10 +41,10 @@ class RefreshUintCrdGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     half_exp_gamma_plus_half = static_cast<float>(GetAttr<float>(kernel_node, "half_exp_gamma_plus_half"));
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_quarter_cof = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_test_frc = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_mass_inverse = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_quarter_cof = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_test_frc = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_mass_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
     for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
     for (size_t i = 0; i < shape_quarter_cof.size(); i++) ele_quarter_cof *= shape_quarter_cof[i];

@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 // namespace to support opmap definition
@@ -348,8 +348,8 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
 void Resource::CacheFuncGraph() const {
   FuncGraphPtr layout_fg = nullptr;
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (func_graph_->has_flag(parallel::AUTO_PARALLEL) &&
-      ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
+  if (func_graph_->has_flag(parallel::kAutoParallel) &&
+      ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel))) {
     layout_fg = GetResult(kStepParallelGraph).cast<FuncGraphPtr>();
   }
   compile_cache_manager_->CacheFuncGraph(func_graph_, layout_fg);

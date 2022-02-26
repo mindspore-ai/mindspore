@@ -19,7 +19,8 @@
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 std::string Vector2String(const std::vector<uint32_t> &v) {

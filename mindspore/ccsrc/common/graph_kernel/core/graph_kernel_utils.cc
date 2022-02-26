@@ -21,7 +21,7 @@
 #include <utility>
 #include "base/core_ops.h"
 #include "utils/anf_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {

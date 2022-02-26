@@ -52,7 +52,7 @@ class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto input_shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto input_shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);

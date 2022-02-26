@@ -38,8 +38,8 @@ class CrdToUintCrdGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
 
-    auto shape_crd_to_uint_crd_cof = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_crd_to_uint_crd_cof = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
     for (size_t i = 0; i < shape_crd_to_uint_crd_cof.size(); i++)
       ele_crd_to_uint_crd_cof *= shape_crd_to_uint_crd_cof[i];

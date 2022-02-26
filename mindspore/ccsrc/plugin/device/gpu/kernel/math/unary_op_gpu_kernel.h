@@ -114,7 +114,7 @@ class UnaryOpGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kUnaryOpTypeMap.find(kernel_name);
     if (iter == kUnaryOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
@@ -122,11 +122,11 @@ class UnaryOpGpuKernelMod : public NativeGpuKernelMod {
                         << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << kernel_name;
     }
     unary_op_type_ = iter->second;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }

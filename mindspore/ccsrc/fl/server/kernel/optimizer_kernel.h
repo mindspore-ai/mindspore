@@ -67,17 +67,17 @@ class OptimizerKernelMod : public NativeCpuKernelMod {
 
   void InitServerKernelInputOutputSize(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     size_t type_size = sizeof(float);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
+      std::vector<size_t> shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
       size_t tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       input_size_list_.emplace_back(tensor_size);
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+      std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
       size_t tensor_size =
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       output_size_list_.emplace_back(tensor_size);

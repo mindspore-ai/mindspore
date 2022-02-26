@@ -49,7 +49,7 @@ class SqueezeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     auto axis = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);

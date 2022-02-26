@@ -36,14 +36,14 @@ class LJEnergyGpuKernelMod : public NativeGpuKernelMod {
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     cutoff_square = static_cast<float>(GetAttr<float_t>(kernel_node, "cutoff_square"));
 
-    auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_LJtype = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_charge = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_nl_numbers = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_nl_serial = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_d_LJ_a = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
-    auto shape_d_LJ_b = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
+    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_LJtype = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_charge = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_nl_numbers = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_nl_serial = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_d_LJ_a = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    auto shape_d_LJ_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
 
     for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
     for (size_t i = 0; i < shape_LJtype.size(); i++) ele_LJtype *= shape_LJtype[i];

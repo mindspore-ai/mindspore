@@ -15,8 +15,8 @@
  */
 
 #include "backend/common/session/single_kernel_graph.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "utils/trace_base.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace session {
@@ -44,14 +44,14 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   auto cnode = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
   // get output dynamic shape info
-  AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), cnode);
   if (output_dtypes.size() != output_shapes.size()) {
     MS_LOG(EXCEPTION)
       << "The size of output_dtypes should be equal to size of output_shapes, but got output_dtypes size: "
       << output_dtypes.size() << ", output_shapes size: " << output_shapes.size() << ". The op name is: " << op_name
       << trace::DumpSourceLines(cnode);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(output_dtypes, output_shapes, cnode.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(output_dtypes, output_shapes, cnode.get());
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);

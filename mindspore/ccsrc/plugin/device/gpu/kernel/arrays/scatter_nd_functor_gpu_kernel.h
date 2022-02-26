@@ -62,7 +62,7 @@ class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kScatterNdFunctorTypeMap.find(kernel_name);
     if (iter == kScatterNdFunctorTypeMap.end()) {
       MS_LOG(EXCEPTION)
@@ -72,18 +72,18 @@ class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
       scatter_nd_functor_type_ = iter->second;
     }
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto index_depth = indices_shape.back();
     if (index_depth > input_shape.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the last dimension value of indices should be greater than "

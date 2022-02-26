@@ -27,7 +27,7 @@
 #include "base/base_ref.h"
 #include "base/core_ops.h"
 #include "ir/anf.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 using PatternListType = std::initializer_list<BaseRef>;

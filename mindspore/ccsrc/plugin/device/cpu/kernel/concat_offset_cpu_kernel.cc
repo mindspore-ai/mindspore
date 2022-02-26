@@ -28,10 +28,10 @@ template <typename T>
 void ConcatOffsetCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   cnode_ptr_ = kernel_node;
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
 
-  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  auto input_1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  auto input_1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis < 0) {
     axis_ = LongToSize(axis + input_1_shape.size());
   } else {
@@ -54,13 +54,13 @@ bool ConcatOffsetCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  size_t input_num = AnfAlgo::GetInputTensorNum(node_);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
   std::vector<size_t> offset{0};
-  size_t all_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0)[axis_];
+  size_t all_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0)[axis_];
 
   // cal offset
   for (size_t i = 1; i < input_num; i++) {
-    auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
+    auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     if (axis_ >= input_shape_i.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the 'axis' should be less than the dimension of input, but got 'axis': " << axis_
@@ -69,7 +69,7 @@ bool ConcatOffsetCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &
     offset.emplace_back(all_shape);
     all_shape += input_shape_i[axis_];
   }
-  auto output_shape = AnfAlgo::GetOutputInferShape(node_, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != kConcatOffsetOutputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                       << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();

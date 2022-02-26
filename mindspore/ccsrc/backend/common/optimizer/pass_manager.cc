@@ -19,11 +19,10 @@
 #include <deque>
 #include <string>
 #include "ir/anf.h"
-#include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -50,11 +49,11 @@ TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
     }
     return kTypeUnknown;
   }
-  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
+  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node);
   std::map<size_t, TypeId> index_to_types;
   TypeId result = kTypeUnknown;
   for (size_t i = 0; i < output_nums; i++) {
-    auto output_type = AnfAlgo::GetOutputInferDataType(node, i);
+    auto output_type = common::AnfAlgo::GetOutputInferDataType(node, i);
     (void)index_to_types.emplace(i, output_type);
     if (index == i) {
       result = output_type;
@@ -75,11 +74,11 @@ std::vector<size_t> CacheManager::GetOutputShape(const AnfNodePtr &node, size_t 
     }
     return {};
   }
-  auto output_nums = AnfAlgo::GetOutputTensorNum(node);
+  auto output_nums = common::AnfAlgo::GetOutputTensorNum(node);
   std::map<size_t, std::vector<size_t>> index_to_shapes;
   std::vector<size_t> result = {};
   for (size_t i = 0; i < output_nums; i++) {
-    auto output_shape = AnfAlgo::GetOutputInferShape(node, i);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(node, i);
     (void)index_to_shapes.emplace(i, output_shape);
     if (index == i) {
       result = output_shape;

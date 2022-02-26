@@ -25,7 +25,7 @@
 #include "include/api/model.h"
 #include "include/api/graph.h"
 #include "cxx_api/graph/graph_data.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {

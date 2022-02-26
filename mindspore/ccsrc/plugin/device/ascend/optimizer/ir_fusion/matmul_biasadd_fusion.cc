@@ -17,7 +17,8 @@
 #include <vector>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -43,7 +44,7 @@ AnfNodePtr MatmulBiasaddFusion::CreateMatmulWithBias(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttrs(matmul, new_node);
+  common::AnfAlgo::CopyNodeAttrs(matmul, new_node);
   return new_node;
 }
 
@@ -62,7 +63,7 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
 }
 
 bool MatmulAddFusion::NeedFusion(const AnfNodePtr &add) const {
-  auto bias_shape = AnfAlgo::GetPrevNodeOutputInferShape(add, kIndex1);
+  auto bias_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(add, kIndex1);
   if (bias_shape.size() != 1) {
     return false;
   }

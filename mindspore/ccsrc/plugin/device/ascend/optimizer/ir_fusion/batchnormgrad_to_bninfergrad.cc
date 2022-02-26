@@ -17,8 +17,9 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
@@ -42,8 +43,8 @@ CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormg
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(batchnormgrad->scope());
   new_node->set_abstract(node->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnormgrad, new_node);
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnormgrad, new_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnormgrad, new_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, batchnormgrad, new_node);
   return new_node;
 }
 
@@ -65,14 +66,14 @@ bool CheckIndex(const AnfNodePtr &index_node) {
 bool CheckBatchNormGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormgrad) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(batchnormgrad);
-  if (AnfAlgo::GetInputTensorNum(batchnormgrad) < kBNGradInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(batchnormgrad) < kBNGradInputTensorNum) {
     MS_LOG(DEBUG) << "BatchNormGrad's input number less than " << kBnInputTensorNum;
     return false;
   }
-  if (!AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnormgrad)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrIsTraining, batchnormgrad)) {
     return false;
   }
-  auto is_training = AnfAlgo::GetNodeAttr<bool>(batchnormgrad, kAttrIsTraining);
+  auto is_training = common::AnfAlgo::GetNodeAttr<bool>(batchnormgrad, kAttrIsTraining);
   if (is_training) {
     MS_LOG(DEBUG) << "Attr 'is_training' is true, no need do fusion";
     return false;

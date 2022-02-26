@@ -20,7 +20,7 @@
 #include <cmath>
 #include <cfloat>
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

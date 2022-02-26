@@ -20,8 +20,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -35,14 +36,14 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
   MS_EXCEPTION_IF_NULL(node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
   builder.SetInputsDeviceType(inputs_type);
@@ -163,9 +164,9 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
     m_input,    v_input,     gradient_input};
   auto adam = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(adam);
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, adam.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, adam.get());
   adam->set_scope(node->scope());
   auto build_info = GenerateKernelBuildInfo(adam);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, adam.get());

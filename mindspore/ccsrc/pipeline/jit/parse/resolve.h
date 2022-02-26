@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/manager.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "abstract/abstract_value.h"
 #include "utils/log_adapter.h"

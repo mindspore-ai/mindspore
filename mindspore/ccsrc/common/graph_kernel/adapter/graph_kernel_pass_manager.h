@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/optimizer/pass_manager.h"
 
 namespace mindspore::graphkernel {

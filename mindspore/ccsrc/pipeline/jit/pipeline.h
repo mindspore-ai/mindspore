@@ -34,6 +34,7 @@
 #include "backend/graph_compiler/segment_runner.h"
 #include "backend/graph_compiler/transform.h"
 #include "pipeline/jit/base.h"
+#include "frontend/parallel/strategy.h"
 
 namespace mindspore {
 extern const char kMsConvert[];

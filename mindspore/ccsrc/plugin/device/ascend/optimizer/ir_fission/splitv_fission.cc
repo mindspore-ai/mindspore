@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/splitv_fission.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::opt {
 const BaseRef SplitVFission::DefinePattern() const {
@@ -27,19 +28,20 @@ const BaseRef SplitVFission::DefinePattern() const {
 const AnfNodePtr SplitVFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // Check output num
-  if (!AnfAlgo::HasNodeAttr(kAttrNumSplit, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrNumSplit, cnode)) {
     return nullptr;
   }
-  auto num_split = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrNumSplit);
+  auto num_split = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrNumSplit);
   if (num_split <= outputs_divisor_) {
     return nullptr;
   }
-  return DoFission(func_graph, cnode, num_split, outputs_divisor_, AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrSplitDim));
+  return DoFission(func_graph, cnode, num_split, outputs_divisor_,
+                   common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrSplitDim));
 }
 }  // namespace mindspore::opt

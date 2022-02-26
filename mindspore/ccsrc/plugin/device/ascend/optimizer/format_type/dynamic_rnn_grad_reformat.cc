@@ -36,11 +36,11 @@ const AnfNodePtr DynamicRNNGradReformat::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(split_v);
   auto matmul = CheckAnfNodeIfCNodeAndInputSize(split_v->input(1), kMatMulInputTensorNum);
   MS_EXCEPTION_IF_NULL(matmul);
-  auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(matmul, 0);
+  auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(matmul, 0);
   auto input_node = input_node_with_idx.first;
   MS_EXCEPTION_IF_NULL(input_node);
   if (!(input_node->isa<CNode>() &&
-        AnfAlgo::GetCNodeName(input_node->cast<CNodePtr>()) == kBasicLSTMCellCStateGradV2OpName)) {
+        common::AnfAlgo::GetCNodeName(input_node->cast<CNodePtr>()) == kBasicLSTMCellCStateGradV2OpName)) {
     return nullptr;
   }
 
@@ -56,7 +56,7 @@ const AnfNodePtr DynamicRNNGradReformat::Process(const FuncGraphPtr &func_graph,
   matmul_new_builder->SetFusionType(matmul_kernel_build_info->fusion_type());
   matmul_new_builder->SetProcessor(matmul_kernel_build_info->processor());
   AnfAlgo::SetSelectKernelBuildInfo(matmul_new_builder->Build(), matmul.get());
-  AnfAlgo::SetNodeAttr("insert_backend", MakeValue(true), matmul);
+  common::AnfAlgo::SetNodeAttr("insert_backend", MakeValue(true), matmul);
 
   // reformat split_v
   auto split_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(split_v);
@@ -70,7 +70,7 @@ const AnfNodePtr DynamicRNNGradReformat::Process(const FuncGraphPtr &func_graph,
   split_new_builder->SetFusionType(split_kernel_build_info->fusion_type());
   split_new_builder->SetProcessor(split_kernel_build_info->processor());
   AnfAlgo::SetSelectKernelBuildInfo(split_new_builder->Build(), split_v.get());
-  AnfAlgo::SetNodeAttr("insert_backend", MakeValue(true), split_v);
+  common::AnfAlgo::SetNodeAttr("insert_backend", MakeValue(true), split_v);
   return split_v;
 }
 }  // namespace opt

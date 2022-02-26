@@ -17,9 +17,10 @@
 #include "plugin/device/ascend/optimizer/format_type/insert_transpose_for_dyanmic_gru_v2.h"
 #include <memory>
 #include <vector>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/ms_context.h"
@@ -49,18 +50,18 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       AnfNodePtr new_node = nullptr;
       AnfNodePtr new_transdata_node = nullptr;
       AnfNodePtr new_transpose_node = nullptr;
-      AnfNodePtr transdata_node = AnfAlgo::GetInputNode(cnode, index);
+      AnfNodePtr transdata_node = common::AnfAlgo::GetInputNode(cnode, index);
       auto input_format = AnfAlgo::GetInputFormat(transdata_node, 0);
       auto output_format = AnfAlgo::GetOutputFormat(transdata_node, 0);
       auto padding_axis = AnfAlgo::GetOutputReshapeType(transdata_node, 0);
       KernelSelectPtr kernel_select = std::make_shared<KernelSelect>();
       // trans default to hwcn
       new_transpose_node =
-        NewTransOpNode(func_graph, AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0), cnode, kernel_select,
-                       false, prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
+        NewTransOpNode(func_graph, common::AnfAlgo::GetInputNode(transdata_node->cast<CNodePtr>(), 0), cnode,
+                       kernel_select, false, prim::kPrimTranspose->name(), std::vector<int64_t>{2, 3, 1, 0});
       MS_EXCEPTION_IF_NULL(new_transpose_node);
       // This Transpose operator is only to change the shape, but does not expect to change the data arrangement!
-      AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
+      common::AnfAlgo::SetNodeAttr(kAttrNopOp, MakeValue(true), new_transpose_node);
       RefreshKernelBuildInfo(input_format, kOpFormat_HWCN, new_transpose_node);
       // trans hwcn to output_format
       new_transdata_node =
@@ -85,10 +86,10 @@ const AnfNodePtr InsertTransposeForDynamicGRUV2::Process(const FuncGraphPtr &fun
                                                          const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   CNodePtr new_node = nullptr;
   if (op_name == kDynamicGRUV2OpName) {
     new_node = Insert(func_graph, cnode);

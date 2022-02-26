@@ -19,7 +19,7 @@
 
 #include "utils/hash_set.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,7 +36,7 @@ const AnfNodePtr CustomOpConstInputToAttr::Process(const FuncGraphPtr &, const A
   if (!IsPrimitiveCNode(cnode, prim::kPrimCustom)) {
     return nullptr;
   }
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   mindspore::HashSet<size_t> attr_indices;
   GetCustomOpAttrIndex(primitive, &attr_indices);

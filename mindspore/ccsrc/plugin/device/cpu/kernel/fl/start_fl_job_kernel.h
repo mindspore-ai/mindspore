@@ -80,7 +80,7 @@ class StartFLJobKernelMod : public NativeCpuKernelMod {
     target_server_rank_ = rank_id_ % server_num_;
     fl_name_ = fl::worker::FLWorker::GetInstance().fl_name();
     fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
-    data_size_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "data_size"));
+    data_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "data_size"));
     fl::worker::FLWorker::GetInstance().set_data_size(data_size_);
     MS_LOG(INFO) << "Initializing StartFLJob kernel. fl_name: " << fl_name_ << ", fl_id: " << fl_id_
                  << ", data_size: " << data_size_ << ". Request will be sent to server " << target_server_rank_;

@@ -19,13 +19,14 @@
 #include <string>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/dev.h"
 #include "utils/ms_utils.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 
 namespace mindspore::kernel {
@@ -33,7 +34,7 @@ using mindspore::kernel::tbe::TbeAdapter;
 bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_json);
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "Start, node [ " << op_name << " ].";
   nlohmann::json soc_info_json = kernel::tbe::TbeUtils::GenSocInfo();
   std::vector<nlohmann::json> op_list;
@@ -59,7 +60,7 @@ bool SingleTbeJsonCreator::GenOpListJson(const AnfNodePtr &anf_node, std::vector
   MS_LOG(DEBUG) << "Start.";
   nlohmann::json compute_json;
   if (!GenComputeJson(anf_node, &compute_json)) {
-    MS_LOG(ERROR) << "Anf Node [" << AnfAlgo::GetCNodeName(anf_node) << "] generate compute json failed";
+    MS_LOG(ERROR) << "Anf Node [" << common::AnfAlgo::GetCNodeName(anf_node) << "] generate compute json failed";
     return false;
   }
   GenDataJson(anf_node, compute_json, op_list_json);
@@ -73,7 +74,7 @@ void SingleTbeJsonCreator::GenDataJson(const AnfNodePtr &anf_node, const nlohman
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_list_json);
   MS_LOG(DEBUG) << "Start";
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
   auto inputs_ptr = op_info_ptr->inputs_ptr();
   auto inputs_json = GetJsonValue<std::vector<nlohmann::json>>(compute_json, kJInputDesc);
@@ -102,7 +103,7 @@ bool SingleTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohmann::j
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   MS_LOG(DEBUG) << "Start.";
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   std::vector<OpIOInfoPtr> inputs_ptr = op_info_ptr->inputs_ptr();
@@ -118,7 +119,7 @@ bool SingleTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohmann::j
   }
 
   std::vector<nlohmann::json> inputs_desc;
-  size_t real_input_num = AnfAlgo::GetInputTensorNum(anf_node);
+  size_t real_input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   for (size_t i = 0; i < real_input_num; i++) {
     nlohmann::json input_desc;
     GenInputDescJson(anf_node, i, &input_desc);
@@ -127,7 +128,7 @@ bool SingleTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohmann::j
 
   size_t need_input_num = std::accumulate(inputs_tensor_num.begin(), inputs_tensor_num.end(), static_cast<size_t>(0));
   // gen optional desc
-  for (size_t i = AnfAlgo::GetInputTensorNum(anf_node); i < need_input_num; i++) {
+  for (size_t i = common::AnfAlgo::GetInputTensorNum(anf_node); i < need_input_num; i++) {
     nlohmann::json input_desc;
     input_desc[kJValid] = false;
     input_desc[kJShape] = kJNull;
@@ -242,7 +243,7 @@ bool SingleTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   MS_LOG(DEBUG) << "Start.";
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   std::vector<size_t> outputs_tensor_num;
@@ -253,7 +254,7 @@ bool SingleTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::
 
   size_t sum_outputs_num =
     std::accumulate(outputs_tensor_num.begin(), outputs_tensor_num.end(), static_cast<size_t>(0));
-  size_t real_output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  size_t real_output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   std::vector<nlohmann::json> outputs_desc;
   for (size_t i = 0; i < real_output_num; i++) {
     nlohmann::json output_desc;
@@ -342,7 +343,7 @@ void SelectTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_o
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = def_format;
 
-  (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputInferDataType(anf_node, node_out_idx));
+  (*output_desc)[kJDataType] = tbe::TypeIdToString(common::AnfAlgo::GetOutputInferDataType(anf_node, node_out_idx));
   (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);
   (*output_desc)[kJFormat] = format;
   (*output_desc)[kJOriFormat] = def_format;
@@ -363,7 +364,7 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
 
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = def_format;
-  auto d_type = AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_input_index);
+  auto d_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, real_input_index);
   (*input_desc)[kJDtype] = tbe::TypeIdToString(d_type);
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;

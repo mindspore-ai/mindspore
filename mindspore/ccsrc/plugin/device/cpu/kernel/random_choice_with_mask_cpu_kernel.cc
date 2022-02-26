@@ -83,34 +83,34 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
 
 void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
                   << "input(s).";
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num
                   << "output(s).";
   }
 
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_shape_size = input_shape.size();
   if (input_shape_size < 1 || input_shape_size > MAX_DIMENSION) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x ' should be in range [1-D, 5-D], but got "
                   << input_shape_size << "-D.";
   }
 
-  seed = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2 = static_cast<size_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-  count = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "count"));
+  seed = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
+  seed2 = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
+  count = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "count"));
 
   MS_LOG(INFO) << "This op attr count is " << count;
 
   for (size_t i = 0; i < input_num; i++) {
-    auto input_i_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+    auto input_i_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
     for (size_t j = 0; j < input_i_shape.size(); j++) {
       (void)dims.emplace_back(input_i_shape[j]);
     }

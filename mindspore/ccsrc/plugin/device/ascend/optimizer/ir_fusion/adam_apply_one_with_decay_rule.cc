@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_with_decay_rule.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
@@ -36,7 +37,7 @@ std::vector<AnfNodePtr> AdamApplyOneWithDecayRule::GetFusionNodeInputs(const Equ
   auto mul4_x = utils::cast<AnfNodePtr>((*equiv)[mul4_x_]);
   auto add2_y = utils::cast<AnfNodePtr>((*equiv)[add2_y_]);
   PrimitivePtr prim = nullptr;
-  if (AnfAlgo::CheckPrimitiveType(final_node, prim::kPrimDepend)) {
+  if (common::AnfAlgo::CheckPrimitiveType(final_node, prim::kPrimDepend)) {
     prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayAssignOpName);
   } else {
     prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayOpName);
@@ -275,7 +276,7 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
     return nullptr;
   }
   auto sub0 = node;
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto iter_sub0 = (*equiv).find(sub0_var_);
     if (iter_sub0 == (*equiv).end()) {
       MS_LOG(EXCEPTION) << "The equiv map is expected to contains the sub0 var after matched."
@@ -306,11 +307,11 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(add0);
   auto add1 = utils::cast<AnfNodePtr>(iter_add1->second);
   MS_EXCEPTION_IF_NULL(add1);
-  auto types = {AnfAlgo::GetOutputInferDataType(add1, 0), AnfAlgo::GetOutputInferDataType(add0, 0),
-                AnfAlgo::GetOutputInferDataType(sub0, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(add1, 0), AnfAlgo::GetOutputInferShape(add0, 0),
-                 AnfAlgo::GetOutputInferShape(sub0, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(add1, 0), common::AnfAlgo::GetOutputInferDataType(add0, 0),
+                common::AnfAlgo::GetOutputInferDataType(sub0, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(add1, 0), common::AnfAlgo::GetOutputInferShape(add0, 0),
+                 common::AnfAlgo::GetOutputInferShape(sub0, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
 
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(graph, fusion_node, kAdamApplyOneWithDecayOutputNum, &fusion_node_outputs);

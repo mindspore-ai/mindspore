@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_mv_with_decay_rule.h"
 #include <utility>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/trace_base.h"
 namespace mindspore {

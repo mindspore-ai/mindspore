@@ -16,7 +16,7 @@
 
 #include "backend/common/pass/reduce_sum_optimizer.h"
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -55,7 +55,7 @@ AnfNodePtr ReduceSumOptimizer::NewRankOp(const AnfNodePtr &cnode, const KernelGr
   std::vector<AnfNodePtr> rank_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimRank->name());
   rank_inputs.push_back(NewValueNode(prim));
-  auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, 1);
+  auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, 1);
   rank_inputs.push_back(prev_node.first);
   auto rank_op = NewCNode(rank_inputs, kernel_graph);
   MS_EXCEPTION_IF_NULL(rank_op);
@@ -99,7 +99,7 @@ AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const Ker
   auto rank_op = NewRankOp(cnode, kernel_graph);
   // new range op
   auto range_op = NewRangeOp(rank_op, kernel_graph);
-  std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
+  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   new_inputs.push_back(cnode->input(1));
   new_inputs.push_back(range_op);
   auto new_node = NewCNode(cnode, kernel_graph);
@@ -118,7 +118,7 @@ AnfNodePtr ReduceSumOptimizer::NewAssistValueNode(const CNodePtr &cnode, const K
   // axis is a tuple ,maybe empty or contain a value less 0;
   auto axis_input = cnode->input(axis_input_index);
   if (IsValueNode<ValueTuple>(axis_input)) {
-    std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
+    std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
     new_inputs.push_back(cnode->input(1));
     auto value_node = axis_input->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -167,16 +167,16 @@ const AnfNodePtr ReduceSumOptimizer::Process(const FuncGraphPtr &func_graph, con
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name != kReduceSumOpName) {
     MS_LOG(DEBUG) << "Current node is not: " << kReduceSumOpName << ", skip!";
     return nullptr;
   }
-  if (!AnfAlgo::IsDynamicShape(cnode)) {
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(DEBUG) << "Current node is not dynamic shape, skip!";
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (AnfUtils::IsDimUnknown(cnode) && IsNeedComputeRank(cnode)) {

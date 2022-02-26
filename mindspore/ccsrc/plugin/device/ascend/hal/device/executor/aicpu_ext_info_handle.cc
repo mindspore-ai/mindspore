@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.h"
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
@@ -171,7 +172,7 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   }
 
   auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
-  auto max_shape = AnfAlgo::GetOutputMaxShape(anf_node, output_index);
+  auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, output_index);
   if (shape.size() != max_shape.size()) {
     MS_LOG(ERROR) << "shape size [" << shape.size() << "] != max_shape size [" << max_shape.size()
                   << "], node: " << node_name_;

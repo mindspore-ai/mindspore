@@ -17,7 +17,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_transdata_fusion.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -60,8 +61,8 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
     auto new_node = NewCNode(inputs, func_graph);
     MS_EXCEPTION_IF_NULL(new_node);
     new_node->set_abstract(node->abstract());
-    AnfAlgo::CopyNodeAttrs(transdata_cnode, new_node);
-    AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(transpose_input_formats[0]), new_node);
+    common::AnfAlgo::CopyNodeAttrs(transdata_cnode, new_node);
+    common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(transpose_input_formats[0]), new_node);
     AnfAlgo::SetSelectKernelBuildInfo(new_transdata_builder->Build(), new_node.get());
     MS_LOG(INFO) << "transpose transdata fusion node:" << node->fullname_with_scope() << " success";
     return new_node;

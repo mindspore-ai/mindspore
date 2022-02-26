@@ -71,16 +71,16 @@ class MirrorPadFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     string mode = GetValue<string>(prim->GetAttr("mode"));
     if (mode == "REFLECT") {
@@ -89,9 +89,9 @@ class MirrorPadFwdGpuKernelMod : public NativeGpuKernelMod {
       mode_ = 1;  // symmetric mirroring
     }
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x") ||
                      CHECK_SHAPE_NULL(padding_shape, kernel_name, "paddings") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name, "output");

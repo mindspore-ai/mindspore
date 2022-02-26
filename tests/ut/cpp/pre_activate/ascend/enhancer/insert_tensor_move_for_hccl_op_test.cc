@@ -19,10 +19,12 @@
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "debug/anf_ir_dump.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel_build_info.h"
 #include "backend/common/optimizer/optimizer.h"
 #include "ir/param_info.h"
+#include "include/common/utils/anfalgo.h"
+
 #define private public
 #define protected public
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
@@ -48,7 +50,7 @@ class MockInsertTensorMoveForHcclKernelQuery : public KernelQuery {
     if (!node->isa<CNode>()) {
       return false;
     }
-    auto node_name = AnfAlgo::GetCNodeName(node->cast<CNodePtr>());
+    auto node_name = common::AnfAlgo::GetCNodeName(node->cast<CNodePtr>());
     return node_name == "ApplyMomentum" || node_name == "AssignAdd";
   }
 };

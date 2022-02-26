@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 
 namespace mindspore::opt {
@@ -42,7 +43,7 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
   }
 
   // 1. tensor move has attr kAttrLabelForInsertStreamActive
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, tensor_move_node)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, tensor_move_node)) {
     MS_LOG(DEBUG) << "node has no label_for_insert_stream_active attr";
     return nullptr;
   }
@@ -64,15 +65,15 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
   for (auto &item : next_nodes) {
     MS_EXCEPTION_IF_NULL(item.first);
     auto next_node = item.first->cast<CNodePtr>();
-    if (opt::IsNopNode(next_node)) {
+    if (common::AnfAlgo::IsNopNode(next_node)) {
       return nullptr;
     }
 
-    if (AnfAlgo::IsCommunicationOp(next_node)) {
+    if (common::AnfAlgo::IsCommunicationOp(next_node)) {
       return nullptr;
     }
 
-    auto graph_outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+    auto graph_outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
     auto iter = std::find(graph_outputs.begin(), graph_outputs.end(), next_node);
     if (iter != graph_outputs.end()) {
       return nullptr;
@@ -83,7 +84,7 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
       return nullptr;
     }
     // add attr label_for_insert_stream_active for next_node
-    AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), next_node);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), next_node);
   }
 
   return tensor_move_node->input(1);

@@ -16,10 +16,11 @@
 
 #include "plugin/device/ascend/optimizer/format_type/insert_trans_op.h"
 #include <memory>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -35,7 +36,7 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   if (node == nullptr || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   MS_LOG(DEBUG) << "process op: " << node->DebugString();
   AnfNodePtr new_node = InsertTransOpForInput(func_graph, node, kernel_select_);
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();

@@ -15,9 +15,10 @@
  */
 
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -28,15 +29,15 @@ bool RunOpInsertTransData::InsertTransdataForOutput(const FuncGraphPtr &graph) {
   auto output = graph->output();
   MS_EXCEPTION_IF_NULL(output);
   auto cnode = output->cast<CNodePtr>();
-  auto inputs_num = AnfAlgo::GetInputNum(cnode);
-  if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+  auto inputs_num = common::AnfAlgo::GetInputNum(cnode);
+  if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     for (size_t index = 0; index < inputs_num; index++) {
       auto format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
       if (format == kOpFormat_ND_RNN_BIAS || format == kOpFormat_FRACTAL_ZN_RNN) {
-        auto cur_cnode_with_index = AnfAlgo::GetPrevNodeOutput(cnode, index, false);
+        auto cur_cnode_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
         auto trans_node =
           AddTransOpNodeToGraph(graph, cur_cnode_with_index.first, kernel_select_, cur_cnode_with_index.second, false);
-        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        common::AnfAlgo::SetNodeInput(cnode, trans_node, index);
         has_changed = true;
       }
     }
@@ -65,24 +66,24 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     for (size_t index = 0; index < input_num; ++index) {
       auto prev_input_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
-      auto prev_node_out_infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+      auto prev_node_out_infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
       auto input_format = AnfAlgo::GetInputFormat(cnode, index);
-      auto input_node = AnfAlgo::GetInputNode(cnode, index);
+      auto input_node = common::AnfAlgo::GetInputNode(cnode, index);
       // convert the format of node's input node to default
       if (kCommonFormatSet.find(prev_input_format) == kCommonFormatSet.end() &&
           (prev_node_out_infer_shape.size() > 1 || prev_input_format == kOpFormat_ND_RNN_BIAS)) {
         auto trans_node = AddTransOpNodeToGraph(graph, input_node, kernel_select_, 0, false);
-        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        common::AnfAlgo::SetNodeInput(cnode, trans_node, index);
         has_changed = true;
       }
       // convert node's output format
       if (kCommonFormatSet.find(input_format) == kCommonFormatSet.end() &&
           (prev_node_out_infer_shape.size() > 1 || input_format == kOpFormat_ND_RNN_BIAS)) {
         auto trans_node = AddTransOpNodeToGraph(graph, cnode, kernel_select_, index, true);
-        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        common::AnfAlgo::SetNodeInput(cnode, trans_node, index);
         has_changed = true;
       }
     }

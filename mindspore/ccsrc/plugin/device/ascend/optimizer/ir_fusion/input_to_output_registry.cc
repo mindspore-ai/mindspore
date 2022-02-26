@@ -15,49 +15,50 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/input_to_output_registry.h"
 #include <utility>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 bool ApplyRMSPropPreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 
 bool FusedMulApplyMomentumPreCheck(const CNodePtr &node) {
-  TypeId data_type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  TypeId data_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   return !(data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16);
 }
 
 bool SparseApplyRMSPropPreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 
 bool ApplyAdagradV2PreCheck(const CNodePtr &node) {
-  TypeId data_type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  TypeId data_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   return !(data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16);
 }
 
 bool ApplyKerasMomentumPreCheck(const CNodePtr &node) {
-  TypeId data_type = AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  TypeId data_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
   return !(data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16);
 }
 
 bool SparseApplyFtrlPreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 
 bool SparseApplyFtrlV2PreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 
 bool SparseApplyAdagradV2PreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 
 bool SparseApplyAdadeltaPreCheck(const CNodePtr &node) {
-  return !(AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
+  return !(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0) != kNumberTypeFloat32);
 }
 }  // namespace
 InputToOutputRegistry::InputToOutputRegistry() {

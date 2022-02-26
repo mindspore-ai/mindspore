@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/layer_norm_cpu_kernel.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,11 +28,11 @@ constexpr size_t kLayerNormOutputsNum = 3;
 
 void LayerNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto begin_norm_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
-  auto begin_params_axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
+  std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto begin_norm_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_norm_axis");
+  auto begin_params_axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "begin_params_axis");
   if (begin_norm_axis < 0) {
     begin_norm_axis += SizeToLong(x_shape.size());
   }

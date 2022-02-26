@@ -27,10 +27,11 @@
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "utils/log_adapter.h"
 #include "ir/tensor.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore {
 namespace runtime {

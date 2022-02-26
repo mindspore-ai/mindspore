@@ -32,7 +32,7 @@ constexpr size_t kIndex2 = 2;
 template <typename T>
 void CheckValidCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   anchor_box_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   img_metas_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);

@@ -23,7 +23,8 @@
 
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_adapter_util.h"
-#include "utils/utils.h"
+#include "transform/graph_ir/op_adapter_base.h"
+#include "include/common/utils/utils.h"
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {

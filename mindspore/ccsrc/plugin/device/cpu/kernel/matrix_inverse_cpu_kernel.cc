@@ -33,7 +33,7 @@ void MatrixInverseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
 }
 
 bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -68,7 +68,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
   T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_ptr);
   // Judge whether the input shape matches
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   if (shape.size() < kNumber2) {
     MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
   }
@@ -92,7 +92,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
     }
   }
   // Gets the value of the property adjoint
-  adjoint_ = AnfAlgo::GetNodeAttr<bool>(node_, "adjoint");
+  adjoint_ = common::AnfAlgo::GetNodeAttr<bool>(node_, "adjoint");
   auto one_size = sizeof(*input_ptr);
 
   if ((one_size * input_num) <= kParallelDataNums) {

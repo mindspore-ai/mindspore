@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -65,11 +65,11 @@ class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

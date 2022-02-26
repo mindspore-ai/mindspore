@@ -118,7 +118,7 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
@@ -209,7 +209,7 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
@@ -340,7 +340,7 @@ class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void SetPoolingMode(const CNodePtr &kernel_node) {
-    mode_ = AnfAlgo::GetCNodeName(kernel_node);
+    mode_ = common::AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPoolGrad") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;

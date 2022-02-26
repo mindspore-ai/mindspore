@@ -26,7 +26,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {

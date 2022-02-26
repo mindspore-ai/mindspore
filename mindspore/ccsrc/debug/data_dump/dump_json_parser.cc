@@ -20,9 +20,10 @@
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "debug/data_dump/npy_header.h"
 #include "debug/anf_ir_utils.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";
@@ -735,7 +736,7 @@ void DumpJsonParser::GetCellDumpFlag(const session::KernelGraph &kernel_graph) {
   }
   for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto dump_flag = AnfAlgo::GetDumpFlag(kernel);
+    auto dump_flag = common::AnfAlgo::GetDumpFlag(kernel);
     if (dump_flag.has_value() && dump_flag.value().compare("true") == 0) {
       MS_LOG(DEBUG) << "Dump flag is true for " << GetKernelNodeName(kernel);
       cell_dump_kernels_.push_back(GetKernelNodeName(kernel));
@@ -757,9 +758,9 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel))) {
-      auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+      auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
-        auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+        auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
         auto input = input_with_index.first;
         MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {

@@ -24,7 +24,7 @@ using mindspore::tensor::TensorPy;
 namespace mindspore {
 namespace transform {
 using mindspore::parse::ParsePythonCode;
-namespace python_adapter = mindspore::parse::python_adapter;
+namespace python_adapter = mindspore::python_adapter;
 using mindspore::parse::ResolveAll;
 std::vector<FuncGraphPtr> getAnfGraph(string package, string function) {
   py::function fn_ = python_adapter::GetPyFn(package, function);

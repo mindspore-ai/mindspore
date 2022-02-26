@@ -22,19 +22,19 @@ namespace kernel {
 template <typename T>
 void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number should be 4, but got " << input_num;
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number should be 1, but got " << output_num;
   }
 
   //  input image
-  auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
+  auto input_image_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
   size_t input_image_shape_len = input_image_shape.size();
   if (input_image_shape_len != IMAGE_DIM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'image' should be " << IMAGE_DIM << "-D, but got "
@@ -45,7 +45,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   input_width_ = SizeToInt(input_image_shape[IMAGE_WEIGHT]);
 
   //  input boxes
-  auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
+  auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
   size_t input_boxes_shape_len = input_boxes_shape.size();
   if (input_boxes_shape_len != BOX_RANK) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'boxes' should be " << BOX_RANK << ", but got "
@@ -53,7 +53,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 
   //  input box_index
-  auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
+  auto input_box_index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
   size_t input_box_index_shape_len = input_box_index_shape.size();
   if (input_box_index_shape_len != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'box_index' should be 1, but got "
@@ -61,7 +61,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 
   //  input crop_size
-  auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
+  auto input_crop_size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
   size_t input_crop_size_shape_len = input_crop_size_shape.size();
   if (input_crop_size_shape_len != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'crop_size' should be 1, but got "
@@ -76,7 +76,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   constexpr size_t HEIGHT = 1;
   constexpr size_t WEIGHT = 2;
   constexpr size_t CHANNEL = 3;
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto output_shape_len = output_shape.size();
   output_size_ = 1;
   for (size_t i = 0; i < output_shape_len; i++) {
@@ -89,7 +89,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   channel_ = SizeToInt(output_shape[CHANNEL]);
 
   //  get op parameters
-  string method = AnfAlgo::GetNodeAttr<string>(kernel_node, "method");
+  string method = common::AnfAlgo::GetNodeAttr<string>(kernel_node, "method");
   if (method == "bilinear") {
     method_ = BILINEAR;
   } else if (method == "nearest") {
@@ -97,7 +97,7 @@ void CropAndResizeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   } else {  //  bilinear-v2
     method_ = BILINEAR_V2;
   }
-  extrapolation_value_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "extrapolation_value");
+  extrapolation_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "extrapolation_value");
 }
 
 template <typename T>

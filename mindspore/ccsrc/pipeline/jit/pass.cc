@@ -34,7 +34,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/optimizer/auto_monad_eliminate.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
@@ -229,7 +229,7 @@ bool parallel_mode() {
   }
 #endif
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  return (parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL);
+  return (parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel);
 }
 
 void AddParallelRenormalize(OptPassGroupMap *map_a) {

@@ -199,15 +199,15 @@ void NMSWithMaskCpuKernelMod<T>::ReducePass(const int num, bool *sel_boxes, cons
 template <typename T>
 void NMSWithMaskCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  iou_value_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  iou_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
                   << "input(s).";
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num
                   << "output(s).";
@@ -217,7 +217,7 @@ void NMSWithMaskCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void NMSWithMaskCpuKernelMod<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   num_input_ = SizeToInt(input_shape[0]);  //  Get N values in  [N, 5] data.
   ceil_power_2 = static_cast<size_t>(NmsRoundUpPower2(num_input_));
 

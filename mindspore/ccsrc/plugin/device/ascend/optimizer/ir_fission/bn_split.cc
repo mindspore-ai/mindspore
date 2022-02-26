@@ -20,11 +20,12 @@
 #include <string>
 #include <limits>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -41,7 +42,7 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
                                               bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (AnfAlgo::GetInputTensorNum(bn_cnode) != kBnInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(bn_cnode) != kBnInputTensorNum) {
     MS_LOG(INFO) << "BatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
     return false;
   }
@@ -53,14 +54,16 @@ bool BnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const C
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   bn_training_reduce->set_kernel_info(kernel_info);
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_cnode, 1), AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(bn_cnode, 1), AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1),
+                common::AnfAlgo::GetOutputInferDataType(bn_cnode, 1)};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(bn_cnode, 1),
+                 common::AnfAlgo::GetOutputDetailShape(bn_cnode, 1)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, bn_training_reduce.get());
   bn_training_reduce->set_scope(bn_cnode->scope());
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_reduce);
   }
-  AnfAlgo::CopyNodeAttrs(bn_cnode, bn_training_reduce);
+  common::AnfAlgo::CopyNodeAttrs(bn_cnode, bn_training_reduce);
 
   CreateMultipleOutputsOfAnfNode(graph, bn_training_reduce, kBNTrainingReduceOutputNum, bn_training_reduce_outputs);
   return true;
@@ -92,19 +95,19 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   bn_training_update->set_kernel_info(kernel_info);
   bn_training_update->set_abstract(bn_cnode->abstract());
   bn_training_update->set_scope(bn_cnode->scope());
-  auto factor = AnfAlgo::GetNodeAttr<float>(bn_cnode, kAttrMomentum);
-  AnfAlgo::SetNodeAttr(kAttrFactor, MakeValue<float>(factor), bn_training_update);
+  auto factor = common::AnfAlgo::GetNodeAttr<float>(bn_cnode, kAttrMomentum);
+  common::AnfAlgo::SetNodeAttr(kAttrFactor, MakeValue<float>(factor), bn_training_update);
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_update);
-    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), bn_training_update);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), bn_training_update);
   }
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update);
-  if (AnfAlgo::HasNodeAttr(kAttrFormat, bn_cnode)) {
-    AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
+  common::AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_cnode, bn_training_update);
+  if (common::AnfAlgo::HasNodeAttr(kAttrFormat, bn_cnode)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrFormat, bn_cnode, bn_training_update);
   } else {
-    AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_training_update);
+    common::AnfAlgo::SetNodeAttr(kAttrFormat, MakeValue(kOpFormat_NCHW), bn_training_update);
   }
-  AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
+  common::AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
   return bn_training_update;
 }
 
@@ -114,8 +117,8 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
-  if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
+  bool is_dynamic = common::AnfAlgo::IsDynamicShape(cnode);
+  if (common::AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
     MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
@@ -139,8 +142,8 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  bool is_dynamic = AnfAlgo::IsDynamicShape(cnode);
-  if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
+  bool is_dynamic = common::AnfAlgo::IsDynamicShape(cnode);
+  if (common::AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
     MS_LOG(INFO) << "Op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
@@ -167,11 +170,11 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
 AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const CNodePtr &sync_bn_cnode) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sync_bn_cnode);
-  if (!AnfAlgo::HasNodeAttr(kDeviceNum, sync_bn_cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kDeviceNum, sync_bn_cnode)) {
     MS_LOG(EXCEPTION) << "The node [" << sync_bn_cnode->DebugString() << "] does not have attr device_num."
                       << trace::DumpSourceLines(sync_bn_cnode);
   }
-  auto device_num = AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
+  auto device_num = common::AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
   if (device_num == 0) {
     MS_LOG(EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString() << "] should not be 0."
                       << trace::DumpSourceLines(sync_bn_cnode);
@@ -199,10 +202,11 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
 AnfNodePtr InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &input, const TypeId dst_type) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
-  if (AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
+  if (common::AnfAlgo::GetOutputInferDataType(input, 0) != dst_type) {
     AnfNodePtr cast = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kCastOpName)), input});
-    AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {AnfAlgo::GetOutputInferShape(input, 0)}, cast.get());
-    AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
+    common::AnfAlgo::SetOutputInferTypeAndShape({dst_type}, {common::AnfAlgo::GetOutputInferShape(input, 0)},
+                                                cast.get());
+    common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
     cast->set_scope(input->scope());
     return cast;
   }
@@ -227,8 +231,8 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   MS_EXCEPTION_IF_NULL(allreduce);
   allreduce->set_abstract(input_node->abstract());
   allreduce->set_scope(allreduce_input->scope());
-  AnfAlgo::SetNodeAttr(kAttrOp, MakeValue(kReduceOpSum), allreduce);
-  AnfAlgo::CopyNodeAttr(kAttrGroup, sync_bn_cnode, allreduce);
+  common::AnfAlgo::SetNodeAttr(kAttrOp, MakeValue(kReduceOpSum), allreduce);
+  common::AnfAlgo::CopyNodeAttr(kAttrGroup, sync_bn_cnode, allreduce);
   // use SyncBatchNorm's opid as AllReduce's fusion attr
   auto sync_bn_opname = sync_bn_cnode->fullname_with_scope();
   auto opid_pos = sync_bn_opname.rfind("-op");
@@ -242,7 +246,7 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   if (opid < kFusionNumThreshold) {
     opid = opid - kFusionNumThreshold + std::numeric_limits<int64_t>::max();
   }
-  AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
+  common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
 
   // create Mul
   auto device_num_reciprocal_vnode = CreateValueNodeOfDeviceNumReciprocal(graph, sync_bn_cnode);
@@ -255,7 +259,7 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
 
   // Cast output to origin datatype to reduce the number of cast node.
   // Should be removed if BNTrainingReduce/BNTrainingUpdateGrad op support fp16 output.
-  return InsertCast(graph, mul, AnfAlgo::GetOutputInferDataType(allreduce_input, 0));
+  return InsertCast(graph, mul, common::AnfAlgo::GetOutputInferDataType(allreduce_input, 0));
 }
 
 const BaseRef BnSplit::DefinePattern() const {

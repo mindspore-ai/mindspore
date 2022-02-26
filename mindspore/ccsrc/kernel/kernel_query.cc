@@ -23,6 +23,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 #include "kernel/akg/akg_kernel_metadata.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
@@ -36,8 +37,8 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t output_tensor_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t output_tensor_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
   (void)std::copy_if(
     kernel_info_list->begin(), kernel_info_list->end(), std::back_inserter(filtered_list),
@@ -70,7 +71,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
 
 bool SelectAicpuReshapeInTaskSink(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  if (AnfAlgo::GetCNodeName(kernel_node) != "Reshape") {
+  if (common::AnfAlgo::GetCNodeName(kernel_node) != "Reshape") {
     return false;
   }
   const size_t AicpuReshapeSize = 2;

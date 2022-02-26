@@ -20,13 +20,13 @@
 #include <utility>
 #include <algorithm>
 #include <set>
-#include "utils/signal_util.h"
+#include "include/common/utils/signal_util.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
-#include "utils/context/context_extends.h"
-#include "utils/mpi/mpi_config.h"
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/context_extends.h"
+#include "include/common/utils/mpi/mpi_config.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/rt.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -34,6 +34,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #ifndef ENABLE_SECURITY
@@ -51,15 +52,15 @@
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
 #include "common/util/error_manager/error_manager.h"
 #include "debug/anf_ir_dump.h"
-#include "frontend/parallel/context.h"
-#include "utils/comm_manager.h"
-#include "utils/runtime_error_codes.h"
+#include "include/common/utils/parallel_context.h"
+#include "include/common/utils/comm_manager.h"
+#include "include/common/utils/runtime_error_codes.h"
 #ifdef MEM_REUSE_DEBUG
 #include "common/mem_reuse/mem_reuse_checker.h"
 #include "debug/env_config_parser.h"
 #endif
 #include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
@@ -114,7 +115,7 @@ void IntHandler(int, siginfo_t *, void *) {
   (void)kill(this_pid, SIGTERM);
 }
 
-void AscendEnableDynamicRuntimeCache(const KernelGraph *graph) {
+void AscendEnableDynamicRuntimeCache(const session::KernelGraph *graph) {
   const auto &node_list = graph->TopoSort(graph->get_return());
   for (auto &node : node_list) {
     auto kernel_info = node->kernel_info();
@@ -446,7 +447,8 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph &graph) {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto dynamic_kernel = kernel_mod->GenDynamicKernel(cnode, stream_);
     if (dynamic_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with the operator [" << AnfAlgo::GetCNodeName(cnode) << "].";
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with the operator [" << common::AnfAlgo::GetCNodeName(cnode)
+                        << "].";
     }
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
@@ -672,7 +674,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
   uint32_t rank_id = 0;
   auto inst = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
-  if (inst->parallel_mode() != parallel::STAND_ALONE) {
+  if (inst->parallel_mode() != parallel::kStandalone) {
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(WARNING) << "Get rank id failed, now using the default value 0.";
     }
@@ -784,7 +786,7 @@ void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &gr
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(node, graph);
     for (auto &knode : input_nodes) {
       if (knode == node) break;
-      if (!AnfAlgo::IsTupleOutput(front_node) && front_node != nullptr &&
+      if (!common::AnfAlgo::IsTupleOutput(front_node) && front_node != nullptr &&
           front_node == AnfAlgo::FetchFrontNodeByBackendNode(knode, graph)) {
         shadow_backend_node_map->emplace(node, knode);
         break;
@@ -842,7 +844,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
     std::vector<bool> stream_hit(stream_num, false);
     std::vector<AnfNodePtr> used_kernels;
     std::set<AnfNodePtr> visited_kernels;
-    AnfAlgo::GetAllVisitedCNode(kernel, &used_kernels, &visited_kernels);
+    common::AnfAlgo::GetAllVisitedCNode(kernel, &used_kernels, &visited_kernels);
     bool found_depend = false;
     for (int k = SizeToInt(i) - 1; k >= 0; --k) {
       auto pre_cnode = kernels[IntToSize(k)];
@@ -897,7 +899,7 @@ void AscendKernelRuntime::GenKernelEventsForMindRT(const session::KernelGraph &g
     auto wait_stream = stream_id_map_[curr_stream_id];
     std::vector<AnfNodePtr> used_kernels;
     std::set<AnfNodePtr> visited_kernels;
-    AnfAlgo::GetAllVisitedCNode(kernel, &used_kernels, &visited_kernels);
+    common::AnfAlgo::GetAllVisitedCNode(kernel, &used_kernels, &visited_kernels);
     bool found_depend = false;
     std::set<AnfNodePtr> record_nodes;
     // set events for nodes and its input: [input_node_stream, node_stream]
@@ -978,7 +980,8 @@ void AscendKernelRuntime::ProcessBoundaryEvent(
       MS_EXCEPTION_IF_NULL(child);
       auto input_size = child->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
+        auto kernel_index =
+          common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(child, k), 0, true);
         if (kernel_index.first == kernel) {
           found_nearest_child = true;
           break;

@@ -20,8 +20,9 @@
 #include <algorithm>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
 #include "utils/trace_base.h"
@@ -46,7 +47,7 @@ AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const An
     constexpr int kMul0InputIndex2 = 2;
     return node_index.first != mul1 && node_index.second == kMul0InputIndex2;
   });
-  if (it != outputs_set.end() && AnfAlgo::GetCNodeName(it->first) == prim::kPrimMul->name()) {
+  if (it != outputs_set.end() && common::AnfAlgo::GetCNodeName(it->first) == prim::kPrimMul->name()) {
     mul0 = it->first;
   }
   return mul0;
@@ -62,14 +63,14 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   constexpr size_t kInferShapeIndex = 2;
   constexpr size_t kShape2Dim1 = 1024;
   constexpr size_t kShape2Dim2 = 768;
-  if (addn == nullptr || AnfAlgo::GetCNodeName(addn) != prim::kPrimAddN->name()) {
+  if (addn == nullptr || common::AnfAlgo::GetCNodeName(addn) != prim::kPrimAddN->name()) {
     MS_LOG(INFO) << "Mul's second input is not Addn, quit fusion";
     return true;
   }
-  if (AnfAlgo::IsDynamicShape(addn)) {
+  if (common::AnfAlgo::IsDynamicShape(addn)) {
     return true;
   }
-  std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(addn, 0);
+  std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(addn, 0);
   if (shape.size() != kInferShapeIndex || !(shape[1] == kShape2Dim1 || shape[1] == kShape2Dim2)) {
     MS_LOG(INFO) << "Addn's infer shape is not equal to [x,1024] or [x,768], quit fusion";
     return true;
@@ -108,11 +109,12 @@ CNodePtr ConfusionMulGradFusion::CreateFusionNode(const FuncGraphPtr &graph, con
   auto fusion_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(reduce_sum->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, reduce_sum, fusion_node);
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, reduce_sum, fusion_node);
-  auto types = {AnfAlgo::GetOutputInferDataType(mul0, 0), AnfAlgo::GetOutputInferDataType(reduce_sum, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(mul0, 0), AnfAlgo::GetOutputInferShape(reduce_sum, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, reduce_sum, fusion_node);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, reduce_sum, fusion_node);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(mul0, 0),
+                common::AnfAlgo::GetOutputInferDataType(reduce_sum, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(mul0, 0), common::AnfAlgo::GetOutputInferShape(reduce_sum, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
   return fusion_node;
 }
 

@@ -17,7 +17,7 @@
 #include "common/mem_reuse/mem_dynamic_allocator.h"
 #include <string>
 #include "utils/ms_utils.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 

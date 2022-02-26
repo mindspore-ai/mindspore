@@ -28,7 +28,7 @@ constexpr size_t kTensorAddOutputsSize = 1;
 template <typename T>
 void TensorAddCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   // Init shape and strides
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);

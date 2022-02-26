@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include <algorithm>
 #include <exception>
 #include "utils/log_adapter.h"

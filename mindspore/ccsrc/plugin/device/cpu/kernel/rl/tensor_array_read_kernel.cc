@@ -27,8 +27,8 @@ TensorArrayReadCpuKernelMod::TensorArrayReadCpuKernelMod() : value_size_(0), typ
 
 void TensorArrayReadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  shapes_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
-  type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
+  shapes_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
+  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   value_size_ = GetTypeByte(type_);
   for (auto i : shapes_) {
     value_size_ *= LongToSize(i);

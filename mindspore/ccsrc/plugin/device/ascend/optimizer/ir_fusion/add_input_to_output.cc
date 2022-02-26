@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "plugin/device/ascend/optimizer/ir_fusion/input_to_output_registry.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/trace_base.h"
 
@@ -26,7 +27,7 @@ namespace opt {
 namespace {
 void GetInputOrOutputNames(const CNodePtr &cnode, const std::string &attr_name, std::vector<std::string> *names_vec) {
   MS_EXCEPTION_IF_NULL(names_vec);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr names_value = primitive->GetAttr(attr_name);
   if (names_value == nullptr) {
@@ -68,7 +69,7 @@ void AddOutputs(const CNodePtr &cnode, const std::vector<size_t> &input_indices)
     }
   }
   if (!output_names_vec.empty()) {
-    AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names_vec), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names_vec), cnode);
   }
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
   cnode->set_abstract(abstract_tuple);
@@ -82,7 +83,7 @@ const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  std::string op_name = AnfAlgo::GetCNodeName(cnode);
+  std::string op_name = common::AnfAlgo::GetCNodeName(cnode);
   InputToOutputRegister reg;
   if (!InputToOutputRegistry::Instance().GetRegisterByOpName(op_name, &reg)) {
     return nullptr;
@@ -93,10 +94,10 @@ const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const
     return nullptr;
   }
   // No need add output if the output num matches the registered output num for tbe.
-  if (AnfAlgo::GetOutputTensorNum(cnode) >= IntToSize(output_num)) {
+  if (common::AnfAlgo::GetOutputTensorNum(cnode) >= IntToSize(output_num)) {
     return nullptr;
   }
-  bool is_origin_tuple_output = AnfAlgo::IsTupleOutput(cnode);
+  bool is_origin_tuple_output = common::AnfAlgo::IsTupleOutput(cnode);
   AddOutputs(cnode, reg.input_indices());
   // No need to create tuple_getitem if the origin output is a tuple because there has already been some tuple_getitems
   // pointed to the outputs.

@@ -22,10 +22,10 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace parallel {
@@ -341,15 +341,15 @@ void GraphSplitter::SetSendNodeAttr(const AnfNodePtr &send_node, const AnfNodePt
 
   // These attributes are the inter-process edge information.
   std::vector<uint32_t> dst_ranks = {node_labels_[send_to_node].rank_id};
-  AnfAlgo::SetNodeAttr(kAttrSendDstRanks, MakeValue(dst_ranks), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrSendDstRanks, MakeValue(dst_ranks), send_node);
   std::vector<std::string> dst_roles = {node_labels_[send_to_node].ms_role};
-  AnfAlgo::SetNodeAttr(kAttrSendDstRoles, MakeValue(dst_roles), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrSendDstRoles, MakeValue(dst_roles), send_node);
 
-  AnfAlgo::SetNodeAttr(kAttrSendSrcNodeName, MakeValue(from_node_name), send_node);
-  AnfAlgo::SetNodeAttr(kAttrSendDstNodeName, MakeValue(to_node_name), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrSendSrcNodeName, MakeValue(from_node_name), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrSendDstNodeName, MakeValue(to_node_name), send_node);
 
   // Set send node to CPU for now.
-  AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), send_node);
 }
 
 void GraphSplitter::SetRecvNodeAttr(const AnfNodePtr &recv_node, const AnfNodePtr &recv_from_node,
@@ -366,15 +366,15 @@ void GraphSplitter::SetRecvNodeAttr(const AnfNodePtr &recv_node, const AnfNodePt
 
   // These attributes are the inter-process edge information.
   std::vector<uint32_t> src_ranks = {node_labels_[recv_from_node].rank_id};
-  AnfAlgo::SetNodeAttr(kAttrRecvSrcRanks, MakeValue(src_ranks), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcRanks, MakeValue(src_ranks), recv_node);
   std::vector<std::string> src_roles = {node_labels_[recv_from_node].ms_role};
-  AnfAlgo::SetNodeAttr(kAttrRecvSrcRoles, MakeValue(src_roles), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcRoles, MakeValue(src_roles), recv_node);
 
-  AnfAlgo::SetNodeAttr(kAttrRecvSrcNodeName, MakeValue(from_node_name), recv_node);
-  AnfAlgo::SetNodeAttr(kAttrRecvDstNodeName, MakeValue(to_node_name), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvSrcNodeName, MakeValue(from_node_name), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrRecvDstNodeName, MakeValue(to_node_name), recv_node);
 
   // Set recv node to CPU for now.
-  AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), recv_node);
 }
 
 std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,

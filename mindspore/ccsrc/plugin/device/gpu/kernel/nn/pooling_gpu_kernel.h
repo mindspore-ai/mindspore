@@ -74,7 +74,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
@@ -158,14 +158,14 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
   }
 
   void SetPoolingMode(const CNodePtr &kernel_node) {
-    mode_ = AnfAlgo::GetCNodeName(kernel_node);
+    mode_ = common::AnfAlgo::GetCNodeName(kernel_node);
     if (mode_ == "AvgPool" || mode_ == "AvgPool3D") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;
@@ -175,7 +175,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     }
   }
   void SetPad(const CNodePtr &kernel_node) {
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     pad_mode_ = GetValue<std::string>(prim->GetAttr("pad_mode"));
     std::vector<int> window;
@@ -218,7 +218,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void SetPad3D(const CNodePtr &kernel_node) {
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     pad_mode_ = GetValue<std::string>(prim->GetAttr("pad_mode"));
     std::vector<int> window;

@@ -21,12 +21,13 @@
 #include <string>
 #include <algorithm>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,7 +38,7 @@ constexpr size_t kSliceGradCangjieInputTensorNum = 2;
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<int64_t> shapes;
-  auto shape_size_t = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  auto shape_size_t = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   std::transform(shape_size_t.begin(), shape_size_t.end(), std::back_inserter(shapes), SizeToLong);
   return shapes;
 }
@@ -64,7 +65,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
 
   auto slice_grad = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(slice_grad);
-  auto input_num = AnfAlgo::GetInputTensorNum(slice_grad);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(slice_grad);
   if (input_num != kSliceGradInputTensorNum && input_num != kSliceGradCangjieInputTensorNum) {
     MS_LOG(EXCEPTION) << "The input tensor size[" << input_num
                       << "] of node " + slice_grad->DebugString() + " is not equal to " << kSliceGradInputTensorNum
@@ -86,8 +87,8 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
     sizes = GetTupleValue(slice_grad->input(kIndex4));
   } else {
     // if frontend is Cangjie and mode is pynative, input 2, 3 is already converted to attr
-    begins = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrBegin);
-    sizes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrSize);
+    begins = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrBegin);
+    sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrSize);
   }
   if (x_shape.size() != begins.size() || begins.size() != sizes.size()) {
     MS_LOG(EXCEPTION)
@@ -99,8 +100,8 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   for (size_t i = 0; i < x_shape.size(); ++i) {
     paddings.emplace_back(std::vector<int64_t>{begins[i], x_shape[i] - begins[i] - sizes[i]});
   }
-  AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
+  common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>{"x"}), pad);
 
   return pad;
 }

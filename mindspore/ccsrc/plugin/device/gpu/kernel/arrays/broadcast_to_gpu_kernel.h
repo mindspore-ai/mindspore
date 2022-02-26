@@ -46,9 +46,9 @@ class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto input_shapes = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shapes = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
     if (is_null_input_) {

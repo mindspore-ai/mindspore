@@ -19,8 +19,9 @@
 #include <fstream>
 #include <vector>
 
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "debug/common.h"
 #include "proto/node_strategy.pb.h"

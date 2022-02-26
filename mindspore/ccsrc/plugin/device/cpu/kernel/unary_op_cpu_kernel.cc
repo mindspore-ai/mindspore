@@ -72,7 +72,7 @@ void UnaryOpCpuKernelMod<T, S>::GetUnaryOpFunc() {
 
 template <typename T, typename S>
 void UnaryOpCpuKernelMod<T, S>::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   GetUnaryOpFunc();
 }
 

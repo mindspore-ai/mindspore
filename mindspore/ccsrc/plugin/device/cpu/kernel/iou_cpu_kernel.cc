@@ -30,7 +30,7 @@ constexpr size_t kBoxCoordinateLen = 4;
 template <typename T>
 void IOUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
   constexpr size_t BOX_SHAPE_SIZE = 2;
   constexpr size_t BOX_SIZE_INDEX = 0;
@@ -48,7 +48,7 @@ void IOUCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   }
   gt_boxes_size_ = gt_boxes_shape[BOX_SIZE_INDEX];
   iou_size_ = anchor_boxes_size_ * gt_boxes_size_;
-  std::string iou_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
+  std::string iou_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   if (iou_mode != "iou" && iou_mode != "iof") {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'iou' or 'iof', but got: " << iou_mode;
   }

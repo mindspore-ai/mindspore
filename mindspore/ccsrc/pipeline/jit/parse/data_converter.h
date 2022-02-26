@@ -25,7 +25,7 @@
 #include <string>
 #include "utils/hash_map.h"
 #include "pipeline/jit/parse/parse_base.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

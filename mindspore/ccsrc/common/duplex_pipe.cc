@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/duplex_pipe.h"
+#include "include/common/duplex_pipe.h"
 
 #include <sys/wait.h>
 #include <iostream>

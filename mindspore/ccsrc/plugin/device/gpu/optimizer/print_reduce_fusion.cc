@@ -21,8 +21,9 @@
 #include <utility>
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -34,15 +35,15 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
     inputs_format.push_back(kOpFormat_DEFAULT);
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_index = 0; output_index < output_num; output_index++) {
     outputs_format.push_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
   }
 
   builder.SetInputsFormat(inputs_format);
@@ -67,9 +68,9 @@ bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr
     std::vector<std::string> string_value;
     std::vector<std::pair<int64_t, int64_t>> value_type;
     if (IsPrimitiveCNode(node, prim::kPrimPrint)) {
-      size_t input_num = AnfAlgo::GetInputTensorNum(node);
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
       for (size_t i = 0; i < input_num; i++) {
-        auto current_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
+        auto current_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), i);
         // not tensor(tuple, scalar, string)
         if (current_node->cast<ValueNodePtr>() == nullptr) {
           continue;
@@ -134,7 +135,7 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
     auto node = opt_list[idx];
     CNodePtr cnode = utils::cast<CNodePtr>(node);
     MS_EXCEPTION_IF_NULL(cnode);
-    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
     auto prim = std::make_shared<Primitive>("Print");
     std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
     auto string_pos = string_pos_vec[idx];
@@ -150,12 +151,12 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
       if (input_flag[i] == -1) {
         continue;
       }
-      auto input_tensor = AnfAlgo::GetInputNode(cnode, i);
+      auto input_tensor = common::AnfAlgo::GetInputNode(cnode, i);
       MS_EXCEPTION_IF_NULL(input_tensor);
       inputs.push_back(input_tensor);
     }
     // add monad
-    auto monad_node = AnfAlgo::GetInputNode(cnode, input_flag.size());
+    auto monad_node = common::AnfAlgo::GetInputNode(cnode, input_flag.size());
     MS_EXCEPTION_IF_NULL(monad_node);
     inputs.push_back(monad_node);
     auto string_value = string_value_vec[idx];
@@ -171,19 +172,19 @@ bool PrintReduceFusion::Run(const FuncGraphPtr &graph) {
     auto print_fused = graph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(print_fused);
     // hand over the attrs to new print
-    AnfAlgo::SetNodeAttr("string_pos", MakeValue<std::vector<int64_t>>(string_pos), print_fused);
-    AnfAlgo::SetNodeAttr("string_value", MakeValue<std::vector<std::string>>(string_value), print_fused);
-    AnfAlgo::SetNodeAttr("value_type", MakeValue<std::vector<int64_t>>(value_type), print_fused);
-    AnfAlgo::SetNodeAttr("value_type_pos", MakeValue<std::vector<int64_t>>(value_type_pos), print_fused);
+    common::AnfAlgo::SetNodeAttr("string_pos", MakeValue<std::vector<int64_t>>(string_pos), print_fused);
+    common::AnfAlgo::SetNodeAttr("string_value", MakeValue<std::vector<std::string>>(string_value), print_fused);
+    common::AnfAlgo::SetNodeAttr("value_type", MakeValue<std::vector<int64_t>>(value_type), print_fused);
+    common::AnfAlgo::SetNodeAttr("value_type_pos", MakeValue<std::vector<int64_t>>(value_type_pos), print_fused);
     // set output type and shape
     std::vector<TypeId> types;
     std::vector<std::vector<size_t>> shapes;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t i = 0; i < output_num; i++) {
-      types.push_back(AnfAlgo::GetOutputInferDataType(cnode, i));
-      shapes.push_back(AnfAlgo::GetOutputInferShape(cnode, i));
+      types.push_back(common::AnfAlgo::GetOutputInferDataType(cnode, i));
+      shapes.push_back(common::AnfAlgo::GetOutputInferShape(cnode, i));
     }
-    AnfAlgo::SetOutputInferTypeAndShape(types, shapes, print_fused.get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, print_fused.get());
     // add build info
     auto build_info = GenerateKernelBuildInfo(print_fused);
     AnfAlgo::SetSelectKernelBuildInfo(build_info, print_fused.get());

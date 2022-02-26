@@ -22,13 +22,14 @@
 #include <string>
 #include <algorithm>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,7 +41,7 @@ constexpr size_t kFloat32Len = 4;  // size of float32
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<int64_t> shapes;
-  auto shape_size_t = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto shape_size_t = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   std::transform(shape_size_t.begin(), shape_size_t.end(), std::back_inserter(shapes), SizeToLong);
   return shapes;
 }
@@ -198,10 +199,10 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   auto avgpool_grad = CheckAnfNodeIfCNodeAndInputSize(node, kAvgPoolGradInputNum);
 
   auto x_shape = GetInputXShape(avgpool_grad);
-  auto x_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, 0);
-  auto k_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrKernelSize);
-  auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrStrides);
-  auto pad_mode = PadMode(AnfAlgo::GetNodeAttr<int64_t>(avgpool_grad, kAttrPadMode));
+  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(avgpool_grad, 0);
+  auto k_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrKernelSize);
+  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(avgpool_grad, kAttrStrides);
+  auto pad_mode = PadMode(common::AnfAlgo::GetNodeAttr<int64_t>(avgpool_grad, kAttrPadMode));
 
   auto x_shape_vnode = CreateShapeValueNode(graph, x_shape);
   auto mean_matrix_vnode = CreateMeanMatrixValueNode(graph, node, x_shape, k_size, stride, pad_mode, x_dtype);
@@ -214,14 +215,14 @@ const AnfNodePtr AvgPoolGradUnifyMindIR::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(avgpool_grad_vm);
   avgpool_grad_vm->set_scope(avgpool_grad->scope());
   avgpool_grad_vm->set_abstract(avgpool_grad->abstract());
-  AnfAlgo::CopyNodeAttr(kAttrKernelSize, avgpool_grad, avgpool_grad_vm);
-  AnfAlgo::CopyNodeAttr(kAttrStrides, avgpool_grad, avgpool_grad_vm);
-  AnfAlgo::CopyNodeAttr(kAttrPadMode, avgpool_grad, avgpool_grad_vm);
-  AnfAlgo::CopyNodeAttr(kAttrFormat, avgpool_grad, avgpool_grad_vm);
+  common::AnfAlgo::CopyNodeAttr(kAttrKernelSize, avgpool_grad, avgpool_grad_vm);
+  common::AnfAlgo::CopyNodeAttr(kAttrStrides, avgpool_grad, avgpool_grad_vm);
+  common::AnfAlgo::CopyNodeAttr(kAttrPadMode, avgpool_grad, avgpool_grad_vm);
+  common::AnfAlgo::CopyNodeAttr(kAttrFormat, avgpool_grad, avgpool_grad_vm);
   auto input_names = std::vector<std::string>{"x_origin", "grad", "mean_matrix", "kernel_matrix"};
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), avgpool_grad_vm);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), avgpool_grad_vm);
   auto output_names = std::vector<std::string>{"output"};
-  AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), avgpool_grad_vm);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), avgpool_grad_vm);
   return avgpool_grad_vm;
 }
 }  // namespace opt

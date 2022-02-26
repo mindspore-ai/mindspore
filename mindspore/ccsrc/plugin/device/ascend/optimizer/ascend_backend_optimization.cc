@@ -160,8 +160,8 @@
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
-#include "utils/config_manager.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/config_manager.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #ifdef ENABLE_DUMP_IR

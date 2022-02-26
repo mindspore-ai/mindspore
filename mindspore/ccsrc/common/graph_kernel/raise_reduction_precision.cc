@@ -17,11 +17,12 @@
 
 #include <memory>
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/tensor.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/common_utils.h"
@@ -39,7 +40,7 @@ AnfNodePtr RaiseReductionPrecision::CreateCast(const AnfNodePtr &input, const Ty
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input};
   auto cnode = CreateCNode(inputs, func_graph, {.format = format, .shape = GetShape(input), .type = dst_type});
   SetNodeAttrSafely(kAttrDstType, dst_type, cnode);
-  AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cnode);
+  common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cnode);
   return cnode;
 }
 
@@ -115,8 +116,8 @@ bool RaiseReductionPrecision::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (const auto &node : todos) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (common::AnfAlgo::IsGraphKernel(node)) {
+      auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       MS_ERROR_IF_NULL(sub_func_graph);
       changed = Process(sub_func_graph) || changed;
     }

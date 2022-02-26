@@ -16,10 +16,10 @@
 #include "backend/common/pass/common_subexpression_elimination.h"
 
 #include <memory>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/flags.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -28,15 +28,15 @@ bool HasSideEffectAttr(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT, cnode)) {
     return false;
   }
-  return AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
+  return common::AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
 }
 
 bool CheckIgnoreCase(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
+  if (common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
@@ -44,7 +44,7 @@ bool CheckIgnoreCase(const AnfNodePtr &node) {
   bool need_ignore = true;
   auto input_size = cnode->inputs().size() - 1;
   for (size_t k = 0; k < input_size; ++k) {
-    auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, k), 0).first;
+    auto input = common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(cnode, k), 0).first;
     if (input != nullptr && input->isa<CNode>()) {
       need_ignore = false;
       break;
@@ -58,7 +58,7 @@ bool BackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNode
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
   if (main->isa<CNode>()) {
-    auto main_name = AnfAlgo::GetCNodeName(main);
+    auto main_name = common::AnfAlgo::GetCNodeName(main);
     if (main_name == prim::kPrimTensorMove->name() || main_name == prim::kPrimMemCpyAsync->name()) {
       return false;
     }

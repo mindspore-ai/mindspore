@@ -39,8 +39,13 @@ class PyObjectRef : public BaseRef {
 
   uint32_t type() const override { return tid(); }
   std::string ToString() const override { return py::str(object_); }
-  bool operator==(const BaseRef &other) const override;
-  bool operator==(const PyObjectRef &other) const;
+  bool operator==(const PyObjectRef &other) const { return object_.is(other.object_); }
+  bool operator==(const BaseRef &other) const override {
+    if (!utils::isa<PyObjectRef>(other)) {
+      return false;
+    }
+    return *this == utils::cast<PyObjectRef>(other);
+  }
 
   py::object object_;
 };

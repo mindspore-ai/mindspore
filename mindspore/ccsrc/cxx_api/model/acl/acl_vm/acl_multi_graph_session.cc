@@ -101,10 +101,10 @@ VectorRef MultiGraphAclSession::ConstructOutputRef(GraphId graph_id, std::deque<
   VectorRef outs;
   auto out_nodes = kernel_graphs_[graph_id]->outputs();
   for (auto &out : out_nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(
+    auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(
       out, 0, false, std::vector<PrimitivePtr>{prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimStateSetItem});
     auto &anf_node = item_with_index.first;
-    if (AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
       auto cnode = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));
@@ -131,11 +131,11 @@ VectorRef MultiGraphAclSession::ConstructOutputRefByTupleNode(const CNodePtr &tu
   MS_EXCEPTION_IF_NULL(out_tensors);
   VectorRef outs;
   for (size_t i = 1; i < tuple_node->inputs().size(); ++i) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(
+    auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(
       tuple_node->input(i), 0, false,
       std::vector<PrimitivePtr>{prim::kPrimMakeTuple, prim::kPrimUpdateState, prim::kPrimStateSetItem});
     auto &anf_node = item_with_index.first;
-    if (AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
       auto cnode = anf_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));

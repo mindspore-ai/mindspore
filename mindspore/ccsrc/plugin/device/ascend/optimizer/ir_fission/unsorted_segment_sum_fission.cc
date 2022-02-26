@@ -17,21 +17,22 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 bool CheckInputs(const CNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
-  if (AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumInputTensorNum) {
     MS_LOG(DEBUG) << "UnsortedSegmentSum has wrong inputs num, not equal " << kUnsortedSegmentSumInputTensorNum
                   << ". CNode= " << origin_node->DebugString();
     return false;
   }
-  auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
-  auto y_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
+  auto y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 1);
   if (x_shape.empty() || y_shape.empty()) {
     return false;
   }
@@ -53,11 +54,11 @@ CNodePtr UnsortSegmentSumFission::CreatePadding(const FuncGraphPtr &graph, const
   auto padding = NewCNode(padding_inputs, graph);
   MS_EXCEPTION_IF_NULL(padding);
   padding->set_scope(origin_node->scope());
-  auto shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
+  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = pad_dim_size;
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)}, {shape},
-                                      padding.get());
-  AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToLong(pad_dim_size)), padding);
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)},
+                                              {shape}, padding.get());
+  common::AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToLong(pad_dim_size)), padding);
   return padding;
 }
 
@@ -72,11 +73,11 @@ CNodePtr UnsortSegmentSumFission::CreateUnsortedSegmentSum(const FuncGraphPtr &g
   auto unsorted_segment_sum = NewCNode(unsorted_segment_sum8_inputs, graph);
   MS_EXCEPTION_IF_NULL(unsorted_segment_sum);
   unsorted_segment_sum->set_scope(origin_node->scope());
-  auto shape = AnfAlgo::GetOutputInferShape(origin_node, 0);
+  auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
   shape[shape.size() - 1] = pad_dim_size;
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
-                                      unsorted_segment_sum.get());
-  AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(SizeToLong(shape[0])), unsorted_segment_sum);
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
+                                              unsorted_segment_sum.get());
+  common::AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(SizeToLong(shape[0])), unsorted_segment_sum);
   return unsorted_segment_sum;
 }
 
@@ -91,10 +92,10 @@ CNodePtr UnsortSegmentSumFission::CreateSlice(const FuncGraphPtr &graph, const C
   MS_EXCEPTION_IF_NULL(slice);
   slice->set_scope(unsort_segment_sum->scope());
   slice->set_abstract(unsort_segment_sum->abstract());
-  auto unsort_segment_sum_shape = AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
+  auto unsort_segment_sum_shape = common::AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
   std::vector<size_t> offsets(unsort_segment_sum_shape.size(), 0);
-  AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(unsort_segment_sum_shape)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(unsort_segment_sum_shape)), slice);
   return slice;
 }
 
@@ -114,7 +115,7 @@ const AnfNodePtr UnsortSegmentSumFission::Process(const FuncGraphPtr &graph, con
     return nullptr;
   }
   size_t pad_dim_size;
-  auto input_dtype = AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
+  auto input_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0);
   constexpr auto PADSIZE32 = 8;
   constexpr auto PADSIZE16 = 16;
   if (input_dtype == kNumberTypeFloat32) {

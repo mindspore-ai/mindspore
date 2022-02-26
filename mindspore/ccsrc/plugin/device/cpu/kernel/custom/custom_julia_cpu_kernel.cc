@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
+  const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
   auto pos1 = exec_info.find(":");
   auto pos2 = exec_info.rfind(":");
   if (pos1 == std::string::npos || pos2 == std::string::npos || pos1 == pos2) {
@@ -43,7 +43,7 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   module_name_ = exec_info.substr(pos1 + 1, pos2 - pos1 - 1);
   func_name_ = exec_info.substr(pos2 + 1);
 
-  num_input_ = AnfAlgo::GetInputTensorNum(kernel_node);
+  num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
   auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   if (num_input_ != input_type_list.size()) {
     MS_LOG(EXCEPTION) << "Kernel[" << exec_info << "]'s input shapes'size is " << num_input_
@@ -60,7 +60,7 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
 
-  num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
+  num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   if (num_output_ != output_type_list.size()) {
     MS_LOG(EXCEPTION) << "Kernel[" << exec_info << "]'s output shapes'size is " << num_input_

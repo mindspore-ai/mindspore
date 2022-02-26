@@ -74,24 +74,24 @@ class PsROIPoolingFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     // Get the number of input args
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPooling needs 2 input.";
       return false;
     }
 
     // Get the number of output args
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != OUTPUT_NUM) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPooling needs 2 output.";
       return false;
     }
 
     // Get the input shapes
-    auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(x_shape, kernel_name, "input") || CHECK_SHAPE_NULL(rois_shape, kernel_name, "roi");
     if (is_null_input_) {

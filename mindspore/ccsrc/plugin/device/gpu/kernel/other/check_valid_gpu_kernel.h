@@ -54,9 +54,9 @@ class CheckValidGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
@@ -64,9 +64,9 @@ class CheckValidGpuKernelMod : public NativeGpuKernelMod {
     img_metas_size_ = sizeof(T);
     valid_size_ = sizeof(S);
 
-    auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto img_metas_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto valid_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto anchor_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto img_metas_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto valid_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(anchor_boxes_shape, kernel_name_, "bboxes") ||
                      CHECK_SHAPE_NULL(img_metas_shape, kernel_name_, "img_metas") ||
                      CHECK_SHAPE_NULL(valid_shape, kernel_name_, "output");

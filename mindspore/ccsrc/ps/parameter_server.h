@@ -37,6 +37,7 @@
 #include "ir/func_graph.h"
 #include "backend/common/session/session_basic.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/session/session_factory.h"
 #include "ps/optimizer_info.h"
 #include "ps/optimizer_info_builder.h"

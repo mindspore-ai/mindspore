@@ -23,7 +23,7 @@
 
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/parse.h"
 

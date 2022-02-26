@@ -67,19 +67,19 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") ||
                      CHECK_SHAPE_NULL(index_shape, kernel_name, "index") ||
                      CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");

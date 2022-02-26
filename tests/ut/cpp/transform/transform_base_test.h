@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "transform/graph_ir/util.h"
+#include "include/transform/graph_ir/util.h"
 #include "ir/tensor.h"
 
 #include "common/common_test.h"

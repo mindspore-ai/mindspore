@@ -24,7 +24,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

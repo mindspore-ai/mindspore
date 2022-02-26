@@ -25,7 +25,7 @@
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "mindspore/core/base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

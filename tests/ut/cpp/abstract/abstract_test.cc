@@ -44,7 +44,7 @@ TEST_F(TestAbstract, TestParseDataClass) {
   }
   PyEval_InitThreads();
 
-  py::object fn = parse::python_adapter::GetPyFn("gtest_input.pipeline.parse.parser_test", "TestFoo");
+  py::object fn = python_adapter::GetPyFn("gtest_input.pipeline.parse.parser_test", "TestFoo");
 
   ClassPtr cls_ptr = parse::ParseDataClass(fn);
   ASSERT_TRUE(nullptr != cls_ptr);

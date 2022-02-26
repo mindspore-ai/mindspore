@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "frontend/parallel/status.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace parallel {

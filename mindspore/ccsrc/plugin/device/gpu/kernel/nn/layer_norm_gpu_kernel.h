@@ -48,11 +48,11 @@ class LayerNormGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     int begin_norm_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_norm_axis"));
     int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x");
     if (is_null_input_) {
       InitSizeLists();

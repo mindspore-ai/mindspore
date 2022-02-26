@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "utils/config_manager.h"
+#include "include/common/utils/config_manager.h"
 
 namespace mindspore {
 class TestConfigManager : public UT::Common {

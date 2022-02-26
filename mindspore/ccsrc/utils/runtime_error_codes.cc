@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "utils/runtime_error_codes.h"
+#include "include/common/utils/runtime_error_codes.h"
 #include <map>
 #include <vector>
 #include "graphengine/inc/external/runtime/rt_error_codes.h"

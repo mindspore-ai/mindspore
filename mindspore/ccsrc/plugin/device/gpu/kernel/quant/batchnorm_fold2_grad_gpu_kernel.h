@@ -90,16 +90,16 @@ class BatchNormFold2GradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
     }
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -114,7 +114,7 @@ class BatchNormFold2GradGpuKernelMod : public NativeGpuKernelMod {
     channel_ = input_shape[1];
     height_ = input_shape[2];
     width_ = input_shape[3];
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     freeze_bn_ = GetValue<int64_t>(prim->GetAttr("freeze_bn"));
 

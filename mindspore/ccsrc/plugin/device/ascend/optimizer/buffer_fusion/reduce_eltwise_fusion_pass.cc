@@ -18,6 +18,7 @@
 #include "kernel/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -74,7 +75,7 @@ void ReduceEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
   std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

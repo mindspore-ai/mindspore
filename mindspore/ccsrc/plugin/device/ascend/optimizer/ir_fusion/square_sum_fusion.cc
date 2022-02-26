@@ -21,7 +21,8 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
@@ -58,14 +59,14 @@ CNodePtr SquareSumFusion::GenerateSquareSumV1(const FuncGraphPtr &graph, const C
   auto kernel_info = std::make_shared<device::KernelInfo>();
   MS_EXCEPTION_IF_NULL(kernel_info);
   square_sumv1->set_kernel_info(kernel_info);
-  auto types = {AnfAlgo::GetOutputInferDataType(sum, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(sum, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv1.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(sum, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(sum, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv1.get());
   square_sumv1->set_scope(sum->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv1);
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv1);
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv1);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv1);
   auto names = MakeValue<std::vector<std::string>>({square->fullname_with_scope(), sum->fullname_with_scope()});
-  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv1);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv1);
   return square_sumv1;
 }
 
@@ -80,14 +81,14 @@ CNodePtr SquareSumFusion::GenerateSquareSumV2(const FuncGraphPtr &graph, const C
   std::vector<AnfNodePtr> square_sumv2_inputs = {NewValueNode(prim), square->input(1)};
   auto square_sumv2 = NewCNode(square_sumv2_inputs, graph);
   MS_EXCEPTION_IF_NULL(square_sumv2);
-  auto types = {AnfAlgo::GetOutputInferDataType(sum, 0), AnfAlgo::GetOutputInferDataType(square, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(sum, 0), AnfAlgo::GetOutputInferShape(square, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv2.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(sum, 0), common::AnfAlgo::GetOutputInferDataType(square, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(sum, 0), common::AnfAlgo::GetOutputInferShape(square, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sumv2.get());
   square_sumv2->set_scope(sum->scope());
-  AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv2);
-  AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv2);
+  common::AnfAlgo::CopyNodeAttr(kAttrAxis, sum, square_sumv2);
+  common::AnfAlgo::CopyNodeAttr(kAttrKeepDims, sum, square_sumv2);
   auto names = MakeValue<std::vector<std::string>>({square->fullname_with_scope(), sum->fullname_with_scope()});
-  AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv2);
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, names, square_sumv2);
   return square_sumv2;
 }
 

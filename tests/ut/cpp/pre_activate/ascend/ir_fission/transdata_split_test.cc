@@ -21,6 +21,7 @@
 #include "kernel/oplib/oplib.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/anfalgo.h"
 
 #define private public
 #define protected public
@@ -45,7 +46,7 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
   MockInsertTransOpKernelSelectTrans4Dto5D() = default;
   ~MockInsertTransOpKernelSelectTrans4Dto5D() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
-    if (AnfAlgo::GetCNodeName(cnode) == "Four2Five") {
+    if (common::AnfAlgo::GetCNodeName(cnode) == "Four2Five") {
       KernelBuildInfoBuilder builder;
       builder.SetInputsFormat({"NCHW"});
       builder.SetInputsDeviceType({kFloat16->type_id()});
@@ -73,7 +74,7 @@ class MockTransdataSplitKernelSelect : public KernelSelect {
   MockTransdataSplitKernelSelect() = default;
   ~MockTransdataSplitKernelSelect() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
-    if (AnfAlgo::GetCNodeName(cnode) == kTransDataOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kTransDataOpName) {
       KernelBuildInfoBuilder builder;
       builder.SetInputsFormat({"NCHW"});
       builder.SetInputsDeviceType({kFloat16->type_id()});

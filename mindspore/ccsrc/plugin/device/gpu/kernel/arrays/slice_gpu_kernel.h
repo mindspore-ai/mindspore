@@ -103,7 +103,7 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     (void)CheckParam(kernel_node);
 
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
@@ -176,7 +176,7 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     constexpr size_t kDynamicSliceInputNum = 3;
     if (input_num != 1 && input_num != kDynamicSliceInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1 or " << kDynamicSliceInputNum
@@ -185,11 +185,11 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
     if (input_num == kDynamicSliceInputNum) {
       is_dynamic_attr_ = true;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     const size_t kInputNumUpperLimit = 7;
     if (input_shape.size() > kInputNumUpperLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "

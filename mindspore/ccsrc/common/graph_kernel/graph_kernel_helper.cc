@@ -27,13 +27,14 @@
 #include "kernel/akg/akg_kernel_json_decoder.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/action.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -47,7 +48,7 @@ bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
     return true;
   }
 
-  if (auto fg = AnfAlgo::GetCNodeFuncGraphPtr(out); fg != nullptr) {
+  if (auto fg = common::AnfAlgo::GetCNodeFuncGraphPtr(out); fg != nullptr) {
     auto fg_out = fg->output();
     if (IsPrimitiveCNode(fg_out, prim::kPrimMakeTuple)) {
       auto inputs = fg_out->cast<CNodePtr>()->inputs();
@@ -75,7 +76,7 @@ bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, Anf
   }
   std::string fused_name;
   std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
-    (void)fused_name.append(AnfAlgo::GetCNodeName(node)).append("_");
+    (void)fused_name.append(common::AnfAlgo::GetCNodeName(node)).append("_");
   });
   MS_LOG(DEBUG) << "Collect fusion json: " << fused_name;
   return true;
@@ -130,7 +131,7 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   std::vector<std::string> graph_output_format;
   std::vector<TypeId> graph_output_type;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(inputs[i], 0);
     if (kernel_with_index.first->isa<ValueNode>()) {
       auto tensor = GetValueNode<tensor::TensorPtr>(kernel_with_index.first);
       MS_EXCEPTION_IF_NULL(tensor);
@@ -153,14 +154,14 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
     AnfAlgo::SetSelectKernelBuildInfo(para_info_builder.Build(), fg->parameters()[i].get());
   }
   auto new_outputs = outputs;
-  if (outputs.size() == 1 && AnfAlgo::IsGraphKernel(outputs[0])) {
+  if (outputs.size() == 1 && common::AnfAlgo::IsGraphKernel(outputs[0])) {
     std::vector<AnfNodePtr> real_outs;
     if (IsMakeTupleOut(outputs[0], &real_outs)) {
       new_outputs = real_outs;
     }
   }
   for (size_t i = 0; i < new_outputs.size(); ++i) {
-    auto kernel_with_index = AnfAlgo::VisitKernel(new_outputs[i], 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(new_outputs[i], 0);
     auto output_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
     graph_output_format.push_back(output_format);
@@ -185,13 +186,13 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     MS_LOG(ERROR) << "Input nodes is empty.";
     return false;
   }
-  bool has_graph_kernel = std::any_of(nodes.begin(), nodes.end(), AnfAlgo::IsGraphKernel);
+  bool has_graph_kernel = std::any_of(nodes.begin(), nodes.end(), common::AnfAlgo::IsGraphKernel);
   bool is_single_graph_kernel = has_graph_kernel && nodes.size() == 1;
 
   FuncGraphPtr fg;
   AnfNodePtrList op_nodes, inputs, outputs;
   if (is_single_graph_kernel) {
-    fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
+    fg = common::AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
     kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
   } else if (!has_graph_kernel) {
     std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes);
@@ -215,8 +216,8 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
 
   FuncGraphPtr fg;
 
-  if (nodes.size() == 1 && AnfAlgo::IsGraphKernel(nodes[0])) {
-    fg = AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
+  if (nodes.size() == 1 && common::AnfAlgo::IsGraphKernel(nodes[0])) {
+    fg = common::AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
   } else {
     std::tie(fg, std::ignore, std::ignore) = BuildSingleGraphFromNodes(nodes);
   }
@@ -385,7 +386,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   std::vector<std::string> input_formats;
   std::vector<TypeId> input_types;
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+    auto kernel_with_index = common::AnfAlgo::VisitKernel(inputs[i], 0);
     auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
     input_formats.push_back(input_format);
     auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
@@ -416,12 +417,12 @@ void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfN
   if (cnode == nullptr) {
     return;
   }
-  AnfNodePtrList new_inputs = {NewValueNode(AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
+  AnfNodePtrList new_inputs = {NewValueNode(common::AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
   auto inputs = cnode->inputs();
   new_inputs.insert(new_inputs.end(), inputs.begin() + 1, inputs.end());
   cnode->set_inputs(new_inputs);
 
   // Set attr secondly.
-  AnfAlgo::SetNodeAttr(key, value, node);
+  common::AnfAlgo::SetNodeAttr(key, value, node);
 }
 }  // namespace mindspore::graphkernel

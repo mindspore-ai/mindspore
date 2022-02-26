@@ -26,6 +26,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -66,7 +67,7 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
@@ -78,7 +79,7 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    need_broadcast_ = AnfAlgo::IsTensorBroadcast(shape1, shape2);
+    need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                         << ", but got " << shape1.size();
@@ -156,7 +157,7 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void GetOpType(const CNodePtr &kernel_node) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
 
     static const std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
       {"Greater", BROADCAST_TYPE_GREATER},

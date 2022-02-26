@@ -19,6 +19,7 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -27,7 +28,7 @@ AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, con
     return nullptr;
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   if (output_num == 0) {
     MS_LOG(DEBUG) << "Output number is zero, no need to insert tensor_move!";
     return node;
@@ -43,10 +44,10 @@ AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, con
     if (new_node == nullptr) {
       MS_LOG(EXCEPTION) << "Create tensor move op failed!";
     }
-    if (AnfAlgo::IsDynamicShape(tuple_get_item)) {
+    if (common::AnfAlgo::IsDynamicShape(tuple_get_item)) {
       MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
     }
-    AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), new_node);
+    common::AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), new_node);
     make_tuple_inputs.push_back(new_node);
   }
   AnfNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
@@ -67,11 +68,11 @@ const AnfNodePtr InsertTensorMoveForGetNext::Process(const FuncGraphPtr &func_gr
   }
 
   auto cnode = node->cast<CNodePtr>();
-  if (AnfAlgo::HasNodeAttr(kAttrVisited, cnode)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrVisited, cnode)) {
     MS_LOG(DEBUG) << "Node op_name[" << kGetNextOpName << "] has visited.";
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cnode);
 
   return InsertTensorMoveForGetNextOutputs(func_graph, cnode);
 }

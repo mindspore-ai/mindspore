@@ -37,22 +37,22 @@ using dt = dnnl::memory::data_type;
 void LstmCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   NativeCpuKernelMod::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
-  auto output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  auto output_type = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  auto output_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);
   auto output_types = std::vector<TypeId>(output_num, output_type);
   std::vector<std::vector<size_t>> output_shapes;
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    auto shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+    auto shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
     (void)output_shapes.emplace_back(shape);
   }
   size_t len = reserve_size_ / IntToSize(kGateNum);
   output_shapes[kOutputWorkSpaceIndex] = {len, 1};
-  AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
 }
 
 void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
   auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
@@ -127,11 +127,11 @@ void LstmCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-  bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
-  hidden_size_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
-  num_layers_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
-  has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
+  bidirectional_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
+  input_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
+  hidden_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
+  num_layers_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
+  has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);
   num_directions_ = 1;

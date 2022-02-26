@@ -26,9 +26,9 @@ constexpr size_t kDynamicShapeOutputNum = 1;
 template <typename T>
 void TensorShapeCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
-  size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_count != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_count;
   }
@@ -44,8 +44,8 @@ bool TensorShapeCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &i
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
-  auto output_shape = AnfAlgo::GetOutputInferShape(node_, 0);
+  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output should be 1-D, but got: " << output_shape.size();

@@ -17,6 +17,7 @@
 #include "kernel/kernel_fusion.h"
 #include "debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
@@ -30,14 +31,14 @@ void MatmulDropoutDoMaskV3AddFusionPass::MatchMatmulDropoutDoMaskV3Add(const CNo
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto add_input = cnode->input(2);
   MS_EXCEPTION_IF_NULL(add_input);
-  if (!add_input->isa<CNode>() || !AnfAlgo::CheckPrimitiveType(add_input, prim::kPrimDropoutDoMaskV3)) {
+  if (!add_input->isa<CNode>() || !common::AnfAlgo::CheckPrimitiveType(add_input, prim::kPrimDropoutDoMaskV3)) {
     return;
   }
   auto dropout_do_mask_v3 = add_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(dropout_do_mask_v3);
   auto matmul = dropout_do_mask_v3->input(1);
   MS_EXCEPTION_IF_NULL(matmul);
-  if (!matmul->isa<CNode>() || !AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul)) {
+  if (!matmul->isa<CNode>() || !common::AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul)) {
     return;
   }
   mindspore::HashSet<AnfNodePtr> record{cnode, dropout_do_mask_v3, matmul};
@@ -51,13 +52,13 @@ void MatmulDropoutDoMaskV3AddFusionPass::MatchSingleFusionPattern(const session:
   const auto &node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
     if (!AnfUtils::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
-        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+        common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    if (AnfAlgo::GetCNodeName(cnode) == kAddOpName) {
+    if (common::AnfAlgo::GetCNodeName(cnode) == kAddOpName) {
       MatchMatmulDropoutDoMaskV3Add(cnode, kernel_graph, candidate_fusion);
     }
   }

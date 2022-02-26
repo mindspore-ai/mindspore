@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "utils/ms_device_shape_transfer.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 #include "mindspore/core/ir/anf.h"
 #include "kernel/oplib/oplib.h"
 namespace mindspore {

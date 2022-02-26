@@ -18,7 +18,8 @@
 #include <map>
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "transform/graph_ir/util.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/transform/graph_ir/util.h"
 #include "runtime/device/memory_manager.h"
 
 namespace mindspore::hccl {
@@ -44,15 +45,15 @@ AllToAllvCalcParam::AllToAllvCalcParam(const CNodeWeakPtr &cnode, uint32_t rank_
 void AllToAllvCalcParam::CalcOpParam() {
   CNodePtr cnode = node_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   // ignore send empty input
-  if (AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
-    bool need_drop_input = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+  if (common::AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
+    bool need_drop_input = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
     if (need_drop_input) {
       input_num = 0;
     }
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   std::vector<size_t> input_aligned_mem_size(input_num);
   std::vector<size_t> output_aligned_mem_size(output_num);
   std::vector<size_t> input_real_mem_size(input_num);
@@ -88,7 +89,7 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
                                        std::vector<int64_t> *displs) {
   CNodePtr cnode = node_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto rank_ids = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, rank_ids_attr);
+  auto rank_ids = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, rank_ids_attr);
   if (mem_sizes.size() != rank_ids.size() || real_sizes.size() != rank_ids.size()) {
     MS_LOG(EXCEPTION) << "Invalid addr num " << mem_sizes.size() << " and " << real_sizes.size()
                       << " must be equal to rank ids size " << rank_ids.size();

@@ -18,7 +18,7 @@
 #include <tuple>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "kernel/common_utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore {
@@ -108,7 +108,7 @@ bool IsAkgMatMul(size_t K, size_t M, size_t N) {
 // Return ture if (K, M, N) need pad
 std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, vec *pad_shape_b, vec *unpad_shape,
                                      vec *tail_shape_a, vec *tail_shape_b, vec *tail_shape_unpad) {
-  auto mm_attrs = AnfAlgo::GetCNodePrimitive(matmul)->attrs();
+  auto mm_attrs = common::AnfAlgo::GetCNodePrimitive(matmul)->attrs();
   if (mm_attrs.count("transpose_a") == 0 || mm_attrs.count("transpose_b") == 0) {
     MS_LOG(ERROR) << "attrs transpose_a and transpose_b need to be set in node " << matmul->fullname_with_scope();
     return std::tuple(false, false, false);
@@ -164,7 +164,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const Fun
   SetNodeAttrSafely("head", MakeValue(head), pad_cnode);
   SetNodeAttrSafely("tail", MakeValue(tail), pad_cnode);
   SetNodeAttrSafely("pad_val", MakeValue(std::make_shared<Int32Imm>(0)), pad_cnode);
-  std::vector<TypeId> pad_type = {AnfAlgo::GetPrevNodeOutputInferDataType(matmul, 0)};
+  std::vector<TypeId> pad_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
   (void)abs_shape.insert(abs_shape.begin(), pad_shape.begin(), pad_shape.end());
@@ -194,7 +194,7 @@ void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const F
   ShapeVector tail;
   (void)tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
   SetNodeAttrSafely("tail", MakeValue(tail), unpad_cnode);
-  std::vector<TypeId> unpad_type = {AnfAlgo::GetOutputInferDataType(matmul, 0)};
+  std::vector<TypeId> unpad_type = {common::AnfAlgo::GetOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
   (void)abs_shape.insert(abs_shape.begin(), unpad_shape.begin(), unpad_shape.end());
@@ -221,7 +221,7 @@ void UpdateMatmulInfo(const AnfNodePtr &matmul_node, const vec &unpad_shape, con
     abs_shape.push_back(unpad_shape[i] + tail_shape[i]);
   }
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(abs_shape));
-  TypeId abs_type = AnfAlgo::GetOutputInferDataType(matmul_node, 0);
+  TypeId abs_type = common::AnfAlgo::GetOutputInferDataType(matmul_node, 0);
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(abs_type), abs_shape_ptr);
   matmul_node->set_abstract(abstract);
 
@@ -240,7 +240,7 @@ bool InsertPadUnpad(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (const auto &n : todos) {
-    if (!AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) continue;
+    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) continue;
     auto mm_cnode = n->cast<CNodePtr>();
     vec pad_shape_a, pad_shape_b, tail_shape_a, tail_shape_b, tail_shape_unpad, unpad_shape;
     bool pad_K{false}, pad_M{false}, pad_N{false};
@@ -283,8 +283,8 @@ bool InsertPadOps::Run(const FuncGraphPtr &func_graph) {
   auto changed = false;
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
-    if (!AnfAlgo::IsGraphKernel(node)) continue;
-    auto graph_kernel_fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (!common::AnfAlgo::IsGraphKernel(node)) continue;
+    auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(graph_kernel_fg);
     changed = InsertPadUnpad(graph_kernel_fg) || changed;
   }

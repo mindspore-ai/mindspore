@@ -25,7 +25,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {

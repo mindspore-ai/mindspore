@@ -56,7 +56,7 @@ class ScatterFunctorKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kScatterFunctorTypeMap.find(kernel_name);
     if (iter == kScatterFunctorTypeMap.end()) {
       MS_LOG(EXCEPTION)
@@ -67,22 +67,22 @@ class ScatterFunctorKernelMod : public NativeGpuKernelMod {
       scatter_functor_type_ = iter->second;
     }
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     input_size_ = 1;
     inner_size_ = 1;
     for (size_t i = 1; i < input_shape.size(); i++) {
       inner_size_ *= input_shape[i];
     }
     input_size_ = input_shape[0] * inner_size_;
-    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     indices_size_ = 1;
     for (size_t i = 0; i < indices_shape.size(); i++) {
       indices_size_ *= indices_shape[i];

@@ -27,7 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

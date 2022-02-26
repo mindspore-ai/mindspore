@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include "debug/common.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {

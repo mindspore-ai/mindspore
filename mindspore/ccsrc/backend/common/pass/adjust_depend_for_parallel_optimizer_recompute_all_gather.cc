@@ -16,7 +16,7 @@
 
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include <algorithm>
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,11 +35,12 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (!AnfAlgo::IsAllgather(cnode) || !AnfAlgo::IsFusion(cnode) || !AnfAlgo::IsFromParallelOptimizer(cnode)) {
+    if (!common::AnfAlgo::IsAllgather(cnode) || !common::AnfAlgo::IsFusion(cnode) ||
+        !common::AnfAlgo::IsFromParallelOptimizer(cnode)) {
       continue;
     }
-    if (AnfAlgo::IsRecompute(cnode)) {
-      int64_t fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
+    if (common::AnfAlgo::IsRecompute(cnode)) {
+      int64_t fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
       if (std::find(parallel_optimizer_recompute_allgather_fusion_ids.begin(),
                     parallel_optimizer_recompute_allgather_fusion_ids.end(),
                     fusion_id) == parallel_optimizer_recompute_allgather_fusion_ids.end()) {
@@ -52,10 +53,10 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
         parallel_optimizer_recompute_allgathers.push_back(node);
       }
     } else {
-      int64_t unrecompute_fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
+      int64_t unrecompute_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
       unrecompute_max_fusion_id = std::max(unrecompute_fusion_id, unrecompute_max_fusion_id);
-      bool would_be_recomputed =
-        AnfAlgo::HasNodeAttr(kAttrRecompute, cnode) && AnfAlgo::GetNodeAttr<bool>(cnode, kAttrRecompute);
+      bool would_be_recomputed = common::AnfAlgo::HasNodeAttr(kAttrRecompute, cnode) &&
+                                 common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrRecompute);
       auto [iter, inserted] =
         forward_allgather_recompute_value_in_fusion_group.emplace(unrecompute_fusion_id, would_be_recomputed);
       if (!inserted && iter->second != would_be_recomputed) {
@@ -79,14 +80,14 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
   if (recompute_min_fusion_id <= unrecompute_max_fusion_id) {
     MS_LOG(WARNING) << "Increase the duplicated allgather fusion id";
     for (auto &adjust_node : parallel_optimizer_recompute_first_fusion_allgathers) {
-      int64_t current_fusion_id = AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
+      int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id = current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + 2;
-      AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
+      common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
     for (auto &adjust_node : parallel_optimizer_recompute_allgathers) {
-      int64_t current_fusion_id = AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
+      int64_t current_fusion_id = common::AnfAlgo::GetNodeAttr<int64_t>(adjust_node, kAttrFusion);
       int64_t destination_fusion_id = current_fusion_id + unrecompute_max_fusion_id - recompute_min_fusion_id + 2;
-      AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
+      common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(destination_fusion_id), adjust_node);
     }
   }
 }
@@ -97,7 +98,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
   bool changed = false;
   for (auto &node : parallel_optimizer_recompute_allgathers) {
     auto cnode = node->cast<CNodePtr>();
-    auto depend_node = AnfAlgo::GetInputNode(cnode, 0);
+    auto depend_node = common::AnfAlgo::GetInputNode(cnode, 0);
     if (IsPrimitiveCNode(depend_node, prim::kPrimDepend)) {
       auto depend_cnode = depend_node->cast<CNodePtr>();
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];
@@ -108,17 +109,17 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
           continue;
         }
         std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                          allgather_next_node, AnfAlgo::GetInputNode(depend_cnode, 1)};
+                                          allgather_next_node, common::AnfAlgo::GetInputNode(depend_cnode, 1)};
         auto new_depend = graph->NewCNode(inputs);
         new_depend->set_abstract(depend_node->abstract());
-        manager->SetEdge(node, 1, AnfAlgo::GetInputNode(depend_cnode, 0));
+        manager->SetEdge(node, 1, common::AnfAlgo::GetInputNode(depend_cnode, 0));
         (void)manager->Replace(allgather_next_node, new_depend);
         changed = true;
       }
     } else if (IsPrimitiveCNode(depend_node, prim::kPrimCast) &&
-               IsPrimitiveCNode(AnfAlgo::GetInputNode(depend_node->cast<CNodePtr>(), 0), prim::kPrimDepend)) {
+               IsPrimitiveCNode(common::AnfAlgo::GetInputNode(depend_node->cast<CNodePtr>(), 0), prim::kPrimDepend)) {
       auto cast_cnode = depend_node->cast<CNodePtr>();
-      auto cast_depend_node = AnfAlgo::GetInputNode(cast_cnode, 0);
+      auto cast_depend_node = common::AnfAlgo::GetInputNode(cast_cnode, 0);
       auto cast_depend_cnode = cast_depend_node->cast<CNodePtr>();
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];
       for (auto &node_pair : allgather_node_set) {
@@ -128,10 +129,10 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
           continue;
         }
         std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                          allgather_next_node, AnfAlgo::GetInputNode(cast_depend_cnode, 1)};
+                                          allgather_next_node, common::AnfAlgo::GetInputNode(cast_depend_cnode, 1)};
         auto new_depend = graph->NewCNode(inputs);
         new_depend->set_abstract(cast_depend_node->abstract());
-        manager->SetEdge(depend_node, 1, AnfAlgo::GetInputNode(cast_depend_cnode, 0));
+        manager->SetEdge(depend_node, 1, common::AnfAlgo::GetInputNode(cast_depend_cnode, 0));
         (void)manager->Replace(allgather_next_node, new_depend);
         changed = true;
       }

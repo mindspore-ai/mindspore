@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/trace_base.h"
 namespace mindspore {
@@ -54,7 +55,8 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto add5 = node->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(add5) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add5) != kAddInputTensorNum) {
+  if (common::AnfAlgo::GetCNodeName(add5) != prim::kPrimAdd->name() ||
+      common::AnfAlgo::GetInputTensorNum(add5) != kAddInputTensorNum) {
     return false;
   }
   auto real_div4_anf = add5->input(kIndex1);
@@ -62,8 +64,8 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto real_div4 = real_div4_anf->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(real_div4) != kRealDivOpName ||
-      AnfAlgo::GetInputTensorNum(real_div4) != kRealDivInputTensorNum) {
+  if (common::AnfAlgo::GetCNodeName(real_div4) != kRealDivOpName ||
+      common::AnfAlgo::GetInputTensorNum(real_div4) != kRealDivInputTensorNum) {
     return false;
   }
   auto add4_anf = real_div4->input(kIndex2);
@@ -71,7 +73,8 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto add4 = add4_anf->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(add4) != prim::kPrimAdd->name() || AnfAlgo::GetInputTensorNum(add4) != kAddInputTensorNum) {
+  if (common::AnfAlgo::GetCNodeName(add4) != prim::kPrimAdd->name() ||
+      common::AnfAlgo::GetInputTensorNum(add4) != kAddInputTensorNum) {
     return false;
   }
   auto sqrt1_anf = add4->input(kIndex1);
@@ -79,7 +82,8 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto sqrt1 = sqrt1_anf->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(sqrt1) != kSqrtOpName || AnfAlgo::GetInputTensorNum(sqrt1) != kSqrtInputTensorNum) {
+  if (common::AnfAlgo::GetCNodeName(sqrt1) != kSqrtOpName ||
+      common::AnfAlgo::GetInputTensorNum(sqrt1) != kSqrtInputTensorNum) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(add2_y);
@@ -177,11 +181,11 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   AnfNodePtr add1 = nullptr;
   AnfNodePtr add5 = iter->first;
   std::tie(add0, add1) = GetAdd0Add1Nodes(real_div0, real_div1);
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0), AnfAlgo::GetOutputInferDataType(add0, 0),
-                AnfAlgo::GetOutputInferDataType(add1, 0), AnfAlgo::GetOutputInferDataType(add5, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0), AnfAlgo::GetOutputInferShape(add0, 0),
-                 AnfAlgo::GetOutputInferShape(add1, 0), AnfAlgo::GetOutputInferShape(add5, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0), common::AnfAlgo::GetOutputInferDataType(add0, 0),
+                common::AnfAlgo::GetOutputInferDataType(add1, 0), common::AnfAlgo::GetOutputInferDataType(add5, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0), common::AnfAlgo::GetOutputInferShape(add0, 0),
+                 common::AnfAlgo::GetOutputInferShape(add1, 0), common::AnfAlgo::GetOutputInferShape(add5, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
 
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, fusion_node, kLambNextMVWithDecayV1OutputNum, &fusion_node_outputs);

@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/remove_reshape_pair.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -38,19 +39,19 @@ const AnfNodePtr RemoveReshapePair::Process(const FuncGraphPtr &func_graph, cons
     return nullptr;
   }
   auto in_reshape =
-    CheckAnfNodeIfCNodeAndInputSize(AnfAlgo::GetInputNode(out_reshape, 0), kBackendReshapeInputTensorNum);
+    CheckAnfNodeIfCNodeAndInputSize(common::AnfAlgo::GetInputNode(out_reshape, 0), kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(in_reshape);
   if (IsUsedByOthers(func_graph, in_reshape)) {
     return nullptr;
   }
 
-  if (AnfAlgo::IsDynamicShape(out_reshape) || AnfAlgo::IsDynamicShape(in_reshape)) {
+  if (common::AnfAlgo::IsDynamicShape(out_reshape) || common::AnfAlgo::IsDynamicShape(in_reshape)) {
     return nullptr;
   }
   auto output_shape = AnfAlgo::GetOutputDeviceShape(out_reshape, 0);
   auto input_shape = AnfAlgo::GetInputDeviceShape(in_reshape, 0);
   if (kernel::IsSameShape(input_shape, output_shape)) {
-    auto input_node = AnfAlgo::GetInputNode(in_reshape, 0);
+    auto input_node = common::AnfAlgo::GetInputNode(in_reshape, 0);
     return input_node;
   }
   return nullptr;

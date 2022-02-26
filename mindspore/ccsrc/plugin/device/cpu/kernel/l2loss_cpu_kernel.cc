@@ -27,8 +27,8 @@ constexpr size_t kL2LossOutputsNum = 1;
 template <typename T>
 void L2LossCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   tensor_size_ = 1;
   for (const size_t &d : input_shape_) {
     tensor_size_ *= d;

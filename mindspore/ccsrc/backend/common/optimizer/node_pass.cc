@@ -22,7 +22,8 @@
 #include "ir/manager.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/session/kernel_graph.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -34,7 +35,7 @@ void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePt
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(out_caller_map);
   auto inputs = cnode->inputs();
-  if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
+  if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     auto partial_node = dyn_cast<CNode>(inputs.at(kSwitchBranchIndex));
     MS_EXCEPTION_IF_NULL(partial_node);
     const auto &partial_inputs = partial_node->inputs();
@@ -44,7 +45,7 @@ void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePt
     auto switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     MS_EXCEPTION_IF_NULL(switch_subgraph);
     (*out_caller_map)[switch_subgraph->output()] = cnode;
-  } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
+  } else if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall)) {
     auto call_subgraph = GetValueNode<FuncGraphPtr>(inputs.at(kCallArgsIndex));
     MS_EXCEPTION_IF_NULL(call_subgraph);
     (*out_caller_map)[call_subgraph->output()] = cnode;
@@ -85,7 +86,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
         auto cnode = node->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
         auto end_label = kernel_graph->get_end_goto();
-        if (cnode == end_label && AnfAlgo::GetCNodeName(cnode) == kLabelSwitchOpName) {
+        if (cnode == end_label && common::AnfAlgo::GetCNodeName(cnode) == kLabelSwitchOpName) {
           kernel_graph->set_end_goto(new_node->cast<CNodePtr>());
         }
       }
@@ -100,7 +101,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
         (void)todo.emplace_back(const_func_graph->output(), const_func_graph);
       }
     } else if (new_node && new_node->isa<CNode>()) {
-      if (AnfAlgo::IsGraphKernel(new_node)) {
+      if (common::AnfAlgo::IsGraphKernel(new_node)) {
         (void)todo.emplace_back(new_node, func_graph);
       }
       auto cnode = new_node->cast<CNodePtr>();

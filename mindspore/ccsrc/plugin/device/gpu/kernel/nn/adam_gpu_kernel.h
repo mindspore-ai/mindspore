@@ -65,8 +65,8 @@ class AdamGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
                         << input_num;
@@ -83,10 +83,10 @@ class AdamGpuKernelMod : public NativeGpuKernelMod {
     epsilon_size_ = sizeof(T);
     gradient_size_ = sizeof(T);
 
-    auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto m_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto v_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
+    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto m_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto v_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
                      CHECK_SHAPE_NULL(m_shape, kernel_name_, "m") || CHECK_SHAPE_NULL(v_shape, kernel_name_, "v") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");

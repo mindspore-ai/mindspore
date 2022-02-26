@@ -30,7 +30,7 @@ constexpr size_t kDropoutGradOutputsNum = 1;
 
 void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto input_mask_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape.size() != input_mask_shape.size()) {
@@ -44,7 +44,7 @@ void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     num_count_ *= x;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  keep_prob_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
+  keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' should be in (0.0, 1.0], but got " << keep_prob_;
   }

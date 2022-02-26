@@ -31,30 +31,30 @@ constexpr size_t kSliceGradMaxInputShapeSize = 4;
 
 void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
   ClearVectors();
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be 4D or lower, but got "
                       << input_shape.size() << "D.";
   }
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
     return;
   }
   // in the case that begin, end, size, stride are const value.
-  std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+  std::vector<int64_t> begin_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
                        [](const int64_t &value) { return LongToInt(value); });
-  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
   if (strides != nullptr) {
-    std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
-    std::vector<int64_t> end_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+    std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+    std::vector<int64_t> end_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
     (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
                          [](const int64_t &value) { return LongToInt(value); });
     (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
@@ -67,7 +67,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
     FormatArgs(true);
   } else {
-    std::vector<int64_t> size_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+    std::vector<int64_t> size_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
     (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
                          [](const int64_t &value) { return LongToInt(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
@@ -119,16 +119,16 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims() {
 void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   ClearVectors();
-  output_shape_ = AnfAlgo::GetOutputInferShape(cnode, 0);
-  std::string kernel_name = AnfAlgo::GetCNodeName(cnode);
-  auto begin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode, 0);
+  std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
   auto begin_ptr = reinterpret_cast<int32_t *>(inputs[2]->addr);
   std::vector<int32_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
                        [](const int32_t &value) { return value; });
   if (kernel_name == prim::kPrimStridedSliceGrad->name()) {
-    auto end_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
-    auto stride_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
+    auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
+    auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimensions of 'begin', 'end', 'strides' should be 1, "
@@ -153,7 +153,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     }
     FormatArgs(true);
   } else {
-    auto size_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
+    auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimensions of 'begin', 'end' should be 1, but got the dimension of 'begin': "

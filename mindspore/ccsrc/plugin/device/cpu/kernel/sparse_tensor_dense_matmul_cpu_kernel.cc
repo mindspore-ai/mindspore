@@ -31,26 +31,26 @@ constexpr size_t kIndices2rdDimNum = 2;
 template <typename I, typename T>
 void SparseTensorDenseMatmulCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
-  adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  adj_st_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
+  adj_dt_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' should be a 2-D Tensor and the second dimension length "
                          "should be 2, but got 'indices' shape: "
                       << Vector2Str(indices_shape);
   }
-  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
                          " should be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
-  b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
+  b_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' should be "
                       << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";

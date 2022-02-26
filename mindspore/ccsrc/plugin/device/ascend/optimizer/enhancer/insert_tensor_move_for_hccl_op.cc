@@ -17,8 +17,9 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "utils/trace_base.h"
@@ -31,7 +32,7 @@ const std::set<std::string> kNeedInsertTensorMoveOpSet = {kLambNextMVOpName, kLa
 
 bool IsParameterOrValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
+  auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(node, 0, true);
   auto real_node = kernel_with_index.first;
   MS_EXCEPTION_IF_NULL(real_node);
   if (real_node->isa<Parameter>()) {
@@ -78,7 +79,7 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
     return false;
   }
   // visited nop node if exist.
-  auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input, 0, false);
+  auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0, false);
   auto real_input = kernel_with_index.first;
   // when input is a parameter or is a value node
   if (IsParameterOrValueNode(real_input)) {
@@ -90,7 +91,7 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   }
   // when input is some special cnodes: kLambNextMVOpName, kLambNextMVWithDecayOpName, kLambUpdateWithLROpName,
   // kGetNextOpName
-  if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(real_input)) != kNeedInsertTensorMoveOpSet.end()) {
+  if (kNeedInsertTensorMoveOpSet.find(common::AnfAlgo::GetCNodeName(real_input)) != kNeedInsertTensorMoveOpSet.end()) {
     return true;
   }
   // example1: NodeA --> Allreduce
@@ -103,7 +104,7 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   if (IsNodeOutPutUsedByOtherRealKernel(graph, input, input_idx, cur_node)) {
     return true;
   }
-  if (opt::IsNopNode(real_input)) {
+  if (common::AnfAlgo::IsNopNode(real_input)) {
     auto cnode = real_input->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     return NeedInsertTensorMove(graph, cnode->input(1), input_idx, cur_node);
@@ -123,7 +124,7 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
       if (tensor_move == nullptr) {
         MS_LOG(EXCEPTION) << "Create tensor_move op failed.";
       }
-      if (input->isa<CNode>() && AnfAlgo::IsDynamicShape(input)) {
+      if (input->isa<CNode>() && common::AnfAlgo::IsDynamicShape(input)) {
         MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
       new_inputs.push_back(tensor_move);
@@ -153,7 +154,7 @@ const AnfNodePtr InsertTensorMoveForHcclOp::Process(const FuncGraphPtr &func_gra
   if (func_graph == nullptr || node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
-  if (!AnfAlgo::IsCommunicationOp(node)) {
+  if (!common::AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
   InsertTensorMove(func_graph, node->cast<CNodePtr>());

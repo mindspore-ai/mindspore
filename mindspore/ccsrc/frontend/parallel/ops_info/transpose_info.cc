@@ -22,7 +22,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/step_parallel.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

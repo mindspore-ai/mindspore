@@ -20,7 +20,7 @@
 #include "cxx_api/akg_kernel_register.h"
 #include "cxx_api/acl_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/context/context_extends.h"
+#include "runtime/device/context_extends.h"
 #include "mindspore/core/base/base_ref_utils.h"
 #include "backend/common/session/session_factory.h"
 #include "backend/common/session/executor_manager.h"

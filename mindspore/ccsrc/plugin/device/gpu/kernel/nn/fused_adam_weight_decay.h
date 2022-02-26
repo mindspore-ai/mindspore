@@ -32,12 +32,12 @@ class FusedAdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
   ~FusedAdamWeightDecayGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (node_name == "FusedAdamWeightDecay") {
       weight_decay_ = true;
     }
 
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
     is_null_input_ = CHECK_SHAPE_NULL(shape, node_name, "input");
     if (is_null_input_) {
       InitSizeLists();

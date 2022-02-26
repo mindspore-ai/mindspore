@@ -17,10 +17,11 @@
 #include "plugin/device/ascend/kernel/rts/rt_kernel_info.h"
 #include <unordered_map>
 #include <algorithm>
-#include "utils/convert_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -54,7 +55,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
                   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string opNameLower = AnfAlgo::GetCNodeName(kernel_node);
+  std::string opNameLower = common::AnfAlgo::GetCNodeName(kernel_node);
   (void)std::transform(opNameLower.begin(), opNameLower.end(), opNameLower.begin(), ::tolower);
 
   auto ker_desc_ptr = RtKerDescFactory::Create(opNameLower);
@@ -63,16 +64,16 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
     return;
   }
   // if can't find kernel info in kernel info database, use the default kernel info
-  auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (IsDefaultKernelInfo(node_name)) {
     auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // set input infos
-    auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    auto input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
     kernel_build_info_builder->SetInputsFormat(std::vector<std::string>(input_num, kOpFormat_DEFAULT));
     std::vector<TypeId> input_types = {};
     for (size_t i = 0; i < input_num; i++) {
-      input_types.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, i));
+      input_types.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, i));
     }
     kernel_build_info_builder->SetInputsDeviceType(input_types);
     // Kernel ops in while-list such as 'LabelSet' always return UMonad.

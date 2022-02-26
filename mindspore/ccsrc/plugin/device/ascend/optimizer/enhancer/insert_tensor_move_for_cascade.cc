@@ -15,8 +15,9 @@
  */
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
 #include <vector>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "utils/trace_base.h"
@@ -28,14 +29,14 @@ bool IsPartOutputsOfHcclOp(const AnfNodePtr &node, const CNodePtr &cur_hccl, con
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(cur_hccl);
   MS_EXCEPTION_IF_NULL(graph);
-  if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+  if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto prev_node = cnode->input(kRealInputNodeIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(prev_node);
-  if (!AnfAlgo::IsCommunicationOp(prev_node)) {
+  if (!common::AnfAlgo::IsCommunicationOp(prev_node)) {
     return false;
   }
   auto prev_hccl_op = prev_node->cast<CNodePtr>();
@@ -82,7 +83,7 @@ AnfNodePtr InsertTensorMoveForCascade::InsertTensorMove(const FuncGraphPtr &grap
       if (tensor_move == nullptr) {
         MS_LOG(EXCEPTION) << "Create tensor_move op failed." << trace::DumpSourceLines(hccl_node);
       }
-      if (AnfAlgo::IsDynamicShape(input)) {
+      if (common::AnfAlgo::IsDynamicShape(input)) {
         MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
       auto kernel_info = std::make_shared<device::KernelInfo>();
@@ -111,7 +112,7 @@ const AnfNodePtr InsertTensorMoveForCascade::Process(const FuncGraphPtr &func_gr
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (!AnfAlgo::IsCommunicationOp(node)) {
+  if (!common::AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
   return InsertTensorMove(func_graph, cnode);

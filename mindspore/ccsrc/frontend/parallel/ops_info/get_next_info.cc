@@ -24,7 +24,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {

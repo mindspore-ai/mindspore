@@ -20,7 +20,7 @@
 #include <list>
 #include "base/core_ops.h"
 #include "utils/trace_base.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace {

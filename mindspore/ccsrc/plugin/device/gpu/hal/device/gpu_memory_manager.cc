@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "utils/ms_context.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"

@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -33,23 +34,23 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(new_concat);
   new_concat->set_scope(origin_concat_cnode->scope());
   // Set attrs
-  if (AnfAlgo::HasNodeAttr(kAttrAxis, origin_concat_cnode)) {
-    AnfAlgo::CopyNodeAttr(kAttrAxis, origin_concat_cnode, new_concat);
+  if (common::AnfAlgo::HasNodeAttr(kAttrAxis, origin_concat_cnode)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrAxis, origin_concat_cnode, new_concat);
   }
-  if (AnfAlgo::HasNodeAttr(kAttrT, origin_concat_cnode)) {
-    AnfAlgo::CopyNodeAttr(kAttrT, origin_concat_cnode, new_concat);
+  if (common::AnfAlgo::HasNodeAttr(kAttrT, origin_concat_cnode)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrT, origin_concat_cnode, new_concat);
   }
-  AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(offset)), new_concat);
-  AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(offset)), new_concat);
+  common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(offset)), new_concat);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(offset)), new_concat);
   std::vector<int64_t> dyn_input_sizes{SizeToLong(offset)};
-  AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_concat);
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_concat);
   // infer shape
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, 0);
-  auto axis_from_attr = AnfAlgo::GetNodeAttr<int64_t>(origin_concat_cnode, kAttrAxis);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, 0);
+  auto axis_from_attr = common::AnfAlgo::GetNodeAttr<int64_t>(origin_concat_cnode, kAttrAxis);
   if (axis_from_attr < 0) {
     axis_from_attr += SizeToLong(input_shape.size());
   }
-  auto output_shape = AnfAlgo::GetOutputInferShape(origin_concat_cnode, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(origin_concat_cnode, 0);
   if (axis_from_attr < 0 || axis_from_attr >= SizeToLong(output_shape.size()) ||
       axis_from_attr >= SizeToLong(input_shape.size())) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
@@ -58,11 +59,11 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;
   for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    input_shape = AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, i - 1);
+    input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, i - 1);
     output_shape[axis] += input_shape[axis];
   }
-  AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)}, {output_shape},
-                                      new_concat.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)},
+                                              {output_shape}, new_concat.get());
   return new_concat;
 }
 
@@ -75,7 +76,7 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
@@ -103,17 +104,17 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
     base_concat->set_scope(new_cnode->scope());
     base_concat->set_abstract(new_cnode->abstract());
     // Set attrs
-    if (AnfAlgo::HasNodeAttr(kAttrAxis, new_cnode)) {
-      AnfAlgo::CopyNodeAttr(kAttrAxis, new_cnode, base_concat);
+    if (common::AnfAlgo::HasNodeAttr(kAttrAxis, new_cnode)) {
+      common::AnfAlgo::CopyNodeAttr(kAttrAxis, new_cnode, base_concat);
     }
-    if (AnfAlgo::HasNodeAttr(kAttrT, new_cnode)) {
-      AnfAlgo::CopyNodeAttr(kAttrT, new_cnode, base_concat);
+    if (common::AnfAlgo::HasNodeAttr(kAttrT, new_cnode)) {
+      common::AnfAlgo::CopyNodeAttr(kAttrT, new_cnode, base_concat);
     }
 
-    AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
-    AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
+    common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
+    common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(SizeToLong(base_concat_inputs.size() - 1)), base_concat);
     std::vector<int64_t> dyn_input_sizes{SizeToLong(base_concat_inputs.size() - 1)};
-    AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_concat);
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), base_concat);
 
     new_cnode = base_concat;
     origin_input_size = base_concat->inputs().size() - 1;

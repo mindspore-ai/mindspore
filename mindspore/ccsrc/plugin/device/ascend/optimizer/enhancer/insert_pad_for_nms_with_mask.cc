@@ -18,7 +18,8 @@
 #include <memory>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -43,7 +44,7 @@ AnfNodePtr InsertPadForNMSWithMask::InsertPadToGraph(const FuncGraphPtr &func_gr
   new_pad_inputs.push_back(input);
   CNodePtr pad = NewCNode(new_pad_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(pad);
-  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, pad.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, pad.get());
   return pad;
 }
 
@@ -51,21 +52,21 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   if (input_num == 0) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
+  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
   for (size_t input_idx = 0; input_idx < input_num; input_idx++) {
-    auto cur_input = AnfAlgo::GetInputNode(cnode, input_idx);
-    auto origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
-    auto origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_idx);
+    auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_idx);
+    auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
+    auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_idx);
     if (!(origin_shape.size() == kShapeSize && origin_shape[1] == kShapeValue5)) {
       return nullptr;
     }
@@ -73,7 +74,7 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
     auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, origin_shape);
     MS_EXCEPTION_IF_NULL(pad);
     pad->set_scope(cnode->scope());
-    AnfAlgo::SetNodeAttr("paddings", MakeValue(std::vector<std::vector<int64_t>>{{0, 0}, {0, 3}}), pad);
+    common::AnfAlgo::SetNodeAttr("paddings", MakeValue(std::vector<std::vector<int64_t>>{{0, 0}, {0, 3}}), pad);
     new_inputs.push_back(pad);
   }
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();

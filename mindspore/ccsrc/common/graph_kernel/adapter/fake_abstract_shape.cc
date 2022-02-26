@@ -15,7 +15,7 @@
  */
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {
 namespace {

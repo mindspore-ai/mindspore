@@ -19,6 +19,7 @@
 #include <string>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -29,10 +30,10 @@ bool CheckValueNodeInputOfMul(const AnfNodePtr &node) {
   if (!node->isa<ValueNode>()) {
     return false;
   }
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     return false;
   }
-  std::vector<size_t> mul_input_shape = AnfAlgo::GetOutputInferShape(node, 0);
+  std::vector<size_t> mul_input_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   return mul_input_shape.empty() || (mul_input_shape.size() == 1 && mul_input_shape[0] == 1);
 }
 }  // namespace
@@ -87,11 +88,11 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
                                           mul_cnode->input(value_node_index)};
   auto new_node = NewCNode(new_node_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_node);
-  AnfAlgo::CopyNodeAttrs(node, new_node);
-  auto input_names_value = AnfAlgo::GetNodeAttr<std::vector<std::string>>(new_node, kAttrInputNames);
+  common::AnfAlgo::CopyNodeAttrs(node, new_node);
+  auto input_names_value = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(new_node, kAttrInputNames);
   input_names_value[kIndex3] = "x1";
   input_names_value.emplace_back("x2");
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_value), new_node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_value), new_node);
   new_node->set_abstract(node->abstract());
   new_node->set_scope(node->scope());
   return new_node;

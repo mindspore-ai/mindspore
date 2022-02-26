@@ -20,9 +20,10 @@
 #include <vector>
 #include <map>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
@@ -44,7 +45,7 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
     MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector"
                       << trace::DumpSourceLines(cnode);
   }
-  if (AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || common::AnfAlgo::GetOutputTensorNum(cnode) != 1) {
     MS_LOG(EXCEPTION) << "The kind of reduce node [" << cnode->DebugString()
                       << "] is not single input or single output." << trace::DumpSourceLines(cnode);
   }
@@ -57,14 +58,14 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce
 
 void DynamicAttrUpdate(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto primitive = AnfAlgo::GetCNodePrimitive(node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_names_ptr = primitive->GetAttr(kAttrInputNames);
   MS_EXCEPTION_IF_NULL(input_names_ptr);
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names_ptr);
   const size_t axes_index = 1;
   input_names_vec[axes_index] = kAttrAxes;
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_vec), node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names_vec), node);
 }
 
 void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
@@ -90,7 +91,7 @@ void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
                      << " but the format is not supported this reduce axis";
     }
   }
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(convert_axis), cnode);
 }
 }  // namespace
 
@@ -110,13 +111,13 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   }
   auto convert_map = kReduceConvertMap.find(AnfAlgo::GetInputFormat(node, 0));
   if (convert_map == kReduceConvertMap.end()) {
-    if (AnfAlgo::IsDynamicShape(node)) {
+    if (common::AnfAlgo::IsDynamicShape(node)) {
       DynamicAttrUpdate(node);
     }
     return nullptr;
   }
   convert_map->second(node->cast<CNodePtr>());
-  if (AnfAlgo::IsDynamicShape(node)) {
+  if (common::AnfAlgo::IsDynamicShape(node)) {
     DynamicAttrUpdate(node);
   }
   return nullptr;

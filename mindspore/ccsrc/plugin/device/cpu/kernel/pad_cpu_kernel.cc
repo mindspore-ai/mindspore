@@ -27,11 +27,11 @@ constexpr size_t kPadElemSize = 2;
 
 void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<std::vector<int64_t>> paddings_ =
-    AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
+    common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
   input_rank_ = input_shape_.size();

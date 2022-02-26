@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -41,39 +42,39 @@ void GetAttrs(const AnfNodePtr &node, std::vector<int64_t> *kernel_size, std::ve
               bool *count_include_pad, int64_t *divisor_override, std::string *format_str) {
   MS_EXCEPTION_IF_NULL(node);
   // attr kernel size
-  if (!AnfAlgo::HasNodeAttr("kernel_size", node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr("kernel_size", node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "AvgPool3D should has attr kernel_size" << trace::DumpSourceLines(node);
   }
-  *kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
+  *kernel_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
   // attr strides
-  if (!AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "AvgPool3D should has attr strides" << trace::DumpSourceLines(node);
   }
-  *strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
+  *strides = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
   // sttr pad_list
-  if (!AnfAlgo::HasNodeAttr("pad_list", node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr("pad_list", node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "AvgPool3D should has attr pad_list" << trace::DumpSourceLines(node);
   }
-  *pad_list = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
+  *pad_list = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "pad_list");
   // attr origin input shape
-  if (!AnfAlgo::HasNodeAttr("origin_input_shape", node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr("origin_input_shape", node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "AvgPool3D should has attr origin_input_shape" << trace::DumpSourceLines(node);
   }
-  *origin_input_shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "origin_input_shape");
+  *origin_input_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "origin_input_shape");
   // attr count include pad
-  if (AnfAlgo::HasNodeAttr("count_include_pad", node->cast<CNodePtr>())) {
-    *count_include_pad = AnfAlgo::GetNodeAttr<bool>(node, "count_include_pad");
+  if (common::AnfAlgo::HasNodeAttr("count_include_pad", node->cast<CNodePtr>())) {
+    *count_include_pad = common::AnfAlgo::GetNodeAttr<bool>(node, "count_include_pad");
   }
   // attr ceil mode
-  if (AnfAlgo::HasNodeAttr("ceil_mode", node->cast<CNodePtr>())) {
-    *ceil_mode = AnfAlgo::GetNodeAttr<bool>(node, "ceil_mode");
+  if (common::AnfAlgo::HasNodeAttr("ceil_mode", node->cast<CNodePtr>())) {
+    *ceil_mode = common::AnfAlgo::GetNodeAttr<bool>(node, "ceil_mode");
   }
   // attr divisor override
-  if (AnfAlgo::HasNodeAttr("divisor_override", node->cast<CNodePtr>())) {
-    *divisor_override = AnfAlgo::GetNodeAttr<int64_t>(node, "divisor_override");
+  if (common::AnfAlgo::HasNodeAttr("divisor_override", node->cast<CNodePtr>())) {
+    *divisor_override = common::AnfAlgo::GetNodeAttr<int64_t>(node, "divisor_override");
   }
-  if (AnfAlgo::HasNodeAttr("format", node->cast<CNodePtr>())) {
-    *format_str = AnfAlgo::GetNodeAttr<std::string>(node, "format");
+  if (common::AnfAlgo::HasNodeAttr("format", node->cast<CNodePtr>())) {
+    *format_str = common::AnfAlgo::GetNodeAttr<std::string>(node, "format");
   }
 }
 
@@ -178,7 +179,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto value_node = kernel_graph->NewValueNode(x_abstract, tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {ori_shape}, value_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {ori_shape}, value_node.get());
   return value_node;
 }
 }  // namespace
@@ -210,11 +211,11 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   GetAttrs(avg_pool_3d_grad_node, &kernel_size, &strides, &pad_list, &origin_input_shape, &ceil_mode,
            &count_include_pad, &divisor_override, &format_str);
   const int64_t dim_one = SizeToLong(1);
-  AnfAlgo::SetNodeAttr(
+  common::AnfAlgo::SetNodeAttr(
     kKernelSize,
     MakeValue(std::vector<int64_t>{dim_one, dim_one, kernel_size[kDim0], kernel_size[kDim1], kernel_size[kDim2]}),
     avg_pool_3d_grad_node);
-  AnfAlgo::SetNodeAttr(
+  common::AnfAlgo::SetNodeAttr(
     kStrides, MakeValue(std::vector<int64_t>{dim_one, dim_one, strides[kDim0], strides[kDim1], strides[kDim2]}),
     avg_pool_3d_grad_node);
   if (IsVectorImpl(origin_input_shape, kernel_size, pad_list)) {
@@ -234,7 +235,7 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(filter_node);
 
   // after input to attr, the first input should be the 'grads', the index is 0;
-  auto dims_in = AnfAlgo::GetPrevNodeOutputInferShape(avg_pool_3d_grad_node, 0);
+  auto dims_in = common::AnfAlgo::GetPrevNodeOutputInferShape(avg_pool_3d_grad_node, 0);
 
   // assist node 2
   if (divisor_override == 0 && (!IsZeroPads(pad_list) || ceil_mode)) {
@@ -246,7 +247,7 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(new_3d_grad);
   new_3d_grad->set_scope(avg_pool_3d_grad_node->scope());
   new_3d_grad->set_abstract(avg_pool_3d_grad_node->abstract());
-  AnfAlgo::CopyNodeAttrs(avg_pool_3d_grad_node, new_3d_grad);
+  common::AnfAlgo::CopyNodeAttrs(avg_pool_3d_grad_node, new_3d_grad);
   return new_3d_grad;
 }
 }  // namespace opt

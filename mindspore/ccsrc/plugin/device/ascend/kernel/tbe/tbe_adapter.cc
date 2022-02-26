@@ -25,13 +25,14 @@
 #include <algorithm>
 #include <unordered_map>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/opinfo.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -78,7 +79,7 @@ std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {kConv2D
 
 bool TbeAdapter::IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNodePtr> &compute_nodes) {
   auto result = std::find_if(compute_nodes.begin(), compute_nodes.end(), [](const auto &it) {
-    auto op_name = AnfAlgo::GetCNodeName(it);
+    auto op_name = common::AnfAlgo::GetCNodeName(it);
     return (op_name == kConv2DBackpropInputOpName || op_name == kConv2DOpName);
   });
   return result != compute_nodes.end();
@@ -159,7 +160,7 @@ bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
     MS_EXCEPTION_IF_NULL(compute_node);
     std::vector<mindspore::AnfNodePtr> layer = {};
     std::vector<mindspore::AnfNodePtr> reorder_layer = {};
-    auto op_name = AnfAlgo::GetCNodeName(compute_node);
+    auto op_name = common::AnfAlgo::GetCNodeName(compute_node);
     auto ccompute_node = compute_node->cast<CNodePtr>();
     if (ccompute_node == nullptr) {
       MS_LOG(WARNING) << "Fusion error: fusion compute node must be cnode, but the node is "
@@ -186,14 +187,14 @@ bool TbeAdapter::IsPlaceHolderInput(const AnfNodePtr &node, const OpIOInfoPtr &i
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_ptr);
   static std::set<std::string> node_set = {kDynamicRNNOpName, kDynamicGRUV2OpName};
-  auto cnode_name = AnfAlgo::GetCNodeName(node);
+  auto cnode_name = common::AnfAlgo::GetCNodeName(node);
   if (node_set.find(cnode_name) == node_set.end()) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
-    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+  if (common::AnfAlgo::HasNodeAttr(kAttrPlaceHolderIndex, cnode)) {
+    auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
     return find(none_index.begin(), none_index.end(), input_ptr->index()) != none_index.end();
   } else {
     MS_LOG(EXCEPTION) << "Cnode: " << cnode_name << " doesn't has attribute placeholder_index.";
@@ -203,7 +204,7 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
                                      nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(attrs_json);
-  if (AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
+  if (common::AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
     return;
   }
   if (op_info_attrs->size() != 1) {
@@ -227,7 +228,7 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
 }
 
 void TbeAdapter::CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
-  if (AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
+  if (common::AnfAlgo::GetCNodeName(anf_node) != kCastOpName) {
     return;
   }
   std::map<int, std::string> dst_type_map{{0, "float32"}, {1, "float16"}, {2, "int8"}, {3, "int32"},
@@ -243,7 +244,7 @@ void TbeAdapter::CastAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *at
 void TbeAdapter::LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(attrs_json);
-  if (AnfAlgo::GetCNodeName(anf_node) == parallel::LAYER_NORM) {
+  if (common::AnfAlgo::GetCNodeName(anf_node) == parallel::LAYER_NORM) {
     nlohmann::json new_attrs_json;
     for (auto &json_item : *attrs_json) {
       if (GetJsonValue<std::string>(json_item, kJName) == kAttrEpsilon) {

@@ -76,18 +76,18 @@ void RMSPropCpuKernelMod<T>::LaunchRMSPropUseCenter(T *variable, T *mean_square,
 template <typename T>
 void RMSPropCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (node_name == "ApplyCenteredRMSProp") {
     use_center_ = true;
   }
 
   if (node_name == "ApplyRMSProp") {
-    decay_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "rho");
-    momentum_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
-    epsilon_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
+    decay_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "rho");
+    momentum_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
+    epsilon_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
   }
-  auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   for (auto &dim : input_shape) {
     size_ *= dim;

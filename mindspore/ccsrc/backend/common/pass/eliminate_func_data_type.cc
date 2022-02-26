@@ -18,9 +18,9 @@
 #include <memory>
 #include <utility>
 #include "ir/anf.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::opt {
 namespace {
@@ -107,7 +107,7 @@ const AnfNodePtr EliminateFuncDataType::Process(const FuncGraphPtr &func_graph, 
       if (abs->isa<abstract::AbstractTuple>() && FuncDataTypeExistsInAbstractTuple(abs)) {
         RemoveInputFuncNodeForKernelGraph(kernel_graph, param);
         (void)tr.Replace(param, constant_);
-      } else if (AnfAlgo::GetOutputInferDataType(param, 0) == kObjectTypeFunction) {
+      } else if (common::AnfAlgo::GetOutputInferDataType(param, 0) == kObjectTypeFunction) {
         RemoveInputFuncNodeForKernelGraph(kernel_graph, param);
         (void)tr.Replace(param, constant_);
       } else {
@@ -125,7 +125,7 @@ const AnfNodePtr EliminateFuncDataType::Process(const FuncGraphPtr &func_graph, 
     if (abs->isa<abstract::AbstractTuple>()) {
       auto abs_tuple = dyn_cast<abstract::AbstractTuple>(abs);
       node->set_abstract(std::make_shared<abstract::AbstractTuple>(EliminateFuncDataTypeForAbstractTuple(abs_tuple)));
-    } else if (AnfAlgo::GetOutputInferDataType(node, 0) == kObjectTypeFunction) {
+    } else if (common::AnfAlgo::GetOutputInferDataType(node, 0) == kObjectTypeFunction) {
       node->set_abstract(constant_abs_);
     }
   }

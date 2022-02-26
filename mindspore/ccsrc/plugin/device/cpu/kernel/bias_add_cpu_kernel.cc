@@ -29,7 +29,7 @@ constexpr size_t kBiasAddOutputsNum = 1;
 
 void BiasAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   data_shape_ = input_shape_.size();

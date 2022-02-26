@@ -22,8 +22,8 @@
 #include "runtime/dev.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "utils/context/graph_kernel_flags.h"
-#include "utils/utils.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
+#include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/memory_manager.h"
@@ -83,7 +83,7 @@ CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t ind
     MS_LOG(EXCEPTION) << "there is no node after this node:" << kernel_nodes[index]->DebugString();
   }
   auto kernel = kernel_nodes[index + 1];
-  if (AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
+  if (common::AnfAlgo::GetCNodeName(kernel) != kLabelSetOpName) {
     MS_LOG(EXCEPTION) << "the node is not labelset follow labelgoto/labelswitch, node: "
                       << kernel_nodes[index]->DebugString();
   }
@@ -104,14 +104,14 @@ std::vector<CNodePtr> HandleRecursiveCall(const std::vector<CNodePtr> &kernel_cn
     } else {
       back->emplace_back(kernel_cnodes[i]);
     }
-    if (AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrRecursiveEnd, kernel_cnodes[i])) {
       *index = i;
       back->insert(back->end(), back_temp.begin(), back_temp.end());
       return front;
     }
-    if (AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
       back_flag = true;
-      if (!AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
+      if (!common::AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], back_label)) {
         auto temp = HandleRecursiveCall(kernel_cnodes, back_label, &(++i), &back_temp);
         front.insert(front.end(), temp.begin(), temp.end());
       }
@@ -130,11 +130,11 @@ void UnfoldRecursiveExecOrder(KernelGraph *kernel_graph) {
   std::vector<CNodePtr> mem_reuse_order;
   mem_reuse_order.reserve(kernel_cnodes.size());
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
-    if (!AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrRecursiveStart, kernel_cnodes[i])) {
       mem_reuse_order.emplace_back(kernel_cnodes[i]);
       continue;
     }
-    auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
     std::vector<CNodePtr> back;
     auto front = HandleRecursiveCall(kernel_cnodes, label_id, &i, &back);
     mem_reuse_order.insert(mem_reuse_order.end(), front.begin(), front.end());
@@ -147,11 +147,11 @@ void GetSubGraphExecOrder(const KernelGraph *kernel_graph, uint32_t index, const
                           std::vector<CNodePtr> *mem_reuse_order) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(mem_reuse_order);
-  auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(back_node, kAttrLabelIndex);
+  auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(back_node, kAttrLabelIndex);
   auto kernel_cnodes = kernel_graph->execution_order();
   for (auto i = index; i < kernel_cnodes.size(); i++) {
     mem_reuse_order->emplace_back(kernel_cnodes[i]);
-    if (AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], label_id)) {
+    if (common::AnfAlgo::IsLabelIndexInNode(kernel_cnodes[i], label_id)) {
       return;
     }
   }
@@ -167,10 +167,10 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   std::vector<CNodePtr> mem_reuse_order;
   for (uint32_t i = 0; i < kernel_cnodes.size(); i++) {
     mem_reuse_order.emplace_back(kernel_cnodes[i]);
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
-        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
-      auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_cnodes[i], kAttrLabelSwitchList);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSwitch) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_cnodes[i], kAttrLabelSwitchList);
       for (auto label_id : label_list) {
         if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
           continue;
@@ -180,10 +180,10 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
       }
       continue;
     }
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelGoto) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
-        !AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
-      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelGoto) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i]) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrReturn, kernel_cnodes[i])) {
+      auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
       if (label_id_index_map.find(label_id) == label_id_index_map.end()) {
         continue;
       }
@@ -191,9 +191,9 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
       GetSubGraphExecOrder(kernel_graph, label_id_index_map[label_id], back_node, &mem_reuse_order);
       continue;
     }
-    if (AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSet) &&
-        !AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
-      auto label_id = AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
+    if (common::AnfAlgo::CheckPrimitiveType(kernel_cnodes[i], prim::kPrimLabelSet) &&
+        !common::AnfAlgo::HasNodeAttr(kAttrRecursive, kernel_cnodes[i])) {
+      auto label_id = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_cnodes[i], kAttrLabelIndex);
       if (label_id_index_map.find(label_id) != label_id_index_map.end()) {
         MS_LOG(EXCEPTION) << "Two labelsets with same label id.";
       }
@@ -415,7 +415,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
   // TODO(dsj): for ms_function running in graph_mode. should be delete later
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
-    AnfAlgo::SetNodeAttr(kAttrMSFunction, MakeValue(true), kernel);
+    common::AnfAlgo::SetNodeAttr(kAttrMSFunction, MakeValue(true), kernel);
   }
 
   PROF_END(preprocess_before_run_graph);
@@ -424,21 +424,21 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
 
 void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  auto outputs = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (auto output : outputs) {
     if (!output->isa<CNode>() || !AnfUtils::IsRealKernel(output)) {
       continue;
     }
 
-    if (!opt::IsNopNode(output)) {
+    if (!common::AnfAlgo::IsNopNode(output)) {
       continue;
     }
 
-    if (!AnfAlgo::IsNeedSkipNopOpAddr(output)) {
+    if (!common::AnfAlgo::IsNeedSkipNopOpAddr(output)) {
       continue;
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(output);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(output);
     if (input_num != 1) {
       MS_LOG(WARNING) << "The input number of nop node :" << output->fullname_with_scope() << " is " << input_num
                       << ", not equal 1";
@@ -456,7 +456,7 @@ void AscendDeviceContext::AssignOutputNopNodeDeviceAddress(const KernelGraphPtr 
     device_address->set_is_ptr_persisted(true);
     device_address->set_host_shape(trans::GetRuntimePaddingShape(output, 0));
     AnfAlgo::SetOutputAddr(device_address, 0, output.get());
-    AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
+    common::AnfAlgo::SetNodeAttr(kAttrSkipNopOpAddr, MakeValue(false), output);
     MS_LOG(INFO) << "Assign device address to output nop node " << output->fullname_with_scope();
   }
 }
@@ -676,18 +676,18 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
 
   for (const auto &node : nodes) {
     // Remove placeholder
-    auto op_name = AnfAlgo::GetCNodeName(node);
+    auto op_name = common::AnfAlgo::GetCNodeName(node);
     static const std::set<std::string> place_holder_nodes = {kDynamicRNNOpName, kDynamicGRUV2OpName};
     auto iter = place_holder_nodes.find(op_name);
     if (iter != place_holder_nodes.end()) {
-      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
+      auto none_index = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrPlaceHolderIndex);
       // Remove seq_length
-      auto input_num = AnfAlgo::GetInputTensorNum(node);
-      std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(node)};
+      auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+      std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(node)};
       for (size_t i = 0; i < input_num; ++i) {
         auto item = std::find(none_index.begin(), none_index.end(), i);
         if (item == none_index.end()) {
-          auto input_node = AnfAlgo::GetInputNode(node, i);
+          auto input_node = common::AnfAlgo::GetInputNode(node, i);
           new_inputs.emplace_back(input_node);
         }
       }
@@ -695,7 +695,7 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     }
 
     // Save the nop_op that needs to be memcpy
-    if (op_name == prim::kPrimTranspose->name() && AnfAlgo::HasNodeAttr(kAttrNopOp, node)) {
+    if (op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node)) {
       nop_op_to_memcpy_.insert(node);
     }
   }
@@ -782,7 +782,7 @@ void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
 
 bool AscendDeviceContext::GetKernelRealInputs(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                               std::vector<AddressPtr> *real_inputs) const {
-  auto input_num = AnfAlgo::GetInputTensorNum(kernel);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   if (input_num != inputs.size()) {
     MS_LOG(ERROR) << "Input num is " << input_num << " but input address num is " << inputs.size();
     return false;
@@ -818,7 +818,7 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // TODO(dsj): for ms_function running in graph_mode. should be delete later
-  if (!is_dynamic_shape || !(AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
+  if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     std::lock_guard<std::mutex> locker(launch_mutex_);
     // launch atomic clean
     if (!LaunchAtomicClean(kernel, workspace, outputs)) {
@@ -833,7 +833,7 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
     // TODO(dsj): for ms_function running in graph_mode. should be delete later
-    if (is_dynamic_shape && !(AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
+    if (is_dynamic_shape && !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
       kernel::AscendKernelMod *ascend_kernel = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(ascend_kernel);
       ascend_kernel->InitDynamicKernel(kernel, GetKernelStream(kernel));
@@ -875,8 +875,8 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   if (atomic_node->inputs().size() != kAtomicCleanInputSize) {
     MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
-  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node)) {
-    auto clean_output_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
+  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node)) {
+    auto clean_output_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
     for (auto output_index : clean_output_indexes) {
       if (output_index >= outputs.size()) {
         MS_LOG(EXCEPTION) << "Invalid output_index:" << output_index << " except less than " << outputs.size();
@@ -886,8 +886,8 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   }
 
   // The workspace addr need to clean
-  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node)) {
-    auto clean_workspace_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
+  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node)) {
+    auto clean_workspace_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
     for (auto workspace_index : clean_workspace_indexes) {
       if (workspace_index >= workspace.size()) {
         MS_LOG(EXCEPTION) << "Invalid workspace_index:" << workspace_index << " except less than " << workspace.size();

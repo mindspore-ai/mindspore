@@ -72,10 +72,10 @@ void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *a
 
 void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  probs_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indices_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  labels_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  probs_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  indices_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  labels_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   if (probs_shape_.size() != 3) {
@@ -91,9 +91,9 @@ void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << indices_dims_.size() << "-D.";
   }
 
-  preprocess_collapse_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
-  ctc_merge_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CTR);
-  ignore_longer_outputs_than_inputs_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ILOTI);
+  preprocess_collapse_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
+  ctc_merge_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CTR);
+  ignore_longer_outputs_than_inputs_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ILOTI);
   max_time_ = probs_shape_[0];
   batch_size_ = probs_shape_[1];
   num_class_ = probs_shape_[2];

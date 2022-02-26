@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/convert_gradient_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -187,9 +187,9 @@ class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void SetProperty(const CNodePtr &kernel_node) {
-    auto matrix_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto matrix_g_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto matrix_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto matrix_g_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     is_null_input_ = CHECK_SHAPE_NULL(matrix_a_shape, kernel_name_, "matrix_a") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient") ||
                      CHECK_SHAPE_NULL(matrix_g_shape, kernel_name_, "matrix_g");

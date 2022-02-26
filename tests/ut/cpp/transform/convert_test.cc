@@ -28,10 +28,10 @@
 #include "common/common_test.h"
 
 #define private public
-#include "transform/graph_ir/types.h"
-#include "transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/types.h"
+#include "include/transform/graph_ir/convert.h"
 #include "securec/include/securec.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 using std::cout;
 using std::endl;
 using std::string;

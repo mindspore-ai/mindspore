@@ -32,7 +32,7 @@ constexpr size_t kKernelStartAxis = 2;
 
 void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -45,7 +45,7 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = kKernelStartAxis; i < src_dim; ++i) {
     (void)kernel_size.emplace_back(weight_shape[i]);
   }
-  size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
+  size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "Conv channels should be divided by group!";
@@ -60,8 +60,8 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int> dilation_ori;
   auto stride_attr = src_dim == kShapeSize4D ? STRIDE : STRIDES;
   auto dilation_attr = src_dim == kShapeSize4D ? DILATION : DILATIONS;
-  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
-  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
+  auto stride_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
+  auto dilation_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_ori),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
@@ -91,7 +91,7 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() + kKernelStartAxis != src_dim || int_padding_r.size() + kKernelStartAxis != src_dim) {
     MS_LOG(EXCEPTION) << "Get padding failed!";

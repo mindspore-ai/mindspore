@@ -16,7 +16,7 @@
 
 #include "ps/core/communicator/http_communicator.h"
 #include <memory>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace ps {

@@ -33,6 +33,7 @@
 #include "debug/debugger/debugger.h"
 #include "debug/anf_ir_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #endif
 #include "nlohmann/json.hpp"
 #include "debug/debugger/tensor_summary.h"
@@ -1738,7 +1739,7 @@ bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr 
 
 bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const {
   if (kernel != nullptr && w_name.length() > 0) {
-    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+    auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
@@ -1823,7 +1824,7 @@ void DebugServices::ResetLoadedTensors() {
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   std::vector<std::shared_ptr<TensorData>> result;
-  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
   auto kernel_name = GetKernelNodeName(kernel);
   for (size_t j = 0; j < output_size; ++j) {
     auto tensor_name_with_slot = kernel_name + ":" + std::to_string(j);

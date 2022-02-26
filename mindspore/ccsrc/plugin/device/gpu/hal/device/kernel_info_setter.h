@@ -24,7 +24,7 @@
 #include <map>
 #include "ir/anf.h"
 #include "ir/dtype.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_graph.h"
 

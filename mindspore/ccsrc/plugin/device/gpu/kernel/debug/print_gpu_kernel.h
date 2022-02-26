@@ -86,10 +86,10 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
-    if (AnfAlgo::HasNodeAttr("string_pos", kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr("string_pos", kernel_node)) {
       string_value_ = GetAttr<std::vector<std::string>>(kernel_node, "string_value");
       string_pos_ = GetAttr<std::vector<int64_t>>(kernel_node, "string_pos");
       auto value_type = GetAttr<std::vector<int64_t>>(kernel_node, "value_type");
@@ -98,7 +98,7 @@ class PrintGpuKernelMod : public NativeGpuKernelMod {
         value_type_[value_type_pos[i]] = value_type[i];
       }
     }
-    size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     input_flag_ = SetInputFlag(&string_pos_, input_tensor_num);
     for (size_t i = 0; i < input_tensor_num; i++) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);

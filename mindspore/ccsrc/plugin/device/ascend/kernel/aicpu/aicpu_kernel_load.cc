@@ -23,9 +23,10 @@
 #include "runtime/kernel.h"
 #include "runtime/mem.h"
 #include "runtime/context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/file_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -155,12 +156,12 @@ bool AicpuOpKernelLoad::LoadAicpuKernelSo(const AnfNodePtr &node,
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrCustAicpu, cnode)) {
     MS_LOG(INFO) << "Current aicpu ops:" << cnode->fullname_with_scope() << " isn't a custom ops.";
     return true;
   }
 
-  std::string so_name = "lib" + AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCustAicpu) + ".so";
+  std::string so_name = "lib" + common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCustAicpu) + ".so";
   if (so_name == kLibAicpuKernelSoName || so_name == kLibCpuKernelSoName) {
     MS_LOG(INFO) << "Aicpu so:" << so_name << " is default so.";
     return true;

@@ -18,7 +18,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {

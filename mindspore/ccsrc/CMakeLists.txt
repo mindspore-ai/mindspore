@@ -230,21 +230,21 @@ endif()
 
 ## make sub objects
 set(SUB_COMP
-        transform/graph_ir
         transform/express_ir
         frontend/optimizer
         frontend/parallel
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        debug pybind_api utils profiler ps fl distributed
+        debug pybind_api
+        profiler ps fl distributed
         kernel
-        common
         common/mem_reuse
         backend/common/optimizer
         backend/common/pass
         backend/common/session
         backend/common/somas
+        common/graph_kernel
         backend/graph_compiler
         runtime/collective
         runtime/device
@@ -277,6 +277,31 @@ endforeach()
 
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
+
+set(COMMON_SUB_COMP
+        transform/graph_ir
+        utils
+        common
+        )
+
+foreach(_comp ${COMMON_SUB_COMP})
+    add_subdirectory(${_comp})
+    string(REPLACE "/" "_" sub ${_comp})
+    if(TARGET _mindspore_${sub}_obj)
+        list(APPEND COMMON_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${sub}_obj>)
+        add_dependencies(_mindspore_${sub}_obj proto_input mindspore_core)
+        if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+            target_compile_definitions(_mindspore_${sub}_obj PRIVATE COMMON_DLL)
+        endif()
+    endif()
+endforeach()
+
+add_library(mindspore_common SHARED ${COMMON_SUB_OBJECTS_SRC})
+target_link_libraries(mindspore_common PRIVATE mindspore_core proto_input mindspore::protobuf)
+set_target_properties(mindspore_common PROPERTIES INSTALL_RPATH $ORIGIN)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(mindspore_common PRIVATE mindspore::pybind11_module)
+endif()
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -402,12 +427,14 @@ set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore PUBLIC mindspore::pybind11_module)
-    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core)
+    target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core
+        mindspore_common)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore PUBLIC proto_input mindspore::protobuf
         mindspore::event mindspore::event_pthreads mindspore::event_openssl mindspore::eigen mindspore::json)
     target_link_libraries(mindspore PUBLIC mindspore::event_core ps_cache)
-    target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core)
+    target_link_libraries(_c_expression PRIVATE -Wl,-all_load mindspore proto_input -Wl,-noall_load mindspore_core
+        mindspore_common)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 else()
     if(ENABLE_CPU AND NOT WIN32)
@@ -419,7 +446,7 @@ else()
         endif()
     endif()
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive
-            mindspore_core)
+            mindspore_core mindspore_common)
     target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
 endif()
 
@@ -477,3 +504,4 @@ if(ENABLE_D)
 endif()
 
 add_subdirectory(cxx_api)
+# include(${CMAKE_CURRENT_SOURCE_DIR}/sharedlib.cmake)

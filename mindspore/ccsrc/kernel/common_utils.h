@@ -27,7 +27,7 @@
 #include <vector>
 #include <utility>
 #include <nlohmann/json.hpp>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"

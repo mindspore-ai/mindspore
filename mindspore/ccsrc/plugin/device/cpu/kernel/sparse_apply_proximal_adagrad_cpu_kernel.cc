@@ -83,14 +83,14 @@ void SparseApplyProximalAdagradCpuKernelMod::InitInputOutputSize(const CNodePtr 
 
 void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> accum_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> lr_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> l1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-  std::vector<size_t> l2_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-  std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-  std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  std::vector<size_t> lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  std::vector<size_t> l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  std::vector<size_t> l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'var' should be at least 1-D, but got scalar or None.";

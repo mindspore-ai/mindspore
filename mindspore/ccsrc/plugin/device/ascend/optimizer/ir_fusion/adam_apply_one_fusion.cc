@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_fusion.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
@@ -209,7 +210,7 @@ AnfNodePtr AdamApplyOneFusion::CreateAdamApplyOneNode(const FuncGraphPtr &func_g
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
   PrimitivePtr prim = nullptr;
-  if (AnfAlgo::CheckPrimitiveType(final_node, prim::kPrimDepend)) {
+  if (common::AnfAlgo::CheckPrimitiveType(final_node, prim::kPrimDepend)) {
     prim = std::make_shared<Primitive>(kAdamApplyOneAssignOpName);
   } else {
     prim = std::make_shared<Primitive>(kAdamApplyOneOpName);
@@ -236,7 +237,7 @@ const AnfNodePtr AdamApplyOneFusion::Process(const FuncGraphPtr &func_graph, con
                                              const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto sub0 = node;
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto iter_sub0 = (*equiv).find(sub0_var_);
     if (iter_sub0 == (*equiv).end()) {
       MS_LOG(EXCEPTION) << "The equiv map is expected to contains the sub0 var after matched."

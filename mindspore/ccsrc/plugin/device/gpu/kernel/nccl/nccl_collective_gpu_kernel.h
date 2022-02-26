@@ -75,14 +75,14 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_node_ = kernel_node;
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
     InferCommType(kernel_node);
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
       auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
@@ -115,8 +115,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
     }
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
-    MS_LOG(INFO) << AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_LOG(INFO) << common::AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     auto comm_stream_attr = prim->GetAttr("stream_id");
     if (comm_stream_attr) {
@@ -186,7 +186,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
   }
 
   void InferCommType(const CNodePtr &kernel_node) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kNcclTypeMap.find(kernel_name);
     if (iter == kNcclTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: AllReduce, AllGather, Broadcast, "
@@ -195,7 +195,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       nccl_kernel_type_ = iter->second;
     }
 
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     auto reduce_op = prim->GetAttr(kAttrOp);
     if (reduce_op) {

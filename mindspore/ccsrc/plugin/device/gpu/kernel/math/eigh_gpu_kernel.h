@@ -29,7 +29,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
@@ -43,9 +43,9 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
   ~EighGpuKernelMod() = default;
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-    auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));
     lower_ = static_cast<bool>(GetAttr<bool>(kernel_node, LOWER));
     if (compute_eigen_vectors_) {

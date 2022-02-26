@@ -18,7 +18,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
 #include "kernel/ascend_kernel_mod.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace device {
@@ -182,7 +182,7 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
   MsprofGeProfTaskData task_info{};
   task_info.taskType = static_cast<uint32_t>(KernelType2TaskTypeEnum[kernel_type]);
   (void)SetAlternativeValue(task_info.opName, MSPROF_MIX_DATA_STRING_LEN, node->fullname_with_scope(), device_id_);
-  (void)SetAlternativeValue(task_info.opType, MSPROF_GE_OP_TYPE_LEN, AnfAlgo::GetCNodeName(node), device_id_);
+  (void)SetAlternativeValue(task_info.opType, MSPROF_GE_OP_TYPE_LEN, common::AnfAlgo::GetCNodeName(node), device_id_);
   // Note: Currently, the profiler supports only static shapes.
   task_info.shapeType = static_cast<uint32_t>(MSPROF_GE_SHAPE_TYPE_STATIC);
   task_info.blockDims = GetBlockDim(node);
@@ -202,9 +202,9 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
 
   size_t total_size = 0;
   if (tensor_type == MSPROF_GE_TENSOR_TYPE_INPUT) {
-    total_size = AnfAlgo::GetInputTensorNum(node);
+    total_size = common::AnfAlgo::GetInputTensorNum(node);
   } else {
-    total_size = AnfAlgo::GetOutputTensorNum(node);
+    total_size = common::AnfAlgo::GetOutputTensorNum(node);
   }
 
   const size_t batch_size = total_size / MSPROF_GE_TENSOR_DATA_NUM;
@@ -253,7 +253,7 @@ void ProfilingReporter::BuildTensorData(MsprofGeTensorData &tensor_data, const C
   std::vector<size_t> shape;
   string data_format;
   if (tensor_type == MSPROF_GE_TENSOR_TYPE_INPUT) {
-    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, index);
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, index);
     auto input_node = input_node_with_index.first;
     auto input_index = input_node_with_index.second;
     shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);

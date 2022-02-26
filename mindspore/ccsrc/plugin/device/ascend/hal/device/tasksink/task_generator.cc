@@ -18,8 +18,9 @@
 
 #include <runtime/rt.h>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/task_stream.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
@@ -64,8 +65,8 @@ void TaskGenerator::LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, Addre
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   // akg process
   // set atomic clean addr
-  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, anf_node_ptr)) {
-    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node_ptr, kAttrAtomicOutputIndexs);
+  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, anf_node_ptr)) {
+    auto clean_output_indexs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node_ptr, kAttrAtomicOutputIndexs);
     auto graph = anf_node_ptr->func_graph();
     MS_EXCEPTION_IF_NULL(graph);
     auto manager = graph->manager();
@@ -104,13 +105,13 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
     return;
   }
   // tbe process
-  auto input_tensor_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
+  auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(anf_node_ptr);
   for (size_t i = 0; i < input_tensor_num; i++) {
     // set clean output addr
     MS_EXCEPTION_IF_NULL(anf_node_ptr->inputs()[i + 1]);
     auto pre_node = anf_node_ptr->input(i + 1)->cast<CNodePtr>();
-    if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-      auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+    if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+      auto clean_output_indexs = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
       for (auto index : clean_output_indexs) {
         auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
         kernel::AddressPtr input = std::make_shared<kernel::Address>();
@@ -124,8 +125,9 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
       MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
     }
     // set clean workspace address
-    if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-      auto clean_workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+      auto clean_workspace_indexs =
+        common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
       for (const auto &index : clean_workspace_indexs) {
         auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
         kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
@@ -139,7 +141,7 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
       MS_LOG(DEBUG) << "AtomicAddClean clean workspace size:" << clean_workspace_indexs.size();
     }
   }
-  auto clear_mems = AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node_ptr, kAttrAtomicAddMemSize);
+  auto clear_mems = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(anf_node_ptr, kAttrAtomicAddMemSize);
   if (kernel_inputs->size() != clear_mems.size()) {
     MS_LOG(EXCEPTION) << "AtomicAddClean kernel inputs size not equal clear memory size, kernel inputs size:"
                       << kernel_inputs->size() << ",clean mem size" << clear_mems.size();
@@ -157,9 +159,9 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   MS_EXCEPTION_IF_NULL(kernel_mod);
   kernel_mod->set_unique_name(anf_node_ptr->UniqueName());
   kernel_mod->set_fullname(anf_node_ptr->fullname_with_scope());
-  kernel_mod->set_is_monad(AnfAlgo::IsNodeInputContainMonad(anf_node_ptr) && HasAbstractMonad(anf_node_ptr));
-  auto op_name = AnfAlgo::GetCNodeName(anf_node_ptr);
-  if (AnfAlgo::IsNonTaskOp(anf_node_ptr)) {
+  kernel_mod->set_is_monad(common::AnfAlgo::IsNodeInputContainMonad(anf_node_ptr) && HasAbstractMonad(anf_node_ptr));
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node_ptr);
+  if (common::AnfAlgo::IsNonTaskOp(anf_node_ptr)) {
     MS_LOG(INFO) << "Skip task generation for NonTask op " << anf_node_ptr->fullname_with_scope();
     auto debug_info = std::make_shared<TaskDebugInfo>();
     MS_EXCEPTION_IF_NULL(debug_info);
@@ -170,9 +172,9 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   }
 
   if (op_name != kAtomicAddrCleanOpName) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node_ptr);
     for (size_t i = 0; i < input_num; ++i) {
-      if (AnfAlgo::IsNoneInput(anf_node_ptr, i)) {
+      if (common::AnfAlgo::IsNoneInput(anf_node_ptr, i)) {
         continue;
       }
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
@@ -182,10 +184,10 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       input->addr = device_address->ptr_;
       input->size = device_address->size_;
 
-      auto prenode_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
+      auto prenode_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
       MS_EXCEPTION_IF_NULL(prenode_with_index.first);
       if (AnfUtils::IsRealCNodeKernel(prenode_with_index.first)) {
-        if (AnfAlgo::IsNonTaskOp(prenode_with_index.first->cast<CNodePtr>())) {
+        if (common::AnfAlgo::IsNonTaskOp(prenode_with_index.first->cast<CNodePtr>())) {
           // use memory offset to implement NonTask Type Split op
           // when op A -> split(NonTask) -> op B, op B's input addr is split's input0's addr + offset
           // offset is split's output index * split's output size
@@ -202,7 +204,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
 
     // No kernel output if output of the cnode is monad, such as LabelSwitch.
     if (!HasAbstractMonad(anf_node_ptr)) {
-      size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node_ptr);
+      size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node_ptr);
       for (size_t i = 0; i < output_num; ++i) {
         auto it = AnfAlgo::GetOutputAddr(anf_node_ptr, i, false);
         AddressPtr output = std::make_shared<Address>();

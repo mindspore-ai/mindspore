@@ -29,10 +29,10 @@ constexpr size_t kResizeBilinearAttrSize = 2;
 
 void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  size_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
-  align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  size_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (shape_.size() != kResizeBilinearInputsShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be "

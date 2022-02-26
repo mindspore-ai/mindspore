@@ -22,6 +22,7 @@
 #include <limits>
 #include "utility"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/convert_utils_base.h"
 #include "runtime/dev.h"
 #include "runtime/mem.h"
@@ -30,7 +31,7 @@
 #include "runtime/rt_model.h"
 #include "plugin/device/ascend/hal/device/ge_types_convert.h"
 #include "proto/op_mapping_info.pb.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -82,9 +83,9 @@ void DataDumper::GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
-      auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+      auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
-        auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+        auto input_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
         auto input = input_with_index.first;
         MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {
@@ -262,7 +263,7 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   dump_task->set_end_graph(false);
   auto iter = runtime_info_map_.find(kernel->UniqueName());
   if (iter == runtime_info_map_.end()) {
-    if (AnfAlgo::IsNonTaskOp(kernel.get())) {
+    if (common::AnfAlgo::IsNonTaskOp(kernel.get())) {
       MS_LOG(INFO) << "[DataDump] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
       return;
     }
@@ -280,7 +281,7 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   dump_task->set_stream_id(stream_id);
   MS_EXCEPTION_IF_NULL(dump_task->mutable_op());
   dump_task->mutable_op()->set_op_name(kernel->fullname_with_scope());
-  dump_task->mutable_op()->set_op_type(AnfAlgo::GetCNodeName(kernel.get()));
+  dump_task->mutable_op()->set_op_type(common::AnfAlgo::GetCNodeName(kernel.get()));
 
 #ifndef ENABLE_SECURITY
   DumpKernelOutput(kernel, args, dump_task);
@@ -425,14 +426,14 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     return;
   }
   MS_LOG(INFO) << "[DataDump] DumpKernelOutput start. Kernel:" << kernel->fullname_with_scope();
-  auto input_size = AnfAlgo::GetInputTensorNum(kernel);
-  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(kernel);
   uint64_t offset = sizeof(void *) * input_size;
   for (size_t i = 0; i < output_size; ++i) {
     auto data_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel, i);
-    auto output_origin_shape = AnfAlgo::GetOutputInferShape(kernel, i);
+    auto output_origin_shape = common::AnfAlgo::GetOutputInferShape(kernel, i);
 
     aicpu::dump::Output output;
     output.set_data_type(GeTypesConvert::GetGeDataType(data_type));
@@ -459,29 +460,29 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel);
-  if (AnfAlgo::IsNodeInputContainMonad(kernel)) {
+  if (common::AnfAlgo::IsNodeInputContainMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;
   }
   MS_LOG(INFO) << "[DataDump] DumpKernelInput start. Kernel:" << kernel->fullname_with_scope();
-  auto input_size = AnfAlgo::GetInputTensorNum(kernel);
+  auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
   uint64_t offset = 0;
   for (size_t i = 0; i < input_size; ++i) {
-    if (AnfAlgo::IsNoneInput(kernel, i)) {
+    if (common::AnfAlgo::IsNoneInput(kernel, i)) {
       continue;
     }
     aicpu::dump::Input input;
-    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
     auto input_node = input_node_with_index.first;
     auto input_index = input_node_with_index.second;
     std::string output_format = AnfAlgo::GetOutputFormat(input_node, input_index);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
     if (output_type == kTypeUnknown) {
       MS_LOG(WARNING) << "[DataDump] It is not suggested to use a lonely weight parameter as the output of graph";
-      output_type = AnfAlgo::GetOutputInferDataType(input_node, input_index);
+      output_type = common::AnfAlgo::GetOutputInferDataType(input_node, input_index);
     }
     auto output_shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
-    auto output_origin_shape = AnfAlgo::GetOutputInferShape(input_node, input_index);
+    auto output_origin_shape = common::AnfAlgo::GetOutputInferShape(input_node, input_index);
 
     input.set_data_type(GeTypesConvert::GetGeDataType(output_type));
     input.set_format(GeTypesConvert::GetGeFormat(output_format, output_shape.size()));

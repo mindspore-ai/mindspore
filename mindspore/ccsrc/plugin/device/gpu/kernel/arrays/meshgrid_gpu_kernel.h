@@ -66,7 +66,7 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     std::string indexing = GetAttr<std::string>(kernel_node, "indexing");
     if (indexing == "xy") {
       swap_indexing_ = true;
@@ -78,7 +78,7 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
     }
 
     input_size_ = 1;
-    input_count_ = AnfAlgo::GetInputTensorNum(kernel_node);
+    input_count_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_count_; i++) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       if (input_shape.size() < 1) {
@@ -91,7 +91,7 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
     }
 
     output_size_ = 1;
-    output_count_ = AnfAlgo::GetOutputTensorNum(kernel_node);
+    output_count_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
 
     // inferred shape swaps output shape for us if needed
     output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);

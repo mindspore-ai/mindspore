@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/optimizer/fusion_id_allocator.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,19 +35,19 @@ bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) const {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
-  return AnfAlgo::HasNodeAttr(kAttrFusionId, cnode);
+  return common::AnfAlgo::HasNodeAttr(kAttrFusionId, cnode);
 }
 
 int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) {
   if (HasFusionIdAttr(node)) {
-    return AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFusionId);
+    return common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFusionId);
   }
   return -1;
 }
 
 void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int64_t id) {
   ValuePtr fusion_id_v = MakeValue(id);
-  AnfAlgo::SetNodeAttr(kAttrFusionId, fusion_id_v, node);
+  common::AnfAlgo::SetNodeAttr(kAttrFusionId, fusion_id_v, node);
 }
 }  // namespace opt
 }  // namespace mindspore

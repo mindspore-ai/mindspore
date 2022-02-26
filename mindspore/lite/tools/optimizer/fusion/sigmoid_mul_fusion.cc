@@ -17,7 +17,7 @@
 #include <memory>
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 

@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/transpose_cpu_kernel.h"
 #include <vector>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/int8/transpose_int8.h"
 
@@ -33,10 +33,10 @@ constexpr size_t kMaxTransposeSerialSize = 50331648;
 
 void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  auto tmp = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  auto tmp = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
   axes_ = {tmp.begin(), tmp.end()};
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {

@@ -19,13 +19,13 @@
 #include "sys/stat.h"
 
 #include "debug/dump_proto.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
 #include "profiler/device/ascend/options.h"
 #include "profiler/device/ascend/ascend_profiling.h"
 #include "proto/profiling_parallel.pb.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 #include "google/protobuf/util/json_util.h"
 
@@ -58,8 +58,8 @@ bool IsProfilingParallelStrategyEnabled() {
 #endif
 
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL) ||
-      (parallel_mode == parallel::DATA_PARALLEL)) {
+  if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel) ||
+      (parallel_mode == parallel::kDataParallel)) {
     return true;
   }
 

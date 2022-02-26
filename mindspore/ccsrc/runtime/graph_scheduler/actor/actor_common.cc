@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace runtime {
@@ -54,7 +55,7 @@ bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strateg
     return false;
   }
 
-  if (node->isa<CNode>() && (AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
+  if (node->isa<CNode>() && (common::AnfAlgo::GetCNodeName(node) == kGetNextOpName)) {
     return true;
   }
   return false;
@@ -64,7 +65,7 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
                         const std::vector<AnfNodePtr> &host_parameters, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(node);
 
-  bool is_parameter_data = node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
+  bool is_parameter_data = node->isa<Parameter>() && (!common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()));
   if (!is_parameter_data) {
     return false;
   }
@@ -92,12 +93,12 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
   return false;
 }
 
-bool IsSwitchActor(const AnfNodePtr &node) { return AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch); }
+bool IsSwitchActor(const AnfNodePtr &node) { return common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch); }
 
 bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
-  if (node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
+  if (node->isa<Parameter>() && (!common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>()))) {
     //  Judge whether node is internal parameter.
     const auto &front_node = graph->GetFrontNodeByInternalParameter(node);
     if (front_node.first != nullptr) {
@@ -117,12 +118,12 @@ bool IsKernelActor(const AnfNodePtr &node, GraphExecutionStrategy strategy) {
     return true;
   }
 
-  return (AnfAlgo::GetCNodeName(node) != kGetNextOpName);
+  return (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName);
 }
 
 bool IsSkippedKernelActor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (IsKernelActor(node) && AnfAlgo::IsInplaceNode(node, "skip")) {
+  if (IsKernelActor(node) && common::AnfAlgo::IsInplaceNode(node, "skip")) {
     return true;
   }
   return false;
@@ -130,8 +131,8 @@ bool IsSkippedKernelActor(const AnfNodePtr &node) {
 
 bool IsRpcActor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (IsKernelActor(node) &&
-      (AnfAlgo::GetCNodeName(node) == kRpcSendOpName || AnfAlgo::GetCNodeName(node) == kRpcRecvOpName)) {
+  if (IsKernelActor(node) && (common::AnfAlgo::GetCNodeName(node) == kRpcSendOpName ||
+                              common::AnfAlgo::GetCNodeName(node) == kRpcRecvOpName)) {
     return true;
   }
   return false;
@@ -142,7 +143,7 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   if (node->isa<ValueNode>()) {
     return true;
   }
-  if (node->isa<Parameter>() && AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
+  if (node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(node->cast<ParameterPtr>())) {
     return true;
   }
   return false;
@@ -329,7 +330,7 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
   MS_EXCEPTION_IF_NULL(graph);
   std::set<size_t> ref_output_indexes;
 
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
     session::AnfWithOutIndex output_pair(cnode, i);
     // Only the ref node will modify the ref input corresponding to the output.

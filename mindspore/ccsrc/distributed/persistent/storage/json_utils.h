@@ -20,7 +20,7 @@
 #include <fstream>
 #include <string>
 
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "nlohmann/json.hpp"
 
 namespace mindspore {

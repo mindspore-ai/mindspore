@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -46,7 +47,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
     dims = dims * ori_shape[i];
   }
   (void)output_shape.insert(output_shape.end(), ori_shape.begin(), ori_shape.end());
-  auto type = AnfAlgo::GetOutputInferDataType(node, 0);
+  auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   std::vector<int64_t> assist_shape;
   std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(assist_shape), SizeToLong);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, assist_shape);
@@ -68,7 +69,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto assist_value_node = kernel_graph->NewValueNode(x_abstract, tensor);
   kernel_graph->AddValueNodeToGraph(assist_value_node);
-  AnfAlgo::SetOutputInferTypeAndShape({type}, {output_shape}, assist_value_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({type}, {output_shape}, assist_value_node.get());
   return assist_value_node;
 }
 
@@ -88,7 +89,7 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
     MS_LOG(INFO) << "The node " << diag_cnode->DebugString() << " is not equal to " << kDiagInputNum << " inputs";
     return nullptr;
   }
-  auto input_shape = AnfAlgo::GetOutputInferShape(diag_cnode->inputs()[kIndex1], 0);
+  auto input_shape = common::AnfAlgo::GetOutputInferShape(diag_cnode->inputs()[kIndex1], 0);
   if (input_shape.size() > kDiagInputMaxDim) {
     MS_EXCEPTION(ValueError) << "For Diag, rank of input should be less than 5, but got: " << input_shape.size();
   }

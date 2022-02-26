@@ -33,15 +33,15 @@ void PoolingCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   std::vector<int> origin_kernel_sizes;
   std::vector<int> strides;
-  std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
-  std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  std::vector<int64_t> kernel_sizes_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
+  std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(origin_kernel_sizes),
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
@@ -65,7 +65,7 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
+  const std::string pad_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
   if (int_padding_l.size() != dim - kPoolingOffsetDim || int_padding_r.size() != dim - kPoolingOffsetDim) {
     MS_LOG(EXCEPTION) << "Pooling get padding failed!";

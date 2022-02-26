@@ -53,7 +53,7 @@ void LSTMGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void LSTMGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
   auto eng = engine_;
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
@@ -148,11 +148,11 @@ void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
     MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
   }
-  bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size");
-  hidden_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
-  num_layers_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers");
-  has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
+  bidirectional_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
+  input_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size");
+  hidden_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
+  num_layers_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers");
+  has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);
   num_directions_ = 1;

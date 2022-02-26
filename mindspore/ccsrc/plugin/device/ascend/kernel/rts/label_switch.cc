@@ -19,6 +19,7 @@
 #include "runtime/stream.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 using mindspore::ge::model_runner::LabelSwitchTaskInfo;
 using LabelSwitchTaskInfoPtr = std::shared_ptr<LabelSwitchTaskInfo>;
@@ -37,10 +38,10 @@ bool LabelSwitchKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(INFO) << "LabelSwitchKernel init";
   auto cnode = anf_node->cast<CNodePtr>();
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
     MS_LOG(EXCEPTION) << "LabelSwitchKernel has no attr label_switch_list";
   }
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   label_list_ = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrLabelSwitchList));
   label_size_ = SizeToUint(label_list_.size());

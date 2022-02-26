@@ -18,34 +18,34 @@
 #include <algorithm>
 #include <tuple>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   constexpr size_t required_input_nums = 3;
   constexpr size_t required_output_nums = 1;
-  if (AnfAlgo::GetInputNum(kernel_node) != required_input_nums ||
-      AnfAlgo::GetOutputTensorNum(kernel_node) != required_output_nums) {
+  if (common::AnfAlgo::GetInputNum(kernel_node) != required_input_nums ||
+      common::AnfAlgo::GetOutputTensorNum(kernel_node) != required_output_nums) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the input nums are required to [input, diagonal, "
                          "k, alignment] for 3 and the output nums is require to 1.";
   }
 
   // invalid alignment will throw an exception.
-  auto alignment = AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
+  auto alignment = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, ALIGNMENT);
   alignment_ = GetAlignments(alignment);
   constexpr size_t input_index = 0;
   constexpr size_t diag_index = 1;
   constexpr size_t diag_k_index = 2;
   constexpr size_t output_index = 0;
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
-  auto diag_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_index);
-  auto diag_k_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_k_index);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, input_index);
+  auto diag_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_index);
+  auto diag_k_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_k_index);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
 
   constexpr size_t temporary_2d_dim = 2;
   constexpr size_t temporary_1d_dim = 1;

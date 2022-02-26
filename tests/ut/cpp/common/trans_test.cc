@@ -16,8 +16,8 @@
 
 #include <vector>
 #include "common/common_test.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/utils.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/utils.h"
 
 using namespace std;
 namespace mindspore {

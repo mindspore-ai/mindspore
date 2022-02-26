@@ -28,7 +28,7 @@ constexpr size_t kIsFiniteOutputsNum = 1;
 
 void IsFiniteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

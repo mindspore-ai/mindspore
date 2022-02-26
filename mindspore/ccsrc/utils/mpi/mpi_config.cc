@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "utils/mpi/mpi_config.h"
+#include "include/common/utils/mpi/mpi_config.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
-std::shared_ptr<MpiConfig> MpiConfig::instance_ = nullptr;
-
 std::shared_ptr<MpiConfig> MpiConfig::GetInstance() {
+  static std::shared_ptr<MpiConfig> instance_ = nullptr;
   if (instance_ == nullptr) {
     MS_LOG(DEBUG) << "Create new mpi config instance.";
     instance_.reset(new (std::nothrow) MpiConfig());

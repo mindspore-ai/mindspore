@@ -21,7 +21,7 @@
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/status.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 #include "utils/log_adapter.h"
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/util.h"
+#include "include/transform/graph_ir/util.h"
 
 #include <utility>
 #include <map>
 
 #include "securec/include/securec.h"
-#include "utils/convert_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/convert_utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace transform {

@@ -21,14 +21,14 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #ifndef ENABLE_SECURITY
-#include "utils/summary/event_writer.h"
+#include "include/common/utils/summary/event_writer.h"
 #endif
-#include "utils/config_manager.h"
-#include "utils/mpi/mpi_config.h"
+#include "include/common/utils/config_manager.h"
+#include "include/common/utils/mpi/mpi_config.h"
 #include "utils/ms_utils.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/costmodel_context.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #ifdef ENABLE_GPU_COLLECTIVE
@@ -341,7 +341,7 @@ PYBIND11_MODULE(_c_expression, m) {
     MS_LOG(INFO) << "End release dataset handles.";
 #endif
     // only in case that c++ calling python interface, ClearResAtexit should be called.
-    if (mindspore::parse::python_adapter::IsPythonEnv()) {
+    if (mindspore::python_adapter::IsPythonEnv()) {
       mindspore::pipeline::ClearResAtexit();
     }
   }});

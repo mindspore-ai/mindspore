@@ -39,15 +39,15 @@ class Dihedral14LJForceGpuKernelMod : public NativeGpuKernelMod {
     dihedral_14_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "dihedral_14_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
 
-    auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_LJtype = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_charge = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_boxlength_f = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_a_14 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_b_14 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_lj_scale_factor = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
-    auto shape_LJ_type_A = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
-    auto shape_LJ_type_B = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
+    auto shape_uint_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_LJtype = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_charge = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_boxlength_f = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_a_14 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_b_14 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_lj_scale_factor = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    auto shape_LJ_type_A = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
+    auto shape_LJ_type_B = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
 
     for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
     for (size_t i = 0; i < shape_LJtype.size(); i++) ele_LJtype *= shape_LJtype[i];

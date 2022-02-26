@@ -23,7 +23,7 @@
 #include "nnacl/op_base.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/converter/converter_flags.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/parallel/operator_info_register.h"

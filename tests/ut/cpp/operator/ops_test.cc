@@ -20,7 +20,8 @@
 #include "common/common_test.h"
 #include "ir/value.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "base/core_ops.h"
 
@@ -439,7 +440,7 @@ TEST_F(TestOps, GetConv2DPrimPyTest) {
       MS_LOG(EXCEPTION) << "" << conv2d_ptr->name() << "'s compute function is not implemented";
     }
 
-    py::object conv2d_pyobj = parse::python_adapter::GetPyFn("gtest_input.pynative", "conv2d_prim");
+    py::object conv2d_pyobj = python_adapter::GetPyFn("gtest_input.pynative", "conv2d_prim");
     py::dict opAttrs = py::getattr(conv2d_pyobj, "attrs");
     mindspore::HashMap<std::string, ValuePtr> attrs{};
     for (auto item : opAttrs) {

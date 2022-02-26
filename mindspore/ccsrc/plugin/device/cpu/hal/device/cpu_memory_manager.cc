@@ -16,8 +16,9 @@
 
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 namespace mindspore {
 namespace device {
 namespace cpu {
@@ -172,7 +173,7 @@ void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph
   auto kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 0; i < input_num; ++i) {
       auto address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
@@ -193,7 +194,7 @@ void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
   for (size_t i = 0; i < input_num; ++i) {
     auto address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(address);

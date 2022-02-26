@@ -52,13 +52,13 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     dampening_ = GetAttr<float>(kernel_node, "dampening");
     weight_decay_ = GetAttr<float>(kernel_node, "weight_decay");
     nesterov_ = GetAttr<bool>(kernel_node, "nesterov");
 
-    auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "parameters");
     if (is_null_input_) {
       InitSizeLists();

@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/log_adapter.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 
 namespace mindspore {

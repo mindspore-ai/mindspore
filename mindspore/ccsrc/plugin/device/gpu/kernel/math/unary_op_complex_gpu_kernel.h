@@ -68,14 +68,14 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     GetOpType(kernel_node);
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num;
     }
@@ -110,7 +110,7 @@ class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void GetOpType(const CNodePtr &kernel_node) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     static std::map<std::string, UnaryOptype> kComplexSupportedTypeMap = {
       {"Real", UNARY_OP_REAL}, {"Imag", UNARY_OP_IMAG}, {"Conj", UNARY_OP_CONJ}};
     auto iter = kComplexSupportedTypeMap.find(kernel_name);

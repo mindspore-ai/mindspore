@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
@@ -153,11 +153,11 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     // 1. get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     // 2. check input shape not null
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {

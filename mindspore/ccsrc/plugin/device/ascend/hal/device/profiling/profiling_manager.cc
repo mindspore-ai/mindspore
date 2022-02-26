@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 #include "runtime/base.h"
 #include <nlohmann/json.hpp>
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"

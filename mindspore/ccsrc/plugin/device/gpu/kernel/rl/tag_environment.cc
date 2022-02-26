@@ -50,18 +50,18 @@ TagEnvironment::~TagEnvironment() {
 bool TagEnvironment::InitGameSetting(const CNodePtr &cnode, GameSetting *setting_host) {
   MS_EXCEPTION_IF_NULL(setting_host);
 
-  setting_host->seed = AnfAlgo::GetNodeAttr<int64_t>(cnode, kSeedAttr);
-  setting_host->predator_num = AnfAlgo::GetNodeAttr<int64_t>(cnode, kPredatorNumAttr);
-  setting_host->max_timestep = AnfAlgo::GetNodeAttr<int64_t>(cnode, kMaxTimestepAttr);
-  setting_host->map_length = AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapLengthAttr);
-  setting_host->map_width = AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapWidthAttr);
-  setting_host->wall_hit_penalty = AnfAlgo::GetNodeAttr<float>(cnode, kWallHitPenaltyAttr);
-  setting_host->catch_reward = AnfAlgo::GetNodeAttr<float>(cnode, kCatchRewardAttr);
-  setting_host->caught_penalty = AnfAlgo::GetNodeAttr<float>(cnode, kCaughtPenaltyAttr);
-  setting_host->step_cost = AnfAlgo::GetNodeAttr<float>(cnode, kStepCostAttr);
-  setting_host->partially_observation = AnfAlgo::GetNodeAttr<bool>(cnode, kPartiallyObsAttr);
+  setting_host->seed = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kSeedAttr);
+  setting_host->predator_num = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kPredatorNumAttr);
+  setting_host->max_timestep = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMaxTimestepAttr);
+  setting_host->map_length = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapLengthAttr);
+  setting_host->map_width = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kMapWidthAttr);
+  setting_host->wall_hit_penalty = common::AnfAlgo::GetNodeAttr<float>(cnode, kWallHitPenaltyAttr);
+  setting_host->catch_reward = common::AnfAlgo::GetNodeAttr<float>(cnode, kCatchRewardAttr);
+  setting_host->caught_penalty = common::AnfAlgo::GetNodeAttr<float>(cnode, kCaughtPenaltyAttr);
+  setting_host->step_cost = common::AnfAlgo::GetNodeAttr<float>(cnode, kStepCostAttr);
+  setting_host->partially_observation = common::AnfAlgo::GetNodeAttr<bool>(cnode, kPartiallyObsAttr);
 
-  env_num_ = AnfAlgo::GetNodeAttr<int64_t>(cnode, kEnvNumAttr);
+  env_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kEnvNumAttr);
   agent_num_ = setting_host->predator_num + 1;
   return true;
 }

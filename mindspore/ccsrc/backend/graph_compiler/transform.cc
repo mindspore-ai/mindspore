@@ -26,7 +26,7 @@
 
 #include "abstract/abstract_value.h"
 #ifdef ENABLE_D
-#include "transform/graph_ir/convert.h"
+#include "include/transform/graph_ir/convert.h"
 #endif
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"

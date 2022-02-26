@@ -130,7 +130,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   KernelLaunchInfo kernel_launch_info;
   device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-  auto dynamic_flag = AnfAlgo::IsDynamicShape(cnode_ptr);
+  auto dynamic_flag = common::AnfAlgo::IsDynamicShape(cnode_ptr);
 
   // Get para_size from json
   auto kernel_json_info = kernel_pack_->kernel_json_info();

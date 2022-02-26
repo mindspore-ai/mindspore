@@ -21,7 +21,7 @@
 #include <map>
 #include <memory>
 #include "frontend/parallel/ops_info/operator_info.h"
-#include "frontend/parallel/context.h"
+#include "include/common/utils/parallel_context.h"
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {

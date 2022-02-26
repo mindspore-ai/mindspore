@@ -22,9 +22,10 @@
 #include "ir/param_info.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
-#include "utils/ms_device_shape_transfer.h"
-#include "utils/config_manager.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "include/common/utils/config_manager.h"
 
 namespace mindspore {
 namespace session {
@@ -45,7 +46,7 @@ void AscendInferenceSession::LoadInputData(const std::shared_ptr<KernelGraph> &k
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
-    if (!AnfAlgo::IsParameterWeight(pk_node)) {
+    if (!common::AnfAlgo::IsParameterWeight(pk_node)) {
       tensor = inputs[no_weight_input++];
       if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
                                             LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
@@ -71,7 +72,7 @@ GraphId AscendInferenceSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_grap
     MS_EXCEPTION_IF_NULL(pk_node);
     auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
     MS_EXCEPTION_IF_NULL(device_address);
-    if (AnfAlgo::IsParameterWeight(pk_node)) {
+    if (common::AnfAlgo::IsParameterWeight(pk_node)) {
       const auto &param_value = pk_node->default_param();
       MS_EXCEPTION_IF_NULL(param_value);
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param_value);
@@ -101,7 +102,7 @@ bool AscendInferenceSession::CheckModelInputs(uint32_t graph_id, const std::vect
       continue;
     }
     auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
-    if (!AnfAlgo::IsParameterWeight(parameter)) {
+    if (!common::AnfAlgo::IsParameterWeight(parameter)) {
       paras.push_back(parameter);
     }
   }

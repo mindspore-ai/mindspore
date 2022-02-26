@@ -20,6 +20,7 @@
 #include <string>
 #include "base/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -28,7 +29,7 @@ void ClonePrimitive(const AnfNodePtr &node) {
   // Several CNode may share a primitive pointer, so we clone the primitive before setting attr.
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) return;
-  auto prim_node = NewValueNode(AnfAlgo::GetCNodePrimitive(cnode)->Clone());
+  auto prim_node = NewValueNode(common::AnfAlgo::GetCNodePrimitive(cnode)->Clone());
   cnode->set_input(kAnfPrimitiveIndex, prim_node);
 }
 }  // namespace
@@ -38,20 +39,20 @@ void ProcessCast(const AnfNodePtr &node) {
   std::vector<std::string> input_names = {"x", kAttrDstType};
   std::vector<std::string> output_names = {"output"};
   ClonePrimitive(node);
-  AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), node);
-  AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), node);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(output_names), node);
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-  AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), node);
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), node);
 }
 
 void ProcessMatMul(const AnfNodePtr &node) {
   ClonePrimitive(node);
   TypeId output_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
-  AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), node);
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(output_type), node);
   auto left_format = AnfAlgo::GetInputFormat(node, 0);
   auto right_format = AnfAlgo::GetInputFormat(node, 1);
-  AnfAlgo::SetNodeAttr("left_format", MakeValue(left_format), node);
-  AnfAlgo::SetNodeAttr("right_format", MakeValue(right_format), node);
+  common::AnfAlgo::SetNodeAttr("left_format", MakeValue(left_format), node);
+  common::AnfAlgo::SetNodeAttr("right_format", MakeValue(right_format), node);
 }
 
 const AnfNodePtr AddAkgKernelAttrs::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

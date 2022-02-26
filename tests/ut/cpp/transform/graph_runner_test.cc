@@ -23,9 +23,9 @@
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "frontend/operator/ops.h"
-#include "transform/graph_ir/df_graph_manager.h"
-#include "transform/graph_ir/convert.h"
-#include "utils/utils.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
+#include "include/transform/graph_ir/convert.h"
+#include "include/common/utils/utils.h"
 
 #ifdef OPEN_SOURCE
 #include "ge/client/ge_api.h"
@@ -34,7 +34,7 @@
 #endif
 
 #define private public
-#include "transform/graph_ir/graph_runner.h"
+#include "include/transform/graph_ir/graph_runner.h"
 
 using mindspore::tensor::TensorPy;
 

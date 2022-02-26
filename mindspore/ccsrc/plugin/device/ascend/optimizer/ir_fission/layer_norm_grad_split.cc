@@ -19,9 +19,10 @@
 #include <vector>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -46,14 +47,14 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr 
   auto layer_norm_x_backprop = NewCNode(layer_norm_x_backprop_inputs, graph);
   MS_EXCEPTION_IF_NULL(layer_norm_x_backprop);
   layer_norm_x_backprop->set_scope(layer_norm_grad->scope());
-  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0), kNumberTypeFloat32};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0),
-                 AnfAlgo::GetPrevNodeOutputDetailShape(layer_norm_grad, 1)};
+  auto types = {common::AnfAlgo::GetOutputInferDataType(layer_norm_grad, 0), kNumberTypeFloat32};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(layer_norm_grad, 0),
+                 common::AnfAlgo::GetPrevNodeOutputDetailShape(layer_norm_grad, 1)};
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
-    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), layer_norm_x_backprop);
   }
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_x_backprop.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_x_backprop.get());
 
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_x_backprop, kLayerNormXBackpropV2OutputNum,
                                  layer_norm_x_backprop_outputs);
@@ -73,18 +74,19 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackpropV2(
   layer_norm_beta_gamma_backprop->set_kernel_info(kernel_info);
   layer_norm_beta_gamma_backprop->set_scope(layer_norm_grad->scope());
   if (is_dynamic) {
-    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), layer_norm_beta_gamma_backprop);
   }
-  auto types = {AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputGammaIndex),
-                AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
-  auto shapes = {AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputGammaIndex),
-                 AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
-  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_beta_gamma_backprop.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputGammaIndex),
+                common::AnfAlgo::GetOutputInferDataType(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputGammaIndex),
+                 common::AnfAlgo::GetOutputDetailShape(layer_norm_grad, kLayerNormGradOutputBetaIndex)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, layer_norm_beta_gamma_backprop.get());
 
   // get device shape of LayerNormGrad's 5th Input, and convert it to attr
   std::vector<size_t> shape_gamma =
-    AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, kLayerNormGradInputGammaIndex);
-  AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Long(shape_gamma)), layer_norm_beta_gamma_backprop);
+    common::AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, kLayerNormGradInputGammaIndex);
+  common::AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Long(shape_gamma)),
+                               layer_norm_beta_gamma_backprop);
 
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_beta_gamma_backprop, kLayerNormBetaGammaBackpropOutputNum,
                                  layer_norm_beta_gamma_backprop_outputs);
@@ -101,10 +103,10 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
-  if (AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
+  if (common::AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
     return nullptr;
   }
-  bool is_dynamic_shape = AnfAlgo::IsDynamicShape(cnode);
+  bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
   // create layer_norm_x_backprop
   std::vector<AnfNodePtr> layer_norm_x_backprop_outputs;
   CreateOutputsOfLayerNormXBackpropV2(graph, cnode, &layer_norm_x_backprop_outputs, is_dynamic_shape);

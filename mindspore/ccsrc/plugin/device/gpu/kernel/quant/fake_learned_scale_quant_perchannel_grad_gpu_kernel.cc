@@ -28,28 +28,29 @@ FakeLearnedScaleQuantPerChannelGradGpuKernelMod::FakeLearnedScaleQuantPerChannel
       num_channels_(0) {}
 
 bool FakeLearnedScaleQuantPerChannelGradGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   kernel_node_ = kernel_node;
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 4) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 4, but got " << input_num;
   }
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
   }
 
-  quant_delay_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
+  quant_delay_ =
+    static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
                       << quant_delay_;
   }
 
-  neg_trunc_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
+  neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
 
   // init size
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   num_channels_ = SizeToInt(input_shape[0]);
   for (size_t i = 0; i < input_shape.size(); ++i) {
     quant_num_ *= SizeToInt(input_shape[i]);

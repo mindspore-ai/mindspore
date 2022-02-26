@@ -29,7 +29,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/operator/ops.h"

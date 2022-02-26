@@ -23,7 +23,7 @@
 #include <memory>
 #include "ir/dtype.h"
 #include "hccl/base.h"
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 #include "hccl/hccl_types.h"
 
 namespace mindspore {

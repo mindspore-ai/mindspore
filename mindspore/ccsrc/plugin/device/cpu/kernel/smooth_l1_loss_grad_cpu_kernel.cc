@@ -27,12 +27,12 @@ constexpr size_t kSmoothL1LossGradOutputsNum = 1;
 template <typename T>
 void SmoothL1LossGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  beta_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  beta_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
   if (beta_ == 0.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'beta' should not be 0.";
   }
-  std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const uint64_t &d : x_shape) {
     tensor_size_ *= d;
   }

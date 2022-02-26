@@ -41,13 +41,13 @@ class LastCrdToDrGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     constrain_pair_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "constrain_pair_numbers"));
 
-    auto shape_atom_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_quater_cof = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_uint_dr_to_dr = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_i_serials = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto shape_atom_j_serials = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
-    auto shape_constant_rs = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
-    auto shape_constrain_ks = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    auto shape_atom_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_quater_cof = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_uint_dr_to_dr = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_atom_i_serials = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_atom_j_serials = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    auto shape_constant_rs = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto shape_constrain_ks = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
 
     for (size_t i = 0; i < shape_atom_crd.size(); i++) ele_atom_crd *= shape_atom_crd[i];
     for (size_t i = 0; i < shape_quater_cof.size(); i++) ele_quater_cof *= shape_quater_cof[i];

@@ -146,7 +146,7 @@ class MatrixTriangularSolveGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
@@ -159,23 +159,23 @@ class MatrixTriangularSolveGpuKernelMod : public NativeGpuKernelMod {
     lda_ = SizeToInt(m_);
     ldb_ = SizeToInt(m_);
 
-    if (AnfAlgo::HasNodeAttr("adjoint", kernel_node)) {
+    if (common::AnfAlgo::HasNodeAttr("adjoint", kernel_node)) {
       // MatrixTriangularSolve attribute
-      bool trans = AnfAlgo::GetNodeAttr<bool>(kernel_node, "adjoint");
+      bool trans = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "adjoint");
       // converting row major to col major is the same as reverting the trans flag
       trans_ = trans ? CUBLAS_OP_N : CUBLAS_OP_T;
-      if (AnfAlgo::HasNodeAttr("trans", kernel_node)) {
+      if (common::AnfAlgo::HasNodeAttr("trans", kernel_node)) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
                           << "', the attribute 'adjoint' and 'trans' could not exist at the same time.";
       }
     } else {
-      bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
+      bool lower = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
       // reverting the trans flag by default, so also flip the lower flag
       lower = !lower;
       uplo_ = lower ? CUBLAS_FILL_MODE_LOWER : CUBLAS_FILL_MODE_UPPER;
-      bool unit_diagonal = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
+      bool unit_diagonal = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
       unit_diagonal_ = unit_diagonal ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
-      const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
+      const std::string trans = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
       // converting row major to col major is the same as reverting the trans flag
       if (trans == "N") {
         trans_ = CUBLAS_OP_T;
@@ -223,8 +223,8 @@ class MatrixTriangularSolveGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitShape(const CNodePtr &kernel_node) {
-    auto a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
     is_null_input_ =
       CHECK_SHAPE_NULL(a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(b_shape, kernel_name_, "input_b");

@@ -46,7 +46,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     std::vector<size_t> shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
@@ -69,17 +69,17 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
                                "cudaStreamSynchronized failed");
     std::vector<TypeId> type_ids;
     std::vector<std::vector<size_t>> shapes;
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node_.lock());
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node_.lock());
     for (size_t i = 0; i < output_num; ++i) {
-      std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
+      std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
       if (i == 0) {
         shape[0] = post_output_size_;
       }
-      TypeId type_id = AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), i);
+      TypeId type_id = common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), i);
       type_ids.emplace_back(type_id);
       shapes.emplace_back(shape);
     }
-    AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {

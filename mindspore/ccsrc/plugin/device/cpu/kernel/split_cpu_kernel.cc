@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/split_cpu_kernel.h"
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,13 +28,13 @@ constexpr size_t kSplitInputsNum = 1;
 template <typename T>
 void SplitCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  output_num_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
   if (output_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' should be positive int, but got 0.";
   }
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](const size_t &value) { return SizeToInt(value); });
   if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {

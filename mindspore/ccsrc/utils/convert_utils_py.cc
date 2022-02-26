@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils_py.h"
 
 #include <vector>
 #include <string>
@@ -26,7 +26,6 @@
 
 #include "abstract/abstract_value.h"
 #include "abstract/utils.h"
-#include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "ir/value.h"
@@ -36,8 +35,7 @@
 #include "pybind_api/ir/base_ref_py.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/ms_context.h"
-#include "utils/convert_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 py::object BuiltinsToPyData(const Any &value);
@@ -185,8 +183,8 @@ static ValueNameToConverterVector value_name_to_converter = {
    [](const ValuePtr &value) -> py::object {
      auto value_list = value->cast<ValueDictionaryPtr>()->value();
      py::dict res_dict;
-     for (const auto &value : value_list) {
-       res_dict[py::str(value.first)] = ValueToPyData(value.second);
+     for (const auto &v : value_list) {
+       res_dict[py::str(v.first)] = ValueToPyData(v.second);
      }
      return res_dict;
    }},
@@ -197,8 +195,7 @@ static ValueNameToConverterVector value_name_to_converter = {
      auto start = ValueToPyData(slice->start());
      auto end = ValueToPyData(slice->stop());
      auto step = ValueToPyData(slice->step());
-     return parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end,
-                                            step);
+     return python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end, step);
    }},
   // KeywordArg
   {KeywordArg::kTypeId,
@@ -441,149 +438,6 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   return ret;
 }
 
-void SetValueRange(const AbstractBasePtr &tensor, const py::object &output) {
-  if (output.is_none()) {
-    return;
-  }
-  py::object obj_min =
-    output.contains(py::str(ATTR_MIN_VALUE)) ? (py::object)output[ATTR_MIN_VALUE] : (py::object)py::none();
-  py::object obj_max =
-    output.contains(py::str(ATTR_MAX_VALUE)) ? (py::object)output[ATTR_MAX_VALUE] : (py::object)py::none();
-
-  if (!obj_min.is_none() && !obj_max.is_none()) {
-    bool converted = true;
-    ValuePtr min_value = nullptr;
-    ValuePtr max_value = nullptr;
-    converted = parse::ConvertData(obj_min, &min_value);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert shape min value data failed";
-    }
-    converted = parse::ConvertData(obj_max, &max_value);
-    if (!converted) {
-      MS_LOG(EXCEPTION) << "Convert shape max value data failed";
-    }
-    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(tensor);
-    abs_tensor->set_value_range(min_value, max_value);
-  }
-}
-
-AbstractBasePtr MakePyInferRes2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                              const py::object &output) {
-  auto ret_vec = shape_obj.cast<ShapeVector>();
-  auto ret_dtype = type_obj.cast<TypePtr>();
-  ShapeVector min_shape_vec;
-  ShapeVector max_shape_vec;
-
-  if (!output.is_none()) {
-    py::object min_shape =
-      output.contains(py::str(ATTR_MIN_SHAPE)) ? (py::object)output[ATTR_MIN_SHAPE] : (py::object)py::none();
-    py::object max_shape =
-      output.contains(py::str(ATTR_MAX_SHAPE)) ? (py::object)output[ATTR_MAX_SHAPE] : (py::object)py::none();
-    if (!min_shape.is_none()) {
-      min_shape_vec = min_shape.cast<ShapeVector>();
-    }
-    if (!max_shape.is_none()) {
-      max_shape_vec = max_shape.cast<ShapeVector>();
-    }
-  }
-
-  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
-  AbstractBasePtr tensor = MakeAbstractTensor(ret_shape, ret_dtype);
-
-  SetValueRange(tensor, output);
-  return tensor;
-}
-
-static bool IsMonadType(const py::object &type_obj) {
-  if (py::isinstance<Type>(type_obj)) {
-    auto type = type_obj.cast<Type *>();
-    return type->isa<MonadType>();
-  }
-  return false;
-}
-
-static AbstractBasePtr ToMonadAbstract(const py::object &type_obj) {
-  if (py::isinstance<Type>(type_obj)) {
-    auto type = type_obj.cast<Type *>();
-    if (!type->isa<MonadType>()) {
-      MS_LOG(EXCEPTION) << "Not a monad type object: " << py::str(type_obj);
-    }
-    return abstract::MakeMonadAbstract(type->cast<MonadTypePtr>());
-  }
-  MS_LOG(EXCEPTION) << "Not a type object: " << py::str(type_obj);
-}
-
-static py::object GetPyAbsItemOfTupleOut(const py::object &output, const size_t index) {
-  auto out_dict = output.cast<py::dict>();
-  auto type_obj = out_dict[ATTR_DTYPE];
-  auto shape_obj = out_dict[ATTR_SHAPE];
-  auto out_item = py::dict();
-  auto shape_tuple = shape_obj.cast<py::tuple>();
-  auto typeid_tuple = type_obj.cast<py::tuple>();
-  out_item[ATTR_DTYPE] = typeid_tuple[index];
-  out_item[ATTR_SHAPE] = shape_tuple[index];
-  if (output.contains(py::str(ATTR_MIN_SHAPE))) {
-    out_item[ATTR_MIN_SHAPE] = output[ATTR_MIN_SHAPE].cast<py::tuple>()[index];
-  }
-  if (output.contains(py::str(ATTR_MAX_SHAPE))) {
-    out_item[ATTR_MAX_SHAPE] = output[ATTR_MAX_SHAPE].cast<py::tuple>()[index];
-  }
-  out_item[ATTR_VALUE] = py::none();
-  return out_item;
-}
-
-AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
-  auto out_dict = output.cast<py::dict>();
-  auto type_obj = out_dict[ATTR_DTYPE];
-  auto shape_obj = out_dict[ATTR_SHAPE];
-  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
-    auto ret_vec = shape_obj.cast<ShapeVector>();
-    auto ret_dtype = type_obj.cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(ret_dtype);
-    // if the size of shape list is empty, return an scalar abstract
-    if (ret_vec.empty() && (!ret_dtype->isa<TensorType>())) {
-      abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
-      return abs_scalar;
-    }
-    return MakePyInferRes2AbstractTensor(shape_obj, type_obj, output);
-  } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
-    auto typeid_tuple = type_obj.cast<py::tuple>();
-    AbstractBasePtrList ptr_list;
-    for (size_t it = 0; it < typeid_tuple.size(); ++it) {
-      auto output_it = GetPyAbsItemOfTupleOut(output, it);
-      auto tensor_it = MakePyInferRes2Abstract(output_it);
-      ptr_list.push_back(tensor_it);
-    }
-    auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
-    return tuple;
-  } else if (py::isinstance<py::list>(shape_obj) && py::isinstance<py::list>(type_obj)) {
-    auto typeid_list = type_obj.cast<py::list>();
-    AbstractBasePtrList ptr_list;
-    for (size_t it = 0; it < typeid_list.size(); ++it) {
-      auto output_it = GetPyAbsItemOfTupleOut(output, it);
-      auto tensor_it = MakePyInferRes2Abstract(output_it);
-      ptr_list.push_back(tensor_it);
-    }
-    auto list = std::make_shared<abstract::AbstractList>(ptr_list);
-    return list;
-  } else if (shape_obj.is_none() && type_obj.is_none()) {
-    // AbstractNone indicates there is no output for this CNode node.
-    auto abstract_none = std::make_shared<abstract::AbstractNone>();
-    return abstract_none;
-  } else if (IsMonadType(type_obj)) {
-    // Return monad abstract if it is monad type.
-    return ToMonadAbstract(type_obj);
-  } else {
-    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-    if (enable_sparse) {
-      return std::make_shared<abstract::AbstractUndetermined>();
-    }
-    MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
-  }
-}
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                        const std::shared_ptr<py::object> &ret_val) {
   if (output->isa<ValueNode>()) {

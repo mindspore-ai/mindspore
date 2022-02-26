@@ -21,8 +21,9 @@
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
@@ -79,7 +80,9 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
 }
 
 // Remove after PS feature finish adapting push/pull in auto_monad.
-void CPUSession::Reorder(std::vector<CNodePtr> *node_list) { AnfAlgo::ReorderPosteriorExecList(NOT_NULL(node_list)); }
+void CPUSession::Reorder(std::vector<CNodePtr> *node_list) {
+  common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(node_list));
+}
 
 void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -178,7 +181,7 @@ void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
       continue;
     }
     auto input_param = input_node->cast<ParameterPtr>();
-    if (AnfAlgo::IsParameterWeight(input_param) && !tensor->IsUpdatedByDevice()) {
+    if (common::AnfAlgo::IsParameterWeight(input_param) && !tensor->IsUpdatedByDevice()) {
       continue;
     }
     if (std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->DeviceType() !=
@@ -249,10 +252,10 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref) {
 
 void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, KernelWithIndex> &tensor_to_node) {
   for (const auto &tensor_node : tensor_to_node) {
-    if (AnfAlgo::IsDynamicShape(tensor_node.second.first)) {
+    if (common::AnfAlgo::IsDynamicShape(tensor_node.second.first)) {
       const auto &kernel = tensor_node.second.first;
       const auto &output_index = tensor_node.second.second;
-      const auto &shape = AnfAlgo::GetOutputInferShape(kernel, output_index);
+      const auto &shape = common::AnfAlgo::GetOutputInferShape(kernel, output_index);
       std::vector<int64_t> refresh_shape;
       (void)std::copy(shape.begin(), shape.end(), std::back_inserter(refresh_shape));
       MS_EXCEPTION_IF_NULL(tensor_node.first);
@@ -314,7 +317,7 @@ void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
 
 namespace {
 void KernelNotSupportException(const AnfNodePtr &kernel_node) {
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   std::stringstream operator_info;
   operator_info << "Operator[" << kernel_name << "] ";
   auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
@@ -362,7 +365,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel_node : kernel_nodes) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_LOG(INFO) << "Cpu building operator[" << kernel_name << "].";
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel_node) == KernelType::AKG_KERNEL) {
       if (!bin_map->initialized()) {

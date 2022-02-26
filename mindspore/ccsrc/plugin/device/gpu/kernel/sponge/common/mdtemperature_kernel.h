@@ -38,10 +38,10 @@ class MDTemperatureGpuKernelMod : public NativeGpuKernelMod {
     kernel_node_ = kernel_node;
     residue_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "residue_numbers"));
 
-    auto shape_start = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_end = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto shape_atom_vel = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-    auto shape_atom_mass = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto shape_start = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape_end = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto shape_atom_vel = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto shape_atom_mass = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
     for (size_t i = 0; i < shape_start.size(); i++) ele_start *= shape_start[i];
     for (size_t i = 0; i < shape_end.size(); i++) ele_end *= shape_end[i];

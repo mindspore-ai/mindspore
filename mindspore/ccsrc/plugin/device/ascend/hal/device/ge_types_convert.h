@@ -21,7 +21,7 @@
 #include <string>
 #include "proto/ge_dtype.pb.h"
 #include "ir/dtype/type_id.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "external/graph/types.h"
 
 namespace mindspore {

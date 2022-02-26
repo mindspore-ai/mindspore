@@ -39,8 +39,8 @@ CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 }
 
 void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  const auto &exec_info = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
     auto real_path = FileUtils::GetRealPath(path.c_str());
@@ -55,7 +55,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       << "' is illegal. Proper function path should follow the format of 'dir_path/file_name:func_name'";
   }
 
-  num_input_ = AnfAlgo::GetInputTensorNum(kernel_node);
+  num_input_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
   auto input_type_list = AnfAlgo::GetAllInputDeviceTypes(kernel_node);
   if (num_input_ != input_type_list.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, number of input types '" << input_type_list.size()
@@ -72,7 +72,7 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
 
-  num_output_ = AnfAlgo::GetOutputTensorNum(kernel_node);
+  num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto output_type_list = AnfAlgo::GetAllOutputDeviceTypes(kernel_node);
   if (num_output_ != output_type_list.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, number of outputs types '" << output_type_list.size()

@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::opt {
 const BaseRef DiagPartFission::DefinePattern() const {
@@ -37,8 +38,8 @@ const AnfNodePtr DiagPartFission::Process(const FuncGraphPtr &func_graph, const 
                  << " inputs";
     return nullptr;
   }
-  auto out_shape = AnfAlgo::GetOutputInferShape(node, 0);
-  auto input_shape = AnfAlgo::GetOutputInferShape(diag_part_cnode->inputs()[kIndex1], 0);
+  auto out_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  auto input_shape = common::AnfAlgo::GetOutputInferShape(diag_part_cnode->inputs()[kIndex1], 0);
   constexpr size_t kDiagPartInputMaxDim = 8;
   if (input_shape.size() > kDiagPartInputMaxDim) {
     MS_EXCEPTION(ValueError) << "For DiagPart, rank of input should be 2, 4, 6 or 8, but got: " << input_shape.size();

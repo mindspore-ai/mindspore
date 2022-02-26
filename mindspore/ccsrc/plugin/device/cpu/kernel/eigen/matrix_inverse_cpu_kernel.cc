@@ -30,12 +30,12 @@ constexpr size_t kMatrixInverseOutIndex = 0;
 template <typename T>
 void MatrixInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kMatrixInverseInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kMatrixInverseOutputsNum, kernel_name_);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kMatrixInverseInIndex);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kMatrixInverseInIndex);
   if (input_shape.size() < 2) {
     MS_LOG(EXCEPTION) << "The dim entered needs to be greater than 2, but " << input_shape.size() << " was taken";
   }
@@ -47,7 +47,7 @@ void MatrixInverseCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < last_index - 1; i++) {
     batch_size_ *= input_shape[i];
   }
-  adjoint_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
+  adjoint_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJOINT);
 }
 
 template <typename T>

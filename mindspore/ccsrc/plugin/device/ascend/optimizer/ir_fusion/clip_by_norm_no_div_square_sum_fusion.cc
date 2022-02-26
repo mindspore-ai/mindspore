@@ -19,8 +19,9 @@
 #include <vector>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -63,9 +64,9 @@ const AnfNodePtr ClipByNormNoDivSquareSumFusion::Process(const FuncGraphPtr &gra
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), input, constant_greater, constant_select, constant_maximum};
   auto fusion_node = NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(fusion_node);
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fusion_node.get());
   fusion_node->set_scope(node->scope());
   return fusion_node;
 }

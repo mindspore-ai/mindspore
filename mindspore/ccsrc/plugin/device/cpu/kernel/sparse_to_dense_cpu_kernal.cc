@@ -29,13 +29,13 @@ constexpr size_t kSparseToDenseOutputsNum = 1;
 template <typename I, typename T>
 void SparseToDenseCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' should be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
-  auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
@@ -43,7 +43,7 @@ void SparseToDenseCpuKernelMod<I, T>::InitKernel(const CNodePtr &kernel_node) {
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
   values_size_ = values_shape[0];
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 }
 
 template <typename I, typename T>

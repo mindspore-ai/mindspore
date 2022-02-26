@@ -57,7 +57,7 @@ dnnl::eltwise_forward::desc EltWiseCpuKernelMod::GetForwardEltwiseDesc(const dnn
 
 void EltWiseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (src_shape.empty()) {
     (void)src_shape.insert(src_shape.begin(), 1);

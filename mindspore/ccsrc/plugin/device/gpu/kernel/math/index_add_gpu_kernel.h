@@ -58,15 +58,15 @@ class IndexAddGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
-    std::vector<size_t> dst_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    std::vector<size_t> index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    std::vector<size_t> src_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    std::vector<size_t> dst_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    std::vector<size_t> index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    std::vector<size_t> src_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     is_null_input_ = CHECK_SHAPE_NULL(dst_shape, kernel_name, "x") ||
                      CHECK_SHAPE_NULL(index_shape, kernel_name, "indices") ||
                      CHECK_SHAPE_NULL(src_shape, kernel_name, "y");

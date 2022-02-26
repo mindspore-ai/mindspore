@@ -61,9 +61,9 @@ class CombineMomentumGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     num_ = GetAttr<size_t>(kernel_node, "n");
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "CombineMomentum") {
       input_num_ = 6;
     } else {
@@ -71,7 +71,7 @@ class CombineMomentumGpuKernelMod : public NativeGpuKernelMod {
     }
     for (size_t i = 0; i < num_; i++) {
       element_num_ = 1;
-      auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
+      auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
       is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
                                         "input[" + std::to_string(i * input_num_ + input_num_ - 5) + "]");
       if (is_null_input_) {

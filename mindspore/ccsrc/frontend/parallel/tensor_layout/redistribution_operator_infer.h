@@ -25,7 +25,7 @@
 #include "utils/hash_map.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "frontend/parallel/tensor_layout/redistribution_layout_transfer.h"
-#include "utils/convert_utils.h"
+#include "include/common/utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {
 using DeviceArrangement = Shape;

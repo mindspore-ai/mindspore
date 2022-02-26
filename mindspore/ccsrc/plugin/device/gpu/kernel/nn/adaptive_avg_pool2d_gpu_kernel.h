@@ -57,8 +57,8 @@ class AdaptiveAvgPool2DKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    auto shape_addr = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto shape_addr = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
     if (shape_addr.size() == 1) {
       output_height = shape_addr[0];
       output_width = shape_addr[0];
@@ -70,7 +70,7 @@ class AdaptiveAvgPool2DKernelMod : public NativeGpuKernelMod {
                         << shape_addr.size();
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
     }
@@ -78,8 +78,8 @@ class AdaptiveAvgPool2DKernelMod : public NativeGpuKernelMod {
     input_size_ = sizeof(T);
     output_size_ = sizeof(T);
 
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {

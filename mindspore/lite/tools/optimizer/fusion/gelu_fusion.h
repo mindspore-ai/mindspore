@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

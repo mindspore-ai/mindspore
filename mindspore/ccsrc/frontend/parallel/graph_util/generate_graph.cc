@@ -20,9 +20,10 @@
 #include <memory>
 #include <string>
 
-#include "pipeline/jit/parse/python_adapter.h"
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/python_adapter.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "mindspore/ccsrc/pipeline/jit/parse/parse_base.h"
 
 using mindspore::tensor::Tensor;
 
@@ -61,7 +62,7 @@ ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_nam
   (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arg_list),
                        [](const Attr &attr) { return ValueToPyData(attr.second); });
   py::object obj =
-    parse::python_adapter::CallPyFn(GET_OP_FUNCTION_PATH, GET_OP_FUNCTION, op_name, op_path, instance_name, arg_list);
+    python_adapter::CallPyFn(GET_OP_FUNCTION_PATH, GET_OP_FUNCTION, op_name, op_path, instance_name, arg_list);
   ValuePtr op_instance = nullptr;
   bool succ = parse::ConvertData(obj, &op_instance);
   if (!succ) {

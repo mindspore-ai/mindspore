@@ -19,7 +19,7 @@
 
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "pipeline/jit/parse/data_converter.h"
 
 namespace mindspore {
 void CellPy::AddAttr(CellPtr cell, const std::string &name, const py::object &obj) {

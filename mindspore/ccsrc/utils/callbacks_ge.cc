@@ -15,14 +15,13 @@
  */
 
 #ifdef ENABLE_D
-#include "utils/callbacks_ge.h"
+#include "include/common/utils/callbacks_ge.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
-#include "transform/graph_ir/df_graph_manager.h"
-#include "transform/graph_ir/util.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
+#include "include/transform/graph_ir/util.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/parse/python_adapter.h"
-#include "utils/visible.h"
+#include "include/common/utils/python_adapter.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
@@ -107,8 +106,7 @@ uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, g
       parameter_list.append(param_dict);
     }
   }
-  py::bool_ ret =
-    parse::python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_CHECKPOINT, parameter_list);
+  py::bool_ ret = python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_CHECKPOINT, parameter_list);
   auto bool_ret = py::cast<bool>(ret);
 
   uint32_t status = Status::SUCCESS;
@@ -176,7 +174,7 @@ uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::
     summary_list.append(summary_value_dict);
   }
 
-  py::bool_ ret = parse::python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_SUMMARY, summary_list);
+  py::bool_ ret = python_adapter::CallPyFn(PYTHON_MOD_CALLBACK_MODULE, PYTHON_FUN_PROCESS_SUMMARY, summary_list);
   auto bool_ret = py::cast<bool>(ret);
   if (!bool_ret) {
     MS_LOG(ERROR) << "Python checkpoint return false during callback";

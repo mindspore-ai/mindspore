@@ -23,12 +23,11 @@
 #include <map>
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "utils/context/graph_kernel_flags.h"
+#include "include/common/utils/context/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 class CostModelSplitSchemer : public SplitSchemer {
@@ -71,7 +70,7 @@ class CostModelSplitSchemer : public SplitSchemer {
     auto flags_str = CollectSplitFlags();
     MS_LOG(DEBUG) << "CallPyFn: [" << kGraphKernelSplitFunc << "] with input json: " << json_desc_str
                   << ". flag: " << flags_str;
-    auto ret = parse::python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
+    auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGraphKernelSplitFunc, json_desc_str, flags_str);
     if (py::isinstance<py::none>(ret)) {
       MS_LOG(ERROR) << "CallPyFn: [" << kGraphKernelSplitFunc << "] return invalid result. input json:\n"
                     << json_desc_str << ". flag: " << flags_str;
@@ -180,7 +179,7 @@ class CostModelSplitSchemer : public SplitSchemer {
       return;
     }
     // assign the make_tuple node to a new group.
-    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
+    if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
       auto group_id = split_plan_.size();
       split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
       need_inline_.emplace_back(1);

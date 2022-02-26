@@ -18,7 +18,7 @@
 #include <memory>
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ops/fusion/scale_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"

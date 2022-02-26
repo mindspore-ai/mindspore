@@ -82,7 +82,7 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
     std::vector<size_t> output_shape;
     std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape),
                    [](const S &value) { return static_cast<size_t>(value); });
-    AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
+    common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicReshape, real output shape is " << output_shape;
   }
 

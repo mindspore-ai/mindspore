@@ -25,8 +25,8 @@
 #endif
 
 #define private public
-#include "transform/graph_ir/graph_builder.h"
-#include "transform/graph_ir/df_graph_manager.h"
+#include "include/transform/graph_ir/graph_builder.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
 
 using UT::Common;
 

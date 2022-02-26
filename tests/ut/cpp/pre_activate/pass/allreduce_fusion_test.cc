@@ -25,7 +25,8 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "kernel/kernel_build_info.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -62,7 +63,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_all) {
     if (node == nullptr) {
       continue;
     }
-    if ((node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
+    if ((node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }
@@ -103,7 +104,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_group) {
     if (node == nullptr) {
       continue;
     }
-    if ((node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
+    if ((node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }
@@ -145,16 +146,16 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
     if (node == nullptr) {
       continue;
     }
-    if ((node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
+    if ((node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }
-    if (node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) {
+    if (node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kAllReduceOpName) {
       if (count == 0) {
-        AnfAlgo::SetNodeAttr("op", MakeValue("max"), node);
+        common::AnfAlgo::SetNodeAttr("op", MakeValue("max"), node);
         count = 1;
       } else {
-        AnfAlgo::SetNodeAttr("op", MakeValue("sum"), node);
+        common::AnfAlgo::SetNodeAttr("op", MakeValue("sum"), node);
         count = 0;
       }
     }
@@ -185,7 +186,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   auto make_tuple = ret->input(1);
   auto make_tuple1 = make_tuple->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
   for (size_t i = 1; i < make_tuple1->inputs().size(); ++i) {
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToLong(i)), make_tuple1->input(i));
+    common::AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToLong(i)), make_tuple1->input(i));
   }
   // set kernel build info
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
@@ -201,7 +202,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
     if (node == nullptr) {
       continue;
     }
-    if ((node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
+    if ((node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kAllReduceOpName) || node->isa<Parameter>()) {
       node->set_kernel_info(std::make_shared<device::KernelInfo>());
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), node.get());
     }

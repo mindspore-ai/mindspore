@@ -61,22 +61,22 @@ class ROIAlignGradFwdGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     // Get the number of input args
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
     }
 
     // Get the number of output args
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
 
     // Get the input shapes
-    auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") || CHECK_SHAPE_NULL(rois_shape, kernel_name, "rois");
     if (is_null_input_) {
       InitSizeLists();

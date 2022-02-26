@@ -17,7 +17,7 @@
 #include "distributed/persistent/storage/block.h"
 #include "utils/system/sha256.h"
 #include "utils/log_adapter.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace distributed {

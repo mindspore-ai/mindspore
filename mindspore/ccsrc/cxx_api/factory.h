@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 inline enum DeviceType g_device_target = kInvalidDeviceType;

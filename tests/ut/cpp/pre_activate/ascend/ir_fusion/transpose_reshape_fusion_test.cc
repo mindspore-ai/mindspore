@@ -17,7 +17,7 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_reshape_fusion.h"
 
 namespace mindspore {
@@ -50,7 +50,7 @@ TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_fusion) {
   auto reshape = ret->input(1)->cast<CNodePtr>();
   EXPECT_NE(reshape->input(1), nullptr);
   auto transpose = reshape->input(1)->cast<CNodePtr>();
-  AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue("perm"), transpose);
+  common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue("perm"), transpose);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();

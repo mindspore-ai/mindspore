@@ -20,8 +20,9 @@
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -43,15 +44,15 @@ const AnfNodePtr SpaceToBatchNDAttrUpdate::Process(const FuncGraphPtr &graph, co
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  auto block_shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
+  auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
     block_shape.insert(block_shape.begin(), 1);
-    AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
+    common::AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
   }
-  auto paddings = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrPaddings);
+  auto paddings = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrPaddings);
   if (paddings.size() == kBlockShapeDimNum) {
     paddings.emplace(paddings.begin(), std::vector<int64_t>{0, 0});
-    AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), node);
+    common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), node);
   }
   return node;
 }
@@ -67,15 +68,15 @@ const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, co
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  auto block_shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
+  auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
     block_shape.insert(block_shape.begin(), 1);
-    AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
+    common::AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
   }
-  auto crops = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrCrops);
+  auto crops = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrCrops);
   if (crops.size() == kBlockShapeDimNum) {
     crops.emplace(crops.begin(), std::vector<int64_t>{0, 0});
-    AnfAlgo::SetNodeAttr(kAttrCrops, MakeValue(crops), node);
+    common::AnfAlgo::SetNodeAttr(kAttrCrops, MakeValue(crops), node);
   }
   return node;
 }

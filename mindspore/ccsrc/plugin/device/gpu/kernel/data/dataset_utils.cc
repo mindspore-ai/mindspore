@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/data/dataset_utils.h"
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,10 +39,10 @@ void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> 
   MS_EXCEPTION_IF_NULL(shapes);
   MS_EXCEPTION_IF_NULL(types);
   std::vector<std::vector<int64_t>> shapes_me;
-  if (AnfAlgo::IsDynamicShape(kernel_node)) {
-    shapes_me = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "max_shapes");
+  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
+    shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "max_shapes");
   } else {
-    shapes_me = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+    shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
   }
   (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(*shapes),
                        [](const std::vector<int64_t> &values) {
@@ -55,7 +56,7 @@ void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> 
                          return shape;
                        });
 
-  *types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
+  *types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
   if (shapes->size() != types->size()) {
     MS_LOG(EXCEPTION) << "Invalid shapes: " << *shapes << ", types: " << *types;
   }

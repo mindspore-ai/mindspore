@@ -16,7 +16,7 @@
 #include "common/py_func_graph_fetcher.h"
 
 namespace UT {
-namespace python_adapter = mindspore::parse::python_adapter;
+namespace python_adapter = mindspore::python_adapter;
 void InitPythonPath() {
   python_adapter::set_python_env_flag(false);
   python_adapter::SetPythonPath("../../../../");

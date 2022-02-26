@@ -21,8 +21,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
@@ -69,15 +70,15 @@ void SetShapeAndType(const CNodePtr &bn_add_relu_grad, const AnfNodePtr &bn_grad
   // set output shape and dtype
   std::vector<TypeId> outputs_type;
   std::vector<std::vector<size_t>> outputs_shape;
-  auto output_num = AnfAlgo::GetOutputTensorNum(bn_grad);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(bn_grad);
   for (size_t i = 0; i < output_num; ++i) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(bn_grad, i));
-    outputs_shape.push_back(AnfAlgo::GetOutputInferShape(bn_grad, i));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(bn_grad, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(bn_grad, i));
   }
 
-  outputs_type.push_back(AnfAlgo::GetOutputInferDataType(relu_grad, 0));
-  outputs_shape.push_back(AnfAlgo::GetOutputInferShape(relu_grad, 0));
-  AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
+  outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(relu_grad, 0));
+  outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(relu_grad, 0));
+  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, bn_add_relu_grad.get());
 }
 
 void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const AnfNodePtr &relu_grad,
@@ -115,7 +116,7 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
 bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto format_attr = AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
+  auto format_attr = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);
   auto format = GetValue<std::string>(format_attr);
   if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
@@ -126,7 +127,7 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     return false;
   }
 
-  auto relu_grad = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto relu_grad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(relu_grad);
   auto relu_users = GetRealNodeUsedList(graph, relu_grad);
   if (relu_users->size() != 2) {
@@ -134,13 +135,14 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   }
 
   // process pattern as Relu(TensorAdd(BN#0, BN#1))
-  auto tuple_getitem = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
+  auto tuple_getitem = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
   MS_EXCEPTION_IF_NULL(tuple_getitem);
-  if (!utils::isa<CNodePtr>(tuple_getitem) || AnfAlgo::GetCNodeName(tuple_getitem) != prim::kPrimTupleGetItem->name()) {
+  if (!utils::isa<CNodePtr>(tuple_getitem) ||
+      common::AnfAlgo::GetCNodeName(tuple_getitem) != prim::kPrimTupleGetItem->name()) {
     return false;
   }
-  auto forward_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_getitem), 0);
-  if (AnfAlgo::GetCNodeName(forward_node) != kBatchNormWithAddAndActivation) {
+  auto forward_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_getitem), 0);
+  if (common::AnfAlgo::GetCNodeName(forward_node) != kBatchNormWithAddAndActivation) {
     return false;
   }
 
@@ -164,27 +166,27 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
     return nullptr;
   }
 
-  auto relu_grad = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto relu_grad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(relu_grad);
-  auto dy = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 0);
+  auto dy = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 0);
   MS_EXCEPTION_IF_NULL(dy);
-  auto y = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 1);
+  auto y = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(relu_grad), 1);
   MS_EXCEPTION_IF_NULL(y);
-  auto x = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
+  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 1);
   MS_EXCEPTION_IF_NULL(x);
-  auto scale = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 2);
+  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 2);
   MS_EXCEPTION_IF_NULL(scale);
-  auto save_mean = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 3);
+  auto save_mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 3);
   MS_EXCEPTION_IF_NULL(save_mean);
-  auto save_var = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 4);
+  auto save_var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 4);
   MS_EXCEPTION_IF_NULL(save_var);
-  auto reserve = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
+  auto reserve = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 5);
   MS_EXCEPTION_IF_NULL(reserve);
-  auto batch_norm = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), 0);
+  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), 0);
   MS_EXCEPTION_IF_NULL(batch_norm);
-  auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
+  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
   MS_EXCEPTION_IF_NULL(bias);
-  auto is_train = AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
+  auto is_train = common::AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
   MS_EXCEPTION_IF_NULL(is_train);
   if (!GetValue<bool>(is_train)) {
     return nullptr;
@@ -194,7 +196,7 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
   auto fused_batch_norm_add_relu_grad = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_add_relu_grad);
-  AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_add_relu_grad);
+  common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_add_relu_grad);
   SetShapeAndType(fused_batch_norm_add_relu_grad, node, relu_grad);
   ReplaceOutput(graph, node, relu_grad, fused_batch_norm_add_relu_grad);
   device::gpu::SetKernelInfo(fused_batch_norm_add_relu_grad);

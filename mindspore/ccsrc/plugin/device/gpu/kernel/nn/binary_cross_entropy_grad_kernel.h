@@ -58,14 +58,14 @@ class BinaryCrossEntropyGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     weight_defined_ = (input_num == 4);
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];

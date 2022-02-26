@@ -23,7 +23,7 @@
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "mindspore/ccsrc/utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 // Dump the circle from the strike node `next`.

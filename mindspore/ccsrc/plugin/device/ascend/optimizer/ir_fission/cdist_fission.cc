@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -62,21 +63,21 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   std::vector<AnfNodePtr> expand_dims_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimExpandDims->name())), input_node};
   auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
-  auto dtype = AnfAlgo::GetOutputInferDataType(input_node, 0);
-  auto expand_shape = AnfAlgo::GetOutputInferShape(input_node, 0);
+  auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+  auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
   (void)expand_shape.insert(expand_shape.end() + dim, 1);
-  AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
-  AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
+  common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
+  common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);
   // Add BroadCastTo Node
   std::vector<AnfNodePtr> broadcast_to_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())), expand_dims};
   auto broadcast_to = pass.NewCNode(broadcast_to_inputs, func_graph);
-  AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
   std::vector<int64_t> shape;
   (void)std::transform(need_shape.begin(), need_shape.end(), std::back_inserter(shape), LongToSize);
-  AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), broadcast_to);
-  AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), broadcast_to);
+  common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to);
   return broadcast_to;
 }
 }  // namespace
@@ -100,15 +101,15 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   if (GetBoolAttr(cdist_cnode, kAttrVisited)) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   MS_EXCEPTION_IF_NULL(cdist_cnode);
   if (cdist_cnode->size() != kCdistInputNum + 1) {
     MS_LOG(INFO) << "The node " << cdist_cnode->DebugString() << " is not equal to " << cdist_cnode << " inputs";
     return nullptr;
   }
   const auto &cdist_inputs = cdist_cnode->inputs();
-  auto x_shape = AnfAlgo::GetOutputInferShape(cdist_inputs[kDim1], 0);
-  auto y_shape = AnfAlgo::GetOutputInferShape(cdist_inputs[kDim2], 0);
+  auto x_shape = common::AnfAlgo::GetOutputInferShape(cdist_inputs[kDim1], 0);
+  auto y_shape = common::AnfAlgo::GetOutputInferShape(cdist_inputs[kDim2], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
   auto broadcast_input_x = AddBroadCastToNode(graph, cdist_inputs[kDim1], kInputXDimP, broadcast_to_shape, *this);
   auto broadcast_input_y = AddBroadCastToNode(graph, cdist_inputs[kDim2], kInputYDimR, broadcast_to_shape, *this);
@@ -118,7 +119,7 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_cnode->abstract());
   new_cnode->set_scope(cdist_cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cdist_cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cdist_cnode, new_cnode);
   return new_cnode;
 }
 
@@ -130,15 +131,15 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   if (GetBoolAttr(cdist_grad_cnode, kAttrVisited)) {
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   if (cdist_grad_cnode->size() != kCdistGradInputNum + 1) {
     MS_LOG(INFO) << "The node " << cdist_grad_cnode->DebugString() << " is not equal to " << cdist_grad_cnode
                  << " inputs";
     return nullptr;
   }
   const auto &cdist_grad_inputs = cdist_grad_cnode->inputs();
-  auto x_shape = AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim2], 0);
-  auto y_shape = AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim3], 0);
+  auto x_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim2], 0);
+  auto y_shape = common::AnfAlgo::GetOutputInferShape(cdist_grad_inputs[kDim3], 0);
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
   auto broadcast_grad = AddBroadCastToNode(graph, cdist_grad_inputs[kDim1], 0, broadcast_to_shape, *this);
   auto broadcast_input_x = AddBroadCastToNode(graph, cdist_grad_inputs[kDim2], kInputXDimP, broadcast_to_shape, *this);
@@ -150,7 +151,7 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_grad_cnode->abstract());
   new_cnode->set_scope(cdist_grad_cnode->scope());
-  AnfAlgo::CopyNodeAttrs(cdist_grad_cnode, new_cnode);
+  common::AnfAlgo::CopyNodeAttrs(cdist_grad_cnode, new_cnode);
   return new_cnode;
 }
 }  // namespace opt

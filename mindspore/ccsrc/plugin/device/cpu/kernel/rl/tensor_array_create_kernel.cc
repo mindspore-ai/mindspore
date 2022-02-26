@@ -28,14 +28,14 @@ TensorArrayCreateCpuKernelMod::TensorArrayCreateCpuKernelMod() : is_dynamic_(tru
 
 void TensorArrayCreateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto shape = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
+  auto shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   for (auto i : shape) {
     shapes_.push_back(LongToSize(i));
   }
-  type_ = AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
-  size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
-  is_dynamic_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "dynamic_size");
-  name_ = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "name");
+  type_ = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
+  size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "size");
+  is_dynamic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "dynamic_size");
+  name_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "name");
   output_size_list_.push_back(sizeof(int64_t));
 }
 

@@ -128,7 +128,7 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
@@ -293,11 +293,11 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
@@ -326,7 +326,7 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
     }
   }
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     auto shp_tuple_x = prim->GetAttr("input_sizes")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
@@ -357,9 +357,9 @@ class ConvGradInputBkwGpuKernelMod : public NativeGpuKernelMod {
                                 "cudnnSetTensorNdDescriptor failed");
   }
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
-    std::vector<int64_t> stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "stride");
-    std::vector<int64_t> dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
-    std::string format_me = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
+    std::vector<int64_t> stride_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "stride");
+    std::vector<int64_t> dilation_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
+    std::string format_me = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
     auto iter = kFormatIndexMap.find(format_me);
     if (iter == kFormatIndexMap.end()) {
       MS_LOG(EXCEPTION) << "OriFormat is " << format_me << ", Please confirm that in {NCHW, HWCN, NHWC}.";

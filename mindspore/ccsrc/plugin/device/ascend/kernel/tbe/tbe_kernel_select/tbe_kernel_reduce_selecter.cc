@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include <string>
 #include <vector>
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
 #include "kernel/common_utils.h"
 
@@ -35,16 +36,16 @@ bool TbeKernelReduceSelecter::GetShapeInfo(SupportFormat *support_format) {
   input_shape_.clear();
   output_shape_.clear();
   axis_.clear();
-  auto input_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);
-  auto output_num = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
+  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode_ptr_);
   if (input_num != 1 || output_num != 1) {
     MS_LOG(EXCEPTION) << "Reduce operator only support one input/output, input num: " << input_num
                       << ", output num: " << output_num;
   }
   // get input/output shape
-  input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, kInputIndex_0);
   PadScalarShape(&input_shape_);
-  output_shape_ = AnfAlgo::GetOutputInferShape(cnode_ptr_, kOutputIndex_0);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode_ptr_, kOutputIndex_0);
   PadScalarShape(&output_shape_);
   // get keep dim attr
   GetReduceAttrKeepDim();
@@ -133,12 +134,12 @@ bool TbeKernelReduceSelecter::IsFracZAndC1HWNCoC0Common(const std::string &forma
 }
 
 void TbeKernelReduceSelecter::GetReduceAttrKeepDim() {
-  if (!AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
     MS_LOG(INFO) << "This node doesn't have keep_attr.";
     keep_dims_ = false;
     return;
   }
-  keep_dims_ = AnfAlgo::GetNodeAttr<bool>(cnode_ptr_, kAttrKeepDims);
+  keep_dims_ = common::AnfAlgo::GetNodeAttr<bool>(cnode_ptr_, kAttrKeepDims);
 }
 
 void TbeKernelReduceSelecter::AssignSupportFormat(const std::string &support_format_str,

@@ -18,11 +18,12 @@
 #include <vector>
 #include <memory>
 
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -46,13 +47,13 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerGra
   MS_EXCEPTION_IF_NULL(lsq_perlayer_grad_d);
   lsq_perlayer_grad_d->set_scope(lsq_perlayer_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0),
-                AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 0),
-                 AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perlayer_grad_d.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0),
+                common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 0),
+                 common::AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perlayer_grad_d.get());
 
-  AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perlayer_grad_node, lsq_perlayer_grad_d);
+  common::AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perlayer_grad_node, lsq_perlayer_grad_d);
   CreateMultipleOutputsOfAnfNode(graph, lsq_perlayer_grad_d, kFakeLearnedScaleQuantGradDOutputNum,
                                  lsq_perlayer_grad_d_outputs);
 }
@@ -82,9 +83,9 @@ void FakeLearnedScaleQuantPerLayerGradUnifyMindIR::CreateOutputsOfLSQPerLayerRed
   MS_EXCEPTION_IF_NULL(lsq_perlayer_reduce_grad);
   lsq_perlayer_reduce_grad->set_scope(lsq_perlayer_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 1)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 1)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perlayer_reduce_grad.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perlayer_grad_node, 1)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(lsq_perlayer_grad_node, 1)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perlayer_reduce_grad.get());
 
   (*lsq_perlayer_reduce_grad_outputs).push_back(lsq_perlayer_reduce_grad);
 }
@@ -108,14 +109,14 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   MS_EXCEPTION_IF_NULL(lsq_perchannel_grad_d);
   lsq_perchannel_grad_d->set_scope(lsq_perchannel_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0),
-                AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 0),
-                 AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perchannel_grad_d.get());
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0),
+                common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 0),
+                 common::AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perchannel_grad_d.get());
 
-  AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perchannel_grad_node, lsq_perchannel_grad_d);
-  AnfAlgo::CopyNodeAttr(kAttrChannelAxis, lsq_perchannel_grad_node, lsq_perchannel_grad_d);
+  common::AnfAlgo::CopyNodeAttr(kAttrNeg_trunc, lsq_perchannel_grad_node, lsq_perchannel_grad_d);
+  common::AnfAlgo::CopyNodeAttr(kAttrChannelAxis, lsq_perchannel_grad_node, lsq_perchannel_grad_d);
   CreateMultipleOutputsOfAnfNode(graph, lsq_perchannel_grad_d, kFakeLearnedScaleQuantGradDOutputNum,
                                  lsq_perchannel_grad_d_outputs);
 }
@@ -145,10 +146,10 @@ void FakeLearnedScaleQuantPerChannelGradUnifyMindIR::CreateOutputsOfLSQPerChanne
   MS_EXCEPTION_IF_NULL(lsq_perchannel_reduce_grad);
   lsq_perchannel_reduce_grad->set_scope(lsq_perchannel_grad_node->scope());
 
-  auto types = {AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 1)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 1)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perchannel_reduce_grad.get());
-  AnfAlgo::CopyNodeAttr(kAttrChannelAxis, lsq_perchannel_grad_node, lsq_perchannel_reduce_grad);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(lsq_perchannel_grad_node, 1)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(lsq_perchannel_grad_node, 1)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, lsq_perchannel_reduce_grad.get());
+  common::AnfAlgo::CopyNodeAttr(kAttrChannelAxis, lsq_perchannel_grad_node, lsq_perchannel_reduce_grad);
   (*lsq_perchannel_reduce_grad_outputs).push_back(lsq_perchannel_reduce_grad);
 }
 
@@ -164,7 +165,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerLayerGradUnifyMindIR::Process(const Fun
   MS_EXCEPTION_IF_NULL(func_graph);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
 
   std::vector<AnfNodePtr> lsq_perlayer_grad_d_outputs;
@@ -203,7 +204,7 @@ const AnfNodePtr FakeLearnedScaleQuantPerChannelGradUnifyMindIR::Process(const F
   MS_EXCEPTION_IF_NULL(func_graph);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
 
   std::vector<AnfNodePtr> lsq_perchannel_grad_d_outputs;

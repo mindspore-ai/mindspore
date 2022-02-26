@@ -29,7 +29,7 @@ constexpr size_t kDynamicAssignOutputsNum = 1;
 
 void DynamicAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   input_x_dtype_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
@@ -63,8 +63,8 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   if (!node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
   }
-  auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   batch_size_ = 1;
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     batch_size_ *= input_x_shape[i];
@@ -98,7 +98,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error.  Error no: " << ret;
   }
 
-  auto node_with_idx = AnfAlgo::GetPrevNodeOutput(node, 0);
+  auto node_with_idx = common::AnfAlgo::GetPrevNodeOutput(node, 0);
   auto out_node = node_with_idx.first;
   if (out_node->isa<Parameter>()) {
     auto node_ptr = out_node->cast<ParameterPtr>();

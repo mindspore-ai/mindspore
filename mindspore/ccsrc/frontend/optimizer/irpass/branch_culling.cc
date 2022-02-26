@@ -22,6 +22,7 @@
 #include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
+#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace opt {

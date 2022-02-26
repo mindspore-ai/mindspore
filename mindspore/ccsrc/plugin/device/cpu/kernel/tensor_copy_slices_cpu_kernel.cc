@@ -30,18 +30,18 @@ constexpr size_t kTensorCopySlicesOutputsNum = 1;
 
 void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
   CastShapeSizeToLong(input_shape, &input_shape_);
   CastShapeSizeToLong(update_shape, &update_shape_);
   CastShapeSizeToLong(output_shape, &output_shape_);
 
-  auto begin = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
-  auto end = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
-  auto stride = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+  auto end = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+  auto stride = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   CheckSliceValid(begin, end, stride, input_shape_);
 
   data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);

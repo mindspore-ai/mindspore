@@ -18,7 +18,7 @@
 #include "ops/lstm.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"

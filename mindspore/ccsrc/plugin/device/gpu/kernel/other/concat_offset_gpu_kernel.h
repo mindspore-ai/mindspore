@@ -42,12 +42,12 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto rank = input_shape.size();
     auto rank_int = SizeToInt(rank);
     auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
@@ -58,7 +58,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     if (axis < 0) {
       axis += rank_int;
     }
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be greater than 0";
     }
@@ -71,10 +71,10 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
       input_size_list_.push_back(input_size * sizeof(T));
     }
     // cal offset
-    size_t shape_offset = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0)[axis];
+    size_t shape_offset = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0)[axis];
     std::vector<size_t> offset(input_num, 0);
     for (size_t i = 1; i < input_num; i++) {
-      input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
       if (input_shape.size() != rank) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the dimension of input should be equal, but got:"
                           << " the dimension of the " << i << "'th input: " << input_shape.size()
@@ -84,7 +84,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
       shape_offset += input_shape[axis];
     }
     constexpr size_t kConcatOffsetOutputShapeSize = 2;
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     if (output_shape.size() != kConcatOffsetOutputShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                         << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
@@ -121,7 +121,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   bool CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }

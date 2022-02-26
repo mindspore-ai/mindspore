@@ -19,9 +19,9 @@
 
 #include <string>
 #include <optional>
-#include "utils/contract.h"
+#include "include/common/utils/contract.h"
 #include "utils/ms_context.h"
-#include "utils/comm_manager.h"
+#include "include/common/utils/comm_manager.h"
 #include "utils/system/base.h"
 
 namespace mindspore {
@@ -49,7 +49,7 @@ class Common {
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);
-  static string GetUserDefineCachePath();
+  static std::string GetUserDefineCachePath();
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {

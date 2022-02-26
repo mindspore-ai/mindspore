@@ -41,7 +41,7 @@ void BatchNormGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node)
 
 void BatchNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() == NC) {
     (void)x_shape.insert(x_shape.end(), (NCHW - NC), 1);
@@ -54,8 +54,8 @@ void BatchNormGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   nhw_size = batch_size * hw_size;
   dnnl::memory::desc x_desc = GetDefaultMemDesc(x_shape);
   dnnl::memory::desc scale_bias_desc = GetDefaultMemDesc({SCALE_SHIFT_NUM, channel});
-  auto epsilon = AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
-  auto is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
+  auto epsilon = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
+  auto is_train = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
   auto prop_kind = dnnl::prop_kind::forward_inference;
   auto normalization_flags = dnnl::normalization_flags::use_scale_shift | dnnl::normalization_flags::use_global_stats;
   if (is_train) {

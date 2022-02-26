@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/common/optimizer/helper.h"
 
@@ -65,7 +66,7 @@ const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNode
     return nullptr;
   }
   auto mul = mul_anf->cast<CNodePtr>();
-  if (mul == nullptr || AnfAlgo::GetInputTensorNum(mul) != kMulInputTensorNum) {
+  if (mul == nullptr || common::AnfAlgo::GetInputTensorNum(mul) != kMulInputTensorNum) {
     return nullptr;
   }
   if (IsUsedByOthers(graph, mul)) {
@@ -82,10 +83,10 @@ const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNode
       break;
     }
   }
-  if (AnfAlgo::IsDynamicShape(mul->input(lossscale_input_index))) {
+  if (common::AnfAlgo::IsDynamicShape(mul->input(lossscale_input_index))) {
     return nullptr;
   }
-  auto constant_shape = AnfAlgo::GetOutputInferShape(mul->input(lossscale_input_index), 0);
+  auto constant_shape = common::AnfAlgo::GetOutputInferShape(mul->input(lossscale_input_index), 0);
   if (!(constant_shape.size() == 0 || (constant_shape.size() == 1 && constant_shape[0] == 1))) {
     MS_LOG(DEBUG) << "The const input of Mul node must be scalar or shape=(1,), but shape size is "
                   << constant_shape.size() << " and shape[0] is " << constant_shape[0];

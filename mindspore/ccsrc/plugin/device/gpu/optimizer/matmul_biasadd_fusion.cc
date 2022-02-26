@@ -20,8 +20,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -34,14 +35,14 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
+    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
   builder.SetInputsDeviceType(inputs_type);
@@ -74,7 +75,7 @@ const AnfNodePtr MatMulBiasAddFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(bias_input);
 
   // The `Matmul` node should have an unique user.
-  const AnfNodePtr &matmul = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  const AnfNodePtr &matmul = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(matmul);
   auto outlist = GetRealNodeUsedList(graph, matmul);
   if (outlist->size() >= 2) {
@@ -97,10 +98,10 @@ const AnfNodePtr MatMulBiasAddFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(fused_node);
 
   // Copy Abstract and KernelBuildInfo.
-  auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fused_node.get());
-  AnfAlgo::CopyNodeAttrs(matmul, fused_node);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fused_node.get());
+  common::AnfAlgo::CopyNodeAttrs(matmul, fused_node);
   fused_node->set_scope(node->scope());
   auto build_info = GenerateKernelBuildInfo(fused_node);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, fused_node.get());

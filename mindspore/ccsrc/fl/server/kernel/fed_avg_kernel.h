@@ -54,14 +54,14 @@ class FedAvgKernel : public AggregationKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    std::string cnode_name = AnfAlgo::GetCNodeName(kernel_node);
+    std::string cnode_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
         kNameToIdxMap.at(cnode_name).at("inputs").count("weight") == 0) {
       MS_LOG(EXCEPTION) << "Can't find index info of weight for kernel " << cnode_name;
       return;
     }
     cnode_weight_idx_ = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
-    std::vector<size_t> weight_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, cnode_weight_idx_);
+    std::vector<size_t> weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, cnode_weight_idx_);
     size_t weight_size =
       std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(T), std::multiplies<size_t>());
     size_t new_weight_size = weight_size;
@@ -72,7 +72,8 @@ class FedAvgKernel : public AggregationKernelMod {
     input_size_list_.push_back(sizeof(size_t));
 
     auto weight_node =
-      AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, cnode_weight_idx_), 0).first;
+      common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(kernel_node, cnode_weight_idx_), 0)
+        .first;
     MS_EXCEPTION_IF_NULL(weight_node);
     name_ = cnode_name + "." + weight_node->fullname_with_scope();
     first_cnt_handler_ = [&](std::shared_ptr<ps::core::MessageHandler>) {

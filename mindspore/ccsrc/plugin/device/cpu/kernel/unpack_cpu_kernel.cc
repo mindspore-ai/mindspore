@@ -28,13 +28,13 @@ constexpr size_t kUnpackWorkspaceMinNum = 1;
 template <typename T>
 void UnpackCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  int64_t axis_tmp = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  int64_t axis_tmp = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis_tmp < 0) {
     axis_tmp += SizeToLong(input_shape.size());
   }
-  output_num_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
+  output_num_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num"));
   unstack_param_.num_ = SizeToInt(output_num_);
   unstack_param_.axis_ = LongToInt(axis_tmp);
   unstack_param_.pre_dims_ = 1;

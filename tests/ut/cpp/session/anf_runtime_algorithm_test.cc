@@ -21,7 +21,8 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "mindspore/ccsrc/runtime/device/kernel_info.h"
 #include "mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_address.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace session {
@@ -40,23 +41,23 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   KernelWithIndex kernel_with_index;
   // test nullptr as input
-  EXPECT_THROW(AnfAlgo::VisitKernel(nullptr, 0), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::VisitKernel(nullptr, 0), std::runtime_error);
   // test value node as input
   ValueNodePtr value_node = NewValueNode(prim::kPrimAdd);
-  kernel_with_index = AnfAlgo::VisitKernel(value_node, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(value_node, 0);
   EXPECT_NE(kernel_with_index.first->cast<ValueNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<ValueNodePtr>()).get(), value_node.get());
   EXPECT_EQ(kernel_with_index.second, 0);
   // test parameter node as input
   ParameterPtr parameter_node = kernel_graph->add_parameter();
-  kernel_with_index = AnfAlgo::VisitKernel(parameter_node, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(parameter_node, 0);
   EXPECT_NE(kernel_with_index.first->cast<ParameterPtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<ParameterPtr>()).get(), parameter_node.get());
   EXPECT_EQ(kernel_with_index.second, 0);
   // test cnode as input
   std::vector<AnfNodePtr> inputs{value_node};
   auto add = kernel_graph->NewCNode(inputs);
-  kernel_with_index = AnfAlgo::VisitKernel(add, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(add, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add.get());
   EXPECT_EQ(kernel_with_index.second, 0);
@@ -70,11 +71,11 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
-  kernel_with_index = AnfAlgo::VisitKernel(make_tuple, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(make_tuple, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add.get());
   EXPECT_EQ(kernel_with_index.second, 0);
-  kernel_with_index = AnfAlgo::VisitKernel(make_tuple, 1);
+  kernel_with_index = common::AnfAlgo::VisitKernel(make_tuple, 1);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add_second.get());
   EXPECT_EQ(kernel_with_index.second, 0);
@@ -82,14 +83,14 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), make_tuple,
                                                 NewValueNode(static_cast<int64_t>(1))};
   auto tuple_get_item = kernel_graph->NewCNode(tuple_get_item_inputs);
-  kernel_with_index = AnfAlgo::VisitKernel(tuple_get_item, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(tuple_get_item, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add_second.get());
   EXPECT_EQ(kernel_with_index.second, 0);
   // test depend node as input
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), add, add_second};
   auto depend = kernel_graph->NewCNode(depend_inputs);
-  kernel_with_index = AnfAlgo::VisitKernel(depend, 0);
+  kernel_with_index = common::AnfAlgo::VisitKernel(depend, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add.get());
   EXPECT_EQ(kernel_with_index.second, 0);
@@ -101,9 +102,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetCNodePrimitive) {
   PrimitivePtr add_primitive = prim::kPrimAdd;
   std::vector<AnfNodePtr> inputs{NewValueNode(add_primitive)};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_NE(AnfAlgo::GetCNodePrimitive(add), nullptr);
-  EXPECT_EQ(AnfAlgo::GetCNodePrimitive(add).get(), add_primitive.get());
-  EXPECT_THROW(AnfAlgo::GetCNodePrimitive(nullptr), std::runtime_error);
+  EXPECT_NE(common::AnfAlgo::GetCNodePrimitive(add), nullptr);
+  EXPECT_EQ(common::AnfAlgo::GetCNodePrimitive(add).get(), add_primitive.get());
+  EXPECT_THROW(common::AnfAlgo::GetCNodePrimitive(nullptr), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetCNodeName) {
@@ -111,11 +112,11 @@ TEST_F(AnfRuntimeAlgorithmTest, GetCNodeName) {
   // test cnode node
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(add), prim::kPrimAdd->name());
-  EXPECT_THROW(AnfAlgo::GetCNodeName(nullptr), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetCNodeName(add), prim::kPrimAdd->name());
+  EXPECT_THROW(common::AnfAlgo::GetCNodeName(nullptr), std::runtime_error);
   // test parameter
   auto parameter_node = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::GetCNodeName(parameter_node), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetCNodeName(parameter_node), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetNodeDebugString) {
@@ -123,8 +124,8 @@ TEST_F(AnfRuntimeAlgorithmTest, GetNodeDebugString) {
   // test cnode node
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_EQ(AnfAlgo::GetNodeDebugString(add), add->DebugString());
-  EXPECT_THROW(AnfAlgo::GetNodeDebugString(nullptr), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetNodeDebugString(add), add->DebugString());
+  EXPECT_THROW(common::AnfAlgo::GetNodeDebugString(nullptr), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, SetNodeAttr) {
@@ -132,13 +133,13 @@ TEST_F(AnfRuntimeAlgorithmTest, SetNodeAttr) {
   // test cnode node
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
-  auto primitive = AnfAlgo::GetCNodePrimitive(add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(add);
   MS_EXCEPTION_IF_NULL(primitive);
   EXPECT_EQ(GetValue<std::string>(primitive->GetAttr("test_set_attr")), "test_value");
   // test parameter node
   auto parameter = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), parameter), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttr) {
@@ -146,23 +147,23 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttr) {
   // test cnode node
   std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
 
   std::vector<AnfNodePtr> mul_inputs{NewValueNode(prim::kPrimMul)};
   auto mul = kernel_graph->NewCNode(mul_inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value_v2"), mul);
-  AnfAlgo::CopyNodeAttr("test_set_attr", mul, add);
-  auto primitive = AnfAlgo::GetCNodePrimitive(add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value_v2"), mul);
+  common::AnfAlgo::CopyNodeAttr("test_set_attr", mul, add);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(add);
   MS_EXCEPTION_IF_NULL(primitive);
   EXPECT_EQ(GetValue<std::string>(primitive->GetAttr("test_set_attr")), "test_value_v2");
   // test parameter node
   auto parameter = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", parameter, add), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", mul, parameter), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", parameter, parameter), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", nullptr, add), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", mul, nullptr), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttr("test_set_attr", nullptr, nullptr), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", parameter, add), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", mul, parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", parameter, parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", nullptr, add), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", mul, nullptr), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttr("test_set_attr", nullptr, nullptr), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttrs) {
@@ -170,23 +171,23 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttrs) {
   // test cnode node
   std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
 
   std::vector<AnfNodePtr> mul_inputs{NewValueNode(prim::kPrimMul)};
   auto mul = kernel_graph->NewCNode(mul_inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value_v2"), mul);
-  AnfAlgo::CopyNodeAttrs(mul, add);
-  auto primitive = AnfAlgo::GetCNodePrimitive(add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value_v2"), mul);
+  common::AnfAlgo::CopyNodeAttrs(mul, add);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(add);
   MS_EXCEPTION_IF_NULL(primitive);
   EXPECT_EQ(GetValue<std::string>(primitive->GetAttr("test_set_attr")), "test_value_v2");
   // test parameter node
   auto parameter = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(parameter, add), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(mul, parameter), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(parameter, parameter), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(nullptr, add), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(mul, nullptr), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::CopyNodeAttrs(nullptr, nullptr), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(parameter, add), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(mul, parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(parameter, parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(nullptr, add), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(mul, nullptr), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::CopyNodeAttrs(nullptr, nullptr), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, EraseNodeAttr) {
@@ -194,14 +195,14 @@ TEST_F(AnfRuntimeAlgorithmTest, EraseNodeAttr) {
   // test cnode node
   std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
-  AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
-  AnfAlgo::SetNodeAttr("test_set_attr_v2", MakeValue("test_value_v2"), add);
-  AnfAlgo::EraseNodeAttr("test_set_attr_v2", add);
-  EXPECT_THROW(AnfAlgo::GetNodeAttr<std::string>(add, "test_set_attr_v2"), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::EraseNodeAttr("test_set_attr_v2", nullptr), std::runtime_error);
+  common::AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
+  common::AnfAlgo::SetNodeAttr("test_set_attr_v2", MakeValue("test_value_v2"), add);
+  common::AnfAlgo::EraseNodeAttr("test_set_attr_v2", add);
+  EXPECT_THROW(common::AnfAlgo::GetNodeAttr<std::string>(add, "test_set_attr_v2"), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::EraseNodeAttr("test_set_attr_v2", nullptr), std::runtime_error);
   // test parameter node
   auto parameter = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::EraseNodeAttr("test_set_attr_v2", parameter), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::EraseNodeAttr("test_set_attr_v2", parameter), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputTensorNum) {
@@ -211,10 +212,10 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputTensorNum) {
   auto parameter_two = kernel_graph->NewParameter();
   std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd), parameter_one, parameter_two};
   auto add = kernel_graph->NewCNode(add_inputs);
-  EXPECT_EQ(AnfAlgo::GetInputTensorNum(add), 2);
-  EXPECT_THROW(AnfAlgo::GetInputTensorNum(nullptr), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetInputTensorNum(add), 2);
+  EXPECT_THROW(common::AnfAlgo::GetInputTensorNum(nullptr), std::runtime_error);
   // test parameter node
-  EXPECT_THROW(AnfAlgo::GetInputTensorNum(parameter_one), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetInputTensorNum(parameter_one), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
@@ -228,17 +229,17 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
-  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(bn), 5);
-  EXPECT_THROW(AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(bn), 5);
+  EXPECT_THROW(common::AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
   // test add as input
   inputs.clear();
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(std::make_shared<abstract::AbstractNone>());
-  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(add), 0);
+  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(add), 0);
   add->set_abstract(x_abstract);
-  EXPECT_EQ(AnfAlgo::GetOutputTensorNum(add), 1);
+  EXPECT_EQ(common::AnfAlgo::GetOutputTensorNum(add), 1);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
@@ -247,7 +248,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
                                     kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   std::vector<size_t> shape = {1, 2, 3, 4};
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32}, {shape, shape}, add.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32}, {shape, shape}, add.get());
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
   auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
@@ -314,28 +315,28 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferShape) {
   auto value_node = NewValueNode(prim::kPrimAdd);
   MS_EXCEPTION_IF_NULL(value_node);
   value_node->set_abstract(x_abstract);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(value_node, 0)[1], 32);
-  EXPECT_THROW(AnfAlgo::GetOutputInferShape(nullptr, 0), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(value_node, 0)[1], 32);
+  EXPECT_THROW(common::AnfAlgo::GetOutputInferShape(nullptr, 0), std::runtime_error);
   // test parameter node as input
   auto parameter_node = kernel_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(parameter_node);
   parameter_node->set_abstract(x_abstract);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(parameter_node, 0)[2], 224);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(parameter_node, 0)[2], 224);
   // test cnode as input
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(std::make_shared<abstract::AbstractNone>());
-  EXPECT_TRUE(AnfAlgo::GetOutputInferShape(add, 0).empty());
+  EXPECT_TRUE(common::AnfAlgo::GetOutputInferShape(add, 0).empty());
   add->set_abstract(x_abstract);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 0)[3], 224);
-  EXPECT_THROW(AnfAlgo::GetOutputInferShape(add, 1), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 0)[3], 224);
+  EXPECT_THROW(common::AnfAlgo::GetOutputInferShape(add, 1), std::runtime_error);
   add->set_abstract(tuple_abstract);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 0)[0], 2);
-  EXPECT_TRUE(AnfAlgo::GetOutputInferShape(add, 1).empty());
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 2)[1], 32);
-  EXPECT_THROW(AnfAlgo::GetOutputInferShape(add, 3), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 0)[0], 2);
+  EXPECT_TRUE(common::AnfAlgo::GetOutputInferShape(add, 1).empty());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 2)[1], 32);
+  EXPECT_THROW(common::AnfAlgo::GetOutputInferShape(add, 3), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
@@ -346,12 +347,12 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
   auto parameter_node = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_node);
   parameter_node->set_abstract(x_abstract);
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(parameter_node, 0), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferShape(parameter_node, 0), std::runtime_error);
   // test cnode as input
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), parameter_node};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_EQ(AnfAlgo::GetPrevNodeOutputInferShape(add, 0)[1], 32);
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(add, 1), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetPrevNodeOutputInferShape(add, 0)[1], 32);
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferShape(add, 1), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
@@ -410,7 +411,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 1)[1], 32);
   std::vector<size_t> expect_shape{2, 224, 224, 32};
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 2), expect_shape);
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(nullptr, 0), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferShape(nullptr, 0), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferDataTypeTest) {
@@ -423,9 +424,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferDataTypeTest) {
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(bn, 0), kFloat32->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(bn, 4), kFloat32->type_id());
-  EXPECT_THROW(AnfAlgo::GetOutputInferDataType(bn, 5), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(bn, 0), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(bn, 4), kFloat32->type_id());
+  EXPECT_THROW(common::AnfAlgo::GetOutputInferDataType(bn, 5), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferDataType) {
@@ -439,12 +440,12 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferDataType) {
   pre_add->set_abstract(x_abstract);
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), pre_add};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_EQ(AnfAlgo::GetPrevNodeOutputInferDataType(add, 0), kFloat32->type_id());
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferDataType(add, 1), std::runtime_error);
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferDataType(nullptr, 0), std::runtime_error);
+  EXPECT_EQ(common::AnfAlgo::GetPrevNodeOutputInferDataType(add, 0), kFloat32->type_id());
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferDataType(add, 1), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferDataType(nullptr, 0), std::runtime_error);
   // test parameter as input
   auto parameter_node = kernel_graph->add_parameter();
-  EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferDataType(parameter_node, 0), std::runtime_error);
+  EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferDataType(parameter_node, 0), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceDataTypeTest) {
@@ -586,26 +587,26 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
   // set none abstract
   std::vector<TypeId> none_types = {};
   std::vector<std::vector<size_t>> none_shapes = {};
-  EXPECT_THROW(AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, nullptr), std::runtime_error);
-  AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, add.get());
+  EXPECT_THROW(common::AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, nullptr), std::runtime_error);
+  common::AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, add.get());
   EXPECT_EQ((*add->abstract()), abstract::AbstractNone());
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
   std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};
-  EXPECT_THROW(AnfAlgo::SetOutputInferTypeAndShape(none_types, single_shapes, add.get()), std::runtime_error);
-  AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, add.get());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(add, 0), kFloat32->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
+  EXPECT_THROW(common::AnfAlgo::SetOutputInferTypeAndShape(none_types, single_shapes, add.get()), std::runtime_error);
+  common::AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, add.get());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 0), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
   // set multiple input
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
   std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
-  AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, add.get());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(add, 0), kFloat16->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(add, 1), kFloat32->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(add, 2), kFloat64->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 1).size(), 4);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 2).size(), 4);
+  common::AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, add.get());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 0), kFloat16->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 1), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 2), kFloat64->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 1).size(), 4);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 2).size(), 4);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
@@ -616,21 +617,21 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
   std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};
-  AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, first_add.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, first_add.get());
   // set multiple input
   std::vector<AnfNodePtr> second_inputs;
   second_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto second_add = kernel_graph->NewCNode(second_inputs);
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
   std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
-  AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, second_add.get());
-  AnfAlgo::CopyAbstract(second_add, first_add.get());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(first_add, 0), kFloat16->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(first_add, 1), kFloat32->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferDataType(first_add, 2), kFloat64->type_id());
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(first_add, 0).size(), 4);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(first_add, 1).size(), 4);
-  EXPECT_EQ(AnfAlgo::GetOutputInferShape(first_add, 2).size(), 4);
+  common::AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, second_add.get());
+  common::AnfAlgo::CopyAbstract(second_add, first_add.get());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(first_add, 0), kFloat16->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(first_add, 1), kFloat32->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(first_add, 2), kFloat64->type_id());
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(first_add, 0).size(), 4);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(first_add, 1).size(), 4);
+  EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(first_add, 2).size(), 4);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetKernelType) {
@@ -765,8 +766,8 @@ TEST_F(AnfRuntimeAlgorithmTest, IsParameterWeight) {
   MS_EXCEPTION_IF_NULL(parameter_node);
   auto param_value_new = std::make_shared<tensor::Tensor>(int64_t(0), kInt32);
   parameter_node->set_default_param(param_value_new);
-  EXPECT_TRUE(AnfAlgo::IsParameterWeight(parameter_node));
-  EXPECT_THROW(AnfAlgo::IsParameterWeight(nullptr), std::runtime_error);
+  EXPECT_TRUE(common::AnfAlgo::IsParameterWeight(parameter_node));
+  EXPECT_THROW(common::AnfAlgo::IsParameterWeight(nullptr), std::runtime_error);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetStreamId) {

@@ -17,12 +17,12 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -92,13 +92,13 @@ bool CheckValues(const ValuePtrList &strides_values) {
 
 bool CheckAttrs(const CNodePtr &strided_slice_grad) {
   MS_EXCEPTION_IF_NULL(strided_slice_grad);
-  if (!AnfAlgo::HasNodeAttr(kAttrNewAxisMask, strided_slice_grad) ||
-      !AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, strided_slice_grad)) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrNewAxisMask, strided_slice_grad) ||
+      !common::AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, strided_slice_grad)) {
     MS_LOG(INFO) << "new_axis_mask or shrink_axis_mask not exist in cnode[" + strided_slice_grad->DebugString() + "]";
     return false;
   }
-  auto new_axis_mask = AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrNewAxisMask);
-  auto shrink_axis_mask = AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrShrinkAxisMask);
+  auto new_axis_mask = common::AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrNewAxisMask);
+  auto shrink_axis_mask = common::AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrShrinkAxisMask);
   if (new_axis_mask != 0 || shrink_axis_mask != 0) {
     MS_LOG(INFO) << "new_axis_mask or shrink_axis_mask not equal 0";
     return false;

@@ -105,16 +105,16 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
 
 void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, VAR);
   var_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, VAR);
   gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, GRAD);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kFusedCastAdamWeightDecayInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;

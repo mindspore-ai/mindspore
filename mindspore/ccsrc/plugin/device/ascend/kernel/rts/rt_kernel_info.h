@@ -28,7 +28,7 @@
 #include "ir/dtype.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/kernel.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {

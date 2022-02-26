@@ -19,8 +19,9 @@
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "nlohmann/json.hpp"
 #include "base/core_ops.h"
@@ -81,7 +82,7 @@ ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelG
 void ProfilingUtils::GetTraceHccl(const session::KernelGraph &kernel_graph,
                                   NotNull<ProfilingTraceInfo *> profiling_trace) {
   for (const auto &node : kernel_graph.execution_order()) {
-    if (AnfAlgo::IsCommunicationOp(node)) {
+    if (common::AnfAlgo::IsCommunicationOp(node)) {
       MS_EXCEPTION_IF_NULL(node);
       profiling_trace->trace_custom_node.insert(node->fullname_with_scope());
       MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id() << " Get hccl node:" << node->fullname_with_scope();
@@ -128,12 +129,12 @@ void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const 
   for (const auto &cnode : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     for (const auto &input : cnode->inputs()) {
-      auto prev_cnode = AnfAlgo::VisitKernel(input, 0);
+      auto prev_cnode = common::AnfAlgo::VisitKernel(input, 0);
       MS_EXCEPTION_IF_NULL(prev_cnode.first);
       if (!prev_cnode.first->isa<CNode>()) {
         continue;
       }
-      if (AnfAlgo::GetCNodeName(prev_cnode.first) == node_name) {
+      if (common::AnfAlgo::GetCNodeName(prev_cnode.first) == node_name) {
         getnext_outputs->insert(cnode->fullname_with_scope());
         MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id()
                      << " Find GetNext Output CNode:" << cnode->fullname_with_scope();
@@ -164,12 +165,12 @@ void ProfilingUtils::GetTraceBpEnd(const session::KernelGraph &kernel_graph, con
   auto &execution_orders = kernel_graph.execution_order();
   auto iter = execution_orders.rbegin();
   while (iter != execution_orders.rend()) {
-    if (AnfAlgo::IsCommunicationOp(*iter)) {
+    if (common::AnfAlgo::IsCommunicationOp(*iter)) {
       // store communication op input nodes' name
       std::set<std::string> ar_input_node_names;
-      size_t input_num = AnfAlgo::GetInputTensorNum(*iter);
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(*iter);
       for (size_t i = 0; i < input_num; ++i) {
-        auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(*iter, i);
+        auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(*iter, i);
         auto input_node = input_node_with_index.first;
         MS_EXCEPTION_IF_NULL(input_node);
         ar_input_node_names.insert(input_node->fullname_with_scope());
@@ -204,7 +205,7 @@ std::string ProfilingUtils::GetGraphLastKernelName(const session::KernelGraph &k
   for (auto iter = execution_order.rbegin(); iter != execution_order.rend(); ++iter) {
     MS_EXCEPTION_IF_NULL(*iter);
     if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL || AnfAlgo::GetKernelType(*iter) == AKG_KERNEL ||
-        AnfAlgo::IsCommunicationOp(*iter)) {
+        common::AnfAlgo::IsCommunicationOp(*iter)) {
       last_tbe_kernel_name = (*iter)->fullname_with_scope();
       break;
     }
@@ -220,7 +221,7 @@ void ProfilingUtils::GetTraceIterEnd(const session::KernelGraph &kernel_graph, P
   // Find last execute node in control flow
   auto &execution_orders = kernel_graph.execution_order();
   for (auto &node : execution_orders) {
-    if (AnfAlgo::HasNodeAttr(kAttrProfilingIterEnd, node)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrProfilingIterEnd, node)) {
       MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id()
                    << " Found PROFILING_ITER_END:" << node->fullname_with_scope();
       trace_info->trace_iter_end.insert(node->fullname_with_scope());
@@ -261,9 +262,9 @@ NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &p
   ValuePtr notify_value = MakeValue(profiling_content.notify);
   ValuePtr trace_id_value = MakeValue(profiling_content.profiler_trace_id);
   ValuePtr flags_value = MakeValue(profiling_content.flags);
-  AnfAlgo::SetNodeAttr(ProfilingUtils::kNotify, notify_value, cnode_ptr);
-  AnfAlgo::SetNodeAttr(ProfilingUtils::kProfilerTraceId, trace_id_value, cnode_ptr);
-  AnfAlgo::SetNodeAttr(ProfilingUtils::kFlags, flags_value, cnode_ptr);
+  common::AnfAlgo::SetNodeAttr(ProfilingUtils::kNotify, notify_value, cnode_ptr);
+  common::AnfAlgo::SetNodeAttr(ProfilingUtils::kProfilerTraceId, trace_id_value, cnode_ptr);
+  common::AnfAlgo::SetNodeAttr(ProfilingUtils::kFlags, flags_value, cnode_ptr);
   return NOT_NULL(cnode_ptr);
 }
 

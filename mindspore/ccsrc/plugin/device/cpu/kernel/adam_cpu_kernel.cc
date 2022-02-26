@@ -96,13 +96,13 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::AddressPtr> &in
 
 void AdamCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kAdamInputsNum, kernel_name_);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kAdamOutputsNum, kernel_name_);
-  use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
+  use_nesterov_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, USE_NESTEROV);
 }
 
 bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

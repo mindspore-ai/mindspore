@@ -115,11 +115,11 @@ class TrsmGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    auto A_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto b_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(A_shape, kernel_name_, "input_A") || CHECK_SHAPE_NULL(b_shape, kernel_name_, "input_b");
     if (is_null_input_) {
@@ -160,10 +160,10 @@ class TrsmGpuKernelMod : public NativeGpuKernelMod {
     lda_ = SizeToInt(m_);
     ldb_ = SizeToInt(m_);
 
-    const std::string trans = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
+    const std::string trans = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "trans");
     SetOperation(trans);
 
-    bool lower = AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
+    bool lower = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "lower");
     // reverting the trans flag by default, so also flip the lower flag
     lower = !lower;
     if (lower) {
@@ -172,7 +172,7 @@ class TrsmGpuKernelMod : public NativeGpuKernelMod {
       uplo_ = CUBLAS_FILL_MODE_UPPER;
     }
 
-    bool unit_diagonal = AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
+    bool unit_diagonal = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "unit_diagonal");
     if (unit_diagonal) {
       unit_diagonal_ = CUBLAS_DIAG_UNIT;
     } else {

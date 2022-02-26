@@ -18,6 +18,7 @@
 #include <string>
 #include "utils/check_convert_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

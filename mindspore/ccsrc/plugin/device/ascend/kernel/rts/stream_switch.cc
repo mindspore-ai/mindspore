@@ -20,6 +20,7 @@
 #include "runtime/stream.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 using mindspore::ge::model_runner::StreamSwitchTaskInfo;
 using StreamSwitchTaskInfoPtr = std::shared_ptr<StreamSwitchTaskInfo>;
@@ -39,17 +40,17 @@ StreamSwitchKernel::~StreamSwitchKernel() {}
 bool StreamSwitchKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(INFO) << "stream switch op init start";
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
-  if (!AnfAlgo::HasNodeAttr(kAttrSwitchCondition, anf_node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrSwitchCondition, anf_node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrSwitchCondition";
   }
   cond_ = tagRtCondition(GetValue<int>(primitive->GetAttr(kAttrSwitchCondition)));
-  if (!AnfAlgo::HasNodeAttr(kAttrTrueBranchStream, anf_node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrTrueBranchStream, anf_node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrTrueBranchStream";
   }
   true_stream_index_ = GetValue<uint32_t>(primitive->GetAttr(kAttrTrueBranchStream));
-  if (!AnfAlgo::HasNodeAttr(kAttrDataType, anf_node->cast<CNodePtr>())) {
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDataType, anf_node->cast<CNodePtr>())) {
     MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrDataType";
   }
   data_type_ = tagRtSwitchDataType(GetValue<int>(primitive->GetAttr(kAttrDataType)));

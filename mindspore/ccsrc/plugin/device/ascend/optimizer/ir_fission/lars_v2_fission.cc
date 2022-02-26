@@ -16,8 +16,9 @@
 #include "plugin/device/ascend/optimizer/ir_fission/lars_v2_fission.h"
 #include <memory>
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {
@@ -44,7 +45,7 @@ void LarsV2Fission::CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const
   auto types = {kNumberTypeFloat32, kNumberTypeFloat32};
   std::vector<size_t> shape;
   auto shapes = {shape, shape};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sum_all.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sum_all.get());
   CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kSquareSumOutputNum, square_sum_all_outputs);
 }
 

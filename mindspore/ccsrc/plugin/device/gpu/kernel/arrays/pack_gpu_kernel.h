@@ -59,7 +59,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
     axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
@@ -71,7 +71,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
-    input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
+    input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
     inputs_host_ = std::make_unique<T *[]>(input_num_);
     for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
@@ -111,7 +111,7 @@ class PackFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   void CheckParam(const CNodePtr &kernel_node) {
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }

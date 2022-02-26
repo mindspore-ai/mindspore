@@ -27,6 +27,7 @@
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/gpu/optimizer/trt_pass/trt_op_factory.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "debug/anf_ir_dump.h"
@@ -39,11 +40,11 @@ bool WeightCheck(const AnfNodePtr &node) {
     {kConv2DOpName, {1}}, {kBatchNorm, {1, 2, 3, 4}}, {kConv2DBackpropInputOpName, {1}}};
 
   MS_EXCEPTION_IF_NULL(node);
-  const std::string &op_name = AnfAlgo::GetCNodePrimitive(node)->name();
+  const std::string &op_name = common::AnfAlgo::GetCNodePrimitive(node)->name();
   auto iter = weight_list.find(op_name);
   if (iter != weight_list.end()) {
     std::vector<session::KernelWithIndex> real_inputs;
-    AnfAlgo::GetRealInputs(node, &real_inputs);
+    common::AnfAlgo::GetRealInputs(node, &real_inputs);
 
     for (auto index : iter->second) {
       if (index >= real_inputs.size()) {
@@ -52,7 +53,7 @@ bool WeightCheck(const AnfNodePtr &node) {
       }
 
       if (real_inputs[index].first->isa<Parameter>() &&
-          !AnfAlgo::IsParameterWeight(real_inputs[index].first->cast<ParameterPtr>())) {
+          !common::AnfAlgo::IsParameterWeight(real_inputs[index].first->cast<ParameterPtr>())) {
         return false;
       }
     }
@@ -77,7 +78,7 @@ mindspore::HashMap<AnfNodePtr, NodeInfo> CollectNodeInfo(const FuncGraphPtr &fun
       continue;
     }
 
-    const std::string &op_name = AnfAlgo::GetCNodePrimitive(node)->name();
+    const std::string &op_name = common::AnfAlgo::GetCNodePrimitive(node)->name();
     const auto &converter_factory = TrtOpFactory::GetInstance();
     ConvertFunc convert_func = converter_factory.GetConvertFunc(op_name);
     if (!convert_func) {
@@ -136,9 +137,9 @@ void GraphPartitioner::NewSubGraph(NodeInfo *node_info) {
 bool GraphPartitioner::ExistCycleAfterMerge(const AnfNodePtr &node, const std::string &target_graph_id) {
   MS_EXCEPTION_IF_NULL(node);
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
+    auto input_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
     if (input_node == nullptr || input_node->isa<ValueNode>() || input_node->isa<Parameter>()) continue;
 
     if (node_info_[input_node].graph_id() == target_graph_id) {
@@ -160,9 +161,9 @@ void GraphPartitioner::MergeParentBranchRecursively(const AnfNodePtr &node, cons
 
   MS_EXCEPTION_IF_NULL(node);
   node_info_[node].graph_id_ = new_graph_id;
-  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
+    auto input_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
     if (input_node == nullptr || input_node->isa<ValueNode>() || input_node->isa<Parameter>()) continue;
 
     if (node_info_[input_node].graph_id() == old_graph_id) {
@@ -182,16 +183,16 @@ bool GraphPartitioner::NodeGrouping(const FuncGraphPtr &func_graph) {
     NewSubGraph(&current_node_info);
 
     // Merge the `TupleGetItem` node too parent sub graph.
-    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-      const AnfNodePtr &input = AnfAlgo::GetTupleGetItemRealInput(node);
+    if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+      const AnfNodePtr &input = common::AnfAlgo::GetTupleGetItemRealInput(node);
       const NodeInfo &parent_node_info = node_info_[input];
       current_node_info.graph_id_ = parent_node_info.graph_id_;
       continue;
     }
 
-    size_t input_num = AnfAlgo::GetInputTensorNum(node);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
+      auto input_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
       if (input_node == nullptr || input_node->isa<ValueNode>() || input_node->isa<Parameter>()) continue;
 
       const NodeInfo &parent_node_info = node_info_[input_node];
@@ -200,7 +201,7 @@ bool GraphPartitioner::NodeGrouping(const FuncGraphPtr &func_graph) {
       // Annotation:    Unsupported   Support           Support
       // Result:        Native        Native            Trt
       if (current_node_info.type() != parent_node_info.type() ||
-          (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) &&
+          (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) &&
            current_node_info.graph_id().at(0) != parent_node_info.graph_id().at(0))) {
         dependency_.AddDependency(current_node_info.graph_id(), parent_node_info.graph_id());
         dependency_.InheritDependency(current_node_info.graph_id(), parent_node_info.graph_id());
@@ -240,7 +241,8 @@ std::map<std::string, AnfNodePtrList> GraphPartitioner::CollectSegments() {
   std::map<std::string, AnfNodePtrList> segments;
   for (const auto &item : node_info_) {
     const std::string &graph_id = item.second.graph_id();
-    if (graph_id.find("T_") != graph_id.npos && AnfAlgo::GetCNodePrimitive(item.first)->name() != kReturnOpName) {
+    if (graph_id.find("T_") != graph_id.npos &&
+        common::AnfAlgo::GetCNodePrimitive(item.first)->name() != kReturnOpName) {
       segments[graph_id].push_back(item.first);
     }
   }
@@ -277,7 +279,7 @@ Subgraph GraphPartitioner::CreateNewGraph(const AnfNodePtrList &segment) {
       dst->set_name(src->name());
       dst->debug_info()->set_name(src->name());
 
-      if (AnfAlgo::IsParameterWeight(src)) {
+      if (common::AnfAlgo::IsParameterWeight(src)) {
         dst->set_default_param(src->default_param());
       }
     } else {

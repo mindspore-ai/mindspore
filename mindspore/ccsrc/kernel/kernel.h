@@ -23,7 +23,7 @@
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "ir/dtype.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"

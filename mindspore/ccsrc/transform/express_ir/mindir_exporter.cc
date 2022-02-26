@@ -30,7 +30,7 @@
 #include "utils/check_convert_utils.h"
 #include "debug/dump_proto.h"
 #include "utils/ms_utils.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {

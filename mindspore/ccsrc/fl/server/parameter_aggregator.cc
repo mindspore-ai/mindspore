@@ -35,7 +35,7 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   // required_pull_count_ normally used in parameter server training mode.
   required_pull_count_ = threshold_count;
 
-  MS_LOG(INFO) << "Start initializing kernels for " << AnfAlgo::GetCNodeName(cnode);
+  MS_LOG(INFO) << "Start initializing kernels for " << common::AnfAlgo::GetCNodeName(cnode);
   if (!InitAggregationKernels(cnode)) {
     MS_LOG(EXCEPTION) << "Initializing aggregation kernels failed.";
     return false;
@@ -161,14 +161,16 @@ bool ParameterAggregator::requires_aggr() const { return requires_aggr_; }
 bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!JudgeRequiredAggr(cnode)) {
-    MS_LOG(WARNING) << "Aggregation for weight of kernel " << AnfAlgo::GetCNodeName(cnode) << " is not required.";
+    MS_LOG(WARNING) << "Aggregation for weight of kernel " << common::AnfAlgo::GetCNodeName(cnode)
+                    << " is not required.";
   }
 
   std::vector<std::string> aggr_kernel_names = SelectAggregationAlgorithm(cnode);
   for (const std::string &name : aggr_kernel_names) {
     auto aggr_kernel = kernel::AggregationKernelFactory::GetInstance().Create(name, cnode);
     if (aggr_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "Fail to create aggregation kernel " << name << " for " << AnfAlgo::GetCNodeName(cnode);
+      MS_LOG(EXCEPTION) << "Fail to create aggregation kernel " << name << " for "
+                        << common::AnfAlgo::GetCNodeName(cnode);
       return false;
     }
 
@@ -232,8 +234,8 @@ bool ParameterAggregator::AssignMemory(const K server_kernel, const CNodePtr &cn
       // Reusing memory of the kernel node means the memory of the input is already assigned by the front end, which
       // is to say, the input node is a parameter node.
       size_t index = reuse_kernel_node_inputs_info.at(name);
-      MS_LOG(INFO) << "Try to reuse memory of kernel node " << AnfAlgo::GetCNodeName(cnode) << " for parameter " << name
-                   << ", kernel node index " << index;
+      MS_LOG(INFO) << "Try to reuse memory of kernel node " << common::AnfAlgo::GetCNodeName(cnode) << " for parameter "
+                   << name << ", kernel node index " << index;
       AddressPtr input_addr = GenerateParameterNodeAddrPtr(cnode, index);
       MS_EXCEPTION_IF_NULL(input_addr);
       memory_register->RegisterAddressPtr(name, input_addr);
@@ -289,14 +291,15 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
 
 bool ParameterAggregator::JudgeRequiredAggr(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
+  std::string cnode_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
       kNameToIdxMap.at(cnode_name).at("inputs").count("weight") == 0) {
     MS_LOG(EXCEPTION) << "Can't find index info of weight for kernel " << cnode_name;
     return false;
   }
   size_t cnode_weight_idx = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
-  auto weight_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, cnode_weight_idx), 0).first;
+  auto weight_node =
+    common::AnfAlgo::VisitKernelWithReturnType(common::AnfAlgo::GetInputNode(cnode, cnode_weight_idx), 0).first;
   MS_EXCEPTION_IF_NULL(weight_node);
 
   if (!weight_node->isa<Parameter>()) {

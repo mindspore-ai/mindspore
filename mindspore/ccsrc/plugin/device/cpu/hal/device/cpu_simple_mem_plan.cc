@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/hal/device/cpu_simple_mem_plan.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace device {
@@ -25,9 +26,9 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
   auto kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 0; i < input_num; ++i) {
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
       MS_EXCEPTION_IF_NULL(kernel_with_index.first);
       if (kernel_with_index.first->isa<Parameter>()) {
         continue;
@@ -39,7 +40,7 @@ size_t CPUSimpleMemPlan::MemPlan(const session::KernelGraph *graph) {
       }
     }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);
@@ -69,9 +70,9 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
   auto kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
     for (size_t i = 0; i < input_num; ++i) {
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
       MS_EXCEPTION_IF_NULL(kernel_with_index.first);
       if (kernel_with_index.first->isa<Parameter>()) {
         continue;
@@ -84,7 +85,7 @@ void CPUSimpleMemPlan::MemAssign(const session::KernelGraph *graph, uint8_t *bas
       }
     }
 
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
     for (size_t i = 0; i < output_num; ++i) {
       auto address = AnfAlgo::GetMutableOutputAddr(kernel, i);
       MS_EXCEPTION_IF_NULL(address);

@@ -24,7 +24,7 @@
 #include "ir/param_info.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/parse.h"
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "utils/any.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/opt.h"
@@ -75,7 +75,7 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
 
 namespace {
 std::string GetPyObjId(const py::object &obj) {
-  py::object out = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
   if (py::isinstance<py::none>(out)) {
     MS_LOG(EXCEPTION) << "Get pyobj failed";
   }
@@ -217,7 +217,7 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
     output = NewCNode(std::move(args), func_graph);
   } else {
     ValuePtr convert_result = nullptr;
-    bool converted = ConvertData(obj, &convert_result, parse::python_adapter::UseSignatureInResolve());
+    bool converted = ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve());
     if (!converted) {
       MS_LOG(ERROR) << "Convert data failed";
       return false;
@@ -345,7 +345,7 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
   const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
   const std::string module = "mindspore._extends.parse.parser";
   auto index = imm_value->value();
-  py::object item_obj = parse::python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
+  py::object item_obj = python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
   return item_obj;
 }
 
@@ -440,7 +440,7 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
 
   const std::string fn = PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL;
   const std::string module = "mindspore._extends.parse.parser";
-  py::object namespace_obj = parse::python_adapter::GetPyFn(module, fn)(obj);
+  py::object namespace_obj = python_adapter::GetPyFn(module, fn)(obj);
   auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
   std::string attr_as_string = GetValueNode<StringImmPtr>(attr)->value();
   auto new_symbol = std::make_shared<Symbol>(attr_as_string);
@@ -487,7 +487,7 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
   opt::OptimizerPtr opt_resolve =
     opt::Optimizer::MakeOptimizer("opt_resolve", res, GetOptResolvePasses(irpass), false, false, false);
 
-  (void)parse::python_adapter::set_python_scoped();
+  (void)python_adapter::set_python_scoped();
 
   MS_EXCEPTION_IF_NULL(opt_resolve);
   (void)opt_resolve->step(func_graph, use_profile);

@@ -20,12 +20,13 @@
 #include <vector>
 #include "base/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/dev.h"
-#include "utils/json_operation_utils.h"
+#include "include/common/utils/json_operation_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 
 namespace mindspore::kernel {
@@ -157,7 +158,7 @@ AnfNodePtr FusionBuildTbeJsonCreator::GetInputCNode(const AnfNodePtr &node, cons
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
-    auto kernel_idx = AnfAlgo::VisitKernel(cnode->input(i), 0);
+    auto kernel_idx = common::AnfAlgo::VisitKernel(cnode->input(i), 0);
     auto full_name = kernel_idx.first->fullname_with_scope();
     std::string desc_name = kernel_idx.second > 0 ? (full_name + "_" + std::to_string(kernel_idx.second)) : full_name;
     if (input_name == desc_name) {
@@ -171,10 +172,10 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   std::vector<nlohmann::json> input_desc_list_tmp = {};
-  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  bool is_dynamic_input = AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode);
+  bool is_dynamic_input = common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode);
   if (is_dynamic_input) {
     MS_LOG(INFO) << op_name << " has dynamic input.";
     if (!CheckDynamicInput(cnode)) {
@@ -187,7 +188,7 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
     if (HasAbstractMonad(input)) {
       continue;
     }
-    auto kernel_idx = AnfAlgo::VisitKernel(input, 0);
+    auto kernel_idx = common::AnfAlgo::VisitKernel(input, 0);
     nlohmann::json input_desc;
     GenDescJson(kernel_idx.first, kernel_idx.second, kernel_idx.second, &input_desc);
     GenInputConstValue(anf_node, i - 1, &input_desc);
@@ -221,12 +222,13 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
 
 bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
-    MS_LOG(WARNING) << "Fusion Error: cnode [ " << AnfAlgo::GetCNodeName(cnode) << "] has not attr dyn_input_sizes.";
+  if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
+    MS_LOG(WARNING) << "Fusion Error: cnode [ " << common::AnfAlgo::GetCNodeName(cnode)
+                    << "] has not attr dyn_input_sizes.";
     return false;
   }
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
-  auto dyn_input_sizes = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  auto dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
   if (dyn_input_sizes.size() != 1) {
     MS_LOG(WARNING) << "Fusion Error: fusion build not support dynamic input size > 1";
     return false;
@@ -243,14 +245,14 @@ bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) {
 bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
-  auto output_size = AnfAlgo::GetOutputTensorNum(anf_node);
+  auto output_size = common::AnfAlgo::GetOutputTensorNum(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<nlohmann::json> output_desc_list;
-  if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
-    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrOutputUsedNum);
+  if (common::AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
+    auto output_used_nums = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, kAttrOutputUsedNum);
     if (output_used_nums.size() != output_size) {
-      MS_LOG(WARNING) << "Fusion Error: [" << AnfAlgo::GetCNodeName(anf_node) << " ]'s output tensor num("
+      MS_LOG(WARNING) << "Fusion Error: [" << common::AnfAlgo::GetCNodeName(anf_node) << " ]'s output tensor num("
                       << output_size << ")"
                       << " is not match output used num(" << output_used_nums.size() << ")";
       return false;

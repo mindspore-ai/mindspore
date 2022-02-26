@@ -18,10 +18,9 @@
 #include <algorithm>
 #include <memory>
 
-#include "utils/hash_map.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/kernel_graph.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
@@ -30,7 +29,7 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   MS_EXCEPTION_IF_NULL(tuple_anf);
   MS_EXCEPTION_IF_NULL(graph);
 
-  if (!AnfAlgo::IsTupleOutput(tuple_anf)) {
+  if (!common::AnfAlgo::IsTupleOutput(tuple_anf)) {
     return tuple_anf;
   }
   auto kernel_graph = graph->cast<KernelGraphPtr>();
@@ -65,7 +64,7 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
-    auto real_input = AnfAlgo::GetTupleGetItemRealInput(cnode);
+    auto real_input = common::AnfAlgo::GetTupleGetItemRealInput(cnode);
     MS_EXCEPTION_IF_NULL(real_input);
     if (!real_input->isa<Parameter>() && !real_input->isa<ValueNode>()) {
       return nullptr;
@@ -77,8 +76,8 @@ const AnfNodePtr ConvertTupleOutputToMaketuple::Process(const FuncGraphPtr &func
   bool cnode_input_changed = false;
   for (size_t i = 0; i < cnode->inputs().size(); ++i) {
     const auto &input = cnode->inputs()[i];
-    if (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && AnfAlgo::IsTupleOutput(input) &&
-        !AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
+    if (input->Type() != nullptr && AnfUtils::IsRealKernel(input) && common::AnfAlgo::IsTupleOutput(input) &&
+        !common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimCall)) {
       cnode->set_input(i, ConvertTupleInputToMakeTuple(func_graph, input));
       cnode_input_changed = true;
     }

@@ -26,11 +26,11 @@ constexpr size_t kL2NormalizeGradOutputsNum = 1;
 template <typename T>
 void L2NormalizeGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
-    (void)input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
+    (void)input_shape_list_.emplace_back(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
   }
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   CheckInputShape(output_shape);
 
   int output_dim_length = output_shape.size();
@@ -39,10 +39,10 @@ void L2NormalizeGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
     dim_elem_num_list_[i] = output_shape[i + 1] * dim_elem_num_list_[i + 1];
   }
 
-  int axis = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
+  int axis = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
   int input_dim_length = SizeToInt(input_shape_list_[0].size());
   axis_ = axis < 0 ? (axis + input_dim_length) : axis;
-  epsilon_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon"));
+  epsilon_ = static_cast<T>(common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon"));
 }
 
 template <typename T>

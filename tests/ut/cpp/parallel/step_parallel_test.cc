@@ -20,7 +20,7 @@
 #include "debug/draw.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "utils/convert_utils_py.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace parallel {
@@ -295,7 +295,7 @@ TEST_F(TestStepParallel, CreateOpInstance) {
     std::vector<py::object> arglist;
     (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arglist),
                          [](Attr attr) { return ValueToPyData(attr.second); });
-    py::object allreduce_pyobj = parse::python_adapter::CallPyFn(
+    py::object allreduce_pyobj = python_adapter::CallPyFn(
       "mindspore.parallel._utils", "_get_python_op", "AllReduce", "mindspore.ops.operations", "test", arglist);
     py::dict opAttr = py::getattr(allreduce_pyobj, "attrs");
     mindspore::HashMap<std::string, ValuePtr> attributes{};

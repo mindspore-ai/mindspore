@@ -20,7 +20,7 @@
 #include <map>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,9 +37,9 @@ const std::map<TypeId, size_t> input_x_dtype_size_map = {
 
 void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (input_x_shape.size() != input_y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'x' and 'y' should have the same dimension, but got the dimension of 'x': "

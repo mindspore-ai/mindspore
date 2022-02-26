@@ -27,11 +27,12 @@
 #include "kernel/kernel.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "ir/anf.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "actor/actormgr.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;

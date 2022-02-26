@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/df_graph_manager.h"
+#include "include/transform/graph_ir/df_graph_manager.h"
 
 #include <sstream>
 
 #ifndef ENABLE_LITE_ACL
-#include "pipeline/jit/parse/python_adapter.h"
+#include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pipeline.h"
 #endif
 #ifndef NO_DLIB
@@ -44,7 +44,7 @@ DfGraphManager::~DfGraphManager() {
   DeleteGeSession();
   ClearGraph();
 #ifndef ENABLE_LITE_ACL
-  parse::python_adapter::set_python_env_flag(false);
+  python_adapter::set_python_env_flag(false);
 #endif
 }
 

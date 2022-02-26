@@ -24,7 +24,7 @@
 #include <utility>
 #include "nlohmann/json.hpp"
 #include "kernel/common_utils.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "utils/ms_utils.h"
 #include "mindspore/ccsrc/debug/common.h"
 

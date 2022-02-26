@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.h"
 #include <string>
 #include <map>
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/fp32_grad/arithmetic_grad.h"
@@ -317,7 +317,7 @@ void EltWiseGradCpuKernelMod<T>::InitComputeFunc() {
 template <typename T>
 void EltWiseGradCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   InitComputeFunc();
 }
 

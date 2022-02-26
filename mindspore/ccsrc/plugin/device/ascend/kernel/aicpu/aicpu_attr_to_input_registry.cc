@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -32,7 +33,7 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimOneHot->name(), {{"depth", 1}}}};
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
-  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (AicpuOpAttrToInputMap.find(op_name) == AicpuOpAttrToInputMap.end()) {
     return false;
   } else {

@@ -20,8 +20,9 @@
 #include <string>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
+#include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
@@ -40,13 +41,13 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  auto tensor_add = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
+  auto tensor_add = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(tensor_add);
-  auto tuple_get_item = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), 0);
+  auto tuple_get_item = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), 0);
   MS_EXCEPTION_IF_NULL(tuple_get_item);
 
   // Only fuse output[0] of BatchNorm with Add and ReLU
-  size_t output_index = AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(tuple_get_item));
+  size_t output_index = common::AnfAlgo::GetTupleGetItemOutIndex(utils::cast<CNodePtr>(tuple_get_item));
   if (output_index != 0) {
     return nullptr;
   }
@@ -59,14 +60,14 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
     return nullptr;
   }
 
-  auto batch_norm = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
+  auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
   MS_EXCEPTION_IF_NULL(batch_norm);
-  auto is_train = AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
+  auto is_train = common::AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
   MS_EXCEPTION_IF_NULL(is_train);
   if (!GetValue<bool>(is_train)) {
     return nullptr;
   }
-  auto format_attr = AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("format");
+  auto format_attr = common::AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);
   auto format = GetValue<std::string>(format_attr);
   if (AnfAlgo::GetInputFormat(batch_norm, 0) != kOpFormat_NHWC && format != "NHWC") {
@@ -77,12 +78,12 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
     return nullptr;
   }
 
-  auto x = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 0);
-  auto scale = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 1);
-  auto bias = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
-  auto mean = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 3);
-  auto var = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 4);
-  auto z = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), 1);
+  auto x = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 0);
+  auto scale = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 1);
+  auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 2);
+  auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 3);
+  auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), 4);
+  auto z = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), 1);
 
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(scale);
@@ -99,13 +100,13 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
 
   std::vector<TypeId> outputs_type;
   std::vector<std::vector<size_t>> outputs_shape;
-  auto output_num = AnfAlgo::GetOutputTensorNum(batch_norm);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(batch_norm);
   for (size_t i = 0; i < output_num; i++) {
-    outputs_type.push_back(AnfAlgo::GetOutputInferDataType(batch_norm, i));
-    outputs_shape.push_back(AnfAlgo::GetOutputInferShape(batch_norm, i));
+    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(batch_norm, i));
+    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(batch_norm, i));
   }
-  AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, fused_batch_norm_with_add_relu.get());
-  AnfAlgo::CopyNodeAttrs(batch_norm, fused_batch_norm_with_add_relu);
+  common::AnfAlgo::SetOutputInferTypeAndShape(outputs_type, outputs_shape, fused_batch_norm_with_add_relu.get());
+  common::AnfAlgo::CopyNodeAttrs(batch_norm, fused_batch_norm_with_add_relu);
 
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

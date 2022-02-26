@@ -29,11 +29,11 @@ constexpr size_t kResizeBilinearGradInputsXShapeSize = 4;
 
 void ResizeBilinearGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  size_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  size_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
+  dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (shape_.size() < kResizeBilinearGradInputsDoutShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input 'dout' should be "
                       << kResizeBilinearGradInputsDoutShapeSize << ", but got " << shape_.size();

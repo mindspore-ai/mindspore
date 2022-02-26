@@ -19,7 +19,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "utils/ms_utils.h"
-#include "common/thread_pool.h"
+#include "include/common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -45,8 +45,8 @@ void AddT(const T *in0, const T *in1, T *out, int start, int end) {
 template <typename T>
 void AddNCpuKernelMod<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num_ < kAddNInputsMinNum) {
     MS_LOG(EXCEPTION) << "Input numbers should not less " << kAddNInputsMinNum << ", but got " << input_num_;
   }
@@ -112,13 +112,13 @@ bool AddNCpuKernelMod<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
 
 template <typename T>
 void AddNCpuKernelMod<T>::CheckParam(const CNodePtr &kernel_node) {
-  auto src0_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto src0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (src0_shape != dst_shape) {
     MS_LOG(EXCEPTION) << "AddN output shape must be equal to input shape.";
   }
   for (size_t index = 1; index < input_num_; ++index) {
-    auto src_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
+    auto src_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
     if (src0_shape != src_shape) {
       MS_LOG(EXCEPTION) << "AddN input shapes must be equal.";
     }
