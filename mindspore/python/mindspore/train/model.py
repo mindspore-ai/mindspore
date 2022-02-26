@@ -93,6 +93,11 @@ class Model:
 
     `Model` groups layers into an object with training and inference features based on the arguments.
 
+    Note:
+        If use mixed precision functions, need to set parameter `optimizer` at the same time,
+        otherwise mixed precision functions do not take effect.
+        When uses mixed precision functions, `global_step` in optimizer may be different from `cur_step_num` in Model.
+
     Args:
         network (Cell): A training or testing network.
         loss_fn (Cell): Objective function. If `loss_fn` is None, the `network` should contain the calculation of loss
