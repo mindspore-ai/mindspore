@@ -38,7 +38,10 @@ class DeviceSync {
   // Used to sync data between host tensor and device address, additional need the data shape and data type.
   virtual bool SyncDeviceToHost(const ShapeVector &shape, size_t size, TypeId type, void *host_ptr) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr,
-                                const std::string &format = "DefaultFormat") const = 0;
+                                const std::string &format) const = 0;
+  virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const {
+    return SyncHostToDevice(shape, size, type, host_ptr, "DefaultFormat");
+  }
   virtual bool SyncDeviceToDevice(const DeviceSync *) const { return true; }
   virtual bool AsyncDeviceToDevice(const ShapeVector &, size_t, TypeId type, const void *, const std::string &) const {
     return true;

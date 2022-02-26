@@ -15,7 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/format_type/insert_transdata_for_runop.h"
-#include <memory>
 #include "utils/utils.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"

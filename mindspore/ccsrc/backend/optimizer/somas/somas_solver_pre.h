@@ -169,7 +169,7 @@ struct SomasSolverTensorDesc {
     out << n->index_ << " " << n->size_ << " " << n->offset_ << "\n";
     return out;
   }
-  friend std::istream &operator>>(std::istream &in, SomasSolverTensorDescPtr n) {
+  friend std::istream &operator>>(std::istream &in, const SomasSolverTensorDescPtr &n) {
     in >> n->index_ >> n->size_ >> n->offset_;
     return in;
   }

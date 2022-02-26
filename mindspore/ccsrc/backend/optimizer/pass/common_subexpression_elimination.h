@@ -33,7 +33,7 @@ class BackendCSE : public CSE {
   BackendCSE() = default;
   ~BackendCSE() override = default;
   virtual bool CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const;
-  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const override;
+  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const override;
   virtual bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const;
   bool Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) const override;
 

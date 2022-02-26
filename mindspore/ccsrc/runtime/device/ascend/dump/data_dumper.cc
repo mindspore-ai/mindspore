@@ -39,6 +39,10 @@
 #include "debug/debugger/debugger.h"
 #endif
 
+namespace mindspore {
+namespace device {
+namespace ascend {
+namespace {
 static constexpr uint32_t kAicpuLoadFlag = 1;
 static constexpr uint32_t kAicpuUnloadFlag = 0;
 static constexpr uint32_t kTupleTaskId = 0;
@@ -61,10 +65,8 @@ constexpr const char *kOpTypeOpDebug = "Opdebug";
 static constexpr auto kCurLoopCountName = "current_loop_count";
 static constexpr auto kCurEpochCountName = "current_epoch_count";
 static constexpr auto kConstLoopNumInEpochName = "const_loop_num_in_epoch";
+}  // namespace
 
-namespace mindspore {
-namespace device {
-namespace ascend {
 DataDumper::~DataDumper() {
   kernel_graph_ = nullptr;
   ReleaseDevMem(&dev_load_mem_);

@@ -52,7 +52,7 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init End";
 }
 
-int DynamicKernel::GetKernelType() const { return AnfAlgo::GetKernelType(cnode_ptr_.lock()); }
+int DynamicKernel::GetKernelType() const { return static_cast<int>(AnfAlgo::GetKernelType(cnode_ptr_.lock())); }
 
 void DynamicKernel::InferShape() {
   auto cnode = cnode_ptr_.lock();

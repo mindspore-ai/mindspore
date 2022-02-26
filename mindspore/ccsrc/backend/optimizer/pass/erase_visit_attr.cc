@@ -15,7 +15,6 @@
  */
 
 #include "backend/optimizer/pass/erase_visit_attr.h"
-#include <vector>
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
