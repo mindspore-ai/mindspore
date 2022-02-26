@@ -70,7 +70,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
       output_nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
     }
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
+      auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
         InitSizeLists();
@@ -84,7 +84,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
       input_size_ += size;
     }
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
+      auto shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, i);
       is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "output");
       if (is_null_input_) {
         InitSizeLists();

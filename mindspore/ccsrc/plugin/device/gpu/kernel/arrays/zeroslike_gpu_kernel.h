@@ -51,7 +51,7 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
 
-    std::vector<size_t> input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    std::vector<size_t> input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

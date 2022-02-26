@@ -48,7 +48,8 @@ class FlattenFwdGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

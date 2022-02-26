@@ -106,8 +106,8 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     (void)CheckParam(kernel_node);
 
-    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    auto out_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto out_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(out_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -126,7 +126,7 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
       std::vector<size_t> dynamic_attr_indexs = {kBeginIndex_, kSizeIndex_};
       for (size_t index : dynamic_attr_indexs) {
         input_size = sizeof(T);
-        for (size_t x : AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, index)) {
+        for (size_t x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
           input_size *= x;
         }
         input_size_list_.push_back(input_size);

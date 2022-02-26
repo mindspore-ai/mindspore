@@ -105,7 +105,7 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     }
 
     // check input_shape
-    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     if (input_shape.size() != SHAPE_SIZE) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << input_shape.size();

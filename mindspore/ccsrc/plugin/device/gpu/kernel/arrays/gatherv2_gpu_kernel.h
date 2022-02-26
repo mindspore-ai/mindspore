@@ -73,9 +73,9 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2 or 3, but got " << input_num;
     }
-    input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
-    indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
-    output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    input_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    indices_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    output_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
                      CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");

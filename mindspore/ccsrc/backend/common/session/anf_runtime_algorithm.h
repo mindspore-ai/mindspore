@@ -178,8 +178,8 @@ class AnfRuntimeAlgorithm {
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
-  static std::vector<size_t> GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<size_t> GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<size_t> GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<size_t> GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
   // Save inputs/outputs/workspace address in kernel_mod.
