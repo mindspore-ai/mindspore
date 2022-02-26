@@ -71,6 +71,9 @@ class Interval {
   bool contains(size_t width) { return (m_b_ - m_a_) >= width; }
   bool contains(const Interval &a) { return ((a.m_a_ >= m_a_) && (a.m_b_ <= m_b_)); }
   Interval &operator=(const Interval &in) {
+    if (this == &in) {
+      return *this;
+    }
     m_a_ = in.m_a_;
     m_b_ = in.m_b_;
     return *this;
@@ -101,6 +104,9 @@ class BlockTensor {
   ~BlockTensor() = default;
 
   BlockTensor &operator=(const BlockTensor &bt) {
+    if (this == &bt) {
+      return *this;
+    }
     m_bre_allocate_ = bt.m_bre_allocate_;
     m_current_sol_ = 0;
     m_start_tensor_ = bt.m_start_tensor_;

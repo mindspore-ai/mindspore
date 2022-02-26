@@ -35,7 +35,7 @@ static constexpr const char *kHcclAlgoEnv = "HCCL_ALGO";
 static constexpr const char *kHcclAlgoOption = "HCCL_algorithm";
 
 #define CHECK_SYMBOL_NULL(symbol)                                                    \
-  if (symbol == nullptr) {                                                           \
+  if ((symbol) == nullptr) {                                                         \
     MS_LOG(WARNING) << #symbol << " is null, hccl has not been inited, do nothing."; \
     return HcclResult::HCCL_E_RESERVED;                                              \
   }

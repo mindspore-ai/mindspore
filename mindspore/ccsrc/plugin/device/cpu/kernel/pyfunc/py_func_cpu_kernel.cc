@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "plugin/device/cpu/kernel/pyfunc/py_func_cpu_kernel.h"
 
 #include <memory>
@@ -135,8 +136,9 @@ void ScalarToRawMemory(const py::object &obj, const TypeId &type, const AddressP
 void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
   if (static_cast<unsigned int>(array.flags()) & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) {
     const py::buffer_info &buf_info = array.request();
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, buf_info.ptr, buf_info.size * buf_info.itemsize), EOK,
-                          "memcpy failed.");
+    CHECK_RET_WITH_EXCEPT(
+      memcpy_s(address->addr, address->size, buf_info.ptr, LongToSize(buf_info.size * buf_info.itemsize)), EOK,
+      "memcpy failed.");
   } else {
     // Transform numpy array to row major buffer.
     Py_buffer pybuf;

@@ -102,7 +102,10 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
   Status ret = SUCCESS;
   try {
     TensorsDescMap &tensors = *ptensors;
-    size_t total_sol = kNumSortingTypes * kNumFittingTypes * kNumAlgorithmTypes;
+    constexpr size_t numSortingTypes = static_cast<size_t>(kNumSortingTypes);
+    constexpr size_t numFittingTypes = static_cast<size_t>(kNumFittingTypes);
+    constexpr size_t numAlgorithmTypes = static_cast<size_t>(kNumAlgorithmTypes);
+    constexpr size_t total_sol = numSortingTypes * numFittingTypes * numAlgorithmTypes;
     size_t process_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
     bool isMultiThreadPermit = ball && process_num >= total_sol && total_sol > 1;
     bool isMultiThreadValid = isMultiThreadPermit && (total_sol > kSolNumThresholdMultiThread ||
@@ -116,9 +119,9 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
         return FAILED;
       }
       auto start = std::chrono::system_clock::now();
-      for (size_t algorithm_strategy = 0, sol = 0; algorithm_strategy < kNumAlgorithmTypes; algorithm_strategy++) {
-        for (size_t sort_strategy = 0; sort_strategy < kNumSortingTypes; sort_strategy++) {
-          for (size_t branching_strategy = 0; branching_strategy < kNumFittingTypes; branching_strategy++) {
+      for (size_t algorithm_strategy = 0, sol = 0; algorithm_strategy < numAlgorithmTypes; algorithm_strategy++) {
+        for (size_t sort_strategy = 0; sort_strategy < numSortingTypes; sort_strategy++) {
+          for (size_t branching_strategy = 0; branching_strategy < numFittingTypes; branching_strategy++) {
             std::shared_ptr<SomasSolverCore> pSolver =
               std::make_shared<SomasSolverCore>(vecTensorsMap[sol], pConstraints, sol);
             pSolver->SetAlgorithmStrategy(AlgorithmType(algorithm));

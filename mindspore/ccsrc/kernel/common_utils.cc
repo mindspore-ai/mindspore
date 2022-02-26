@@ -1003,9 +1003,9 @@ size_t UnitSizeInBytes(const mindspore::TypeId &t) {
     case kNumberTypeFloat64:
       bytes = sizeof(int64_t);
       break;
+    case kNumberTypeInt4:
     default:
       MS_LOG(EXCEPTION) << "Invalid types " << t;
-      break;
   }
 
   return bytes;

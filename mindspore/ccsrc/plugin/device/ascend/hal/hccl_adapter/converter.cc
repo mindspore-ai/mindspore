@@ -28,6 +28,8 @@
 #include "transform/graph_ir/util.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 
+namespace mindspore::hccl {
+namespace {
 static constexpr char kGeOpNameHcclSend[] = "HcomSend";
 static constexpr char kGeOpNameHcclReceive[] = "HcomReceive";
 static constexpr char kGeOpNameHcclAllRudece[] = "HcomAllReduce";
@@ -81,8 +83,8 @@ struct IsVector<std::vector<int64_t>> {
   // cppcheck-suppress unusedStructMember
   static constexpr bool value = true;
 };
+}  // namespace
 
-namespace mindspore::hccl {
 template <class T>
 static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const std::string &anf_attr_name,
                      const std::string &ge_attr_name) {

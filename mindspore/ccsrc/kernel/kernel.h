@@ -213,9 +213,9 @@ class KernelMod {
   void set_inputs_addr(const std::vector<AddressPtr> &addr) { inputs_addr_ = addr; }
   void set_workspaces_addr(const std::vector<AddressPtr> &addr) { workspaces_addr_ = addr; }
   void set_outputs_addr(const std::vector<AddressPtr> &addr) { outputs_addr_ = addr; }
-  const std::vector<AddressPtr> &GetInputsAddr() { return inputs_addr_; }
-  const std::vector<AddressPtr> &GetWorkSpacesAddr() { return workspaces_addr_; }
-  const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
+  const std::vector<AddressPtr> &GetInputsAddr() const { return inputs_addr_; }
+  const std::vector<AddressPtr> &GetWorkSpacesAddr() const { return workspaces_addr_; }
+  const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
   void set_stream(StreamType stream) { stream_ = stream; }
   StreamType stream() const { return stream_; }
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);

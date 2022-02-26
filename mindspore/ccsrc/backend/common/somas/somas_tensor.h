@@ -60,11 +60,10 @@ enum LifeLongType {
   kLifeLongGraphEnd     // life time is  from tensor start to graph end
 };
 
-using SomasNodePtr = std::shared_ptr<SomasNode>;
-using SomasStreamPtr = std::shared_ptr<SomasStream>;
-
 class SomasTensor {
  public:
+  using SomasNodePtr = std::shared_ptr<SomasNode>;
+  using SomasStreamPtr = std::shared_ptr<SomasStream>;
   using SomasTensorPtr = std::shared_ptr<SomasTensor>;
 
   size_t aligned_size_{0};
@@ -90,20 +89,20 @@ class SomasTensor {
   ~SomasTensor() = default;
 
   // Accessors
-  const size_t &GetId() { return id_; }
+  const size_t &GetId() const { return id_; }
   SomasNodePtr GetSourceNode() const { return source_node_; }
   SomasStreamPtr GetSourceStream() const { return source_stream_; }
-  const size_t &GetOriginalSize() { return original_size_; }
-  const size_t &GetAlignedSize() { return aligned_size_; }
-  const size_t &GetNumConstraints() { return num_constraints_; }
-  bool IsLifelong() { return lifelong_value_ == kLifeLongGraphAll; }
-  bool IsWorkspace() { return type_ == kWorkspace; }
-  bool IsOutputOnly() { return type_ == kOutputOnly; }
-  size_t GetOffset() { return offset_; }
-  bool IsBetweenStreams() { return between_streams_; }
-  bool IsSemiLifelongStart() { return lifelong_value_ == kLifeLongGraphStart; }
-  bool IsSemiLifelongEnd() { return lifelong_value_ == kLifeLongGraphEnd; }
-  bool IsRefOverlap() { return ref_overlap_; }
+  const size_t &GetOriginalSize() const { return original_size_; }
+  const size_t &GetAlignedSize() const { return aligned_size_; }
+  const size_t &GetNumConstraints() const { return num_constraints_; }
+  bool IsLifelong() const { return lifelong_value_ == kLifeLongGraphAll; }
+  bool IsWorkspace() const { return type_ == kWorkspace; }
+  bool IsOutputOnly() const { return type_ == kOutputOnly; }
+  size_t GetOffset() const { return offset_; }
+  bool IsBetweenStreams() const { return between_streams_; }
+  bool IsSemiLifelongStart() const { return lifelong_value_ == kLifeLongGraphStart; }
+  bool IsSemiLifelongEnd() const { return lifelong_value_ == kLifeLongGraphEnd; }
+  bool IsRefOverlap() const { return ref_overlap_; }
 
   // Computing functions
   void SetOffset() {

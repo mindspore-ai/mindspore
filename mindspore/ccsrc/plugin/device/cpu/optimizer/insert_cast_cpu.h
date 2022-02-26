@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 class InsertCastCPU : public Pass {
  public:
-  explicit InsertCastCPU(const std::string &name) : Pass("insert_cast_cpu") {}
+  explicit InsertCastCPU(const std::string & /* name */) : Pass("insert_cast_cpu") {}
   ~InsertCastCPU() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };

@@ -135,8 +135,8 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   if (!runtime_.Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  MS_LOG(INFO) << "Assign kernel address";
-  runtime_.AssignKernelAddress(graph.get());
+  MS_LOG(INFO) << "Assign kernel graph address";
+  runtime_.AssignKernelGraphAddress(graph.get());
   // set summary node
 #ifndef ENABLE_SECURITY
   SetSummaryNodes(graph.get());
@@ -285,7 +285,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   if (!runtime_.Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
-  runtime_.AssignKernelAddress(kernel_graph.get());
+  runtime_.AssignKernelGraphAddress(kernel_graph.get());
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
   runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);

@@ -179,7 +179,7 @@ class MKLCpuKernelMod : public NativeCpuKernelMod {
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
   dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const;
   void ExecutePrimitive();
-  inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) {
+  inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) const {
     MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory::desc";
     auto desc = dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
     MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory::desc";
