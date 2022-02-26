@@ -180,6 +180,8 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/ps/*.cc"
         "../../../mindspore/ccsrc/fl/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/actor_route_table_service.cc"
+        "../../../mindspore/ccsrc/distributed/cluster/actor_route_table_proxy.cc"
+        "../../../mindspore/ccsrc/distributed/cluster/cluster_context.cc"
         "../../../mindspore/ccsrc/distributed/persistent/*.cc"
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
         "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"

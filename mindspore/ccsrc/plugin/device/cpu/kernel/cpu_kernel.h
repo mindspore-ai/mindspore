@@ -30,7 +30,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "ir/anf.h"
-#include "runtime/graph_scheduler/graph_scheduler.h"
 #include "actor/actormgr.h"
 #include "include/common/thread_pool.h"
 

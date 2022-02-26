@@ -23,10 +23,22 @@
 #include <memory>
 #include <utility>
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
+#include "distributed/cluster/cluster_context.h"
+#include "distributed/rpc/tcp/tcp_client.h"
+#include "distributed/rpc/tcp/tcp_server.h"
 
 namespace mindspore {
 namespace runtime {
+using distributed::cluster::ActorRouteTableProxy;
+using distributed::cluster::ActorRouteTableProxyPtr;
+using distributed::cluster::ClusterContext;
+using distributed::rpc::TCPClient;
+using distributed::rpc::TCPServer;
 using mindspore::device::KernelInfo;
+using ps::core::ActorAddress;
+
+// The inter-process edge mark between two nodes.
+constexpr char kInterProcessEdgeMark[] = "->";
 
 // RpcActor is used to do rpc with other processes in distributed execution.
 // Besides data arrows and controlling arrows, RpcActor also has inter-process arrows which is in charge of remote
@@ -38,29 +50,49 @@ class RpcActor : public KernelActor {
                     GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                     const std::set<size_t> &modifiable_ref_output_indexes, const KernelTransformType &type)
       : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
-                    modifiable_ref_input_indexes, modifiable_ref_output_indexes, type) {}
+                    modifiable_ref_input_indexes, modifiable_ref_output_indexes, type),
+        input_inter_process_num_(0) {}
   virtual ~RpcActor() = default;
+
+  // Normally, an actor's op_context is passed by its input actor, but rpc actors could be triggered by inter-process
+  // arrows which do not contain op_context. So we need to set op_context manually.
+  void SetOpcontext(OpContext<DeviceTensor> *const op_context);
+
+  // Set the actor route proxy for rpc actors.
+  void SetActorRouteRableProxy(const ActorRouteTableProxyPtr &proxy);
+
+  // Set the inter-process edge name for rpc actor.
+  void SetInterProcessEdgeName(const std::string &src_node_name, const std::string &dst_node_name);
 
   // Set some info which will be used for rpc routing.
   virtual void SetRouteInfo(uint32_t peer_rank, const std::string &peer_role, const std::string &src_node_name,
                             const std::string &dst_node_name) {}
 
-  // When an inter-process data received, this method is called.
-  void RunOpInterProcessData(std::unique_ptr<MessageBase> &&msg, OpContext<DeviceTensor> *const context);
-
  protected:
-  // Besides the checking method in base class AbstractActor, condition of inter-process arrows should be checked.
-  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override { return true; }
+  // The op context to run rpc actor inter-process op.
+  OpContext<DeviceTensor> *op_context_;
 
-  // After rpc kernel is launched, inter-process data could be sent.
-  void SendOutput(OpContext<DeviceTensor> *const context) override {}
+  // The inter-process edge name. It is also used as the actor id for route. It's a string consists of source node name
+  // and destination node name. The format is "source node name"->"destination node name". For each inter-process edge,
+  // this is is unique. Rpc actor with the same inter_process_edge_name_ should not be in the same process.
+  std::string inter_process_edge_name_;
 
-  // The node name of rpc actor's peers.
-  std::vector<std::string> input_peer_node_name_;
-  std::vector<std::string> output_peer_node_name_;
+  // The node name of rpc actor's peers. They are not the name of send or recv nodes. Instead, they are the names of the
+  // nodes which use send node as output and recv node as input.
+  std::vector<std::string> rpc_input_node_name_;
+  std::vector<std::string> rpc_output_node_name_;
+
+  // The iter-process inputs number. This should be the same as size of vector rpc_input_node_name_.
+  size_t input_inter_process_num_;
+
+  // The inter-process inputs of each sequential number.
+  mindspore::HashMap<int, std::vector<std::string>> input_op_inter_process_;
+
   // The arrows represent inter-process communication.
   std::vector<AID> inter_process_input_arrows_;
   std::vector<AID> inter_process_output_arrows_;
+
+  ActorRouteTableProxyPtr actor_route_table_proxy_;
 
  private:
   friend class GraphScheduler;

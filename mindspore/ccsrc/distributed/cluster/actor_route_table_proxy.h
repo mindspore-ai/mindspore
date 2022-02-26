@@ -31,15 +31,19 @@ using ps::core::ActorAddress;
 using ps::core::GeneralResponseMsg;
 using ps::core::NodeCommand;
 
+// The timeout in milliseconds for one lookup.
+constexpr uint32_t kDefaultLookupTimeout = 5000;
+
 // The time in milliseconds between two lookup operations.
-constexpr auto kLookupInterval = 100;
+constexpr uint32_t kLookupInterval = 100;
 
 // Actor route table proxy for nodes like workers and server. This class helps update actor route table in scheduler
 // across the network.
 class ActorRouteTableProxy {
  public:
-  explicit ActorRouteTableProxy(const std::shared_ptr<ps::core::AbstractNode> &node, uint32_t lookup_timout)
-      : node_(node), lookup_timeout_(std::chrono::milliseconds(lookup_timout)) {}
+  explicit ActorRouteTableProxy(const std::shared_ptr<ps::core::AbstractNode> &node,
+                                uint32_t lookup_timeout = kDefaultLookupTimeout)
+      : node_(node), lookup_timeout_(std::chrono::milliseconds(lookup_timeout)) {}
   ~ActorRouteTableProxy() = default;
 
   // Register actor address to the route table stored in scheduler.
@@ -55,9 +59,11 @@ class ActorRouteTableProxy {
   // The node variable helps proxy to communicate with scheduler, e.g., SendMessage.
   std::shared_ptr<ps::core::AbstractNode> node_;
 
-  // The timeout window for lookup route operation because time of route lookup_timout of each process is different.
+  // The timeout window for lookup route operation because time of route lookup_timeout of each process is different.
   std::chrono::milliseconds lookup_timeout_;
 };
+
+using ActorRouteTableProxyPtr = std::shared_ptr<ActorRouteTableProxy>;
 }  // namespace cluster
 }  // namespace distributed
 }  // namespace mindspore

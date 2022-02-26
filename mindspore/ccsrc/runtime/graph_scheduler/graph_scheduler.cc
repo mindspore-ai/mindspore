@@ -282,6 +282,8 @@ void GraphScheduler::Initialize() {
                                       &GraphScheduler::LinkDataArrowForDeviceTensorStore);
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kInternalParameter,
                                       &GraphScheduler::LinkDataArrowForInternalParameter);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kSendActor, &GraphScheduler::LinkDataArrowForBaseActor);
+  (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kRecvActor, &GraphScheduler::LinkDataArrowForBaseActor);
 
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
@@ -297,10 +299,12 @@ void GraphScheduler::Initialize() {
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
 
+#ifdef ENABLE_RPC_ACTOR
   // Create and initialize RpcNodeScheduler.
   rpc_node_scheduler_ = std::make_unique<RpcNodeScheduler>();
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   rpc_node_scheduler_->Initialize();
+#endif
 
   BuildAndScheduleGlobalActor();
 }
@@ -393,6 +397,12 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   for (auto actor : actors) {
     (void)actor_manager->Spawn(actor);
   }
+
+#ifdef ENABLE_RPC_ACTOR
+  // Build physical connections in 'RpcNodeScheduler::Schedule()' method. This costs some time.
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  rpc_node_scheduler_->Schedule();
+#endif
 }
 
 void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceContext *> &device_contexts,
@@ -409,6 +419,12 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   std::vector<Promise<int>> result(1);
   op_context.sequential_num_ = RandInt::Instance().Get();
   op_context.results_ = &result;
+
+#ifdef ENABLE_RPC_ACTOR
+  // Set OpContext to rpc node scheduler.
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  rpc_node_scheduler_->SetOpcontext(&op_context);
+#endif
 
   if ((strategy == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
     actor_set->data_prepare_actor_->PrepareData(input_tensors, &op_context, GraphExecutionStrategy::kStep);
@@ -543,8 +559,10 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
     BuildDataPrepareActor(graph_compiler_info, actor_set->data_source_actors_, host_queue);
   actor_set->control_actors_ = control_node_scheduler_.Build(graph_compiler_info, memory_manager_aid_);
 
+#ifdef ENABLE_RPC_ACTOR
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   actor_set->rpc_actors_ = rpc_node_scheduler_->Build(graph_compiler_info);
+#endif
   return actor_set;
 }
 
@@ -622,6 +640,12 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {
     control_node_scheduler_.Link(actor_set, graph_compiler_info);
   }
+
+#ifdef ENABLE_RPC_ACTOR
+  // Link inter-process arrows for rpc actors.
+  MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+  rpc_node_scheduler_->Link(actor_set);
+#endif
 }
 
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,
@@ -959,6 +983,7 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
                                                 const std::set<size_t> &ref_output_indexes) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
+#ifdef ENABLE_RPC_ACTOR
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   if (common::AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
     auto send_actor =
@@ -977,6 +1002,7 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   } else {
     MS_LOG(EXCEPTION) << "Kernel " << kernel->fullname_with_scope() << " is not an rpc kernel.";
   }
+#endif
   return nullptr;
 }
 

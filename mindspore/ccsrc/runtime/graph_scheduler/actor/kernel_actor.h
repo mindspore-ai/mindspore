@@ -50,8 +50,8 @@ class KernelActor : public DebugAwareActor {
               const std::set<size_t> &modifiable_ref_output_indexes,
               const KernelTransformType &type = KernelTransformType::kKernelActor)
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
-        kernel_(kernel),
         kernel_info_(nullptr),
+        kernel_(kernel),
         is_dynamic_shape_(false),
         real_input_num_(0),
         strategy_(strategy),
@@ -85,6 +85,10 @@ class KernelActor : public DebugAwareActor {
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
+  KernelInfo *kernel_info_;
+  // The kernel launch info is fetched by the device tensors.
+  KernelLaunchInfo launch_info_;
+
  private:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
@@ -111,7 +115,6 @@ class KernelActor : public DebugAwareActor {
 
   // The info of kernel.
   CNodePtr kernel_;
-  KernelInfo *kernel_info_;
   bool is_dynamic_shape_;
 
   // The real input number of kernel launch.
@@ -137,9 +140,6 @@ class KernelActor : public DebugAwareActor {
   std::vector<DeviceTensor *> memory_free_list_;
   // The device tensor of external reference is not the real data of this kernel, but need add to the memory_free_list_.
   std::vector<DeviceTensor *> external_reference_tensors_;
-
-  // The kernel launch info is fetched by the device tensors.
-  KernelLaunchInfo launch_info_;
 
   // Record the modifiable ref indexes. Used to refresh the ref data which are modified in the running.
   std::set<size_t> modifiable_ref_input_indexes_;

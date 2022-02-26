@@ -36,11 +36,31 @@ class RecvActor : public RpcActor {
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor) {}
   ~RecvActor() override = default;
 
-  void SetRouteInfo(uint32_t src_rank, const std::string &src_role, const std::string &src_node_name,
-                    const std::string &dst_node_name) override;
+  // When an inter-process data received, this method is called.
+  void RunOpInterProcessData(std::unique_ptr<MessageBase> &&msg, OpContext<DeviceTensor> *const context);
+
+  // Set recv actor's source peer info, in another word, recv actor's input.
+  void SetRouteInfo(uint32_t src_rank, const std::string &src_role, const std::string &recv_src_node_name,
+                    const std::string &recv_dst_node_name) override;
+
+  // Start recv actor server and register this server address to actor route table in scheduler by proxy.
+  bool StartServer();
+
+ protected:
+  // Besides the checking method in base class AbstractActor, condition of inter-process arrows should be checked for
+  // recv actor.
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
 
  private:
+  void HandleMessage(std::unique_ptr<MessageBase> &&msg);
+
   friend class GraphScheduler;
+
+  // The network address of this recv actor. It's generated automatically by rpc module.
+  std::string ip_;
+  uint16_t port_;
+
+  std::unique_ptr<TCPServer> server_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;
