@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp16/concat_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
@@ -23,116 +24,95 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
-int ConcatFp16CPUKernel::Prepare() {
-  MS_CHECK_TRUE_RET(in_tensors_.size() >= 1, RET_ERROR);
-  MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
-  CHECK_NULL_RETURN(in_tensors_.front());
-  CHECK_NULL_RETURN(out_tensors_.front());
-  if (!InferShapeDone()) {
-    return RET_OK;
+int ConcatFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto concat_kernel = reinterpret_cast<ConcatFp16CPUKernel *>(cdata);
+  auto error_code = concat_kernel->DoConcat(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "ConcatRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
   }
-  return ReSize();
-}
-
-int ConcatFp16CPUKernel::ReSize() {
-  concat_param_->axis_ =
-    concat_param_->axis_ >= 0 ? concat_param_->axis_ : in_tensors_.front()->shape().size() + concat_param_->axis_;
   return RET_OK;
 }
 
-int ConcatFp16CPUKernel::MallocTmpBuffer() {
-  for (const auto &in_tensor : in_tensors_) {
-    float16_t *ptr = nullptr;
-    if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-      ptr = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
-      if (ptr == nullptr) {
+int ConcatFp16CPUKernel::EnsureFp16InputsAndOutput() {
+  inputs_.clear();
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
+    if (!is_with_data_[i]) {
+      continue;
+    }
+    auto input = in_tensors_[i]->data();
+    MS_CHECK_TRUE_MSG(input != nullptr, RET_ERROR, "input-data is a nullptr.");
+    if (in_tensors_[i]->data_type() == kNumberTypeFloat16) {
+      inputs_.push_back(static_cast<const uint8_t *>(input));
+      continue;
+    }
+    if (in_tensors_[i]->data_type() == kNumberTypeFloat32 || in_tensors_[i]->data_type() == kNumberTypeFloat) {
+      auto *tmp =
+        reinterpret_cast<uint8_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * in_tensors_[i]->ElementsNum()));
+      if (tmp == nullptr) {
         MS_LOG(ERROR) << "malloc failed";
         return RET_ERROR;
       }
-    }
-    fp16_inputs_.push_back(ptr);
-  }
-
-  auto &out_tensor = out_tensors_.at(0);
-  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
-    fp16_output_ =
-      reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * out_tensors_[0]->ElementsNum()));
-    if (fp16_output_ == nullptr) {
-      MS_LOG(ERROR) << "malloc failed";
+      inputs_.push_back(tmp);
+      tmp_buffers_.push_back(tmp);
+      Float32ToFloat16(static_cast<float *>(input), reinterpret_cast<float16_t *>(tmp), in_tensors_[i]->ElementsNum());
+    } else {
+      MS_LOG(ERROR) << "input's data-type is invalid.";
       return RET_ERROR;
     }
   }
-  return RET_OK;
-}
-
-void ConcatFp16CPUKernel::FreeTmpBuffer() {
-  for (size_t i = 0; i < fp16_inputs_.size(); i++) {
-    auto &in_tensor = in_tensors_.at(i);
-    auto &in_ptr = fp16_inputs_.at(i);
-    if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-      if (in_ptr != nullptr) {
-        ms_context_->allocator->Free(in_ptr);
-        in_ptr = nullptr;
-      }
-    }
-  }
-  fp16_inputs_.clear();
-
   auto &out_tensor = out_tensors_.at(0);
-  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
-    if (fp16_output_ != nullptr) {
-      ms_context_->allocator->Free(fp16_output_);
-      fp16_output_ = nullptr;
-    }
+  if (out_tensor->data_type() == kNumberTypeFloat16) {
+    output_ = reinterpret_cast<uint8_t *>(out_tensor->data());
+    return RET_OK;
   }
+  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
+    output_ =
+      reinterpret_cast<uint8_t *>(ms_context_->allocator->Malloc(sizeof(float16_t) * out_tensor->ElementsNum()));
+    if (output_ == nullptr) {
+      MS_LOG(ERROR) << "malloc failed";
+      return RET_ERROR;
+    }
+    tmp_buffers_.push_back(output_);
+  } else {
+    MS_LOG(ERROR) << "output's data-type is invalid.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 int ConcatFp16CPUKernel::Run() {
-  auto ret = MallocTmpBuffer();
+  if (outer_size_ == 0 || inner_sizes_.back() == 0) {
+    return RET_OK;
+  }
+  auto ret = EnsureFp16InputsAndOutput();
   if (ret != RET_OK) {
-    FreeTmpBuffer();
-    return ret;
-  }
-
-  auto input_num = in_tensors_.size();
-  std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
-
-  std::vector<std::vector<int>> shapes;
-  for (size_t i = 0; i < input_num; ++i) {
-    const auto in_tensor = in_tensors_.at(i);
-    CHECK_NULL_RETURN(in_tensor);
-    auto in_tensor_data = in_tensor->data();
-    MS_CHECK_TRUE_RET(in_tensor->ElementsNum() == 0 || in_tensor_data != nullptr, RET_ERROR);
-    if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-      auto fp32_tensor_data = reinterpret_cast<float *>(in_tensor_data);
-      Float32ToFloat16(fp32_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
-    } else {
-      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor_data);
+    for (auto tmp_buffer : tmp_buffers_) {
+      ms_context_->allocator->Free(tmp_buffer);
     }
-
-    shapes.push_back(in_tensors_[i]->shape());
-    MS_CHECK_LT(concat_param_->axis_, static_cast<int>(in_tensors_[i]->shape().size()), RET_ERROR);
-    inputs_output_shape[i] = shapes[i].data();
+    tmp_buffers_.clear();
+    MS_LOG(ERROR) << "EnsureFp16InputsAndOutput failed.";
+    return RET_ERROR;
   }
-  auto output_shape = out_tensors_.at(0)->shape();
-  MS_CHECK_LT(concat_param_->axis_, static_cast<int>(output_shape.size()), RET_ERROR);
-  inputs_output_shape[input_num] = output_shape.data();
-  auto output_addr = out_tensors_.at(0)->MutableData();
-  CHECK_NULL_RETURN(output_addr);
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
-    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
-    CHECK_NULL_RETURN(fp16_output_);
+  MS_CHECK_TRUE_MSG(output_ != nullptr, RET_ERROR, "output data is a nullptr.");
+  ret = ParallelLaunch(this->ms_context_, ConcatFp16Run, this, block_splits_.size());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "the kernel run failed. name is " << name_;
+  } else if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32 ||
+             out_tensors_.at(0)->data_type() == kNumberTypeFloat) {
+    auto output = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+    if (output == nullptr) {
+      MS_LOG(ERROR) << "output data is a nullptr.";
+      ret = RET_ERROR;
+    } else {
+      Float16ToFloat32(reinterpret_cast<float16_t *>(output_), output, out_tensors_.at(0)->ElementsNum());
+    }
   }
-  int dtype_len = in_tensors_.at(0)->data_type() == kNumberTypeInt32 ? sizeof(int32_t) : sizeof(float16_t);
-
-  Concat(reinterpret_cast<void **>(fp16_inputs_.data()), input_num, concat_param_->axis_, inputs_output_shape.data(),
-         output_shape.size(), reinterpret_cast<void *>(fp16_output_), 0, 1, dtype_len);
-
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32 || out_tensors_.at(0)->data_type() == kNumberTypeFloat) {
-    Float16ToFloat32(fp16_output_, reinterpret_cast<float *>(output_addr), out_tensors_.at(0)->ElementsNum());
+  for (auto tmp_buffer : tmp_buffers_) {
+    ms_context_->allocator->Free(tmp_buffer);
   }
-  FreeTmpBuffer();
-  return RET_OK;
+  tmp_buffers_.clear();
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, LiteKernelCreator<ConcatFp16CPUKernel>)
