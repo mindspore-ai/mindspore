@@ -102,8 +102,8 @@ def _check_moe_config(moe_config=None, parallel_config=None):
 
 
 @constexpr
-def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
-    return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)
+def calculate_expert_capacity(k, tokens_per_group, capacity_factor, expert_dim):
+    return math.ceil(k * tokens_per_group * capacity_factor / expert_dim)
 
 
 class MoE(Cell):
@@ -144,8 +144,9 @@ class MoE(Cell):
         self.capacity_factor = moe_config.capacity_factor
         self.aux_loss_factor = moe_config.aux_loss_factor
         self.num_experts_chosen = moe_config.num_experts_chosen
-        self.expert_parallel = parallel_config.data_parallel
+        self.dp_group = parallel_config.data_parallel
         self.dp = parallel_config.data_parallel
+        self.ep = parallel_config.expert_parallel
         from .transformer import FeedForward
 
         self.ffn = FeedForward(hidden_size=hidden_size,
@@ -158,8 +159,9 @@ class MoE(Cell):
         self.reshape = P.Reshape()
         self.shape = P.Shape()
         self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
+        self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
         self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose_4dim = P.Transpose().shard(((self.dp, 1, 1, 1),))
+        self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
         self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
         self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
         self.mul = P.Mul().shard(((), ()))
@@ -172,62 +174,62 @@ class MoE(Cell):
         input_shape = F.shape(input_tensor)
         input_tensor = self.reshape(input_tensor, (-1, self.hidden_size))
         bs_and_dmodel = self.shape(input_tensor)
-        tokens_per_device = bs_and_dmodel[0] // self.expert_parallel
-        input_tensor = self.reshape(input_tensor, (self.expert_parallel, tokens_per_device, self.hidden_size))
+        tokens_per_group = bs_and_dmodel[0] // self.dp_group
+        input_tensor = self.reshape(input_tensor, (self.dp_group, tokens_per_group, self.hidden_size))
 
-        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_device,
+        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_group,
                                                     self.capacity_factor, self.expert_dim)
-        # dispatch_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, expert_capacity)
-        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, expert_capacity)
+        # dispatch_tensor's shape: (self.dp_group, tokens_per_group, self.expert_dim, expert_capacity)
+        # combine_tensor's shape: (self.dp_group, tokens_per_group, self.expert_dim, expert_capacity)
         dispatch_tensor, combine_tensor, aux_loss = self.router(input_tensor)
 
-        # after transpose, input_tensor's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
+        # after transpose, input_tensor's shape: (self.dp_group, self.hidden_size, tokens_per_group)
         input_tensor = self.transpose_3dim(input_tensor, (0, 2, 1))
-        dispatch_tensor = self.reshape(dispatch_tensor, (self.expert_parallel, tokens_per_device,
+        dispatch_tensor = self.reshape(dispatch_tensor, (self.dp_group, tokens_per_group,
                                                          self.expert_dim * expert_capacity))
         dispatch_tensor = self.cast(dispatch_tensor, F.dtype(input_tensor))
-        # expert_input's shape: (self.expert_parallel, self.hidden_size, self.expert_dim * expert_capacity)
+        # expert_input's shape: (self.dp_group, self.hidden_size, self.expert_dim * expert_capacity)
         expert_input = self.batch_mm(input_tensor, dispatch_tensor)
-        expert_input = self.reshape(expert_input, (self.expert_parallel, self.hidden_size, self.expert_dim,
+        expert_input = self.reshape(expert_input, (self.dp_group, self.hidden_size, self.expert_dim,
                                                    expert_capacity))
         # The following four ops are to implement transpose(expert_input, (2, 0, 3, 1)), for that a single transpose
         # has bad performance
-        expert_input = self.reshape(expert_input, (self.expert_parallel*self.hidden_size,
+        expert_input = self.reshape(expert_input, (self.dp_group*self.hidden_size,
                                                    self.expert_dim*expert_capacity))
         expert_input = self.transpose_2dim(expert_input, (1, 0))
-        expert_input = self.reshape(expert_input, (self.expert_dim, expert_capacity, self.expert_parallel,
+        expert_input = self.reshape(expert_input, (self.expert_dim, expert_capacity, self.dp_group,
                                                    self.hidden_size))
-        # expert_input's shape: (self.expert_dim, self.expert_parallel, expert_capacity, self.hidden_size)
-        expert_input = self.transpose_4dim(expert_input, (0, 2, 1, 3))
-        expert_input = self.reshape(expert_input, (self.expert_dim * self.expert_parallel * expert_capacity,
+        # expert_input's shape: (self.expert_dim, self.dp_group, expert_capacity, self.hidden_size)
+        expert_input = self.transpose_4dim_ep(expert_input, (0, 2, 1, 3))
+        expert_input = self.reshape(expert_input, (self.expert_dim * self.dp_group * expert_capacity,
                                                    self.hidden_size))
 
-        # expert_output's shape: (self.expert_dim, self.expert_parallel*expert_capacity, self.hidden_size)
+        # expert_output's shape: (self.expert_dim, self.dp_group*expert_capacity, self.hidden_size)
         expert_output = self.ffn(expert_input)
-        expert_output = self.reshape(expert_output, (self.expert_dim, self.expert_parallel,
+        expert_output = self.reshape(expert_output, (self.expert_dim, self.dp_group,
                                                      expert_capacity, self.hidden_size))
         # The following five ops are to implement transpose(expert_output, (1, 3, 0, 2)), for that a single transpose
         # has bad performance
         expert_output = self.reshape(expert_output, (self.expert_dim,
-                                                     self.expert_parallel*expert_capacity*self.hidden_size))
-        expert_output = self.transpose_2dim(expert_output, (1, 0))
-        expert_output = self.reshape(expert_output, (self.expert_parallel, expert_capacity,
+                                                     self.dp_group*expert_capacity*self.hidden_size))
+        expert_output = self.transpose_2dim_ep(expert_output, (1, 0))
+        expert_output = self.reshape(expert_output, (self.dp_group, expert_capacity,
                                                      self.hidden_size*self.expert_dim))
         expert_output = self.transpose_3dim(expert_output, (0, 2, 1))
-        # expert_output's shape: (self.expert_parallel, self.hidden_size, self.expert_dim, expert_capacity)
-        expert_output = self.reshape(expert_output, (self.expert_parallel, self.hidden_size, self.expert_dim,
+        # expert_output's shape: (self.dp_group, self.hidden_size, self.expert_dim, expert_capacity)
+        expert_output = self.reshape(expert_output, (self.dp_group, self.hidden_size, self.expert_dim,
                                                      expert_capacity))
-        expert_output = self.reshape(expert_output, (self.expert_parallel, self.hidden_size,
+        expert_output = self.reshape(expert_output, (self.dp_group, self.hidden_size,
                                                      self.expert_dim*expert_capacity))
-        combine_tensor = self.reshape(combine_tensor, (self.expert_parallel, tokens_per_device,
+        combine_tensor = self.reshape(combine_tensor, (self.dp_group, tokens_per_group,
                                                        self.expert_dim*expert_capacity))
-        # combine_tensor's shape: (self.expert_parallel, self.expert_dim*expert_capacity, tokens_per_device)
+        # combine_tensor's shape: (self.dp_group, self.expert_dim*expert_capacity, tokens_per_group)
         combine_tensor = self.transpose_3dim(combine_tensor, (0, 2, 1))
         combine_tensor = self.cast(combine_tensor, F.dtype(expert_output))
 
-        # combined_output's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
+        # combined_output's shape: (self.dp_group, self.hidden_size, tokens_per_group)
         combined_output = self.batch_mm2(expert_output, combine_tensor)
-        # combined_output's shape: (self.expert_parallel, tokens_per_device, self.hidden_size)
+        # combined_output's shape: (self.dp_group, tokens_per_group, self.hidden_size)
         combined_output = self.transpose_3dim(combined_output, (0, 2, 1))
         combined_output = self.reshape(combined_output, (bs_and_dmodel[0], bs_and_dmodel[1]))
         combined_output = self.reshape(combined_output, input_shape)
@@ -327,7 +329,7 @@ class TopkRouter(Cell):
         self.expert_dim = moe_config.expert_num
         self.capacity_factor = moe_config.capacity_factor
         self.training = training
-        self.expert_parallel = dp
+        self.dp_group = dp
         self.noisy_policy = None
         self.cast = P.Cast()
         self.reshape = P.Reshape()
@@ -374,9 +376,9 @@ class TopkRouter(Cell):
         """
         Computing the load balance loss.
         """
-        # density_1's shape: (expert_parallel, self.expert_dim)
+        # density_1's shape: (dp_group, self.expert_dim)
         density_1 = self.reduce_mean(expert_mask, 1)
-        # density_1_proxy's shape: (expert_parallel, self.expert_dim)
+        # density_1_proxy's shape: (dp_group, self.expert_dim)
         density_1_proxy = self.reduce_mean2(router_prob, 1)
         loss = self.mul(density_1, density_1_proxy)
         loss = self.reduce_mean3(loss)
@@ -390,16 +392,16 @@ class TopkRouter(Cell):
         cumsum = self.cumsum(expert_mask, 1)
         if expert_chosen_index > 0:
             cumsum = self.add(cumsum, last_num)
-        # position_in_expert's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+        # position_in_expert's shape: (dp_group, tokens_per_group, self.expert_dim)
         position_in_expert = self.mul4(cumsum, expert_mask)
         less_result = self.less(position_in_expert, expert_capacity)
-        # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+        # expert_mask's shape: (dp_group, tokens_per_group, self.expert_dim)
         expert_mask = self.mul5(less_result, expert_mask)
-        # expert_mask_flat's shape: (expert_parallel, tokens_per_device)
+        # expert_mask_flat's shape: (dp_group, tokens_per_group)
         expert_mask_flat = self.reduce_sum(expert_mask, -1)
 
         # Mask out the experts that have overflowed the expert_capacity.
-        # expert_gate's shape: (expert_parallel, tokens_per_device)
+        # expert_gate's shape: (dp_group, tokens_per_group)
         expert_gate = self.mul6(expert_gate, expert_mask_flat)
         output = (expert_mask, expert_gate, expert_mask_flat, position_in_expert)
         return output
@@ -408,10 +410,10 @@ class TopkRouter(Cell):
         router_logits_shape = self.shape(router_logits)
         router_logits = self.reshape(router_logits, (-1, router_logits_shape[-1]))
         logits_shape = self.shape(router_logits)
-        tokens_per_device = logits_shape[0] // self.expert_parallel
-        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_device, self.capacity_factor,
+        tokens_per_group = logits_shape[0] // self.dp_group
+        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_group, self.capacity_factor,
                                                     self.expert_dim)
-        router_logits = self.reshape(router_logits, (self.expert_parallel, tokens_per_device, self.expert_dim))
+        router_logits = self.reshape(router_logits, (self.dp_group, tokens_per_group, self.expert_dim))
 
         accum_expert_mask = 0
         accum_expert_gate = 0
@@ -424,9 +426,9 @@ class TopkRouter(Cell):
         for expert_chosen_index in range(self.num_experts_chosen):
             # for each token, set the router_prob of the selected experts to zero
             router_prob = self.mul4(router_prob, self.sub(self.on_value, accum_expert_mask))
-            # shape is : (expert_parallel, tokens_per_device)
+            # shape is : (dp_group, tokens_per_group)
             expert_index, expert_gate = self.argmax(router_prob)
-            # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+            # expert_mask's shape: (dp_group, tokens_per_group, self.expert_dim)
             expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
             #renormalize the rest prob to be of sum 1
             router_prob_normal = self.div1(router_prob, self.add(self.reduce_sum_keep(router_prob, -1), 1e-9))
@@ -441,12 +443,12 @@ class TopkRouter(Cell):
             accum_expert_gate = self.add3(accum_expert_gate, expert_gate)
             mask_count = self.add(mask_count, self.reduce_sum_keep(expert_mask, 1))
 
-            # combine_tensor's shape: (expert_parallel, tokens_per_device)
+            # combine_tensor's shape: (dp_group, tokens_per_group)
             combine_tensor = self.mul7(expert_gate, expert_mask_flat)
-            # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim)
+            # combine_tensor's shape: (dp_group, tokens_per_group, self.expert_dim)
             combine_tensor = self.mul8(self.expand(combine_tensor, -1),
                                        self.onehot2(expert_index, self.expert_dim, self.on_value, self.off_value))
-            # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
+            # combine_tensor's shape: (dp_group, tokens_per_group, self.expert_dim, self.expert_capacity)
             combine_tensor = self.mul9(self.expand2(combine_tensor, -1),
                                        self.onehot3(self.cast(position_in_expert, mstype.int32), expert_capacity,
                                                     self.on_value, self.off_value))
