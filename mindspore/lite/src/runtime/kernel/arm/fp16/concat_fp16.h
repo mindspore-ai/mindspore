@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,36 +18,23 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "include/context.h"
-#include "include/errorcode.h"
-#include "nnacl/base/concat_base.h"
-#include "nnacl/concat_parameter.h"
-#include "nnacl/fp16/cast_fp16.h"
-#include "src/inner_kernel.h"
-#include "src/runtime/kernel/arm/fp16/common_fp16.h"
+#include "src/runtime/kernel/arm/base/concat_base.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class ConcatFp16CPUKernel : public InnerKernel {
+class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
  public:
   ConcatFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : InnerKernel(parameter, inputs, outputs, ctx) {
-    concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
+      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx) {
+    data_size_ = sizeof(float16_t);
   }
   ~ConcatFp16CPUKernel() = default;
-  int Prepare() override;
-  int ReSize() override;
   int Run() override;
 
  private:
-  int MallocTmpBuffer();
-  void FreeTmpBuffer();
-
- private:
-  std::vector<float16_t *> fp16_inputs_;
-  float16_t *fp16_output_ = nullptr;
-  ConcatParameter *concat_param_ = nullptr;
+  int EnsureFp16InputsAndOutput();
+  std::vector<void *> tmp_buffers_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONCAT_FP16_H_
