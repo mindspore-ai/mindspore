@@ -7,4 +7,4 @@ mindspore.dataset.vision.c_transforms.RandomResizeWithBBox
 
     **参数：**
 
-    - **size** (Union[int, sequence]) - 调整后图像的输出大小。如果 `size` 是一个整数，图像的短边将被调整为`size`大小，并依据短边的调整比例相应调整图像长边的大小。如果 `size` 是一个长度为2的序列，其输入格式应该为 (height, width)。
+    - **size** (Union[int, sequence]) - 调整后图像的输出大小。如果 `size` 是一个整数，图像的短边将被调整为 `size` 大小，并依据短边的调整比例相应调整图像长边的大小。如果 `size` 是一个长度为2的序列，其输入格式应该为 (height, width)。

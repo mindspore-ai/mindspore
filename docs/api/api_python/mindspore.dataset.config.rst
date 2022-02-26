@@ -133,7 +133,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_enable_shared_mem(enable)
 
-    设置共享内存标志的是否启用。如果 `shared_mem_enable` 为True，则使用共享内存队列将数据传递给为数据集操作而创建的进程，而这些数据集操作将设置`python_multiprocessing`为True。
+    设置共享内存标志的是否启用。如果 `shared_mem_enable` 为True，则使用共享内存队列将数据传递给为数据集操作而创建的进程，而这些数据集操作将设置 `python_multiprocessing` 为True。
 
     **参数：**
 
@@ -159,7 +159,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_numa_enable(numa_enable)
 
-    设置NUMA的默认状态为启动状态。如果`numa_enable`为True，则需要确保安装了NUMA库。
+    设置NUMA的默认状态为启动状态。如果 `numa_enable` 为True，则需要确保安装了NUMA库。
 
     **参数：**
 
@@ -194,11 +194,11 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - 当`size`小于等于0或`size`大于`MAX_INT_32`时，线程的队列容量无效。
+    - **ValueError** - 当 `size` 小于等于0或 `size` 大于 `MAX_INT_32` 时，线程的队列容量无效。
 
     .. note::
         用于预取的总内存可能会随着工作线程数量的增加而快速增长，所以当工作线程数量大于4时，每个工作线程的预取大小将减少。
-        每个工作线程在运行时预取大小将是`prefetchsize` * (4 / `num_parallel_workers`)。
+        每个工作线程在运行时预取大小将是 `prefetchsize` * (4 / `num_parallel_workers` )。
     
 
 .. py:function:: mindspore.dataset.config.set_seed(seed)
@@ -206,7 +206,7 @@ API示例所需模块的导入代码如下：
     如果设置了种子，生成的随机数将被固定，这有助于产生确定性结果。
 
     .. note::
-        此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。在管道中，这并不保证`num_parallel_workers`大于1。
+        此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。在管道中，这并不保证 `num_parallel_workers` 大于1。
 
     **参数：**
 
@@ -214,7 +214,7 @@ API示例所需模块的导入代码如下：
 
     **异常：**
 
-    - **ValueError** - `seed` 小于0或 `seed` 大于MAX_UINT_32时，`seed` 无效。
+    - **ValueError** - `seed` 小于0或 `seed` 大于MAX_UINT_32时， `seed` 无效。
     
 
 .. py:function:: mindspore.dataset.config.set_sending_batches(batch_num)
@@ -223,7 +223,7 @@ API示例所需模块的导入代码如下：
 
     **参数：**
 
-    - **batch_num** (int) - 表示总的发送批次。当设置了`batch_num`时，它将会等待，除非增加发送批次。默认值为0，表示将发送数据集中的所有批次。
+    - **batch_num** (int) - 表示总的发送批次。当设置了 `batch_num` 时，它将会等待，除非增加发送批次。默认值为0，表示将发送数据集中的所有批次。
 
     **异常：**
 
