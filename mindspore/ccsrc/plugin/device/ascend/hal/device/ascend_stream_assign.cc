@@ -124,8 +124,8 @@ uint32_t GetHcomTaskNum(const CNodePtr &cnode) {
     return kTaskNumPerHcomSendRecvNode;
   }
 
-  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  auto device_num = parallel::ParallelContext::GetInstance()->device_num();
+  MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
+  auto device_num = parallel::g_device_manager->DeviceNum();
   auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
   auto group_info = parallel::g_device_manager->group_info();
   for (const auto &info : group_info) {

@@ -236,7 +236,7 @@ RankList DeviceManager::GetDeviceListBetweenStage() const {
   if (stage_num < 1) {
     MS_LOG(EXCEPTION) << "Stage num got " << stage_num << ", expected a positive integer.";
   }
-  auto device_num = parallel::ParallelContext::GetInstance()->device_num();
+  auto device_num = DeviceNum();
   auto per_stage_rank_num = device_num / stage_num;
   for (int64_t i = 0; i < stage_num; ++i) {
     rank_list.push_back(rank_id + per_stage_rank_num * (i - stage_id));
