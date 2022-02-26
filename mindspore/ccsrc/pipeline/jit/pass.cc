@@ -212,6 +212,7 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
+  func_graph = LiftingClone(func_graph);
   Validate(func_graph);
   return func_graph;
 }
