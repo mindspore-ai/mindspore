@@ -68,7 +68,7 @@ bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph) {
 
 bool MemSwapManager::InitSwapThreshold(size_t swap_mem_size) {
   distance_threshold_ = execution_order_.size() / kDistanceInitFactor;
-  distance_decay_step_ = execution_order_.size() / kDistanceInitFactor / tensor_size_num_;
+  distance_decay_step_ = (execution_order_.size() / kDistanceInitFactor) / tensor_size_num_;
   if (distance_decay_step_ <= 1) {
     distance_decay_step_ = 1;
   }

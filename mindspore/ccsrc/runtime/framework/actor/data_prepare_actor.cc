@@ -812,6 +812,7 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     (*host_tensors)[tensor_position] = input_tensor;
 
     const AnfNodePtr &backend_node = host_data_source_actor_->FetchNode(tensor_position);
+    MS_EXCEPTION_IF_NULL(input_tensor);
     auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
     auto device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
     MS_EXCEPTION_IF_NULL(device_address);
