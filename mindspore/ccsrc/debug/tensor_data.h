@@ -25,10 +25,7 @@
 #include "ir/tensor.h"
 #endif
 
-#ifdef ONLINE_DBG_MODE
 namespace mindspore {
-#endif
-
 namespace MsTypeId {
 typedef enum MsTypeId : unsigned int {
   kTypeUnknown = 0,
@@ -444,7 +441,5 @@ class TensorData {
   mindspore::tensor::TensorPtr tensor_ptr_{nullptr};
 #endif
 };
-#ifdef ONLINE_DBG_MODE
 }  // namespace mindspore
-#endif
 #endif  // MINDSPORE_CCSRC_DEBUG_TENSOR_DATA_H_
