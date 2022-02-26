@@ -23,11 +23,6 @@
 #include "debug/rdr/graph_recorder.h"
 
 namespace mindspore {
-class FuncGraph;
-class CNode;
-using FuncGraphPtr = std::shared_ptr<FuncGraph>;
-using CNodePtr = std::shared_ptr<CNode>;
-
 namespace kernel {
 class Address;
 struct KernelLaunchInfo;

@@ -60,7 +60,6 @@ class BaseRecorder {
   std::optional<std::string> GetFileRealPath(const std::string &suffix = "") const;
 
   virtual void Export() {}
-  virtual void UpdateInfo(const BaseRecorder &recorder) {}
 
  protected:
   std::string module_;
@@ -71,5 +70,10 @@ class BaseRecorder {
   std::string delimiter_{"."};
 };
 using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
+
+class CNode;
+using CNodePtr = std::shared_ptr<CNode>;
+class FuncGraph;
+using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_

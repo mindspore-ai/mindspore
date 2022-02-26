@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "debug/rdr/base_recorder.h"
-#include <sys/stat.h>
-#include <fstream>
 #include "debug/common.h"
 #include "utils/utils.h"
 #include "utils/comm_manager.h"
