@@ -85,21 +85,24 @@ class Callback:
     `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_.
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import Model, nn
         >>> from mindspore.train.callback import Callback
+        >>> from mindspore import dataset as ds
         >>> class Print_info(Callback):
         ...     def step_end(self, run_context):
         ...         cb_params = run_context.original_args()
         ...         print("step_num: ", cb_params.cur_step_num)
         >>>
         >>> print_cb = Print_info()
-        >>> dataset = create_custom_dataset()
-        >>> net = Net()
+        >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+        >>> dataset = ds.NumpySlicesDataset(data=data).batch(32)
+        >>> net = nn.Dense(10, 5)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
         >>> model.train(1, dataset, callbacks=print_cb)
-        step_num: 1
+        step_num: 2
     """
 
     def __enter__(self):

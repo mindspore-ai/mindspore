@@ -122,7 +122,7 @@ class Model:
             - "O2": Cast network to float16, keep BatchNorm run in float32, using dynamic loss scale.
             - "O3": Cast network to float16, the BatchNorm is also cast to float16, loss scale will not be used.
             - auto: Set level to recommended level in different devices. Set level to "O2" on GPU, set
-              level to "O3" on Ascend. The recommended level is chosen by the export experience, not applicable to all
+              level to "O3" on Ascend. The recommended level is chosen by the expert experience, not applicable to all
               scenarios. User should specify the level for special network.
 
             "O2" is recommended on GPU, "O3" is recommended on Ascend.
@@ -170,8 +170,9 @@ class Model:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-        >>> # For details about how to build the dataset, please refer to the tutorial
-        >>> # document on the official website.
+        >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial
+        >>> # document on the official website:
+        >>> # https://www.mindspore.cn/tutorials/zh-CN/master/quick_start.html
         >>> dataset = create_custom_dataset()
         >>> model.train(2, dataset)
     """

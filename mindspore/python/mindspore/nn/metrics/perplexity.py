@@ -34,9 +34,6 @@ class Perplexity(Metric):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Note:
-        The method `update` must be called with the form `update(preds, labels)`.
-
     Examples:
         >>> import numpy as np
         >>> from mindspore import nn, Tensor

@@ -273,6 +273,7 @@ class Lamb(Optimizer):
 
     Examples:
         >>> from mindspore import nn, Model
+        >>> from mindspore.nn import learning_rate_schedule
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

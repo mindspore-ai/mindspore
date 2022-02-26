@@ -14,7 +14,3 @@ mindspore.nn.get_metric_fn
     **返回：**
 
     metric对象，metric方法的类实例。
-
-    **异常：**
-
-    - **TypeError** - 入参 `metric` 的类型不是None, dict或set。

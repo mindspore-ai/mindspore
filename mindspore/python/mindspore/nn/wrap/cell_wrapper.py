@@ -398,8 +398,10 @@ class GetNextSingleOp(Cell):
     Examples:
         >>> import mindspore
         >>> from mindspore import ops, nn
+        >>> from mindspore import dataset as ds
         >>>
-        >>> train_dataset = create_custom_dataset()
+        >>> data_path =  "/path/to/MNIST_Data/train/"
+        >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
         >>> dataset_types, dataset_shapes = dataset_helper.types_shapes()
@@ -409,7 +411,7 @@ class GetNextSingleOp(Cell):
         >>> relu = ops.ReLU()
         >>> result = relu(data).asnumpy()
         >>> print(result.shape)
-        (32, 1, 32, 32)
+        (28, 28, 1)
     """
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):

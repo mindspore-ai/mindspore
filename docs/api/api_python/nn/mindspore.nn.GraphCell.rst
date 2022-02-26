@@ -1,7 +1,7 @@
 mindspore.nn.GraphCell
 ======================
 
-.. py:class:: mindspore.nn.GraphCell(graph)
+.. py:class:: mindspore.nn.GraphCell(graph, params_init=None)
 
     运行从MindIR加载的计算图。
 

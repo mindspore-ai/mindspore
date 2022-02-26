@@ -49,3 +49,6 @@ mindspore.nn.HausdorffDistance
         **异常：**
 
         - **ValueError** - 输入的数量不等于3。
+        - **TypeError** - label_idx 的数据类型不是int或float。
+        - **ValueError** - label_idx 的值不在y_pred或y中。
+        - **ValueError** - y_pred 和 y 的shape不同。
