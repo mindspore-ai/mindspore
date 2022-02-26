@@ -144,34 +144,12 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
 }
 
 bool TensorRTSubGraph::IsInt8Mode() {
-  bool isInt8Mode = false;
   for (auto cur_op : all_ops_) {
-    if (isInt8Mode) {
-      break;
-    }
-    for (auto in_tensor : cur_op->inputs()) {
-      if (cur_op->inputs().front().QuantParams().empty()) {
-        continue;
-      }
-      auto quant_param = cur_op->inputs().front().QuantParams().front();
-      if (quant_param.max > 0) {
-        isInt8Mode = true;
-        break;
-      }
-    }
-
-    for (auto out_tensor : cur_op->outputs()) {
-      if (cur_op->outputs().front().QuantParams().empty()) {
-        continue;
-      }
-      auto quant_param = cur_op->outputs().front().QuantParams().front();
-      if (quant_param.max > 0) {
-        isInt8Mode = true;
-        break;
-      }
+    if (cur_op->GetQuantType() == schema::QuantType_QUANT_ALL) {
+      return true;
     }
   }
-  return isInt8Mode;
+  return false;
 }
 
 nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {

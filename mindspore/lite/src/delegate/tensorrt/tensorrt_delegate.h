@@ -31,7 +31,8 @@
 namespace mindspore::lite {
 typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
                                      const std::vector<mindspore::MSTensor> &in_tensors,
-                                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name);
+                                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+                                     const schema::QuantType &quant_type);
 
 class TensorRTDelegate : public Delegate {
  public:

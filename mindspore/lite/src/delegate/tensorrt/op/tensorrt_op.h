@@ -55,11 +55,12 @@ class TensorRTRuntime;
 class TensorRTOp {
  public:
   explicit TensorRTOp(const schema::Primitive *primitive, std::vector<mindspore::MSTensor> in_tensors,
-                      std::vector<mindspore::MSTensor> out_tensors, std::string name)
+                      std::vector<mindspore::MSTensor> out_tensors, std::string name, schema::QuantType quant_type)
       : op_primitive_(primitive),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
-        op_name_(std::move(name)) {
+        op_name_(std::move(name)),
+        quant_type_(quant_type) {
     if (primitive != nullptr) {
       this->type_ = primitive->value_type();
     }
@@ -93,6 +94,8 @@ class TensorRTOp {
   std::vector<mindspore::MSTensor> &outputs();
 
   schema::PrimitiveType type() const;
+
+  schema::QuantType GetQuantType() const;
 
   void set_in_ops(const std::vector<TensorRTOp *> &in_ops);
 
@@ -136,6 +139,8 @@ class TensorRTOp {
 
   schema::PrimitiveType type_ = schema::PrimitiveType_NONE;
 
+  schema::QuantType quant_type_ = schema::QuantType_QUANT_NONE;
+
   std::vector<BindingHelper> op_binding_tensor_;
 
   TensorRTRuntime *runtime_{nullptr};
@@ -145,8 +150,9 @@ class TensorRTOp {
 
 template <class T>
 TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                          const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
-  auto *op = new (std::nothrow) T(primitive, in_tensors, out_tensors, name);
+                          const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+                          const schema::QuantType &quant_type) {
+  auto *op = new (std::nothrow) T(primitive, in_tensors, out_tensors, name, quant_type);
   if (op == nullptr) {
     MS_LOG(WARNING) << "TensorRT is nullptr.";
     return nullptr;

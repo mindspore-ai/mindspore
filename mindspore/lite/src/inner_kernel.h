@@ -95,6 +95,11 @@ class InnerKernel : public Kernel {
                                             : schema::PrimitiveType_NONE;
   }
 
+  schema::QuantType quant_type() const override {
+    return (this->op_parameter_ != nullptr) ? schema::QuantType(this->op_parameter_->quant_type_)
+                                            : schema::QuantType_QUANT_NONE;
+  }
+
   const std::vector<mindspore::MSTensor> &inputs() override {
     if (inputs_.empty()) {
       std::transform(in_tensors_.begin(), in_tensors_.end(), std::back_inserter(inputs_), [](lite::Tensor *tensor) {

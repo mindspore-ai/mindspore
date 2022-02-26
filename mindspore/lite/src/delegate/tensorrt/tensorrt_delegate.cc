@@ -242,7 +242,7 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
   auto name = kernel->name();
   auto node_type = primitive->value_type();
   if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
-    TensorRTOp *tensorrt_op = op_func_lists_[node_type](primitive, in_tensors, out_tensors, name);
+    TensorRTOp *tensorrt_op = op_func_lists_[node_type](primitive, in_tensors, out_tensors, name, kernel->quant_type());
     if (tensorrt_op == nullptr) {
       return nullptr;
     }
