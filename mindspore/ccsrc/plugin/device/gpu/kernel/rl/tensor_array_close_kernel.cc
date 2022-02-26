@@ -28,6 +28,7 @@ TensorArrayCloseKernelMod::TensorArrayCloseKernelMod() {}
 
 bool TensorArrayCloseKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   InitSizeLists();
   return true;
 }

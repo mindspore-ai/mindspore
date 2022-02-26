@@ -18,21 +18,26 @@
 
 namespace mindspore {
 namespace kernel {
-void GpuDynamicKernel::UpdateArgs() {
-  if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
+void NativeGpuKernelMod::InferOp() {
+  anf_node_ = kernel_node_.lock();
+  if (common::AnfAlgo::IsDynamicShape(kernel_node_.lock())) {
+    KernelMod::InferShape();
+  }
+}
+
+void NativeGpuKernelMod::InitOp() {
+  auto cnode = kernel_node_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  KernelMod::GetDepndLists(cnode);
+  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
+      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) && depend_list_.empty()) {
     return;
   }
 
-  auto cnode = cnode_ptr_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto gpu_kernel_mod = dynamic_cast<NativeGpuKernelMod *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(gpu_kernel_mod);
-  gpu_kernel_mod->DestroyResource();
-  gpu_kernel_mod->ResetResource();
-  gpu_kernel_mod->Init(cnode);
+  DestroyResource();
+  ResetResource();
+  Init(cnode);
 }
 }  // namespace kernel
 }  // namespace mindspore

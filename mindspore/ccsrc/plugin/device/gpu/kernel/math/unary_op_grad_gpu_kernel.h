@@ -117,6 +117,7 @@ class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     auto iter = kUnaryGradOpTypeMap.find(kernel_name);
     if (iter == kUnaryGradOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "

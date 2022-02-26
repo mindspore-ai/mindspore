@@ -222,6 +222,7 @@ class KernelMod {
 
  protected:
   void InferShape();
+  void GetDepndLists(const CNodePtr &cnode);
 
   std::string kernel_name_;
   std::string unique_name_;
@@ -234,16 +235,15 @@ class KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  std::set<uint32_t> depend_list_;
 
  private:
   void InferShapeForNopNode(AnfNodePtr *input_node);
-  void GetDepndLists(const CNodePtr &cnode);
   bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode);
 
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
-  std::set<uint32_t> depend_list_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 }  // namespace kernel

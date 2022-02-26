@@ -23,6 +23,7 @@ namespace mindspore {
 namespace kernel {
 bool TensorCopyGpuKernelMod::Init(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  kernel_node_ = node;
 
   auto input_type = AnfAlgo::GetInputDeviceDataType(node, 0);
   auto input_shapes = AnfAlgo::GetInputDeviceShape(node, 0);

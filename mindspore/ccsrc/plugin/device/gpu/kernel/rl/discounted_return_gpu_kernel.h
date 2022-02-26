@@ -40,6 +40,7 @@ class DiscountedReturnGpuKernelMod : public NativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(kernel_node);
     gamma_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, kGammaAttrName);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_node_ = kernel_node;
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << kInputNum << ", but got "
                         << input_num;

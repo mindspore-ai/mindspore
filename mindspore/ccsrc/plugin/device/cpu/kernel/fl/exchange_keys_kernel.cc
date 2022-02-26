@@ -60,6 +60,9 @@ bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
 
 void ExchangeKeysKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  if (cnode_ptr_.lock() == nullptr) {
+    cnode_ptr_ = kernel_node;
+  }
   fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
   server_num_ = fl::worker::FLWorker::GetInstance().server_num();
   rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();

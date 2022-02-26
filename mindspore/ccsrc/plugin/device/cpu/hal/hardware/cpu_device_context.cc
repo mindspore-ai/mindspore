@@ -224,10 +224,6 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
     }
 
     cpu_kernel->Init(node);
-    cpu_kernel->InitDynamicKernel(node);
-    auto cpu_dynamic_kernel = cpu_kernel->DynamicKernel();
-    MS_EXCEPTION_IF_NULL(cpu_dynamic_kernel);
-    cpu_dynamic_kernel->Initialize();
     AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
 #ifdef ENABLE_AKG
@@ -249,10 +245,8 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
 
   kernel::NativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(cpu_kernel);
-  device::DynamicKernelPtr dynamic_kernel = cpu_kernel->DynamicKernel();
-  MS_EXCEPTION_IF_NULL(dynamic_kernel);
-  dynamic_kernel->InferShape();
-  dynamic_kernel->UpdateArgs();
+  cpu_kernel->InferOp();
+  cpu_kernel->InitOp();
 }
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {

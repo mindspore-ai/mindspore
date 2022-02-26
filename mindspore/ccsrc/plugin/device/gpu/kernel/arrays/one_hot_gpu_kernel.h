@@ -47,6 +47,7 @@ class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);

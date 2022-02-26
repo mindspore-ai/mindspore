@@ -44,6 +44,7 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     compute_eigen_vectors_ = static_cast<bool>(GetAttr<bool>(kernel_node, C_EIEH_VECTOR));

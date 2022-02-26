@@ -38,6 +38,7 @@ class MatrixSetDiagGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     constexpr size_t required_input_nums = 3;
     constexpr size_t required_output_nums = 1;
     if (common::AnfAlgo::GetInputNum(kernel_node) != required_input_nums ||

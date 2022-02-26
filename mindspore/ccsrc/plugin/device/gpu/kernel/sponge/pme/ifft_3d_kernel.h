@@ -35,6 +35,7 @@ class IFFT3DGpuKernelMod : public NativeGpuKernelMod {
   ~IFFT3DGpuKernelMod() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     fftx = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftx"));
     ffty = static_cast<int>(GetAttr<int64_t>(kernel_node, "ffty"));
     fftz = static_cast<int>(GetAttr<int64_t>(kernel_node, "fftz"));

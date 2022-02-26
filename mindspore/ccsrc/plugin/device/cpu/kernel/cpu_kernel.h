@@ -112,16 +112,6 @@ struct ParallelSearchInfo {
   size_t search_count{0};
 };
 
-class CpuDynamicKernel : public device::DynamicKernel {
- public:
-  explicit CpuDynamicKernel(const CNodePtr &cnode_ptr) : DynamicKernel(nullptr, cnode_ptr) {}
-  ~CpuDynamicKernel() override = default;
-
-  void UpdateArgs() override;
-  void PostExecute() final { MS_LOG(EXCEPTION) << "`PostExecute()` should not invoked with cpu backend"; };
-  void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with cpu backend"; }
-};
-
 class NativeCpuKernelMod : public CpuKernelMod {
  public:
   NativeCpuKernelMod() = default;
@@ -137,15 +127,15 @@ class NativeCpuKernelMod : public CpuKernelMod {
 
   void SetCNodePtr(const CNodePtr &kernel_node) { cnode_ptr_ = kernel_node; }
   const CNodeWeakPtr &GetCNodePtr() { return cnode_ptr_; }
-  void InitDynamicKernel(const CNodePtr &cnode_ptr) { dynamic_kernel_ = std::make_shared<CpuDynamicKernel>(cnode_ptr); }
-  device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
+
+  void InferOp() override;
+  void InitOp() override;
 
   ParallelSearchInfo parallel_search_info_;
 
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
   CNodeWeakPtr cnode_ptr_;
-  device::DynamicKernelPtr dynamic_kernel_;
 
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {

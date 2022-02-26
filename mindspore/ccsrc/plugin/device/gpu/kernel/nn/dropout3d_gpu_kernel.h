@@ -67,6 +67,7 @@ class Dropout3DFwdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

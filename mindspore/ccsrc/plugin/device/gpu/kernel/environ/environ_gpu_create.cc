@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 bool EnvironCreateGpuKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   // Check the output handle.
   auto handle_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   auto handle_shapes = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);

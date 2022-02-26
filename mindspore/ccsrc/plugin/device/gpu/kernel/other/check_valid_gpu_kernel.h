@@ -57,6 +57,7 @@ class CheckValidGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_node_ = kernel_node;
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
     }

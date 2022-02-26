@@ -29,6 +29,7 @@ TensorArrayWriteKernelMod::TensorArrayWriteKernelMod() : value_size_(0) {}
 
 bool TensorArrayWriteKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
   shapes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kSecondInputIndex);
   value_size_ = GetTypeByte(TypeIdToType(type_));

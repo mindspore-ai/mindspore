@@ -27,6 +27,7 @@ TensorArrayReadKernelMod::TensorArrayReadKernelMod() : value_size_(0), type_(nul
 
 bool TensorArrayReadKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   shapes_ = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   type_ = GetAttr<TypePtr>(kernel_node, "dtype");
   value_size_ = GetTypeByte(type_);

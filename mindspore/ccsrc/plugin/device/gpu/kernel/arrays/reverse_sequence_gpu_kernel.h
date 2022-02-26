@@ -64,6 +64,7 @@ class ReverseSequenceFwdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     batch_dim_ = GetAttr<int64_t>(kernel_node, "batch_dim");
     seq_dim_ = GetAttr<int64_t>(kernel_node, "seq_dim");
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

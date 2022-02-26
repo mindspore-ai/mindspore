@@ -59,6 +59,7 @@ class AdaptiveAvgPool2DKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     auto shape_addr = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_size");
+    kernel_node_ = kernel_node;
     if (shape_addr.size() == 1) {
       output_height = shape_addr[0];
       output_width = shape_addr[0];

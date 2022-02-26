@@ -62,6 +62,7 @@ class CombineMomentumGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     num_ = GetAttr<size_t>(kernel_node, "n");
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "CombineMomentum") {

@@ -68,6 +68,7 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     auto shape2 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);

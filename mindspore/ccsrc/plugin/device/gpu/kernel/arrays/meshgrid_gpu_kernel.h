@@ -67,6 +67,7 @@ class MeshgridGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     std::string indexing = GetAttr<std::string>(kernel_node, "indexing");
     if (indexing == "xy") {
       swap_indexing_ = true;

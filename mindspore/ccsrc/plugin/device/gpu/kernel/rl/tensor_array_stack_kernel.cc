@@ -58,7 +58,7 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void TensorArrayStackKernelMod::PostExecute() {
+void TensorArrayStackKernelMod::UpdateOp() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "TensorArrayStack cudaStreamSynchronized failed");
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);

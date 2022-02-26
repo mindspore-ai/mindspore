@@ -412,11 +412,9 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
 
   kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel);
-  device::DynamicKernelPtr dynamic_kernel = gpu_kernel->DynamicKernel();
-  MS_EXCEPTION_IF_NULL(dynamic_kernel);
 
-  dynamic_kernel->InferShape();
-  dynamic_kernel->UpdateArgs();
+  gpu_kernel->InferOp();
+  gpu_kernel->InitOp();
 }
 
 bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
@@ -463,7 +461,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   if (is_dynamic_shape) {
     kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
-    gpu_kernel->PostExecute();
+    gpu_kernel->UpdateOp();
   }
   return ret;
 }

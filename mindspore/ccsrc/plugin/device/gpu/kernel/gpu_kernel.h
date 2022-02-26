@@ -73,18 +73,6 @@ inline int GetPad(int input, int kernel, int stride) {
   return std::max<int>(0, (CeilDivide(input, stride) - 1) * stride + kernel - input);
 }
 
-class GpuDynamicKernel : public device::DynamicKernel {
- public:
-  explicit GpuDynamicKernel(const CNodePtr &cnode_ptr) : DynamicKernel(nullptr, cnode_ptr) {}
-  ~GpuDynamicKernel() = default;
-
-  void UpdateArgs() override;
-  void PostExecute() final { MS_LOG(EXCEPTION) << "`PostExecute()` should not invoked with gpu backend"; };
-  void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with gpu backend"; }
-
-  std::map<uint32_t, tensor::TensorPtr> GetDependTensorMap() { return depend_tensor_map_; }
-};
-
 class NativeGpuKernelMod : public GpuKernelMod {
  public:
   virtual ~NativeGpuKernelMod() = default;
@@ -93,10 +81,11 @@ class NativeGpuKernelMod : public GpuKernelMod {
     MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
   }
   virtual void DestroyResource() noexcept {}
-  virtual void PostExecute() {}
 
-  void InitDynamicKernel(const CNodePtr &cnode_ptr) { dynamic_kernel_ = std::make_shared<GpuDynamicKernel>(cnode_ptr); }
-  device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
+  bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
+
+  void InferOp() override;
+  void InitOp() override;
 
  protected:
   virtual void InitResource() {}
@@ -330,14 +319,6 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return type->second;
   }
 
-  inline std::map<uint32_t, tensor::TensorPtr> GetDependTensorMap() {
-    auto gpu_dynamic_kernel = dynamic_cast<GpuDynamicKernel *>(DynamicKernel().get());
-    if (gpu_dynamic_kernel != nullptr) {
-      return gpu_dynamic_kernel->GetDependTensorMap();
-    }
-    return {};
-  }
-
   inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index) {
     std::vector<int64_t> tensor_value;
     MS_EXCEPTION_IF_NULL(input_tensor);
@@ -366,12 +347,11 @@ class NativeGpuKernelMod : public GpuKernelMod {
   }
 
   inline std::vector<int64_t> GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index) {
-    const auto &depend_tensor_map = GetDependTensorMap();
-    if (depend_tensor_map.empty()) {
+    if (depend_tensor_map_.empty()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the depend_tensor_map is empty!";
     }
-    auto depend_iter = depend_tensor_map.find(input_index);
-    if (depend_iter == depend_tensor_map.end()) {
+    auto depend_iter = depend_tensor_map_.find(input_index);
+    if (depend_iter == depend_tensor_map_.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to find the " << input_index
                         << "th input in the depend_tensor_map";
     }
@@ -388,8 +368,6 @@ class NativeGpuKernelMod : public GpuKernelMod {
     }
     return GetTensorIntValue(input_tensor, input_index);
   }
-
-  device::DynamicKernelPtr dynamic_kernel_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

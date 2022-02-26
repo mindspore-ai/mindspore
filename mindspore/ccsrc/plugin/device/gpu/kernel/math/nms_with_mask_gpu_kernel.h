@@ -62,6 +62,7 @@ class NMSWithMaskFwdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     iou_value_ = GetAttr<float>(kernel_node, "iou_threshold");
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

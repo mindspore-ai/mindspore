@@ -63,6 +63,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     if (node_name == "ApplyCenteredRMSProp") {
       use_center_ = true;
     }

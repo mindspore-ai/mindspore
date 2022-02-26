@@ -59,7 +59,7 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DynamicStitchKernelMod::PostExecute() {
+void DynamicStitchKernelMod::UpdateOp() {
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
   output_shape[0] = max_index_ + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);

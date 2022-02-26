@@ -69,6 +69,7 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_node_ = kernel_node;
     if (input_num != 3) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 3, but got " << input_num;
     }

@@ -104,6 +104,7 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
 
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
@@ -205,7 +206,7 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
       begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     } else {
       // The value of dynamic attr can only be obtained after the InferShape() of dynamic kernel is executed
-      if (DynamicKernel() == nullptr) {
+      if (depend_tensor_map_.empty()) {
         return;
       }
       begin = GetDynamicAttrIntValue(kernel_node, kBeginIndex_);

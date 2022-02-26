@@ -101,7 +101,7 @@ class DynamicBroadcastToGpuKernelMod : public NativeGpuKernelMod {
       output_shape_[i] = 1;
     }
   }
-  void PostExecute() override {
+  void UpdateOp() override {
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
     std::vector<size_t> output_shape;
     std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape),

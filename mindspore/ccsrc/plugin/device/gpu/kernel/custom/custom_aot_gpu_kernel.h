@@ -97,6 +97,7 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     const auto &exec_info = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "func_name");
+    kernel_node_ = kernel_node;
     if (auto pos = exec_info.find(":"); pos != std::string::npos) {
       auto path = exec_info.substr(0, pos);
       auto real_path = FileUtils::GetRealPath(path.c_str());

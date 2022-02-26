@@ -69,10 +69,6 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   try {
     cpu_kernel->Init(cast);
-    cpu_kernel->InitDynamicKernel(cast);
-    auto cpu_dynamic_kernel = cpu_kernel->DynamicKernel();
-    MS_EXCEPTION_IF_NULL(cpu_dynamic_kernel);
-    cpu_dynamic_kernel->Initialize();
   } catch (std::exception &e) {
     MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);
   }

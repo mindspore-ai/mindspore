@@ -34,7 +34,7 @@ class DynamicStitchKernelMod : public NativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
   void ResetResource() noexcept override;
-  void PostExecute() override;
+  void UpdateOp() override;
   constexpr static size_t kDivNum2 = 2;
 
  protected:
