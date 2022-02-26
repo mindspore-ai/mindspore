@@ -43,12 +43,12 @@
 
     - **TypeError** - `kernel_size` 、 `strides` 或 `pad` 既不是int也不是tuple。
     - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是bool。
-    - **TypeError** - `pad_mode` 或`data_format` 不是string。
+    - **TypeError** - `pad_mode` 或 `data_format` 不是string。
     - **TypeError** - `divisor_override` 不是int。
     - **ValueError** - `kernel_size` 或 `strides` 中的数字不是正数。
     - **ValueError** - `kernel_size` 或 `strides` 是长度不等于3的tuple。
     - **ValueError** - `pad_mode` 不是'same'，'valid'，或'pad'。
     - **ValueError** - `pad` 是长度不等于6的tuple。
     - **ValueError** - `pad` 的元素小于0。
-    - **ValueError** - `pad_mode` 不等于'pad'且`pad`不等于0或(0, 0, 0, 0, 0, 0)。
+    - **ValueError** - `pad_mode` 不等于'pad'且 `pad` 不等于0或(0, 0, 0, 0, 0, 0)。
     - **ValueError** - `data_format` 不是'NCDHW'。

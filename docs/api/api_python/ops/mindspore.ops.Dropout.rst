@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Dropout(keep_prob=0.5, Seed0=0, Seed1=0)
 
-     Dropout是一种正则化手段，该算子根据丢弃概率 :math:`1 - keep\_prob` ，在训练过程中随机将一些神经元输出设置为0，通过阻止神经元节点间的相关性来减少过拟合。
+    Dropout是一种正则化手段，该算子根据丢弃概率 :math:`1 - keep\_prob` ，在训练过程中随机将一些神经元输出设置为0，通过阻止神经元节点间的相关性来减少过拟合。
 
     **参数：**
 
@@ -23,6 +23,6 @@
     **异常：**
 
     - **TypeError** - `keep_prob` 不是float。
-    - **TypeError** - `Seed0` 或`Seed1` 不是int。
+    - **TypeError** - `Seed0` 或 `Seed1` 不是int。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
     - **TypeError** - `x` 不是Tensor。

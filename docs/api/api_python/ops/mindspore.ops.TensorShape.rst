@@ -11,7 +11,7 @@ mindspore.ops.TensorShape
 
     **输出：**
 
-    Tensor，输入`input_x`的shape
+    Tensor，输入 `input_x` 的shape
 
     **异常：**
 

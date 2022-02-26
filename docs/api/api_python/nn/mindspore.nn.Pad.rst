@@ -9,17 +9,17 @@ mindspore.nn.Pad
 
     - **paddings** (tuple) - 填充大小，其shape为(N, 2)，N是输入数据的维度，填充的元素为int类型。对于 `x` 的第 `D` 个维度，paddings[D, 0]表示要在输入Tensor的第 `D` 个维度之前扩展的大小，paddings[D, 1]表示在输入Tensor的第 `D` 个维度后面要扩展的大小。输出的每个维度D的填充大小为： :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`
 
-        .. code-block::
+      .. code-block::
 
-            # 假设参数和输入如下：
-            mode = "CONSTANT".
-            paddings = [[1,1], [2,2]].
-            x = [[1,2,3], [4,5,6], [7,8,9]].
-            # `x` 的第一个维度为3， `x` 的第二个维度为3。
-            # 根据以上公式可得：
-            # 输出的第一个维度是paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 5。
-            # 输出的第二个维度是paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7。
-            # 所以最终的输出shape为(5, 7)
+          # 假设参数和输入如下：
+          mode = "CONSTANT".
+          paddings = [[1,1], [2,2]].
+          x = [[1,2,3], [4,5,6], [7,8,9]].
+          # `x` 的第一个维度为3， `x` 的第二个维度为3。
+          # 根据以上公式可得：
+          # 输出的第一个维度是paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 5。
+          # 输出的第二个维度是paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7。
+          # 所以最终的输出shape为(5, 7)
 
     - **mode** (str) - 指定填充模式。取值为"CONSTANT"，"REFLECT"，"SYMMETRIC"。默认值："CONSTANT"。
 

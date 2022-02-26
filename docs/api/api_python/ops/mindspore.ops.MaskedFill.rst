@@ -5,7 +5,7 @@ mindspore.ops.MaskedFill
 
     掩码为True位置的值将被指定的值填充。
 
-    `input`和 `mask` 的shape需相同或可广播。
+    `input` 和 `mask` 的shape需相同或可广播。
 
     **输入：**
 

@@ -27,5 +27,5 @@ mindspore.ops.Maximum
 
     **异常：**
 
-    - **TypeError** - `x`和 `y` 不是以下之一：Tensor，Number，bool。
+    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor，Number，bool。
     - **ValueError** - `x` 和 `y` 的shape不相同。
