@@ -1520,11 +1520,11 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
   auto value_ptr = node->input(2)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_ptr);
   std::ostringstream ss;
   ss << "op" << value_ptr.get();
   op_draw_name_[value_ptr.get()] = ss.str();
   compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  MS_EXCEPTION_IF_NULL(value_ptr);
   auto input_value = value_ptr->value();
   auto int64_value = GetValue<int64_t>(input_value);
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
