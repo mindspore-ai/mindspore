@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
-#include <iostream>
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 

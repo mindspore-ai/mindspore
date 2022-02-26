@@ -32,6 +32,11 @@ void UpdateStandardDeviation(float stddev, size_t total_count, float *output) {
   MS_EXCEPTION_IF_NULL(output);
 
   auto update_stddev_task = [](float stddev, size_t task_len, float *data) {
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "The pointer data is nullptr";
+      return;
+    }
+
     for (size_t i = 0; i < task_len; i++) {
       data[i] *= stddev;
     }

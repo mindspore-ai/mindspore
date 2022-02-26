@@ -85,7 +85,8 @@ class GraphScheduler {
   DISABLE_COPY_AND_ASSIGN(GraphScheduler);
 
   // Set using the multi thread or single thread to execute the actor set by the execution time compared.
-  void SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy, double execution_time);
+  void SetActorExecutionStrategy(ActorSet *const actor_set, GraphExecutionStrategy strategy,
+                                 double execution_time) const;
 
   // The Global actors contain memory manager actor, recorder actor and debug actor.
   void BuildAndScheduleGlobalActor();
