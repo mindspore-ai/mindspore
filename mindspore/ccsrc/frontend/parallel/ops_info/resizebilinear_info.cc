@@ -69,7 +69,14 @@ Status ResizeBilinearInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (input_strategy[3] != 1) {
+    if (backend == kGPUDevice) {
+      MS_LOG(ERROR) << name_ << ": Do not support split W dimension in GPU platform";
+      return FAILED;
+    }
     need_exchange_overlap_ = true;
     MS_LOG(INFO) << name_ << ": Split the w dimension";
   }
