@@ -198,3 +198,33 @@ def test_load_convert_tensormove_2():
     graph_forword_net = ForwardNet2()
     forward_res = graph_forword_net()
     assert forward_res == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_load_eliminate():
+    """
+    Feature: Auto monad feature: test load eliminate.
+    Description: test load eliminate.
+    Expectation: No exception.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign = P.Assign()
+            self.variable = Parameter(Tensor(0, ms.float32), name="global")
+
+        def construct(self, x):
+            out = self.variable
+            self.assign(self.variable, 0)
+            out = x ** 2 + self.variable + out
+            self.assign(self.variable, 1)
+            out = self.variable + out
+            return out
+
+    x = Tensor([2], ms.float32)
+    net = Net()
+    out = net(x)
+    assert out == 5
