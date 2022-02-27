@@ -273,6 +273,7 @@ constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kSparseMatrixAdd = "SparseMatrixAdd";
 constexpr auto kSparseAdd = "SparseAdd";
 constexpr auto kSparseConcat = "SparseConcat";
+constexpr auto kSparseMatrixNNZ = "SparseMatrixNNZ";
 
 // Meta Function Graph
 constexpr auto kJ = "J";
@@ -867,6 +868,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAdd));
 GVAR_DEF(PrimitivePtr, kPrimDenseToCSRSparseMatrix, std::make_shared<Primitive>("DenseToCSRSparseMatrix"));
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensor));
 GVAR_DEF(PrimitivePtr, kPrimSparseConcat, std::make_shared<Primitive>(kSparseConcat));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixNNZ, std::make_shared<Primitive>(kSparseMatrixNNZ));
 
 // TensorList
 GVAR_DEF(PrimitivePtr, kPrimTensorListFromTensor, std::make_shared<Primitive>("TensorListFromTensor"));

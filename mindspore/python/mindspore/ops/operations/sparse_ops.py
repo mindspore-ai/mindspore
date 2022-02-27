@@ -539,3 +539,61 @@ class SparseConcat(Primitive):
         self.init_prim_io_names(inputs=['sp_input_indices', 'sp_input_values', 'sp_input_shapes'],
                                 outputs=['output_indices', 'output_values', 'output_shape'])
         validator.check_value_type("concat_dim", concat_dim, [int], self.name)
+
+
+class SparseMatrixNNZ(Primitive):
+    r"""
+    Count number of the non-zero elements in sparse matrix or sparse matrixs.
+    If the sparse matrix input contains batch dimension, then output dimension will be same with the batch dimension.
+
+    Note:
+        It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator won't work.
+
+    Inputs:
+        - **x_dense_shape** (Tensor) -  A 1-D Tensor. It represents the dense form shape of
+          the input CSR sparse matrix, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **x_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of nonzero values of the first `i - 1` batches.
+        - **x_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          nonzero values of the first `i - 1` rows in the corresponding batch.
+        - **x_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
+          in the input CSR sparse matrix.
+        - **x_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
+          input CSR sparse matrix.
+
+    Outputs:
+        Tensor, the dtype is int32.
+        If there are n batch within input sparse matrix, the shape is :math:`(n,)`.
+
+    Raises:
+        TypeError: If the dtype of `x_dense_shape`, `x_batch_pointers`, `x_row_pointers` or `x_col_indices`
+            is not int32 or int64, or the dtypes of above inputs are not the same.
+        TypeError: If the dtype of `x_values` is not supported.
+        TypeError: If any of the inputs is not a tensor.
+        ValueError: If any of the inputs is not 1-D.
+        ValueError: If `x_values` and `x_col_indices` have different length.
+        ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> dense_shape = Tensor([2,3], dtype=mstype.int32)
+        >>> batch_pointers = Tensor([0,1], dtype=mstype.int32)
+        >>> row_pointers = Tensor([0,1,1], dtype=mstype.int32)
+        >>> col_indices = Tensor([0], dtype=mstype.int32)
+        >>> values = Tensor([99], dtype=mstype.float32)
+        >>> sparse_matrix_nnz = ops.SparseMatrixNNZ()
+        >>> out = sparse_matrix_nnz(dense_shape, batch_pointers, row_pointers, col_indices, values)
+        >>> print(out)
+        [1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseMatrixNNZ"""
+        self.init_prim_io_names(
+            inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'], outputs=['y'])
