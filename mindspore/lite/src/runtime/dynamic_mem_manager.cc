@@ -55,7 +55,7 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
     free_count = lite::GetFreeMemory();
   }
 
-  if (UNLIKELY(static_cast<int64_t>(rounded_size) >= free_count)) {
+  if (MS_UNLIKELY(static_cast<int64_t>(rounded_size) >= free_count)) {
     MS_LOG(ERROR) << "No enough memory left!node_id: " << node_id << ", request: " << rounded_size
                   << ", free: " << free_count << ", least free request: " << least_free_memory_;
     return nullptr;
@@ -78,13 +78,13 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
     data = NUMAAdapter::GetInstance()->Malloc(node_id, static_cast<size_t>(allocate_tmp_size));
   } else {
     auto ret = posix_memalign(&data, kMemAlginSize, static_cast<size_t>(allocate_tmp_size));
-    if (UNLIKELY(ret != 0)) {
+    if (MS_UNLIKELY(ret != 0)) {
       MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret;
       return nullptr;
     }
   }
 #endif
-  if (UNLIKELY(data == nullptr)) {
+  if (MS_UNLIKELY(data == nullptr)) {
     MS_LOG(ERROR) << "malloc data failed!";
     return nullptr;
   }
@@ -147,7 +147,7 @@ void *MemOperator::Malloc(size_t size) {
   // todo kAllocUnitSize can be replaced by config
   size_t allocate_size;
   void *data = Allocate(rounded_size, node_id_, &allocate_size);
-  if (UNLIKELY(data == nullptr)) {
+  if (MS_UNLIKELY(data == nullptr)) {
     return nullptr;
   }
   all_datas_.emplace(data, allocate_size);
@@ -169,7 +169,7 @@ void *MemOperator::Malloc(size_t size) {
 
 // return memory to the memory pool
 void MemOperator::Free(void *ptr) {
-  if (UNLIKELY(ptr == nullptr)) {
+  if (MS_UNLIKELY(ptr == nullptr)) {
     return;
   }
   std::lock_guard<std::mutex> locker(mutex_);
@@ -247,7 +247,7 @@ MemOperator::MemOperator(int node_id) {
   auto *block = GetBlock();
   size_t allocate_size;
   block->data_ = Allocate(kAllocUnitSize, node_id, &allocate_size);
-  if (UNLIKELY(block->data_ == nullptr)) {
+  if (MS_UNLIKELY(block->data_ == nullptr)) {
     return;
   }
   all_datas_.emplace(block->data_, allocate_size);
@@ -328,7 +328,7 @@ std::shared_ptr<MemOperator> DynamicMemManager::GetMemOperator(const int node_id
   iter = nodes_mem_.find(numa_node_id);
   if (iter == nodes_mem_.end()) {
     mem_oper = std::make_shared<MemOperator>(numa_node_id);
-    if (UNLIKELY(mem_oper == nullptr)) {
+    if (MS_UNLIKELY(mem_oper == nullptr)) {
       MS_LOG(ERROR) << "make_shared MemOperator failed!";
       return nullptr;
     }
