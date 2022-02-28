@@ -184,6 +184,26 @@ void Cos(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) 
 }
 
 template <typename T>
+void ComplexSin(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(sin(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void ComplexCos(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(cos(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void Tan(ArithmeticSelfCpuKernelMod *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -377,10 +397,9 @@ void ArithmeticSelfCpuKernelMod::LaunchKernelComplex(const std::vector<AddressPt
   const size_t lens = outputs[0]->size / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelMod *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
-                          {prim::kPrimAcosh->name(), ComplexAcosh<T>},
-                          {prim::kPrimAsinh->name(), ComplexAsinh<T>},
-                          {prim::kPrimNeg->name(), Neg<T>}};
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},      {prim::kPrimAcosh->name(), ComplexAcosh<T>},
+                          {prim::kPrimAsinh->name(), ComplexAsinh<T>}, {prim::kPrimNeg->name(), Neg<T>},
+                          {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelMod does not support " << kernel_name_;
