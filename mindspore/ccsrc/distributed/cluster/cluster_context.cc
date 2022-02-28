@@ -34,6 +34,7 @@ ClusterContext::ClusterContext()
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
       node_(nullptr),
+      abstract_node_(nullptr),
       node_role_(""),
       cluster_config_(nullptr) {}
 
@@ -84,6 +85,14 @@ bool ClusterContext::Initialize() {
     return false;
   }
 
+  // Step 3: Initialize some modules for the node, e.g., actor route table proxy.
+  if (!IsScheduler()) {
+    // Only node which is not the scheduler needs route table proxy.
+    actor_route_table_proxy_ =
+      std::make_shared<ActorRouteTableProxy>(std::dynamic_pointer_cast<ps::core::AbstractNode>(node_));
+    MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
+  }
+
   inited_ = true;
   finalized_ = false;
   return true;
@@ -105,6 +114,8 @@ bool ClusterContext::Finalize(uint32_t timeout) {
   return true;
 }
 
+bool ClusterContext::IsScheduler() { return (abstract_node_ == nullptr) ? true : false; }
+
 const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
 const std::string &ClusterContext::node_role() const { return node_role_; }
@@ -119,6 +130,8 @@ uint32_t ClusterContext::node_num(const std::string &node_role) {
 }
 
 bool ClusterContext::initialized() const { return inited_; }
+
+const ActorRouteTableProxyPtr &ClusterContext::actor_route_table_proxy() const { return actor_route_table_proxy_; }
 
 void ClusterContext::InitClusterConfig() {
   InitNodeRole();
@@ -154,6 +167,7 @@ bool ClusterContext::BuildCluster() {
     MS_LOG(ERROR) << "Building network failed.";
     return false;
   }
+  abstract_node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(node_);
   MS_LOG(INFO) << "Cluster is successfully initialized.";
   return true;
 }

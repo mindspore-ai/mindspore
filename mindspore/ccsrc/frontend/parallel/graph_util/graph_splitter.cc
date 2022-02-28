@@ -275,12 +275,13 @@ CNodePtr GraphSplitter::GenerateSendNode(const AnfNodePtr &input, const AnfNodeP
   MS_EXCEPTION_IF_NULL(peer);
 
   std::vector<AnfNodePtr> send_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcSendOpName))};
-  auto mock_value = GenerateMockValueNode(true, input);
-  MS_EXCEPTION_IF_NULL(mock_value);
+  ValueNodePtr mock_value = nullptr;
   if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
+    mock_value = GenerateMockValueNode(false);
     send_inputs.push_back(mock_value);
     send_inputs.push_back(input);
   } else {
+    mock_value = GenerateMockValueNode(true, input);
     send_inputs.push_back(input);
   }
   CNodePtr send_node = func_graph_->NewCNode(send_inputs);

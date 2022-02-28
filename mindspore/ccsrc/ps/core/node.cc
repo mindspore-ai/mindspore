@@ -107,9 +107,6 @@ bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
   if (receive_messages_.count(request_id) != 0) {
     (void)receive_messages_.erase(request_id);
   }
-  if (received_scheduler_messages_.count(request_id) != 0) {
-    (void)received_scheduler_messages_.erase(request_id);
-  }
   msgs_lock.unlock();
   return res;
 }

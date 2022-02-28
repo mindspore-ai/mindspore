@@ -26,10 +26,21 @@ void RpcNodeScheduler::Initialize() {
 
 RpcActorSetPtr RpcNodeScheduler::Build(const GraphCompilerInfo &) {
   MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+  std::vector<RpcActorPtr> rpc_actors;
+  (void)rpc_actors.insert(rpc_actors.end(), rpc_actor_set_->send_actors_.begin(), rpc_actor_set_->send_actors_.end());
+  (void)rpc_actors.insert(rpc_actors.end(), rpc_actor_set_->recv_actors_.begin(), rpc_actor_set_->recv_actors_.end());
+
+  // Create route table proxy for each rpc actor and set.
+  for (auto &rpc_actor : rpc_actors) {
+    auto proxy = CreateRouteTableProxy();
+    MS_EXCEPTION_IF_NULL(proxy);
+    rpc_actor->SetActorRouteRableProxy(proxy);
+  }
+
   return rpc_actor_set_;
 }
 
-void RpcNodeScheduler::Link(const ActorSetPtr &) {
+void RpcNodeScheduler::Link(const ActorSet *) {
   MS_EXCEPTION_IF_NULL(rpc_actor_set_);
   std::vector<SendActorPtr> send_actors = rpc_actor_set_->send_actors_;
   std::vector<RecvActorPtr> recv_actors = rpc_actor_set_->recv_actors_;
@@ -50,6 +61,7 @@ void RpcNodeScheduler::Link(const ActorSetPtr &) {
                         << ", send_src_node_name: " << send_src_node_name
                         << ", send_dst_node_name: " << send_dst_node_name;
     }
+    send_actor->SetInterProcessEdgeName(send_src_node_name, send_dst_node_name);
     send_actor->SetRouteInfo(send_dst_ranks[0], send_dst_roles[0], send_src_node_name, send_dst_node_name);
   }
   for (auto &recv_actor : recv_actors) {
@@ -67,20 +79,66 @@ void RpcNodeScheduler::Link(const ActorSetPtr &) {
                         << ", recv_src_node_name: " << recv_src_node_name
                         << ", recv_dst_node_name: " << recv_dst_node_name;
     }
+    recv_actor->SetInterProcessEdgeName(recv_src_node_name, recv_dst_node_name);
     recv_actor->SetRouteInfo(recv_src_ranks[0], recv_src_roles[0], recv_src_node_name, recv_dst_node_name);
+  }
+}
+
+void RpcNodeScheduler::Schedule() {
+  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+  // Must start server and register route table before looking up route and connecting.
+
+  // Start servers of recv actors and register route table.
+  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    if (!recv_actor->StartServer()) {
+      MS_LOG(EXCEPTION) << "Failed to start server for the recv actor.";
+    }
+  }
+  // Lookup route and connect to servers for send actors.
+  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+    MS_EXCEPTION_IF_NULL(send_actor);
+    if (!send_actor->ConnectServer()) {
+      MS_LOG(EXCEPTION) << "Failed to connect servers for the send actor.";
+    }
   }
 }
 
 void RpcNodeScheduler::InsertSendActor(const SendActorPtr &send_actor) {
   MS_EXCEPTION_IF_NULL(rpc_actor_set_);
   MS_EXCEPTION_IF_NULL(send_actor);
-  rpc_actor_set_->send_actors_.emplace_back(send_actor);
+  (void)rpc_actor_set_->send_actors_.emplace_back(send_actor);
 }
 
 void RpcNodeScheduler::InsertRecvActor(const RecvActorPtr &recv_actor) {
   MS_EXCEPTION_IF_NULL(rpc_actor_set_);
   MS_EXCEPTION_IF_NULL(recv_actor);
-  rpc_actor_set_->recv_actors_.emplace_back(recv_actor);
+  (void)rpc_actor_set_->recv_actors_.emplace_back(recv_actor);
+}
+
+void RpcNodeScheduler::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
+  MS_EXCEPTION_IF_NULL(op_context);
+  MS_EXCEPTION_IF_NULL(rpc_actor_set_);
+
+  for (auto &recv_actor : rpc_actor_set_->recv_actors_) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    recv_actor->SetOpcontext(op_context);
+  }
+  for (auto &send_actor : rpc_actor_set_->send_actors_) {
+    MS_EXCEPTION_IF_NULL(send_actor);
+    send_actor->SetOpcontext(op_context);
+  }
+}
+
+ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() {
+  ActorRouteTableProxyPtr actor_route_table_proxy;
+  if (!ClusterContext::instance()->IsScheduler()) {
+    auto node = ClusterContext::instance()->node();
+    actor_route_table_proxy =
+      std::make_shared<ActorRouteTableProxy>(std::dynamic_pointer_cast<ps::core::AbstractNode>(node));
+    MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
+  }
+  return actor_route_table_proxy;
 }
 }  // namespace runtime
 }  // namespace mindspore

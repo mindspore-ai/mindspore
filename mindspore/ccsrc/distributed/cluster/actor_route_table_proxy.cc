@@ -80,6 +80,9 @@ ActorAddress ActorRouteTableProxy::LookupRoute(const std::string &actor_id) cons
       lookup_success = true;
     }
   } while (!lookup_success && CURRENT_TIMESTAMP_MILLI <= timeout_ts);
+  if (!lookup_success) {
+    MS_LOG(EXCEPTION) << "Failed to lookup actor address for " << actor_id;
+  }
 
   return lookup_route_rsp_msg;
 }

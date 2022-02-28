@@ -33,6 +33,7 @@
 #include "ps/core/worker_node.h"
 #include "ps/core/server_node.h"
 #include "ps/core/scheduler_node.h"
+#include "distributed/cluster/actor_route_table_proxy.h"
 
 namespace mindspore {
 namespace distributed {
@@ -57,6 +58,10 @@ class ClusterContext {
   // Finalize the cluster and process exits. If timeout is set to UINT32_MAX, this method will block without timeout.
   bool Finalize(uint32_t timeout = kDefaultFinishTimeout);
 
+  // Return whether this node is the scheduler node.
+  // In a cluster, the scheduler node is special because it's responsible for building network.
+  bool IsScheduler();
+
   // Return node object of this process.
   const std::shared_ptr<ps::core::Node> &node() const;
 
@@ -68,6 +73,9 @@ class ClusterContext {
 
   // Return cluster is initialized.
   bool initialized() const;
+
+  // Return actor route proxy for AbstractNode.
+  const ActorRouteTableProxyPtr &actor_route_table_proxy() const;
 
  private:
   ClusterContext();
@@ -106,11 +114,17 @@ class ClusterContext {
   // The node could be Worker, Server or Scheduler, etc.
   std::shared_ptr<ps::core::Node> node_;
 
+  // abstract_node_ is nullptr only when this is node is scheduler.
+  std::shared_ptr<ps::core::AbstractNode> abstract_node_;
+
   // The role of this process in the cluster.
   std::string node_role_;
 
   // The configuration of this cluster.
   std::unique_ptr<ps::core::ClusterConfig> cluster_config_;
+
+  // The actor route table proxy. It only created in abstract nodes because scheduler does not use proxy.
+  ActorRouteTableProxyPtr actor_route_table_proxy_;
 };
 }  // namespace cluster
 }  // namespace distributed

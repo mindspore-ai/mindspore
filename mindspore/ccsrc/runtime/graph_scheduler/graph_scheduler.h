@@ -28,11 +28,14 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
-#include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
 #include "thread/actor_threadpool.h"
+
+#ifdef ENABLE_RPC_ACTOR
+#include "runtime/graph_scheduler/rpc_node_scheduler.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -208,8 +211,10 @@ class GraphScheduler {
   // In the control flow, used to build and link control actor.
   ControlNodeScheduler control_node_scheduler_;
 
+#ifdef ENABLE_RPC_ACTOR
   // Used to build and link for rpc actors.
   std::unique_ptr<RpcNodeScheduler> rpc_node_scheduler_{nullptr};
+#endif
 
   // The id of global actor.
   AID memory_manager_aid_;

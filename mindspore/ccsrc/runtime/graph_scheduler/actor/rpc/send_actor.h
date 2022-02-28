@@ -36,11 +36,28 @@ class SendActor : public RpcActor {
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kSendActor) {}
   ~SendActor() override = default;
 
-  void SetRouteInfo(uint32_t dst_rank, const std::string &dst_role, const std::string &src_node_name,
-                    const std::string &dst_node_name) override;
+  // Set send actor's destination peer info, in another word, send actor's output.
+  void SetRouteInfo(uint32_t dst_rank, const std::string &dst_role, const std::string &send_src_node_name,
+                    const std::string &send_dst_node_name) override;
+
+  // Lookup peer actors' route and create connection to them.
+  bool ConnectServer();
+
+ protected:
+  // After rpc send kernel is launched, inter-process data should be sent.
+  void SendOutput(OpContext<DeviceTensor> *const context) override;
 
  private:
+  // Client only supports to send MessageBase, so build MessageBase with data and url.
+  std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtr &data, const std::string &server_url);
+
   friend class GraphScheduler;
+
+  // This send actor's destination peers' actor ids and route table.
+  std::vector<std::string> peer_actor_ids_;
+  mindspore::HashMap<std::string, std::string> peer_actor_urls_;
+
+  std::unique_ptr<TCPClient> client_;
 };
 
 using SendActorPtr = std::shared_ptr<SendActor>;

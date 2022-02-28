@@ -312,10 +312,12 @@ bool AbstractNode::SendToScheduler(const void *message, size_t len, NodeCommand 
   // Assign the response value from scheduler.
   if (output != nullptr) {
     if (received_scheduler_messages_.count(request_id) == 0) {
-      MS_LOG(ERROR) << "The response message of " << node_cmd << " is not received yet.";
+      MS_LOG(ERROR) << "The response message of command " << node_cmd << ", request_id " << request_id
+                    << " is not received yet.";
       return false;
     }
     *output = received_scheduler_messages_[request_id];
+    (void)received_scheduler_messages_.erase(request_id);
   }
   return ret;
 }

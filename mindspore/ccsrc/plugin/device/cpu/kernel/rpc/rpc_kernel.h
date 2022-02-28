@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RPC_RPC_KERNEL_H_
 
 #include <vector>
+#include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_factory.h"
 
@@ -34,6 +35,9 @@ class RpcKernelMod : public NativeCpuKernelMod {
   }
 
   void InitKernel(const CNodePtr &kernel_node) override { return; }
+
+  // Set remote data as input.
+  void SetRemoteInput(std::unique_ptr<MessageBase> &&) {}
 
  private:
 };
