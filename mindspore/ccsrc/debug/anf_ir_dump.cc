@@ -654,6 +654,7 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
       }
       oss << std::endl;
     }
+    oss << "subgraph instance: " << sg.first->ToString() << " : " << sg.first.get() << std::endl;
     oss << "subgraph @" << sg.first->ToString() << "(";
     if (sg.first != graph) {
       std::vector<AnfNodePtr> parameters = sg.first->parameters();

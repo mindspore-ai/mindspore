@@ -63,8 +63,6 @@ class MS_CORE_API MindIRLoader {
       : is_lite_(is_lite), dec_key_(dec_key), key_len_(key_len), dec_mode_(dec_mode), inc_load_(inc_load) {}
   ~MindIRLoader() = default;
 
-  bool get_need_renormalize() const { return need_renormalize_; }
-  void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
   void set_has_parallel_info(bool has_parallel_info) { has_parallel_info_ = has_parallel_info; }
   void set_weights_value_map(const std::map<string, ValuePtr> &weights_value_map) {
     weights_value_map_ = weights_value_map;
@@ -83,7 +81,6 @@ class MS_CORE_API MindIRLoader {
   size_t key_len_ = 0;
   std::string dec_mode_ = std::string("AES-GCM");
   bool inc_load_ = false;
-  bool need_renormalize_ = true;
   std::map<string, ValuePtr> weights_value_map_;
   bool has_parallel_info_ = false;
   LayoutMap layout_map_;

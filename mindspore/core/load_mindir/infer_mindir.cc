@@ -24,6 +24,7 @@
 #include "abstract/abstract_function.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace {
@@ -354,7 +355,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
     SaveNodeInferResult(node, it->second);
 
     // Process only one return valueNode function graph
-    auto func_inputs = func->func_graph()->get_inputs();
+    auto func_inputs = func->func_graph()->parameters();
     // args has been resolved in partial.
     if (args != nullptr) {
       if (func_inputs.size() != args->size()) {
@@ -390,7 +391,7 @@ void MindIREngine::EvalFuncGraphAbastract(const abstract::FuncGraphAbstractClosu
   func_graph_visited_[funcName] = std::set<AnfNodePtr>({node});
 
   // Call the funcGraph
-  auto func_inputs = func->func_graph()->get_inputs();
+  auto func_inputs = func->func_graph()->parameters();
 
   // args has been resolved in partial.
   if (args != nullptr) {
@@ -527,5 +528,38 @@ bool InferMindir(const FuncGraphPtr &root, const AbstractBasePtrList &args, bool
   auto engine = std::make_shared<MindIREngine>(root);
   engine->SetException(raise_exception);
   return engine->InferShape(args);
+}
+
+bool ValidMindir(const FuncGraphPtr &root) {
+  if (MsContext::GetInstance() == nullptr) {
+    MS_LOG(WARNING) << "MsContext::GetInstance() is nullptr.";
+    MsContext::device_type_seter([](std::shared_ptr<MsContext> &device_type_seter) {
+      device_type_seter.reset(new (std::nothrow) MsContext("vm", kCPUDevice));
+    });
+  }
+  MS_EXCEPTION_IF_NULL(root);
+  auto manager = root->manager();
+  if (manager == nullptr) {
+    manager = MakeManager();
+    manager->AddFuncGraph(root, true);
+  }
+  abstract::AbstractBasePtrList func_args;
+  const auto inputs = root->get_inputs();
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(func_args),
+                       [](const AnfNodePtr &arg) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg);
+                         if (arg->abstract() == nullptr) {
+                           MS_LOG(ERROR) << "The parameter's abstract is null:" << arg->DebugString();
+                         }
+                         MS_EXCEPTION_IF_NULL(arg->abstract());
+                         return arg->abstract();
+                       });
+  auto valid = InferMindir(root, func_args);
+  if (!valid) {
+    MS_LOG(ERROR) << "There is some wrong in the mindir. " << root->ToString() << " : " << root.get();
+    return false;
+  }
+  MS_LOG(DEBUG) << "Success to valid the mindir. " << root->ToString() << " : " << root.get();
+  return true;
 }
 }  // namespace mindspore

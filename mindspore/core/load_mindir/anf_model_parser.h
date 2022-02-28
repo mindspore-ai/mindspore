@@ -47,14 +47,15 @@ class MSANFModelParser {
   bool IsLite() const { return is_lite_; }
   void SetIncLoad() { inc_load_ = true; }
   bool IsIncLoad() const { return inc_load_; }
-  void set_need_renormalize(bool need_renormalize) { need_renormalize_ = need_renormalize; }
-  bool need_renormalize() const { return need_renormalize_; }
   void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
   void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
   void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
   void SetMindIRDecMode(const std::string &dec_mode) { mindir_dec_mode_ = dec_mode; }
 
  private:
+  bool BuildPrimitiveNode(const mind_ir::PrimitiveProto &primitive_proto);
+  abstract::AbstractBasePtr BuildAbstractFunction(const mind_ir::AttributeProto &attr_proto);
+  void CorrectFuncGraph(const FuncGraphPtr &root);
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
@@ -67,7 +68,7 @@ class MSANFModelParser {
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::NodeProto &node_proto);
   bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool GetAttrValueForCNode(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
-  bool GetAttrValueForCNodeWithType(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
+  bool SetPrimitiveAttrWithType(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   void ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
                                    mindspore::HashMap<std::string, ValuePtr> *multi_value_map);
@@ -76,9 +77,8 @@ class MSANFModelParser {
   bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto);
   bool BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node_proto);
   AnfNodePtr BuildOperatorNode(const mind_ir::NodeProto &node_proto);
-  bool CheckCNodePrim(const CNodePtr &cnode_ptr);
   bool SetEmptyTensorProtoCNodeAbstract(const AnfNodePtr &node_ptr);
-  bool SetCNodeAbstract(const mind_ir::AttributeProto &attr_proto, const CNodePtr &cnode_ptr);
+  void SetCNodeAbstract(const mind_ir::AttributeProto &attr_proto, const CNodePtr &cnode_ptr);
   bool SetNodeAbstractFromAttrProto(const mind_ir::AttributeProto &attr_proto, const AnfNodePtr &node_ptr);
   abstract::AbstractBasePtr GetNodeAbstractFromAttrProtoWithType(const mind_ir::AttributeProto &attr_proto);
   void SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr);
@@ -103,7 +103,7 @@ class MSANFModelParser {
   std::string ir_version_;
   bool is_lite_ = false;
   bool inc_load_ = false;
-  bool need_renormalize_ = true;
+  bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   std::string mindir_path_;
   const unsigned char *mindir_dec_key_{nullptr};

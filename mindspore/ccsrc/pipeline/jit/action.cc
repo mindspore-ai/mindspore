@@ -212,7 +212,7 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
   MS_LOG(DEBUG) << "AbstractAnalyze start";
   auto engine = resource->engine();
   MS_EXCEPTION_IF_NULL(engine);
-  if (clear) {
+  if (clear || resource->is_load()) {
     auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
@@ -226,6 +226,9 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
         auto primitive = GetCNodePrimitive(node);
         if (primitive != nullptr && abstract::GetPrimEvaluator(primitive, engine) == nullptr) {
           MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+          continue;
+        }
+        if (!clear && node->isa<Parameter>()) {
           continue;
         }
       }
@@ -1232,34 +1235,10 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
     is_equal_input_args = false;
   }
 
-  // suppose that there is not KeywordArgument for the top graph
-  // get the hyper parameter
-  for (const auto &param : fg->parameters()) {
-    auto param_node = std::static_pointer_cast<Parameter>(param);
-    MS_EXCEPTION_IF_NULL(param_node);
-    if (param_node->has_default()) {
-      auto value = param_node->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
-      auto ref_key = std::make_shared<RefKey>(param_node->name());
-      auto abs_ref_key = ref_key->ToAbstract();
-      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
-      broaded_args.push_back(abs_ref);
-    }
-  }
-
-  if (is_equal_input_args) {
-    (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
-  } else {
+  if (!is_equal_input_args) {
     // Use InferMindir which will find c++ infer in eval_map and backend_eval_map;
     (void)InferMindir(res->func_graph(), args_spec_list, true);
   }
-  auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
-  auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();
-  for (; it != it_end; ++it) {
-    it->first->node()->set_abstract(it->second->abstract());
-  }
-  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
   return true;
 }
 
