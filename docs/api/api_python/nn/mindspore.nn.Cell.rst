@@ -300,17 +300,62 @@
         - **mp_comm_recompute** (bool) – 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值：True。
         - **parallel_optimizer_comm_recompute** (bool) – 表示在自动并行或半自动并行模式下，指定Cell内部由优化器并行引入的AllGather通信是否重计算。默认值：False。
 
-    .. py:method:: register_backward_hook(fn)
+    .. py:method:: register_forward_pre_hook(hook_fn)
 
-        设置网络反向hook函数。此函数仅在PyNative Mode下支持。
+        设置Cell对象的正向pre_hook函数。此函数仅在PyNative模式下支持。
 
         .. note::
-            - fn必须有如下代码定义。 `cell_name` 是已注册网络的名称。 `grad_input` 是传递给网络的梯度。 `grad_output` 是计算或者传递给下一个网络或者算子的梯度，这个梯度可以被修改或者返回。
-            - fn的返回值为Tensor或者None：fn(cell_name, grad_input, grad_output) -> Tensor or None。
+            - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。用户可以在hook_fn中打印输入数据或者返回新的输入数据。
+            - hook_fn返回新的输入数据或者None：hook_fn(cell_id, inputs) -> New inputs or None。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_pre_hook(hook_fn)`。
 
         **参数：**
 
-        - **fn** (function) – 以梯度作为输入的hook函数。
+        - **hook_fn** (function) – 捕获Cell对象信息和正向输入数据的hook_fn函数。
+
+        **返回：**
+        - **handle** – 与hook_fn函数对应的handle对象。
+
+        **异常：**
+        - **TypeError** – 如果 `hook_fn` 不是Python函数。
+
+    .. py:method:: register_forward_hook(hook_fn)
+
+        设置Cell对象的正向hook函数。此函数仅在PyNative模式下支持。
+
+        .. note::
+            - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `inputs` 是网络正向传播时Cell对象的输入数据。 `outputs` 是网络正向传播时Cell对象的输出数据。用户可以在hook_fn中打印数据或者返回新的输出数据。
+            - hook_fn返回新的输出数据或者None：hook_fn(cell_id, inputs, outputs) -> New outputs or None。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_forward_hook(hook_fn)`。
+
+        **参数：**
+
+        - **hook_fn** (function) – 捕获Cell对象信息和正向输入，输出数据的hook_fn函数。
+
+        **返回：**
+        - **handle** – 与hook_fn函数对应的handle对象。
+
+        **异常：**
+        - **TypeError** – 如果 `hook_fn` 不是Python函数。
+
+    .. py:method:: register_backward_hook(hook_fn)
+
+        设置Cell对象的反向hook函数。此函数仅在PyNative模式下支持。
+
+        .. note::
+            - hook_fn必须有如下代码定义。 `cell_id` 是已注册Cell对象的信息，包括名称和ID。 `grad_input` 是反向传递给Cell对象的梯度。 `grad_output` 是Cell对象的反向输出梯度。用户可以在hook_fn中打印梯度数据或者返回新的输出梯度。
+            - hook_fn返回新的输出梯度或者None：hook_fn(cell_id, grad_input, grad_output) -> New grad_output or None。
+            - 为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_backward_hook(hook_fn)`。
+
+        **参数：**
+
+        - **hook_fn** (function) – 捕获Cell对象信息和反向输入，输出梯度的hook_fn函数。
+
+        **返回：**
+        - **handle** – 与hook_fn函数对应的handle对象。
+
+        **异常：**
+        - **TypeError** – 如果 `hook_fn` 不是Python函数。
 
     .. py:method:: remove_redundant_parameters()
 
