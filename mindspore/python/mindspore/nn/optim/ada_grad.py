@@ -49,12 +49,13 @@ class Adagrad(Optimizer):
 
     .. math::
        \begin{aligned}
-            &\rule{110mm}{0.4pt}                                                                 \\
+            &\hline \\
             &\textbf{Input}      : lr \text{ (learning rate)}, \: w_0 \text{ (params)}, \: f(w)
                 \text{ (objective)}, \: \lambda \text{ (weight decay)},                          \\
             &\hspace{12mm}    accum \text{ (initial accumulator value)} \\
             &\textbf{Initialize} :  state\_sum_0 \leftarrow 0.1                             \\[-1.ex]
-            &\rule{110mm}{0.4pt}                                                                 \\
+            &\newline
+            &\hline \\
             &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
             &\hspace{5mm}g_t           \leftarrow   \nabla_{w} f_t (w_{t-1})           \\
             &\hspace{5mm} \textbf{if} \: \lambda \neq 0                                          \\
@@ -62,9 +63,11 @@ class Adagrad(Optimizer):
             &\hspace{5mm}state\_sum_t  \leftarrow  state\_sum_{t-1} + g^2_t                      \\
             &\hspace{5mm}w_t \leftarrow
                 w_{t-1}- lr \frac{g_t}{\sqrt{state\_sum_t}}            \\
-            &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
+            &\newline
+            &\hline \\
             &\bf{return} \:  w_t                                                     \\[-1.ex]
-            &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
+            &\newline
+            &\hline \\
        \end{aligned}
 
     Note:
