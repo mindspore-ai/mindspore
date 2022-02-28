@@ -44,6 +44,11 @@ class MockOpsKernelInfoStore : public ge::OpsKernelInfoStore {
   ge::Status Finalize() override { return ge::SUCCESS; }
   void GetAllOpsKernelInfo(std::map<string, ge::OpInfo> &infos) const override {}
   bool CheckSupported(const ge::OpDescPtr &opDescPtr, std::string &un_supported_reason) const override { return true; }
+  bool CheckSupported(const ge::NodePtr &node, std::string &un_supported_reason) const { return true; }
+  bool CheckAccuracySupported(const ge::OpDescPtr &opDescPtr, std::string &un_supported_reason,
+      const bool realQuery = false) const override { return true; }
+  bool CheckAccuracySupported(const ge::NodePtr &node, std::string &un_supported_reason,
+      const bool realQuery = false) const { return true; }
   ge::Status LoadTask(ge::GETaskInfo &task) override { return ge::SUCCESS; }
 };
 

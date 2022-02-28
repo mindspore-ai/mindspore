@@ -252,14 +252,6 @@ if(ENABLE_D OR ENABLE_ACL)
           COMPONENT mindspore
         )
     endif()
-elseif(ENABLE_TESTCASES)
-    install(
-        FILES
-            ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
-            ${BUILD_PATH}/graphengine/c_sec/lib/libc_sec.so
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
 endif()
 
 if(MS_BUILD_GRPC)
