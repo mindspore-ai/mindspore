@@ -18,7 +18,6 @@ set(_OFFLINE_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/debugger/tensor_summary.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/dbg_services.cc"
-    "${CMAKE_SOURCE_DIR}/mindspore/core/utils/log_adapter.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/debugger/offline_debug/mi_pybind_register.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
 )
@@ -75,7 +74,6 @@ if(ENABLE_DEBUGGER)
         add_library(_mindspore_offline_debug SHARED ${_OFFLINE_SRC_LIST})
         target_link_libraries(_mindspore_offline_debug PRIVATE
             mindspore::pybind11_module
-            mindspore::glog
             mindspore_core
             )
         set_target_properties(_mindspore_offline_debug PROPERTIES
@@ -87,6 +85,7 @@ if(ENABLE_DEBUGGER)
             set_target_properties(_mindspore_offline_debug PROPERTIES INSTALL_RPATH @loader_path/lib)
         else()
             set_target_properties(_mindspore_offline_debug PROPERTIES INSTALL_RPATH $ORIGIN/lib)
+            target_link_options(_mindspore_offline_debug PRIVATE -Wl,-init,common_log_init)
         endif()
     endif()
 endif()
