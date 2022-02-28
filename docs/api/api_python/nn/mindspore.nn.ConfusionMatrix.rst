@@ -1,7 +1,7 @@
 mindspore.nn.ConfusionMatrix
 ============================
 
-.. py:class:: mindspore.nn.ConfusionMatrix(num_classes, normalize='no_norm', threshold=0.5)
+.. py:class:: mindspore.nn.ConfusionMatrix(num_classes, normalize='NO_NORM', threshold=0.5)
 
     计算混淆矩阵(confusion matrix)，通常用于评估分类模型的性能，包括二分类和多分类场景。
 

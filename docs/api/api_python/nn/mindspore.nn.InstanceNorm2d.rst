@@ -1,7 +1,7 @@
 mindspore.nn.InstanceNorm2d
 ============================
 
-.. py:class:: mindspore.nn.InstanceNorm2d(num_features, eps=1e-05, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros')
+.. py:class:: mindspore.nn.InstanceNorm2d(num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros')
 
     对四维输入实现实例归一化层（Instance Normalization Layer）。
 

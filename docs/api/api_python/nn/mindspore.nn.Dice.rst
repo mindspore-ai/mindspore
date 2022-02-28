@@ -1,7 +1,7 @@
 mindspore.nn.Dice
 ==================
 
-.. py:class:: mindspore.nn.Dice(smooth=1e-05)
+.. py:class:: mindspore.nn.Dice(smooth=1e-5)
 
     集合相似性度量。
 

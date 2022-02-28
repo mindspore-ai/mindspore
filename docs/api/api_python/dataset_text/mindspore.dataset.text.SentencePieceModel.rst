@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.SentencePieceModel
 ==========================================
 
-.. py:class:: mindspore.dataset.text.SentencePieceModel(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.text.SentencePieceModel
 
     `SentencePiece` 分词方法的枚举类。
 

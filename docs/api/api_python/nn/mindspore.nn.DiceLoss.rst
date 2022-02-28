@@ -1,7 +1,7 @@
 mindspore.nn.DiceLoss
 ======================
 
-.. py:class:: mindspore.nn.DiceLoss(smooth=1e-05)
+.. py:class:: mindspore.nn.DiceLoss(smooth=1e-5)
 
     Dice系数是一个集合相似性loss,用于计算两个样本之间的相似性。当分割结果最好时，Dice系数的值为1，当分割结果最差时，Dice系数的值为0。
 

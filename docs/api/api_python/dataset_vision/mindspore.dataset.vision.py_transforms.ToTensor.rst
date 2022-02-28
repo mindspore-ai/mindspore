@@ -1,7 +1,7 @@
 mindspore.dataset.vision.py_transforms.ToTensor
 ===============================================
 
-.. py:class:: mindspore.dataset.vision.py_transforms.ToTensor(output_type=numpy.float32)
+.. py:class:: mindspore.dataset.vision.py_transforms.ToTensor(output_type=np.float32)
 
     将输入的PIL或numpy.ndarray图像转换为指定数据类型的numpy.ndarray图像，此时像素值取值将由[0, 255]变为[0.0, 1.0]，图像的shape将由(H, W, C)变为(C, H, W)。
 

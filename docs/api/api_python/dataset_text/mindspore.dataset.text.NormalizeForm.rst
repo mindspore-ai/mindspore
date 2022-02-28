@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.NormalizeForm
 =====================================
 
-.. py:class:: mindspore.dataset.text.NormalizeForm(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.text.NormalizeForm
 
     :class:`NormalizeUTF8` 的枚举值。
 

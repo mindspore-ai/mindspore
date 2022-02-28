@@ -162,7 +162,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     - **Valuerror** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
 
-    .. py:method:: network_auto_process_train()
+    .. py:method:: network_auto_process_train(network, optimizer)
     
         使用Boost算法训练。
     
@@ -171,7 +171,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - network (Cell)，训练网络。
         - optimizer (Union[Cell])，用于更新权重的优化器。
     
-    .. py:method:: network_auto_process_eval()
+    .. py:method:: network_auto_process_eval(network)
     
         使用Boost算法推理。
     

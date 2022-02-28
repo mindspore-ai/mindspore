@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.nn.transformer.TransformerOpParallelConfig(data_parallel=1, model_parallel=1, pipeline_stage=1, micro_batch_num=1, recompute=False, optimizer_shard=False, gradient_aggregation_group=4, vocab_emb_dp=True)
+﻿.. py:class:: mindspore.nn.transformer.TransformerOpParallelConfig(data_parallel=1, model_parallel=1, expert_parallel=1, pipeline_stage=1, micro_batch_num=1, recompute=default_transformer_recompute_config, optimizer_shard=False, gradient_aggregation_group=4, vocab_emb_dp=True)
 
     用于设置数据并行、模型并行等等并行配置的TransformerOpParallelConfig。
 

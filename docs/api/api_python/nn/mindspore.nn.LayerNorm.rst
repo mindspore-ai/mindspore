@@ -1,7 +1,7 @@
 mindspore.nn.LayerNorm
 =======================
 
-.. py:class:: mindspore.nn.LayerNorm(normalized_shape, begin_norm_axis=-1, begin_params_axis=-1, gamma_init='ones', beta_init='zeros', epsilon=1e-07)
+.. py:class:: mindspore.nn.LayerNorm(normalized_shape, begin_norm_axis=-1, begin_params_axis=-1, gamma_init='ones', beta_init='zeros', epsilon=1e-7)
 
     在mini-batch输入上应用层归一化（Layer Normalization）。
 

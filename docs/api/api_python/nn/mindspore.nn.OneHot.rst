@@ -1,7 +1,7 @@
 mindspore.nn.OneHot
 ====================
 
-.. py:class:: mindspore.nn.OneHot(axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mindspore.float32)
+.. py:class:: mindspore.nn.OneHot(axis=-1, depth=1, on_value=1.0, off_value=0.0, dtype=mstype.float32)
 
     返回一个one-hot类型的Tensor。
 
