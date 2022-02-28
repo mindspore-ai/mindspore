@@ -27,12 +27,12 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kLenLogProbs = 3;
-constexpr size_t kLenTarget = 2;
-constexpr int64_t kMulti = 2;
-constexpr int64_t kInputSize = 4;
 abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
+  constexpr size_t kLenLogProbs = 3;
+  constexpr size_t kLenTarget = 2;
+  constexpr int64_t kMulti = 2;
+  constexpr int64_t kInputSize = 4;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize,

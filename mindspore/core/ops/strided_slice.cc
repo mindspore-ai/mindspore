@@ -28,10 +28,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t begin_index = 1;
-const size_t end_index = 2;
-const size_t stride_index = 3;
-
 std::vector<int64_t> TenToTwo(int64_t num) {
   std::vector<int64_t> output;
   if (num == 0) {
@@ -340,6 +336,9 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   size_t begin_len = 0;
   size_t end_len = 0;
   size_t stride_len = 0;
+  const size_t begin_index = 1;
+  const size_t end_index = 2;
+  const size_t stride_index = 3;
   bool begin_dynamic = CheckAndGetDynamicSlice(input_args[begin_index], "begin", &begin_v, &begin_len);
   bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len);
   bool stride_dynamic = CheckAndGetDynamicSlice(input_args[stride_index], "strides", &strides_v, &stride_len);

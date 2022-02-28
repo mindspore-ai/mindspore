@@ -19,8 +19,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t input_num = 2;
-
 abstract::ShapePtr AcoshGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
@@ -46,6 +44,7 @@ AbstractBasePtr AcoshGradInfer(const abstract::AnalysisEnginePtr &, const Primit
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const size_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto types = AcoshGradInferType(primitive, input_args);
   auto shapes = AcoshGradInferShape(primitive, input_args);

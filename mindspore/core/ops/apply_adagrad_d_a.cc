@@ -28,7 +28,8 @@ namespace mindspore {
 namespace ops {
 
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 8;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
@@ -54,7 +55,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     std::vector<abstract::BaseShapePtr>{var_shape, gradient_accumulator_shape, gradient_squared_accumulator_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 8;
@@ -100,7 +101,8 @@ TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> 
 AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(ApplyAdagradDAInferShape(primitive, input_args),
+                                ApplyAdagradDAInferType(primitive, input_args));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(ApplyAdagradDA, prim::kPrimApplyAdagradDA, ApplyAdagradDAInfer, nullptr, true);

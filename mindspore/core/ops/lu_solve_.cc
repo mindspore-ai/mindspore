@@ -47,7 +47,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t kDimNum = 2;
@@ -128,7 +128,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr LuSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kDimNum = 2;
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -152,8 +152,8 @@ AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = LuSolveInferType(primitive, input_args);
+  auto infer_shape = LuSolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

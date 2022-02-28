@@ -24,9 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kScaleNum = 2;
-
 abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr size_t kScaleNum = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];

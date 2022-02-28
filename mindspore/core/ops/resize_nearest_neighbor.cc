@@ -44,7 +44,8 @@ bool ResizeNearestNeighbor::get_align_corners() const {
 }
 
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
@@ -77,7 +78,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ResizeNearestNeighborInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto valid_types = common_valid_types;
   valid_types.insert(kComplex128);
   valid_types.insert(kComplex64);
@@ -90,7 +91,8 @@ AbstractBasePtr ResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, 
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
                                            kEqual, input_num, prim_name);
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(ResizeNearestNeighborInferShape(primitive, input_args),
+                                ResizeNearestNeighborInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ResizeNearestNeighbor, prim::kPrimResizeNearestNeighbor, ResizeNearestNeighborInfer,
                              nullptr, true);

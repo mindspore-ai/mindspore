@@ -24,7 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr LogMatrixDeterminantInferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
@@ -39,7 +40,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 
-TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr LogMatrixDeterminantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat32};
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
@@ -52,8 +53,8 @@ AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, c
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = InferType(primitive, input_args);
-  auto infershape = InferShape(primitive, input_args);
+  auto infertype = LogMatrixDeterminantInferType(primitive, input_args);
+  auto infershape = LogMatrixDeterminantInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LogMatrixDeterminant, prim::kPrimLogMatrixDeterminant, LogMatrixDeterminantInfer, nullptr,

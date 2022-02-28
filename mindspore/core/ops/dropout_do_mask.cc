@@ -40,7 +40,8 @@ T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
   return *value;
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
   auto mask_shape = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 1);
@@ -72,7 +73,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return x_shape;
 }
 
-TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   auto keep_prop = input_args[kInputIndex2];
   MS_EXCEPTION_IF_NULL(keep_prop);
@@ -121,7 +122,8 @@ AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const Pr
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(DropoutDoMaskInferShape(primitive, input_args),
+                                DropoutDoMaskInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DropoutDoMask, prim::kPrimDropoutDoMask, DropoutDoMaskInfer, nullptr, true);
 }  // namespace ops

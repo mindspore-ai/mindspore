@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_GRID_SAMPLER_3D_H_
-#define MINDSPORE_CORE_OPS_GRID_SAMPLER_3D_H_
+#ifndef MINDSPORE_CORE_OPS_GRAD_GRID_SAMPLER_3D_GRAD_H_
+#define MINDSPORE_CORE_OPS_GRAD_GRID_SAMPLER_3D_GRAD_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -41,4 +41,4 @@ using PrimGridSampler3DGrad = std::shared_ptr<GridSampler3DGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_GRID_SAMPLER_3D_H_
+#endif  // MINDSPORE_CORE_OPS_GRAD_GRID_SAMPLER_3D_GRAD_H_

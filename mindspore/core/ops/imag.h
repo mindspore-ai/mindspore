@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_REAL_H_
-#define MINDSPORE_CORE_OPS_REAL_H_
+#ifndef MINDSPORE_CORE_OPS_IMAG_H_
+#define MINDSPORE_CORE_OPS_IMAG_H_
 #include <memory>
 #include <vector>
 
@@ -40,4 +40,4 @@ class MS_CORE_API Imag : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_REAL_H_
+#endif  // MINDSPORE_CORE_OPS_IMAG_H_

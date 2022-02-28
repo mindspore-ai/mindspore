@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
@@ -73,7 +73,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   return std::make_shared<abstract::Shape>(input_shape);
 }
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 2;
@@ -105,8 +105,8 @@ Format BiasAdd::get_format() const {
 void BiasAdd::Init(const Format &format) { this->set_format(format); }
 AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  auto infertype = InferType(primitive, input_args);
-  auto infershape = InferShape(primitive, input_args);
+  auto infertype = BiasAddInferType(primitive, input_args);
+  auto infershape = BiasAddInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BiasAdd, prim::kPrimBiasAdd, BiasAddInfer, nullptr, true);

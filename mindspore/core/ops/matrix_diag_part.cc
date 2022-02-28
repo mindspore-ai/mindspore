@@ -23,21 +23,22 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const constexpr int64_t kShape2 = 2;
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MatrixDiagPartInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_shape = input_args[0]->BuildShape();
   auto shape_element = input_shape->cast<abstract::ShapePtr>();
   ShapeVector shape = shape_element->shape();
   ShapeVector min_shape = shape_element->shape();
   ShapeVector max_shape = shape_element->shape();
+  const constexpr int64_t kShape2 = 2;
   max_shape[shape.size() - 1] = kShape2 * shape[shape.size() - 1] - 1;
   min_shape[shape.size() - 1] = 1;
   shape[shape.size() - 1] = abstract::Shape::SHP_ANY;
   return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MatrixDiagPartInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -51,7 +52,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
+  return abstract::MakeAbstract(MatrixDiagPartInferShape(primitive, input_args),
+                                MatrixDiagPartInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDiagPartV3, prim::kPrimMatrixDiagPart, MatrixDiagPartInfer, nullptr, true);
 }  // namespace ops

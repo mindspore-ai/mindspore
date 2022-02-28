@@ -24,7 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MatrixInverseInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
@@ -37,7 +38,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MatrixInverseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   auto infer_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
@@ -50,8 +51,8 @@ AbstractBasePtr MatrixInverseInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = InferType(primitive, input_args);
-  auto infershape = InferShape(primitive, input_args);
+  auto infertype = MatrixInverseInferType(primitive, input_args);
+  auto infershape = MatrixInverseInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MatrixInverse, prim::kPrimMatrixInverse, MatrixInverseInfer, nullptr, true);
