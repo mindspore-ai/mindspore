@@ -1,7 +1,7 @@
 mindspore.nn.BatchNorm2d
 =========================
 
-.. py:class:: mindspore.nn.BatchNorm2d(num_features, eps=1e-05, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW')
+.. py:class:: mindspore.nn.BatchNorm2d(num_features, eps=1e-5, momentum=0.9, affine=True, gamma_init='ones', beta_init='zeros', moving_mean_init='zeros', moving_var_init='ones', use_batch_statistics=None, data_format='NCHW')
 
     对输入的四维数据进行批归一化层(Batch Normalization Layer)。
 

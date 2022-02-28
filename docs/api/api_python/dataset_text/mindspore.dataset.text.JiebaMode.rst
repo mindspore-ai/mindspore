@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.JiebaMode
 =================================
 
-.. py:class:: mindspore.dataset.text.JiebaMode(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.text.JiebaMode
 
     :class:`JiebaTokenizer` 的枚举值。
 

@@ -1,5 +1,5 @@
 
-.. py:class:: mindspore.mindrecord.FileWriter(file_name, shard_num=1)
+.. py:class:: mindspore.mindrecord.FileWriter(file_name, shard_num=1, overwrite=False)
 
     将用户自定义的数据转为MindRecord格式数据集的类。
 

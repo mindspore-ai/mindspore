@@ -1,7 +1,7 @@
 mindspore.Tensor
 ================
 
-.. py:class:: mindspore.Tensor(input_data=None, dtype=None, shape=None, init=None)
+.. py:class:: mindspore.Tensor(input_data=None, dtype=None, shape=None, init=None, internal=False)
 
     张量，即存储多维数组（n-dimensional array）的数据结构。
 

@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.SPieceTokenizerLoadType
 ===============================================
 
-.. py:class:: mindspore.dataset.text.SPieceTokenizerLoadType(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.text.SPieceTokenizerLoadType
 
     :class:`SentencePieceTokenizer` 加载类型的枚举值。
 

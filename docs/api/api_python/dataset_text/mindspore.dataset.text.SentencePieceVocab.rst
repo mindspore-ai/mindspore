@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.SentencePieceVocab
 ==========================================
 
-.. py:class:: mindspore.dataset.text.SentencePieceVocab(cde.SentencePieceVocab)
+.. py:class:: mindspore.dataset.text.SentencePieceVocab
 
     用于执行分词的SentencePiece对象。
 

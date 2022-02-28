@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.text.SPieceTokenizerOutType
 ==============================================
 
-.. py:class:: mindspore.dataset.text.SPieceTokenizerOutType(value, names=None, *, module=None, qualname=None, type=None, start=1)
+.. py:class:: mindspore.dataset.text.SPieceTokenizerOutType
 
     :class:`SentencePieceTokenizer` 输出类型的枚举值。
 

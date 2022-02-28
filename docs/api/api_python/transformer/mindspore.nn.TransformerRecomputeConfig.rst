@@ -1,5 +1,4 @@
-﻿.. py:class:: mindspore.nn.transformer.TransformerRecomputeConfig(recompute=False, parallel_optimizer_comm_recompute=False,
-                                                                  mp_comm_recompute=True, recompute_slice_activation=False)
+﻿.. py:class:: mindspore.nn.transformer.TransformerRecomputeConfig(recompute=False, parallel_optimizer_comm_recompute=False, mp_comm_recompute=True, recompute_slice_activation=False)
 
     Transformer的重计算配置接口。
 
