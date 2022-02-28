@@ -178,57 +178,58 @@ Status ModelC::Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorH
 }
 
 Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after) {
-  if (before == nullptr || after == nullptr) {
-    auto ret = session_->RunGraph();
-    return static_cast<StatusCode>(ret);
+  KernelCallBack before_call_back = nullptr;
+  KernelCallBack after_call_back = nullptr;
+  if (before != nullptr) {
+    before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                           const CallBackParam &call_param) {
+      std::vector<mindspore::MSTensor::Impl> inputs_impl;
+      std::vector<mindspore::MSTensor::Impl> outputs_impl;
+      std::vector<MSTensorHandle> op_inputs;
+      std::vector<MSTensorHandle> op_outputs;
+      size_t op_input_num = before_inputs.size();
+      for (size_t i = 0; i < op_input_num; i++) {
+        inputs_impl.emplace_back(before_inputs[i]);
+        op_inputs.push_back(&(inputs_impl.back()));
+      }
+      size_t op_output_num = before_outputs.size();
+      for (size_t i = 0; i < op_output_num; i++) {
+        outputs_impl.emplace_back(before_outputs[i]);
+        op_outputs.push_back(&(outputs_impl.back()));
+      }
+      const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
+                                        const_cast<char *>(call_param.node_type.c_str())};
+      MSTensorHandleArray inputs = {op_input_num, op_inputs.data()};
+      MSTensorHandleArray outputs = {op_output_num, op_outputs.data()};
+      return before(inputs, outputs, op_info);
+    };
   }
-  auto before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                              const CallBackParam &call_param) {
-    std::vector<mindspore::MSTensor::Impl> inputs_impl;
-    std::vector<mindspore::MSTensor::Impl> outputs_impl;
-    std::vector<MSTensorHandle> op_inputs;
-    std::vector<MSTensorHandle> op_outputs;
-    size_t op_input_num = before_inputs.size();
-    for (size_t i = 0; i < op_input_num; i++) {
-      inputs_impl.emplace_back(before_inputs[i]);
-      op_inputs.push_back(&(inputs_impl.back()));
-    }
-    size_t op_output_num = before_outputs.size();
-    for (size_t i = 0; i < op_output_num; i++) {
-      outputs_impl.emplace_back(before_outputs[i]);
-      op_outputs.push_back(&(outputs_impl.back()));
-    }
-    const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
-                                      const_cast<char *>(call_param.node_type.c_str())};
-    MSTensorHandleArray inputs = {op_input_num, op_inputs.data()};
-    MSTensorHandleArray outputs = {op_output_num, op_outputs.data()};
-    return before(inputs, outputs, op_info);
-  };
-
-  auto after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                             const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                             const CallBackParam &call_param) {
-    std::vector<mindspore::MSTensor::Impl> inputs_impl;
-    std::vector<mindspore::MSTensor::Impl> outputs_impl;
-    std::vector<MSTensorHandle> op_inputs;
-    std::vector<MSTensorHandle> op_outputs;
-    size_t op_input_num = after_inputs.size();
-    for (size_t i = 0; i < op_input_num; i++) {
-      inputs_impl.emplace_back(after_inputs[i]);
-      op_inputs.push_back(&(inputs_impl.back()));
-    }
-    size_t op_output_num = after_outputs.size();
-    for (size_t i = 0; i < op_output_num; i++) {
-      outputs_impl.emplace_back(after_outputs[i]);
-      op_outputs.push_back(&(outputs_impl.back()));
-    }
-    const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
-                                      const_cast<char *>(call_param.node_type.c_str())};
-    MSTensorHandleArray inputs = {op_input_num, op_inputs.data()};
-    MSTensorHandleArray outputs = {op_output_num, op_outputs.data()};
-    return after(inputs, outputs, op_info);
-  };
+  if (after != nullptr) {
+    after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                          const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                          const CallBackParam &call_param) {
+      std::vector<mindspore::MSTensor::Impl> inputs_impl;
+      std::vector<mindspore::MSTensor::Impl> outputs_impl;
+      std::vector<MSTensorHandle> op_inputs;
+      std::vector<MSTensorHandle> op_outputs;
+      size_t op_input_num = after_inputs.size();
+      for (size_t i = 0; i < op_input_num; i++) {
+        inputs_impl.emplace_back(after_inputs[i]);
+        op_inputs.push_back(&(inputs_impl.back()));
+      }
+      size_t op_output_num = after_outputs.size();
+      for (size_t i = 0; i < op_output_num; i++) {
+        outputs_impl.emplace_back(after_outputs[i]);
+        op_outputs.push_back(&(outputs_impl.back()));
+      }
+      const MSCallBackParamC op_info = {const_cast<char *>(call_param.node_name.c_str()),
+                                        const_cast<char *>(call_param.node_type.c_str())};
+      MSTensorHandleArray inputs = {op_input_num, op_inputs.data()};
+      MSTensorHandleArray outputs = {op_output_num, op_outputs.data()};
+      return after(inputs, outputs, op_info);
+    };
+  }
   auto ret = session_->RunGraph(before_call_back, after_call_back);
   return static_cast<StatusCode>(ret);
 }
