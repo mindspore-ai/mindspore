@@ -16,6 +16,7 @@
 from types import FunctionType, MethodType
 
 from mindspore import context
+from mindspore import log as logger
 from mindspore._c_expression import security
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
@@ -334,6 +335,11 @@ class HookBackward(PrimitiveWithInfer):
 
     Args:
         hook_fn (Function): Python function. hook function.
+        cell_id (str): Used to identify whether the function registered by the hook is actually registered on
+                       the specified cell object. For example, 'nn.Conv2d' is a cell object.
+                       The default value of cell_id is empty string(""), in this case, the system will automatically
+                       register a value of cell_id.
+                       The value of cell_id currently does not support custom values.
 
     Inputs:
         - **input** (Tensor) - The variable to hook.
@@ -375,15 +381,18 @@ class HookBackward(PrimitiveWithInfer):
         (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))
     """
 
-    def __init__(self, hook_fn):
+    def __init__(self, hook_fn, cell_id=""):
         """Initialize HookBackward."""
         super(HookBackward, self).__init__(self.__class__.__name__)
         if not isinstance(hook_fn, (FunctionType, MethodType)):
             raise TypeError(f"For '{self.name}', the type of 'hook_fn' should be python function, "
                             f"but got {type(hook_fn)}.")
-        self.add_prim_attr("cell_id", "")
-        self.init_attrs["cell_id"] = ""
-        self.cell_id = ""
+        if cell_id != "":
+            logger.warning(f"The args 'cell_id' of HookBackward will be removed in a future version. If the value of "
+                           f"'cell_id' is set, the hook function will not work.")
+        self.add_prim_attr("cell_id", cell_id)
+        self.init_attrs["cell_id"] = cell_id
+        self.cell_id = cell_id
         self.add_backward_hook_fn(hook_fn)
 
     def infer_shape(self, *inputs_shape):
