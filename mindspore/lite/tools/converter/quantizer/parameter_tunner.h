@@ -30,8 +30,8 @@
 #include "tools/converter/converter_flags.h"
 namespace mindspore::lite::quant {
 struct InferenceParam {
-  int start_scale;
-  int end_scale;
+  int range_start;
+  int range_end;
   int step;
   int thread_num;
 };
@@ -49,9 +49,8 @@ class ParameterOptimizer {
   int CloneFuncGraph(const FuncGraphPtr &func_graph, converter::Flags *flags, FuncGraphPtr *func_graph_bak);
 
   int WeightQuantModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
-                                session::LiteSession *origin_session, int origin_model_size,
-                                const InferenceParam &param, int *ret_scale, float *best_compress_ratio,
-                                bool *found_valid_scale);
+                                session::LiteSession *origin_session, int origin_model_size, InferenceParam *param,
+                                int *ret_scale, float *best_compress_ratio, bool *found_valid_scale);
 
   int OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags, SessionModel *sm,
                            int *origin_model_size);

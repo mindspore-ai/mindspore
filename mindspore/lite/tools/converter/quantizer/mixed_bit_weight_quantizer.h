@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <vector>
 #include <cmath>
+#include <string>
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
@@ -30,6 +31,11 @@ typedef struct {
   float scale;
 } BinarySearchResult;
 
+typedef struct {
+  float inv_norm;
+  MinMax mm;
+} LayerParam;
+
 class MixedBitWeightQuantizer {
  public:
   explicit MixedBitWeightQuantizer(float target_relative_err = 0.01, float target_search_tolerance = 0.01,
@@ -40,18 +46,22 @@ class MixedBitWeightQuantizer {
   ~MixedBitWeightQuantizer() = default;
 
   int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,
-                     std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas);
+                     std::vector<schema::QuantParamT> *quant_params, std::vector<int16_t> *quant_datas,
+                     const std::string &description, bool use_auto_tune_alg);
 
  private:
   float MeasureQuantizationError(float *weights, const int *shape, int dims, int preferred_dim, float scale);
 
-  MinMax GetMinMax(const float *arr, int arrc);
+  static MinMax GetMinMax(const float *arr, int arrc);
+  static LayerParam CalculateLayerParams(const float *weights, int element_num);
 
   int QuantizeByScale(const float *weights, int weightsc, float scale, schema::QuantParamT *quant_params,
                       std::vector<int16_t> *quant_datas);
 
   BinarySearchResult BinarySearchForQuantizationScale(float *weights, int *shape, int dims, int preferred_dim,
                                                       int max_iters, float target_err, float rel_tol);
+
+  float GetDx(float *weights, int *shape, int dims, int preferred_dim, const std::string &description);
 
   void GetBiasCorrection(float *weights, int element_num, float scale, float *origin_dequant_datas);
 

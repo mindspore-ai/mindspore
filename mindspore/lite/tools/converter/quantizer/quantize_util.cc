@@ -521,7 +521,8 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
 
 int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                         const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
-                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry) {
+                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry,
+                        bool use_auto_tune_alg) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();
@@ -545,8 +546,8 @@ int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
     return RET_ERROR;
   }
   MixedBitWeightQuantizer quantizer(init_scale);
-  auto ret =
-    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
+  auto ret = quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params,
+                                      &quant_data, parameter_node->fullname_with_scope(), use_auto_tune_alg);
   if (ret == RET_NO_CHANGE) {
     const int quant_min = QuantMin(k8Bit, false, false);  // -128
     const int quant_max = QuantMax(k8Bit);                // 127
