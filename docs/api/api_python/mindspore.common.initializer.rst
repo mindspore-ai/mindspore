@@ -132,3 +132,83 @@ mindspore.common.initializer
 
 .. automodule:: mindspore.common.initializer
     :members:
+
+
+.. py:class:: mindspore.common.initializer.Identity(**kwargs)
+
+    生成一个2维的单位阵用于初始化Tensor。
+
+    **异常：**
+
+    - **ValueError** - 被初始化的Tensor的维度不等于2。
+
+
+.. py:class:: mindspore.common.initializer.Sparse(sparsity, sigma=0.01)
+
+    生成一个2维的稀疏矩阵用于初始化Tensor。矩阵非0的位置的值服从正态分布N(0, 0.01)。
+
+    **参数：**
+
+    **sparsity** (float) - 矩阵每列中元素被置0的比例。
+    **sigma** (float) - 正态分布的标准差，默认值为0.01。
+
+    **异常：**
+
+    - **ValueError** - 被初始化的Tensor的维度不等于2。
+
+
+
+.. py:class:: mindspore.common.initializer.Dirac(group=1)
+
+    利用Dirac delta函数生成一个array用于初始化Tensor。这种初始化方式将会保留卷积层的输入。对于group
+    卷积，通道的每个分组会被分别保留。
+
+    **参数：**
+
+    **group** (int) - 卷积层中的分组，默认值为1。
+
+    **异常：**
+
+    - **ValueError** - group不在[3, 4, 5]的范围内。
+    - **ValueError** - 初始化的Tensor的第一个维度不能被group整除。
+
+
+
+.. py:class:: mindspore.common.initializer.Orthogonal(gain=1.)
+
+    生成一个(半)正交矩阵用于初始化Tensor。被初始化的Tensor的维度至少为2。
+    如果维度大于2，多余的维度将会被展平。
+
+    **参数：**
+
+    **gain** (float) - 可选的比例因子，默认值为1。
+
+    **异常：**
+
+    - **ValueError** - 被初始化的Tensor的维度小于2。
+
+
+.. py:class:: mindspore.common.initializer.VarianceScaling(scale=1.0, mode="fan_in", distribution="truncated_normal")
+
+    生成一个随机的array用于初始化Tensor。
+    当distribution是"truncated_normal"或者"untruncated_normal"时，array中的值将服从均值为0，标准差
+    为 :math:`stddev = sqrt(scale/n)` 的截断或者非截断正太分布。如果mode是"fan_in"， :math:`n` 是输入单元的数量；
+    如果mode是"fan_out"， :math:`n` 是输出单元的数量；如果mode是"fan_avg"， :math:`n` 是输入输出单元数量的均值。
+    当distribution是"uniform"时，array中的值将服从均匀分布[`-sqrt(3*scale/n)`, `sqrt(3*scale/n)`]。
+
+    **参数：**
+
+    **scale** (float) - 比例因子，默认值为1.0。
+    **mode** (str) - 其值应为"fan_in"，"fan_out"或者"fan_avg"，默认值为"fan_in"。
+    **distribution** (str) - 用于采样的分布类型。它可以是"uniform"，"truncated_normal"或"untruncated_normal"，
+    默认值为"truncated_normal"。
+
+
+    **异常：**
+
+    - **ValueError** - scale小于等于0。
+    - **ValueError** - mode不是"fan_in"，"fan_out"或者"fan_avg"。
+    - **ValueError** - distribution不是"truncated_normal"，"untruncated_normal"或者"uniform"。
+
+
+    

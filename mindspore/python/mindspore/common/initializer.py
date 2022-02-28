@@ -379,7 +379,7 @@ class Constant(Initializer):
 @_register()
 class Identity(Initializer):
     """
-    Initialize a 2 dimension identity matrix to fill the input tensor.
+    Generates a 2 dimension identity matrix array in order to initialize a tensor.
 
     Raises:
         ValueError: If the dimension of input tensor is not equal to 2.
@@ -401,8 +401,8 @@ class Identity(Initializer):
 @_register()
 class Sparse(Initializer):
     """
-    Initialize a 2 dimension sparse matrix to fill the input tensor. The non-zero positions will be filled with
-    the value sampled from the normal distribution :math:`{N}(0, 0.01)`
+    Generates a 2 dimension sparse matrix array in order to initialize a tensor. The non-zero positions
+    will be filled with the value sampled from the normal distribution :math:`{N}(0, 0.01)`
 
     Args:
          sparsity (float): The fraction of elements being set to zero in each column.
@@ -436,8 +436,10 @@ class Sparse(Initializer):
 
 @_register()
 class Dirac(Initializer):
-    """Initialize input tensor with the Dirac delta function. It tries to preserves the identity of
-    input for convolution layers. For group convolution, each group of channels will be preserved respectively.
+    """
+    Generates an array with the Dirac delta function in order to initialize a tensor.
+    It tries to preserves the identity of input for convolution layers.
+    For group convolution, each group of channels will be preserved respectively.
 
     Args:
         groups (int): The number of group in convolution layer. Default: 1.
@@ -487,8 +489,9 @@ class Dirac(Initializer):
 @_register()
 class Orthogonal(Initializer):
     r"""
-    Initialize a (semi) orthogonal matrix to fill the input tensor. The dimension of input tensor must have at least 2
-    dimensions. If the dimension is greater than 2, the trailing dimensions will be flattened.
+    Generates a (semi) orthogonal matrix array in order to initialize a tensor.
+    The dimension of input tensor must have at least 2 dimensions.
+    If the dimension is greater than 2, the trailing dimensions will be flattened.
 
     Args:
          gain (float): An optional scaling factor. Default: 1.
@@ -532,7 +535,7 @@ class Orthogonal(Initializer):
 @_register()
 class VarianceScaling(Initializer):
     r"""
-    Randomly initialize an array with scaling to fill the input tensor.
+    Generates an random array with scaling in order to initialize a tensor.
     When distribution is truncated_normal or untruncated_normal, the value will be sampled from truncated or
     untruncated normal distribution with a mean of 0 and a scaled standard deviation :math:`stddev = sqrt(scale/n)`.
     :math:`n` will be the number of input units if mode is fan_in, the number of output units if mode is fan_out,
@@ -543,7 +546,8 @@ class VarianceScaling(Initializer):
     Args:
         scale (float): The scaling factor. Default: 1.0.
         mode (str): Should be 'fan_in', 'fan_out' or 'fan_avg'. Default: 'fan_in'.
-        distribution(str): The type of distribution chose to sample values. Default: 'truncated_normal'.
+        distribution(str): The type of distribution chose to sample values. It should be
+        'uniform', 'truncated_normal' or 'untruncated_normal'. Default: 'truncated_normal'.
 
     Raises:
         ValueError: If scale is not greater than 0.
