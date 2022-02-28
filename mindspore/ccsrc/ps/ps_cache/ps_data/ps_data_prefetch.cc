@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace ps {
-const size_t kTimeoutLoopCount = 20;
+const size_t kTimeoutLoopCount = 40;
 const int64_t kLongestTimeToWait = 30;
 
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {
