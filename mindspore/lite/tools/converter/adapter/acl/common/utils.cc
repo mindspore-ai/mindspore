@@ -111,7 +111,7 @@ TypeId GetTypeFromNode(const AnfNodePtr &node) {
     auto cnode = node->cast<CNodePtr>();
     MS_CHECK_TRUE_MSG(cnode != nullptr, type, "cnode is nullptr.");
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
-      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
+      auto abstract_tensor = cnode->abstract()->cast<abstract::AbstractTensorPtr>();
       if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
         MS_LOG(WARNING) << "Abstract_tensor or abstract_tensor->element() is nullptr.";
         return type;

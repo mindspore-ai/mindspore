@@ -284,7 +284,7 @@ int LiteTensorExtractor::GetCNodeOutputTensors(const CNodePtr &cnode, std::vecto
         auto type = kNumberTypeFloat32;
         if (utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
           auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
-          MS_ASSERT(abstract_tensor != nullptr);
+          MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
           MS_CHECK_TRUE_RET(abstract_tensor->element() != nullptr, lite::RET_NULL_PTR);
           auto typePtr = abstract_tensor->element()->GetTypeTrack();
           MS_CHECK_TRUE_RET(typePtr != nullptr, lite::RET_NULL_PTR);
@@ -303,7 +303,7 @@ int LiteTensorExtractor::GetCNodeOutputTensors(const CNodePtr &cnode, std::vecto
     auto type = kNumberTypeFloat32;
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
       auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
-      MS_ASSERT(abstract_tensor != nullptr);
+      MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
       MS_CHECK_TRUE_RET(abstract_tensor->element() != nullptr, lite::RET_NULL_PTR);
       auto typePtr = abstract_tensor->element()->GetTypeTrack();
       MS_CHECK_TRUE_RET(typePtr != nullptr, lite::RET_NULL_PTR);

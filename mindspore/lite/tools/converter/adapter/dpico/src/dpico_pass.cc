@@ -116,7 +116,7 @@ STATUS ModifyGraphInputDataType(const Subgraph &subgraph, const api::FuncGraphPt
     if (param != nullptr && !param->has_default()) {  // only for graph input parameter node
       auto param_abstract = param->abstract();
       MS_CHECK_TRUE_MSG(param_abstract != nullptr, RET_ERROR, "param_abstract is nullptr");
-      auto abstractScalar = utils::cast<abstract::AbstractTensorPtr>(param_abstract);
+      auto abstractScalar = param_abstract->cast<abstract::AbstractTensorPtr>();
       MS_CHECK_TRUE_MSG(abstractScalar != nullptr, RET_ERROR, "abstractScalar is nullptr");
       auto element = abstractScalar->element();
       MS_CHECK_TRUE_MSG(element != nullptr, RET_ERROR, "element is nullptr");

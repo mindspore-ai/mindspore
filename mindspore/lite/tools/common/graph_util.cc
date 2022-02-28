@@ -384,7 +384,8 @@ TypeId GetAbstractTensorDtype(const abstract::AbstractTensorPtr &tensor) {
 
 TypeId GetParameterDtype(const ParameterPtr &param_node) {
   auto abstract_base = param_node->abstract();
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, kTypeUnknown, "Cast to abstract tensor failed!");
   auto type_ptr = abstract_tensor->element()->GetTypeTrack();
   return type_ptr->type_id();
 }

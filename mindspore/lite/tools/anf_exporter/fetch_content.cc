@@ -122,7 +122,7 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
   auto valueAbstract = value_node->abstract();
   MS_CHECK_TRUE_MSG(valueAbstract != nullptr, RET_ERROR, "valueAbstract is nullptr");
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
+  auto abstract_tensor = valueAbstract->cast<abstract::AbstractTensorPtr>();
   if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
     MS_LOG(ERROR) << "abstract_tensor or abstract_tensor->element() is nullptr";
     return RET_ERROR;

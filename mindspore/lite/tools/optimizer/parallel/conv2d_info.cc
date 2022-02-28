@@ -112,11 +112,11 @@ int Conv2DInfo::CheckIfSplit() {
       return RET_ERROR;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(input_node_abstract);
-    MS_ASSERT(abstract_tensor != nullptr);
+    MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
     MS_CHECK_TRUE_RET(abstract_tensor->shape() != nullptr, RET_ERROR);
     input_shape = abstract_tensor->shape()->shape();
     abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(weight_node_abstract);
-    MS_ASSERT(abstract_tensor != nullptr);
+    MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
     MS_CHECK_TRUE_RET(abstract_tensor->shape() != nullptr, RET_ERROR);
     weight_shape = abstract_tensor->shape()->shape();
     int total_ratio = 0;

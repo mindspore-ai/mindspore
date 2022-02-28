@@ -149,7 +149,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
   }
 
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-  MS_ASSERT(abstract_tensor != nullptr);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, nullptr, "Cast to abstract tensor failed!");
   if (!utils::isa<tensor::TensorPtr>(abstract_tensor->GetValueTrack())) {  // input node not complete infershape
     MS_LOG(DEBUG) << "Value of abstract is not tensor::Tensor, indicate that infershape has failed";
     return nullptr;
