@@ -27,6 +27,7 @@ add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mindspore_shared_lib)
 
 set_property(SOURCE ${ACL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(lite_acl_mid OBJECT ${ACL_SRC})
+target_link_libraries(lite_acl_mid mindspore_shared_lib)
 add_dependencies(lite_acl_mid fbs_inner_src)
 
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud")

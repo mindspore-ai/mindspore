@@ -94,7 +94,7 @@ if(ENABLE_D OR ENABLE_GPU)
         mindspore::protobuf)
 else()
     if(BUILD_LITE)
-        target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
+        target_link_libraries(mindspore_shared_lib PRIVATE mindspore_core ${SECUREC_LIBRARY})
     else()
         target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
                 mindspore mindspore_core mindspore_common proto_input mindspore::protobuf)

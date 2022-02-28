@@ -118,6 +118,10 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(INFO) << "Dynamic input no need to run const fold pass.";
     return lite::RET_OK;
   }
+  if (fmk_type_ == converter::kFmkTypeMs) {
+    MS_LOG(INFO) << "Ms model no need to run const fold pass.";
+    return lite::RET_OK;
+  }
   if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
     MS_LOG(ERROR) << "Const fold pass failed.";
     return lite::RET_ERROR;

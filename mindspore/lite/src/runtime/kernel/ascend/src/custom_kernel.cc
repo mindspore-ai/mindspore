@@ -263,10 +263,12 @@ namespace mindspore {
 namespace registry {
 namespace {
 const auto kFloat32 = DataType::kNumberTypeFloat32;
+const auto kFloat16 = DataType::kNumberTypeFloat16;
 const auto kInt8 = DataType::kNumberTypeInt8;
 const auto kUInt8 = DataType::kNumberTypeUInt8;
 }  // namespace
 REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kFloat32, ACL, kernel::acl::CustomCreateKernel)
+REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kFloat16, ACL, kernel::acl::CustomCreateKernel)
 REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kInt8, ACL, kernel::acl::CustomCreateKernel)
 REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kUInt8, ACL, kernel::acl::CustomCreateKernel)
 }  // namespace registry

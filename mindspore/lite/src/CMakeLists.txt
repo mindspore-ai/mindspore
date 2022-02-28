@@ -459,14 +459,12 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin
-            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+            config_parser_mid mslite_converter_plugin mindspore_core
             mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            config_parser_mid mslite_converter_plugin
-            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+            config_parser_mid mslite_converter_plugin mindspore_core
             mindspore::protobuf ${SECUREC_LIBRARY})
     if(MSLITE_ENABLE_ACL)
         target_link_libraries(mindspore-lite lite_acl_mid
