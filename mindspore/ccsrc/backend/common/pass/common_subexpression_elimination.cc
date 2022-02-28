@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool HasSideEffectAttr(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::HasNodeAttr(GRAPH_FLAG_SIDE_EFFECT, cnode)) {
-    return false;
-  }
-  return common::AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
-}
-
 bool CheckIgnoreCase(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (common::AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
@@ -112,7 +102,7 @@ bool BackendCSE::CheckValueNode(const ValueNodePtr &main, const ValueNodePtr &no
   return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
 }
 
-bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node, bool check_side_effect) const {
+bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -121,20 +111,16 @@ bool BackendCSE::CheckCNode(const CNodePtr &main, const CNodePtr &node, bool che
   if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && CheckIgnoreCase(main)) {
     return false;
   }
-  if (CheckRandomEffect(main, node)) {
-    return false;
-  }
-  if (check_side_effect && HasSideEffectAttr(main)) {
+  if (HasRandomEffect(main) || HasRandomEffect(node)) {
     return false;
   }
   if (!CheckEqualKernelBuildInfo(main, node)) {
     return false;
   }
-
   return CheckEqualCnodeInputs(main, node);
 }
 
-bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const {
+bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -148,7 +134,7 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
   if (main->isa<ValueNode>() && node->isa<ValueNode>()) {
     return CheckValueNode(main->cast<ValueNodePtr>(), node->cast<ValueNodePtr>());
   } else if (main->isa<CNode>() && node->isa<CNode>()) {
-    return CheckCNode(main->cast<CNodePtr>(), node->cast<CNodePtr>(), check_side_effect);
+    return CheckCNode(main->cast<CNodePtr>(), node->cast<CNodePtr>());
   }
   return false;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ class BackendCSE : public CSE {
   BackendCSE() = default;
   ~BackendCSE() override = default;
   virtual bool CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const;
-  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const override;
+  bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const override;
   virtual bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const;
   bool Cse(const FuncGraphPtr graph, const FuncGraphManagerPtr manager) const override;
 
  private:
   bool CheckValueNode(const ValueNodePtr &main, const ValueNodePtr &node) const;
-  bool CheckCNode(const CNodePtr &main, const CNodePtr &node, bool check_side_effect) const;
+  bool CheckCNode(const CNodePtr &main, const CNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

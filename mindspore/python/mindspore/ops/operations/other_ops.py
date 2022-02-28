@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -677,7 +677,6 @@ class Push(PrimitiveWithInfer):
     def __init__(self, optim_type='ApplyMomentum', only_shape_indices=None):
         """Initialize Push"""
         self.add_prim_attr("primitive_target", "CPU")
-        self.add_prim_attr("_side_effect", True)
         self.init_prim_io_names(inputs=['optim_inputs', 'optim_input_shapes'], outputs=['key'])
 
     def infer_shape(self, inputs, shapes):

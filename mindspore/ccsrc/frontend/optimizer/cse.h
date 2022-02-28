@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ class CSE {
   CSE() = default;
   virtual ~CSE() = default;
 
-  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const;
-
-  virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
+  virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const;
 
   virtual bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
+
+  static bool HasRandomEffect(const AnfNodePtr &node);
 
  protected:
   bool BuildOrderGroupAndDoReplaceForOneGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) const;

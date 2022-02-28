@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #include <vector>
 #include <set>
 
+#include "ir/anf.h"
+#include "ir/scalar.h"
 #include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
@@ -131,43 +133,18 @@ bool CSE::BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const {
   return changed;
 }
 
-// The op like print, summary, or the op do not has true output, and always as a depend node input.
-static bool HasSideEffect(const AnfNodePtr &node) {
+bool CSE::HasRandomEffect(const AnfNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
   if (prim == nullptr) {
     return false;
   }
-  auto side_effect_v = prim->GetAttr(GRAPH_FLAG_SIDE_EFFECT);
-  if (side_effect_v != nullptr && side_effect_v->isa<BoolImm>()) {
-    return GetValue<bool>(side_effect_v);
-  }
-  return false;
+  auto attr = prim->GetAttr(GRAPH_FLAG_RANDOM_EFFECT);
+  return (attr != nullptr) && attr->isa<BoolImm>() && GetValue<bool>(attr);
 }
 
-// If true do not merge the node.
-bool CSE::CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const {
-  auto prim_main = GetCNodePrimitive(main);
-  auto prim_node = GetCNodePrimitive(node);
-  // if has random effect, when generate by different op (not same object), do not merge.
-  if (prim_main != nullptr) {
-    auto effect_val = prim_main->GetAttr(GRAPH_FLAG_RANDOM_EFFECT);
-    if (effect_val != nullptr && effect_val->isa<BoolImm>()) {
-      bool has_random_effect = GetValue<bool>(effect_val);
-      if (has_random_effect) {
-        return true;
-      }
-    }
-    if (prim_main->name() != prim_node->name()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect) const {
+bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
-
   if (main->isa<ValueNode>() && node->isa<ValueNode>()) {
     auto main_value = GetValueNode(main);
     auto node_value = GetValueNode(node);
@@ -179,44 +156,32 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool chec
     if (IsSetRecomputed(c_main, c_node)) {
       return false;
     }
-    // When appsame is true, check if has side effect, do not merge.
-    if (check_side_effect && HasSideEffect(main)) {
+    const auto &inputs1 = c_main->inputs();
+    const auto &inputs2 = c_node->inputs();
+    if (inputs1.size() != inputs2.size()) {
       return false;
     }
-    const auto &inp1 = c_main->inputs();
-    const auto &inp2 = c_node->inputs();
-    if (inp1.size() != inp2.size()) {
-      return false;
-    }
-    for (size_t j = 0; j < inp1.size(); j++) {
-      auto inp1_j = inp1[j];
-      auto inp2_j = inp2[j];
-      MS_EXCEPTION_IF_NULL(inp1_j);
-      MS_EXCEPTION_IF_NULL(inp2_j);
-      if (!(*inp1_j == *inp2_j)) {
-        // Handle the case of two different Tensor, but with the same value
-        if (IsValueNode<tensor::Tensor>(inp1_j) && IsValueNode<tensor::Tensor>(inp2_j)) {
-          auto tensor1 = GetValueNode<tensor::TensorPtr>(inp1_j);
-          auto tensor2 = GetValueNode<tensor::TensorPtr>(inp2_j);
-          if (tensor1->ValueEqual(*tensor2)) {
-            continue;
-          }
-        } else if (HasSideEffect(inp1_j) && HasSideEffect(inp2_j)) {
-          // When the same side effect node as another two nodes' inputs, we still merge the node.
-          // Because the node only can be the inputs of `depend`, when the `depend` is duplicated merge the depend the
-          // node.
-          if (CheckReplace(inp1_j, inp2_j, false)) {
-            continue;
-          }
-        }
-        return false;
+    // Check inputs, all inputs should equal.
+    for (size_t i = 0; i < inputs1.size(); i++) {
+      auto &input1 = inputs1[i];
+      auto &input2 = inputs2[i];
+      MS_EXCEPTION_IF_NULL(input1);
+      MS_EXCEPTION_IF_NULL(input2);
+      if ((input1 == input2) || (*input1 == *input2)) {
+        continue;
       }
-    }
-    // When appsame is true, check if has random effect do not merge
-    if (CheckRandomEffect(c_main, c_node)) {
+      // Handle the case of two different Tensor, but with the same value.
+      if (IsValueNode<tensor::Tensor>(input1) && IsValueNode<tensor::Tensor>(input2)) {
+        auto tensor1 = GetValueNode<tensor::TensorPtr>(input1);
+        auto tensor2 = GetValueNode<tensor::TensorPtr>(input2);
+        if (tensor1->ValueEqual(*tensor2)) {
+          continue;
+        }
+      }
       return false;
     }
-    return true;
+    // We don't merge primitive cnodes with random effect.
+    return !HasRandomEffect(c_main);
   }
   // a parameter node.
   return false;
@@ -256,7 +221,7 @@ bool CSE::DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::si
           if (main->func_graph() != node->func_graph()) {
             continue;
           }
-          if (CheckReplace(node, main, true)) {
+          if (CheckReplace(node, main)) {
             changes = true;
             UpdateDebugInfoAndDumpFlag(main, node);
             (void)manager->Replace(node, main);
