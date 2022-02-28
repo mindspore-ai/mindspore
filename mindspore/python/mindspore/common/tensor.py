@@ -50,7 +50,7 @@ class Tensor(Tensor_):
             'init' interface to initialize Tensor in the other conditions. If 'init' interface is used to initialize
             Tensor, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.
             Default: None.
-        internal (bool): Whether it is the user's input.
+        internal (bool): Whether it is created by the framework.
             'True' means that the tensor is created by framework.
             'False' means that the tensor is created by user.
             Default: False
