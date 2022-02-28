@@ -373,12 +373,19 @@ def _parallel_check():
         raise RuntimeError("Currently, the optimizer shard is not supported with applying adasum.")
     if context.get_auto_parallel_context("pipeline_stages") > 1:
         raise RuntimeError("Currently, the pipeline parallel is not supported with applying adasum.")
-    if _get_stage_device_num() < 16:
-        raise RuntimeError("The device_num should be at least 16 when applying adasum.")
+    stage_device_num = _get_stage_device_num()
+    if stage_device_num < 16 or (stage_device_num & (stage_device_num - 1) != 0):
+        raise RuntimeError("The device_num should be at least 16 and should be the power of 2 when applying adasum.")
 
 class AdaSumByGradWrapCell(Cell):
     r"""
     Enable the adasum in "auto_parallel/semi_auto_parallel" mode.
+
+    Note:
+        When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
+        Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
+        It is recommended to using AdaSumByGradWrapCell in semi auto parallel/auto parallel mode, and in data parallel
+        mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
         optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer
@@ -418,6 +425,12 @@ class AdaSumByGradWrapCell(Cell):
 class AdaSumByDeltaWeightWrapCell(Cell):
     r"""
     Enable the adasum in "auto_parallel/semi_auto_parallel" mode.
+
+    Note:
+        When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
+        Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
+        It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel/auto parallel mode,
+        and in data parallel mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
         optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer
