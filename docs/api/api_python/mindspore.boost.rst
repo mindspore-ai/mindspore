@@ -11,9 +11,10 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **network** (Cell) – 训练网络，当前网络只支持单个输出。
-    - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
-    - **sens** (numbers.Number) – 作为反向传播输入要填充的缩放数，默认值为1.0。
+    - **rank** (int) – 总的训练的卡数。
+    - **device_number** (int) – 单机的卡数。
+    - **group_number** (int) – 分组的数量。
+    - **parameter_tuple** (Tuple(Parameter)) – 网络训练权重组成的元组。
 
     **输入：**
 
@@ -160,13 +161,13 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **异常：**
 
-    - **Valuerror** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
+    - **ValueError** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
 
     .. py:method:: network_auto_process_train(network, optimizer)
     
         使用Boost算法训练。
     
-        **返回：**
+        **参数：**
     
         - network (Cell)，训练网络。
         - optimizer (Union[Cell])，用于更新权重的优化器。
@@ -175,7 +176,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     
         使用Boost算法推理。
     
-        **返回：**
+        **参数：**
     
         network(Cell)，推理网络。
 
@@ -206,11 +207,15 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **异常：**
 
-    - **Typerror** – 如果*sens*不是一个数字。
+    - **TypeError** – 如果*sens*不是一个数字。
 
     .. py:method:: gradient_freeze_process(*inputs)
     
         使用梯度冻结算法训练。
+
+        **参数：**
+
+        - **inputs** (Tuple(Tensor)) – 网络训练的输入。
     
         **返回：**
     
@@ -219,6 +224,13 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     .. py:method:: gradient_accumulation_process(loss, grads, sens, *inputs)
     
         使用梯度累积算法训练。
+
+        **参数：**
+
+        - **loss** (Tensor) – 网络训练的loss值。
+        - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
+        - **sens** (Tensor) – 作为反向传播输入要填充的缩放数。
+        - **inputs** (Tuple(Tensor)) – 网络训练的输入。
     
         **返回：**
     
@@ -227,6 +239,11 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     .. py:method:: adasum_process(loss, grads)
     
         使用Adasum算法训练。
+
+        **参数：**
+
+        - **loss** (Tensor) – 网络训练的loss值。
+        - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
     
         **返回：**
     
