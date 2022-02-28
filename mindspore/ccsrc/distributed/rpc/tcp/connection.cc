@@ -257,7 +257,7 @@ int Connection::ReceiveMessage() {
   recv_message = nullptr;
 
   // Call msg handler if set
-  if (message_handler != nullptr) {
+  if (message_handler) {
     message_handler(std::move(msg));
   } else {
     MS_LOG(INFO) << "Message handler was not found";
