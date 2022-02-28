@@ -3,7 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core/mindrt/src)
 
 file(GLOB_RECURSE GRAPH_SCHEDULER_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if(NOT ENABLE_CPU OR WIN32)
+if(NOT ENABLE_CPU OR WIN32 OR APPLE)
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "rpc_node_scheduler.cc")
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/rpc/recv_actor.cc")
   list(REMOVE_ITEM GRAPH_SCHEDULER_SRC_LIST "actor/rpc/rpc_actor.cc")
