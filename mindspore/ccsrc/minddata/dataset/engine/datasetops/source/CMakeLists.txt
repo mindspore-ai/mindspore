@@ -28,6 +28,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     iwslt_op.cc
     io_block.cc
     kmnist_op.cc
+    lfw_op.cc
     libri_tts_op.cc
     lj_speech_op.cc
     lsun_op.cc

@@ -50,8 +50,9 @@ __all__ = ["Caltech101Dataset",        # Vision
            "FlickrDataset",            # Vision
            "Flowers102Dataset",        # Vision
            "ImageFolderDataset",       # Vision
-           "LSUNDataset",              # Vision
            "KMnistDataset",            # Vision
+           "LFWDataset",               # Vision
+           "LSUNDataset",              # Vision
            "ManifestDataset",          # Vision
            "MnistDataset",             # Vision
            "PhotoTourDataset",         # Vision

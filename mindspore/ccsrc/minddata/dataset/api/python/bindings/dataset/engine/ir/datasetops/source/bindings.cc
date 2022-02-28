@@ -50,6 +50,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2017_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/lfw_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/libri_tts_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/penn_treebank_node.h"
@@ -416,6 +417,17 @@ PYBIND_REGISTER(KMnistNode, 2, ([](const py::module *m) {
                         THROW_IF_ERROR(kmnist->ValidateParams());
                         return kmnist;
                       }));
+                }));
+
+PYBIND_REGISTER(LFWNode, 2, ([](const py::module *m) {
+                  (void)py::class_<LFWNode, DatasetNode, std::shared_ptr<LFWNode>>(*m, "LFWNode", "to create a LFWNode")
+                    .def(py::init([](const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                                     const std::string &image_set, bool decode, const py::handle &sampler) {
+                      auto lfw = std::make_shared<LFWNode>(dataset_dir, task, usage, image_set, decode,
+                                                           toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(lfw->ValidateParams());
+                      return lfw;
+                    }));
                 }));
 
 PYBIND_REGISTER(LibriTTSNode, 2, ([](const py::module *m) {

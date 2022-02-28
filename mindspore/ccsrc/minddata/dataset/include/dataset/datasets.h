@@ -3239,6 +3239,125 @@ inline std::shared_ptr<KMnistDataset> MS_API KMnist(const std::string &dataset_d
   return std::make_shared<KMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class LFWDataset
+/// \brief A source dataset for reading and parsing LFW dataset.
+class MS_API LFWDataset : public Dataset {
+ public:
+  /// \brief Constructor of LFWDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
+  /// \param[in] usage The image split to use, support "10fold", "train", "test" and "all".
+  /// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LFWDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::vector<char> &image_set, bool decode, const std::shared_ptr<Sampler> &sampler,
+             const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LFWDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
+  /// \param[in] usage The image split to use, support "10fold", "train", "test" and "all".
+  /// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LFWDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::vector<char> &image_set, bool decode, const Sampler *sampler,
+             const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of LFWDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
+  /// \param[in] usage The image split to use, support "10fold", "train", "test" and "all".
+  /// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled".
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  LFWDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::vector<char> &image_set, bool decode, const std::reference_wrapper<Sampler> &sampler,
+             const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Destructor of LFWDataset.
+  ~LFWDataset() = default;
+};
+
+/// \brief Function to create a LFWDataset.
+/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] task Set the task type of reading LFW, support "people" and "pairs" (default = "people").
+/// \param[in] usage The image split to use, support "10fold", "train", "test" and "all" (default = "all",
+///     will read samples including train and test).
+/// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled"
+///     (default = "funneled").
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LFWDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/lfw_dataset_directory";
+///      std::shared_ptr<Dataset> ds = LFW(folder_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In LFW dataset, each data dictionary owns keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
+inline std::shared_ptr<LFWDataset> MS_API
+LFW(const std::string &dataset_dir, const std::string &task = "people", const std::string &usage = "all",
+    const std::string &image_set = "funneled", bool decode = false,
+    const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+    const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LFWDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
+                                      StringToChar(image_set), decode, sampler, cache);
+}
+
+/// \brief Function to create a LFWDataset.
+/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
+/// \param[in] usage The image split to use, support "10fold", "train", "test" and "all".
+/// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LFWDataset.
+inline std::shared_ptr<LFWDataset> MS_API LFW(const std::string &dataset_dir, const std::string &task,
+                                              const std::string &usage, const std::string &image_set, bool decode,
+                                              const Sampler *sampler,
+                                              const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LFWDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
+                                      StringToChar(image_set), decode, sampler, cache);
+}
+
+/// \brief Function to create a LFWDataset.
+/// \notes When usage is 'people', the generated dataset has two columns ["image", "label"];
+///     When task is 'pairs', the generated dataset has three columns ["image1", "image2", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] task Set the task type of reading LFW, support "people" and "pairs".
+/// \param[in] usage The image split to use, support "10fold", "train", "test" and "all".
+/// \param[in] image_set Image set of image funneling to use, support "original", "funneled" and "deepfunneled".
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr, which means no cache is used).
+/// \return Shared pointer to the LFWDataset.
+inline std::shared_ptr<LFWDataset> MS_API LFW(const std::string &dataset_dir, const std::string &task,
+                                              const std::string &usage, const std::string &image_set, bool decode,
+                                              const std::reference_wrapper<Sampler> &sampler,
+                                              const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<LFWDataset>(StringToChar(dataset_dir), StringToChar(task), StringToChar(usage),
+                                      StringToChar(image_set), decode, sampler, cache);
+}
+
 /// \class LibriTTSDataset
 /// \brief A source dataset for reading and parsing LibriTTSDataset dataset.
 class MS_API LibriTTSDataset : public Dataset {
