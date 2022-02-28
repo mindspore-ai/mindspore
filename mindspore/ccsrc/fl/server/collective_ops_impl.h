@@ -62,7 +62,7 @@ class CollectiveOpsImpl {
   void Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node);
 
   template <typename T>
-  bool AllReduce(const void *sendbuff, void *recvbuff, size_t count);
+  bool AllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count);
 
   template <typename T>
   bool AllGather(const void *sendbuff, void *recvbuff, size_t send_count,
@@ -91,11 +91,17 @@ class CollectiveOpsImpl {
 
   // Implementation of RingAllReduce.
   template <typename T>
-  bool RingAllReduce(const void *sendbuff, void *recvbuff, size_t count);
+  bool RunRingAllReduce(const std::string &data_name, uint32_t send_to_rank, uint32_t recv_from_rank,
+                        const std::vector<size_t> &chunk_sizes, const std::vector<size_t> &chunk_offset,
+                        T *output_buff);
+
+  // Implementation of RingAllReduce.
+  template <typename T>
+  bool RingAllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count);
 
   // Implementation of BroadcastAllReduce.
   template <typename T>
-  bool ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count);
+  bool ReduceBroadcastAllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count);
 
   // Implementation of RingAllGather.
   template <typename T>

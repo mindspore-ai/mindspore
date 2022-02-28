@@ -23,6 +23,7 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 #include "ps/core/node.h"
 #include "ps/core/communicator/message.h"
@@ -107,6 +108,12 @@ class AbstractNode : public Node {
             const uint32_t &timeout = kCommTimeoutInSeconds);
 
   uint64_t CollectiveSendAsync(const NodeRole &node_role, const uint32_t &rank_id, const void *data, size_t size);
+
+  using CheckFailReturnFun = std::function<bool()>;
+  uint64_t FlCollectiveSendAsync(const CollectiveMessageMeta &collective_meta, const void *data, size_t size);
+  bool FlCollectiveWait(const CollectiveMessageMeta &expect_meta, size_t expect_size, VectorPtr *output,
+                        const uint32_t &timeout = kCommTimeoutInSeconds);
+
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                        VectorPtr *output);
   bool CollectiveWait(const std::pair<uint32_t, uint64_t> &request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
@@ -148,6 +155,9 @@ class AbstractNode : public Node {
   std::shared_ptr<CommunicatorBase> GetOrCreateTcpComm(const std::string &scheduler_ip, std::int16_t scheduler_port,
                                                        uint32_t worker_num, uint32_t server_num,
                                                        const std::shared_ptr<TaskExecutor> &task_executor);
+
+  void SetIterationResult(size_t last_iteration, bool is_iteration_valid);
+  bool HasIterationFailed(uint32_t iteration_num) const;
 
  protected:
   virtual void Register(const std::shared_ptr<TcpClient> &client);
@@ -235,6 +245,9 @@ class AbstractNode : public Node {
                                      const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                                      size_t size);
 
+  bool FlCollectiveWaitInner(const CollectiveMessageMeta &expect_meta, VectorPtr *output, const uint32_t &timeout);
+  void OnRecvCollectiveData(const MessageMeta &message_meta, const VectorPtr &data);
+
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
   std::shared_ptr<TcpClient> client_to_scheduler_;
@@ -259,6 +272,12 @@ class AbstractNode : public Node {
   timeval scheduler_time_{0, 0};
   std::unordered_map<NodeCommand, ResponseHandler> handlers_;
   std::unordered_map<NodeCommand, ServerHandler> server_handler_;
+
+  // send_rank_id, recv CollectiveMessageMeta and data
+  std::unordered_map<uint32_t, std::vector<std::pair<CollectiveMessageMeta, std::shared_ptr<std::vector<uint8_t>>>>>
+    fl_received_data_;
+  std::mutex fl_receive_mutex_;
+  std::condition_variable fl_receive_cond_;
 
   // Workers and servers launch the server to process command: FINISH,SCALE_OUT,SCALE_IN,SEND_METADATA
   std::shared_ptr<TcpServer> server_;
@@ -302,6 +321,9 @@ class AbstractNode : public Node {
   std::unordered_map<std::string, std::shared_ptr<CommunicatorBase>> communicators_;
   std::mutex communicator_mutex_;
   std::mutex cluster_state_mutex_;
+
+  size_t failed_iteration_num_ = 0;
+  bool iteration_failed_ = false;
 };
 }  // namespace core
 }  // namespace ps

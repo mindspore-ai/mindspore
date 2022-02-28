@@ -122,7 +122,7 @@ void Iteration::MoveToNextIteration(bool is_last_iter_valid, const std::string &
 
   MS_ERROR_IF_NULL_WO_RET_VAL(server_node_);
   if (server_node_->rank_id() == kLeaderServerRank) {
-    if (!BroadcastPrepareForNextIterRequest(is_last_iter_valid, reason)) {
+    if (!BroadcastPrepareForNextIterRequest(iteration_num_, is_last_iter_valid, reason)) {
       MS_LOG(ERROR) << "Broadcast prepare for next iteration request failed.";
       return;
     }
@@ -424,7 +424,7 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
     return;
   }
 
-  if (!BroadcastPrepareForNextIterRequest(is_last_iter_valid, reason)) {
+  if (!BroadcastPrepareForNextIterRequest(iter_num, is_last_iter_valid, reason)) {
     MS_LOG(ERROR) << "Broadcast prepare for next iteration request failed.";
     return;
   }
@@ -438,13 +438,15 @@ void Iteration::HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps
   }
 }
 
-bool Iteration::BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, const std::string &reason) {
+bool Iteration::BroadcastPrepareForNextIterRequest(size_t last_iteration, bool is_last_iter_valid,
+                                                   const std::string &reason) {
   MS_ERROR_IF_NULL_W_RET_VAL(communicator_, false);
-  PrepareForNextIter();
+  PrepareForNextIter(last_iteration, is_last_iter_valid);
   MS_LOG(INFO) << "Notify all follower servers to prepare for next iteration.";
   PrepareForNextIterRequest prepare_next_iter_req;
   prepare_next_iter_req.set_is_last_iter_valid(is_last_iter_valid);
   prepare_next_iter_req.set_reason(reason);
+  prepare_next_iter_req.set_last_iteration(last_iteration);
 
   std::vector<uint32_t> offline_servers = {};
   for (uint32_t i = 1; i < server_node_->server_num(); i++) {
@@ -476,8 +478,12 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
   PrepareForNextIterRequest prepare_next_iter_req;
   (void)prepare_next_iter_req.ParseFromArray(message->data(), SizeToInt(message->len()));
   const auto &reason = prepare_next_iter_req.reason();
-  MS_LOG(INFO) << "Prepare next iteration for this rank " << server_node_->rank_id() << ", reason: " << reason;
-  PrepareForNextIter();
+  auto is_last_iter_valid = prepare_next_iter_req.is_last_iter_valid();
+  auto last_iteration = prepare_next_iter_req.last_iteration();
+  MS_LOG(INFO) << "Prepare next iteration for this rank " << server_node_->rank_id()
+               << ", last iteration: " << last_iteration << ", last iteration valid: " << is_last_iter_valid
+               << ", reason: " << reason;
+  PrepareForNextIter(last_iteration, is_last_iter_valid);
 
   PrepareForNextIterResponse prepare_next_iter_rsp;
   prepare_next_iter_rsp.set_result("success");
@@ -488,9 +494,12 @@ void Iteration::HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::
   }
 }
 
-void Iteration::PrepareForNextIter() {
+void Iteration::PrepareForNextIter(size_t last_iteration, bool is_last_iter_valid) {
   MS_LOG(INFO) << "Prepare for next iteration. Switch the server to safemode.";
   Server::GetInstance().SwitchToSafeMode();
+  if (server_node_) {
+    server_node_->SetIterationResult(last_iteration, is_last_iter_valid);
+  }
   MS_LOG(INFO) << "Start waiting for rounds to finish.";
   WaitAllRoundsFinish();
   MS_LOG(INFO) << "End waiting for rounds to finish.";

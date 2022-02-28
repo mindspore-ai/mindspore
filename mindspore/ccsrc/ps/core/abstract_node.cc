@@ -361,6 +361,136 @@ uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint
   return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
 }
 
+static std::string CollectiveMetaToString(const CollectiveMessageMeta &meta) {
+  std::ostringstream os;
+  os << "{iteration:" << meta.iteration() << ", data:" << meta.weight_name() << ", send rank:" << meta.send_rank_id()
+     << ", recv rank:" << meta.recv_rank_id() << ", phase:" << meta.phase() << ", chunk index:" << meta.chunk_index()
+     << ", for index:" << meta.for_index() << "}";
+  return os.str();
+}
+
+uint64_t AbstractNode::FlCollectiveSendAsync(const CollectiveMessageMeta &collective_meta, const void *data,
+                                             size_t size) {
+  MS_EXCEPTION_IF_NULL(data);
+  auto recv_rank_id = collective_meta.recv_rank_id();
+  if (!CommUtil::ValidateRankId(SERVER, recv_rank_id, worker_num_, server_num_)) {
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << recv_rank_id;
+    return 0;
+  }
+  std::shared_ptr<MessageMeta> message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
+  message_meta->set_cmd(NodeCommand::COLLECTIVE_SEND_DATA);
+  message_meta->set_rank_id(node_info_.rank_id_);
+  message_meta->set_role(node_info_.node_role_);
+  *(message_meta->mutable_collective_meta()) = collective_meta;
+  message_meta->mutable_collective_meta()->set_enable_flag(true);
+  message_meta->mutable_collective_meta()->set_send_rank_id(node_info_.rank_id_);
+
+  MS_LOG(DEBUG) << "Send data to rank id:" << recv_rank_id
+                << ", send meta:" << CollectiveMetaToString(message_meta->collective_meta());
+  auto client = GetOrCreateTcpClient(recv_rank_id, SERVER);
+  MS_EXCEPTION_IF_NULL(client);
+  return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
+}
+
+bool AbstractNode::FlCollectiveWaitInner(const CollectiveMessageMeta &expect_meta, VectorPtr *output,
+                                         const uint32_t &timeout) {
+  if (output == nullptr) {
+    return false;
+  }
+  auto send_rank_id = expect_meta.send_rank_id();
+  if (!CommUtil::ValidateRankId(SERVER, send_rank_id, worker_num_, server_num_)) {
+    MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
+                  << ", the server num:" << server_num_ << ", the rank id:" << send_rank_id;
+    return false;
+  }
+  auto check_meta = [](const CollectiveMessageMeta &left, const CollectiveMessageMeta &right) {
+    return left.iteration() == right.iteration() && left.weight_name() == right.weight_name() &&
+           left.recv_rank_id() == right.recv_rank_id() && left.send_rank_id() == right.send_rank_id() &&
+           left.phase() == right.phase() && left.chunk_index() == right.chunk_index() &&
+           left.for_index() == right.for_index();
+  };
+  auto iteration_num = expect_meta.iteration();
+  std::unique_lock<std::mutex> lock(fl_receive_mutex_);
+  auto &recv_data_list = fl_received_data_[send_rank_id];
+  for (uint32_t i = 0; i < timeout; i++) {
+    if (recv_data_list.empty()) {
+      fl_receive_cond_.wait_for(lock, std::chrono::seconds(1), [&recv_data_list]() { return !recv_data_list.empty(); });
+      if (recv_data_list.empty()) {               // timeout
+        if (HasIterationFailed(iteration_num)) {  // if result of iteration reported by other server is failed
+          MS_LOG(WARNING) << "Detect iteration " << iteration_num << " has failed";
+          return false;
+        }
+        continue;
+      }
+    }
+    while (!recv_data_list.empty()) {
+      auto first = recv_data_list.begin();
+      auto recv_meta = std::move(first->first);
+      auto recv_data = std::move(first->second);
+      recv_data_list.erase(first);
+      MS_LOG(DEBUG) << "Handle receive data from rank id:" << send_rank_id
+                    << ", recv meta:" << CollectiveMetaToString(recv_meta);
+      if (recv_meta.iteration() != expect_meta.iteration()) {
+        MS_LOG(WARNING) << "Skip recv data, iteration of recv meta " << recv_meta.iteration()
+                        << " != iteration of expected meta " << expect_meta.iteration();
+        continue;
+      }
+      // error data in the same iteration
+      if (!check_meta(recv_meta, expect_meta)) {
+        MS_LOG(WARNING) << "Recv meta not match expected meta, recv mata: " << CollectiveMetaToString(recv_meta)
+                        << ", expected meta: " << CollectiveMetaToString(expect_meta);
+        return false;
+      }
+      *output = recv_data;
+      return true;  // success to recv data
+    }
+  }
+  return false;
+}
+
+bool AbstractNode::FlCollectiveWait(const CollectiveMessageMeta &expect_meta, size_t expect_size, VectorPtr *output,
+                                    const uint32_t &timeout) {
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "FlCollectiveWait failed, parameter output invalid";
+    return false;
+  }
+  auto data_recved = FlCollectiveWaitInner(expect_meta, output, timeout);
+  if (!data_recved) {
+    MS_LOG(ERROR) << "FlCollectiveWait failed, expect meta: " << CollectiveMetaToString(expect_meta);
+    return false;
+  }
+  if (*output == nullptr) {
+    MS_LOG(ERROR) << "FlCollectiveWait failed, recv buffer invalid";
+    return false;
+  }
+  if (expect_size != (*output)->size()) {
+    MS_LOG(ERROR) << "Expected data size " << expect_size << " != recv data size " << (*output)->size()
+                  << CollectiveMetaToString(expect_meta);
+    return false;
+  }
+  return true;
+}
+
+void AbstractNode::OnRecvCollectiveData(const MessageMeta &message_meta, const VectorPtr &data) {
+  std::unique_lock<std::mutex> lock(fl_receive_mutex_);
+  auto &recv_meta = message_meta.collective_meta();
+  auto send_rank_id = recv_meta.send_rank_id();
+  MS_LOG(DEBUG) << "Receive data from rank id:" << send_rank_id << ", recv meta:" << CollectiveMetaToString(recv_meta);
+  fl_received_data_[send_rank_id].emplace_back(std::make_pair(recv_meta, data));
+  fl_receive_cond_.notify_all();
+}
+
+void AbstractNode::SetIterationResult(size_t last_iteration, bool is_iteration_valid) {
+  iteration_failed_ = !is_iteration_valid;
+  failed_iteration_num_ = last_iteration;
+}
+
+bool AbstractNode::HasIterationFailed(uint32_t iteration_num) const {
+  return iteration_num == failed_iteration_num_ && iteration_failed_;
+}
+
 std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const NodeRole &node_role, const uint32_t &rank_id,
                                                                    VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
@@ -1101,19 +1231,22 @@ void AbstractNode::RunReceiveCallback(const std::shared_ptr<MessageMeta> &meta, 
                                       size_t size) {
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  receive_callbacks_mutex_.lock();
-  uint32_t rank_id = meta->rank_id();
-  // When receiving a collective message, Then generate rank request id,compare with the desired rank request id,
-  // If they are equal, then call the callback function
-  uint64_t rank_request_id = NextActualRankRequestId(rank_id);
   std::shared_ptr<std::vector<unsigned char>> received_data = std::make_shared<std::vector<unsigned char>>(size, 0);
   size_t dest_size = size;
   size_t src_size = size;
   int ret = memcpy_s(received_data->data(), dest_size, data, src_size);
   if (ret != 0) {
-    receive_callbacks_mutex_.unlock();
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
+  if (meta->collective_meta().enable_flag()) {
+    OnRecvCollectiveData(*meta, received_data);
+    return;
+  }
+  receive_callbacks_mutex_.lock();
+  uint32_t rank_id = meta->rank_id();
+  // When receiving a collective message, Then generate rank request id,compare with the desired rank request id,
+  // If they are equal, then call the callback function
+  uint64_t rank_request_id = NextActualRankRequestId(rank_id);
   received_data_[std::make_pair(rank_id, rank_request_id)] = received_data;
   MS_LOG(DEBUG) << "Run Receive data callback,the rank id:" << rank_id << ", the rank request id is:" << rank_request_id
                 << ", the send request id is:" << meta->request_id() << " the size is:" << size;

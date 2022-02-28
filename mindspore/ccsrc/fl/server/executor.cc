@@ -142,6 +142,27 @@ std::map<std::string, AddressPtr> Executor::HandlePullWeight(const std::vector<s
 
 bool Executor::IsAllWeightAggregationDone() { return IsWeightAggrDone(param_names_); }
 
+bool Executor::RunAllWeightAggregation() {
+  for (const auto &name : param_names_) {
+    if (param_aggrs_.count(name) == 0) {
+      MS_LOG(ERROR) << "Weight " << name << " is invalid in server.";
+      return false;
+    }
+    std::mutex &mtx = parameter_mutex_[name];
+    std::unique_lock<std::mutex> lock(mtx);
+    auto &param_aggr = param_aggrs_[name];
+    MS_ERROR_IF_NULL_W_RET_VAL(param_aggr, false);
+    if (!param_aggr->requires_aggr()) {
+      continue;
+    }
+    if (!param_aggr->RunAggregation()) {
+      MS_LOG(DEBUG) << "Failed to run aggregation for " << name;
+      return false;
+    }
+  }
+  return true;
+}
+
 bool Executor::IsWeightAggrDone(const std::vector<std::string> &param_names) {
   for (const auto &name : param_names) {
     if (param_aggrs_.count(name) == 0) {

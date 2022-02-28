@@ -26,7 +26,8 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-constexpr uint32_t kRetryCountOfWaitWeightAggregation = 15 * 60;
+const char *kCountForAggregation = "count_for_aggregation";
+
 void UpdateModelKernel::InitKernel(size_t threshold_count) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
@@ -44,6 +45,11 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   DistributedMetadataStore::GetInstance().RegisterMetadata(kCtxUpdateModelClientList, client_list);
   LocalMetaStore::GetInstance().put_value(kCtxUpdateModelThld, threshold_count);
   LocalMetaStore::GetInstance().put_value(kCtxFedAvgTotalDataSize, kInitialDataSizeSum);
+
+  auto first_cnt_handler = [](std::shared_ptr<ps::core::MessageHandler>) {};
+  auto last_cnt_handler = [this](std::shared_ptr<ps::core::MessageHandler>) { RunAggregation(); };
+  DistributedCountService::GetInstance().RegisterCounter(kCountForAggregation, threshold_count,
+                                                         {first_cnt_handler, last_cnt_handler});
 }
 
 bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
@@ -73,7 +79,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
   }
 
   const schema::RequestUpdateModel *update_model_req = flatbuffers::GetRoot<schema::RequestUpdateModel>(req_data);
-  if (update_model_req == nullptr) {
+  if (update_model_req == nullptr || update_model_req->fl_id() == nullptr) {
     std::string reason = "Building flatbuffers schema failed for RequestUpdateModel.";
     BuildUpdateModelRsp(fbb, schema::ResponseCode_RequestError, reason, "");
     MS_LOG(WARNING) << reason;
@@ -119,11 +125,16 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
   if (result_code != ResultCode::kSuccess) {
     MS_LOG(WARNING) << "Updating model failed.";
     GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
-    return ConvertResultCode(result_code);
+    return false;
   }
-
+  std::string update_model_fl_id = update_model_req->fl_id()->str();
   IncreaseAcceptClientNum();
   GenerateOutput(message, fbb->GetBufferPointer(), fbb->GetSize());
+
+  result_code = CountForAggregation(update_model_fl_id);
+  if (result_code != ResultCode::kSuccess) {
+    return false;
+  }
   return true;
 }
 
@@ -131,6 +142,7 @@ bool UpdateModelKernel::Reset() {
   MS_LOG(INFO) << "Update model kernel reset!";
   StopTimer();
   DistributedCountService::GetInstance().ResetCounter(name_);
+  DistributedCountService::GetInstance().ResetCounter(kCountForAggregation);
   executor_->ResetAggregationStatus();
   DistributedMetadataStore::GetInstance().ResetMetadata(kCtxUpdateModelClientList);
   size_t &total_data_size = LocalMetaStore::GetInstance().mutable_value<size_t>(kCtxFedAvgTotalDataSize);
@@ -138,27 +150,22 @@ bool UpdateModelKernel::Reset() {
   return true;
 }
 
-void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
-  if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kUpdateModel) {
-    last_count_thread_ = std::make_unique<std::thread>([this]() {
-      uint32_t retryCount = 0;
-      while (!executor_->IsAllWeightAggregationDone() && retryCount <= kRetryCountOfWaitWeightAggregation) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        retryCount += 1;
-      }
+void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {}
 
-      size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
-      MS_LOG(INFO) << "Total data size for iteration " << LocalMetaStore::GetInstance().curr_iter_num() << " is "
-                   << total_data_size;
-      if (ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
-        if (executor_->IsAllWeightAggregationDone()) {
-          FinishIteration(true);
-        } else {
-          FinishIteration(false);
-        }
-      }
-    });
-    last_count_thread_->detach();
+void UpdateModelKernel::RunAggregation() {
+  auto is_last_iter_valid = Executor::GetInstance().RunAllWeightAggregation();
+  auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
+  if (is_last_iter_valid) {
+    size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
+    MS_LOG(INFO) << "Total data size for iteration " << curr_iter_num << " is " << total_data_size;
+    if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kUpdateModel &&
+        ps::PSContext::instance()->encrypt_type() != ps::kPWEncryptType) {
+      FinishIteration(is_last_iter_valid);
+    }
+  } else {
+    std::string reason = "Weight aggregation failed, current iteration: " + std::to_string(curr_iter_num);
+    MS_LOG(WARNING) << reason;
+    FinishIteration(is_last_iter_valid, reason);
   }
 }
 
@@ -304,6 +311,15 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
     feature_map[weight_full_name] = upload_data;
   }
   return feature_map;
+}
+
+ResultCode UpdateModelKernel::CountForAggregation(const std::string &req_fl_id) {
+  std::string count_reason = "";
+  if (!DistributedCountService::GetInstance().Count(kCountForAggregation, req_fl_id, &count_reason)) {
+    MS_LOG(ERROR) << "Counting for aggregation failed. reason: " + count_reason;
+    return ResultCode::kFail;
+  }
+  return ResultCode::kSuccess;
 }
 
 ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,

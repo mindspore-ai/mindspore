@@ -15,10 +15,19 @@
  */
 
 #include "fl/server/collective_ops_impl.h"
+#include "fl/server/local_meta_store.h"
+#include "fl/server/iteration.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
+namespace {
+const char *kCollectivePhaseRing = "ring";
+const char *kCollectivePhaseGather = "gather";
+const char *kCollectivePhaseReduce = "reduce";
+const char *kCollectivePhaseBroadcast = "broadcast";
+}  // namespace
+
 void CollectiveOpsImpl::Initialize(const std::shared_ptr<ps::core::ServerNode> &server_node) {
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
@@ -28,8 +37,8 @@ void CollectiveOpsImpl::Initialize(const std::shared_ptr<ps::core::ServerNode> &
 }
 
 template <typename T>
-bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
-  MS_ERROR_IF_NULL_W_RET_VAL(server_node_, false);
+bool CollectiveOpsImpl::RingAllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff,
+                                      size_t count) {
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
 
@@ -66,43 +75,71 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
                 << ", chunk_sizes:" << chunk_sizes << ", send_to_rank:" << send_to_rank
                 << ", recv_from_rank:" << recv_from_rank;
 
+  return RunRingAllReduce<T>(data_name, send_to_rank, recv_from_rank, chunk_sizes, chunk_offset, output_buff);
+}
+
+// Implementation of RingAllReduce.
+template <typename T>
+bool CollectiveOpsImpl::RunRingAllReduce(const std::string &data_name, uint32_t send_to_rank, uint32_t recv_from_rank,
+                                         const std::vector<size_t> &chunk_sizes,
+                                         const std::vector<size_t> &chunk_offset, T *output_buff) {
+  MS_ERROR_IF_NULL_W_RET_VAL(server_node_, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(output_buff, false);
+  auto curr_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
+  ps::core::CollectiveMessageMeta send_meta;
+  send_meta.set_enable_flag(true);
+  send_meta.set_send_rank_id(rank_id_);
+  send_meta.set_recv_rank_id(send_to_rank);
+  send_meta.set_iteration(curr_iteration_num);
+  send_meta.set_weight_name(data_name);
+
+  ps::core::CollectiveMessageMeta recv_meta;
+  recv_meta.set_enable_flag(true);
+  recv_meta.set_send_rank_id(recv_from_rank);
+  recv_meta.set_recv_rank_id(rank_id_);
+  recv_meta.set_iteration(curr_iteration_num);
+  recv_meta.set_weight_name(data_name);
+
   // Ring ReduceScatter.
   MS_LOG(DEBUG) << "Start Ring ReduceScatter.";
-  std::unique_ptr<T[]> tmp_recv_chunk = std::make_unique<T[]>(chunk_sizes[0]);
-  MS_EXCEPTION_IF_NULL(tmp_recv_chunk);
+  send_meta.set_phase(kCollectivePhaseRing);
+  recv_meta.set_phase(kCollectivePhaseRing);
+
+  uint32_t rank_size = server_num_;
   for (size_t i = 0; i < rank_size - 1; i++) {
     // Step 1: Async send data to next rank.
     size_t send_chunk_index = (rank_id_ - i + rank_size) % rank_size;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
-    auto send_req_id = server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, send_to_rank, send_chunk,
-                                                         chunk_sizes[send_chunk_index] * sizeof(T));
+    send_meta.set_chunk_index(send_chunk_index);
+    send_meta.set_for_index(i);
+    auto send_chunk_count = chunk_sizes[send_chunk_index];
+    auto send_req_id = server_node_->FlCollectiveSendAsync(send_meta, send_chunk, send_chunk_count * sizeof(T));
+
     // Step 2: Async receive data to next rank and wait until it's done.
     size_t recv_chunk_index = (rank_id_ - i - 1 + rank_size) % rank_size;
+    recv_meta.set_chunk_index(recv_chunk_index);
+    recv_meta.set_for_index(i);
     T *recv_chunk = output_buff + chunk_offset[recv_chunk_index];
+    auto recv_chunk_count = chunk_sizes[recv_chunk_index];
     MS_LOG(DEBUG) << "Ring ReduceScatter send_to_rank:" << send_to_rank << ", recv_from_rank:" << recv_from_rank
-                  << ", send count:" << chunk_sizes[send_chunk_index]
-                  << ", recv count:" << chunk_sizes[recv_chunk_index] << ", iteration:" << i;
+                  << ", send chunk index:" << send_chunk_index << ", send count:" << send_chunk_count
+                  << ", recv chunk index:" << recv_chunk_index << ", recv count:" << recv_chunk_count
+                  << ", for index:" << i;
 
     std::shared_ptr<std::vector<unsigned char>> recv_str;
-    auto recv_req_id = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, recv_from_rank, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
+    auto expect_size = recv_chunk_count * sizeof(T);
+    if (!server_node_->FlCollectiveWait(recv_meta, expect_size, &recv_str, kCollectiveCommTimeout)) {
+      MS_LOG(ERROR) << "FlCollectiveWait failed, send rank id: " << recv_meta.send_rank_id();
       return false;
     }
-    ret = memcpy_s(tmp_recv_chunk.get(), chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
-    if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
-                    << ", dest size is " << (chunk_sizes[recv_chunk_index] * sizeof(T)) << ", src size is "
-                    << recv_str->size();
-      return false;
-    }
+    auto tmp_recv_chunk = reinterpret_cast<T *>(recv_str->data());
     // Step 3: Reduce the data so we can overlap the time cost of send.
-    for (size_t j = 0; j < chunk_sizes[recv_chunk_index]; j++) {
+    for (size_t j = 0; j < recv_chunk_count; j++) {
       recv_chunk[j] += tmp_recv_chunk[j];
     }
     // Step 4: Wait until send is done.
     if (!server_node_->Wait(send_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
+      MS_LOG(ERROR) << "Wait response of rank " << send_req_id << " failed.";
       return false;
     }
   }
@@ -110,32 +147,40 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 
   // Ring AllGather.
   MS_LOG(DEBUG) << "Start Ring AllGather.";
+  send_meta.set_phase(kCollectivePhaseGather);
+  recv_meta.set_phase(kCollectivePhaseGather);
   for (size_t i = 0; i < rank_size - 1; i++) {
     size_t send_chunk_index = (rank_id_ - i + 1 + rank_size) % rank_size;
     T *send_chunk = output_buff + chunk_offset[send_chunk_index];
-    auto send_req_id = server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, send_to_rank, send_chunk,
-                                                         chunk_sizes[send_chunk_index] * sizeof(T));
+    send_meta.set_chunk_index(send_chunk_index);
+    send_meta.set_for_index(i);
+    auto send_chunk_count = chunk_sizes[send_chunk_index];
+    auto send_req_id = server_node_->FlCollectiveSendAsync(send_meta, send_chunk, send_chunk_count * sizeof(T));
+
     size_t recv_chunk_index = (rank_id_ - i + rank_size) % rank_size;
     T *recv_chunk = output_buff + chunk_offset[recv_chunk_index];
+    recv_meta.set_chunk_index(recv_chunk_index);
+    recv_meta.set_for_index(i);
+    auto recv_chunk_count = chunk_sizes[recv_chunk_index];
     MS_LOG(DEBUG) << "Ring AllGather send_to_rank:" << send_to_rank << ", recv_from_rank:" << recv_from_rank
-                  << ", send count:" << chunk_sizes[send_chunk_index]
-                  << ", recv count:" << chunk_sizes[recv_chunk_index] << ", iteration:" << i;
+                  << ", send chunk index:" << send_chunk_index << ", send count:" << send_chunk_count
+                  << ", recv chunk index:" << recv_chunk_index << ", recv count:" << recv_chunk_count
+                  << ", for index:" << i;
 
     std::shared_ptr<std::vector<unsigned char>> recv_str;
-    auto recv_req_id = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, recv_from_rank, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << recv_req_id << " failed.";
+    auto expect_size = recv_chunk_count * sizeof(T);
+    if (!server_node_->FlCollectiveWait(recv_meta, expect_size, &recv_str, kCollectiveCommTimeout)) {
+      MS_LOG(ERROR) << "FlCollectiveWait failed, send rank id: " << recv_meta.send_rank_id();
       return false;
     }
-    ret = memcpy_s(recv_chunk, chunk_sizes[recv_chunk_index] * sizeof(T), recv_str->data(), recv_str->size());
+    auto ret = memcpy_s(recv_chunk, expect_size, recv_str->data(), recv_str->size());
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
-                    << ", dest size is " << chunk_sizes[recv_chunk_index] * sizeof(T) << ", src size is "
-                    << recv_str->size();
+                    << ", dest size is " << recv_chunk_count * sizeof(T) << ", src size is " << recv_str->size();
       return false;
     }
     if (!server_node_->Wait(send_req_id, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << send_req_id << " failed.";
+      MS_LOG(ERROR) << "Wait response of rank " << send_req_id << " failed.";
       return false;
     }
   }
@@ -144,7 +189,8 @@ bool CollectiveOpsImpl::RingAllReduce(const void *sendbuff, void *recvbuff, size
 }
 
 template <typename T>
-bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *recvbuff, size_t count) {
+bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff,
+                                                 size_t count) {
   MS_ERROR_IF_NULL_W_RET_VAL(server_node_, false);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
@@ -162,33 +208,48 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
   }
   T *output_buff = reinterpret_cast<T *>(recvbuff);
   // Reduce data to rank 0 process.
+  auto curr_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
+  ps::core::CollectiveMessageMeta send_meta;
+  send_meta.set_enable_flag(true);
+  send_meta.set_send_rank_id(rank_id_);
+  send_meta.set_iteration(curr_iteration_num);
+  send_meta.set_weight_name(data_name);
+  send_meta.set_chunk_index(0);
+  send_meta.set_for_index(0);
+
+  ps::core::CollectiveMessageMeta recv_meta;
+  recv_meta.set_enable_flag(true);
+  recv_meta.set_recv_rank_id(rank_id_);
+  recv_meta.set_iteration(curr_iteration_num);
+  recv_meta.set_weight_name(data_name);
+  recv_meta.set_chunk_index(0);
+  recv_meta.set_for_index(0);
+
+  send_meta.set_phase(kCollectivePhaseReduce);
+  recv_meta.set_phase(kCollectivePhaseReduce);
+
   MS_LOG(DEBUG) << "Start Reduce to rank 0 process.";
   if (rank_id_ == 0) {
-    std::unique_ptr<T[]> tmp_recv_buff = std::make_unique<T[]>(count);
-    MS_EXCEPTION_IF_NULL(tmp_recv_buff);
     for (uint32_t i = 1; i < rank_size; i++) {
       std::shared_ptr<std::vector<unsigned char>> recv_str;
       MS_LOG(DEBUG) << "Reduce rank 0 receive from rank " << i;
-      auto recv_req_id1 = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, i, &recv_str);
-      if (!server_node_->CollectiveWait(recv_req_id1, kCollectiveCommTimeout)) {
-        MS_LOG(ERROR) << "CollectiveWait " << recv_req_id1 << " failed.";
+      recv_meta.set_send_rank_id(i);
+      auto expect_size = count * sizeof(T);
+      if (!server_node_->FlCollectiveWait(recv_meta, expect_size, &recv_str, kCollectiveCommTimeout)) {
+        MS_LOG(ERROR) << "FlCollectiveWait failed, send rank id: " << recv_meta.send_rank_id();
         return false;
       }
-      ret = memcpy_s(tmp_recv_buff.get(), count * sizeof(T), recv_str->data(), recv_str->size());
-      if (ret != 0) {
-        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
-                      << ", dest size is " << count * sizeof(T) << ", src size is " << recv_str->size();
-        return false;
-      }
+      auto tmp_recv_chunk = reinterpret_cast<T *>(recv_str->data());  // recv_str size has checked in FlCollectiveWait
       for (size_t j = 0; j < count; j++) {
-        output_buff[j] += tmp_recv_buff[j];
+        output_buff[j] += tmp_recv_chunk[j];
       }
     }
   } else {
     MS_LOG(DEBUG) << "Reduce send data to rank 0 process.";
-    auto send_req_id1 = server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, 0, sendbuff, count * sizeof(T));
+    send_meta.set_recv_rank_id(0);
+    auto send_req_id1 = server_node_->FlCollectiveSendAsync(send_meta, sendbuff, count * sizeof(T));
     if (!server_node_->Wait(send_req_id1, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << send_req_id1 << " failed.";
+      MS_LOG(ERROR) << "Wait response of rank " << send_req_id1 << " failed.";
       return false;
     }
   }
@@ -196,28 +257,31 @@ bool CollectiveOpsImpl::ReduceBroadcastAllReduce(const void *sendbuff, void *rec
 
   // Broadcast data to not 0 rank process.
   MS_LOG(DEBUG) << "Start broadcast from rank 0 to other processes.";
+  send_meta.set_phase(kCollectivePhaseBroadcast);
+  recv_meta.set_phase(kCollectivePhaseBroadcast);
   if (rank_id_ == 0) {
     for (uint32_t i = 1; i < rank_size; i++) {
       MS_LOG(DEBUG) << "Broadcast data to process " << i;
-      auto send_req_id2 =
-        server_node_->CollectiveSendAsync(ps::core::NodeRole::SERVER, i, output_buff, count * sizeof(T));
+      send_meta.set_recv_rank_id(i);
+      auto send_req_id2 = server_node_->FlCollectiveSendAsync(send_meta, output_buff, count * sizeof(T));
       if (!server_node_->Wait(send_req_id2, kCollectiveCommTimeout)) {
-        MS_LOG(ERROR) << "CollectiveWait " << send_req_id2 << " failed.";
+        MS_LOG(ERROR) << "Wait response of rank " << send_req_id2 << " failed.";
         return false;
       }
     }
   } else {
     MS_LOG(DEBUG) << "Broadcast receive from rank 0.";
+    recv_meta.set_send_rank_id(0);
     std::shared_ptr<std::vector<unsigned char>> recv_str;
-    auto recv_req_id2 = server_node_->CollectiveReceiveAsync(ps::core::NodeRole::SERVER, 0, &recv_str);
-    if (!server_node_->CollectiveWait(recv_req_id2, kCollectiveCommTimeout)) {
-      MS_LOG(ERROR) << "CollectiveWait " << recv_req_id2 << " failed.";
+    auto expect_size = count * sizeof(T);
+    if (!server_node_->FlCollectiveWait(recv_meta, expect_size, &recv_str, kCollectiveCommTimeout)) {
+      MS_LOG(ERROR) << "FlCollectiveWait failed, send rank id: " << recv_meta.send_rank_id();
       return false;
     }
-    ret = memcpy_s(output_buff, count * sizeof(T), recv_str->data(), recv_str->size());
+    ret = memcpy_s(output_buff, expect_size, recv_str->data(), recv_str->size());
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
-                    << ", dest size is " << count * sizeof(T) << ", src size is " << recv_str->size();
+                    << ", dest size is " << expect_size << ", src size is " << recv_str->size();
       return false;
     }
   }
@@ -339,11 +403,12 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
 }
 
 template <typename T>
-bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t count) {
+bool CollectiveOpsImpl::AllReduce(const std::string &data_name, const void *sendbuff, void *recvbuff, size_t count) {
   // The collective communication API does not support calling Send and Recv concurrently with multiple threads;
   std::unique_lock<std::mutex> lock(mtx_);
   MS_ERROR_IF_NULL_W_RET_VAL(recvbuff, false);
   MS_ERROR_IF_NULL_W_RET_VAL(sendbuff, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(server_node_, false);
 
   uint32_t rank_size = server_num_;
   if (rank_size == 0) {
@@ -354,11 +419,16 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     MS_LOG(INFO) << "Rank size is 1. Do nothing.";
     return true;
   }
+  auto cur_iteration_num = LocalMetaStore::GetInstance().curr_iter_num();
+  if (server_node_->HasIterationFailed(cur_iteration_num)) {
+    MS_LOG(WARNING) << "Detect iteration " << cur_iteration_num << " has failed";
+    return false;
+  }
 
   if (count >= rank_size) {
-    return RingAllReduce<T>(sendbuff, recvbuff, count);
+    return RingAllReduce<T>(data_name, sendbuff, recvbuff, count);
   } else {
-    return ReduceBroadcastAllReduce<T>(sendbuff, recvbuff, count);
+    return ReduceBroadcastAllReduce<T>(data_name, sendbuff, recvbuff, count);
   }
 }
 
@@ -437,17 +507,12 @@ bool CollectiveOpsImpl::ReInitForScaling() {
   return true;
 }
 
-template bool CollectiveOpsImpl::RingAllReduce<float>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::RingAllReduce<size_t>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::RingAllReduce<int>(const void *sendbuff, void *recvbuff, size_t count);
-
-template bool CollectiveOpsImpl::ReduceBroadcastAllReduce<float>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::ReduceBroadcastAllReduce<size_t>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::ReduceBroadcastAllReduce<int>(const void *sendbuff, void *recvbuff, size_t count);
-
-template bool CollectiveOpsImpl::AllReduce<float>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::AllReduce<size_t>(const void *sendbuff, void *recvbuff, size_t count);
-template bool CollectiveOpsImpl::AllReduce<int>(const void *sendbuff, void *recvbuff, size_t count);
+template bool CollectiveOpsImpl::AllReduce<float>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+                                                  size_t count);
+template bool CollectiveOpsImpl::AllReduce<size_t>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+                                                   size_t count);
+template bool CollectiveOpsImpl::AllReduce<int>(const std::string &data_name, const void *sendbuff, void *recvbuff,
+                                                size_t count);
 
 template bool CollectiveOpsImpl::AllGather<float>(const void *sendbuff, void *recvbuff, size_t send_count,
                                                   const std::shared_ptr<ps::core::AbstractNode> &node);

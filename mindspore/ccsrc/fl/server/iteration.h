@@ -186,10 +186,10 @@ class Iteration {
   void HandleNotifyLeaderMoveToNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
 
   // Step 2: leader server broadcasts to all follower servers to prepare for next iteration and switch to safemode..
-  bool BroadcastPrepareForNextIterRequest(bool is_last_iter_valid, const std::string &reason);
+  bool BroadcastPrepareForNextIterRequest(size_t last_iteration, bool is_last_iter_valid, const std::string &reason);
   void HandlePrepareForNextIterRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
   // The server prepare for the next iteration. This method will switch the server to safemode.
-  void PrepareForNextIter();
+  void PrepareForNextIter(size_t last_iteration, bool is_last_iter_valid);
 
   // Step 3: leader server broadcasts to all follower servers to move to next iteration.
   bool BroadcastMoveToNextIterRequest(bool is_last_iter_valid, const std::string &reason);

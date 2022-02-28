@@ -152,6 +152,17 @@ bool ParameterAggregator::IsAggregationDone() const {
   return true;
 }
 
+bool ParameterAggregator::RunAggregation() {
+  for (auto &aggregator_with_params : aggregation_kernel_parameters_) {
+    std::shared_ptr<kernel::AggregationKernel> aggr_kernel = aggregator_with_params.first;
+    MS_ERROR_IF_NULL_W_RET_VAL(aggr_kernel, false);
+    if (!aggr_kernel->AllReduce()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool ParameterAggregator::IsOptimizingDone() const { return optimizing_done_; }
 
 bool ParameterAggregator::IsPullingDone() const { return pulling_done_; }
