@@ -420,7 +420,7 @@ class Print(PrimitiveWithInfer):
         In pynative mode, please use python print function.
         In graph mode, the bool, int and float would be converted into Tensor to print,
         str remains unchanged.
-        This function is used for debug. When too many print data at the same time,
+        This function is used for debugging. When too much data is printed at the same time,
         in order not to affect the main process, the framework may discard some data. At this time,
         if you need to record the data completely, you can recommended to use the `Summary` function. Please check
         `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
