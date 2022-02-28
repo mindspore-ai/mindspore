@@ -198,10 +198,11 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       - semi_auto_parallel：半自动并行模式。
       - auto_parallel：自动并行模式。
 
-    - **search_mode** (str) - 表示有两种策略搜索模式，分别是recursive_programming和dynamic_programming。默认值：dynamic_programming。
+    - **search_mode** (str) - 表示有三种策略搜索模式，分别是recursive_programming，dynamic_programming和sharding_propagation。默认值：dynamic_programming。
 
       - recursive_programming：表示双递归搜索模式。
       - dynamic_programming：表示动态规划搜索模式。
+      - sharding_propagation：表示从已配置算子的切分策略传播到所有算子。
 
     - **auto_parallel_search_mode** (str) - search_modes参数的兼容接口。将在后续的版本中删除。
     - **parameter_broadcast** (bool) - 表示在训练前是否广播参数。在训练之前，为了使所有设备的网络初始化参数值相同，请将设备0上的参数广播到其他设备。不同并行模式下的参数广播不同。在data_parallel模式下，除layerwise_parallel属性为True的参数外，所有参数都会被广播。在hybrid_parallel、semi_auto_parallel和auto_parallel模式下，分段参数不参与广播。默认值：False。
