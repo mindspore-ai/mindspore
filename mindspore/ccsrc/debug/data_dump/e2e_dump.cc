@@ -247,7 +247,7 @@ std::shared_ptr<device::DeviceAddress> CreateAscendDeviceAddress(const KernelLau
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({kAscendDevice, device_id});
   auto format = kOpFormat_DEFAULT;
   MS_EXCEPTION_IF_NULL(addr_ptr);
-  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, format, type);
+  return device_context->CreateDeviceAddress(addr_ptr->addr, addr_ptr->size, format, type, ShapeVector());
 }
 
 void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,

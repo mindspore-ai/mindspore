@@ -100,10 +100,10 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
       }
 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
-      auto device_address = device_context->CreateDeviceAddress(nullptr, tensor_size,
-                                                                AnfAlgo::GetOutputFormat(item, index), output_type_id);
+      auto device_address =
+        device_context->CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
+                                            trans::GetRuntimePaddingShape(item, index));
       device_address->set_from_persistent_mem(item->isa<Parameter>());
-      device_address->set_host_shape(trans::GetRuntimePaddingShape(item, index));
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
                     << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
@@ -144,8 +144,8 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     }
     std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
 
-    device::DeviceAddressPtr address =
-      device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
+    device::DeviceAddressPtr address = device_context->CreateDeviceAddress(
+      nullptr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
     MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
     MS_EXCEPTION_IF_NULL(address);
     address->set_from_persistent_mem(true);
@@ -169,7 +169,8 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
-      auto address = device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
+      auto address =
+        device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8, ShapeVector());
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(true);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
@@ -199,8 +200,8 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
-      auto device_address = device_context->CreateDeviceAddress(nullptr, address_size, output_format, output_type);
-      device_address->set_host_shape(trans::GetRuntimePaddingShape(kernel, i));
+      auto device_address = device_context->CreateDeviceAddress(nullptr, address_size, output_format, output_type,
+                                                                trans::GetRuntimePaddingShape(kernel, i));
       if (is_gradient_out) {
         device_address->set_from_persistent_mem(true);
       }
@@ -227,7 +228,8 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
       if (AnfAlgo::WorkspaceAddrExist(kernel, i)) {
         break;
       }
-      auto device_address = device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
+      auto device_address =
+        device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());

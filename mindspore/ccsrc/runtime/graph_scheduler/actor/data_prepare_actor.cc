@@ -465,8 +465,9 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
           output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
         }
         size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
-        auto device_address = device_context->CreateDeviceAddress(
-          nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, 0), output_type_id);
+        auto device_address =
+          device_context->CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, 0),
+                                              output_type_id, trans::GetRuntimePaddingShape(input_node, 0));
         MS_EXCEPTION_IF_NULL(device_address);
         AnfAlgo::SetOutputAddr(device_address, 0, input_node.get());
         device_address->SetNodeIndex(input_node, 0);
@@ -663,8 +664,9 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
       if ((strategy_ == GraphExecutionStrategy::kStep) ||
           (device_tensor->DeviceType() != device_context->GetDeviceAddressType())) {
-        host_tensor_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
-                                                                  device_tensor->format(), device_tensor->type_id());
+        host_tensor_address =
+          device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
+                                              device_tensor->type_id(), device_tensor->host_shape());
         host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
       } else {
         host_tensor_address = device_tensor;

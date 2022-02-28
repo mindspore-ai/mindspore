@@ -91,11 +91,8 @@ class AscendDeviceContext : public DeviceContext {
                                 const std::vector<size_t> &size_list) const override;
 
   // Create concrete device address according different device type.
-  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                       TypeId type_id) const override {
-    return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                 device_context_key_.device_name_, device_context_key_.device_id_);
-  }
+  DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
+                                       const ShapeVector &shape = ShapeVector()) const override;
 
   // Get device address type according different device type, such GPU, Ascend.
   DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kAscend; }

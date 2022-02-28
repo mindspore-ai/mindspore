@@ -127,7 +127,8 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
     launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
   } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
-      auto device_address = device_contexts_[0]->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
+      auto device_address =
+        device_contexts_[0]->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
@@ -309,8 +310,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   if (copy_input_device_tensors_[input_data->index_] == nullptr) {
-    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id());
+    copy_input_device_tensors_[input_data->index_] =
+      device_contexts_[0]->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
+                                               device_tensor->type_id(), device_tensor->host_shape());
   }
   auto &new_device_tensor = copy_input_device_tensors_[input_data->index_];
   MS_EXCEPTION_IF_NULL(new_device_tensor);

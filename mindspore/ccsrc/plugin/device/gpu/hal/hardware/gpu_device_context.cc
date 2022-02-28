@@ -233,7 +233,7 @@ void GPUDeviceContext::FreeMemory(void *const ptr) const {
 }
 
 DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                                       TypeId type_id) const {
+                                                       TypeId type_id, const ShapeVector &shape) const {
   return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, device_context_key_.device_name_,
                                             device_context_key_.device_id_);
 }

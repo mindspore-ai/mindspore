@@ -918,6 +918,18 @@ void AscendDeviceContext::InsertEventBeforeRunTask(const KernelGraphPtr &graph) 
   graph_event_[graph->graph_id()] = compute_event;
 }
 
+DeviceAddressPtr AscendDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size,
+                                                          const string &format, TypeId type_id,
+                                                          const ShapeVector &shape) const {
+  auto device_address = std::make_shared<AscendDeviceAddress>(
+    device_ptr, device_size, format, type_id, device_context_key_.device_name_, device_context_key_.device_id_);
+  if (shape.empty()) {
+    MS_LOG(WARNING) << "shape size is empty.";
+  }
+  device_address->set_host_shape(shape);
+  return device_address;
+}
+
 MS_REGISTER_DEVICE(kAscendDevice, AscendDeviceContext);
 }  // namespace ascend
 }  // namespace device
