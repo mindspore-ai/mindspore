@@ -152,7 +152,6 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
     Expectation: the result match gradient checking.
     """
     onp.random.seed(0)
-    context.set_context(mode=context.GRAPH_MODE)
     dtype, epsilon, error = data_type
 
     class Net(nn.Cell):
@@ -176,6 +175,9 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
 
     net = Net()
     a = create_random_rank_matrix(shape, dtype)
+    context.set_context(mode=context.GRAPH_MODE)
+    assert gradient_check(Tensor(a), net, epsilon) < error
+    context.set_context(mode=context.PYNATIVE_MODE)
     assert gradient_check(Tensor(a), net, epsilon) < error
 
 
@@ -196,7 +198,6 @@ def test_trsm_grad(shapes, trans, lower, unit_diagonal, data_type):
     """
     a_shape, b_shape = shapes
     onp.random.seed(0)
-    context.set_context(mode=context.GRAPH_MODE)
     dtype, epsilon, error = data_type
 
     class Net(nn.Cell):
@@ -213,4 +214,7 @@ def test_trsm_grad(shapes, trans, lower, unit_diagonal, data_type):
     net = Net()
     a = (onp.random.random(a_shape) + onp.eye(a_shape[-1])).astype(dtype)
     b = onp.random.random(b_shape).astype(dtype)
+    context.set_context(mode=context.GRAPH_MODE)
+    assert gradient_check([Tensor(a), Tensor(b)], net, epsilon) < error
+    context.set_context(mode=context.PYNATIVE_MODE)
     assert gradient_check([Tensor(a), Tensor(b)], net, epsilon) < error
