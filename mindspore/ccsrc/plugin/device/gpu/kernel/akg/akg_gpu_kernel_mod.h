@@ -68,6 +68,8 @@ class AkgGpuKernelMod : public GpuKernelMod {
 
  private:
   KernelPackPtr kernel_pack_;
+  std::vector<uint32_t> thread_info_;
+  CUfunction kernel_addr_{nullptr};
 };
 
 using AkgGpuKernelModPtr = std::shared_ptr<AkgGpuKernelMod>;

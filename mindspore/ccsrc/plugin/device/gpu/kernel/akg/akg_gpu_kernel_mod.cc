@@ -102,6 +102,12 @@ AkgGpuKernelMod::AkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack
 
 bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  const int BX = 0;
+  const int BY = 1;
+  const int BZ = 2;
+  const int TX = 3;
+  const int TY = 4;
+  const int TZ = 5;
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr. Kernel name: " << kernel_name_;
     return false;
@@ -110,16 +116,18 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
     MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
-  vector<uint32_t> thread_info;
-  CUfunction kernel_addr;
-  CUresult result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info, &kernel_addr);
-  if (result != CUDA_SUCCESS) {
-    const char *msg = nullptr;
-    cuGetErrorName(result, &msg);
-    MS_LOG(ERROR) << "Get function " << kernel_name_ << " failed. Error message: " << msg;
-    return false;
+  CUresult result;
+  if (kernel_addr_ == nullptr) {
+    result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info_, &kernel_addr_);
+    if (result != CUDA_SUCCESS) {
+      const char *msg = nullptr;
+      cuGetErrorName(result, &msg);
+      MS_LOG(ERROR) << "Get function " << kernel_name_ << " failed. Error message: " << msg;
+      return false;
+    }
   }
   std::vector<void *> runtimeargs;
+  runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
                        [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
@@ -128,8 +136,8 @@ bool AkgGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::v
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
                          [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
   }
-  result = cuLaunchKernel(kernel_addr, thread_info[0], thread_info[1], thread_info[2], thread_info[3], thread_info[4],
-                          thread_info[5], 0, reinterpret_cast<CUstream>(stream_ptr),
+  result = cuLaunchKernel(kernel_addr_, thread_info_[BX], thread_info_[BY], thread_info_[BZ], thread_info_[TX],
+                          thread_info_[TY], thread_info_[TZ], 0, reinterpret_cast<CUstream>(stream_ptr),
                           reinterpret_cast<void **>(&runtimeargs[0]), 0);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
