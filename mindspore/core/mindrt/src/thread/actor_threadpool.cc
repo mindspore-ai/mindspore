@@ -22,11 +22,7 @@
 
 namespace mindspore {
 constexpr size_t MAX_READY_ACTOR_NR = 4096;
-void ActorWorker::CreateThread(ActorThreadPool *pool) {
-  THREAD_RETURN_IF_NULL(pool);
-  pool_ = pool;
-  thread_ = std::thread(&ActorWorker::RunWithSpin, this);
-}
+void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
   SetAffinity();
@@ -41,24 +37,43 @@ void ActorWorker::RunWithSpin() {
 #endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
-    if (RunLocalKernelTask() || RunQueueActorTask()) {
+    if (RunLocalKernelTask()) {
       spin_count_ = 0;
     } else {
       YieldAndDeactive();
     }
+#ifdef OPERATOR_PARALLELISM
+    if (RunQueueActorTask() || RunQueueWorkTask()) {
+#else
+    if (RunQueueActorTask()) {
+#endif
+      if (spin_count_ > 0) {
+        spin_count_ = 1;
+      }
+    }
     if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
-      spin_count_ = 0;
+      spin_count_ = 1;
     }
   }
 }
 
 bool ActorWorker::RunQueueActorTask() {
-  THREAD_ERROR_IF_NULL(pool_);
-  auto actor = pool_->PopActorFromQueue();
+  if (pool_ == nullptr) {
+    return false;
+  }
+  auto actor = reinterpret_cast<ActorThreadPool *>(pool_)->PopActorFromQueue();
   if (actor == nullptr) {
     return false;
   }
+#ifndef OPERATOR_PARALLELISM
+  if (available() || check_task_nullptr()) {
+    status_ = kThreadBusy;
+    set_task_free(true);
+  } else {
+    set_task_free(false);
+  }
+#endif
   actor->Run();
   return true;
 }
@@ -149,6 +164,12 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
     THREAD_ERROR("init actor queue failed.");
     return THREAD_ERROR;
   }
+#ifdef OPERATOR_PARALLELISM
+  if (task_queue_.Init(MAX_READY_TASK_NR) != true) {
+    THREAD_ERROR("Init task queue failed");
+    return THREAD_ERROR;
+  }
+#endif
 #endif
   if (affinity_ != nullptr) {
     affinity_->SetCoreId(core_list);
@@ -162,10 +183,22 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   }
   for (size_t i = 0; i < actor_thread_num_; ++i) {
     std::lock_guard<std::mutex> _l(pool_mutex_);
-    auto worker = new (std::nothrow) ActorWorker();
+    auto worker = new (std::nothrow) ActorWorker(this);
     THREAD_ERROR_IF_NULL(worker);
+#ifdef OPERATOR_PARALLELISM
+    auto task_messages = reinterpret_cast<TaskMessage *>(malloc(sizeof(TaskMessage) * all_thread_num));
+    if (task_messages == nullptr) {
+      delete worker;
+      THREAD_ERROR("malloc TaskMessages failed.");
+      return THREAD_ERROR;
+    }
+    for (size_t j = 0; j < all_thread_num; j++) {
+      task_messages[j].task_id = j;
+    }
+    worker->SetTaskMessages(task_messages);
+#endif
     worker->InitWorkerMask(core_list, workers_.size());
-    worker->CreateThread(this);
+    worker->CreateThread();
     workers_.push_back(worker);
     THREAD_INFO("create actor thread[%zu]", i);
   }

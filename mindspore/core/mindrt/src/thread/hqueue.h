@@ -46,7 +46,12 @@ class HQueue {
   HQueue() {}
   virtual ~HQueue() {}
 
+  bool IsInit() { return nodes.size() != 0; }
+
   bool Init(int32_t sz) {
+    if (IsInit() || sz <= 0) {
+      return false;
+    }
     for (int32_t i = 0; i < sz; i++) {
       auto node = new HQNode<T>();
       if (node == nullptr) {
@@ -63,6 +68,8 @@ class HQueue {
     qhead = {0, 0};
     qtail = {0, 0};
     nodes[0]->free = false;
+    queue_size = sz;
+    free_index = 1;
     return true;
   }
 
@@ -75,17 +82,30 @@ class HQueue {
 
   bool Enqueue(T *t) {
     HQNode<T> *node = nullptr;
-    int32_t nodeIdx;
-    for (nodeIdx = 0; nodeIdx < static_cast<int32_t>(nodes.size()); nodeIdx++) {
+    int32_t nodeIdx = free_index;
+    for (; nodeIdx < queue_size; ++nodeIdx) {
       bool expected = true;
       if (nodes[nodeIdx]->free.compare_exchange_strong(expected, false)) {
         node = nodes[nodeIdx];
+        free_index = nodeIdx + 1;
         break;
       }
     }
     if (node == nullptr) {
-      return false;
+      free_index = 1;
+      for (nodeIdx = 1; nodeIdx < queue_size; ++nodeIdx) {
+        bool expected = true;
+        if (nodes[nodeIdx]->free.compare_exchange_strong(expected, false)) {
+          node = nodes[nodeIdx];
+          free_index = nodeIdx + 1;
+          break;
+        }
+      }
+      if (node == nullptr) {
+        return false;
+      }
     }
+
     node->value = t;
     node->next = {-1, 0};
 
@@ -166,6 +186,8 @@ class HQueue {
   std::atomic<Pointer> qhead;
   std::atomic<Pointer> qtail;
   std::vector<HQNode<T> *> nodes;
+  int32_t queue_size;
+  std::atomic<int32_t> free_index;
 };
 }  // namespace mindspore
 

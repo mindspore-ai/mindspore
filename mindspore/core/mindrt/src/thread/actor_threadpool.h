@@ -31,14 +31,13 @@ namespace mindspore {
 class ActorThreadPool;
 class ActorWorker : public Worker {
  public:
-  void CreateThread(ActorThreadPool *pool);
+  explicit ActorWorker(ThreadPool *pool) : Worker(pool) {}
+  void CreateThread() override;
   bool ActorActive();
 
  private:
   void RunWithSpin();
   bool RunQueueActorTask();
-
-  ActorThreadPool *pool_{nullptr};
 };
 
 class ActorThreadPool : public ThreadPool {
@@ -58,7 +57,6 @@ class ActorThreadPool : public ThreadPool {
  private:
   ActorThreadPool() {}
   int CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
-  size_t actor_thread_num_{0};
 
   std::mutex actor_mutex_;
   std::condition_variable actor_cond_;

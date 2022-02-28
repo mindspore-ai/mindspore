@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <queue>
 #include "src/tensor.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
@@ -216,9 +217,11 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
 }
 
 void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
+#ifndef OPERATOR_PARALLELISM
   if (sub_graphs->size() != kDefaultSubGraphSize) {
     return;
   }
+#endif
   Model::SubGraph *main_graphs = model_->sub_graphs_.front();
 
   for (Subgraph &subgraph : *sub_graphs) {
@@ -1069,4 +1072,96 @@ void SearchSubGraph::SubGraphSplit() {
   }
   return;
 }
+
+#ifdef OPERATOR_PARALLELISM
+void SearchSubGraph::InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs) {
+  size_t last_index = index;
+
+  while (1) {
+    Model::Node *node = node_list_.at(index);
+    if (node == nullptr) {
+      subgraph->heads_.push_back(last_index);
+      return;
+    }
+
+    std::vector<uint32_t> input = node->input_indices_;
+    RemoveConstNode(&input);
+
+    /* all node_input is graph_input */
+    for (size_t i = 0; i < input.size(); i++) {
+      if (tensors_[input[i]].type_ != INPUT) {
+        break;
+      }
+      subgraph->heads_.push_back(last_index);
+      return;
+    }
+
+    /* split in graph */
+    if (IsNodeSubGraphHead(index, subgraph->nodes_)) {
+      if (subgraph->nodes_.empty()) {
+        subgraph->heads_.push_back(index);
+        subgraph->nodes_.insert(subgraph->nodes_.begin(), index);
+        node_list_.at(index) = nullptr;
+        for (uint32_t in : input) {
+          auto next_nodes = tensors_[in].out_nodes_;
+          std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(*outputs));
+        }
+        return;
+      }
+      subgraph->heads_.push_back(last_index);
+      outputs->push_back(index);
+      return;
+    }
+
+    for (uint32_t in : input) {
+      auto next_nodes = tensors_[in].out_nodes_;
+      std::copy(next_nodes.begin(), next_nodes.end(), std::back_inserter(*outputs));
+    }
+    subgraph->nodes_.insert(subgraph->nodes_.begin(), index);
+    node_list_.at(index) = nullptr;
+    if (outputs->size() == 1) {
+      last_index = index;
+      index = outputs->at(0);
+      outputs->clear();
+    } else {
+      subgraph->heads_.push_back(index);
+      return;
+    }
+  }
+
+  return;
+}
+
+void SearchSubGraph::SubGraphSplitByOperator() {
+  if (!ValidInParallel()) {
+    return;
+  }
+  sub_graphs_.clear();
+  node_list_ = model_->all_nodes_;
+  std::queue<size_t> outputs{};
+  for (auto out : *output_nodes_) {
+    outputs.push(out);
+  }
+  std::vector<size_t> outputs_vec{};
+  while (!outputs.empty()) {
+    auto out = outputs.front();
+    outputs.pop();
+
+    Subgraph subgraph;
+    subgraph.ends_.push_back(out);
+    subgraph.device_ = DT_CPU;
+    subgraph.thread_ = context_->thread_num_ > 2 ? (context_->thread_num_ / 2) : 1;
+
+    InsertNodeBegin(static_cast<uint32_t>(out), &subgraph, &outputs_vec);
+    for (auto new_out : outputs_vec) {
+      outputs.push(new_out);
+    }
+    outputs_vec.clear();
+    if (!subgraph.nodes_.empty()) {
+      sub_graphs_.push_back(std::move(subgraph));
+    }
+  }
+  ConvertSubGraphToModel(&sub_graphs_);
+}
+#endif
 }  // namespace mindspore::lite

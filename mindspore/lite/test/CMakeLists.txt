@@ -35,6 +35,10 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/api/tensor_c_test.cc
         )
 
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    list(REMOVE_ITEM TEST_UT_SRC ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc)
+endif()
+
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/runtime/runtime_convert_tests.cc)
 endif()
@@ -115,6 +119,12 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/ut/src/dynamic_library_loader_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/*.cc
             )
+    if(MSLITE_ENABLE_SERVER_INFERENCE)
+        list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/mindrt_parallel_test.cc)
+        list(REMOVE_ITEM TEST_UT_SRC ${TEST_DIR}/st/benchmark_test.cc)
+        list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/graph_test.cc)
+        list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/sub_graph_test.cc)
+    endif()
     list(APPEND TEST_UT_SRC ${TEST_CONVERTER_UT_SRC})
 
     set(TEST_LITE_SRC
