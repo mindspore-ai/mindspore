@@ -63,6 +63,7 @@ class BatchNormFold2GpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     InitResource();
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

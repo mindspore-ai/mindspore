@@ -48,7 +48,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  void PostExecute() override {
+  void UpdateOp() override {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
                                "cudaStreamSynchronized failed");
 

@@ -92,8 +92,8 @@ class DynamicRangeGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void PostExecute() override {
-    // required synchronize for PostExecute
+  void UpdateOp() override {
+    // required synchronize for UpdateOp
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronize failed");
 

@@ -58,6 +58,7 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

@@ -83,7 +83,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-  void PostExecute() override {
+  void UpdateOp() override {
     std::vector<size_t> r0_shape{r0_size_};
     std::vector<size_t> r1_shape{r1_size_};
     common::AnfAlgo::SetOutputInferTypeAndShape({TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64},

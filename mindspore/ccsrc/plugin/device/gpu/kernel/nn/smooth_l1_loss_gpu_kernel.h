@@ -45,6 +45,7 @@ class SmoothL1LossGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
     if (is_null_input_) {
       InitSizeLists();

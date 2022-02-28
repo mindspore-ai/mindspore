@@ -55,6 +55,7 @@ class SliceGradGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);

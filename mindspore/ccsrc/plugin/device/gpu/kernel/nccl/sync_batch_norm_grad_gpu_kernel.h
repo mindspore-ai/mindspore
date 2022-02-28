@@ -66,6 +66,7 @@ class SyncBatchNormGradGpuKernel : public NcclGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto root_rank = common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
+    kernel_node_ = kernel_node;
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
     }

@@ -21,6 +21,7 @@ namespace mindspore {
 namespace kernel {
 bool EnvironDestroyAllGpuKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   // Check the output type.
   auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   if (output_type != TypeId::kNumberTypeBool) {

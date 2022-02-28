@@ -64,6 +64,7 @@ class NeighborListUpdateNewGpuKernelMod : public NativeGpuKernelMod {
         max_neighbor_numbers(kMaxNbNumDef) {}
   ~NeighborListUpdateNewGpuKernelMod() override = default;
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     grid_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "grid_numbers"));
     atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     refresh_interval = static_cast<int>(GetAttr<int64_t>(kernel_node, "refresh_interval"));

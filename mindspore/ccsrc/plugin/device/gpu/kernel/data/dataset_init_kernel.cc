@@ -29,6 +29,7 @@ DatasetInitKernelMod::DatasetInitKernelMod() : total_bytes_(0) {}
 
 bool DatasetInitKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   queue_name_ = GetAttr<std::string>(kernel_node, "queue_name");
   std::vector<std::vector<int>> shapes;
   std::vector<TypePtr> types;

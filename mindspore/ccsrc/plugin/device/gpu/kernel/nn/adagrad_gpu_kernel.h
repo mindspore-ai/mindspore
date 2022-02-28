@@ -69,6 +69,7 @@ class AdagradGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     update_slots = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
+    kernel_node_ = kernel_node;
     if (input_num != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << input_num;
     }

@@ -124,6 +124,7 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     auto iter = kRandomOpTypeMap.find(kernel_name);
     if (iter == kRandomOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: StandardNormal, CudnnUniformReal, "

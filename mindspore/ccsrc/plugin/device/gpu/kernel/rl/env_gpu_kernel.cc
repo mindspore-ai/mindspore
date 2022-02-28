@@ -44,6 +44,7 @@ bool EnvCreateKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
 bool EnvResetKernelMod::Init(const CNodePtr &cnode) {
   handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kHandleAttrName);
+  kernel_node_ = cnode;
   env_ = EnvironmentFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(env_);
   InitSizeLists();

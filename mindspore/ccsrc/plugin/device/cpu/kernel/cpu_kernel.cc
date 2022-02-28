@@ -25,18 +25,25 @@
 
 namespace mindspore {
 namespace kernel {
-void CpuDynamicKernel::UpdateArgs() {
-  if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
-    return;
+void NativeCpuKernelMod::InferOp() {
+  if (common::AnfAlgo::IsDynamicShape(cnode_ptr_.lock())) {
+    anf_node_ = cnode_ptr_.lock();
+    KernelMod::InferShape();
   }
+}
+
+void NativeCpuKernelMod::InitOp() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
+  KernelMod::GetDepndLists(cnode);
+  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
+      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) && depend_list_.empty()) {
+    return;
+  }
+
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto cpu_kernel_mod = dynamic_cast<NativeCpuKernelMod *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
-  cpu_kernel_mod->Init(cnode);
+
+  Init(cnode);
 }
 
 void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -66,6 +73,11 @@ void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
 }
 
 void NativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (cnode_ptr_.lock() == nullptr) {
+    cnode_ptr_ = kernel_node;
+  }
+
   InitKernel(kernel_node);
   InitInputOutputSize(kernel_node);
 }

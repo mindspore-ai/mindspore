@@ -33,6 +33,7 @@ class FusedAdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     if (node_name == "FusedAdamWeightDecay") {
       weight_decay_ = true;
     }

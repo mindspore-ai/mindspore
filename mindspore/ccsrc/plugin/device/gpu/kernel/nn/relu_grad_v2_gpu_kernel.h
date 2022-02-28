@@ -48,6 +48,7 @@ class ReluGradV2GpuKernelMod : public NativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {

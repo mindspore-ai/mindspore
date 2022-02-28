@@ -64,7 +64,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  void PostExecute() override {
+  void UpdateOp() override {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronized failed");
     std::vector<TypeId> type_ids;

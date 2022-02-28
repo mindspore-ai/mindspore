@@ -27,6 +27,7 @@ namespace kernel {
 bool TrtKernelMod::Init(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_node_ = kernel_node;
   for (size_t i = 0; i < input_num; i++) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
     auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, i);

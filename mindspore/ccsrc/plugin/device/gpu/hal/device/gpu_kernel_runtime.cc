@@ -768,17 +768,15 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     }
 
     // akg kernel do not support dynamic shape by now.
-    device::DynamicKernelPtr dynamic_kernel = nullptr;
     kernel::NativeGpuKernelMod *gpu_kernel = nullptr;
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
       gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(gpu_kernel);
-      dynamic_kernel = gpu_kernel->DynamicKernel();
     }
 
-    if (dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
-      dynamic_kernel->InferShape();
-      dynamic_kernel->UpdateArgs();
+    if (common::AnfAlgo::IsDynamicShape(kernel)) {
+      gpu_kernel->InferOp();
+      gpu_kernel->InitOp();
     }
 
     AddressPtrList kernel_inputs;
@@ -803,8 +801,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
 
-      if (gpu_kernel != nullptr && dynamic_kernel != nullptr && dynamic_kernel->is_dynamic_shape()) {
-        gpu_kernel->PostExecute();
+      if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
+        gpu_kernel->UpdateOp();
       }
 #ifdef ENABLE_DEBUGGER
       MS_EXCEPTION_IF_NULL(debugger_);
@@ -888,17 +886,15 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // akg kernel do not support dynamic shape by now.
-    device::DynamicKernelPtr dynamic_kernel = nullptr;
     kernel::NativeGpuKernelMod *gpu_kernel = nullptr;
     if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
       gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
       MS_EXCEPTION_IF_NULL(gpu_kernel);
-      dynamic_kernel = gpu_kernel->DynamicKernel();
     }
     // pre-processing for dynamic shape kernel
-    if (dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
-      dynamic_kernel->InferShape();
-      dynamic_kernel->UpdateArgs();
+    if (common::AnfAlgo::IsDynamicShape(kernel)) {
+      gpu_kernel->InferOp();
+      gpu_kernel->InitOp();
     }
     // alloc kernel res
     AddressPtrList kernel_inputs;
@@ -912,8 +908,8 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
     }
-    if (gpu_kernel != nullptr && dynamic_kernel != nullptr && dynamic_kernel->is_dynamic_shape()) {
-      gpu_kernel->PostExecute();
+    if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
+      gpu_kernel->UpdateOp();
     }
   }
   return true;

@@ -23,6 +23,7 @@ namespace mindspore {
 namespace kernel {
 bool EnvironSetGpuKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   if (!EnvironMgr::GetInstance().CheckEnvInput(kernel_node)) {
     MS_LOG(ERROR) << "The input checks invalid, kernel: " << kernel_node->fullname_with_scope();
     return false;

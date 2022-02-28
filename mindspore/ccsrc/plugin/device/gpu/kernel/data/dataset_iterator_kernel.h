@@ -36,7 +36,7 @@ class DatasetIteratorKernelMod : public NativeGpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
-  void PostExecute() override;
+  void UpdateOp() override;
 
  protected:
   void InitSizeLists() override;

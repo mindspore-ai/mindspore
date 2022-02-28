@@ -50,6 +50,7 @@ class SpaceToBatchGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
     input_size_ = sizeof(T);
     for (size_t idx = 0; idx < input_shape_.size(); ++idx) {

@@ -115,6 +115,7 @@ class UnaryOpGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     auto iter = kUnaryOpTypeMap.find(kernel_name);
     if (iter == kUnaryOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"

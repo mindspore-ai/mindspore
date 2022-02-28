@@ -157,7 +157,7 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
   return true;
 }
 
-void DatasetIteratorKernelMod::PostExecute() {
+void DatasetIteratorKernelMod::UpdateOp() {
   std::vector<std::vector<size_t>> shapes;
   for (const auto &item : output_data_) {
     std::vector<size_t> shape;

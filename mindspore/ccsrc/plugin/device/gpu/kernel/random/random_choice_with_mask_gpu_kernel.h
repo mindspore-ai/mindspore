@@ -70,6 +70,7 @@ class RandomChoiceWithMaskGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
     uint32_t time_interval = std::chrono::system_clock::now().time_since_epoch().count();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);

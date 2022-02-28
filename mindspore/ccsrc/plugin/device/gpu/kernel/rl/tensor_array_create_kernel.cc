@@ -28,6 +28,7 @@ TensorArrayCreateKernelMod::TensorArrayCreateKernelMod() : is_dynamic_(true), si
 
 bool TensorArrayCreateKernelMod::Init(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_node_ = kernel_node;
   auto shape = GetAttr<std::vector<int64_t>>(kernel_node, "element_shape");
   for (auto i : shape) {
     shapes_.push_back(LongToSize(i));

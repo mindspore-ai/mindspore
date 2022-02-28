@@ -73,6 +73,7 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     (void)CheckIONumber(kernel_node);
 
     input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

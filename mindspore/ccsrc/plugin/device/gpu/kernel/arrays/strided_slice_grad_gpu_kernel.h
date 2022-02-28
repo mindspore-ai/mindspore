@@ -48,6 +48,7 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
   }
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+    kernel_node_ = kernel_node;
     std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
     for (auto x : shapex) {
       input_shape_.push_back(static_cast<size_t>(x));
