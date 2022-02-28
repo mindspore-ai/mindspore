@@ -211,11 +211,11 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   if (value_node->abstract() == nullptr) {
     return lite::RET_NO_CHANGE;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(value_node->abstract());
+  auto abstract_tensor = value_node->abstract()->cast<abstract::AbstractTensorPtr>();
   if (abstract_tensor == nullptr) {
     return lite::RET_NO_CHANGE;
   }
-  auto value = abstract_tensor->GetValueTrack();
+  auto value = value_node->value();
   if (value != nullptr && value->isa<tensor::Tensor>()) {
     if (abstract_tensor->element() == nullptr) {
       MS_LOG(ERROR) << "abstractTensor->element() is nullptr.";
@@ -244,8 +244,6 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
       for (int i = 0; i < dest_tensor_info->ElementsNum(); i++) {
         dest_data_buf[i] = src_data_buf[i];
       }
-      abstract_tensor->set_value(dest_tensor_info);
-      abstract_tensor->set_type(TypeIdToType(kNumberTypeInt32));
       abstract_tensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
       value_node->set_value(dest_tensor_info);
     }

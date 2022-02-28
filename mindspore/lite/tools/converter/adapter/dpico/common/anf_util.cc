@@ -24,6 +24,7 @@
 #include "common/string_util.h"
 #include "ops/custom.h"
 #include "ops/transpose.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace dpico {
@@ -94,6 +95,7 @@ STATUS GetShapeVectorFromParameter(const AnfNodePtr &anode, ShapeVector *shape_v
     return lite::RET_INPUT_TENSOR_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << param_node->name();
     return lite::RET_PARAM_INVALID;
@@ -705,6 +707,7 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
     return RET_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
   auto typePtr = abstract_tensor->element()->GetTypeTrack();
   MS_ASSERT(typePtr != nullptr);
   *data_type = typePtr->type_id();

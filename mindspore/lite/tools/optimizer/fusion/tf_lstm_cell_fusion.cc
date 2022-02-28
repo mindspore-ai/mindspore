@@ -385,6 +385,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(hidden_param->abstract());
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, nullptr, "Cast to abstract tensor failed!");
   auto hidden_shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   if (hidden_shape.empty()) {
     MS_LOG(DEBUG) << "can't get hidden shape";

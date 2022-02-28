@@ -915,6 +915,7 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
           return RET_ERROR;
         }
         auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
+        MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
         auto type_ptr = abstract_tensor->element()->GetTypeTrack();
         MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
         ms_tensor->dataType = type_ptr->type_id();
@@ -934,6 +935,7 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
     auto type = kNumberTypeFloat32;
     if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
       auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
+      MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
       auto typePtr = abstract_tensor->element()->GetTypeTrack();
       type = typePtr->type_id();
     }

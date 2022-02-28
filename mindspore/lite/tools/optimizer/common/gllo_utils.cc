@@ -1026,6 +1026,7 @@ int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
   }
   if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+    MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "Cast to abstract tensor failed!");
     auto type_ptr = abstract_tensor->element()->GetTypeTrack();
     MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
     *type_id = type_ptr->type_id();
